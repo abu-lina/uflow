@@ -32,6 +32,8 @@ export interface StoreProviderExtension {
   verification_method: string | null;
   has_certificate: boolean;
   certificate_url: string | null;
+  no_alcohol: boolean;
+  no_pork: boolean;
   no_gambling: boolean;
   proof_tier?: number;
 }

@@ -105,12 +105,12 @@ export function buildExtensionFieldsPayload(
   listingType?: 'food' | 'store' | string | null
 ): Record<string, unknown> {
   const hasExtensionFields =
-    (data.verificationMethod !== undefined && data.verificationMethod !== null) ||
-    data.hasCertificate === true ||
-    (data.certificateUrl !== undefined && data.certificateUrl !== null) ||
-    data.noAlcohol === true ||
-    data.noPork === true ||
-    data.noGambling === true;
+    data.verificationMethod !== undefined ||
+    data.hasCertificate !== undefined ||
+    data.certificateUrl !== undefined ||
+    data.noAlcohol !== undefined ||
+    data.noPork !== undefined ||
+    data.noGambling !== undefined;
 
   if (!hasExtensionFields) return {};
 
@@ -127,11 +127,8 @@ export function buildExtensionFieldsPayload(
     return { food_providers: ext };
   }
   if (listingType === 'store') {
-    // Store only has no_gambling of the three booleans
-    const storeExt: Record<string, unknown> = { ...ext };
-    delete storeExt.no_alcohol;
-    delete storeExt.no_pork;
-    return { store_providers: storeExt };
+    // Plan 192: no_alcohol and no_pork are now supported for stores too
+    return { store_providers: ext };
   }
 
   return {};

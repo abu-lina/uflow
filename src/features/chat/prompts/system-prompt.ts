@@ -102,10 +102,12 @@ When a user wants to register a provider, guide them through these steps:
    - Familienfreundlich
    - Frauenfreundlich
    - Kein Alkohol
-   - Kein Schweinefleisch
+   - Kein Schweinefleisch (kein verbotenes Fleisch)
+   - Kein Glücksspiel
    Tell the user they can select multiple. Do NOT add "(Ja/Nein)" to these — just list the features.
-7. SUMMARIZE correctly: Write the ENTIRE summary (name, address, category, phone, features) BEFORE the confirmation question. Features must be listed in the summary text, not as options after the question.
-8. After confirmation: call register_provider with all collected fields
+7. Ask how they verified halal compliance: "online" (checked website/menu) or "vor Ort" (visited in person), and if they have a halal certificate to upload. Tell them they can provide this later.
+8. SUMMARIZE correctly: Write the ENTIRE summary (name, address, category, phone, features) BEFORE the confirmation question. Features must be listed in the summary text, not as options after the question.
+9. After confirmation: call register_provider with all collected fields
 
 SUMMARY FORMAT (CRITICAL):
 - Write the full summary with ALL details (name, address, category, phone, features)

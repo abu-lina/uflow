@@ -166,15 +166,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           women_friendly: { type: 'boolean' },
           no_alcohol: {
             type: 'boolean',
-            description: 'For food listing_type only',
+            description: 'Does not serve/sell alcohol',
           },
           no_pork: {
             type: 'boolean',
-            description: 'For food listing_type only',
+            description: 'Does not serve/sell alcohol',
           },
           no_gambling: {
             type: 'boolean',
-            description: 'For store listing_type only',
+            description: 'Does not offer gambling',
           },
           makes_donations: {
             type: 'boolean',
@@ -383,14 +383,18 @@ export async function executeToolCall(
         const noAlcohol = !!(args.no_alcohol as boolean);
         const noPork = !!(args.no_pork as boolean);
         const noGambling = !!(args.no_gambling as boolean);
+        const verificationMethod = (args.verification_method as string) || 'online';
+        const hasCertificate = !!(args.has_certificate as boolean);
         
         const { error: extError } = await adminForCreate
           .from(extTable)
           .upsert({
             provider_id: providerId,
             no_alcohol: noAlcohol,
-            no_pork: listingType === 'food' ? noPork : false,
-            no_gambling: listingType === 'store' ? noGambling : false,
+            no_pork: noPork,
+            no_gambling: noGambling,
+            verification_method: verificationMethod,
+            has_certificate: hasCertificate,
           }, { onConflict: 'provider_id' });
         
         if (extError) {
@@ -488,6 +492,13 @@ export async function mapChatArgsToFormData(
     socialCategory: '',
     socialTitle: '',
     socialDescription: '',
+    no_alcohol: !!(args.no_alcohol as boolean),
+    no_pork: !!(args.no_pork as boolean),
+    no_gambling: !!(args.no_gambling as boolean),
+    verification_method: (args.verification_method as string) || '',
+    has_certificate: !!(args.has_certificate as boolean),
+    certificate_file: null,
+    certificate_url: '',
   };
 
   const user: User = {

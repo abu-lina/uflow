@@ -69,6 +69,21 @@ async function syncEntityRelations(
   }
 }
 
+async function resolveListingType(categoryId: string): Promise<'food' | 'store' | 'ummah' | null> {
+  if (!categoryId) return null;
+  try {
+    const { data } = await supabase
+      .from('categories')
+      .select('applicable_section')
+      .eq('category_id', categoryId)
+      .single();
+    if (data?.applicable_section && ['food', 'store', 'ummah'].includes(data.applicable_section)) {
+      return data.applicable_section as 'food' | 'store' | 'ummah';
+    }
+  } catch {}
+  return null;
+}
+
 const TAG_SYNONYMS = {
   muslim: new Set(['muslim', 'muslim_owned', 'muslim-owned']),
   prayer: new Set(['gebet', 'gebetsraum', 'gebetsfreundlich', 'prayer', 'prayer_space', 'prayer-friendly']),
@@ -285,6 +300,29 @@ export async function createProviderOrService(
       ),
       createPrimaryLocation(generatedProviderId, formData),
     ]);
+
+    // Save halal attestation data to extension table
+    try {
+      const resolvedListingType = await resolveListingType(formData.category);
+      if (resolvedListingType === 'food' || resolvedListingType === 'store') {
+        const extTable = resolvedListingType === 'food' ? 'food_providers' : 'store_providers';
+        const extPayload: Record<string, unknown> = {
+          provider_id: generatedProviderId,
+          no_alcohol: formData.no_alcohol || false,
+          no_pork: formData.no_pork || false,
+          no_gambling: formData.no_gambling || false,
+          verification_method: formData.verification_method || 'online',
+          has_certificate: formData.has_certificate || false,
+          certificate_url: formData.certificate_url || null,
+        };
+        const { error: extError } = await supabase
+          .from(extTable)
+          .upsert(extPayload, { onConflict: 'provider_id' });
+        if (extError) console.error('Error saving halal data:', extError);
+      }
+    } catch (e) {
+      console.error('Failed to save halal attestation:', e);
+    }
 
     if (requestedBadgeKeys.length > 0) {
       const { data: badgeTypes, error: badgeTypesError } = await supabase
