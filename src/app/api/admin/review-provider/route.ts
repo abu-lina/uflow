@@ -4,6 +4,7 @@ import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudi
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { providerReviewUpdateSchema } from '@/lib/validations/adminSchemas';
 import { updateProviderReview } from '@/services/admin/providers';
+import { checkEnrichmentAlcoholConflict } from '@/services/admin/enrichment-gate';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
@@ -14,6 +15,9 @@ import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
  * 
  * Plan 059/062: Rejection requires a non-empty feedback reason.
  * Approval and needs_revision do not require feedback.
+ * 
+ * Plan 193: Blocks approval when enrichment has detected alcohol
+ * that contradicts the manual review. Returns 409 with conflict details.
  * 
  * Request body:
  * {
@@ -94,6 +98,31 @@ export async function PATCH(request: Request) {
         { error: 'Invalid request body', details: validationError instanceof Error ? validationError.message : 'Validation failed' },
         { status: 400 }
       );
+    }
+
+    // Plan 193: Before approving, check for enrichment alcohol conflicts
+    if (validatedData.reviewStatus === 'approved') {
+      const alcoholConflict = await checkEnrichmentAlcoholConflict(validatedData.providerId);
+      if (alcoholConflict.hasConflict) {
+        logger.warn(
+          'Provider approval blocked by enrichment alcohol conflict',
+          {
+            providerId: validatedData.providerId,
+            userId: user.id,
+            conflicts: alcoholConflict.conflicts.map(c => ({ source: c.source, candidateId: c.candidateId })),
+          },
+          { ...getRequestMetadata(request) }
+        );
+
+        return NextResponse.json(
+          {
+            error: 'Enrichment detected alcohol on menu items. Review pending enrichment candidates before approving.',
+            code: 'ALCOHOL_ENRICHMENT_CONFLICT',
+            conflict: alcoholConflict,
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // Update provider review using service layer
