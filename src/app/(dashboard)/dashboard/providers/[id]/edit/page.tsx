@@ -155,7 +155,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       if (response.status === 409) {
         toast.error('This provider was modified by another user. Please refresh.');
       } else {
-        toast.error(errorData.error || t('editProvider.errorUpdating'));
+        toast.error(errorData.details || errorData.error || t('editProvider.errorUpdating'));
       }
       throw new Error(errorData.error || 'Failed to save');
     }
