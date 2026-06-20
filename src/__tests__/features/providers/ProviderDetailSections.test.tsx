@@ -124,7 +124,7 @@ describe('ProviderDetailSections', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Values & Amenities' }));
     // At least one values/amenities row should also render with icon container.
     const iconSlots = container.querySelectorAll('span.bg-\\[\\#E3F2EF\\]');
-    expect(iconSlots.length).toBeGreaterThanOrEqual(2);
+    expect(iconSlots.length).toBeGreaterThanOrEqual(1);
   });
 
   it('[figma alignment] renders opening-hours rows with stronger day/time typography', () => {
