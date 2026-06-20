@@ -120,6 +120,8 @@ describe('ProviderDetailSections', () => {
     expect(menuItemRow?.firstElementChild).toHaveClass('bg-[#E3F2EF]');
     expect(menuItemRow?.firstElementChild).toHaveClass('h-12', 'w-12');
 
+    // Expand Values section to check icon containers
+    fireEvent.click(screen.getByRole('button', { name: 'Values & Amenities' }));
     // At least one values/amenities row should also render with icon container.
     const iconSlots = container.querySelectorAll('span.bg-\\[\\#E3F2EF\\]');
     expect(iconSlots.length).toBeGreaterThanOrEqual(2);
@@ -187,7 +189,7 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Halal Check/ }));
+    // Halal section starts open with the seal UI
     // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]
     expect(screen.getByRole('group')).toBeInTheDocument();
   });
@@ -316,7 +318,7 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Halal Check/ }));
+    // Halal section starts open with the seal UI
     expect(screen.queryByText('No proofs available.')).not.toBeInTheDocument();
     expect(screen.queryByText('Only halal meat')).not.toBeInTheDocument();
     // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]

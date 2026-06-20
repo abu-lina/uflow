@@ -95,6 +95,13 @@ const baseFormData: ProviderFormData = {
   socialCategory: '',
   socialTitle: '',
   socialDescription: '',
+      no_alcohol: false,
+      no_pork: false,
+      no_gambling: false,
+      verification_method: '',
+      has_certificate: false,
+      certificate_file: null,
+      certificate_url: '',
 };
 
 describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
