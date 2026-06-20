@@ -202,11 +202,16 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const errorMessage = response.status === 409
-        ? 'This provider was modified by another reviewer. Please refresh.'
-        : response.status === 429
-          ? 'Too many requests. Please wait a moment and try again.'
-          : errorData.error || `Failed to ${reviewStatus === 'approved' ? 'approve' : 'reject'} provider.`;
+      let errorMessage;
+      if (response.status === 409 && errorData.code === 'MENU_ALCOHOL_DETECTED') {
+        errorMessage = errorData.error;
+      } else if (response.status === 409) {
+        errorMessage = 'This provider was modified by another reviewer. Please refresh.';
+      } else if (response.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      } else {
+        errorMessage = errorData.error || `Failed to ${reviewStatus === 'approved' ? 'approve' : 'reject'} provider.`;
+      }
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }

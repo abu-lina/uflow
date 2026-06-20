@@ -300,8 +300,9 @@ export function ProvidersContent({
       try {
         await approveProvider(providerId);
       } catch (err) {
-        console.error('[handleApprove] Failed to approve provider:', err);
-        toast.error('Failed to approve provider. Please try again.');
+        const message = err instanceof Error ? err.message : 'Failed to approve provider. Please try again.';
+        console.error('[handleApprove] Failed to approve provider:', message);
+        toast.error(message);
       }
     },
     [approveProvider],
