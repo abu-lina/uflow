@@ -13,7 +13,7 @@ interface HalalData {
   noAlcohol: boolean;
   noPork: boolean;
   noGambling: boolean;
-  verificationMethod: 'online' | 'onsite' | '';
+  verificationMethod: 'online' | 'onsite' | null;
   hasCertificate: boolean;
   certificateUrl: string | null;
   certificateFile: File | null;
@@ -42,7 +42,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     noAlcohol: false,
     noPork: false,
     noGambling: false,
-    verificationMethod: '',
+    verificationMethod: null,
     hasCertificate: false,
     certificateUrl: null,
     certificateFile: null,
@@ -80,7 +80,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
             noAlcohol: extData.no_alcohol ?? false,
             noPork: extData.no_pork ?? false,
             noGambling: extData.no_gambling ?? false,
-            verificationMethod: extData.verification_method ?? '',
+            verificationMethod: extData.verification_method ?? null,
             hasCertificate: extData.has_certificate ?? false,
             certificateUrl: extData.certificate_url ?? null,
             certificateFile: null,

@@ -244,7 +244,7 @@ export function ProviderEditForm({
         const parsed = JSON.parse(storedHalal);
         setFormData(prev => ({
           ...prev,
-          verificationMethod: parsed.verificationMethod ?? prev.verificationMethod,
+          verificationMethod: parsed.verificationMethod || null,
           hasCertificate: parsed.hasCertificate ?? prev.hasCertificate,
           certificateUrl: parsed.certificateUrl ?? prev.certificateUrl,
           noAlcohol: parsed.noAlcohol ?? prev.noAlcohol,
