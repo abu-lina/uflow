@@ -96,7 +96,7 @@ describe('ProviderDetailSections', () => {
       isFetching: false,
     });
 
-    const { container } = render(
+    render(
       <ProviderDetailSections
         badges={[]}
         isLoadingBadges={false}
@@ -109,8 +109,12 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Values & Amenities' }));
+    expect(screen.getByText(/Muslim/)).toBeInTheDocument();
+    const valueRow = screen.getByText(/Muslim/).closest('div');
+    expect(valueRow?.firstElementChild).toHaveClass('bg-[#E3F2EF]');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
     const menuItem = screen.getByText('Falafel Teller');
     expect(menuItem).toBeInTheDocument();
     expect(menuItem).toHaveClass('text-base', 'font-semibold', 'text-content-heading');
@@ -119,10 +123,6 @@ describe('ProviderDetailSections', () => {
     expect(menuItemRow).toBeTruthy();
     expect(menuItemRow?.firstElementChild).toHaveClass('bg-[#E3F2EF]');
     expect(menuItemRow?.firstElementChild).toHaveClass('h-12', 'w-12');
-
-    // At least one values/amenities row should also render with icon container.
-    const iconSlots = container.querySelectorAll('span.bg-\\[\\#E3F2EF\\]');
-    expect(iconSlots.length).toBeGreaterThanOrEqual(2);
   });
 
   it('[figma alignment] renders opening-hours rows with stronger day/time typography', () => {
@@ -187,8 +187,7 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Halal Check/ }));
-    // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]
+    // Halal Check is open by default (accordion default)
     expect(screen.getByRole('group')).toBeInTheDocument();
   });
 
@@ -316,7 +315,7 @@ describe('ProviderDetailSections', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Halal Check/ }));
+    // Halal Check is open by default (accordion default)
     expect(screen.queryByText('No proofs available.')).not.toBeInTheDocument();
     expect(screen.queryByText('Only halal meat')).not.toBeInTheDocument();
     // New wax-seal UI: SealRow renders 3 seals inside a [role="group"]
