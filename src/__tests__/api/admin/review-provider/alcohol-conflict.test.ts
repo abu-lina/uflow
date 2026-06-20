@@ -20,7 +20,7 @@ vi.mock('@/services/admin/providers', () => ({
 }));
 
 vi.mock('@/services/admin/enrichment-gate', () => ({
-  checkEnrichmentAlcoholConflict: vi.fn(),
+  checkMenuForAlcohol: vi.fn(),
 }));
 
 vi.mock('@/lib/audit/adminAudit', () => ({
@@ -52,12 +52,12 @@ import { PATCH } from '@/app/api/admin/review-provider/route';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { updateProviderReview } from '@/services/admin/providers';
-import { checkEnrichmentAlcoholConflict } from '@/services/admin/enrichment-gate';
+import { checkMenuForAlcohol } from '@/services/admin/enrichment-gate';
 
 const mockGetUserFromCookie = getUserFromCookie as ReturnType<typeof vi.fn>;
 const mockIsAdminOrModerator = isAdminOrModerator as ReturnType<typeof vi.fn>;
 const mockUpdateProviderReview = updateProviderReview as ReturnType<typeof vi.fn>;
-const mockCheckEnrichmentAlcoholConflict = checkEnrichmentAlcoholConflict as ReturnType<typeof vi.fn>;
+const mockCheckMenuForAlcohol = checkMenuForAlcohol as ReturnType<typeof vi.fn>;
 
 function createPatchRequest(body: Record<string, unknown>): Request {
   return new Request('http://localhost/api/admin/review-provider', {
@@ -76,16 +76,21 @@ const PROVIDER_RESPONSE = {
   review_feedback: null,
 };
 
-describe('PATCH /api/admin/review-provider — Plan 193 alcohol conflict gate', () => {
+describe('PATCH /api/admin/review-provider — Plan 193 menu alcohol check', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetUserFromCookie.mockResolvedValue(ADMIN_USER);
     mockIsAdminOrModerator.mockResolvedValue(true);
     mockUpdateProviderReview.mockResolvedValue(PROVIDER_RESPONSE);
-    mockCheckEnrichmentAlcoholConflict.mockResolvedValue({ hasConflict: false, conflicts: [] });
+    mockCheckMenuForAlcohol.mockResolvedValue({
+      hasAlcohol: false,
+      matchedItemNames: [],
+      matchedKeywords: [],
+      totalMenuItems: 0,
+    });
   });
 
-  it('approves provider when no alcohol conflict exists', async () => {
+  it('approves provider when menu has no alcohol', async () => {
     const response = await PATCH(createPatchRequest({
       providerId: VALID_ID,
       reviewStatus: 'approved',
@@ -94,20 +99,15 @@ describe('PATCH /api/admin/review-provider — Plan 193 alcohol conflict gate', 
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.data.review_status).toBe('approved');
-    expect(mockCheckEnrichmentAlcoholConflict).toHaveBeenCalledWith(VALID_ID);
+    expect(mockCheckMenuForAlcohol).toHaveBeenCalledWith(VALID_ID);
   });
 
-  it('returns 409 when alcohol conflict exists', async () => {
-    mockCheckEnrichmentAlcoholConflict.mockResolvedValue({
-      hasConflict: true,
-      conflicts: [
-        {
-          candidateId: 'candidate-1',
-          source: 'wolt',
-          sourceUrl: 'https://wolt.com/venue/test',
-          enrichedAt: '2026-06-20T10:00:00Z',
-        },
-      ],
+  it('returns 409 when menu contains alcohol keywords', async () => {
+    mockCheckMenuForAlcohol.mockResolvedValue({
+      hasAlcohol: true,
+      matchedItemNames: ['Bier 0,5l', 'Wein Rot'],
+      matchedKeywords: ['Bier', 'Wein'],
+      totalMenuItems: 5,
     });
 
     const response = await PATCH(createPatchRequest({
@@ -117,11 +117,11 @@ describe('PATCH /api/admin/review-provider — Plan 193 alcohol conflict gate', 
 
     expect(response.status).toBe(409);
     const json = await response.json();
-    expect(json.code).toBe('ALCOHOL_ENRICHMENT_CONFLICT');
-    expect(json.error).toContain('Enrichment detected alcohol');
-    expect(json.conflict.hasConflict).toBe(true);
-    expect(json.conflict.conflicts).toHaveLength(1);
-    expect(json.conflict.conflicts[0].source).toBe('wolt');
+    expect(json.code).toBe('MENU_ALCOHOL_DETECTED');
+    expect(json.error).toContain('alcohol keywords');
+    expect(json.menuCheck.hasAlcohol).toBe(true);
+    expect(json.menuCheck.matchedItemNames).toContain('Bier 0,5l');
+    expect(json.menuCheck.matchedKeywords).toContain('Bier');
     expect(mockUpdateProviderReview).not.toHaveBeenCalled();
   });
 
@@ -133,7 +133,7 @@ describe('PATCH /api/admin/review-provider — Plan 193 alcohol conflict gate', 
     })) as Response;
 
     expect(response.status).toBe(200);
-    expect(mockCheckEnrichmentAlcoholConflict).not.toHaveBeenCalled();
+    expect(mockCheckMenuForAlcohol).not.toHaveBeenCalled();
     expect(mockUpdateProviderReview).toHaveBeenCalled();
   });
 
@@ -144,21 +144,16 @@ describe('PATCH /api/admin/review-provider — Plan 193 alcohol conflict gate', 
     })) as Response;
 
     expect(response.status).toBe(200);
-    expect(mockCheckEnrichmentAlcoholConflict).not.toHaveBeenCalled();
+    expect(mockCheckMenuForAlcohol).not.toHaveBeenCalled();
     expect(mockUpdateProviderReview).toHaveBeenCalled();
   });
 
-  it('logs warning when blocking approval due to alcohol conflict', async () => {
-    mockCheckEnrichmentAlcoholConflict.mockResolvedValue({
-      hasConflict: true,
-      conflicts: [
-        {
-          candidateId: 'candidate-1',
-          source: 'wolt',
-          sourceUrl: 'https://wolt.com/venue/test',
-          enrichedAt: '2026-06-20T10:00:00Z',
-        },
-      ],
+  it('logs warning when blocking approval due to menu alcohol', async () => {
+    mockCheckMenuForAlcohol.mockResolvedValue({
+      hasAlcohol: true,
+      matchedItemNames: ['Bier'],
+      matchedKeywords: ['Bier'],
+      totalMenuItems: 3,
     });
 
     await PATCH(createPatchRequest({
@@ -168,7 +163,7 @@ describe('PATCH /api/admin/review-provider — Plan 193 alcohol conflict gate', 
 
     const { logger: mockedLogger } = await import('@/lib/logging/structuredLogger');
     expect(mockedLogger.warn).toHaveBeenCalledWith(
-      'Provider approval blocked by enrichment alcohol conflict',
+      'Provider approval blocked — enriched menu contains alcohol keywords',
       expect.objectContaining({
         providerId: VALID_ID,
         userId: ADMIN_USER.id,
@@ -177,10 +172,12 @@ describe('PATCH /api/admin/review-provider — Plan 193 alcohol conflict gate', 
     );
   });
 
-  it('does not call updateProviderReview when blocked by alcohol conflict', async () => {
-    mockCheckEnrichmentAlcoholConflict.mockResolvedValue({
-      hasConflict: true,
-      conflicts: [{ candidateId: 'c-1', source: 'wolt', sourceUrl: null, enrichedAt: '' }],
+  it('does not call updateProviderReview when blocked', async () => {
+    mockCheckMenuForAlcohol.mockResolvedValue({
+      hasAlcohol: true,
+      matchedItemNames: ['Bier'],
+      matchedKeywords: ['Bier'],
+      totalMenuItems: 3,
     });
 
     await PATCH(createPatchRequest({

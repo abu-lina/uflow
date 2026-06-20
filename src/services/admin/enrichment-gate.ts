@@ -1,83 +1,79 @@
 /**
- * Enrichment gate service — Plan 193.
+ * Menu alcohol check service — Plan 193.
  *
- * Quality gate that prevents provider approval when automated enrichment
- * has detected alcohol on menu items that contradicts manual review.
+ * Quality gate that prevents provider approval when enriched menu items
+ * contain alcohol keywords, alerting the reviewer to menu content that
+ * may not have been visible during manual website review.
  *
  * Uses service-role Supabase client for reads (bypasses RLS).
  */
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { detectAlcohol } from '@/lib/enrichment/delivery-platform/alcohol-detector';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface AlcoholConflictDetail {
-  candidateId: string;
-  source: string;
-  sourceUrl: string | null;
-  enrichedAt: string;
-}
-
-export interface AlcoholConflictResult {
-  hasConflict: boolean;
-  conflicts: AlcoholConflictDetail[];
+export interface MenuAlcoholCheckResult {
+  hasAlcohol: boolean;
+  /** Menu item names that matched alcohol keywords */
+  matchedItemNames: string[];
+  /** Unique alcohol keywords found across matched items */
+  matchedKeywords: string[];
+  /** Total number of menu items checked for this provider */
+  totalMenuItems: number;
 }
 
 // ─── Service Functions ────────────────────────────────────────────────────────
 
 /**
- * Check if a provider has pending enrichment candidates that propose
- * `no_alcohol = false` (alcohol detected) while the provider is currently
- * marked as `no_alcohol = true` from manual review.
+ * Check a food provider's menu items for alcohol content detected by
+ * automated enrichment (e.g. Wolt). Reads the food_menu table entries
+ * directly — these are the items that were imported into the database
+ * and would be displayed on the public listing.
  *
- * Returns conflict details including enrichment source, source URL,
- * and candidate ID for resolution via the enrichment review panel.
+ * Returns details about which items matched and which keywords were found,
+ * so the reviewer can make an informed decision before approving.
  */
-export async function checkEnrichmentAlcoholConflict(
+export async function checkMenuForAlcohol(
   providerId: string
-): Promise<AlcoholConflictResult> {
+): Promise<MenuAlcoholCheckResult> {
   const supabase = getSupabaseAdmin();
 
-  // 1. Check if provider is currently marked as no_alcohol = true
-  const { data: foodProvider, error: foodError } = await supabase
-    .from('food_providers')
-    .select('no_alcohol')
-    .eq('provider_id', providerId)
-    .maybeSingle();
+  const { data: menuItems, error } = await supabase
+    .from('food_menu')
+    .select('name_de, name_en')
+    .eq('provider_id', providerId);
 
-  if (foodError) {
-    throw new Error(`Failed to fetch food_providers: ${foodError.message}`);
+  if (error) {
+    throw new Error(`Failed to fetch menu items: ${error.message}`);
   }
 
-  // If no food_providers row exists or no_alcohol is not true, there's no conflict
-  if (!foodProvider || foodProvider.no_alcohol !== true) {
-    return { hasConflict: false, conflicts: [] };
+  if (!menuItems || menuItems.length === 0) {
+    return { hasAlcohol: false, matchedItemNames: [], matchedKeywords: [], totalMenuItems: 0 };
   }
 
-  // 2. Check for pending enrichment candidates proposing no_alcohol = false
-  const { data: candidates, error: candidatesError } = await supabase
-    .from('enrichment_candidates')
-    .select('id, source, source_url, enriched_at, proposed_value, current_value')
-    .eq('provider_id', providerId)
-    .eq('field_name', 'no_alcohol')
-    .eq('status', 'pending')
-    .eq('proposed_value', false);
-
-  if (candidatesError) {
-    throw new Error(`Failed to fetch enrichment candidates: ${candidatesError.message}`);
+  // Collect all item names — run detection against the primary (German) names
+  // since the keyword list is German-focused. If name_de is empty, fall back to name_en.
+  const itemNames: string[] = [];
+  for (const item of menuItems) {
+    if (item.name_de) {
+      itemNames.push(item.name_de);
+    } else if (item.name_en) {
+      itemNames.push(item.name_en);
+    }
   }
 
-  if (!candidates || candidates.length === 0) {
-    return { hasConflict: false, conflicts: [] };
+  // Run alcohol detection on the menu item names
+  const detection = detectAlcohol(itemNames);
+
+  if (detection.signal !== 'definite_alcohol') {
+    return { hasAlcohol: false, matchedItemNames: [], matchedKeywords: [], totalMenuItems: menuItems.length };
   }
 
-  // 3. Build conflict details
-  const conflicts: AlcoholConflictDetail[] = candidates.map((c: Record<string, unknown>) => ({
-    candidateId: c.id as string,
-    source: c.source as string,
-    sourceUrl: (c.source_url as string) ?? null,
-    enrichedAt: c.enriched_at as string,
-  }));
-
-  return { hasConflict: true, conflicts };
+  return {
+    hasAlcohol: true,
+    matchedItemNames: detection.matchedItems,
+    matchedKeywords: detection.matchedKeywords,
+    totalMenuItems: menuItems.length,
+  };
 }

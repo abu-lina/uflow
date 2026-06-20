@@ -4,7 +4,7 @@ import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudi
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { providerReviewUpdateSchema } from '@/lib/validations/adminSchemas';
 import { updateProviderReview } from '@/services/admin/providers';
-import { checkEnrichmentAlcoholConflict } from '@/services/admin/enrichment-gate';
+import { checkMenuForAlcohol } from '@/services/admin/enrichment-gate';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
@@ -16,8 +16,9 @@ import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
  * Plan 059/062: Rejection requires a non-empty feedback reason.
  * Approval and needs_revision do not require feedback.
  * 
- * Plan 193: Blocks approval when enrichment has detected alcohol
- * that contradicts the manual review. Returns 409 with conflict details.
+ * Plan 193: Blocks approval when enriched menu items contain alcohol keywords,
+ * alerting the reviewer to content revealed by automated enrichment (e.g. Wolt)
+ * that may not have been visible during manual website review.
  * 
  * Request body:
  * {
@@ -86,7 +87,6 @@ export async function PATCH(request: Request) {
         logger.warn(
           'Invalid request body',
           {
-            // Log only known keys — never log raw body (log injection / sensitive bleed risk)
             providerId: typeof body?.providerId === 'string' ? body.providerId : '[invalid]',
             reviewStatus: typeof body?.reviewStatus === 'string' ? body.reviewStatus : '[invalid]',
             error: validationError.message,
@@ -100,25 +100,26 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Plan 193: Before approving, check for enrichment alcohol conflicts
+    // Plan 193: Before approving, check enriched menu items for alcohol content
     if (validatedData.reviewStatus === 'approved') {
-      const alcoholConflict = await checkEnrichmentAlcoholConflict(validatedData.providerId);
-      if (alcoholConflict.hasConflict) {
+      const menuCheck = await checkMenuForAlcohol(validatedData.providerId);
+      if (menuCheck.hasAlcohol) {
         logger.warn(
-          'Provider approval blocked by enrichment alcohol conflict',
+          'Provider approval blocked — enriched menu contains alcohol keywords',
           {
             providerId: validatedData.providerId,
             userId: user.id,
-            conflicts: alcoholConflict.conflicts.map(c => ({ source: c.source, candidateId: c.candidateId })),
+            matchedItems: menuCheck.matchedItemNames,
+            matchedKeywords: menuCheck.matchedKeywords,
           },
           { ...getRequestMetadata(request) }
         );
 
         return NextResponse.json(
           {
-            error: 'Enrichment detected alcohol on menu items. Review pending enrichment candidates before approving.',
-            code: 'ALCOHOL_ENRICHMENT_CONFLICT',
-            conflict: alcoholConflict,
+            error: 'Enriched menu items contain alcohol keywords (e.g. Bier, Wein). Review the menu before approving.',
+            code: 'MENU_ALCOHOL_DETECTED',
+            menuCheck,
           },
           { status: 409 }
         );
@@ -126,7 +127,6 @@ export async function PATCH(request: Request) {
     }
 
     // Update provider review using service layer
-    // Sanitization is handled by the service (single boundary)
     const updatedProvider = await updateProviderReview(
       validatedData.providerId,
       validatedData.reviewStatus,
@@ -168,7 +168,6 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Get user for logging if available
     let userId: string | undefined;
     try {
       const { getUserFromCookie } = await import('@/lib/supabase/getUserFromCookie');
@@ -185,7 +184,6 @@ export async function PATCH(request: Request) {
       { ...getRequestMetadata(request), userId }
     );
 
-    // Sanitize error message in production
     const errorMessage = process.env.NODE_ENV === 'production'
       ? 'Failed to review provider'
       : error instanceof Error ? error.message : 'Unknown error';

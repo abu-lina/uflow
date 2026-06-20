@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkEnrichmentAlcoholConflict } from '@/services/admin/enrichment-gate';
+import { checkMenuForAlcohol } from '@/services/admin/enrichment-gate';
 
 // ─── Dynamic Supabase Mock ────────────────────────────────────────────────────
 
@@ -10,164 +10,116 @@ vi.mock('@/lib/supabase/admin', () => ({
 }));
 
 /**
- * Configure query chain mocks for a test.
+ * Configure the food_menu query mock for a test.
  * The implementation does:
- *   .from('food_providers').select('no_alcohol').eq('provider_id', id).maybeSingle()
- *   .from('enrichment_candidates').select(...).eq('provider_id', id).eq('field_name', 'no_alcohol').eq('status', 'pending').eq('proposed_value', false)
+ *   .from('food_menu').select('name_de, name_en').eq('provider_id', id)
  */
-function setupMocks(options: {
-  foodProviderResult: () => Promise<{ data: unknown; error: unknown }>;
-  enrichmentResult: () => Promise<{ data: unknown; error: unknown }>;
-}) {
-  // enrichment chain: select → eq1 → eq2 → eq3 → eq4
-  const enrichmentEq4 = vi.fn().mockImplementation(options.enrichmentResult);
-  const enrichmentEq3 = vi.fn().mockReturnValue({ eq: enrichmentEq4 });
-  const enrichmentEq2 = vi.fn().mockReturnValue({ eq: enrichmentEq3 });
-  const enrichmentEq1 = vi.fn().mockReturnValue({ eq: enrichmentEq2 });
-  const enrichmentSelect = vi.fn().mockReturnValue({ eq: enrichmentEq1 });
-
-  // food_providers chain: select → eq → maybeSingle
-  const foodMaybeSingle = vi.fn().mockImplementation(options.foodProviderResult);
-  const foodEq = vi.fn().mockReturnValue({ maybeSingle: foodMaybeSingle });
-  const foodSelect = vi.fn().mockReturnValue({ eq: foodEq });
-
-  // Route calls based on table name
+function setupFoodMenuMock(
+  returnValue: () => Promise<{ data: unknown; error: unknown }>
+) {
+  const mockEq = vi.fn().mockImplementation(returnValue);
+  const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
   mockFrom.mockImplementation((table: string) => {
-    if (table === 'food_providers') return { select: foodSelect };
-    if (table === 'enrichment_candidates') return { select: enrichmentSelect };
+    if (table === 'food_menu') return { select: mockSelect };
     throw new Error(`Unexpected table: ${table}`);
   });
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe('checkEnrichmentAlcoholConflict', () => {
+describe('checkMenuForAlcohol', () => {
   const validProviderId = '123e4567-e89b-12d3-a456-426614174000';
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('returns hasConflict=false when no enrichment candidates exist', async () => {
-    setupMocks({
-      foodProviderResult: () => Promise.resolve({ data: { no_alcohol: true }, error: null }),
-      enrichmentResult: () => Promise.resolve({ data: [], error: null }),
-    });
+  it('returns hasAlcohol=false when menu has no items', async () => {
+    setupFoodMenuMock(() => Promise.resolve({ data: [], error: null }));
 
-    const result = await checkEnrichmentAlcoholConflict(validProviderId);
-    expect(result.hasConflict).toBe(false);
-    expect(result.conflicts).toEqual([]);
+    const result = await checkMenuForAlcohol(validProviderId);
+    expect(result.hasAlcohol).toBe(false);
+    expect(result.totalMenuItems).toBe(0);
+    expect(result.matchedItemNames).toEqual([]);
   });
 
-  it('returns hasConflict=false when food_providers.no_alcohol is false', async () => {
-    setupMocks({
-      foodProviderResult: () => Promise.resolve({ data: { no_alcohol: false }, error: null }),
-      enrichmentResult: () => Promise.resolve({ data: [], error: null }),
-    });
-
-    const result = await checkEnrichmentAlcoholConflict(validProviderId);
-    expect(result.hasConflict).toBe(false);
-    expect(result.conflicts).toEqual([]);
-  });
-
-  it('returns hasConflict=false when food_providers row does not exist', async () => {
-    setupMocks({
-      foodProviderResult: () => Promise.resolve({ data: null, error: null }),
-      enrichmentResult: () => Promise.resolve({ data: [], error: null }),
-    });
-
-    const result = await checkEnrichmentAlcoholConflict(validProviderId);
-    expect(result.hasConflict).toBe(false);
-    expect(result.conflicts).toEqual([]);
-  });
-
-  it('returns hasConflict=true when enrichment proposes no_alcohol=false for no_alcohol=true provider', async () => {
-    setupMocks({
-      foodProviderResult: () => Promise.resolve({ data: { no_alcohol: true }, error: null }),
-      enrichmentResult: () => Promise.resolve({
+  it('returns hasAlcohol=false when menu items have no alcohol keywords', async () => {
+    setupFoodMenuMock(() =>
+      Promise.resolve({
         data: [
-          {
-            id: 'candidate-1',
-            source: 'wolt',
-            source_url: 'https://wolt.com/venue/test',
-            enriched_at: '2026-06-20T10:00:00Z',
-            proposed_value: false,
-            current_value: true,
-          },
+          { name_de: 'Döner Teller', name_en: null },
+          { name_de: 'Lahmacun', name_en: null },
+          { name_de: 'Cola', name_en: null },
         ],
         error: null,
-      }),
-    });
+      })
+    );
 
-    const result = await checkEnrichmentAlcoholConflict(validProviderId);
-    expect(result.hasConflict).toBe(true);
-    expect(result.conflicts).toHaveLength(1);
-    expect(result.conflicts[0]).toEqual({
-      candidateId: 'candidate-1',
-      source: 'wolt',
-      sourceUrl: 'https://wolt.com/venue/test',
-      enrichedAt: '2026-06-20T10:00:00Z',
-    });
+    const result = await checkMenuForAlcohol(validProviderId);
+    expect(result.hasAlcohol).toBe(false);
+    expect(result.totalMenuItems).toBe(3);
   });
 
-  it('returns multiple conflicts when multiple enrichment sources detect alcohol', async () => {
-    setupMocks({
-      foodProviderResult: () => Promise.resolve({ data: { no_alcohol: true }, error: null }),
-      enrichmentResult: () => Promise.resolve({
+  it('returns hasAlcohol=true when menu items contain alcohol keywords', async () => {
+    setupFoodMenuMock(() =>
+      Promise.resolve({
         data: [
-          {
-            id: 'candidate-1',
-            source: 'wolt',
-            source_url: 'https://wolt.com/venue/test',
-            enriched_at: '2026-06-20T10:00:00Z',
-            proposed_value: false,
-            current_value: true,
-          },
-          {
-            id: 'candidate-2',
-            source: 'lieferando',
-            source_url: 'https://lieferando.de/restaurant/test',
-            enriched_at: '2026-06-20T11:00:00Z',
-            proposed_value: false,
-            current_value: true,
-          },
+          { name_de: 'Döner Teller', name_en: null },
+          { name_de: 'Bier 0,5l', name_en: null },
+          { name_de: 'Cola', name_en: null },
         ],
         error: null,
-      }),
-    });
+      })
+    );
 
-    const result = await checkEnrichmentAlcoholConflict(validProviderId);
-    expect(result.hasConflict).toBe(true);
-    expect(result.conflicts).toHaveLength(2);
-    expect(result.conflicts[0].source).toBe('wolt');
-    expect(result.conflicts[1].source).toBe('lieferando');
+    const result = await checkMenuForAlcohol(validProviderId);
+    expect(result.hasAlcohol).toBe(true);
+    expect(result.matchedItemNames).toContain('Bier 0,5l');
+    expect(result.matchedKeywords).toContain('Bier');
+    expect(result.totalMenuItems).toBe(3);
   });
 
-  it('throws error on database failure for food_providers', async () => {
-    setupMocks({
-      foodProviderResult: () => Promise.resolve({
-        data: null,
-        error: { message: 'DB error fetching food_providers' },
-      }),
-      enrichmentResult: () => Promise.resolve({ data: [], error: null }),
-    });
-
-    await expect(checkEnrichmentAlcoholConflict(validProviderId)).rejects.toThrow(
-      'DB error fetching food_providers'
+  it('returns multiple matched items when multiple items contain alcohol', async () => {
+    setupFoodMenuMock(() =>
+      Promise.resolve({
+        data: [
+          { name_de: 'Bier 0,5l', name_en: null },
+          { name_de: 'Wein Rot', name_en: null },
+          { name_de: 'Cocktail Klassiker', name_en: null },
+        ],
+        error: null,
+      })
     );
+
+    const result = await checkMenuForAlcohol(validProviderId);
+    expect(result.hasAlcohol).toBe(true);
+    expect(result.matchedItemNames).toHaveLength(3);
+    expect(result.matchedKeywords.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('throws error on database failure for enrichment_candidates', async () => {
-    setupMocks({
-      foodProviderResult: () => Promise.resolve({ data: { no_alcohol: true }, error: null }),
-      enrichmentResult: () => Promise.resolve({
-        data: null,
-        error: { message: 'DB error fetching candidates' },
-      }),
-    });
-
-    await expect(checkEnrichmentAlcoholConflict(validProviderId)).rejects.toThrow(
-      'DB error fetching candidates'
+  it('uses name_de primarily, falls back to name_en', async () => {
+    setupFoodMenuMock(() =>
+      Promise.resolve({
+        data: [
+          { name_de: null, name_en: 'Red Wine' },
+          // "Wine" isn't in the German keyword list, so this won't match
+          { name_de: null, name_en: 'Beer' },
+          // "Beer" isn't in the keyword list either
+        ],
+        error: null,
+      })
     );
+
+    const result = await checkMenuForAlcohol(validProviderId);
+    // English names with non-German keywords won't match
+    expect(result.hasAlcohol).toBe(false);
+  });
+
+  it('throws error on database failure', async () => {
+    setupFoodMenuMock(() =>
+      Promise.resolve({ data: null, error: { message: 'DB error' } })
+    );
+
+    await expect(checkMenuForAlcohol(validProviderId)).rejects.toThrow('DB error');
   });
 });

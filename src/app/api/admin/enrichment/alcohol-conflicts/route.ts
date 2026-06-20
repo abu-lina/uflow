@@ -1,17 +1,17 @@
 /**
  * GET /api/admin/enrichment/alcohol-conflicts?providerId=<uuid>
  *
- * Plan 193 — Lightweight endpoint for checking enrichment alcohol conflicts.
+ * Plan 193 — Lightweight endpoint for checking whether a provider's
+ * enriched menu items contain alcohol keywords.
  * Used by the UI to show warnings on provider detail pages and edit forms.
  *
  * Protected route: admin/moderator only.
- * Uses service-role Supabase client via the enrichment gate service.
  */
 
 import { NextResponse } from 'next/server';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
-import { checkEnrichmentAlcoholConflict } from '@/services/admin/enrichment-gate';
+import { checkMenuForAlcohol } from '@/services/admin/enrichment-gate';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
@@ -21,7 +21,7 @@ import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
  *   providerId (string, required) — UUID of the provider to check
  *
  * Returns:
- *   { hasConflict: boolean, conflicts: AlcoholConflictDetail[] }
+ *   { hasAlcohol: boolean, matchedItemNames: string[], matchedKeywords: string[], totalMenuItems: number }
  */
 export async function GET(request: Request) {
   try {
@@ -44,7 +44,6 @@ export async function GET(request: Request) {
       );
     }
 
-    // Rate limiting — consistent with other admin read endpoints
     const identifier = getClientIdentifier(request, user.id);
     const isRateLimited =
       !rateLimiters.adminReview.perHour(identifier) ||
@@ -66,12 +65,12 @@ export async function GET(request: Request) {
       );
     }
 
-    const result = await checkEnrichmentAlcoholConflict(providerId);
+    const result = await checkMenuForAlcohol(providerId);
 
     return NextResponse.json(result);
   } catch (err) {
     logger.error(
-      'Error checking enrichment alcohol conflicts',
+      'Error checking menu for alcohol',
       err instanceof Error ? err : undefined,
       { error: err instanceof Error ? err.message : String(err) }
     );
