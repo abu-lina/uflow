@@ -211,6 +211,19 @@ export function ProviderDetailSections({
 
   return (
     <div className="flex flex-col gap-8 self-stretch">
+      <ExpandSection title={t('providerDetail.proofTier.sectionTitle')}>
+        <div className="space-y-3 pt-3">
+          <ProofTierCard
+            hasCertificate={provider.has_certificate}
+            listingType={provider.listing_type}
+            noAlcohol={provider.no_alcohol}
+            noGambling={provider.no_gambling}
+            noPork={provider.no_pork}
+            verificationMethod={provider.verification_method}
+          />
+        </div>
+      </ExpandSection>
+
       <ExpandSection defaultOpen title={t('providerDetail.sections.valuesAmenities')}>
         <div className="space-y-2 pt-3">
           {amenities.length === 0 ? (
@@ -256,19 +269,6 @@ export function ProviderDetailSections({
 
       <ExpandSection title={t('providerDetail.sections.openingHours')}>
         {renderOpeningHours(provider.opening_hours, t)}
-      </ExpandSection>
-
-      <ExpandSection title={t('providerDetail.proofTier.sectionTitle')}>
-        <div className="space-y-3 pt-3">
-          <ProofTierCard
-            hasCertificate={provider.has_certificate}
-            listingType={provider.listing_type}
-            noAlcohol={provider.no_alcohol}
-            noGambling={provider.no_gambling}
-            noPork={provider.no_pork}
-            verificationMethod={provider.verification_method}
-          />
-        </div>
       </ExpandSection>
 
       {(locations?.length ?? 0) > 0 && (
