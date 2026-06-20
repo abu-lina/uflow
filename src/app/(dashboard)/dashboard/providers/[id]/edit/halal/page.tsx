@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
+import type { DerivedReviewStatus } from '@/utils/halal-derivation';
 
 interface HalalData {
   noAlcohol: boolean;
@@ -17,6 +18,7 @@ interface HalalData {
   hasCertificate: boolean;
   certificateUrl: string | null;
   certificateFile: File | null;
+  reviewStatus?: DerivedReviewStatus;
 }
 
 function getDerivedTier(data: HalalData): { label: string; color: string } | null {
@@ -127,6 +129,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     }
   };
 
+  const derivedTier = getDerivedTier(data);
+  const allAttested = data.noAlcohol && data.noPork && data.noGambling;
+
   const handleSave = useCallback(async () => {
     let certUrl = data.certificateUrl;
     if (data.certificateFile) {
@@ -152,13 +157,11 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
       setIsUploading(false);
     }
 
-    const saveData: HalalData = { ...data, certificateUrl: certUrl, certificateFile: null };
+    const reviewStatus = allAttested ? 'approved' : 'rejected';
+    const saveData: HalalData = { ...data, certificateUrl: certUrl, certificateFile: null, reviewStatus };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     router.back();
-  }, [data, id, STORAGE_KEY, router]);
-
-  const derivedTier = getDerivedTier(data);
-  const allAttested = data.noAlcohol && data.noPork && data.noGambling;
+  }, [data, id, STORAGE_KEY, router, allAttested]);
 
   return (
     <ScrollablePageLayout>
@@ -392,7 +395,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
             )}
           </div>
 
-          {/* Info section: derived halal level */}
+          {/* Derived halal level + auto-review status */}
           <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
             <div className="flex items-start gap-3">
               <Icon className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" icon="material-symbols:info-outline" />
@@ -406,14 +409,57 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                     Abgeleitetes Level: {derivedTier.label}
                   </span>
                 )}
-                {!allAttested && (
-                  <p className="text-xs text-amber-700 mt-1">
-                    Bezeugung unvollständig — Eintrag kann nicht freigegeben werden.
-                  </p>
-                )}
               </div>
             </div>
           </div>
+
+          {allAttested ? (
+            <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
+              <div className="flex items-start gap-3">
+                <Icon className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" icon="material-symbols:check-circle-outline" />
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-semibold text-green-800">Auto-Approved</p>
+                  <p className="text-xs text-green-700 leading-relaxed">
+                    Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+              <div className="flex items-start gap-3">
+                <Icon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" icon="material-symbols:cancel-outline" />
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-semibold text-red-800">Auto-Rejected</p>
+                  <p className="text-xs text-red-700 leading-relaxed">
+                    Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.
+                  </p>
+                  {!allAttested && (
+                    <ul className="flex flex-col gap-1 mt-1">
+                      {!data.noAlcohol && (
+                        <li className="flex items-center gap-1.5 text-xs text-red-700">
+                          <Icon className="w-3.5 h-3.5 text-red-500 flex-shrink-0" icon="material-symbols:close-small" />
+                          Kein Alkohol
+                        </li>
+                      )}
+                      {!data.noPork && (
+                        <li className="flex items-center gap-1.5 text-xs text-red-700">
+                          <Icon className="w-3.5 h-3.5 text-red-500 flex-shrink-0" icon="material-symbols:close-small" />
+                          Kein verbotenes Fleisch
+                        </li>
+                      )}
+                      {!data.noGambling && (
+                        <li className="flex items-center gap-1.5 text-xs text-red-700">
+                          <Icon className="w-3.5 h-3.5 text-red-500 flex-shrink-0" icon="material-symbols:close-small" />
+                          Kein Glücksspiel
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </PageContent>
       <FooterAction

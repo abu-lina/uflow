@@ -250,6 +250,7 @@ export function ProviderEditForm({
           noAlcohol: parsed.noAlcohol ?? prev.noAlcohol,
           noPork: parsed.noPork ?? prev.noPork,
           noGambling: parsed.noGambling ?? prev.noGambling,
+          reviewStatus: parsed.reviewStatus ?? prev.reviewStatus,
         }));
       } catch { /* ignore */ }
     }
