@@ -5,7 +5,6 @@ import { vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/providers/auth-provider';
 import { SearchProvider } from '@/providers/search-provider';
-import { LoadingProvider } from '@/providers/LoadingProvider';
 import { LanguageProvider } from '@/providers/LanguageProvider';
 import { mockAuthContext, mockSearchContext } from '../mocks/providerData';
 
@@ -210,9 +209,7 @@ function customRender(
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
           <AuthProvider>
-            <SearchProvider>
-              <LoadingProvider>{children}</LoadingProvider>
-            </SearchProvider>
+            <SearchProvider>{children}</SearchProvider>
           </AuthProvider>
         </LanguageProvider>
       </QueryClientProvider>
