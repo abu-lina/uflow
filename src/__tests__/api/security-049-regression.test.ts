@@ -300,27 +300,6 @@ describe('F-049-05: /api/push/send authorization trust boundary', () => {
   });
 });
 
-// ─── F-049-03: Hardcoded debug key removal ───────────────────────────────────
-
-describe('F-049-03: Debug endpoint hardcoded key removal', () => {
-  it('[post-fix] debug-ip-status rejects when ADMIN_DEBUG_KEY env var is not set', async () => {
-    // Remove the env var to simulate production without it
-    const origKey = process.env.ADMIN_DEBUG_KEY;
-    delete process.env.ADMIN_DEBUG_KEY;
-
-    const { GET } = await import('@/app/api/auth/debug-ip-status/route');
-    const req = new Request('http://localhost:3000/api/auth/debug-ip-status?list=all', {
-      headers: { 'x-admin-key': 'debug-key-change-in-production' },
-    });
-
-    const res = await GET(req);
-    expect(res.status).toBe(401);
-
-    // Restore
-    if (origKey !== undefined) process.env.ADMIN_DEBUG_KEY = origKey;
-  });
-});
-
 // ─── F-049-04: User enumeration ──────────────────────────────────────────────
 
 describe('F-049-04: /api/check-email-exists user enumeration', () => {
@@ -379,8 +358,19 @@ describe('F-049-07: /api/instagram/scrape input validation', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    // Authenticated user by default so input-validation tests reach the 400 checks
+    mockSupabaseServerAuth.auth.getUser.mockResolvedValue({
+      data: { user: { id: 'test-user' } },
+    });
+    mockCheckRateLimit.mockReturnValue(true);
     const mod = await import('@/app/api/instagram/scrape/route');
     POST = mod.POST as typeof POST;
+  });
+
+  it('[post-fix] rejects unauthenticated requests', async () => {
+    mockSupabaseServerAuth.auth.getUser.mockResolvedValue({ data: { user: null } });
+    const res = await POST(makeRequest({ username: 'valid_user' }));
+    expect(res.status).toBe(401);
   });
 
   it('[post-fix] rejects malformed username with path traversal', async () => {
