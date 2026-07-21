@@ -1,10 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-
-// Mock the LoadingProvider
-vi.mock('@/providers/LoadingProvider', () => ({
-  useLoading: () => ({ isPreloading: false }),
-}));
 
 import { PageTransition } from '@/components/ui/PageTransition';
 

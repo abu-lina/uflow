@@ -2,8 +2,6 @@
 
 import { Suspense } from 'react';
 
-import { useLoading } from '@/providers/LoadingProvider';
-
 interface PageTransitionProps {
   children: React.ReactNode;
 }
@@ -24,16 +22,9 @@ function LoadingPlaceholder() {
  * where the root viewport height may not propagate correctly (Plan 015).
  */
 export function PageTransition({ children }: PageTransitionProps) {
-  const { isPreloading } = useLoading();
-
   return (
-    <div
-      className="relative flex flex-1 flex-col transition-opacity duration-300 ease-out"
-      style={{ opacity: isPreloading ? 0 : 1 }}
-    >
-      <Suspense fallback={<LoadingPlaceholder />}>
-        {isPreloading ? <LoadingPlaceholder /> : children}
-      </Suspense>
+    <div className="relative flex flex-1 flex-col transition-opacity duration-300 ease-out">
+      <Suspense fallback={<LoadingPlaceholder />}>{children}</Suspense>
     </div>
   );
 }

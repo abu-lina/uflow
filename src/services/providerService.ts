@@ -101,6 +101,51 @@ const FORM_TAG_TO_BADGE_KEY = {
 } as const;
 
 /**
+ * Uploads entity images to the appropriate storage bucket and returns their public URLs.
+ * Anonymous uploads use a randomized prefix; authenticated uploads are namespaced by user id.
+ */
+async function uploadEntityImages(
+  images: File[] | undefined,
+  isCommunityService: boolean,
+  isAnonymous: boolean,
+  userId: string | undefined,
+): Promise<string[]> {
+  if (!images || images.length === 0) {
+    return [];
+  }
+
+  const bucketName = isCommunityService ? 'community-service-images' : 'provider-images';
+  const folderName = isCommunityService ? 'community-services' : 'providers';
+  const uploadedUrls: string[] = [];
+
+  for (const imageFile of images) {
+    const fileExt = imageFile.name.split('.').pop();
+    // Use different naming for anonymous users
+    const fileName = isAnonymous
+      ? `anon-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      : `${userId}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `${folderName}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, imageFile);
+
+    if (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+
+    uploadedUrls.push(publicUrl);
+  }
+
+  return uploadedUrls;
+}
+
+/**
  * Creates a provider or community service from form data
  * Handles image uploads, entity creation, and relationships
  * 
@@ -120,35 +165,12 @@ export async function createProviderOrService(
   const isOwner = formData.creationMode === 'owner';
 
   // Upload images if any exist
-  let uploadedUrls: string[] = [];
-  if (formData.images && formData.images.length > 0) {
-    const bucketName = isCommunityService ? 'community-service-images' : 'provider-images';
-    const folderName = isCommunityService ? 'community-services' : 'providers';
-
-    for (const imageFile of formData.images) {
-      const fileExt = imageFile.name.split('.').pop();
-      // Use different naming for anonymous users
-      const fileName = isAnonymous
-        ? `anon-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-        : `${user?.id}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${folderName}/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucketName)
-        .upload(filePath, imageFile);
-
-      if (uploadError) {
-        console.error('Error uploading image:', uploadError);
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(filePath);
-
-      uploadedUrls.push(publicUrl);
-    }
-  }
+  const uploadedUrls = await uploadEntityImages(
+    formData.images,
+    isCommunityService,
+    isAnonymous,
+    user?.id,
+  );
 
   if (isCommunityService) {
     // M-5a: community_services table dropped — ummah providers created in providers table
