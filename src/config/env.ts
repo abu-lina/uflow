@@ -62,34 +62,3 @@ export function isVapidConfigured(): boolean {
   return !!key && key.trim() !== '';
 }
 
-/**
- * Get optional environment variable
- * @param key - Environment variable key
- * @param defaultValue - Default value if not set
- * @returns Environment variable value or default
- */
-export function getOptionalEnvVar(key: string, defaultValue: string = ''): string {
-  return process.env[key] || defaultValue;
-}
-
-/**
- * Validate all required environment variables at startup
- * This should be called early in the application lifecycle
- */
-export function validateEnvironment(): void {
-  // Only validate in production or when explicitly requested
-  if (process.env.NODE_ENV === 'production') {
-    try {
-      // Validate critical variables
-      // Note: VAPID key is optional for development
-      if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
-        getVapidPublicKey();
-      }
-    } catch (error) {
-      console.error('Environment validation failed:', error);
-      // In production, you might want to throw here
-      // For now, we'll just log the error
-    }
-  }
-}
-
