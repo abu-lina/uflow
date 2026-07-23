@@ -8,6 +8,11 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { SectionSelector } from '@/features/search/components/SectionSelector';
+import { NearMeOpenNowFilters } from '@/features/search/components/NearMeOpenNowFilters';
+import { NearMeResultsGrid } from '@/features/search/components/NearMeResultsGrid';
+import { useNearMeSearch } from '@/features/search/hooks/useNearMeSearch';
+import { useNearMeToggle } from '@/features/search/hooks/useNearMeToggle';
+import { filterOpenNow } from '@/utils/filterOpenNow';
 import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
 import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -155,6 +160,20 @@ export function ProvidersContent({
   const hasMatchingInitialFilters =
     (initialFilters ?? []).join(',') === (normalizedFilters ?? []).join(',');
 
+  // Plan 196 bug fix: "Open now" must work standalone, not only when combined
+  // with "Near me". Previously, open_now=1 was only honored inside
+  // useNearMeSearch, which is a no-op unless near_lat/near_lon are ALSO
+  // present — so toggling "Open now" by itself silently did nothing.
+  const openNowParam = searchParams.get('open_now') === '1';
+
+  // Plan 196: "Near me" + "Open now" — consumes near_lat/near_lon/near_radius/open_now
+  // URL params emitted by the chip row rendered on THIS page (results page, not the
+  // filter-building /search page — corrected placement per product owner feedback).
+  // When active, this takes over result rendering entirely (see renderContent below);
+  // the paginated infinite-query path below remains unchanged for the non-geo search experience.
+  const nearMeSearch = useNearMeSearch(searchParams, section);
+  const nearMeToggle = useNearMeToggle(router, searchParams, pathname);
+
   // Use React Query infinite query for paginated search results
   // Page size: 12 provides good balance between initial load and frequent pagination
   const PAGE_SIZE = 12;
@@ -183,12 +202,16 @@ export function ProvidersContent({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
       // Show cached data immediately while refetching in background
       placeholderData: (previousData) => previousData,
+      // Plan 196: Skip the paginated text/category search entirely while "near me" is active.
+      enabled: !nearMeSearch.isNearMeMode,
     });
 
-  // Flatten all pages into a single array — memoized so stable reference for useCallback deps
+  // Flatten all pages into a single array — memoized so stable reference for useCallback deps.
+  // Plan 196 bug fix: apply the "Open now" filter here too, so it takes effect
+  // even when "Near me" is not active (see openNowParam above).
   const searchResults = useMemo(
-    () => data?.pages.flatMap((page) => page.results) ?? [],
-    [data],
+    () => filterOpenNow(data?.pages.flatMap((page) => page.results) ?? [], openNowParam),
+    [data, openNowParam],
   );
 
   const { data: categories = [] } = useQuery({
@@ -384,6 +407,24 @@ export function ProvidersContent({
   // Only show loading skeleton on true initial load (isLoading = true means no cached data)
   // If we have cached data, show it immediately even if isFetching (background refetch)
   const renderContent = () => {
+    // Plan 196: "Near me" takes over rendering entirely — distance-sorted results,
+    // optionally open-now filtered, via the dedicated near-me RPC (not the paginated
+    // text/category search below).
+    if (nearMeSearch.isNearMeMode) {
+      return (
+        <NearMeResultsGrid
+          bookmarkedProviderIds={bookmarkedProviderIds}
+          error={nearMeSearch.error}
+          isLoading={nearMeSearch.isLoading}
+          results={nearMeSearch.results}
+          t={t}
+          onBookmarkChange={handleBookmarkChange}
+          onProviderClick={(providerId) => router.push(`/providers/${providerId}`)}
+          onRetry={nearMeSearch.refetch}
+        />
+      );
+    }
+
     // True initial load: isLoading is true only when there's no cached data AND currently fetching
     // In React Query v5: isLoading = isPending && isFetching
     // Show skeleton grid matching the actual grid layout
@@ -568,6 +609,21 @@ export function ProvidersContent({
                 onStatusChange={handleStatusChange}
               />
             </div>
+          </div>
+        )}
+        {/* Plan 196: "Near me" + "Open now" quick filters — results page only (food) */}
+        {section === 'food' && (
+          <div className="px-4 sm:px-6">
+            <NearMeOpenNowFilters
+              geoStatus={nearMeToggle.geoStatus}
+              nearMeActive={nearMeToggle.nearMeActive}
+              openNowActive={nearMeToggle.openNowActive}
+              radiusKm={nearMeToggle.radiusKm}
+              t={t}
+              onRadiusChange={nearMeToggle.onRadiusChange}
+              onToggleNearMe={nearMeToggle.onToggleNearMe}
+              onToggleOpenNow={nearMeToggle.onToggleOpenNow}
+            />
           </div>
         )}
         {renderContent()}
