@@ -23,6 +23,24 @@ Status: Active
 | --- | --- | --- | --- |
 | 2026-07-21 | Planner → Analyst → Critic → Architect → Implementer | Implement Plan 196 | All milestones (M2–M7) implemented with TDD; M6 baseline explicitly deferred (no DB credentials in this environment) |
 | 2026-07-23 | User (product owner) → Implementer | "The chip should only appear on the search results page and not on the filter page." | Deviation: moved the "Near me" + "Open now" quick-filter chip row from `/search` (filter-building page) to `/providers` (results page). See Deviations section below. |
+| 2026-07-23 | User (bug report) → Implementer | "clicked on open now but the restaurant listed is closed" (`/food?category=...&section=food&open_now=1`) | **Bug fix**: `open_now=1` had no effect unless combined with `near_lat`/`near_lon` (near-me mode). Root cause + fix documented below. |
+
+---
+
+## Bug Fix — "Open now" was a no-op without "Near me" active
+
+**Report**: User toggled "Open now" alone (no "Near me") on `/food?category=...&section=food&open_now=1` and saw a closed restaurant in the results.
+
+**Root cause**: `useNearMeSearch`'s `isNearMeMode` gate requires `near_lat`/`near_lon` to be present. When only `open_now=1` was set, `isNearMeMode` was `false`, so the hook did nothing at all — `ProvidersContent` fell through to the normal paginated `/api/providers/search` result set (`searchResults`), which never applied any open-now filtering. The `open_now` URL param was written correctly by `useNearMeToggle`, but nothing ever read it on the non-near-me path.
+
+**Fix**:
+1. Extracted the open-now filtering logic (previously inlined in `useNearMeSearch`) into a standalone, reusable utility: `src/utils/filterOpenNow.ts` — `filterOpenNow(items, openNowActive)`, generic over any `{ opening_hours }`-shaped item, order-preserving, reuses `getOpenStatus` (no logic duplication).
+2. `useNearMeSearch` refactored to call `filterOpenNow` instead of its inline filter (behavior-preserving; its 5 existing tests still pass unchanged).
+3. `ProvidersContent.tsx` now parses `open_now` from the URL independently of near-me mode and applies `filterOpenNow` to the paginated `searchResults` (the normal, non-geo search path) — so "Open now" now works standalone, exactly as it does when combined with "Near me".
+
+**TDD**: `filterOpenNow` was written test-first (`src/__tests__/utils/filterOpenNow.test.ts`, 4 tests: no-op when inactive, filters closed/no-hours items, empty result when nothing open, order preservation). Confirmed red (`Failed to resolve import`) before implementation, green after.
+
+**Known trade-off**: the fix filters *already-fetched* pages client-side, so a page of N paginated results may show fewer than N cards when "Open now" is active; `hasNextPage`/"load more" pagination is still driven by the unfiltered API response. This mirrors the same client-side-filtering trade-off already accepted for the near-me path (Analysis 196 #3) and does not require a schema/RPC change — flagged for QA/UAT awareness, not a blocking issue.
 
 ---
 
@@ -71,7 +89,8 @@ This delivers the plan's value statement: a mobile user in the evening can now t
 | `src/services/providers.ts` | Added `NearMeFoodResult` type + `searchFoodNearMe()` | +49 |
 | `src/components/providers/ProviderCard.tsx` | Added optional `distanceKm` prop, rendered next to open-status label | +12 |
 | `src/app/(public)/search/page.tsx` | **Net zero** — chip row + geolocation state added then removed after placement correction (see Deviations) |  |
-| `src/app/(public)/providers/ProvidersContent.tsx` | Wired `useNearMeSearch` + `useNearMeToggle` + chip row (`NearMeOpenNowFilters`) + `NearMeResultsGrid` branch; disabled paginated query while near-me active | +40 |
+| `src/app/(public)/providers/ProvidersContent.tsx` | Wired `useNearMeSearch` + `useNearMeToggle` + chip row (`NearMeOpenNowFilters`) + `NearMeResultsGrid` branch; disabled paginated query while near-me active; **bug fix**: applies `filterOpenNow` to paginated `searchResults` so "Open now" works standalone | +45 |
+| `src/features/search/hooks/useNearMeSearch.ts` | **Bug fix**: refactored to reuse `filterOpenNow` instead of an inline filter (behavior-preserving) | net 0 |
 | `src/translations/{en,de,ar,tr,ur,ps}.ts` | Added `suchen.nearMe.*` / `suchen.openNow.*` keys | +12 each |
 | `package.json` | Version `0.14.0` → `0.15.0` | 1 |
 | `package-lock.json` | Realigned to `0.15.0` | 2 |
@@ -97,6 +116,8 @@ This delivers the plan's value statement: a mobile user in the evening can now t
 | `src/__tests__/hooks/useNearMeSearch.test.tsx` | Unit tests for `useNearMeSearch` |
 | `src/features/search/hooks/useNearMeToggle.ts` | Owns chip on/off state + geolocation lifecycle on the results page; syncs URL via `router.replace`, preserving existing params |
 | `src/__tests__/hooks/useNearMeToggle.test.tsx` | Unit tests for `useNearMeToggle` (hydration, param preservation, toggle on/off, radius sync) |
+| `src/utils/filterOpenNow.ts` | **Bug fix**: standalone, reusable "open now" filter utility (order-preserving, reuses `getOpenStatus`) |
+| `src/__tests__/utils/filterOpenNow.test.ts` | Unit tests for `filterOpenNow` |
 | `src/__tests__/components/ProviderCard-distance.test.tsx` | Unit tests for the new `distanceKm` prop on `ProviderCard` |
 | `docs/design/196-near-me-open-now-prototype.html` | Owner-approved HTML/CSS design prototype (mobile + desktop) |
 
@@ -116,7 +137,7 @@ Adding `Clock` (lucide-react) to `NearMeOpenNowFilters` broke 3 pre-existing tes
 
 - [x] TypeScript compiles: `npm run type-check` → 0 errors
 - [x] Lint (full-repo): `npm run lint` → 0 errors in any Plan 196 file; 1 new warning introduced then fixed (unused eslint-disable directive in `useNearMeToggle.ts`); remaining warnings are pre-existing project-wide, unrelated to this plan
-- [x] Tests: `npx vitest run` → 1842 passed, 24 skipped, 4 failed (pre-existing, unrelated — see above)
+- [x] Tests: `npx vitest run` → 1846 passed, 24 skipped, 4 failed (pre-existing, unrelated — see above)
 - [x] Build: `npm run build` → succeeds; `/search` (15 kB) and `/providers` routes compile cleanly
 
 ---
@@ -142,8 +163,9 @@ Adding `Clock` (lucide-react) to `NearMeOpenNowFilters` broke 3 pre-existing tes
 | `NearMeResultsGrid` | `NearMeResultsGrid.test.tsx` | ✅ Yes | ✅ Yes | Vite import-analysis: module not found | ✅ Yes |
 | `useNearMeSearch()` | `useNearMeSearch.test.tsx` | ✅ Yes | ✅ Yes | Vite import-analysis: module not found | ✅ Yes |
 | `useNearMeToggle()` (deviation — results-page placement) | `useNearMeToggle.test.tsx` | ✅ Yes | ✅ Yes | Vite import-analysis: module not found | ✅ Yes |
+| `filterOpenNow()` (bug fix — "open now" standalone) | `filterOpenNow.test.ts` | ✅ Yes | ✅ Yes | Vite import-analysis: module not found | ✅ Yes |
 
-All new functions/classes for this plan follow strict Red→Green TDD, including the one introduced by the mid-implementation deviation. No exceptions taken.
+All new functions/classes for this plan follow strict Red→Green TDD, including the one introduced by the mid-implementation deviation and the one introduced by the post-implementation bug fix. No exceptions taken.
 
 ---
 
