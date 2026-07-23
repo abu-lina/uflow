@@ -613,7 +613,7 @@ export function ProvidersContent({
         )}
         {/* Plan 196: "Near me" + "Open now" quick filters — results page only (food) */}
         {section === 'food' && (
-          <div className="mt-3 mb-6 px-4 sm:px-6">
+          <div className="mb-6 px-4 sm:px-6">
             <NearMeOpenNowFilters
               geoStatus={nearMeToggle.geoStatus}
               nearMeActive={nearMeToggle.nearMeActive}
