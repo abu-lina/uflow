@@ -586,8 +586,8 @@ export function ProvidersContent({
       <main
         className={`mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden ${
           showGreeting
-            ? 'pt-0 sm:pt-0 md:pt-52'
-            : 'pt-0 sm:pt-0 md:pt-52'
+            ? 'pt-0 sm:pt-0 md:pt-[153px]'
+            : 'pt-0 sm:pt-0 md:pt-[153px]'
         }`}
       >
         {!showGreeting && (
@@ -613,7 +613,7 @@ export function ProvidersContent({
         )}
         {/* Plan 196: "Near me" + "Open now" quick filters — results page only (food) */}
         {section === 'food' && (
-          <div className="px-4 sm:px-6">
+          <div className="mt-3 mb-6 px-4 sm:px-6">
             <NearMeOpenNowFilters
               geoStatus={nearMeToggle.geoStatus}
               nearMeActive={nearMeToggle.nearMeActive}

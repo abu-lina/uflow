@@ -24,6 +24,19 @@ Status: Active
 | 2026-07-21 | Planner → Analyst → Critic → Architect → Implementer | Implement Plan 196 | All milestones (M2–M7) implemented with TDD; M6 baseline explicitly deferred (no DB credentials in this environment) |
 | 2026-07-23 | User (product owner) → Implementer | "The chip should only appear on the search results page and not on the filter page." | Deviation: moved the "Near me" + "Open now" quick-filter chip row from `/search` (filter-building page) to `/providers` (results page). See Deviations section below. |
 | 2026-07-23 | User (bug report) → Implementer | "clicked on open now but the restaurant listed is closed" (`/food?category=...&section=food&open_now=1`) | **Bug fix**: `open_now=1` had no effect unless combined with `near_lat`/`near_lon` (near-me mode). Root cause + fix documented below. |
+| 2026-07-24 | User (visual QA) → Implementer | "the visual gap between the filter and chips is bigger than 12px" → "is it maybe because it is not yet part of the header and the filter is?" | **Bug fix**: pre-existing, page-wide header-offset mismatch on `ProvidersContent`'s `<main>` (`md:pt-52`=208px reserved vs. the shared global `Header.tsx`'s real 153px height, confirmed live via browser measurement). Corrected to `md:pt-[153px]`. See below. |
+
+---
+
+## Bug Fix — Desktop header-offset mismatch caused excess spacing above the chip row
+
+**Report**: User observed the gap above the "Near me"/"Open now" chip row was visibly larger than the intended 12px (`mt-3`) at desktop width, and correctly hypothesized the cause: the filter/search bar is rendered inside the shared `position: fixed` global header (`src/components/layout/Header.tsx`), while the chip row renders in normal document flow inside `ProvidersContent`'s own `<main>`.
+
+**Root cause (confirmed via live browser measurement, not guesswork)**: `ProvidersContent`'s `<main>` reserved a static `md:pt-52` (208px) top offset to visually clear the fixed global header at desktop widths — but the header's real rendered height is 153px. This 55px pre-existing excess (unrelated to Plan 196) stacked with the new `mt-3` (12px) chip-row margin, producing a 67px visible gap instead of 12px. Mobile's equivalent reserved spacer (`152px`) was found to closely match the real mobile header height (155px, only 3px off) — the mismatch was desktop-specific.
+
+**Fix**: Corrected `md:pt-52` → `md:pt-[153px]` in `ProvidersContent.tsx`'s `<main>` className (both branches of the `showGreeting` ternary). This is a page-wide correction (benefits all content on `/providers` and `/food`, not just the chip row) and was verified end-to-end with live `getBoundingClientRect()` measurements before and after: **67px → 12px**, matching the requested spacing exactly.
+
+**Verification method**: Used the browser DevTools (via automated page evaluation) to measure `header.getBoundingClientRect()` and the chip wrapper's `getBoundingClientRect()` directly, rather than trial-and-error CSS changes — confirmed the fix in the running dev server before reporting completion.
 
 ---
 
