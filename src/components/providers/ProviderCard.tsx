@@ -19,6 +19,7 @@ import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { openNavigation, isAddressNavigable } from '@/utils/navigationUtils';
 import { computeHalalStars } from '@/utils/sectionBadges';
 import { getOpenStatus } from '@/utils/openStatus';
+import { formatDistance } from '@/utils/distance';
 import type { Location } from '@/types/location';
 
 interface ProviderCardProps extends Omit<Provider, 'id'> {
@@ -41,6 +42,8 @@ interface ProviderCardProps extends Omit<Provider, 'id'> {
   onReject?: () => void;
   /** Loading state for review actions */
   isReviewing?: boolean;
+  /** Plan 196: distance from the user's location in km, for "near me" search results */
+  distanceKm?: number;
 }
 
 export const ProviderCard = React.memo(
@@ -71,6 +74,7 @@ export const ProviderCard = React.memo(
         onApprove,
         onReject,
         isReviewing = false,
+        distanceKm,
         // Plan 089: Section classification fields for computed badges
         listing_type,
         verification_method,
@@ -198,6 +202,7 @@ export const ProviderCard = React.memo(
       const openStatusLabel = openStatus.isOpen
         ? t('providerDetail.openStatus.open')
         : t('providerDetail.openStatus.closed');
+      const distanceLabel = formatDistance(distanceKm);
 
 
       const handleBookmark = async (e: React.MouseEvent) => {
@@ -438,13 +443,20 @@ export const ProviderCard = React.memo(
                   >
                     {provider_name}
                   </span>
-                  {openStatus.visible && (
-                    <div className="mt-0.5 flex items-center" data-testid="provider-open-status">
-                      <span
-                        className={`font-inter text-sm font-medium leading-normal ${openStatus.isOpen ? 'text-success-dark' : 'text-danger-dark'}`}
-                      >
-                        {openStatusLabel}
-                      </span>
+                  {(openStatus.visible || distanceLabel) && (
+                    <div className="mt-0.5 flex items-center gap-2" data-testid="provider-open-status">
+                      {openStatus.visible && (
+                        <span
+                          className={`font-inter text-sm font-medium leading-normal ${openStatus.isOpen ? 'text-success-dark' : 'text-danger-dark'}`}
+                        >
+                          {openStatusLabel}
+                        </span>
+                      )}
+                      {distanceLabel && (
+                        <span className="font-inter text-sm font-medium leading-normal text-text-muted" data-testid="provider-distance">
+                          {distanceLabel}
+                        </span>
+                      )}
                     </div>
                   )}
                   <button

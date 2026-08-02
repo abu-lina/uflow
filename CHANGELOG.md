@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Near me + Open now restaurant search (Plan 196)**: Public `/search` page now offers a "Near me" quick-filter chip that requests device geolocation and searches approved food providers within a selectable radius (2/5/10 km), distance-sorted, via a new additive `search_food_near_me` Postgres RPC (nearest-location-per-provider semantics against the `locations` table). A companion "Open now" chip filters results to currently-open providers client-side, reusing the existing `getOpenStatus` logic (device-local time, overnight-window aware) — result cards always show open/closed status regardless of the toggle. Includes graceful fallback to manual city search when geolocation is denied, unavailable, or times out. Existing `find_nearby_food_providers` (related-provider lookup on the detail page) is unchanged.
 - **Admin delete provider (Plan 162)**: Red "Delete Provider" button on /dashboard/providers/[id]/edit with confirmation dialog. Cascading delete (all child tables have ON DELETE CASCADE). Security: auth required, admin/moderator only, rate limited (20/hr, 5/min), audit logged.
 
 ### Fixed
