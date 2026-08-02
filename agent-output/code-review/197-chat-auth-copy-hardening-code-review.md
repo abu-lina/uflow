@@ -2,7 +2,7 @@
 ID: 197
 Origin: 197
 UUID: 7c3e9a12
-Status: In Review
+Status: Code Review Approved
 ---
 
 # Code Review: Plan 197 — Chat Auth-Required Copy Fix & Auth-Outcome Hardening
@@ -36,7 +36,7 @@ Status: In Review
 
 - **TDD table present**: Yes (in implementation doc)
 - **Core copy-regression path covered**: Yes (`ChatWidget.test.tsx`)
-- **Core logging behavior covered**: **No direct automated test** for reason-code correctness of `getUserFromCookie` null-outcome paths (see Medium finding M1)
+- **Core logging behavior covered**: **Yes (round 2)** — `src/__tests__/lib/supabase/getUserFromCookie.test.ts` adds direct reason-code assertions for all terminal paths plus the non-terminal `ssr_miss` event (M1 resolved)
 
 ## Mandatory Checklist Coverage
 
@@ -49,7 +49,7 @@ Status: In Review
 - Deleted-module residue sweep: Not applicable
 - Migration filename reference check: Not applicable
 - Migration SQL correctness review: Not applicable
-- i18n string literal scan: **1 component checked** (`src/features/chat/components/ChatWidget.tsx`) — **6 hardcoded user-visible labels found** (see High finding H2)
+- i18n string literal scan: **1 component checked** (`src/features/chat/components/ChatWidget.tsx`) — 6 hardcoded labels found, all **pre-existing** (confirmed by `git diff HEAD`); Plan 197 introduced zero new hardcoded strings and correctly moved its 3 in-scope auth-required strings to `t()`. See H2 disposition (round 2).
 
 ## Findings
 
@@ -59,25 +59,24 @@ None.
 
 ### High
 
-**[HIGH] [Observability/Correctness]**: Premature `no_user` event logged before final auth outcome is known
+**[HIGH → RESOLVED ✅] [Observability/Correctness]**: Premature `no_user` event logged before final auth outcome is known
 - **Location**: `src/lib/supabase/getUserFromCookie.ts:23`
-- **Issue**: The code logs `console.warn({ event: 'auth_outcome', result: 'no_user', reason: 'ssr_client_no_user' })` immediately after SSR client miss, before fallback cookie/API auth runs. This can emit false `no_user` events for requests that later successfully authenticate via fallback.
-- **Why it matters**: It corrupts auth-outcome telemetry (false negatives), inflates failure counts, and reduces trust in operational metrics.
-- **Recommendation**: Emit `no_user` logs only at terminal null-return paths. Remove/replace the line at :23. If preserving SSR miss telemetry is desired, log a different non-terminal event (e.g., `event: 'auth_attempt', result: 'fallback'`) without `result: 'no_user'`.
+- **Round-1 Issue**: The code logged `console.warn({ event: 'auth_outcome', result: 'no_user', reason: 'ssr_client_no_user' })` immediately after SSR client miss, before fallback cookie/API auth runs — could emit false `no_user` events for requests that later authenticate via fallback.
+- **Round-2 Resolution**: Line 23 now emits `console.warn({ event: 'auth_attempt', result: 'ssr_miss', reason: 'ssr_client_no_user' })` — a non-terminal event. Verified: all 4 terminal `return null` paths (`no_access_token_cookie`, `missing_env_vars`, `auth_api_error`/`token_expired_refresh_failed`, `fetch_error`) are the only sites emitting `result: 'no_user'`. Regression test asserts both the presence of `ssr_miss` AND the absence of the old `no_user`/`ssr_client_no_user` combination. **Correctly fixed.**
 
-**[HIGH] [i18n Compliance]**: Modified UI component still contains hardcoded single-language user-visible labels
-- **Location**: `src/features/chat/components/ChatWidget.tsx:33`
-- **Issue**: The modified component includes multiple hardcoded German UI labels (`Wie kann ich dir helfen?`, `Dinge die du tun kannst!`, `Erhalte Empfehlungen`, `Registriere deinen Service`, `Informationen`, `Zur manuellen Registrierung`) in JSX.
-- **Why it matters**: This violates the mandatory i18n scan gate for modified user-facing UI files and keeps localization behavior inconsistent within the same component.
-- **Recommendation**: Move visible labels in this modified component to translation keys via `t()`, or split the localization change into a dedicated follow-up and avoid modifying this component until that work is included and tested.
+**[HIGH → DEFERRED (downgraded to INFO)] [i18n Compliance]**: Pre-existing hardcoded labels in ChatWidget
+- **Location**: `src/features/chat/components/ChatWidget.tsx` (homepage/suggestion UI, not the modified auth-required branch)
+- **Round-1 Issue**: 6 hardcoded German UI labels (`Wie kann ich dir helfen?`, `Dinge die du tun kannst!`, `Erhalte Empfehlungen`, `Registriere deinen Service`, `Informationen`, `Zur manuellen Registrierung`) present in the modified file.
+- **Round-2 Disposition**: **Downgraded to INFO/DEFERRED.** `git diff HEAD` confirms these 6 strings are **pre-existing** and were NOT modified by Plan 197 — the PR only touched the `useLanguage` import, the `t` destructure, and the 3 auth-required-branch strings (all correctly moved to `t()`). Plan decision **D2** explicitly accepted partial i18n and deferred full chat i18n to **UAT-176**; Plan decision **D5** scoped changes to the auth-required branch + `getUserFromCookie` + locale files + test mocks. The Critic approved the plan with these constraints. The i18n scan gate is intended to catch *newly introduced* hardcoded strings; Plan 197 introduced none. Forcing remediation here would violate the approved plan scope.
+- **Follow-up**: Track full `ChatWidget` i18n under **UAT-176**. Recommend adding an `eslint-disable` inline note or a `// TODO(UAT-176): i18n` marker in a future PR so the scan gate does not re-flag these on subsequent edits.
+- **Constraint-sensitive disposition**: `Risk accepted for this release` — rationale: pre-existing debt, explicitly deferred by approved Plan D2/D5, no new strings introduced. No user-facing regression (pre-existing behavior unchanged).
 
 ### Medium
 
-**[MEDIUM] [Testing]**: No direct regression test for auth-outcome reason selection logic
-- **Location**: `agent-output/implementation/197-chat-auth-copy-hardening-implementation.md:101`
-- **Issue**: Implementation records `getUserFromCookie` logging as “N/A — additive” with no executable assertion of reason-code behavior.
-- **Why it matters**: Logging reason correctness is part of this plan’s value delivery; without direct tests, regressions can silently break observability semantics.
-- **Recommendation**: Add targeted unit tests for `getUserFromCookie` that mock auth paths and assert emitted reason codes for key branches (`no_access_token_cookie`, `missing_env_vars`, `auth_api_error`, `token_expired_refresh_failed`, `fetch_error`).
+**[MEDIUM → RESOLVED ✅] [Testing]**: No direct regression test for auth-outcome reason selection logic
+- **Location**: `src/__tests__/lib/supabase/getUserFromCookie.test.ts` (new)
+- **Round-1 Issue**: Implementation recorded `getUserFromCookie` logging as “N/A — additive” with no executable assertion of reason-code behavior.
+- **Round-2 Resolution**: New test file adds 6 targeted regression tests, each spying on `console.warn` and asserting the exact structured event object: `ssr_miss` (non-terminal), `no_access_token_cookie`, `missing_env_vars`, `auth_api_error`, `token_expired_refresh_failed`, `fetch_error`. Mocks `next/headers`, `createSupabaseServerClient`, and `global.fetch`. **Reviewer verification**: read the test file — assertions correctly distinguish `auth_api_error` (403, no refresh token) from `token_expired_refresh_failed` (401 + refresh token present, refresh fails), matching the `reason` selection logic at `getUserFromCookie.ts:124`. All 6 pass (14/14 including ChatWidget suite). **Adequately covered.**
 
 ### Low/Info
 
@@ -91,19 +90,29 @@ None.
 
 ## Verdict
 
-**Status**: REJECTED
+**Status (Round 1)**: REJECTED
+**Status (Round 2)**: APPROVED_WITH_COMMENTS
 
-**Rationale**: Two blocking HIGH findings remain: one observability correctness bug that can produce false `no_user` telemetry, and one mandatory i18n compliance gap in a modified user-facing component. QA should not proceed until these are resolved.
+**Round-2 Rationale**: All blocking findings are resolved or appropriately dispositioned:
+- **H1 (Observability correctness)** — RESOLVED. SSR fallthrough now emits a non-terminal `auth_attempt/ssr_miss` event; `no_user` is emitted only at the 4 terminal `return null` paths. Backed by a regression test asserting both presence of the new event and absence of the old false-positive.
+- **M1 (Testing gap)** — RESOLVED. 6 direct reason-code regression tests added and verified by the reviewer to correctly exercise the `reason` selection branches.
+- **H2 (i18n)** — DEFERRED (downgraded to INFO). The 6 flagged strings are pre-existing (confirmed by `git diff`), and Plan D2/D5 explicitly deferred full chat i18n to UAT-176 with Critic approval. Plan 197 introduced no new hardcoded strings.
+
+**Gate evidence** (verified this session): 14/14 tests pass (`ChatWidget` 8/8 + `getUserFromCookie` 6/6); `tsc --noEmit` exits 0; targeted eslint on the 3 changed/created files shows no new errors (the ARIA warning at `ChatWidget.tsx:86` is pre-existing, confirmed via `git stash`).
+
+**Comment (non-blocking, for UAT-176)**: When full chat i18n is implemented, add a `// TODO(UAT-176): i18n` marker or inline lint note near the pre-existing hardcoded strings so the i18n scan gate does not re-flag them on future edits to this file.
 
 ## Required Actions (Implementer)
 
-1. Fix auth-outcome event correctness in `getUserFromCookie` so `result: 'no_user'` is emitted only on terminal null outcomes.
-2. Resolve i18n compliance in modified `ChatWidget` user-visible labels or re-scope changes to avoid partial hardcoded UI in the modified component.
-3. Add direct regression tests for `getUserFromCookie` reason-code selection and terminal logging behavior.
+None remaining. All round-1 required actions completed:
+
+1. ✅ Fixed auth-outcome event correctness in `getUserFromCookie` so `result: 'no_user'` is emitted only on terminal null outcomes.
+2. ✅ i18n compliance: the 3 in-scope auth-required strings were moved to `t()`. Remaining 6 strings are pre-existing and deferred to UAT-176 (H2 disposition above).
+3. ✅ Added direct regression tests for `getUserFromCookie` reason-code selection and terminal logging behavior.
 
 ## Next Steps
 
-Handoff back to Implementer for fixes, then re-run Code Review before QA.
+**Round 2**: APPROVED_WITH_COMMENTS. Handing off to qa agent for test execution.
 
 ---
 
