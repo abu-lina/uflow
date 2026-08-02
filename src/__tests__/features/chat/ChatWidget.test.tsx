@@ -8,6 +8,13 @@ vi.mock('@/features/chat/hooks/useChat', () => ({
   useChat: () => mockUseChat(),
 }));
 
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({
+    t: (key: string) => key,
+    language: 'de',
+  }),
+}));
+
 function mockChatState(overrides: Record<string, unknown> = {}) {
   return {
     messages: [],
@@ -123,5 +130,27 @@ describe('ChatWidget', () => {
 
     expect(screen.getByText('Döner Haus')).toBeInTheDocument();
     expect(screen.getByText('Berlin | Türkisch')).toBeInTheDocument();
+  });
+
+  // Plan 197 — auth-required card shows generic chat message, not restaurant-registration text
+  it('[pre-fix FAILS] auth-required error does NOT show restaurant-registration text', () => {
+    mockUseChat.mockReturnValue(
+      mockChatState({ error: 'Authentication required' }),
+    );
+
+    render(<ChatWidget />);
+
+    expect(screen.queryByText(/Restaurant zu registrieren/i)).not.toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS] auth-required error card uses i18n key for body text', () => {
+    mockUseChat.mockReturnValue(
+      mockChatState({ error: 'Authentication required' }),
+    );
+
+    render(<ChatWidget />);
+
+    // t() returns the key itself — so we expect the key, not hardcoded German
+    expect(screen.getByText('chat.authRequired.body')).toBeInTheDocument();
   });
 });

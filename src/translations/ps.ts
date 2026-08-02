@@ -1100,5 +1100,12 @@ export const ps = {
     "subtitle": "د غوره تجربې لپاره اپلیکیشن نصب کړئ",
     "preparing": "د نصب تیاري کیږي...",
     "continueInBrowser": "په براوزر کې دوام ورکړئ"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "لاګ ان اړین دی",
+      "body": "د چیټ بوټ د کارولو لپاره باید لاګ ان شئ.",
+      "action": "اوس لاګ ان کړئ"
+    }
   }
 } as const;

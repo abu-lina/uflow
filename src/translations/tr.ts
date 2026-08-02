@@ -1100,5 +1100,12 @@ export const tr = {
     "subtitle": "En iyi deneyim için uygulamayı yükleyin",
     "preparing": "Kurulum hazırlanıyor...",
     "continueInBrowser": "Tarayıcıda Devam Et"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "Giriş yapmanız gerekiyor",
+      "body": "Sohbet botunu kullanmak için giriş yapmanız gerekiyor.",
+      "action": "Şimdi giriş yap"
+    }
   }
 } as const;

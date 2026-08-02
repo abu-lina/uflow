@@ -9,7 +9,8 @@
 
 ### Fixed
 
-- **Mobile header gap (Plan 167)**: Fixed excessive 96px gap between header and content on `/create`, `/saved`, `/profile` and other mobile pages by correcting Tailwind `header-spacing` tokens from flat `160px` to per-breakpoint values (80px mobile / 96px tablet / 104px desktop). `PageContent.tsx` inline padding updated to match.
+- **Chat auth-required copy (Plan 197)**: ChatWidget no longer shows the misleading "Um ein Restaurant zu registrieren" text when the user is unauthenticated. The auth-required card now displays a generic chatbot login message sourced from the i18n system (`chat.authRequired.*` keys added to all 6 locale files).
+- **Auth-outcome observability (Plan 197)**: `getUserFromCookie()` now emits `console.warn({ event: 'auth_outcome', result: 'no_user', reason: '<code>' })` at each auth-failure path (`ssr_client_no_user`, `no_access_token_cookie`, `missing_env_vars`, `auth_api_error`, `token_expired_refresh_failed`, `fetch_error`). Logs fire on all environments (not gated by `NODE_ENV`), with no PII. content on `/create`, `/saved`, `/profile` and other mobile pages by correcting Tailwind `header-spacing` tokens from flat `160px` to per-breakpoint values (80px mobile / 96px tablet / 104px desktop). `PageContent.tsx` inline padding updated to match.
 - Provider edit form now saves inline field state before sub-page navigation (no more lost edits)
 - Review status now shows stored value instead of always defaulting to "Pending"
 - Category selection page now filters by listing_type (food/store)

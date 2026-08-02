@@ -1101,5 +1101,12 @@ export const de = {
     "subtitle": "Installiere die App für die beste Erfahrung",
     "preparing": "Installation wird vorbereitet...",
     "continueInBrowser": "Im Browser fortfahren"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "Anmeldung erforderlich",
+      "body": "Um den Chatbot zu nutzen, musst du angemeldet sein.",
+      "action": "Jetzt anmelden"
+    }
   }
 } as const;

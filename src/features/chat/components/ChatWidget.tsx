@@ -3,12 +3,14 @@
 import { useRef, useEffect } from 'react';
 import { ChevronUp, Plus, Info, Sparkles } from 'lucide-react';
 import { useChat } from '@/features/chat/hooks/useChat';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { ChatMessage } from '@/features/chat/components/ChatMessage';
 import { ChatInput } from '@/features/chat/components/ChatInput';
 import { SuggestionCard } from '@/features/chat/components/SuggestionCard';
 
 export function ChatWidget({ userName }: { userName?: string }) {
   const { messages, isLoading, error, sendMessage } = useChat();
+  const { t } = useLanguage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -94,15 +96,15 @@ export function ChatWidget({ userName }: { userName?: string }) {
           <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl text-sm mt-4">
             {error.includes('Authentication required') || error.includes('authentifizieren') ? (
               <>
-                <p className="font-medium">Anmeldung erforderlich</p>
+                <p className="font-medium">{t('chat.authRequired.title')}</p>
                 <p className="mt-1">
-                  Um ein Restaurant zu registrieren, musst du angemeldet sein.
+                  {t('chat.authRequired.body')}
                 </p>
                 <a
                   className="inline-block mt-3 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
                   href="/login"
                 >
-                  Jetzt anmelden
+                  {t('chat.authRequired.action')}
                 </a>
               </>
             ) : error.includes('unavailable') || error.includes('temporarily') || error.includes('rate limited') || error.includes('429') ? (

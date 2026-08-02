@@ -1101,5 +1101,12 @@ export const en = {
     "subtitle": "Install the app for the best experience",
     "preparing": "Preparing installation...",
     "continueInBrowser": "Continue in Browser"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "Login required",
+      "body": "You must be logged in to use the chatbot.",
+      "action": "Log in now"
+    }
   }
 } as const;
