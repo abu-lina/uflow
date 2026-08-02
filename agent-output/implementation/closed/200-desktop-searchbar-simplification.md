@@ -2,7 +2,7 @@
 ID: 200
 Origin: Planner
 UUID: b7a2d1f4-3a9f-49b3-8e5a-1d4e7c9a8b3f
-Status: Active
+Status: Committed
 ---
 
 # Implementation: Desktop Search Bar Simplification (Plan 200)

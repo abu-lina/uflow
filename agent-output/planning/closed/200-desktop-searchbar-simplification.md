@@ -1,8 +1,8 @@
 ---
 ID: 200
 Origin: 200
-UUID: b7a2d1f4
-Status: Active
+UUID: b7a2d1f4-3a9f-49b3-8e5a-1d4e7c9a8b3f
+Status: Committed
 ---
 
 # Plan 200 — Desktop Search Bar Simplification
@@ -23,6 +23,7 @@ Status: Active
 | Date | Author | Change |
 |------|--------|--------|
 | 2026-08-02T21:00Z | Planner | Initial plan from Architect Direction A recommendation. |
+| 2026-08-02T22:00Z | UAT | Value statement validated; APPROVED FOR RELEASE. Handoff to DevOps. |
 
 ---
 
