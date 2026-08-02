@@ -65,6 +65,7 @@ CREATE POLICY "Users can insert own messages"
 -- Migration 109: Enhanced search RPC for chatbot (fixed v2)
 -- Plan 176: Chatbot Feature
 -- Fixed: removed halal_level (column doesn't exist on remote), fixed param prefix collision
+-- Updated v3 (Plan 199): added opening_hours for open-now filtering
 
 CREATE OR REPLACE FUNCTION search_providers_chat(
     p_search_query      TEXT DEFAULT '',
@@ -97,6 +98,7 @@ RETURNS TABLE(
     has_parking          BOOLEAN,
     economic_solidarity  BOOLEAN,
     makes_donations      BOOLEAN,
+    opening_hours        JSONB,
     rank                 REAL
 )
 LANGUAGE plpgsql
@@ -119,6 +121,7 @@ BEGIN
         p.has_parking,
         p.economic_solidarity,
         p.makes_donations,
+        p.opening_hours,
         CASE
             WHEN p_search_query = '' THEN 0.0
             ELSE ts_rank(
@@ -154,7 +157,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION search_providers_chat IS 'Chatbot search with boolean flag filtering. v2: removed halal_level (column missing on remote).';
+COMMENT ON FUNCTION search_providers_chat IS 'Chatbot search with boolean flag filtering. v3 (Plan 199): added opening_hours for open-now filtering in tool executor.';
 
 -- Migration 110: Add redirect_count to conversations for Tier 2 guardrail escalation
 -- Plan 176: Chatbot Feature — Fix G2 (UAT blocker)
