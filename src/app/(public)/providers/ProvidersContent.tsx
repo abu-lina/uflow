@@ -592,10 +592,10 @@ export function ProvidersContent({
       >
         {!showGreeting && (
           <>
-            {/* Spacer pushes content below fixed mobile header */}
+            {/* Spacer reserves the fixed mobile header's real height (155px measured) */}
             <div
               className="sm:hidden"
-              style={{ height: 'max(152px, calc(env(safe-area-inset-top) + 152px))' }}
+              style={{ height: 'max(155px, calc(env(safe-area-inset-top) + 155px))' }}
             />
           </>
         )}
