@@ -2,7 +2,7 @@
 ID: 198
 Origin: 198
 UUID: b7e4a1c9
-Status: QA Complete
+Status: Released
 ---
 
 # QA Report: Chatbot Flow Improvements (Plan 198)

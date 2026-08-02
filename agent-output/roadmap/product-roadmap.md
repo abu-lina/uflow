@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-08-02
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.15.1
+**Current Version**: v0.15.2
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -110,6 +110,7 @@
 | 2026-05-02T01:50Z | Plan 119 released (v0.12.1): Category filter section guardrail + data remediation | Added `applicable_section` guardrail to `fetchCategoriesBySection()` so wrong-section categories (e.g. Gesundheit & Sport) no longer appear in Food tab. Normalised store/business semantics across both provider edit flows via shared scope constant. Removed dead `CategoryFilter.tsx`. Migration 087 applied to PROD: 0 remaining provider/category mismatches. 1203 tests pass. GitHub issue #202 closed. Tag v0.12.1 pushed. |
 | 2026-05-02T10:20Z | Plan 115 released (v0.12.2): Provider card specialty tags + open/closed status indicator | Discovery cards now show up to 2 offer names (e.g. "Shawarma · Falafel · +1") from provider offers, plus a compact open/closed status indicator (green/red dot + localized text) when opening_hours is available. Trust chip labels fully i18n across 6 languages (EN/DE/AR/TR/UR/PS). No DB migrations. 1205 tests pass. GitHub issue #195 closed. Tag v0.12.2 pushed. |
 | 2026-05-03T18:55Z | Plan 109 released (v0.12.3): Search header fixed + scrollable section tabs + i18n compliance | Search bar and context summary (query · location · audience) are now pinned at the top of the screen on home (Stage 2/3) and providers listing pages. Section tabs moved to the scrollable content area — no longer frozen in the fixed header layer. Two focused layout regression tests lock this contract. Back-to-home aria-label and admin filter label fully translated across 6 locales (EN/DE/AR/TR/UR/PS). 12 targeted tests pass. Commit a3f55581. Tag v0.12.3 pushed. |
+| 2026-08-02T17:00Z | Plan 198 released (v0.15.2): Chatbot flow improvements — food scope, natural copy, back-nav | Three UX fixes: (1) "Empfehlung erhalten" now scopes to food/restaurants only — dead-end store/ummah 3-type question removed; (2) machine artifact "Folgendes trifft zu: " prefix removed from multi-select confirmations, CONVERSATION STYLE polished; (3) chat session persisted to sessionStorage — back-navigation from provider detail restores full conversation. Fixes Rules-of-Hooks violation in ChatFloatingWidget. 15/15 delta tests, tsc clean. DF-1: live LLM scope validation (operator, 24h). Tag v0.15.2 pushed. GitHub issue #286 closed. |
 | 2026-08-02T12:22Z | Plan 197 released (v0.15.1): Chat auth-required copy fix & auth-outcome logging | ChatWidget no longer shows "Um ein Restaurant zu registrieren" copy for unauthenticated chat users — replaced with generic i18n chatbot login message (`chat.authRequired.*` added to all 6 locale files). `getUserFromCookie()` now emits structured reason-coded `auth_outcome` logs at every auth-failure path. 14 tests pass. GitHub issue #285 closed. Tag v0.15.1 pushed. |
 | 2026-05-12T19:40Z | Plans 130+131 released (v0.12.15): RowItem component system + IconListRow layout primitive | Added `IconListRow` reusable layout primitive and `RowItem`/`InfoTrailing`/`CounterTrailing` component system in `src/components/ui/`. Migrated 6 consumers (`WasCategoryResults`, `WasServiceTypeResults`, `WoCityResults`, `FilterSection`, `WerAudienceFilter`, `AttestationCard`) from ad-hoc row markup to shared semantics. Restored `TrustBadgesSection` + `supportsAttestation` gating in `ProviderDetailSections`. Semantic color token `--color-icon-surface` added. All 6 locale translation files updated. 23 regression+component tests pass. PR #229 squash-merged (`a30f08ef`). Tag v0.12.15 pushed. |
 | 2026-05-12T14:00Z | Plan 126 released (v0.12.13): Nachweise attestation display card for halal commitments | Added `AttestationCard` to the provider detail Nachweise section showing declared halal commitments (`no_alcohol`, `no_pork`, `no_gambling`) for eligible food and store providers. Card renders only when ≥1 commitment is declared; fully localized across 6 locales. Both `getProviderById()` variants (client + server) hydrate extension-table booleans via parallel `maybeSingle()` reads. Version bumped twice due to collisions (v0.12.11 → Plan 128, v0.12.12 → Plan 129). 1257 tests pass. PR #225 squash-merged. Tag v0.12.13 pushed. GitHub issue #219 already closed. |
@@ -136,7 +137,7 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.12.12 — Released 2026-05-12 · Plan 129: Food search RPC junction-table hotfix (P0 outage)
+**Current Working Release**: v0.15.2 — Released 2026-08-02 · Plan 198: Chatbot flow improvements (food scope, natural copy, back-nav persistence)
 
 **Release Status**: Released  
 **Ready for Release**: ✅ v0.12.12 complete  
@@ -157,7 +158,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 | Version | Date       | Plans Included                                       | Status   |
 | ------- | ---------- | ---------------------------------------------------- | -------- |
-| v0.12.12 | 2026-05-12 | Plan 129 (Food search RPC junction-table hotfix — P0 outage restore) | Released |
+| v0.15.2 | 2026-08-02 | Plan 198 (Chatbot flow improvements — food scope, natural copy, back-nav — Closes #286) | Released |
+| v0.15.1 | 2026-08-02 | Plan 197 (Chat auth-required copy fix & auth-outcome logging — Closes #285) | Released |
+| v0.12.15 | 2026-05-12 | Plans 130+131 (RowItem component system + IconListRow layout primitive) | Released |
+| v0.12.13 | 2026-05-12 | Plan 126 (Nachweise attestation display card — Closes #219) | Released |
 | v0.12.11 | 2026-05-12 | Plan 128 (Admin edit-provider section HTTP 400 bugfix — Closes #222, #221) | Released |
 | v0.12.10 | 2026-05-12 | Plan 127 (Dependency security patch — resolve high-severity npm advisories — Closes #220) | Released |
 | v0.12.9 | 2026-05-04 | Plan 124 (Remove location field from providers search bar — PR #217) | Released |

@@ -2,7 +2,7 @@
 ID: 198
 Origin: 198
 UUID: b7e4a1c9
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: Chatbot Flow Improvements (Plan 198)

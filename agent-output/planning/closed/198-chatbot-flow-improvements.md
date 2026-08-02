@@ -2,7 +2,7 @@
 ID: 198
 Origin: 198
 UUID: b7e4a1c9
-Status: QA Complete
+Status: Released
 ---
 
 # Plan 198 — Chatbot Flow Improvements (Food-only scope, natural flow, back-nav fix)
@@ -25,6 +25,7 @@ Status: QA Complete
 |------|--------|---------|
 | 2026-08-02T00:00Z | Planner | Initial plan from analysis 198. Item-2 Tier resolved as Tier A. NO-MEMORY MODE. |
 | 2026-08-02T00:00Z | Planner | Revised per Critic findings F1+F2: added mandatory multi-select semantic regression test to Testing Strategy (F1); added session-boundary note to M3 scope item 1 (F2). |
+| 2026-08-02T16:45Z | UAT | UAT Complete — APPROVED FOR RELEASE. All 6 scenarios pass. DF-1: live LLM scope validation (owner: DevOps, 24h post-deploy). |
 
 ---
 
