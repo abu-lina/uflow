@@ -2,7 +2,7 @@
 ID: 197
 Origin: 197
 UUID: 7c3e9a12
-Status: Code Review Approved
+Status: QA Complete
 ---
 
 # Plan 197 — Chat Auth-Required Copy Fix & Auth-Outcome Hardening
@@ -26,6 +26,7 @@ Status: Code Review Approved
 | 2026-08-02T11:55Z  | Planner | Revised per critique 197: M1 → Option B (i18n via `useLanguage()`/`t()`), M2 → drop correlation-ID claim (standalone reason log), L1/L2 acknowledged |
 | 2026-08-02T12:15Z  | Implementer | Status → In Progress |
 | 2026-08-02T14:05Z  | Code Reviewer | Round 2 APPROVED_WITH_COMMENTS (H1 resolved, M1 resolved, H2 deferred to UAT-176); Status → Code Review Approved |
+| 2026-08-02T14:20Z  | QA | 14/14 tests pass; type-check clean; delta lint clean; TDD compliance valid; Status → QA Complete |
 
 ## Value Statement and Business Objective
 
