@@ -156,6 +156,11 @@ export const ur = {
     "personSingular": "{{count}} شخص",
     "personPlural": "{{count}} لوگ",
     "searchButton": "تلاش کریں",
+    "suggestions": {
+      "provider": "ریستوران",
+      "cuisine": "کھانے",
+      "menuItem": "مینو"
+    },
     "context": {
       "allResults": "All results",
       "edit": "Edit search",

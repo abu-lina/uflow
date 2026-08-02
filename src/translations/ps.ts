@@ -156,6 +156,11 @@ export const ps = {
     "personSingular": "{{count}} کس",
     "personPlural": "{{count}} کسانو",
     "searchButton": "لټون",
+    "suggestions": {
+      "provider": "رسټوران",
+      "cuisine": "خواړه",
+      "menuItem": "مینو"
+    },
     "context": {
       "allResults": "All results",
       "edit": "Edit search",

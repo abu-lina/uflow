@@ -156,6 +156,11 @@ export const ar = {
     "personSingular": "{{count}} شخص",
     "personPlural": "{{count}} أشخاص",
     "searchButton": "بحث",
+    "suggestions": {
+      "provider": "مطعم",
+      "cuisine": "مطبخ",
+      "menuItem": "قائمة"
+    },
     "context": {
       "allResults": "جميع النتائج",
       "edit": "تعديل البحث",

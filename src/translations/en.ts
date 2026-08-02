@@ -156,6 +156,11 @@ export const en = {
     "personSingular": "{{count}} Person",
     "personPlural": "{{count}} People",
     "searchButton": "Search",
+    "suggestions": {
+      "provider": "Restaurant",
+      "cuisine": "Cuisine",
+      "menuItem": "Menu"
+    },
     "context": {
       "allResults": "All results",
       "edit": "Edit search",

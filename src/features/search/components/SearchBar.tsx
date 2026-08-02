@@ -380,8 +380,8 @@ function SearchBarContent({
                     }}
                   >
                     <span className="text-xs font-medium uppercase text-gray-400 w-14 shrink-0">
-                      {item.type === 'provider' ? 'Restaurant' :
-                       item.type === 'cuisine' ? 'Küche' : 'Menü'}
+                      {item.type === 'provider' ? t('search.suggestions.provider') :
+                       item.type === 'cuisine' ? t('search.suggestions.cuisine') : t('search.suggestions.menuItem')}
                     </span>
                     <span className="text-gray-800">{item.label}</span>
                   </button>

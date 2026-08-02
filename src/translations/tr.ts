@@ -156,6 +156,11 @@ export const tr = {
     "personSingular": "{{count}} Kişi",
     "personPlural": "{{count}} Kişi",
     "searchButton": "Ara",
+    "suggestions": {
+      "provider": "Restoran",
+      "cuisine": "Mutfak",
+      "menuItem": "Menü"
+    },
     "context": {
       "allResults": "Tüm sonuçlar",
       "edit": "Aramayı düzenle",
