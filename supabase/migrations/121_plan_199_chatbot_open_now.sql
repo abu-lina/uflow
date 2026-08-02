@@ -4,6 +4,23 @@
 -- can compute open/closed status via the existing getOpenStatus() utility.
 -- All other params/columns unchanged for backward compatibility.
 
+DROP FUNCTION IF EXISTS search_providers_chat(
+    TEXT,
+    UUID,
+    TEXT,
+    TEXT,
+    BOOLEAN,
+    BOOLEAN,
+    BOOLEAN,
+    BOOLEAN,
+    BOOLEAN,
+    BOOLEAN,
+    BOOLEAN,
+    BOOLEAN,
+    INTEGER,
+    INTEGER
+);
+
 CREATE OR REPLACE FUNCTION search_providers_chat(
     p_search_query      TEXT DEFAULT '',
     p_category_filter   UUID DEFAULT NULL,
