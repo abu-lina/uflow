@@ -182,6 +182,22 @@ export const de = {
     "notifyMeCityUnavailable": "In {{city}} sind noch keine Anbieter – wir arbeiten daran.",
     "providerCTA": "Bist du Anbieter? Jetzt eintragen →",
     "cityNotRecognized": "{{city}} ist uns nicht bekannt. Bitte überprüfe die Schreibweise.",
+    "nearMe": {
+      "chipLabel": "In der Nähe",
+      "radiusLabel": "Radius:",
+      "permissionDenied": "Standort nicht verfügbar",
+      "loading": "Anbieter werden geladen...",
+      "emptyTitle": "Keine geöffneten Restaurants in der Nähe",
+      "errorTitle": "Suche nicht verfügbar",
+      "errorLoading": "Suche ist aktuell nicht verfügbar. Bitte versuche es erneut.",
+      "retry": "Erneut versuchen"
+    },
+    "openNow": {
+      "chipLabel": "Jetzt geöffnet"
+    },
+    "empty": {
+      "noNearby": "Versuche einen größeren Radius oder schau später wieder vorbei."
+    },
     "was": {
       "searchPlaceholder": "Was suchst du?",
       "loading": "Suche läuft...",

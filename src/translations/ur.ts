@@ -182,6 +182,22 @@ export const ur = {
     "notifyMeCityUnavailable": "{{city}} میں ابھی کوئی فراہم کنندہ نہیں – ہم اس پر کام کر رہے ہیں۔",
     "providerCTA": "کیا آپ فراہم کنندہ ہیں؟ اپنی فہرست شامل کریں →",
     "cityNotRecognized": "{{city}} پہچانا نہیں گیا۔ براہ کرم ہجے چیک کریں۔",
+    "nearMe": {
+      "chipLabel": "میرے قریب",
+      "radiusLabel": "فاصلہ:",
+      "permissionDenied": "مقام دستیاب نہیں",
+      "loading": "فراہم کنندگان لوڈ ہو رہے ہیں...",
+      "emptyTitle": "قریب کوئی کھلا ریسٹورانٹ نہیں",
+      "errorTitle": "تلاش دستیاب نہیں",
+      "errorLoading": "تلاش فی الحال دستیاب نہیں ہے۔ براہ کرم دوبارہ کوشش کریں۔",
+      "retry": "دوبارہ کوشش کریں"
+    },
+    "openNow": {
+      "chipLabel": "ابھی کھلا ہے"
+    },
+    "empty": {
+      "noNearby": "بڑا فاصلہ آزمائیں یا بعد میں دوبارہ چیک کریں۔"
+    },
     "was": {
       "searchPlaceholder": "آپ کیا تلاش کر رہے ہیں؟",
       "loading": "تلاش جاری ہے...",

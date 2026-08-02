@@ -182,6 +182,22 @@ export const ar = {
     "notifyMeCityUnavailable": "لا يوجد مقدمو خدمات في {{city}} بعد – نحن نعمل على ذلك.",
     "providerCTA": "هل أنت مقدم خدمة؟ أضف قائمتك →",
     "cityNotRecognized": "{{city}} غير معروفة. يرجى التحقق من الإملاء.",
+    "nearMe": {
+      "chipLabel": "بالقرب مني",
+      "radiusLabel": "المسافة:",
+      "permissionDenied": "الموقع غير متاح",
+      "loading": "جارٍ تحميل مقدمي الخدمة...",
+      "emptyTitle": "لا توجد مطاعم مفتوحة قريبة",
+      "errorTitle": "البحث غير متاح",
+      "errorLoading": "البحث غير متاح حاليًا. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
+    },
+    "openNow": {
+      "chipLabel": "مفتوح الآن"
+    },
+    "empty": {
+      "noNearby": "جرّب نطاقًا أوسع أو تحقق لاحقًا."
+    },
     "was": {
       "searchPlaceholder": "ماذا تبحث؟",
       "loading": "جارٍ البحث...",

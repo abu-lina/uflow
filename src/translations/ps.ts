@@ -182,6 +182,22 @@ export const ps = {
     "notifyMeCityUnavailable": "په {{city}} کې لا هم دمه چمتو چمتووونکي نه دی – موږ پرې کار کوو۔",
     "providerCTA": "ایا تاسو دمه چمتو چمتووونکي یاست؟ خپل لیسټ زیات کړئ →",
     "cityNotRecognized": "{{city}} ونه پیژندل شو۔ مهرباني وکړئ املا چک کړئ۔",
+    "nearMe": {
+      "chipLabel": "زما په نږدې",
+      "radiusLabel": "واډن:",
+      "permissionDenied": "موقعیت شتون نلري",
+      "loading": "چمتو کوونکي پورته کیږي...",
+      "emptyTitle": "هیڅ خلاص چمتو رستورانت نږدې نشته",
+      "errorTitle": "لټون شتون نلري",
+      "errorLoading": "لټون اوس مهال شتون نلري. مهرباني وکړئ بیا هڅه وکړئ.",
+      "retry": "بیا هڅه وکړئ"
+    },
+    "openNow": {
+      "chipLabel": "اوس خلاص دی"
+    },
+    "empty": {
+      "noNearby": "لوی واټن هڅه وکړئ یا وروسته بیا وګورئ."
+    },
     "was": {
       "searchPlaceholder": "څه لټوې؟",
       "loading": "لټون روان دی...",

@@ -182,6 +182,22 @@ export const tr = {
     "notifyMeCityUnavailable": "{{city}} şehrinde henüz sağlayıcı yok – üzerinde çalışıyoruz.",
     "providerCTA": "Sağlayıcı mısın? Listelemenizi ekleyin →",
     "cityNotRecognized": "{{city}} tanınmadı. Lütfen yazımı kontrol edin.",
+    "nearMe": {
+      "chipLabel": "Yakınımda",
+      "radiusLabel": "Mesafe:",
+      "permissionDenied": "Konum kullanılamıyor",
+      "loading": "Sağlayıcılar yükleniyor...",
+      "emptyTitle": "Yakında açık restoran yok",
+      "errorTitle": "Arama kullanılamıyor",
+      "errorLoading": "Arama şu anda kullanılamıyor. Lütfen tekrar deneyin.",
+      "retry": "Tekrar dene"
+    },
+    "openNow": {
+      "chipLabel": "Şimdi açık"
+    },
+    "empty": {
+      "noNearby": "Daha geniş bir mesafe deneyin veya daha sonra tekrar bakın."
+    },
     "was": {
       "searchPlaceholder": "Ne arıyorsun?",
       "loading": "Aranıyor...",
