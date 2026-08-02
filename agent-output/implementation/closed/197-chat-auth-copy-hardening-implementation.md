@@ -2,7 +2,7 @@
 ID: 197
 Origin: 197
 UUID: 7c3e9a12
-Status: Active
+Status: Committed
 ---
 
 # Implementation Doc — Plan 197: Chat Auth-Required Copy Fix & Auth-Outcome Hardening
