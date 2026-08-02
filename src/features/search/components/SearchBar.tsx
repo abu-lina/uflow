@@ -2,7 +2,7 @@
 // React imports
 import { Suspense, useEffect, useState, useRef } from 'react';
 
-import { useSearchParams, usePathname, useRouter } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 
 // Third-party imports
 import { ChevronDown, Search, X, Loader2 } from 'lucide-react';
@@ -32,8 +32,7 @@ function SearchBarContent({
 }: SearchBarProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   // State for input and dropdowns
   const [isTyping, setIsTyping] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
@@ -255,150 +254,161 @@ function SearchBarContent({
   return (
     <div
       aria-label={t('search.ariaLabel')}
-      className={`relative flex h-12 w-full flex-row items-center gap-4 rounded-2xl bg-white border border-border-light px-2 ${className}`}
+      className={`flex flex-col gap-2 ${className}`}
       role="search"
     >
-      <div suppressHydrationWarning className="flex w-full flex-row items-center justify-between">
-        {/* Location — Where first */}
-        <div className="relative flex flex-row items-center">
-          <button
-            aria-expanded={isLocationOpen}
-            aria-haspopup="listbox"
-            className="flex items-center gap-1"
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsLocationOpen(!isLocationOpen);
-            }}
-          >
-            <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
-              {t('suchen.wo.selectedWhere', { city: selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation })}
-            </span>
-            <ChevronDown
-              aria-hidden="true"
-              className={`size-6 text-neutral-500 transition-transform duration-200 ${
-                isLocationOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-          {isLocationOpen && (
-            <div
-              ref={locationDropdownRef}
-              className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-            >
-              {/* "Everywhere" option using canonical sentinel */}
-              <button
-                key="__everywhere__"
-                className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                  selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
-                }`}
-                onClick={() => {
-                  setSelectedLocation(LOCATION_ALL);
-                  setIsLocationOpen(false);
-                  onLocationChange?.(LOCATION_ALL);
-                }}
-              >
-                {t('search.everywhere')}
-              </button>
-              {/* City options */}
-              {locations.map((location) => (
-                <button
-                  key={location}
-                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                    location === selectedLocation ? 'bg-gray-50' : ''
-                  }`}
-                  onClick={() => {
-                    setSelectedLocation(location);
-                    setIsLocationOpen(false);
-                    onLocationChange?.(location);
-                  }}
-                >
-                  {location}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="h-6 border-l border-[#999999]" />
-
-        {/* Search Section — What second */}
-        <div className="relative flex flex-1 flex-row items-center gap-0">
-                <Search className="text-neutral-500" size={24} />
-          <input
-            ref={inputRef}
-            className={`w-full appearance-none truncate border-none bg-transparent px-1 text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
-            placeholder={t('search.placeholder')}
-            type="text"
-            value={searchQuery}
-            onBlur={() => setIsTyping(false)}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setIsTyping(true);
-            }}
-            onFocus={() => setIsTyping(true)}
-            onKeyDown={handleKeyPress}
-          />
-          {hasMounted && searchQuery && (
+      {/* Primary bar: Location + Search + Submit button */}
+      <div className="relative flex h-12 w-full flex-row items-center gap-3 rounded-2xl bg-white border border-border-light px-3">
+        <div suppressHydrationWarning className="flex w-full flex-row items-center gap-3">
+          {/* Location — Where first */}
+          <div className="relative flex flex-row items-center">
             <button
-              aria-label={t('common.delete')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-gray-100 focus:outline-none"
+              aria-expanded={isLocationOpen}
+              aria-haspopup="listbox"
+              className="flex items-center gap-1 hover:opacity-80 transition-opacity"
               type="button"
-              onClick={() => {
-                setSearchQuery('');
-                inputRef.current?.focus();
-                // Call parent callback to handle clear
-                onClearSearch?.();
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLocationOpen(!isLocationOpen);
               }}
             >
-              <X className="text-gray-400" size={16} />
+              <span className="text-sm font-medium text-neutral-600 max-w-[120px] truncate sm:max-w-none">
+                {t('suchen.wo.selectedWhere', { city: selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation })}
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className={`size-5 text-neutral-500 transition-transform duration-200 ${
+                  isLocationOpen ? 'rotate-180' : ''
+                }`}
+              />
             </button>
-          )}
-          {/* Loading indicator for suggestions */}
-          {isLoadingSuggestions && searchQuery.trim().length >= 2 && (
-            <div className="absolute left-0 top-full z-50 mt-1 w-full">
-              <div className="flex items-center justify-center rounded-lg bg-white py-3 shadow-lg ring-1 ring-black/5">
-                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-              </div>
-            </div>
-          )}
-          {/* Suggestions dropdown */}
-          {searchQuery.trim().length >= 2 && suggestions.length > 0 && (
-            <div
-              ref={suggestionsRef}
-              className="absolute left-0 top-full z-50 mt-1 w-full rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-80 overflow-y-auto"
-            >
-              {suggestions.map((item, idx) => (
+            {isLocationOpen && (
+              <div
+                ref={locationDropdownRef}
+                className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+              >
+                {/* "Everywhere" option using canonical sentinel */}
                 <button
-                  key={`${item.type}-${item.label}-${idx}`}
-                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-gray-50"
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setSearchQuery(item.label);
-                    setSuggestions([]);
-                    onSearchSubmit?.(item.label, selectedLocation);
+                  key="__everywhere__"
+                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                    selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
+                  }`}
+                  onClick={() => {
+                    setSelectedLocation(LOCATION_ALL);
+                    setIsLocationOpen(false);
+                    onLocationChange?.(LOCATION_ALL);
                   }}
                 >
-                  <span className="text-xs font-medium uppercase text-gray-400 w-14 shrink-0">
-                    {item.type === 'provider' ? 'Restaurant' :
-                     item.type === 'cuisine' ? 'Küche' : 'Menü'}
-                  </span>
-                  <span className="text-gray-800">{item.label}</span>
+                  {t('search.everywhere')}
                 </button>
-              ))}
-            </div>
-          )}
+                {/* City options */}
+                {locations.map((location) => (
+                  <button
+                    key={location}
+                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                      location === selectedLocation ? 'bg-gray-50' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedLocation(location);
+                      setIsLocationOpen(false);
+                      onLocationChange?.(location);
+                    }}
+                  >
+                    {location}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Search Section — What second */}
+          <div className="relative flex flex-1 flex-row items-center gap-1">
+            <Search className="text-neutral-500 shrink-0" size={20} />
+            <input
+              ref={inputRef}
+              className={`w-full appearance-none truncate border-none bg-transparent px-1 text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
+              placeholder={t('search.placeholder')}
+              type="text"
+              value={searchQuery}
+              onBlur={() => setIsTyping(false)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setIsTyping(true);
+              }}
+              onFocus={() => setIsTyping(true)}
+              onKeyDown={handleKeyPress}
+            />
+            {hasMounted && searchQuery && (
+              <button
+                aria-label={t('common.delete')}
+                className="shrink-0 rounded p-1 hover:bg-gray-100 focus:outline-none"
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  inputRef.current?.focus();
+                  // Call parent callback to handle clear
+                  onClearSearch?.();
+                }}
+              >
+                <X className="text-gray-400" size={16} />
+              </button>
+            )}
+            {/* Loading indicator for suggestions */}
+            {isLoadingSuggestions && searchQuery.trim().length >= 2 && (
+              <div className="absolute left-0 top-full z-50 mt-1 w-full">
+                <div className="flex items-center justify-center rounded-lg bg-white py-3 shadow-lg ring-1 ring-black/5">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                </div>
+              </div>
+            )}
+            {/* Suggestions dropdown */}
+            {searchQuery.trim().length >= 2 && suggestions.length > 0 && (
+              <div
+                ref={suggestionsRef}
+                className="absolute left-0 top-full z-50 mt-1 w-full rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-80 overflow-y-auto"
+              >
+                {suggestions.map((item, idx) => (
+                  <button
+                    key={`${item.type}-${item.label}-${idx}`}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-gray-50"
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setSearchQuery(item.label);
+                      setSuggestions([]);
+                      onSearchSubmit?.(item.label, selectedLocation);
+                    }}
+                  >
+                    <span className="text-xs font-medium uppercase text-gray-400 w-14 shrink-0">
+                      {item.type === 'provider' ? 'Restaurant' :
+                       item.type === 'cuisine' ? 'Küche' : 'Menü'}
+                    </span>
+                    <span className="text-gray-800">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button — CTA */}
+          <button
+            className="shrink-0 rounded-lg bg-primary px-6 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+            type="button"
+            onClick={() => onSearchSubmit?.(searchQuery, selectedLocation)}
+          >
+            {t('search.searchButton')}
+          </button>
         </div>
+      </div>
 
-        <div className="h-6 border-l border-[#999999]" />
-
-        {/* Wer */}
+      {/* Secondary filter pills — desktop only */}
+      <div className="hidden md:flex flex-row items-center gap-2">
+        {/* Wer pill */}
         <div className="relative flex flex-row items-center">
           <button
             aria-expanded={isWerOpen}
             aria-haspopup="listbox"
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 rounded-full bg-white border border-border-light px-3 py-1.5 hover:bg-gray-50 transition-colors"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -408,12 +418,12 @@ function SearchBarContent({
               }
             }}
           >
-            <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
+            <span className="text-sm font-medium text-neutral-600">
               {t('suchen.accordions.wer')}: {selectedWer === 1 ? t('search.personSingular', { count: 1 }) : t('search.personPlural', { count: selectedWer })}
             </span>
             <ChevronDown
               aria-hidden="true"
-              className={`size-6 text-neutral-500 transition-transform duration-200 ${
+              className={`size-4 text-neutral-500 transition-transform duration-200 ${
                 isWerOpen ? 'rotate-180' : ''
               }`}
             />
@@ -421,7 +431,7 @@ function SearchBarContent({
           {isWerOpen && (
             <div
               ref={werDropdownRef}
-              className="dropdown-container absolute right-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+              className="dropdown-container absolute left-0 top-full z-50 mt-1 w-48 max-h-64 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
             >
               {[1, 2, 3, 4, 5].map((count) => (
                 <button
@@ -442,14 +452,12 @@ function SearchBarContent({
           )}
         </div>
 
-        <div className="h-6 border-l border-[#999999]" />
-
-        {/* Filter */}
+        {/* Filter pill */}
         <div className="relative flex flex-row items-center">
           <button
             aria-expanded={isFilterOpen}
             aria-haspopup="listbox"
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 rounded-full bg-white border border-border-light px-3 py-1.5 hover:bg-gray-50 transition-colors"
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -460,14 +468,14 @@ function SearchBarContent({
               }
             }}
           >
-            <span className="text-base font-medium text-neutral-500 max-w-[120px] truncate sm:max-w-none">
+            <span className="text-sm font-medium text-neutral-600">
               {selectedFilters.length > 0
                 ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
                 : t('suchen.accordions.filter')}
             </span>
             <ChevronDown
               aria-hidden="true"
-              className={`size-6 text-neutral-500 transition-transform duration-200 ${
+              className={`size-4 text-neutral-500 transition-transform duration-200 ${
                 isFilterOpen ? 'rotate-180' : ''
               }`}
             />
@@ -475,7 +483,7 @@ function SearchBarContent({
           {isFilterOpen && (
             <div
               ref={filterDropdownRef}
-              className="dropdown-container absolute right-0 top-full z-50 mt-1 w-56 max-h-80 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+              className="dropdown-container absolute left-0 top-full z-50 mt-1 w-56 max-h-80 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
             >
               {(selectedSection === 'ummah'
                 ? [

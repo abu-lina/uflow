@@ -155,6 +155,7 @@ export const ps = {
     "filter": "د ځای له مخې فلټر کړه",
     "personSingular": "{{count}} کس",
     "personPlural": "{{count}} کسانو",
+    "searchButton": "لټون",
     "context": {
       "allResults": "All results",
       "edit": "Edit search",

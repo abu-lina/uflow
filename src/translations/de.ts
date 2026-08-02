@@ -155,6 +155,7 @@ export const de = {
     "filter": "Nach Ort filtern",
     "personSingular": "{{count}} Person",
     "personPlural": "{{count}} Personen",
+    "searchButton": "Suchen",
     "context": {
       "allResults": "Alle Ergebnisse",
       "edit": "Suche bearbeiten",

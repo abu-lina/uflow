@@ -155,6 +155,7 @@ export const tr = {
     "filter": "Konuma göre filtrele",
     "personSingular": "{{count}} Kişi",
     "personPlural": "{{count}} Kişi",
+    "searchButton": "Ara",
     "context": {
       "allResults": "Tüm sonuçlar",
       "edit": "Aramayı düzenle",

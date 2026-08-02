@@ -155,6 +155,7 @@ export const ur = {
     "filter": "مقام کے لحاظ سے فلٹر کریں",
     "personSingular": "{{count}} شخص",
     "personPlural": "{{count}} لوگ",
+    "searchButton": "تلاش کریں",
     "context": {
       "allResults": "All results",
       "edit": "Edit search",

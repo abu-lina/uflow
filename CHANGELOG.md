@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 2026-08-02
+
+### Changed
+
+- **Desktop search bar simplified (Plan 200)**: Restructured the desktop search bar to follow a Google Maps-style pattern with clear visual hierarchy. The primary bar (800px, white rounded container) now contains only essential controls — location selector, search input, and a green "Suchen" CTA button — with no visual dividers. Secondary filters (Wer: person count, Werte & Ausstattung: amenity filters) moved to a separate pill row below the bar, displayed only on desktop (≥768px) to preserve mobile touch targets. All controls use consistent sizing (text-sm, smaller icons), softer colors (neutral-600), and hover states. This reduces visual clutter while maintaining full functionality. Desktop users see the refined bar + pills; mobile users see the existing accordion (no changes). Closes #288.
+
 ## [0.15.3] - 2026-08-02
 
 ### Fixed
