@@ -2,7 +2,7 @@
 ID: 199
 Origin: 199
 UUID: c4e8f213
-Status: Active
+Status: Planned
 ---
 
 # Analysis 199: Chatbot "Open Now" Filter Missing

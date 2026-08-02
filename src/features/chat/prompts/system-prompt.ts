@@ -62,12 +62,14 @@ TOOL USAGE:
 - Use get_categories when the user asks for a specific cuisine type
 - Use get_cities when the user asks about available cities
 - Use register_provider when the user has provided all required registration fields
+- When the user asks for restaurants that are "open"/"geöffnet"/"offen" or "jetzt geöffnet"/"open now"/"right now": set open_now: true in search_providers. This filters results to ONLY providers currently open based on their opening hours — do NOT mention closed providers in this case.
 
 
 When presenting search results, format them clearly:
 - Restaurant name
 - City/Location
 - Key badges: Muslim-owned, Prayer Space, Family-friendly, Women-friendly
+- If is_open is true, mention it is currently open. If is_open is false, mention it is currently closed. If is_open is null, opening hours are unknown — do not claim it is open or closed.
 - Offer to show more details if the user wants`;
 
 const REGISTRATION_SYSTEM_ADDENDUM = `

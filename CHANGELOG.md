@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 2026-08-02
+
+### Fixed
+
+- **Chatbot "open now" filter (Plan 199)**: The chatbot's restaurant search now supports "open now"/"geöffnet"/"offen"/"jetzt" queries. Previously, asking for e.g. "open burger restaurants in Stuttgart" returned both open and closed providers with no way to filter or indicate status. Added `open_now` parameter to the `search_providers` chatbot tool, `opening_hours` column to the `search_providers_chat` RPC (migration 121), and an `is_open` annotation on every result computed via the existing `getOpenStatus()` utility (device-local time, overnight-window aware — same logic used by `/search`'s "Open now" chip). Providers without opening-hours data are annotated `is_open: null` and excluded when `open_now: true` is requested.
+
 ## [0.15.2] - 2026-08-02
 
 ### Added

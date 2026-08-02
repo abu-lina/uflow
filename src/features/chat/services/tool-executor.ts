@@ -6,6 +6,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { getProviderById, fetchProviderCities, checkCityExists } from '@/services/providers';
 import { createProviderOrService } from '@/services/providerService';
+import { getOpenStatus } from '@/utils/openStatus';
+import type { OpeningHours } from '@/types/openingHours';
 import type { ToolCall, ToolDefinition } from '@/features/chat/types';
 
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
@@ -50,6 +52,10 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           women_friendly: {
             type: 'boolean',
             description: 'Filter for women-friendly providers',
+          },
+          open_now: {
+            type: 'boolean',
+            description: 'Set to true when the user asks for providers that are CURRENTLY open/geöffnet/offen right now. Only returns providers currently open based on their opening hours.',
           },
           limit: {
             type: 'integer',
@@ -257,7 +263,21 @@ export async function executeToolCall(
       });
 
       if (error) throw error;
-      return JSON.stringify({ results: data || [] });
+
+      // Plan 199: annotate each result with is_open; filter to open-only when requested.
+      const rawResults = (data || []) as Array<Record<string, unknown>>;
+      const annotated = rawResults.map((result) => {
+        const openingHours = (result.opening_hours as OpeningHours | null) ?? null;
+        const isOpen = openingHours ? getOpenStatus(openingHours).isOpen : null;
+        return { ...result, is_open: isOpen };
+      });
+
+      const openNow = args.open_now === true;
+      const results = openNow
+        ? annotated.filter((result) => result.is_open === true)
+        : annotated;
+
+      return JSON.stringify({ results });
     }
 
     case 'get_provider_details': {

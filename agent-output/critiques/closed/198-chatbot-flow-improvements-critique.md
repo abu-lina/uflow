@@ -2,7 +2,7 @@
 ID: 198
 Origin: 198
 UUID: b7e4a1c9
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique — Plan 198: Chatbot Flow Improvements
@@ -118,7 +118,7 @@ All decisions marked `[RESOLVED]` except:
 
 | Field | Value |
 |-------|-------|
-| Status | OPEN |
+| Status | RESOLVED — regression test added to Testing Strategy; QA confirmed `[post-fix PASSES] multi-select…WITHOUT machine artifact prefix` ✅ |
 | Severity | MEDIUM |
 | Location | M2 acceptance criteria + Testing Strategy |
 | Issue | The plan's "Coupling caution" for Implementer is good, but the testing strategy does not explicitly require a **regression test that verifies multi-select "means YES" semantics remain functional** after the prefix artifact removal. The plan mentions unit tests for option-extraction/single-select, but not an explicit test for multi-select semantic preservation. |
@@ -129,7 +129,7 @@ All decisions marked `[RESOLVED]` except:
 
 | Field | Value |
 |-------|-------|
-| Status | OPEN |
+| Status | RESOLVED — session-boundary note added to M3 scope item 1 by Planner (Rev 1) ✅ |
 | Severity | LOW |
 | Location | M3 scope item 1 / acceptance criteria |
 | Issue | The plan correctly requires "conversation restored on back-nav" and "no new conversation row on back-nav." However, it does not define **when a user intentionally starts a fresh conversation** (e.g., after closing and re-opening the app hours later, or after explicitly tapping a "new chat" affordance). Without this boundary, the Implementer may over-persist and never show the greeting/suggestion cards again, or under-persist and fail the acceptance test. |
@@ -140,7 +140,7 @@ All decisions marked `[RESOLVED]` except:
 
 | Field | Value |
 |-------|-------|
-| Status | OPEN |
+| Status | RESOLVED — No action required on this plan; noted for awareness |
 | Severity | LOW |
 | Location | Process / tooling |
 | Issue | Per Critic instructions, `planner.chatmode.md` should be checked at review start. File does not exist. |
