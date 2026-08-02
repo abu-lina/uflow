@@ -36,8 +36,7 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
       )
       .filter(Boolean)
       .join(', ');
-    const prefix = selected.size > 1 ? 'Folgendes trifft zu: ' : '';
-    if (selectedTexts) onSelect(prefix + selectedTexts);
+    if (selectedTexts) onSelect(selectedTexts);
   };
 
   if (isMultiSelect) {

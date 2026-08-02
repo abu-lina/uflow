@@ -282,7 +282,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
     if (guardrailResult.status === 'block') {
       const blockContent =
-        'I can only help you find and register services on UFlow. Please ask me about restaurants, stores, or community services.';
+        'I can only help you find and register restaurants on UFlow. Please ask me about restaurants or Muslim-friendly dining near you.';
 
       await measureDependency(ctx, 'supabase.messages.save', async () => {
         await supabase.from('messages').insert({
