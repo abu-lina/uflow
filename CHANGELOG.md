@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.6] - 2026-08-05
+
+### Fixed
+
+- **Provider detail accordion exclusivity (Plan 201)**: Converted all remaining uncontrolled sections in provider detail (`Opening Hours`, `Weitere Standorte`, `Nearby`) to controlled `ExpandSection` mode using shared `openSection` state, so only one section can be open at a time and opening any section now collapses the others.
+- **Provider detail section spacing consistency (Plan 201)**: Normalized internal section stack spacing from `gap-8` to `gap-4` in `ProviderDetailSections`, aligning inter-section spacing with the existing first-section offset and producing uniform 16px rhythm on mobile.
+
 ## [0.15.5] - 2026-08-05
 
 ### Fixed
