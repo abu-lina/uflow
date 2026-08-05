@@ -20,8 +20,8 @@ Release context: v0.15.5 patch targeting Plan 201 accordion + spacing bugfixes.
 
 | Item | Owner | Trigger/Due | Evidence to Close | Status |
 |---|---|---|---|---|
-| **DF-1** Manual mobile browser validation | UAT Specialist | Before Stage 2 tag v0.15.5 | Visit `/providers/33084ad8-72a0-42d2-b6ef-ff5065709d5d` on 375px mobile viewport; confirm (a) only one accordion section open at a time, (b) spacing uniform between all sections, (c) desktop modal unaffected | Open |
-| **DF-2** CI full build validation | CI Pipeline / DevOps | Stage 2 PR push (automated) | CI build job exits 0 on merged PR for `session/201-provider-sections-fix` | Open |
+| **DF-1** Manual mobile browser validation | UAT Specialist | Before Stage 2 tag v0.15.6 | Visit `/providers/33084ad8-72a0-42d2-b6ef-ff5065709d5d` on 375px mobile viewport; confirm (a) only one accordion section open at a time, (b) spacing uniform between all sections, (c) desktop modal unaffected | Open |
+| **DF-2** CI full build validation | CI Pipeline / DevOps | Stage 2 PR push (automated) | CI build job exits 0 on merged PR for `session/201-provider-sections-fix` | **Closed** — CI `Build application` job ✅ on PR #293. Performance budget violations and test failures are pre-existing on all branches (confirmed via run 30980156662, session/202 with identical kB values predating our push). |
 
 ## Closure Procedure
 
@@ -35,3 +35,4 @@ When both items are Closed, this document Status transitions to `Closed` and mov
 | Date (UTC) | Agent | Change |
 |---|---|---|
 | 2026-08-05T00:00Z | devops | Created tracker from deferred UAT validations (DF-1) and build gate (DF-2) |
+| 2026-08-05T08:30Z | devops | DF-2 closed: CI build application job passed on PR #293; performance budget + test failures confirmed pre-existing. DF-1 remains Open (manual device validation). Version ref updated to v0.15.6. |

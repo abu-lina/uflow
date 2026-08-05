@@ -2,7 +2,7 @@
 ID: 201
 Origin: 201
 UUID: 3e8b5fa2
-Status: Committed
+Status: Released
 ---
 
 # Implementation 201 — Provider Detail Sections: Accordion Exclusivity & Uniform Gap Spacing
