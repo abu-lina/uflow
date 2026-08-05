@@ -970,8 +970,10 @@ export const ar = {
       "menu": "القائمة",
       "offers": "العروض",
       "openingHours": "ساعات العمل",
+      "furtherLocations": "مواقع إضافية",
       "nearby": "بالقرب"
     },
+    "locationFallback": "الموقع",
     "days": {
       "monday": "الاثنين",
       "tuesday": "الثلاثاء",

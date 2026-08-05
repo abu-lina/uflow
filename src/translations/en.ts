@@ -972,8 +972,10 @@ export const en = {
       "menu": "Menu",
       "offers": "Offers",
       "openingHours": "Opening Hours",
+      "furtherLocations": "Further Locations",
       "nearby": "Nearby"
     },
+    "locationFallback": "Location",
     "days": {
       "monday": "Monday",
       "tuesday": "Tuesday",

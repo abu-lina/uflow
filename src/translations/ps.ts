@@ -970,8 +970,10 @@ export const ps = {
       "menu": "مېنو",
       "offers": "وړاندیزونه",
       "openingHours": "د کار وختونه",
+      "furtherLocations": "نور موقعیتونه",
       "nearby": "نږدې"
     },
+    "locationFallback": "موقعیت",
     "days": {
       "monday": "دوشنبه",
       "tuesday": "سه شنبه",
