@@ -2,7 +2,7 @@
 
 **Last Updated**: 2026-08-05
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.15.6
+**Current Version**: v0.15.7
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
@@ -111,6 +111,7 @@
 | 2026-05-02T10:20Z | Plan 115 released (v0.12.2): Provider card specialty tags + open/closed status indicator | Discovery cards now show up to 2 offer names (e.g. "Shawarma · Falafel · +1") from provider offers, plus a compact open/closed status indicator (green/red dot + localized text) when opening_hours is available. Trust chip labels fully i18n across 6 languages (EN/DE/AR/TR/UR/PS). No DB migrations. 1205 tests pass. GitHub issue #195 closed. Tag v0.12.2 pushed. |
 | 2026-05-03T18:55Z | Plan 109 released (v0.12.3): Search header fixed + scrollable section tabs + i18n compliance | Search bar and context summary (query · location · audience) are now pinned at the top of the screen on home (Stage 2/3) and providers listing pages. Section tabs moved to the scrollable content area — no longer frozen in the fixed header layer. Two focused layout regression tests lock this contract. Back-to-home aria-label and admin filter label fully translated across 6 locales (EN/DE/AR/TR/UR/PS). 12 targeted tests pass. Commit a3f55581. Tag v0.12.3 pushed. |
 | 2026-08-02T17:00Z | Plan 198 released (v0.15.2): Chatbot flow improvements — food scope, natural copy, back-nav | Three UX fixes: (1) "Empfehlung erhalten" now scopes to food/restaurants only — dead-end store/ummah 3-type question removed; (2) machine artifact "Folgendes trifft zu: " prefix removed from multi-select confirmations, CONVERSATION STYLE polished; (3) chat session persisted to sessionStorage — back-navigation from provider detail restores full conversation. Fixes Rules-of-Hooks violation in ChatFloatingWidget. 15/15 delta tests, tsc clean. DF-1: live LLM scope validation (operator, 24h). Tag v0.15.2 pushed. GitHub issue #286 closed. |
+| 2026-08-05T10:15Z | Plan 203 released (v0.15.7): Fix provider edit auth — sync DB role to auth metadata (split-brain) | Auth role sync split-brain fixed. Admin/moderator role grants now propagate to `user_metadata.role` (UI hint) via three non-blocking sync paths: set-role endpoint, login, and magic-link verification. Server-side auth continues to use DB-backed `isAdminOrModerator()` only (security pattern F-049 unchanged). 3/3 targeted regressions pass. PR #298 squash-merged (`140b187e`). Tag v0.15.7 pushed. GitHub issue #297 closed. |
 | 2026-08-05T08:30Z | Plan 201 released (v0.15.6): Provider detail accordion exclusivity and uniform gap spacing | Converted Opening Hours, Weitere Standorte, and Nearby sections to controlled ExpandSection mode using shared `openSection` state — only one accordion open at a time. Normalized internal section stack spacing from `gap-8` to `gap-4`. Version bumped to 0.15.6 (v0.15.5 claimed by Plan 202 concurrently). 16/16 tests pass (includes 2 BUG-202 regression tests from Plan 202 rebase). PR #293 squash-merged (`acaebfef`). Tag v0.15.6 pushed. GitHub issue #290 closed. |
 | 2026-08-05T08:02Z | Plan 202 released (v0.15.5): Fix further-locations guard for single-location providers | Guard condition in ProviderDetailSections.tsx changed from `> 0` to `> 1`; "Weitere Standorte" accordion hidden for single-location providers. Also replaced hardcoded German strings with i18n keys across all 6 locales. BUG-202 regression tests added. PR #292 squash-merged (`e9200421`). Tag v0.15.5 pushed. GitHub issue #291 auto-closed. |
 | 2026-08-02T22:30Z | Plan 200 released (v0.15.4): Desktop search bar simplification (bar+pill pattern) | Desktop search bar restructured from cluttered single-row layout to Google Maps-style pattern. Primary bar contains location selector, search input, and green "Suchen" CTA button. Secondary filters (Wer/Filter) moved to desktop-only pill row below bar (`hidden md:flex`). Removed 3 vertical dividers. All 6 locales updated. Mobile unchanged. 0 logic changes. Tag v0.15.4 pushed. GitHub issue #288 closed. |
@@ -141,10 +142,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.15.6 — Released 2026-08-05 · Plan 201: Provider detail accordion exclusivity and uniform gap spacing
+**Current Working Release**: v0.15.7 — Released 2026-08-05 · Plan 203: Fix provider edit auth — sync DB role to auth metadata
 
 **Release Status**: Released  
-**Ready for Release**: ✅ v0.15.6 complete  
+**Ready for Release**: ✅ v0.15.7 complete  
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
