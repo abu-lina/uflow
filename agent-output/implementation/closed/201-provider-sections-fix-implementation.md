@@ -145,7 +145,7 @@ Implementation outcome:
 
 ## Version Note
 
-- Version bumped to `0.15.5` (preliminary - final version confirmed at DevOps Stage 1).
+- Version bumped to `0.15.6` (preliminary - final version confirmed at DevOps Stage 1).
 
 ## Outstanding Items
 
