@@ -2,7 +2,7 @@
 ID: 201
 Origin: 201
 UUID: 3e8b5fa2
-Status: Committed
+Status: Released
 ---
 
 # UAT Report: 201 Provider Sections Fix
