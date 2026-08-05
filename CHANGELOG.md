@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.7] - 2026-08-05
+
+### Fixed
+
+- **Auth role sync split-brain (Plan 203)**: Admin/moderator role grants no longer silently fail to propagate to the client UI hint (`user_metadata.role`). The `set-role` API now syncs `public.users.role` into `auth.user_metadata.role` after every DB role write; the login endpoint syncs on each successful sign-in when DB and metadata roles differ; the magic-link verification endpoint performs the same sync during successful token verification. All three paths are non-blocking (sync failure is logged as a warning, never hard-fails login or role assignment), preserve existing metadata fields, and leave server-side authorization gates (`isAdminOrModerator`) fully DB-backed and unchanged. Fixes #297.
+
 ## [0.15.6] - 2026-08-05
 
 ### Fixed

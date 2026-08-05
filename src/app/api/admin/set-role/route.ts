@@ -85,6 +85,9 @@ export async function POST(request: Request) {
       .eq('user_id', targetUserId)
       .single();
 
+    let responseUser: unknown;
+    let successMessage = '';
+
     if (existingUser) {
       // Update existing user
       const { data, error } = await supabaseAdmin
@@ -101,11 +104,8 @@ export async function POST(request: Request) {
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        message: `Role updated to ${role}`,
-        user: data,
-      });
+      responseUser = data;
+      successMessage = `Role updated to ${role}`;
     } else {
       // Create new user record
       const { data, error } = await supabaseAdmin
@@ -125,12 +125,32 @@ export async function POST(request: Request) {
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        message: `User record created with role ${role}`,
-        user: data,
+      responseUser = data;
+      successMessage = `User record created with role ${role}`;
+    }
+
+    const mergedMetadata = {
+      ...(authUserData.user.user_metadata || {}),
+      role,
+    };
+
+    const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+      user_metadata: mergedMetadata,
+    });
+
+    if (metadataError) {
+      console.warn('[set-role] Role updated in DB but metadata sync failed:', {
+        targetUserId,
+        role,
+        error: metadataError.message,
       });
     }
+
+    return NextResponse.json({
+      success: true,
+      message: successMessage,
+      user: responseUser,
+    });
   } catch (error) {
     console.error('Error setting role:', error);
     return NextResponse.json(

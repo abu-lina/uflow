@@ -32,6 +32,7 @@ const mockSupabaseAdmin = {
     admin: {
       listUsers: vi.fn(),
       getUserById: vi.fn(),
+      updateUserById: vi.fn(),
     },
   },
 };
@@ -129,6 +130,7 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockSupabaseAdmin.auth.admin.updateUserById.mockResolvedValue({ error: null });
     // Re-import to get fresh module
     const mod = await import('@/app/api/admin/set-role/route');
     POST = mod.POST;
@@ -183,6 +185,52 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
 
     const res = await POST(makeRequest({ userId: 'target-user', role: 'moderator' }));
     expect(res.status).toBe(200);
+  });
+
+  it('[pre-fix FAILS, post-fix PASSES] syncs DB role to auth user_metadata.role when setting role', async () => {
+    mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123', email: 'admin@test.com' });
+    mockIsAdminOrModerator.mockResolvedValue(true);
+
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValue({
+      data: { user: { id: 'target-user', email: 'target@test.com', user_metadata: { language: 'en' } } },
+      error: null,
+    });
+
+    const dbChain = {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { id: 1, user_id: 'target-user', email: 'target@test.com', role: 'user' },
+            error: null,
+          }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { id: 1, user_id: 'target-user', role: 'moderator' },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    };
+
+    mockSupabaseAdmin.from.mockReturnValue(dbChain);
+
+    const res = await POST(makeRequest({ userId: 'target-user', role: 'moderator' }));
+    expect(res.status).toBe(200);
+
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(
+      'target-user',
+      {
+        user_metadata: {
+          language: 'en',
+          role: 'moderator',
+        },
+      }
+    );
   });
 });
 
