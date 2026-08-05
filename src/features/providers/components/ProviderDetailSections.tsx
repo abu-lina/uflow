@@ -211,10 +211,10 @@ export function ProviderDetailSections({
   });
 
   return (
-    <div className="flex flex-col gap-8 self-stretch">
+    <div className="flex flex-col gap-4 self-stretch">
       <ExpandSection
-        title={t('providerDetail.proofTier.sectionTitle')}
         isOpen={openSection === 'halal'}
+        title={t('providerDetail.proofTier.sectionTitle')}
         onToggle={(next) => setOpenSection(next ? 'halal' : null)}
       >
         <div className="space-y-3 pt-3">
@@ -230,8 +230,8 @@ export function ProviderDetailSections({
       </ExpandSection>
 
       <ExpandSection
-        title={t('providerDetail.sections.valuesAmenities')}
         isOpen={openSection === 'values'}
+        title={t('providerDetail.sections.valuesAmenities')}
         onToggle={(next) => setOpenSection(next ? 'values' : null)}
       >
         <div className="space-y-2 pt-3">
@@ -251,8 +251,8 @@ export function ProviderDetailSections({
 
       {/* Menu (food) — Offers (store) */}
       <ExpandSection
-        title={t(provider.listing_type === 'store' ? 'providerDetail.sections.offers' : 'providerDetail.sections.menu')}
         isOpen={openSection === 'menu-offers'}
+        title={t(provider.listing_type === 'store' ? 'providerDetail.sections.offers' : 'providerDetail.sections.menu')}
         onToggle={(next) => setOpenSection(next ? 'menu-offers' : null)}
       >
         <div className="space-y-2 pt-3">
@@ -280,31 +280,43 @@ export function ProviderDetailSections({
         </div>
       </ExpandSection>
 
-      <ExpandSection title={t('providerDetail.sections.openingHours')}>
+      <ExpandSection
+        isOpen={openSection === 'opening-hours'}
+        title={t('providerDetail.sections.openingHours')}
+        onToggle={(next) => setOpenSection(next ? 'opening-hours' : null)}
+      >
         {renderOpeningHours(provider.opening_hours, t)}
       </ExpandSection>
 
       {(locations?.length ?? 0) > 1 && (
         <div id="standorte-section">
-          <ExpandSection title={t('providerDetail.sections.furtherLocations')}>
-          <div className="space-y-2 pt-3">
-            {locations!.map((loc) => (
-              <DetailListItem
-                key={loc.location_id}
-                icon={<Store aria-hidden="true" className="h-6 w-6" />}
-                isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
-                label={loc.location_name || loc.address_city || t('providerDetail.locationFallback')}
-                onClick={() => onLocationSelect?.(loc.location_id)}
-              />
-            ))}
-          </div>
+          <ExpandSection
+            isOpen={openSection === 'standorte'}
+            title={t('providerDetail.sections.furtherLocations')}
+            onToggle={(next) => setOpenSection(next ? 'standorte' : null)}
+          >
+            <div className="space-y-2 pt-3">
+              {(locations ?? []).map((loc) => (
+                <DetailListItem
+                  key={loc.location_id}
+                  icon={<Store aria-hidden="true" className="h-6 w-6" />}
+                  isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
+                  label={loc.location_name || loc.address_city || t('providerDetail.locationFallback')}
+                  onClick={() => onLocationSelect?.(loc.location_id)}
+                />
+              ))}
+            </div>
           </ExpandSection>
         </div>
       )}
 
       <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
 
-      <ExpandSection title={t('providerDetail.sections.nearby')}>
+      <ExpandSection
+        isOpen={openSection === 'nearby'}
+        title={t('providerDetail.sections.nearby')}
+        onToggle={(next) => setOpenSection(next ? 'nearby' : null)}
+      >
         <div className="space-y-2 pt-3">
           {isLoadingNearbyProviders || isFetchingNearbyProviders ? (
             <p className="text-sm text-[#7a7a7a]">{t('providerDetail.loading.nearby')}</p>
