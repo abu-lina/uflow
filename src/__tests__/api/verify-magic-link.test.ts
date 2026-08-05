@@ -311,6 +311,52 @@ describe('POST /api/auth/verify-magic-link', () => {
       expect(data.success).toBe(true);
       expect(data.hashedToken).toBe('test-hashed-token-123');
     });
+
+    it('[pre-fix FAILS, post-fix PASSES] syncs DB role into auth user_metadata.role on successful verification', async () => {
+      const validToken = createMockTokenData({
+        token: 'valid-token-role-sync',
+        email: 'test@example.com',
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      });
+
+      const mockUser = createMockUser({
+        id: validToken.user_id,
+        email: validToken.email,
+        email_confirmed_at: new Date().toISOString(),
+        user_metadata: { language: 'en' },
+      });
+
+      const mock = await setupMockClient({
+        tokenData: validToken,
+        userRole: 'user',
+        users: [mockUser],
+        hashedToken: 'test-hashed-token-123',
+      });
+
+      const request = new Request('http://localhost/api/auth/verify-magic-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-test-ip': '192.168.1.1',
+        },
+        body: JSON.stringify({
+          token: 'valid-token-role-sync',
+          email: 'test@example.com',
+        }),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(mock.auth.admin.updateUserById).toHaveBeenCalledWith(validToken.user_id, {
+        user_metadata: {
+          language: 'en',
+          role: 'user',
+        },
+      });
+    });
   });
 
   describe('Database Errors', () => {
