@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.5] - 2026-08-05
+
+### Fixed
+
+- **Weitere Standorte guard for single-location providers (Plan 202)**: The provider detail section in `src/features/providers/components/ProviderDetailSections.tsx` now renders the "Weitere Standorte" accordion only when a provider has more than one location. The guard was changed from `(locations?.length ?? 0) > 0` to `(locations?.length ?? 0) > 1`, preventing the section from appearing for single-location providers.
+
 ## [0.15.4] - 2026-08-02
 
 ### Changed

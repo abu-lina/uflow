@@ -284,16 +284,16 @@ export function ProviderDetailSections({
         {renderOpeningHours(provider.opening_hours, t)}
       </ExpandSection>
 
-      {(locations?.length ?? 0) > 0 && (
+      {(locations?.length ?? 0) > 1 && (
         <div id="standorte-section">
-        <ExpandSection title="Weitere Standorte">
+          <ExpandSection title={t('providerDetail.sections.furtherLocations')}>
           <div className="space-y-2 pt-3">
             {locations!.map((loc) => (
               <DetailListItem
                 key={loc.location_id}
                 icon={<Store aria-hidden="true" className="h-6 w-6" />}
                 isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
-                label={loc.location_name || loc.address_city || 'Standort'}
+                label={loc.location_name || loc.address_city || t('providerDetail.locationFallback')}
                 onClick={() => onLocationSelect?.(loc.location_id)}
               />
             ))}

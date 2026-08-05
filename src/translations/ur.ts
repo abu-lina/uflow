@@ -970,8 +970,10 @@ export const ur = {
       "menu": "مینیو",
       "offers": "پیشکش",
       "openingHours": "اوقاتِ کار",
+      "furtherLocations": "مزید مقامات",
       "nearby": "قریب"
     },
+    "locationFallback": "مقام",
     "days": {
       "monday": "پیر",
       "tuesday": "منگل",

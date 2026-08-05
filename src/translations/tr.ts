@@ -970,8 +970,10 @@ export const tr = {
       "menu": "Menü",
       "offers": "Teklifler",
       "openingHours": "Çalışma Saatleri",
+      "furtherLocations": "Diğer Konumlar",
       "nearby": "Yakında"
     },
+    "locationFallback": "Konum",
     "days": {
       "monday": "Pazartesi",
       "tuesday": "Salı",

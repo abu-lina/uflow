@@ -392,4 +392,87 @@ describe('ProviderDetailSections', () => {
 
     expect(localMockPush).not.toHaveBeenCalled();
   });
+
+  it('[BUG-202 pre-fix FAILS] single-location provider: "Further Locations" must NOT render', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        locations={[
+          {
+            location_id: 'loc-1',
+            provider_id: 'provider-1',
+            location_name: 'Berlin',
+            address_street: 'Musterstrasse 1',
+            address_zip: '10115',
+            address_city: 'Berlin',
+            address_country: 'DE',
+            location_latitude: null,
+            location_longitude: null,
+            opening_hours: null,
+            show_address: true,
+            contact_phone: null,
+            is_primary: true,
+            created_at: null,
+            updated_at: null,
+          },
+        ]}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Further Locations' })).not.toBeInTheDocument();
+  });
+
+  it('[BUG-202 post-fix PASSES] multi-location provider: "Further Locations" must render', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        locations={[
+          {
+            location_id: 'loc-1',
+            provider_id: 'provider-1',
+            location_name: 'Berlin',
+            address_street: 'Musterstrasse 1',
+            address_zip: '10115',
+            address_city: 'Berlin',
+            address_country: 'DE',
+            location_latitude: null,
+            location_longitude: null,
+            opening_hours: null,
+            show_address: true,
+            contact_phone: null,
+            is_primary: true,
+            created_at: null,
+            updated_at: null,
+          },
+          {
+            location_id: 'loc-2',
+            provider_id: 'provider-1',
+            location_name: 'Hamburg',
+            address_street: 'Musterstrasse 2',
+            address_zip: '20095',
+            address_city: 'Hamburg',
+            address_country: 'DE',
+            location_latitude: null,
+            location_longitude: null,
+            opening_hours: null,
+            show_address: true,
+            contact_phone: null,
+            is_primary: false,
+            created_at: null,
+            updated_at: null,
+          },
+        ]}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Further Locations' })).toBeInTheDocument();
+  });
 });
