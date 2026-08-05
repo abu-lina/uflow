@@ -2,7 +2,7 @@
 ID: 203
 Origin: 203
 UUID: b4e7f91a
-Status: In Progress
+Status: Committed
 ---
 
 # Plan 203 — Fix Provider Edit Authorization & Harden Role Sync
@@ -24,6 +24,9 @@ Status: In Progress
 |------|--------|--------|
 | 2026-08-05T14:00Z | @Planner | Initial plan created from analysis 203 |
 | 2026-08-05T07:00Z | @Implementer | Implementation started |
+| 2026-08-05T09:20Z | @Code Reviewer | Code review approved with comments |
+| 2026-08-05T09:30Z | @QA | QA phase complete; ready for UAT |
+| 2026-08-05T09:35Z | @Product Owner | UAT approved; ready for release execution |
 
 ---
 
