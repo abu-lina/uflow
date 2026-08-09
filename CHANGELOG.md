@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.9] - 2026-08-09
+
+### Fixed
+
+- **iOS keyboard UX for chatbot input (Plan 205)**: Added `autoCorrect="on"`, `autoCapitalize="sentences"`, `spellCheck={true}`, and `enterKeyHint="send"` to the ChatInput textarea, restoring QuickType autocorrect, auto-capitalisation, spell-check suggestions, and a contextual Send key hint on iOS Safari. No state or logic changes; purely additive HTML hints. Added regression test to assert all four attributes are present, preventing silent removal.
+
 ## [0.15.8] - 2026-08-09
 
 ### Fixed

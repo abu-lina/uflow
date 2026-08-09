@@ -2,7 +2,7 @@
 ID: 205
 Origin: 205
 UUID: a4e9c1f3
-Status: QA Complete
+Status: Committed for Release v0.15.9
 ---
 
 # Plan 205 — Add iOS Keyboard Attributes to ChatInput Textarea

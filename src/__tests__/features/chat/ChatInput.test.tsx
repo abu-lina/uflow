@@ -20,6 +20,17 @@ describe('ChatInput', () => {
     expect(button).toBeDisabled();
   });
 
+  it('renders textarea with iOS keyboard attributes', () => {
+    render(<ChatInput onSend={vi.fn()} />);
+
+    const textarea = screen.getByPlaceholderText(/Nachricht schreiben/i);
+
+    expect(textarea).toHaveAttribute('autocorrect', 'on');
+    expect(textarea).toHaveAttribute('autocapitalize', 'sentences');
+    expect(textarea).toHaveAttribute('spellcheck', 'true');
+    expect(textarea).toHaveAttribute('enterkeyhint', 'send');
+  });
+
   it('calls onSend with trimmed message on click', () => {
     const onSend = vi.fn();
 
