@@ -2,7 +2,7 @@
 ID: 204
 Origin: 204
 UUID: f3a8c1e2
-Status: Committed
+Status: Released
 ---
 
 # Plan 204 — Fix Category Badge "Unnamed" on Near-Me Provider Cards

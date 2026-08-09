@@ -2,7 +2,7 @@
 ID: 204
 Origin: 204
 UUID: f3a8c1e2
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 204 — Near-Me Category Badge "Unnamed" Fix

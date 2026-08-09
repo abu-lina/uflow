@@ -2,7 +2,7 @@
 ID: 204
 Origin: 204
 UUID: f3a8c1e2
-Status: Committed
+Status: Released
 ---
 
 # Implementation 204 — Near-Me Category Badge "Unnamed" Fix
