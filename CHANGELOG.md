@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.8] - 2026-08-09
+
+### Fixed
+
+- **Near-me category badge fallback fix (Plan 204)**: Fixed provider cards in near-me mode showing `search.unnamed` for every result by extending the `search_food_near_me` RPC with category metadata (`category_id`, `category_name_de`, `category_name_en`, `category_images`) and forwarding those fields through `NearMeFoodResult` and `NearMeResultsGrid` into `ProviderCard`. Added regression coverage to ensure near-me category props are passed to card rendering.
+
 ## [0.15.7] - 2026-08-05
 
 ### Fixed

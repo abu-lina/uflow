@@ -7,12 +7,18 @@ vi.mock('@/components/providers/ProviderCard', () => ({
   ProviderCard: ({
     provider_name,
     distanceKm,
+    category_id,
+    category,
   }: {
     provider_name: string;
     distanceKm?: number;
+    category_id?: string | null;
+    category?: { name_de?: string | null; name_en?: string | null };
   }) => (
     <div>
       {provider_name} — {distanceKm} km
+      <span data-testid={`category-id-${provider_name}`}>{category_id ?? 'null'}</span>
+      <span data-testid={`category-name-${provider_name}`}>{category?.name_de ?? category?.name_en ?? 'missing'}</span>
     </div>
   ),
 }));
@@ -36,6 +42,10 @@ const results: NearMeFoodResult[] = [
     location_latitude: 52.5,
     location_longitude: 13.4,
     distance_km: 0.4,
+    category_id: 'c1',
+    category_name_de: 'Turkisch',
+    category_name_en: 'Turkish',
+    category_images: null,
   },
   {
     provider_id: 'p2',
@@ -46,6 +56,10 @@ const results: NearMeFoodResult[] = [
     location_latitude: 52.51,
     location_longitude: 13.41,
     distance_km: 1.2,
+    category_id: 'c2',
+    category_name_de: 'Arabisch',
+    category_name_en: 'Arabic',
+    category_images: null,
   },
 ];
 
@@ -120,5 +134,25 @@ describe('NearMeResultsGrid', () => {
     expect(screen.getByText('Search is currently unavailable. Please try again.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button'));
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('forwards near-me category fields to ProviderCard', () => {
+    render(
+      <NearMeResultsGrid
+        bookmarkedProviderIds={[]}
+        error={null}
+        isLoading={false}
+        results={results}
+        t={t}
+        onBookmarkChange={vi.fn()}
+        onProviderClick={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('category-id-Sultan Kitchen')).toHaveTextContent('c1');
+    expect(screen.getByTestId('category-name-Sultan Kitchen')).toHaveTextContent('Turkisch');
+    expect(screen.getByTestId('category-id-Habibi Falafel')).toHaveTextContent('c2');
+    expect(screen.getByTestId('category-name-Habibi Falafel')).toHaveTextContent('Arabisch');
   });
 });

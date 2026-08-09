@@ -89,7 +89,12 @@ export function NearMeResultsGrid({
             address_country={null}
             address_street={null}
             address_zip={null}
-            category_id={null}
+            category={{
+              name_de: result.category_name_de ?? result.category_name_en ?? '',
+              name_en: result.category_name_en ?? undefined,
+              category_images: result.category_images ?? undefined,
+            }}
+            category_id={result.category_id}
             contact_email={null}
             contact_phone={null}
             created_at={null}
