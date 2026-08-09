@@ -28,6 +28,10 @@ export interface NearMeFoodResult {
   provider_id: string;
   provider_name: string;
   provider_images: string | { urls?: string[] } | null;
+  category_id: string | null;
+  category_name_de: string | null;
+  category_name_en: string | null;
+  category_images: Record<string, unknown> | null;
   address_city: string | null;
   opening_hours: OpeningHours | null;
   location_latitude: number | null;
