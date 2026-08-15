@@ -109,6 +109,9 @@ function buildCsp() {
       'https://api.simplesvg.com',
       'https://*.supabase.co',
       'https://nominatim.openstreetmap.org',
+      'https://tile.openstreetmap.org',
+      'https://tiles.stadiamaps.com',
+      'https://*.basemaps.cartocdn.com',
       'https://overpass-api.de',
       'https://photon.komoot.io',
       'https://api.foursquare.com',
@@ -333,7 +336,7 @@ const nextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            value: 'strict-origin-when-cross-origin',
           },
           // F-049-06: CSP restored as response header
           {
