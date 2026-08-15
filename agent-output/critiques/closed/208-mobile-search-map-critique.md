@@ -2,7 +2,7 @@
 ID: 208
 Origin: 208
 UUID: e7a3f1b9
-Status: Resolved
+Status: Released
 ---
 
 # Critique: Plan 208 — Mobile Search: Interactive Map View with Restaurant Pins

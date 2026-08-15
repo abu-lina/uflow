@@ -2,7 +2,7 @@
 ID: 208
 Origin: 208
 UUID: e7a3f1b9
-Status: Committed
+Status: Released
 ---
 
 # Implementation Doc — Plan 208: Mobile Search Map View
