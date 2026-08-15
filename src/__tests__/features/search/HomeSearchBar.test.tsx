@@ -101,9 +101,8 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
   });
 
   it('accepts an optional className prop', () => {
-    render(<HomeSearchBar activeSection="food" className="custom-class" />);
-    const region = screen.getByRole('search');
-    expect(region.className).toContain('custom-class');
+    const { container } = render(<HomeSearchBar activeSection="food" className="custom-class" />);
+    expect(container.firstChild).toHaveClass('custom-class');
   });
 
   it('[post-review fix] uses gap-0 between icon and input', () => {

@@ -4,6 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import CitySelectionClient from './CitySelectionClient';
 
 const mockPush = vi.fn();
+const setHref = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -93,6 +94,7 @@ vi.mock('@/lib/utils/onboarding-state', () => ({
 describe('CitySelectionClient redirect behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setHref.mockReset();
 
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
@@ -107,6 +109,18 @@ describe('CitySelectionClient redirect behavior', () => {
         dispatchEvent: vi.fn(),
       })),
     });
+
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        get href() {
+          return 'http://localhost/';
+        },
+        set href(value: string) {
+          setHref(value);
+        },
+      },
+    });
   });
 
   it('[post-fix PASSES] routes to / after selecting city and pressing CTA', () => {
@@ -115,7 +129,8 @@ describe('CitySelectionClient redirect behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Berlin, 10 providers' }));
     fireEvent.click(screen.getByRole('button', { name: 'Show city' }));
 
-    expect(mockPush).toHaveBeenCalledWith('/');
+    expect(setHref).toHaveBeenCalledWith('/');
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
   it('[post-fix PASSES] renders cities when initialCities prop is provided', () => {

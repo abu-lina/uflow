@@ -31,6 +31,12 @@ vi.mock('@/providers/LanguageProvider', () => ({
       if (key === 'suchen.accordions.was') {
         return 'Was';
       }
+      if (key === 'suchen.was.searchPlaceholder') {
+        return 'Angebote suchen';
+      }
+      if (key === 'suchen.was.ummah.searchPlaceholder') {
+        return 'Welchen Dienst suchst du?';
+      }
       if (key === 'suchen.accordions.wer') {
         return 'Wer';
       }
