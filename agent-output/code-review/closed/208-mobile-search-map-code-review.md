@@ -2,7 +2,7 @@
 ID: 208
 Origin: 208
 UUID: e7a3f1b9
-Status: Committed
+Status: Released
 ---
 
 # Code Review: 208-mobile-search-map

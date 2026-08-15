@@ -2,13 +2,15 @@
 
 **Last Updated**: 2026-08-09
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.15.8
+**Current Version**: v0.15.10
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
 
 | Date & Time      | Change                                                             | Rationale                                                                                                                                                 |
 | ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-15T18:00Z | Plan 208 released (v0.15.10): Mobile search map with restaurant pins | Interactive Leaflet map for food section on mobile — OSM DE tiles, real Supabase pin fetch, pin-tap→provider detail, map/list toggle i18n'd across 6 locales. HomeSearchBar filter pill UI (isNearMe/isOpenNow). Footer shown on /search. 3/3 regression tests. PR #307 squash-merged (4c10e903). Tag v0.15.10 pushed. GitHub issue #306 closed. |
+| 2026-08-09T22:16Z | Plan 205 released (v0.15.9): iOS keyboard attributes on ChatInput textarea | Fixed iOS PWA keyboard — added inputmode/autocorrect/spellcheck/autocapitalize attributes to ChatInput textarea. PR #305 squash-merged. Tag v0.15.9 pushed. |
 | 2026-08-09T20:20Z | Plan 204 released (v0.15.8): Near-me category badge fix           | Three-layer fix: search_food_near_me LEFT JOIN categories (migration 122), NearMeFoodResult type +4 fields, NearMeResultsGrid forwards category props to ProviderCard. Issue #302 closed. PR #303 squash-merged (49b1ee61). Tag v0.15.8 pushed. |
 | 2026-01-27 14:00 | Initial roadmap creation                                           | Established strategic direction based on "strengthening Ummah" outcome with focus on growth and community                                                 |
 | 2026-01-27 15:30 | Epic 2.1 implementation plan created (Plan 001), validation passed | Detailed technical plan delivers all 5 acceptance criteria, ready for Architect/Security review                                                           |
