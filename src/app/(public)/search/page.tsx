@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Heart, Search, MapPin } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -19,7 +20,6 @@ import { WerAudienceFilter, type WerAudienceSelectionChange } from '@/features/s
 import { WoCityResults, type WoRecentSearch } from '@/features/search/components/WoCityResults';
 import { FilterSection } from '@/features/search/components/FilterSection';
 import { UmmahFilterSection } from '@/features/search/components/UmmahFilterSection';
-import { SearchMap } from '@/features/search/components/SearchMap';
 import type { MapPin as ProviderMapPin } from '@/features/search/components/SearchMap';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
@@ -29,6 +29,12 @@ import { toast } from 'sonner';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 import { type PopularCity, fetchPopularCities, fetchProviderCities, checkCityExists } from '@/services/providers';
+
+// Leaflet accesses browser globals on import — load only on client side
+const SearchMap = dynamic(
+  () => import('@/features/search/components/SearchMap').then((m) => ({ default: m.SearchMap })),
+  { ssr: false, loading: () => null }
+);
 
 /**
  * /search — dedicated search detail page (Figma node 212:785 "CreateSouk").
