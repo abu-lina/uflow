@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.11] - 2026-08-15
+
+### Fixed
+
+- **Fix UAT deployment: Leaflet SSR build failure (hotfix for v0.15.10)**: `SearchMap` was imported with a direct static import in `search/page.tsx`, causing `import L from 'leaflet'` to execute in a Node.js server context during static page generation (`npm run build:standalone`). Changed to a `next/dynamic` import with `ssr: false` so Leaflet is only loaded client-side. Build now exits 0 with `STANDALONE_BUILD=true`. No functional changes to the map feature.
+
 ## [0.15.10] - 2026-08-15
 
 ### Added
