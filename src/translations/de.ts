@@ -142,7 +142,9 @@ export const de = {
     "food": "Food",
     "ummah": "Ummah",
     "stores": "Stores",
-    "soon": "Demnächst"
+    "soon": "Demnächst",
+    "comingSoon": "{{section}} kommt bald",
+    "comingSoonDescription": "Wir arbeiten daran — bleib gespannt."
   },
   "search": {
     "placeholder": "In deiner Ummah suchen",
@@ -1115,6 +1117,21 @@ export const de = {
       "title": "Anmeldung erforderlich",
       "body": "Um den Chatbot zu nutzen, musst du angemeldet sein.",
       "action": "Jetzt anmelden"
-    }
+    },
+    "openChat": "Chat öffnen",
+    "closeChat": "Chat schließen",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "noProviders": "Keine Anbieter gefunden",
+    "noProvidersHint": "Schau bald wieder rein.",
+    "noOpenProviders": "Momentan keine geöffneten Anbieter",
+    "noOpenProvidersHint": "Versuche, den Filter \"Jetzt geöffnet\" zu deaktivieren.",
+    "switchToList": "Zur Listenansicht",
+    "switchToMap": "Zur Kartenansicht",
+    "listViewLabel": "Liste",
+    "mapViewLabel": "Karte"
   }
 } as const;

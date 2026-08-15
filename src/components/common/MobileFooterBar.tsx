@@ -64,6 +64,7 @@ export function MobileFooterBar() {
 
   const isExploreActive =
     pathname === '/' ||
+    pathname === '/search' ||
     pathname.startsWith('/city/') ||
     pathname === '/providers' ||
     pathname === '/food' ||

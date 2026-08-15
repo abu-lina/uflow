@@ -142,7 +142,9 @@ export const ps = {
     "food": "خواړه",
     "ummah": "امت",
     "stores": "دکانونه",
-    "soon": "ژر"
+    "soon": "ژر",
+    "comingSoon": "{{section}} ژر راځي",
+    "comingSoonDescription": "مونږ پرې کار کوو — پاته اوسئ."
   },
   "search": {
     "placeholder": "په خپل امت کې لټون وکړئ",
@@ -1114,6 +1116,21 @@ export const ps = {
       "title": "لاګ ان اړین دی",
       "body": "د چیټ بوټ د کارولو لپاره باید لاګ ان شئ.",
       "action": "اوس لاګ ان کړئ"
-    }
+    },
+    "openChat": "چیټ پرانیزئ",
+    "closeChat": "چیټ وتړئ",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "لوی کول",
+    "zoomOut": "وړوکی کول",
+    "noProviders": "هیڅ چمتو کوونکی ونه موندل شو",
+    "noProvidersHint": "ژر بیرته وګورئ.",
+    "noOpenProviders": "اوس مهال هیڅ خلاص چمتو کوونکی نشته",
+    "noOpenProvidersHint": "اوس خلاص فلټر بند کولو هڅه وکړئ.",
+    "switchToList": "د لیست لیدلو ته لاړ شئ",
+    "switchToMap": "د نقشې لیدلو ته لاړ شئ",
+    "listViewLabel": "لیست",
+    "mapViewLabel": "نقشه"
   }
 } as const;

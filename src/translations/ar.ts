@@ -142,7 +142,9 @@ export const ar = {
     "food": "طعام",
     "ummah": "أمة",
     "stores": "محلات",
-    "soon": "قريباً"
+    "soon": "قريباً",
+    "comingSoon": "{{section}} قادم قريباً",
+    "comingSoonDescription": "نعمل على ذلك — ترقبوا."
   },
   "search": {
     "placeholder": "ابحث في أمتك",
@@ -1114,6 +1116,21 @@ export const ar = {
       "title": "تسجيل الدخول مطلوب",
       "body": "يجب أن تكون مسجلاً للدخول لاستخدام الدردشة.",
       "action": "تسجيل الدخول الآن"
-    }
+    },
+    "openChat": "فتح الدردشة",
+    "closeChat": "إغلاق الدردشة",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "تكبير",
+    "zoomOut": "تصغير",
+    "noProviders": "لم يتم العثور على مزودين",
+    "noProvidersHint": "تحقق مرة أخرى قريباً.",
+    "noOpenProviders": "لا يوجد مزودون مفتوحون الآن",
+    "noOpenProvidersHint": "جرب إيقاف تشغيل فلتر مفتوح الآن.",
+    "switchToList": "عرض القائمة",
+    "switchToMap": "عرض الخريطة",
+    "listViewLabel": "قائمة",
+    "mapViewLabel": "خريطة"
   }
 } as const;

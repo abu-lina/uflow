@@ -883,3 +883,16 @@
 .growth-effect:hover {
   transform: scale(1.05);
 }
+
+/* Subtle Leaflet attribution */
+.leaflet-control-attribution {
+  font-size: 9px !important;
+  opacity: 0.45;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: opacity 0.2s ease;
+}
+
+.leaflet-control-attribution:hover {
+  opacity: 0.85;
+}

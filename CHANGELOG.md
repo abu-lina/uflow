@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.10] - 2026-08-15
+
+### Added
+
+- **Mobile search map with restaurant pins (Plan 208)**: Mobile users visiting the Search page food section now see an interactive Leaflet map with pins for all approved food providers that have coordinates, instead of category tiles. Pins are tappable and navigate to the provider detail page. Map uses OSM DE tile server with no API key. Map/list toggle controls are fully i18n'd across 6 locales (en/de/ar/tr/ur/ps). Section "coming soon" toast uses localised template interpolation. Error boundary provides fallback to the accordion if the map fails to load. Feature is mobile-only; desktop retains the existing category accordion. Fixes #306.
+
 ## [0.15.9] - 2026-08-09
 
 ### Fixed

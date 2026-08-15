@@ -142,7 +142,9 @@ export const ur = {
     "food": "کھانا",
     "ummah": "امت",
     "stores": "دکانیں",
-    "soon": "جلد"
+    "soon": "جلد",
+    "comingSoon": "{{section}} جلد آ رہا ہے",
+    "comingSoonDescription": "ہم اس پر کام کر رہے ہیں — جڑے رہیں۔"
   },
   "search": {
     "placeholder": "اپنی امت میں تلاش کریں",
@@ -1114,6 +1116,21 @@ export const ur = {
       "title": "لاگ ان ضروری ہے",
       "body": "چیٹ بوٹ استعمال کرنے کے لیے آپ کو لاگ ان ہونا ضروری ہے۔",
       "action": "ابھی لاگ ان کریں"
-    }
+    },
+    "openChat": "چیٹ کھولیں",
+    "closeChat": "چیٹ بند کریں",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "زوم ان",
+    "zoomOut": "زوم آؤٹ",
+    "noProviders": "کوئی فراہم کنندہ نہیں ملا",
+    "noProvidersHint": "جلد واپس آئیں۔",
+    "noOpenProviders": "ابھی کوئی کھلا فراہم کنندہ نہیں",
+    "noOpenProvidersHint": "ابھی کھلا فلٹر بند کرنے کی کوشش کریں۔",
+    "switchToList": "فہرست کا نظارہ",
+    "switchToMap": "نقشہ کا نظارہ",
+    "listViewLabel": "فہرست",
+    "mapViewLabel": "نقشہ"
   }
 } as const;

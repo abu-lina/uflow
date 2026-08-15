@@ -142,7 +142,9 @@ export const tr = {
     "food": "Yemek",
     "ummah": "Ümmet",
     "stores": "Mağazalar",
-    "soon": "Yakında"
+    "soon": "Yakında",
+    "comingSoon": "{{section}} çok yakında",
+    "comingSoonDescription": "Üzerinde çalışıyoruz — takipte kalın."
   },
   "search": {
     "placeholder": "Ümmetinde ara",
@@ -1114,6 +1116,21 @@ export const tr = {
       "title": "Giriş yapmanız gerekiyor",
       "body": "Sohbet botunu kullanmak için giriş yapmanız gerekiyor.",
       "action": "Şimdi giriş yap"
-    }
+    },
+    "openChat": "Sohbeti aç",
+    "closeChat": "Sohbeti kapat",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "Yakınlaştır",
+    "zoomOut": "Uzaklaştır",
+    "noProviders": "Sağlayıcı bulunamadı",
+    "noProvidersHint": "Yakında tekrar kontrol edin.",
+    "noOpenProviders": "Şu an açık sağlayıcı yok",
+    "noOpenProvidersHint": "Şimdi Açık filtresini kapatmayı deneyin.",
+    "switchToList": "Liste görünümü",
+    "switchToMap": "Harita görünümü",
+    "listViewLabel": "Liste",
+    "mapViewLabel": "Harita"
   }
 } as const;
