@@ -2,7 +2,7 @@
 ID: 210
 Origin: 210
 UUID: b7e4f1a3
-Status: Active
+Status: Committed
 ---
 
 # Plan 210 Implementation — CI Pipeline Failure Fix

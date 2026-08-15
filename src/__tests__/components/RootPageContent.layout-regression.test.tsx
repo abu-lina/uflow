@@ -11,6 +11,28 @@ vi.mock('@/hooks/useAppStage', () => ({
   }),
 }));
 
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
+vi.mock('@/lib/supabase/client', () => {
+  const query = {
+    select: vi.fn(() => query),
+    not: vi.fn(() => query),
+    eq: vi.fn(() => query),
+    then: (resolve: (value: { data: unknown[] }) => unknown) =>
+      Promise.resolve(resolve({ data: [] })),
+  };
+
+  return {
+    supabase: {
+      from: vi.fn(() => query),
+    },
+  };
+});
+
 vi.mock('@/config/feature-flags', () => ({
   getFeatureFlag: (key: string) => key === 'isAppLaunched',
 }));

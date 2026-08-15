@@ -19,23 +19,36 @@ function runImport(args: string[]) {
   });
 }
 
+function scriptOutput(result: ReturnType<typeof runImport>) {
+  const combined = `${result.stdout}\n${result.stderr}`;
+  return combined
+    .split('\n')
+    .filter(
+      (line) =>
+        !line.startsWith('npm warn exec') &&
+        !line.includes('Node.js 20 and below are deprecated')
+    )
+    .join('\n');
+}
+
 describe('import-muslimbusiness CLI', () => {
   it('rejects --limit without a positive integer value', () => {
     const result = runImport(['--dry-run', '--limit']);
+    const output = scriptOutput(result);
 
     expect(result.status).not.toBe(0);
-    expect(result.stderr || result.stdout).toContain(
+    expect(output).toContain(
       '--limit requires a positive integer (got: undefined)'
     );
   }, 15_000);
 
   it('accepts a positive --limit and reaches category loading', () => {
     const result = runImport(['--dry-run', '--limit', '3']);
-    const output = `${result.stdout}\n${result.stderr}`;
+    const output = scriptOutput(result);
 
     expect(output).toContain('Mode       : 🔍 DRY-RUN (no writes)');
     expect(output).toContain('Limit      : 3');
     expect(output).toContain('▶ Loading categories from Supabase...');
     expect(output).toContain('Failed to load categories');
-  });
+  }, 15_000);
 });
