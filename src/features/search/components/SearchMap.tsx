@@ -76,7 +76,6 @@ export function SearchMap({ isNearMe = false, pins }: SearchMapProps) {
 
     L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      crossOrigin: 'anonymous',
     }).addTo(map);
 
     return () => {

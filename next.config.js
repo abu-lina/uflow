@@ -49,7 +49,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
       // Cross-origin image assets (e.g. Supabase Storage provider photos).
       // Do NOT add Supabase API calls here — only static image assets.
       {
-        urlPattern: /^https:\/\/.*\.(?:png|jpg|jpeg|svg|gif)$/,
+        urlPattern: /^https:\/\/[^/]*\.supabase\.co\/.*\.(?:png|jpg|jpeg|svg|gif)(\?.*)?$/,
         handler: 'CacheFirst',
         options: {
           cacheName: 'images-cache',
@@ -109,7 +109,7 @@ function buildCsp() {
       'https://api.simplesvg.com',
       'https://*.supabase.co',
       'https://nominatim.openstreetmap.org',
-      'https://tile.openstreetmap.org',
+      'https://tile.openstreetmap.de',
       'https://tiles.stadiamaps.com',
       'https://*.basemaps.cartocdn.com',
       'https://overpass-api.de',

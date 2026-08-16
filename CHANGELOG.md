@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.13] - 2026-08-16
+
+### Fixed
+
+- **iPhone map tile rendering regression (Plan 211)**: Fixed mobile `/search` map tiles turning grey on iOS Safari while pins remained visible. Scoped PWA `runtimeCaching` image route to Supabase storage URLs only so OpenStreetMap tile requests are no longer intercepted by Service Worker CacheFirst logic, removed unnecessary `crossOrigin: 'anonymous'` from Leaflet tile layer, and corrected CSP `connect-src` tile host from `tile.openstreetmap.org` to `tile.openstreetmap.de`. Added regression coverage guarding SW regex scope, CSP tile host, and tile-layer crossOrigin configuration.
+
 ## [0.15.12] - 2026-08-15
 
 ### Fixed
