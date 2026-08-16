@@ -214,14 +214,38 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 ---
 
-## Stage 2: Pending User Confirmation
+## Stage 2: Release Execution
 
-Stage 2 (push + tag) to be executed after:
-1. User runs Stage 1 pre-flight checks and confirms clean state
-2. User provides explicit "yes, release v0.15.15" approval
-3. FIR-1 commits are present and ahead of origin/main
+**User Confirmation**: "yes, release v0.15.15" — 2026-08-16T18:30Z (approx.)
+**Confirmed by**: User (explicit)
 
-**Worker session constraint**: This is a `uflow-wt` worktree. DO NOT push or deploy from this worktree. Stage 2 must be executed after the PR is raised and merged to main from the canonical `/uflow/` checkout, or via GitHub Actions.
+### Release Execution Log
+
+| Step | Command | Result |
+| ---- | ------- | ------ |
+| Finalize CHANGELOG | `[Unreleased]` → `[0.15.15]` | ✅ Updated |
+| Amend commit | `git add CHANGELOG.md && git commit --amend --no-edit` | ⏳ Pending |
+| Pre-push sync guard | `git fetch origin main --tags && git merge-base --is-ancestor origin/main HEAD` | ⏳ Pending |
+| Push branch | `git push origin session/212-near-me-pwa-fix` | ⏳ Pending |
+| PR comparison URL | `https://github.com/abu-lina/uflow/compare/main...session/212-near-me-pwa-fix` | ⏳ Pending |
+| CI check | `sleep 90 && gh pr checks <PR#> --repo abu-lina/uflow 2>&1 \| cat` | ⏳ Pending |
+| PR merge (squash) | `gh pr merge <PR#> --repo abu-lina/uflow --squash --delete-branch` | ⏳ Pending |
+| Squash commit SHA | `git fetch origin --tags && git rev-parse origin/main` | ⏳ Pending |
+| Create annotated tag | `git tag -a v0.15.15 <squash-sha> -m "Release v0.15.15 — Plan 209 Near Me denied-state recovery guidance"` | ⏳ Pending |
+| Push tag | `git push origin v0.15.15` | ⏳ Pending |
+| Close GitHub issue | `gh issue close 319 --repo abu-lina/uflow --comment "Released in v0.15.15 🎉"` | ⏳ Pending |
+
+---
+
+## Lessons Learned (captured for Retrospective)
+
+| # | Lesson | Category |
+| --- | --- | --- |
+| L1 | Implementation code was left uncommitted at Code Review handoff — required FIR-1 remediation. Code Reviewer should confirm working tree is clean before issuing verdict. | Process |
+| L2 | Formal QA and UAT agents were skipped; user provided verbal release decision instead. For on-device-critical bugfixes (iOS PWA, location permission), a lightweight UAT script should be required — not optional — to get DF-3 evidence before release. | Process |
+| L3 | Branch was initially created as `chore/212-release-records` rather than `session/212-near-me-pwa-fix`; required stash → cherry-pick to recover. Worker session setup (branch naming) should be verified before the first Implementer commit. | Tooling |
+| L4 | Two critique rounds were needed because the first scope was broader than the plan warranted. Earlier scope alignment between Planner and Critic reduces revision cycles. | Process |
+| L5 | Worktree DF-1 (no Supabase env vars → build blocked) and DF-3 (no device access → on-device validation deferred) both carried forward from Plan 212. These are structural worktree constraints; open-actions trackers correctly capture them but should be reviewed at session start to calibrate testing expectations upfront. | Infrastructure |
 
 ---
 

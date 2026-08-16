@@ -2,7 +2,7 @@
 ID: 209
 Origin: 209
 UUID: b7e3f41a
-Status: OPEN
+Status: Resolved
 ---
 
 # Critique: Plan 209 — Near Me Permission-Denied UX Guidance
