@@ -68,6 +68,7 @@ function SearchPageContent() {
 
   const urlSection = resolveSection(searchParams.get('section'));
   const urlQuery = (searchParams.get('q') || '').trim();
+  const urlView = searchParams.get('view');
   const [selectedSection, setSelectedSection] = useState<Section>(urlSection);
   const [wasQuery, setWasQuery] = useState(urlQuery);
   const [wasResults, setWasResults] = useState<FoodConcept[]>([]);
@@ -436,9 +437,9 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
     setWasQuery(urlQuery);
   }, [urlQuery]);
 
-  // Load food provider pins for map mode — only fetches when mobile + food section
+  // Load food provider pins for map mode — only fetches when mobile + food section + view=map
   useEffect(() => {
-    if (!isMobile || selectedSection !== 'food') { setMapPins([]); return; }
+    if (!isMobile || selectedSection !== 'food' || urlView !== 'map') { setMapPins([]); return; }
     let cancelled = false;
     type RawPin = { provider_id: string; location_latitude: number; location_longitude: number; providers: { provider_name: string | null } | { provider_name: string | null }[] | null };
     async function loadPins() {
@@ -461,7 +462,7 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
     }
     void loadPins();
     return () => { cancelled = true; };
-  }, [isMobile, selectedSection]);
+  }, [isMobile, selectedSection, urlView]);
 
   const handleSectionChange = (section: Section) => {
     if (!SECTION_META[section].active) {
@@ -588,7 +589,7 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
   const filterAccordionTitle = selectedFilters.length > 0
     ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
     : t('suchen.accordions.filter');
-  const isMobileFoodMapMode = isMobile && selectedSection === 'food';
+  const isMobileFoodMapMode = isMobile && selectedSection === 'food' && urlView === 'map';
 
   const accordionBody = (
     <div className="flex flex-col gap-2">

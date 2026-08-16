@@ -4,6 +4,7 @@ import SearchPage from '@/app/(public)/search/page';
 
 let mockSection: 'food' | 'ummah' | 'store' = 'food';
 let mockIsMobile = false;
+let mockView: string | null = null;
 
 // Hoisted refs available inside vi.mock factories
 const { capturedPins, mockSupabaseFrom } = vi.hoisted(() => {
@@ -30,7 +31,11 @@ vi.mock('next/navigation', () => ({
     back: vi.fn(),
     replace: vi.fn(),
   }),
-  useSearchParams: () => new URLSearchParams(`section=${mockSection}`),
+  useSearchParams: () => {
+    const params = new URLSearchParams(`section=${mockSection}`);
+    if (mockView) params.set('view', mockView);
+    return params;
+  },
 }));
 
 vi.mock('@/providers/LanguageProvider', () => ({
@@ -106,6 +111,7 @@ describe('Plan 208 mobile map switch', () => {
   beforeEach(() => {
     mockIsMobile = false;
     mockSection = 'food';
+    mockView = null;
     capturedPins.current = [];
     mockSupabaseFrom.mockClear();
   });
@@ -114,18 +120,42 @@ describe('Plan 208 mobile map switch', () => {
     cleanup();
   });
 
-  it('renders map on mobile for food section', async () => {
+  it('[pre-fix FAILS / post-fix PASSES] mobile food without view param renders filters, not map', async () => {
     mockIsMobile = true;
     mockSection = 'food';
+    mockView = null;
+
+    render(<SearchPage />);
+
+    expect(screen.queryByTestId('search-map')).not.toBeInTheDocument();
+    expect(await screen.findByText('suchen.accordions.woEmpty')).toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] mobile food with view=filters renders filters, not map', async () => {
+    mockIsMobile = true;
+    mockSection = 'food';
+    mockView = 'filters';
+
+    render(<SearchPage />);
+
+    expect(screen.queryByTestId('search-map')).not.toBeInTheDocument();
+    expect(await screen.findByText('suchen.accordions.woEmpty')).toBeInTheDocument();
+  });
+
+  it('renders map on mobile food when view=map', async () => {
+    mockIsMobile = true;
+    mockSection = 'food';
+    mockView = 'map';
 
     render(<SearchPage />);
 
     expect(await screen.findByTestId('search-map')).toBeInTheDocument();
   });
 
-  it('does not render map on desktop', async () => {
+  it('does not render map on desktop even with view=map', async () => {
     mockIsMobile = false;
     mockSection = 'food';
+    mockView = 'map';
 
     render(<SearchPage />);
 
@@ -150,12 +180,26 @@ describe('Plan 208 mobile map switch', () => {
 
     mockIsMobile = true;
     mockSection = 'food';
+    mockView = 'map';
 
     render(<SearchPage />);
 
     await screen.findByTestId('search-map');
     await waitFor(() => {
       expect(capturedPins.current.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('[post-fix] does not fetch pins when filters shown (mobile food, no view)', async () => {
+    mockIsMobile = true;
+    mockSection = 'food';
+    mockView = null;
+
+    render(<SearchPage />);
+
+    expect(screen.queryByTestId('search-map')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockSupabaseFrom).not.toHaveBeenCalledWith('locations');
     });
   });
 });

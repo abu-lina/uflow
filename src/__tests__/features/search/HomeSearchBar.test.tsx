@@ -74,6 +74,16 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     expect(mockPush).toHaveBeenCalledWith('/search?section=food');
   });
 
+  it('[post-fix PASSES] sliders button does not append a view=map param', () => {
+    render(<HomeSearchBar activeSection="food" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Suchfilter öffnen' }));
+    expect(mockPush).toHaveBeenCalledWith('/search?section=food');
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    const callArg = mockPush.mock.calls[0]?.[0];
+    expect(typeof callArg).toBe('string');
+    expect(callArg).not.toContain('view=map');
+  });
+
   it('sliders button navigates to /search?section=ummah', () => {
     render(<HomeSearchBar activeSection="ummah" />);
     fireEvent.click(screen.getByRole('button', { name: 'Suchfilter öffnen' }));
