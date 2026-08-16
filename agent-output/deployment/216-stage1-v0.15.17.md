@@ -19,6 +19,7 @@ Status: Active
 | Date (UTC) | Agent | Change |
 | --- | --- | --- |
 | 2026-08-17 | devops | Stage 1: version pre-flight, v0.15.17 bump committed, branch pushed, PR #325 raised; awaiting user approval for merge/tag/PROD deploy |
+| 2026-08-17 | devops | CI verified — all PR #325 checks green (Build 3m5s, Lint & Type 1m40s, Tests 6m59s, Audit 55s, IOC 6s, Snyk pass); docs-only record update pushed |
 
 ---
 
@@ -89,9 +90,20 @@ Status: Active
 | Base / Head | `main` ← `fix/216-filter-button-redirect` |
 | Mergeable | Pending CI (reported after push) |
 
-### CI Status
+### CI Status (`gh pr checks 325` — final HEAD `79f3ee56`, run 31977899065)
 
-To be reported after `gh pr checks 325` completes on the pushed branch HEAD (Build Verification, Lint & Type Check, Run Tests, Security Audit).
+| Check | Status | Duration |
+| --- | --- | --- |
+| Build Verification | ✅ pass | 3m5s |
+| Lint & Type Check | ✅ pass | 1m40s |
+| Run Tests | ✅ pass | 6m59s |
+| Security Audit | ✅ pass | 55s |
+| Supply Chain IOC Scan | ✅ pass | 6s |
+| CI Summary | ✅ pass | 3s |
+| security/snyk (abu-lina) | ✅ pass | 1 security test passed |
+| Verify Snyk PR | skipping | n/a |
+
+All checks green on the branch HEAD containing the fix, review docs, version bump, and release records. Docs-only update below does not touch build/lint scope; CI re-runs on the new HEAD and the result is reported in the DevOps session summary.
 
 ---
 

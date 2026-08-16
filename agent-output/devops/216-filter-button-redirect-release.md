@@ -12,6 +12,7 @@ Status: Active
 | Date | Agent | Summary |
 |------|-------|---------|
 | 2026-08-17 | DevOps | Stage 1 complete: version bumped to v0.15.17, branch pushed, PR raised; production release awaiting user approval |
+| 2026-08-17 | DevOps | CI verified — all PR #325 checks green; records updated with CI results |
 
 ## 2. Plan Reference
 
@@ -82,7 +83,7 @@ No other version-locked files found (README carries no version reference; grep o
 | Branch sync | ✅ 0 behind origin/main | This record |
 | Unrelated changes | ✅ excluded from commits; only 3 version files + 2 record files staged | This record |
 | Migrations | None — no schema/data migration in Plan 216 (frontend-only fix) | Plan doc |
-| CI | See PR checks after push (Build Verification, Lint & Type Check, Run Tests, Security Audit) | gh pr checks |
+| CI | ✅ ALL GREEN on final HEAD `79f3ee56` (run 31977899065): Build Verification 3m5s, Lint & Type Check 1m40s, Run Tests 6m59s, Security Audit 55s, Supply Chain IOC Scan 6s, CI Summary 3s, snyk pass | gh pr checks 325 |
 
 ## 8. Lifecycle Status (per document-lifecycle skill)
 
