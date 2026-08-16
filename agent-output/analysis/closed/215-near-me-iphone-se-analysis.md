@@ -2,7 +2,7 @@
 ID: 215
 Origin: 215
 UUID: 140019f7
-Status: Committed
+Status: Released
 ---
 
 # Analysis 215 — "Near Me" Broken on iPhone SE PWA (Home Page Map)
@@ -15,6 +15,7 @@ Status: Committed
 | 2026-08-16T22:30Z | analyst | On-device evidence received; Plan 214 ruled out; DF-3 gap confirmed; root cause updated; F7 L3→L2; F9 added |
 | 2026-08-16T22:45Z | planner | Plan created: agent-output/planning/215-near-me-ios-pwa-geolocation-plan.md |
 | 2026-08-16T23:50Z | devops | Status: Committed — Stage 1 lifecycle commit for release v0.15.16 |
+| 2026-08-16T22:04Z | devops | Status: Released — v0.15.16 shipped to PROD (PR #324 squash 3b8c8a72, tag v0.15.16, deploy run 31975012863); document closed |
 
 ---
 

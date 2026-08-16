@@ -2,7 +2,7 @@
 ID: 215
 Origin: 215
 UUID: 140019f7
-Status: Committed
+Status: Released
 ---
 
 # Implementation 215 — iOS PWA Geolocation Hang Watchdog (Near Me)
@@ -23,6 +23,7 @@ Status: Committed
 | 2026-08-16T23:20Z | Implementer | Validation + artifacts | Completed code/test/version updates; recorded gate results |
 | 2026-08-16T23:45Z | Implementer | Code review remediation | Reordered `typeof navigator` guard in `isStandaloneDisplayMode`; added `unavailable` outcome log; added regression tests for both |
 | 2026-08-16T23:50Z | devops | Stage 1 lifecycle commit | Status: Committed — release v0.15.16 |
+| 2026-08-16T22:04Z | devops | Stage 2/3 release execution | Status: Released — v0.15.16 shipped to PROD (PR #324 squash 3b8c8a72, tag v0.15.16, deploy run 31975012863); document closed |
 
 ## Implementation Summary
 Implemented a client-side geolocation hang watchdog so the Near Me flow on iPhone SE standalone PWA always reaches a terminal, actionable state instead of staying stuck in `prompting` forever.

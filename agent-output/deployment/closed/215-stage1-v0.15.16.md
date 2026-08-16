@@ -2,7 +2,7 @@
 ID: 215
 Origin: 215
 UUID: 140019f7
-Status: Active
+Status: Released
 ---
 
 # Deployment Record: v0.15.16 — Stage 1 (Plan 215)
@@ -19,6 +19,8 @@ Status: Active
 | Date (UTC) | Agent | Change |
 | --- | --- | --- |
 | 2026-08-16T23:50Z | devops | Stage 1 initiated: version pre-flight, lifecycle docs committed, PR raised, CI verified |
+| 2026-08-16T21:57Z | devops | Stage 2: PR #324 squash-merged (3b8c8a72); annotated tag v0.15.16 created + pushed |
+| 2026-08-16T22:04Z | devops | Stage 3: PROD deploy run 31975012863 success; PROD healthy with fresh uptime (34.95s); lifecycle docs closed; roadmap sync; issue #323 closed |
 | 2026-08-16T23:55Z | devops | Deployment record written with PR URL + CI results; docs-only commit pushed |
 | 2026-08-16T21:47Z | devops | UAT branch deploy (workflow_dispatch, ref `fix/215-ios-pwa-geolocation` @ `5196a4c1`) → success; UAT live with v0.15.16 code; PROD untouched |
 | 2026-08-16T21:55Z | devops | UAT deploy record section added to this document; docs commit pushed to branch |
@@ -37,7 +39,7 @@ Status: Active
 | QA doc | `agent-output/qa/215-ios-pwa-geolocation-qa.md` |
 | QA Status | QA Complete — 50/50 targeted, 1906/1906 full suite, type-check, delta lint, build exit 0 |
 | Code Review | APPROVED_WITH_COMMENTS → Medium guard fix applied in `58360b22`, re-reviewed by QA |
-| UAT Status | On-device gate (M6 / DF-3) DEFERRED to UAT operator — does NOT block Stage 1 (PR + CI) |
+| UAT Status | On-device gate (M6 / DF-3) — **VALIDATED by user on-device (iPhone SE PWA, scenarios A–F)** — release approved by user |
 
 **Plans included in this release**: Plan 215 (single-plan patch, v0.15.16)
 
@@ -164,16 +166,56 @@ User-approved manual UAT deploy BEFORE merge to main, so the Near Me fix can be 
 
 ---
 
-## Stage 2/3 Trigger Conditions
+## Stage 2: Release Execution (2026-08-16)
 
-| Stage | Trigger | Actions |
-| --- | --- | --- |
-| **Stage 2 (Release execution)** | User explicitly confirms release of v0.15.16 AFTER on-device M6/DF-3 evidence recorded and UAT approves | Pre-push sync guard, squash-merge PR #324, tag `v0.15.16` on the squash commit, push tag, update all plan statuses to "Released", roadmap sync, close issue #323 |
-| **Stage 3 (PROD release)** | Stage 2 complete + user confirmation | Deploy to production, functional smoke tests, mark plans Released, close lifecycle docs (moves to `closed/`) |
+**User confirmation**: User validated the fix on-device (iPhone SE PWA, Plan 215 M6 / DF-3 scenarios A–F) and explicitly approved the release of v0.15.16. Orchestrator confirmed; previous DevOps attempt returned empty — this session executed the release.
 
-**NOT executed in this session**: no merge, no tag, no PROD deployment — awaiting on-device validation + explicit user approval.
+| Step | Result |
+| --- | --- |
+| Pre-push sync guard | `git fetch origin`; branch `fix/215-ios-pwa-geolocation` 0 behind / 6 ahead of origin/main; `mergeStateStatus: CLEAN`, `mergeable: MERGEABLE` |
+| CI on PR #324 | All green — Build Verification, Lint & Type Check, Run Tests, Security Audit, Supply Chain IOC Scan, CI Summary, snyk all pass |
+| Merge | `gh pr merge 324 --squash --delete-branch` → **MERGED** at 2026-08-16T21:57:38Z |
+| Merge SHA | `3b8c8a72ede1ee4dad50145fdb85190052fa4fa6` (squash commit on main) |
+| PR title | `fix(near-me): Add geolocation hang watchdog for iOS standalone PWA (Plan 215)` |
+| Tag | `git tag -a v0.15.16 3b8c8a72 -m "Release v0.15.16 — Plan 215: iOS PWA geolocation hang watchdog"` (annotated, matching v0.15.15 style) |
+| Tag push | `git push origin v0.15.16` → new tag on origin; verified `git ls-remote --tags origin \| grep v0.15.16` → `3b8c8a72^{}` |
+| Version consistency | package.json `0.15.16` ✅, package-lock `0.15.16` ✅, CHANGELOG `## [0.15.16] - 2026-08-16` ✅, tag `v0.15.16` ✅ |
 
 ---
+
+## Stage 3: PROD Deployment (2026-08-16)
+
+| Step | Result |
+| --- | --- |
+| Workflow | `deploy-hetzner.yml` (`workflow_dispatch` + `confirm_deploy` input) — merge does NOT auto-deploy PROD |
+| Run | `gh workflow run deploy-hetzner.yml --ref main -f confirm_deploy=deploy` → run **31975012863** |
+| Run URL | https://github.com/abu-lina/uflow/actions/runs/31975012863 |
+| Result | ✅ SUCCESS in 5m51s — all steps green (Checkout → nginx upload → Build & push GHCR image → Deploy to Hetzner blue-green → Deployment summary) |
+| PROD health | `GET https://ummahflow.com/api/health` → HTTP 200 `{"status":"healthy","uptime":34.95,"environment":"production"}` at 2026-08-16T22:04:15Z — **uptime fresh (container swapped**; was ~58 days / 5,011,200s pre-deploy) |
+| PWA service worker | `public/sw.js` regenerated during build; container swap confirmed via uptime reset; PROD serving v0.15.16 code |
+| Migrations | None — Plan 215 ships no schema/data migration (`supabase db push` not required) |
+
+---
+
+## Post-Release Status
+
+| Item | Status |
+| --- | --- |
+| Plan statuses | All Plan 215 docs → **Released**, moved to `closed/` (analysis, planning, implementation, code-review, qa, deployment) |
+| GitHub issue #323 | **CLOSED** |
+| Roadmap | Current Version → **v0.15.16**, changelog row added |
+| Plan 212 open-actions | **DF-3 CLOSED** (Plan 215 delivered + user validated on-device) |
+| Smoke tests | PROD `/api/health` healthy (200); UAT still healthy on fix-branch deploy |
+
+---
+
+## Known Limitations (Post-Release)
+
+| Item | Detail |
+| --- | --- |
+| Full-repo lint debt (203 problems) | Pre-existing, unrelated to Plan 215; tracked separately |
+| `npm audit` 4 pre-existing findings | 2 high / 2 moderate, no new deps from Plan 215; not a blocker (v0.15.15 precedent) |
+| Desktop standalone false-positive on `denied` mapping (code review LOW) | Open — follow up if telemetry shows it (optional LOW) |
 
 ## Known Limitations (Pre-Stage 2)
 

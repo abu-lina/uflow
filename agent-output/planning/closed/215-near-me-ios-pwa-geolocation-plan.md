@@ -2,7 +2,7 @@
 ID: 215
 Origin: 215
 UUID: 140019f7
-Status: Committed
+Status: Released
 ---
 
 # Plan 215 — iOS PWA Geolocation Hang Fix (Near Me Never Resolves on iPhone SE)
@@ -19,6 +19,7 @@ Status: Committed
 | 2026-08-16T23:30Z | code-reviewer | Code review completed | APPROVED_WITH_COMMENTS; one required guard fix in isStandaloneDisplayMode(). |
 | 2026-08-16T23:25Z | qa | QA validation completed | QA Complete — all automated gates pass (50/50 targeted, 1906/1906 full suite, type-check, delta lint, build); on-device M6/DF-3 gate deferred to user iPhone SE with evidence checklist in QA doc. |
 | 2026-08-16T23:50Z | devops | Status: Committed — Stage 1 lifecycle commit for release v0.15.16 (PR raised, CI verified); on-device M6 gate remains open until user validates |
+| 2026-08-16T22:04Z | devops | Status: Released — v0.15.16 shipped to PROD (PR #324 squash 3b8c8a72, tag v0.15.16, deploy run 31975012863); document closed |
 
 ---
 

@@ -2,7 +2,7 @@
 ID: 215
 Origin: 215
 UUID: 140019f7
-Status: Committed
+Status: Released
 ---
 
 # QA Report: Plan 215 — iOS PWA Geolocation Hang Watchdog (Near Me)
@@ -23,6 +23,7 @@ Status: Committed
 | 2026-08-16T23:10Z | qa | Phase 1 test strategy development | Strategy defined from plan M1-M6 + analysis F9 root cause |
 | 2026-08-16T23:15Z | qa | Phase 2 test execution | All automated gates executed and recorded; QA Complete |
 | 2026-08-16T23:50Z | devops | Stage 1 lifecycle commit | Status: Committed — release v0.15.16; DF-1 CI gate now exercised via PR |
+| 2026-08-16T22:04Z | devops | Stage 2/3 release execution | Status: Released — v0.15.16 shipped to PROD (PR #324 squash 3b8c8a72, tag v0.15.16, deploy run 31975012863); document closed |
 
 ## Timeline
 
