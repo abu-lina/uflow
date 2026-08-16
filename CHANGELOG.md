@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.14] - 2026-08-16
+
+### Fixed
+
+- **Near Me map viewport on iPhone SE PWA (Plan 212)**: Refactored home Near Me flow to use the shared `useGeolocation` lifecycle in `RootPageContent` and removed duplicate geolocation calls from `SearchMap`. The map now pans to user coordinates only after geolocation is granted (`setView` zoom 14), Near Me chip state is driven by `geoStatus` (idle/prompting/granted/denied/timeout/unavailable), prompting uses Tailwind `animate-pulse`, and deactivation uses `reset()` without snapping back to Germany centroid. Added regression tests for prop-driven map pan, removal of `getCurrentPosition` from `SearchMap`, and RootPageContent request/reset wiring.
+
 ## [0.15.13] - 2026-08-16
 
 ### Fixed

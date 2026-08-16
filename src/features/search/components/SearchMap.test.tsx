@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import { SearchMap } from './SearchMap';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const mockPush = vi.fn();
-const mockMarkerOn = vi.fn();
 let capturedClickHandler: (() => void) | undefined;
+
+const mapRoot = path.resolve(__dirname, '../../../..');
 
 vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({
@@ -97,7 +100,47 @@ describe('SearchMap', () => {
       expect(capturedClickHandler).toBeDefined();
     });
 
-    capturedClickHandler!();
+    expect(capturedClickHandler).toBeDefined();
+    if (!capturedClickHandler) {
+      throw new Error('expected capturedClickHandler to be defined');
+    }
+    capturedClickHandler();
     expect(mockPush).toHaveBeenCalledWith('/providers/p1');
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] pans map when userCoords is provided', async () => {
+    const pins: never[] = [];
+    render(<SearchMap pins={pins} userCoords={{ lat: 52.52, lon: 13.405 }} />);
+
+    const leaflet = await import('leaflet');
+    const mapFn = vi.mocked(leaflet.default.map);
+    const mapInstance = mapFn.mock.results[0]?.value;
+
+    await waitFor(() => {
+      expect(mapInstance.setView).toHaveBeenCalledWith([52.52, 13.405], 14);
+    });
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] does not call setView again when rerendered with unchanged coords', async () => {
+    const pins: never[] = [];
+    const { rerender } = render(<SearchMap pins={pins} userCoords={{ lat: 52.52, lon: 13.405 }} />);
+
+    const leaflet = await import('leaflet');
+    const mapFn = vi.mocked(leaflet.default.map);
+    const mapInstance = mapFn.mock.results[0]?.value;
+
+    await waitFor(() => {
+      expect(mapInstance.setView).toHaveBeenCalledWith([52.52, 13.405], 14);
+    });
+
+    rerender(<SearchMap pins={pins} userCoords={{ lat: 52.52, lon: 13.405 }} />);
+
+    // One init setView + one near-me setView; unchanged rerender must not add another call.
+    expect(mapInstance.setView).toHaveBeenCalledTimes(2);
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] SearchMap source does not call getCurrentPosition', () => {
+    const source = fs.readFileSync(path.join(mapRoot, 'src/features/search/components/SearchMap.tsx'), 'utf8');
+    expect(source).not.toContain('getCurrentPosition');
   });
 });

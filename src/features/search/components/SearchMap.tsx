@@ -25,7 +25,7 @@ export interface MapPin {
 }
 
 interface SearchMapProps {
-  isNearMe?: boolean;
+  userCoords?: { lat: number; lon: number } | null;
   pins: MapPin[];
 }
 
@@ -51,11 +51,13 @@ function createPinIcon(): L.DivIcon {
   });
 }
 
-export function SearchMap({ isNearMe = false, pins }: SearchMapProps) {
+export function SearchMap({ userCoords = null, pins }: SearchMapProps) {
   const router = useRouter();
   const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const userLat = userCoords?.lat ?? null;
+  const userLon = userCoords?.lon ?? null;
 
   // Init map + tile layer once the container is mounted — independent of pins
   useEffect(() => {
@@ -84,21 +86,11 @@ export function SearchMap({ isNearMe = false, pins }: SearchMapProps) {
     };
   }, []);  
 
-  // Near me: when activated, fly to user's current location (zoom 14 ≈ ~1 km visible)
+  // Near me viewport changes are controlled by parent-provided user coords.
   useEffect(() => {
-    if (!isNearMe) return;
-
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        mapRef.current?.setView([pos.coords.latitude, pos.coords.longitude], 14);
-      },
-      () => {
-        // Permission denied or unavailable — no-op, chips remain toggled
-      },
-    );
-  }, [isNearMe]);
+    if (userLat === null || userLon === null) return;
+    mapRef.current?.setView([userLat, userLon], 14);
+  }, [userLat, userLon]);
 
   // Add/refresh markers whenever pins change
   useEffect(() => {
