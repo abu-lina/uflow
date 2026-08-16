@@ -20,6 +20,7 @@ Status: Active
 | --- | --- | --- |
 | 2026-08-17 | devops | Stage 1: version pre-flight, v0.15.17 bump committed, branch pushed, PR #325 raised; awaiting user approval for merge/tag/PROD deploy |
 | 2026-08-17 | devops | CI verified — all PR #325 checks green (Build 3m5s, Lint & Type 1m40s, Tests 6m59s, Audit 55s, IOC 6s, Snyk pass); docs-only record update pushed |
+| 2026-08-17 | devops | Stage 2 released: PR #325 squash-merged (212f9668), tag v0.15.17 pushed, PROD deploy run 31978780554 SUCCESS, health healthy; chain docs closed → Committed |
 
 ---
 
@@ -116,18 +117,18 @@ All checks green on the branch HEAD containing the fix, review docs, version bum
 
 ---
 
-## Stage 2/3 (NOT executed — awaiting approval)
+## Stage 2 — Executed (2026-08-17, user approval granted)
 
 | Step | Status |
 | --- | --- |
-| PR squash-merge | ⏸ Pending user approval |
-| Annotated tag `v0.15.17` + push | ⏸ Pending user approval |
-| PROD deploy (`deploy-hetzner.yml`) | ⏸ Pending user approval |
-| PROD health check | ⏸ Pending |
-| Lifecycle docs → Committed → `closed/` | ⏸ Pending merge/release (kept Active per session instruction) |
-| Roadmap sync | ⏸ Pending release |
+| PR #325 squash-merge | ✅ MERGED — `212f96682c717498e962cb2efcd36ce1bbdc7b83` |
+| Annotated tag `v0.15.17` + push | ✅ Tag created on `212f9668`, pushed to origin |
+| PROD deploy (`deploy-hetzner.yml`) | ✅ Run 31978780554 — SUCCESS (head `212f9668`, all steps green) |
+| PROD health check | ✅ https://ummahflow.com/api/health → healthy, HTTP 200 (fresh container) |
+| Lifecycle docs → Committed → `closed/` | ✅ analysis/planning/implementation/code-review/qa 216 all Status: Committed, moved to `closed/` |
+| Roadmap sync | ✅ Current Version → v0.15.17 + changelog row |
 
-**Constraints honored**: PR #325 NOT merged; `v0.15.17` tag NOT created; PROD (ummahflow.com) remains at v0.15.16. No push of lifecycle-doc commits beyond the release record + version bump.
+**Final state**: PROD is at **v0.15.17**. tag `v0.15.17` == package.json `0.15.17` == main HEAD `212f9668`.
 
 ---
 

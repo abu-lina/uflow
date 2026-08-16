@@ -2,7 +2,7 @@
 ID: 216
 Origin: 216
 UUID: c91f3a2e
-Status: Code Review Approved
+Status: Committed
 ---
 
 # Plan 216: Filter Button Redirects to Map Instead of Filter Page
@@ -13,6 +13,7 @@ Status: Code Review Approved
 |------|-------|--------|-------|
 | 2026-08-17 | Planner | Plan created | Inherits ID/Origin 216 from analysis 216; bugfix pipeline Phase 2 |
 | 2026-08-17 | Code Reviewer | Code review approved | Verdict: APPROVED; no blocking findings |
+| 2026-08-17 | QA | QA complete | Verdict: QA COMPLETE — approved for release; real-browser validation passed; G1/G2 disposition non-blocking |
 
 ---
 
@@ -235,6 +236,7 @@ graph TD
 
 **Uncertainty drivers:** whether the pin-fetch gating (D3) is folded into M2 or deferred; whether the optional pin-fetch test (test 6) is included; QA/UAT time for the unresolved desktop repro (G1) is outside this plan.
 
+| 2026-08-17 | DevOps | Document closed | Status: Committed |
 ---
 
 ## Risks & What the Code Reviewer Should Check

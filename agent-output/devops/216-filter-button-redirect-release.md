@@ -13,6 +13,7 @@ Status: Active
 |------|-------|---------|
 | 2026-08-17 | DevOps | Stage 1 complete: version bumped to v0.15.17, branch pushed, PR raised; production release awaiting user approval |
 | 2026-08-17 | DevOps | CI verified — all PR #325 checks green; records updated with CI results |
+| 2026-08-17 | DevOps | Stage 2 released: PR #325 squash-merged (212f9668), annotated tag v0.15.17 pushed, PROD deploy run 31978780554 SUCCESS, health check healthy; chain docs closed → Committed |
 
 ## 2. Plan Reference
 
@@ -106,3 +107,36 @@ Production release is **NOT executed** — awaiting explicit user approval:
 3. Optional per QA: one manual UAT tap-check of the home filter button on a real device before merge (environmental finding — client-side `router.push` from home page could not be committed in headless dev; button URL contract pinned by unit test).
 
 **Abort option**: if the user declines, this record is marked Aborted and no merge/tag/deploy happens.
+
+
+---
+
+## 10. Stage 2 — Release Execution (2026-08-17)
+
+**User approval**: Explicit — task prompt: "user has APPROVED production release of v0.15.17".
+
+| Step | Result |
+|------|--------|
+| CI final state | ✅ ALL GREEN on HEAD `c5d701b3` (runs 31978354299, 31978356359) — Run Tests 6m49s / 5m26s, Build, Lint & Type, Security Audit, IOC, Snyk all pass; `mergeStateStatus` CLEAN |
+| PR #325 squash-merge | ✅ MERGED — merge commit `212f96682c717498e962cb2efcd36ce1bbdc7b83`, merged 2026-08-16T23:17:34Z by abu-lina |
+| Annotated tag | ✅ `v0.15.17` created on `212f9668` + pushed (message: "Release v0.15.17 — filter button lands on filters, map is opt-in via view=map (Plan 216)") |
+| PROD deploy | ✅ `deploy-hetzner.yml` run **31978780554** — conclusion SUCCESS, head `212f9668`; all steps green (build, GHCR push, blue-green swap, nginx, domain health) |
+| PROD health check | ✅ https://ummahflow.com/api/health → `{"status":"healthy", ... "environment":"production"}` HTTP 200 (fresh container, uptime ~34s) |
+| Version consistency | ✅ tag `v0.15.17` == package.json `0.15.17` == CHANGELOG `## [0.15.17]` == main HEAD `212f9668` |
+| Migrations | None (frontend-only fix) — no migration apply needed |
+| Closed docs | ✅ analysis 216, planning 216, implementation 216, code-review 216, qa 216 → Status **Committed**, moved to `closed/` (see §11) |
+| GitHub issues | None dedicated to Plan 216 (issue #307 belongs to Plan 208) — nothing to close |
+
+## 11. Lifecycle Docs Closed (Status: Committed)
+
+| File | Status before | Status after | Location |
+|------|---------------|--------------|----------|
+| `agent-output/analysis/216-filter-button-redirect.md` | Active | **Committed** | `agent-output/analysis/closed/` |
+| `agent-output/planning/216-filter-button-redirect-plan.md` | QA Complete | **Committed** | `agent-output/planning/closed/` |
+| `agent-output/implementation/216-filter-button-redirect.md` | Active | **Committed** | `agent-output/implementation/closed/` |
+| `agent-output/code-review/216-filter-button-redirect-review.md` | In Review | **Committed** | `agent-output/code-review/closed/` |
+| `agent-output/qa/216-filter-button-redirect-qa.md` | QA Complete | **Committed** | `agent-output/qa/closed/` |
+
+**DevOps/deployment records remain Active** per lifecycle rules (devops release record + deployment record `216-stage1-v0.15.17.md`).
+
+**PROD is now at v0.15.17.**

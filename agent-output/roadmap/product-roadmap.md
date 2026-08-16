@@ -1,14 +1,15 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-08-16
+**Last Updated**: 2026-08-17
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.15.16
+**Current Version**: v0.15.17
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
 
 | Date & Time      | Change                                                             | Rationale                                                                                                                                                 |
 | ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-17T01:25Z | Plan 216 released (v0.15.17): filter button lands on filters, map is opt-in via view=map | Fixed mobile filter-button taps (home searchbar sliders, results edit button) landing on full-screen map instead of filter page — regression of Plan 208 (issue #307). `/search` now renders filter accordions by default; mobile map is explicit opt-in via `?view=map`; unknown/missing view values fail safe to filters. Single predicate change in `search/page.tsx` + regression tests (1910 passed, 12/12 real-browser checks). PR #325 squash-merged (212f9668). Tag v0.15.17 pushed. PROD deploy run 31978780554 SUCCESS. |
 | 2026-08-16T22:04Z | Plan 215 released (v0.15.16): iOS PWA geolocation hang watchdog | Fixed Near Me never resolving on iPhone SE standalone PWA: 12 s client-side watchdog in `useGeolocation` forces terminal state when `getCurrentPosition` never fires callbacks (standalone hang → denied + Plan 209 iOS Settings hint; non-standalone → timeout). Timer cleared on success/error/reset/unmount. Outcome logging `{ status, errorCode?, standalone, elapsedMs }` + SearchMap setView instrumentation. 12 new hook tests + SearchMap regression, all pre-fix FAIL/post-fix PASS. PR #324 squash-merged (3b8c8a72). Tag v0.15.16 pushed. PROD deploy run 31975012863 SUCCESS. GitHub issue #323 closed. Plan 212 DF-3 closed (user validated on-device, scenarios A–F). |
 | 2026-08-16T15:10Z | Plan 212 released (v0.15.14): Near Me map viewport fix on iPhone SE PWA | Centralized geolocation ownership in RootPageContent via useGeolocation hook. Removed duplicate getCurrentPosition() from SearchMap. Chip now reflects geolocation lifecycle (prompting/granted/denied). Map pans only on granted coordinates. 6 regression tests. PR #317 squash-merged (5b69d740). Tag v0.15.14 pushed. GitHub issue #316 closed. On-device iPhone SE validation deferred (DF-3, owner: UAT, due 2026-08-17 EOD). |
 | 2026-08-16T03:15Z | Plan 211 released (v0.15.13): Fix iPhone map tile rendering regression | Service Worker runtimeCaching regex scoped to Supabase URLs only — OSM tile requests no longer intercepted. Removed `crossOrigin: 'anonymous'` from Leaflet tile layer. Corrected CSP connect-src to tile.openstreetmap.de. 3/3 regression tests. PR #314 squash-merged (31f16b63). Tag v0.15.13 pushed. GitHub issue #313 closed. On-device iPhone validation deferred to post-UAT-deployment. |
