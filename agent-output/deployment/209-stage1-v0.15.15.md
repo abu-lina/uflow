@@ -2,7 +2,7 @@
 ID: 209
 Origin: 209
 UUID: b7e3f41a
-Status: Active
+Status: Released
 ---
 
 # Deployment Record: v0.15.15 — Stage 1
@@ -223,17 +223,17 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 | Step | Command | Result |
 | ---- | ------- | ------ |
-| Finalize CHANGELOG | `[Unreleased]` → `[0.15.15]` | ✅ Updated |
-| Amend commit | `git add CHANGELOG.md && git commit --amend --no-edit` | ⏳ Pending |
-| Pre-push sync guard | `git fetch origin main --tags && git merge-base --is-ancestor origin/main HEAD` | ⏳ Pending |
-| Push branch | `git push origin session/212-near-me-pwa-fix` | ⏳ Pending |
-| PR comparison URL | `https://github.com/abu-lina/uflow/compare/main...session/212-near-me-pwa-fix` | ⏳ Pending |
-| CI check | `sleep 90 && gh pr checks <PR#> --repo abu-lina/uflow 2>&1 \| cat` | ⏳ Pending |
-| PR merge (squash) | `gh pr merge <PR#> --repo abu-lina/uflow --squash --delete-branch` | ⏳ Pending |
-| Squash commit SHA | `git fetch origin --tags && git rev-parse origin/main` | ⏳ Pending |
-| Create annotated tag | `git tag -a v0.15.15 <squash-sha> -m "Release v0.15.15 — Plan 209 Near Me denied-state recovery guidance"` | ⏳ Pending |
-| Push tag | `git push origin v0.15.15` | ⏳ Pending |
-| Close GitHub issue | `gh issue close 319 --repo abu-lina/uflow --comment "Released in v0.15.15 🎉"` | ⏳ Pending |
+| Finalize CHANGELOG | `[Unreleased]` → `[0.15.15]` | ✅ |
+| Amend commit | `git add CHANGELOG.md && git commit --amend --no-edit` | ✅ |
+| Pre-push sync guard | `git fetch origin main --tags && git merge-base --is-ancestor origin/main HEAD` | ✅ Passed (rebase required — v0.15.14.md bookkeeping conflict resolved) |
+| Push branch | `git push origin session/212-near-me-pwa-fix` | ✅ |
+| PR comparison URL | https://github.com/abu-lina/uflow/pull/320 | ✅ PR #320 |
+| CI check | All 5 checks | ✅ Run Tests (7m10s) · Build Verification (3m11s) · Lint & Type Check (1m40s) · Security Audit · Supply Chain — all green. DF-1 CLOSED. |
+| PR merge (squash) | `gh pr merge 320 --repo abu-lina/uflow --squash --delete-branch` | ✅ Merged |
+| Squash commit SHA | `1cd6389ad35c739dd9deca872b846ac105082025` | ✅ |
+| Create annotated tag | `git tag -a v0.15.15 1cd6389a... -m "Release v0.15.15 ..."` | ✅ |
+| Push tag | `git push origin v0.15.15` | ✅ `[new tag] v0.15.15 -> v0.15.15` |
+| Close GitHub issue | Issue #319 | ✅ Auto-closed via "Fixes #319" in PR |
 
 ---
 

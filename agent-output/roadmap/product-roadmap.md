@@ -2,13 +2,14 @@
 
 **Last Updated**: 2026-08-16
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.15.14
+**Current Version**: v0.15.15
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
 
 | Date & Time      | Change                                                             | Rationale                                                                                                                                                 |
 | ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-16T18:30Z | Plan 209 released (v0.15.15): Near Me denied-state recovery guidance for iPhone PWA | Added platform-specific hint text shown only when `geoStatus === 'denied'`. iOS path (Settings → Privacy → Location Services), Android path (browser settings), fallback. `timeout`/`unavailable` show existing label only. 10 regression tests across HomeSearchBar + NearMeOpenNowFilters. All 6 locales. PR #320 squash-merged (1cd6389a). Tag v0.15.15 pushed. GitHub issue #319 auto-closed. DF-3 partially addressed (denied-state guidance delivered); happy-path + deactivate on-device validation still open. |
 | 2026-08-16T15:10Z | Plan 212 released (v0.15.14): Near Me map viewport fix on iPhone SE PWA | Centralized geolocation ownership in RootPageContent via useGeolocation hook. Removed duplicate getCurrentPosition() from SearchMap. Chip now reflects geolocation lifecycle (prompting/granted/denied). Map pans only on granted coordinates. 6 regression tests. PR #317 squash-merged (5b69d740). Tag v0.15.14 pushed. GitHub issue #316 closed. On-device iPhone SE validation deferred (DF-3, owner: UAT, due 2026-08-17 EOD). |
 | 2026-08-16T03:15Z | Plan 211 released (v0.15.13): Fix iPhone map tile rendering regression | Service Worker runtimeCaching regex scoped to Supabase URLs only — OSM tile requests no longer intercepted. Removed `crossOrigin: 'anonymous'` from Leaflet tile layer. Corrected CSP connect-src to tile.openstreetmap.de. 3/3 regression tests. PR #314 squash-merged (31f16b63). Tag v0.15.13 pushed. GitHub issue #313 closed. On-device iPhone validation deferred to post-UAT-deployment. |
 | 2026-08-15T19:38Z | Hotfix v0.15.11 released: Fix Leaflet SSR build failure (PLAN-208) | `search/page.tsx` imported `SearchMap` statically; leaflet accesses `window` at module level, failing during standalone build. Replaced with `next/dynamic` + `ssr:false`. Both v0.15.10 UAT deploys had failed. PR #309 squash-merged (d5705468). Tag v0.15.11 pushed. UAT deploy run/31904160833 — SUCCESS. |
