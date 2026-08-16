@@ -23,6 +23,7 @@ import { supabase } from '@/lib/supabase/client';
 import { filterOpenNow } from '@/utils/filterOpenNow';
 import type { OpeningHours } from '@/types/openingHours';
 import type { MapPin } from '@/features/search/components/SearchMap';
+import { useGeolocation } from '@/hooks/useGeolocation';
 
 const SearchMap = dynamic(
   () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
@@ -71,13 +72,29 @@ export function RootPageContent() {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [isRecovering, setIsRecovering] = useState(false);
   const [activeSection, setActiveSection] = useState<Section>('food');
-  const [isNearMe, setIsNearMe] = useState(false);
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [allRows, setAllRows] = useState<RawLocationRow[]>([]);
   const [pinsLoading, setPinsLoading] = useState(true);
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(120);
+  const geolocation = useGeolocation();
+
+  const userCoords = useMemo(
+    () =>
+      geolocation.status === 'granted' && geolocation.coords
+        ? { lat: geolocation.coords.latitude, lon: geolocation.coords.longitude }
+        : null,
+    [geolocation.status, geolocation.coords],
+  );
+
+  const handleNearMeChange = (nextNearMe?: boolean) => {
+    if (nextNearMe === false || geolocation.status === 'granted') {
+      geolocation.reset();
+      return;
+    }
+    geolocation.requestLocation();
+  };
 
   const pins = useMemo<MapPin[]>(() => {
     const unique = new Map<string, MapPin>();
@@ -342,9 +359,9 @@ export function RootPageContent() {
                     </div>
                     <HomeSearchBar
                       activeSection={activeSection}
-                      isNearMe={isNearMe}
+                      geoStatus={geolocation.status}
                       isOpenNow={isOpenNow}
-                      onNearMeChange={setIsNearMe}
+                      onNearMeChange={handleNearMeChange}
                       onOpenNowChange={setIsOpenNow}
                     />
                   </div>
@@ -358,8 +375,8 @@ export function RootPageContent() {
                   }}
                 >
                   <SearchMap
-                    isNearMe={isNearMe}
                     pins={pins}
+                    userCoords={userCoords}
                   />
                 </div>
 

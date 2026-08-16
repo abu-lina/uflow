@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Clock, MapPin, Search, SlidersHorizontal } from 'lucide-react';
 import type { Section } from '@/providers/search-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import type { GeolocationStatus } from '@/hooks/useGeolocation';
 
 interface HomeSearchBarProps {
   /** The currently active section — used for sliders navigation and search submission */
   activeSection: Section;
   className?: string;
-  isNearMe?: boolean;
+  geoStatus?: GeolocationStatus;
   isOpenNow?: boolean;
   onNearMeChange?: (v: boolean) => void;
   onOpenNowChange?: (v: boolean) => void;
@@ -31,7 +32,7 @@ interface HomeSearchBarProps {
 export function HomeSearchBar({
   activeSection,
   className = '',
-  isNearMe = false,
+  geoStatus = 'idle',
   isOpenNow = false,
   onNearMeChange,
   onOpenNowChange,
@@ -42,6 +43,11 @@ export function HomeSearchBar({
 
   const placeholder = t('home.searchPlaceholder');
   const ariaLabel = t('home.searchAriaLabel');
+  const nearMeLabel = t('suchen.nearMe.chipLabel');
+  const openNowLabel = t('suchen.openNow.chipLabel');
+  const showNearMeDenied = geoStatus === 'denied' || geoStatus === 'timeout' || geoStatus === 'unavailable';
+  const nearMeIsActive = geoStatus === 'granted';
+  const nearMeIsPrompting = geoStatus === 'prompting';
 
   const handleSubmit = () => {
     const trimmed = query.trim();
@@ -95,18 +101,22 @@ export function HomeSearchBar({
       {/* Quick-filter chips */}
       <div className="flex items-center gap-2">
         <button
-          aria-pressed={isNearMe}
+          aria-pressed={nearMeIsActive}
           className={`inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-            isNearMe
+            nearMeIsActive
               ? 'bg-primary text-white'
               : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
           }`}
           type="button"
-          onClick={() => onNearMeChange?.(!isNearMe)}
+          onClick={() => onNearMeChange?.(!nearMeIsActive)}
         >
-          <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-          <span>Near me</span>
+          <MapPin aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 ${nearMeIsPrompting ? 'animate-pulse' : ''}`} />
+          <span className={nearMeIsPrompting ? 'animate-pulse' : ''}>{nearMeLabel}</span>
         </button>
+
+        {showNearMeDenied && (
+          <span className="text-xs text-content-muted">{t('suchen.nearMe.permissionDenied')}</span>
+        )}
 
         <button
           aria-pressed={isOpenNow}
@@ -119,7 +129,7 @@ export function HomeSearchBar({
           onClick={() => onOpenNowChange?.(!isOpenNow)}
         >
           <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-          <span>Open now</span>
+          <span>{openNowLabel}</span>
         </button>
       </div>
     </div>
