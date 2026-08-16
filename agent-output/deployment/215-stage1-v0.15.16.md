@@ -20,6 +20,8 @@ Status: Active
 | --- | --- | --- |
 | 2026-08-16T23:50Z | devops | Stage 1 initiated: version pre-flight, lifecycle docs committed, PR raised, CI verified |
 | 2026-08-16T23:55Z | devops | Deployment record written with PR URL + CI results; docs-only commit pushed |
+| 2026-08-16T21:47Z | devops | UAT branch deploy (workflow_dispatch, ref `fix/215-ios-pwa-geolocation` @ `5196a4c1`) → success; UAT live with v0.15.16 code; PROD untouched |
+| 2026-08-16T21:55Z | devops | UAT deploy record section added to this document; docs commit pushed to branch |
 
 ---
 
@@ -138,6 +140,27 @@ Changelog rows added to all five docs (2026-08-16T23:50Z, devops, Status: Commit
 | **On-device iPhone SE PWA validation (Plan 215 M6 / Plan 212 DF-3)** — scenarios A–F: hang→guidance video (terminal state < 15 s + iOS Settings hint), happy-path map pan (zoom 14 < 12 s, chip green), denied immediate state, deactivate no centroid snap-back, Q3/Q4/Q5 written answers, `geolocation_outcome` log excerpt | UAT operator (user, physical iPhone SE) | 2026-08-17 EOD | Record evidence per `agent-output/qa/215-ios-pwa-geolocation-qa.md` (UAT/On-Device Gate section); then close DF-3 in the open-actions tracker |
 
 If on-device evidence reveals the `denied` wording is misleading (location actually "Allow" but still hangs), log a follow-up for neutral wording (plan risk R1) — does NOT block this release.
+
+---
+
+## UAT Branch Deploy — Pre-Merge Validation (2026-08-16)
+
+User-approved manual UAT deploy BEFORE merge to main, so the Near Me fix can be validated on-device (iPhone SE PWA) against real code.
+
+| Field | Value |
+| --- | --- |
+| Trigger | User explicitly approved deploying the fix branch to UAT pre-merge |
+| Workflow | `deploy-uat.yml` via `workflow_dispatch` |
+| Ref | `fix/215-ios-pwa-geolocation` @ `5196a4c1` (branch HEAD: watchdog fix `58360b22` + implementation `3b191d23` + Stage 1 docs) |
+| Run URL | https://github.com/abu-lina/uflow/actions/runs/31974170012 |
+| Result | ✅ SUCCESS — 6m33s, all steps green |
+| Key steps | Checkout → nginx upload → npm ci → Build & push GHCR image (`ghcr.io/abu-lina/uflow-uat:latest`) → Deploy to UAT on Hetzner (blue-green: temp port 3003, health check, swap to 3001) → UAT deployment summary |
+| Deployed version | v0.15.16 code (package.json `0.15.16`; fix commits `3b191d23`, `58360b22`). Health endpoint `version` is a static `"1.0.0"` fallback (no `npm_package_version` in Docker), so container swap is proven by uptime reset: 20201.68s (pre) → 53.18s (post) |
+| Health check | `GET https://uat.ummahflow.com/api/health` → HTTP 200 `{"status":"healthy","uptime":53.18}` at 2026-08-16T21:47:20Z |
+| UAT environment | UAT Supabase env (separate DB) — expected and fine for this validation |
+| PROD | Untouched — no `deploy-hetzner.yml` run, no tag, no merge |
+
+**Constraints honored**: PR #324 NOT merged; `v0.15.16` tag NOT created; PROD (ummahflow.com) remains at v0.15.15.
 
 ---
 
