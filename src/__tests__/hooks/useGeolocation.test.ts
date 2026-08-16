@@ -109,7 +109,7 @@ describe('useGeolocation', () => {
     });
   });
 
-  it('transitions to unavailable when the browser lacks geolocation support', () => {
+  it('[pre-fix FAILS / post-fix PASSES] transitions to unavailable and logs outcome when the browser lacks geolocation support', () => {
     Object.defineProperty(navigator, 'geolocation', {
       value: undefined,
       configurable: true,
@@ -122,6 +122,15 @@ describe('useGeolocation', () => {
     });
 
     expect(result.current.status).toBe('unavailable');
+    expect(logApp).toHaveBeenCalledWith(
+      'info',
+      expect.objectContaining({
+        event: 'geolocation_outcome',
+        status: 'unavailable',
+        standalone: false,
+        elapsedMs: expect.any(Number),
+      }),
+    );
   });
 
   it('reset() returns to idle state', async () => {
@@ -390,6 +399,19 @@ describe('useGeolocation', () => {
 
     afterEach(() => {
       window.matchMedia = originalMatchMedia;
+    });
+
+    it('[pre-fix FAILS / post-fix PASSES] returns false when navigator global is absent', () => {
+      const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+      Reflect.deleteProperty(globalThis, 'navigator');
+
+      try {
+        expect(isStandaloneDisplayMode()).toBe(false);
+      } finally {
+        if (originalDescriptor) {
+          Object.defineProperty(globalThis, 'navigator', originalDescriptor);
+        }
+      }
     });
 
     it('returns true when navigator.standalone is true', () => {

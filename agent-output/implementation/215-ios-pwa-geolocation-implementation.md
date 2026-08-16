@@ -21,15 +21,16 @@ Status: In Progress
 | --- | --- | --- | --- |
 | 2026-08-16T23:00Z | Implementer | Initial implementation | Started M1-M5 execution, TDD red phase for watchdog/standalone/logging |
 | 2026-08-16T23:20Z | Implementer | Validation + artifacts | Completed code/test/version updates; recorded gate results |
+| 2026-08-16T23:45Z | Implementer | Code review remediation | Reordered `typeof navigator` guard in `isStandaloneDisplayMode`; added `unavailable` outcome log; added regression tests for both |
 
 ## Implementation Summary
 Implemented a client-side geolocation hang watchdog so the Near Me flow on iPhone SE standalone PWA always reaches a terminal, actionable state instead of staying stuck in `prompting` forever.
 
 Changes:
 - `useGeolocation.ts` now arms a 12,000 ms `setTimeout` watchdog when `requestLocation()` is called. If iOS/WKWebView suppresses the permission prompt and neither the success nor error callback fires, the watchdog forces a terminal state at the deadline: `denied` in standalone mode (so Plan 209's `permissionDeniedHintIos` is surfaced) and `timeout` otherwise.
-- Added exported `isStandaloneDisplayMode()` helper that detects standalone via `navigator.standalone === true` or `matchMedia('(display-mode: standalone)').matches`, guarded for non-browser contexts.
+- Added exported `isStandaloneDisplayMode()` helper that detects standalone via `navigator.standalone === true` or `matchMedia('(display-mode: standalone)').matches`. The `typeof navigator !== 'undefined'` guard is now evaluated before any read of `navigator`, so the helper is safe in SSR / non-browser contexts.
 - Watchdog is cleared on success, error, `reset()`, and unmount — preventing double-fire, late overrides, and setState-after-unmount warnings.
-- Added Normal-level outcome logging `{ status, errorCode?, standalone, elapsedMs }` on every terminal transition, with `forcedByWatchdog: true` on watchdog-forced paths so the two failure modes are distinguishable in production logs.
+- Added Normal-level outcome logging `{ status, errorCode?, standalone, elapsedMs }` on every terminal transition, including the `unavailable` branch, with `forcedByWatchdog: true` on watchdog-forced paths so the two failure modes are distinguishable in production logs.
 - `SearchMap.tsx` now logs `setView` executed and `setView skipped (mapRef null)` on the near-me pan path.
 - `HomeSearchBar.tsx` required no code change: the existing `geoStatus === 'denied'` branch already renders Plan 209's iOS Settings hint.
 - Bumped version to `0.15.16` and added CHANGELOG entry.
@@ -54,9 +55,9 @@ Value delivery against plan objective:
 ## Files Modified
 | File | Changes | Approx lines |
 | --- | --- | --- |
-| `src/hooks/useGeolocation.ts` | Added watchdog, standalone helper, outcome logging, unmount/reset cleanup | +90 / -10 |
+| `src/hooks/useGeolocation.ts` | Added watchdog, standalone helper, outcome logging, unmount/reset cleanup, navigator guard fix | +95 / -10 |
 | `src/features/search/components/SearchMap.tsx` | Added `setView` executed/skipped logging and defensive null-map guard | +18 / -2 |
-| `src/__tests__/hooks/useGeolocation.test.ts` | Added 10 watchdog/standalone/logging regression tests | +291 |
+| `src/__tests__/hooks/useGeolocation.test.ts` | Added 12 watchdog/standalone/logging regression tests (including review-fix regressions) | +310 |
 | `src/features/search/components/SearchMap.test.tsx` | Added 2 setView logging regression tests | +35 |
 | `package.json` | Version bump `0.15.15 -> 0.15.16` | 1 |
 | `package-lock.json` | Version alignment to `0.15.16` | generated |
@@ -74,7 +75,7 @@ Value delivery against plan objective:
   - `npm run type-check`
 - [x] Full test suite passes:
   - `npx vitest run`
-  - Result: `233 passed | 2 skipped` files, `1905 passed | 24 skipped` tests
+  - Result: `233 passed | 2 skipped` files, `1906 passed | 24 skipped` tests
 - [x] Build passes:
   - `npm run build` exits `0` (route optimization completes; `DYNAMIC_SERVER_USAGE` warnings are pre-existing `/city/[cityName]` static-generation issues unrelated to Plan 215)
 - [ ] Full-repo lint passes:
@@ -100,6 +101,8 @@ Implementation delivery:
 | `useGeolocation` `reset()` clears in-flight watchdog | `src/__tests__/hooks/useGeolocation.test.ts` | ✅ Yes | ⚠️ No observable pre-fix failure (no watchdog existed to leak) | N/A — safety guard | ✅ Yes |
 | `isStandaloneDisplayMode()` helper | `src/__tests__/hooks/useGeolocation.test.ts` | ✅ Yes | ✅ Yes | `TypeError: isStandaloneDisplayMode is not a function` | ✅ Yes |
 | `useGeolocation` outcome log `{ status, errorCode?, standalone, elapsedMs }` | `src/__tests__/hooks/useGeolocation.test.ts` | ✅ Yes | ✅ Yes | `AssertionError: logApp not called with expected outcome shape` | ✅ Yes |
+| `useGeolocation` `unavailable` outcome log | `src/__tests__/hooks/useGeolocation.test.ts` | ✅ Yes | ✅ Yes | `AssertionError: logApp not called for unavailable branch` | ✅ Yes |
+| `isStandaloneDisplayMode()` navigator-absent guard | `src/__tests__/hooks/useGeolocation.test.ts` | ✅ Yes | ✅ Yes | `ReferenceError: navigator is not defined` | ✅ Yes |
 | `SearchMap` setView executed/skipped logging | `src/features/search/components/SearchMap.test.tsx` | ✅ Yes | ✅ Yes | `AssertionError: logApp not called with expected setView event` | ✅ Yes |
 
 **Note on intent #5:** The `reset()` cleanup test is a safety/regression guard. Before the watchdog existed there was no timer to leak, so the assertion that status stays `idle` already passed. The implementation still clears the watchdog on reset and unmount, satisfying the acceptance criterion and preventing setState-after-unmount.
@@ -108,8 +111,8 @@ Implementation delivery:
 - Unit / hook:
   - Watchdog terminal transitions (timeout, denied)
   - Watchdog teardown on success/error/reset/unmount
-  - Standalone detection helper
-  - Outcome log shape
+  - Standalone detection helper, including navigator-absent SSR/non-browser guard
+  - Outcome log shape on all terminal transitions, including `unavailable`
 - Component:
   - `SearchMap` setView executed and skipped log branches
 - Regression:
@@ -121,7 +124,9 @@ Implementation delivery:
 | `npx vitest run src/__tests__/hooks/useGeolocation.test.ts src/features/search/components/SearchMap.test.tsx` | Red phase captured: 11 failed (watchdog tests timed out, standalone helper `TypeError`, SearchMap log assertions failed) |
 | `npx vitest run src/__tests__/hooks/useGeolocation.test.ts src/features/search/components/SearchMap.test.tsx` | Green after implementation: 23 passed |
 | `npx vitest run src/__tests__/hooks/useGeolocation.test.ts src/features/search/components/SearchMap.test.tsx src/__tests__/features/search/HomeSearchBar.test.tsx src/__tests__/regression/plan212-near-me-viewport.test.tsx src/__tests__/hooks/useNearMeToggle.test.tsx` | Pass: 49 passed |
-| `npx vitest run` | Pass: `233 passed | 2 skipped` files, `1905 passed | 24 skipped` tests |
+| `npx vitest run src/__tests__/hooks/useGeolocation.test.ts src/features/search/components/SearchMap.test.tsx` | Review-fix red phase: 2 failed (`ReferenceError: navigator is not defined`, `AssertionError: logApp not called for unavailable`) |
+| `npx vitest run src/__tests__/hooks/useGeolocation.test.ts src/features/search/components/SearchMap.test.tsx` | Review-fix green: 24 passed |
+| `npx vitest run` | Pass: `233 passed | 2 skipped` files, `1906 passed | 24 skipped` tests |
 | `npm run type-check` | Pass |
 | `npx eslint src/hooks/useGeolocation.ts src/features/search/components/SearchMap.tsx src/__tests__/hooks/useGeolocation.test.ts src/features/search/components/SearchMap.test.tsx` | Pass |
 | `npm run lint` | Fail — pre-existing unrelated repo lint errors |

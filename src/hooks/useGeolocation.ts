@@ -40,8 +40,12 @@ const WATCHDOG_MS = 12000;
  * or `window.matchMedia` may be absent.
  */
 export function isStandaloneDisplayMode(): boolean {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
   const nav = navigator as Navigator & { standalone?: boolean };
-  if (typeof navigator !== 'undefined' && nav.standalone === true) {
+  if (nav.standalone === true) {
     return true;
   }
 
@@ -65,10 +69,10 @@ function currentTimeMs(): number {
 function logOutcome(
   status: GeolocationStatus,
   errorCode: number | undefined,
-  startTime: number,
+  requestStartTime: number,
   forcedByWatchdog = false,
 ): void {
-  const elapsedMs = Math.round(currentTimeMs() - startTime);
+  const elapsedMs = Math.round(currentTimeMs() - requestStartTime);
 
   logApp('info', {
     event: 'geolocation_outcome',
@@ -118,14 +122,15 @@ export function useGeolocation(): UseGeolocationResult {
 
   const requestLocation = useCallback(() => {
     clearWatchdog();
+    const requestStartTime = currentTimeMs();
 
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setStatus('unavailable');
+      logOutcome('unavailable', undefined, requestStartTime);
       return;
     }
 
     setStatus('prompting');
-    const startTime = currentTimeMs();
 
     const handleSuccess = (position: GeolocationPosition) => {
       clearWatchdog();
@@ -134,7 +139,7 @@ export function useGeolocation(): UseGeolocationResult {
         longitude: position.coords.longitude,
       });
       setStatus('granted');
-      logOutcome('granted', undefined, startTime);
+      logOutcome('granted', undefined, requestStartTime);
     };
 
     const handleError = (error: GeolocationPositionError) => {
@@ -148,14 +153,14 @@ export function useGeolocation(): UseGeolocationResult {
         nextStatus = 'unavailable';
       }
       setStatus(nextStatus);
-      logOutcome(nextStatus, error.code, startTime);
+      logOutcome(nextStatus, error.code, requestStartTime);
     };
 
     watchdogRef.current = setTimeout(() => {
       watchdogRef.current = null;
       const terminalStatus = isStandaloneDisplayMode() ? 'denied' : 'timeout';
       setStatus(terminalStatus);
-      logOutcome(terminalStatus, undefined, startTime, true);
+      logOutcome(terminalStatus, undefined, requestStartTime, true);
     }, WATCHDOG_MS);
 
     navigator.geolocation.getCurrentPosition(
