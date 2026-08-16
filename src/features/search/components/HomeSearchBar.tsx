@@ -46,8 +46,17 @@ export function HomeSearchBar({
   const nearMeLabel = t('suchen.nearMe.chipLabel');
   const openNowLabel = t('suchen.openNow.chipLabel');
   const showNearMeDenied = geoStatus === 'denied' || geoStatus === 'timeout' || geoStatus === 'unavailable';
+  const showNearMeDeniedHint = geoStatus === 'denied';
   const nearMeIsActive = geoStatus === 'granted';
   const nearMeIsPrompting = geoStatus === 'prompting';
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+  const isIOS = /iphone|ipad|ipod/.test(userAgent) || (userAgent.includes('macintosh') && navigator.maxTouchPoints > 1);
+  const isAndroid = userAgent.includes('android');
+  const nearMeDeniedHintKey = isIOS
+    ? 'suchen.nearMe.permissionDeniedHintIos'
+    : isAndroid
+      ? 'suchen.nearMe.permissionDeniedHintAndroid'
+      : 'suchen.nearMe.permissionDeniedHintFallback';
 
   const handleSubmit = () => {
     const trimmed = query.trim();
@@ -115,7 +124,10 @@ export function HomeSearchBar({
         </button>
 
         {showNearMeDenied && (
-          <span className="text-xs text-content-muted">{t('suchen.nearMe.permissionDenied')}</span>
+          <div className="flex flex-col text-xs text-content-muted">
+            <span>{t('suchen.nearMe.permissionDenied')}</span>
+            {showNearMeDeniedHint ? <span>{t(nearMeDeniedHintKey)}</span> : null}
+          </div>
         )}
 
         <button

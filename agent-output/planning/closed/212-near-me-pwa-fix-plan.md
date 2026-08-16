@@ -2,7 +2,7 @@
 ID: 212
 Origin: 212
 UUID: 4c9e1a7d
-Status: Committed for v0.15.14
+Status: Released
 ---
 
 # Plan 212 — Near Me Map Viewport Fix (iPhone SE PWA)

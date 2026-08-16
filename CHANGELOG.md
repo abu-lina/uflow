@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.15] - 2026-08-16
+
+### Fixed
+
+- **Near Me permission-denied recovery guidance (Plan 209)**: Added denied-state UX guidance for mobile PWA users when location permission has been blocked by the OS. `HomeSearchBar` and `NearMeOpenNowFilters` now render platform-specific help text only when `geoStatus === 'denied'` (`iOS`, `Android`, `fallback`). `timeout` and `unavailable` continue showing only the existing "Location unavailable" label, avoiding misleading settings guidance for transient failures. Added regression coverage for iOS/Android/fallback hint selection and denied-only guard behavior.
+
 ## [0.15.14] - 2026-08-16
 
 ### Fixed
