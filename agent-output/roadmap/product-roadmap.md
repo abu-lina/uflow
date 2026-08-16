@@ -1,14 +1,15 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-08-15
+**Last Updated**: 2026-08-16
 **Roadmap Owner**: roadmap agent
-**Current Version**: v0.15.11
+**Current Version**: v0.15.13
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
 
 ## Change Log
 
 | Date & Time      | Change                                                             | Rationale                                                                                                                                                 |
 | ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-16T03:15Z | Plan 211 released (v0.15.13): Fix iPhone map tile rendering regression | Service Worker runtimeCaching regex scoped to Supabase URLs only — OSM tile requests no longer intercepted. Removed `crossOrigin: 'anonymous'` from Leaflet tile layer. Corrected CSP connect-src to tile.openstreetmap.de. 3/3 regression tests. PR #314 squash-merged (31f16b63). Tag v0.15.13 pushed. GitHub issue #313 closed. On-device iPhone validation deferred to post-UAT-deployment. |
 | 2026-08-15T19:38Z | Hotfix v0.15.11 released: Fix Leaflet SSR build failure (PLAN-208) | `search/page.tsx` imported `SearchMap` statically; leaflet accesses `window` at module level, failing during standalone build. Replaced with `next/dynamic` + `ssr:false`. Both v0.15.10 UAT deploys had failed. PR #309 squash-merged (d5705468). Tag v0.15.11 pushed. UAT deploy run/31904160833 — SUCCESS. |
 | 2026-08-15T18:00Z | Plan 208 released (v0.15.10): Mobile search map with restaurant pins | Interactive Leaflet map for food section on mobile — OSM DE tiles, real Supabase pin fetch, pin-tap→provider detail, map/list toggle i18n'd across 6 locales. HomeSearchBar filter pill UI (isNearMe/isOpenNow). Footer shown on /search. 3/3 regression tests. PR #307 squash-merged (4c10e903). Tag v0.15.10 pushed. GitHub issue #306 closed. |
 | 2026-08-09T22:16Z | Plan 205 released (v0.15.9): iOS keyboard attributes on ChatInput textarea | Fixed iOS PWA keyboard — added inputmode/autocorrect/spellcheck/autocapitalize attributes to ChatInput textarea. PR #305 squash-merged. Tag v0.15.9 pushed. |
