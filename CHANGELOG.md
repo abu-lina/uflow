@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.16] - 2026-08-16
+
+### Fixed
+
+- **iOS PWA geolocation hang watchdog (Plan 215)**: Added a client-side `setTimeout` watchdog to `useGeolocation` that forces a terminal state when `navigator.geolocation.getCurrentPosition` hangs without firing its success or error callback, which happens on iPhone SE standalone PWAs. Standalone mode maps the hang to `denied` so the existing Plan 209 iOS Settings hint (`permissionDeniedHintIos`) is surfaced; non-standalone browsers map it to `timeout`. Timer is cleared on success, error, `reset()`, and unmount. Added Normal-level outcome logging `{ status, errorCode?, standalone, elapsedMs }` and `SearchMap` `setView` executed/skipped logging for diagnostics.
+
 ## [0.15.15] - 2026-08-16
 
 ### Fixed
