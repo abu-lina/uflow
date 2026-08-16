@@ -12,6 +12,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 
+function setUserAgent(userAgent: string) {
+  Object.defineProperty(window.navigator, 'userAgent', {
+    value: userAgent,
+    configurable: true,
+  });
+}
+
 // ─── Mock next/navigation ─────────────────────────────────────────────────────
 const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({
@@ -29,6 +36,9 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'suchen.nearMe.chipLabel': 'Near me',
         'suchen.openNow.chipLabel': 'Open now',
         'suchen.nearMe.permissionDenied': 'Standort nicht verfügbar',
+        'suchen.nearMe.permissionDeniedHintIos': 'Standort gesperrt. Öffne Einstellungen → Datenschutz → Ortungsdienste.',
+        'suchen.nearMe.permissionDeniedHintAndroid': 'Standort gesperrt. Erlaube den Zugriff in den Browser-Einstellungen.',
+        'suchen.nearMe.permissionDeniedHintFallback': 'Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.',
       };
       return map[key] ?? key;
     },
@@ -41,6 +51,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
 describe('HomeSearchBar (Plan 090 M2)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
   });
 
   it('renders a search region with correct aria-label', () => {
@@ -149,5 +160,49 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     rerender(<HomeSearchBar activeSection="food" geoStatus="granted" onNearMeChange={onNearMeChange} />);
     fireEvent.click(screen.getByRole('button', { name: /near me/i }));
     expect(onNearMeChange).toHaveBeenLastCalledWith(false);
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] denied state shows iOS-specific recovery hint', () => {
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
+    render(<HomeSearchBar activeSection="food" geoStatus="denied" />);
+
+    expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
+    expect(
+      screen.getByText('Standort gesperrt. Öffne Einstellungen → Datenschutz → Ortungsdienste.'),
+    ).toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] denied state shows Android-specific recovery hint', () => {
+    setUserAgent('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36');
+    render(<HomeSearchBar activeSection="food" geoStatus="denied" />);
+
+    expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
+    expect(
+      screen.getByText('Standort gesperrt. Erlaube den Zugriff in den Browser-Einstellungen.'),
+    ).toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] denied state shows fallback recovery hint', () => {
+    setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+    render(<HomeSearchBar activeSection="food" geoStatus="denied" />);
+
+    expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
+    expect(
+      screen.getByText('Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.'),
+    ).toBeInTheDocument();
+  });
+
+  it('timeout state does not show any settings guidance hint', () => {
+    render(<HomeSearchBar activeSection="food" geoStatus="timeout" />);
+
+    expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
+    expect(screen.queryByText(/Standort gesperrt\./)).not.toBeInTheDocument();
+  });
+
+  it('unavailable state does not show any settings guidance hint', () => {
+    render(<HomeSearchBar activeSection="food" geoStatus="unavailable" />);
+
+    expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
+    expect(screen.queryByText(/Standort gesperrt\./)).not.toBeInTheDocument();
   });
 });

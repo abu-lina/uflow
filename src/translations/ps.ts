@@ -194,6 +194,10 @@ export const ps = {
       "chipLabel": "زما په نږدې",
       "radiusLabel": "واډن:",
       "permissionDenied": "موقعیت شتون نلري",
+      // TODO: Refine iOS/Android path wording with native-speaker review.
+      "permissionDeniedHintIos": "موقعیت بند شوی دی. مهرباني وکړئ د وسیلې په تنظیماتو کې د موقعیت لاسرسی فعال کړئ.",
+      "permissionDeniedHintAndroid": "موقعیت بند شوی دی. مهرباني وکړئ د وسیلې په تنظیماتو کې د موقعیت لاسرسی فعال کړئ.",
+      "permissionDeniedHintFallback": "موقعیت بند شوی دی. مهرباني وکړئ د وسیلې په تنظیماتو کې د موقعیت لاسرسی فعال کړئ.",
       "loading": "چمتو کوونکي پورته کیږي...",
       "emptyTitle": "هیڅ خلاص چمتو رستورانت نږدې نشته",
       "errorTitle": "لټون شتون نلري",
