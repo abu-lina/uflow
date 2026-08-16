@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import L from 'leaflet';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { logApp } from '@/lib/logger';
 import type { OpeningHours } from '@/types/openingHours';
 import 'leaflet/dist/leaflet.css';
 
@@ -68,7 +69,16 @@ export function SearchMap({ userCoords = null, pins }: SearchMapProps) {
     const initCenter: [number, number] = parsed ? [parsed.lat, parsed.lng] : DEFAULT_CENTER;
     const initZoom = parsed?.zoom ?? DEFAULT_ZOOM;
 
-    const map = L.map(containerRef.current, { zoomControl: false }).setView(initCenter, initZoom);
+    const map = L.map(containerRef.current, { zoomControl: false });
+    if (!map) {
+      logApp('info', {
+        event: 'searchmap_init_failed',
+        reason: 'leaflet map returned null',
+      });
+      return;
+    }
+
+    map.setView(initCenter, initZoom);
     mapRef.current = map;
 
     map.on('moveend', () => {
@@ -89,7 +99,24 @@ export function SearchMap({ userCoords = null, pins }: SearchMapProps) {
   // Near me viewport changes are controlled by parent-provided user coords.
   useEffect(() => {
     if (userLat === null || userLon === null) return;
-    mapRef.current?.setView([userLat, userLon], 14);
+
+    if (mapRef.current) {
+      mapRef.current.setView([userLat, userLon], 14);
+      logApp('info', {
+        event: 'searchmap_setview_executed',
+        lat: userLat,
+        lon: userLon,
+        zoom: 14,
+      });
+    } else {
+      logApp('info', {
+        event: 'searchmap_setview_skipped',
+        lat: userLat,
+        lon: userLon,
+        zoom: 14,
+        reason: 'mapRef null',
+      });
+    }
   }, [userLat, userLon]);
 
   // Add/refresh markers whenever pins change

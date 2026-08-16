@@ -3,6 +3,7 @@ import { render, waitFor } from '@testing-library/react';
 import { SearchMap } from './SearchMap';
 import fs from 'node:fs';
 import path from 'node:path';
+import { logApp } from '@/lib/logger';
 
 const mockPush = vi.fn();
 let capturedClickHandler: (() => void) | undefined;
@@ -78,6 +79,10 @@ vi.mock('leaflet', () => {
   };
 });
 
+vi.mock('@/lib/logger', () => ({
+  logApp: vi.fn(),
+}));
+
 describe('SearchMap', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -142,5 +147,44 @@ describe('SearchMap', () => {
   it('[pre-fix FAILS / post-fix PASSES] SearchMap source does not call getCurrentPosition', () => {
     const source = fs.readFileSync(path.join(mapRoot, 'src/features/search/components/SearchMap.tsx'), 'utf8');
     expect(source).not.toContain('getCurrentPosition');
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] logs setView executed when userCoords is provided and map is initialized', async () => {
+    const pins: never[] = [];
+    render(<SearchMap pins={pins} userCoords={{ lat: 52.52, lon: 13.405 }} />);
+
+    await waitFor(() => {
+      expect(logApp).toHaveBeenCalledWith(
+        'info',
+        expect.objectContaining({
+          event: 'searchmap_setview_executed',
+          lat: 52.52,
+          lon: 13.405,
+          zoom: 14,
+        }),
+      );
+    });
+  });
+
+  it('[pre-fix FAILS / post-fix PASSES] logs setView skipped when mapRef is null', async () => {
+    const L = await import('leaflet');
+    const mapFn = vi.mocked(L.default.map);
+    mapFn.mockReturnValueOnce(null as never);
+
+    const pins: never[] = [];
+    render(<SearchMap pins={pins} userCoords={{ lat: 52.52, lon: 13.405 }} />);
+
+    await waitFor(() => {
+      expect(logApp).toHaveBeenCalledWith(
+        'info',
+        expect.objectContaining({
+          event: 'searchmap_setview_skipped',
+          lat: 52.52,
+          lon: 13.405,
+          zoom: 14,
+          reason: 'mapRef null',
+        }),
+      );
+    });
   });
 });
