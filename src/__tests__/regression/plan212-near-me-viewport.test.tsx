@@ -56,6 +56,20 @@ vi.mock('@/features/search/components/HomeListView', () => ({
   HomeListView: () => <div data-testid="home-list-view" />,
 }));
 
+vi.mock('@/features/search/hooks/useHomeNearMe', () => ({
+  useHomeNearMe: () => ({
+    isActive: false,
+    results: [],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
+
+vi.mock('@/features/search/components/HomeNearMeList', () => ({
+  HomeNearMeList: () => <div data-testid="home-near-me-list" />,
+}));
+
 vi.mock('@/components/shared/AboutSection', () => ({
   AboutSection: () => <div />,
 }));

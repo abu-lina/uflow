@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 2026-08-17
+
+### Fixed
+
+- **"Near me" now works on the home List view (Plan 217)**: Tapping the "In der Nähe" chip while in List view now reorders providers nearest-first and limits results to those within 25 km, with a distance badge on each card. The List branch consumes the same `useGeolocation` signal as the Map branch via the new `useHomeNearMe` hook and `HomeNearMeList` component. Open-now filtering is applied client-side and preserves distance ordering. Map view behavior is unchanged. Added `home_list_nearme_*` instrumentation and regression coverage.
+
 ## [0.15.17] - 2026-08-17
 
 ### Fixed

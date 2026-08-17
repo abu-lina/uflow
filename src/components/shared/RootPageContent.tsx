@@ -24,6 +24,9 @@ import { filterOpenNow } from '@/utils/filterOpenNow';
 import type { OpeningHours } from '@/types/openingHours';
 import type { MapPin } from '@/features/search/components/SearchMap';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { useHomeNearMe } from '@/features/search/hooks/useHomeNearMe';
+import { HomeNearMeList } from '@/features/search/components/HomeNearMeList';
+import { logApp } from '@/lib/logger';
 
 const SearchMap = dynamic(
   () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
@@ -87,6 +90,21 @@ export function RootPageContent() {
         : null,
     [geolocation.status, geolocation.coords],
   );
+
+  const homeNearMe = useHomeNearMe({
+    coords: userCoords,
+    enabled: viewMode === 'list',
+    openNowActive: isOpenNow,
+  });
+
+  useEffect(() => {
+    if (viewMode === 'list' && userCoords === null) {
+      logApp('info', {
+        event: 'home_list_nearme_skipped',
+        status: geolocation.status,
+      });
+    }
+  }, [viewMode, userCoords, geolocation.status]);
 
   const handleNearMeChange = (nextNearMe?: boolean) => {
     if (nextNearMe === false || geolocation.status === 'granted') {
@@ -381,12 +399,22 @@ export function RootPageContent() {
                 </div>
 
                 {viewMode === 'list' && (
-                  <HomeListView
-                    headerOffset={headerHeight}
-                    isLoading={pinsLoading}
-                    isOpenNow={isOpenNow}
-                    pins={pins}
-                  />
+                  homeNearMe.isActive ? (
+                    <HomeNearMeList
+                      error={homeNearMe.error}
+                      headerOffset={headerHeight}
+                      isLoading={homeNearMe.isLoading}
+                      results={homeNearMe.results}
+                      onRetry={homeNearMe.refetch}
+                    />
+                  ) : (
+                    <HomeListView
+                      headerOffset={headerHeight}
+                      isLoading={pinsLoading}
+                      isOpenNow={isOpenNow}
+                      pins={pins}
+                    />
+                  )
                 )}
 
                 {/* Toggle button: map ↔ list, sits above navbar */}
