@@ -19,6 +19,7 @@ Status: In Review
 | Date (UTC) | Agent Handoff | Request | Summary |
 | --- | --- | --- | --- |
 | 2026-08-17 | Implementer → Code Reviewer | Review Plan 217 implementation on `fix/217-near-me-list-fix` | Reviewed git diff `origin/main...HEAD`, all new/modified source files, tests, and validation evidence. |
+| 2026-08-17 | Implementer → Code Reviewer | Re-check loading-state flash fix | Verified `useHomeNearMe` now derives `isLoading` from `hasFetched`/`isFetching`; new regression test asserts first-active-render loading; targeted tests pass. |
 
 ## Self-Check
 
@@ -56,7 +57,7 @@ None.
 
 ### Medium
 
-**[MEDIUM] Hook loading state can flash the empty state on activation**
+**[MEDIUM] [RESOLVED] Hook loading state can flash the empty state on activation**
 - **Location**: `src/features/search/hooks/useHomeNearMe.ts:24-25`, `src/features/search/hooks/useHomeNearMe.ts:42-100`
 - **Issue**: `isLoading` is initialized to `false` and only set to `true` inside `useEffect`. When the hook transitions from inactive to active (e.g., user switches from Map to List after granting location, or grants location while already in List view), React renders `HomeNearMeList` once with `isLoading=false` and `results=[]` before the effect commits and sets `isLoading=true`. That single frame renders the empty state ("No open restaurants nearby") instead of the `SkeletonGrid`, violating the behavior spec's loading state and producing a visible flicker.
 - **Recommendation**: Derive `isLoading` so it is `true` whenever the hook is active and the initial fetch has not yet completed. One compact pattern:
@@ -68,6 +69,7 @@ None.
   ```
   Reset `hasFetched`/`isFetching` when inactive so the next activation starts in the loading state.
 - **Why not blocking**: The steady-state behavior is correct; this is a transient UI flash, not a data-loss or functional bug.
+- **Resolution**: Implementer replaced `isLoading` state with `isFetching` + `hasFetched` flags, derives `isLoading = isActive && (!hasFetched || isFetching)`, resets both flags on deactivation, and added a TDD regression test that hangs the RPC and asserts `isLoading === true` on the very first active render. Verified with `npx vitest run src/__tests__/hooks/useHomeNearMe.test.tsx src/__tests__/regression/plan217-near-me-list.test.tsx src/__tests__/regression/plan212-near-me-viewport.test.tsx` (12 tests passed) and `npx tsc --noEmit && npx eslint` (clean).
 
 ### Low / Info
 
@@ -101,16 +103,15 @@ None.
 
 **Status**: APPROVED
 
-**Rationale**: The implementation matches the approved plan, passes the reported static and test gates (`type-check`, `vitest`, `build`), introduces no security or architectural concerns, and correctly wires the home List view to the existing `search_food_near_me` RPC with distance badges and open-now interplay. The only finding is a non-blocking MEDIUM transient loading-state flash that should be fixed but does not prevent QA from proceeding.
+**Rationale**: The implementation matches the approved plan, passes the reported static and test gates (`type-check`, `vitest`, `build`), introduces no security or architectural concerns, and correctly wires the home List view to the existing `search_food_near_me` RPC with distance badges and open-now interplay. All findings are resolved or informational; the implementation is ready for QA.
 
 ## Required Actions
 
-1. **Fix the loading-state flash** (`src/features/search/hooks/useHomeNearMe.ts`). Ensure `HomeNearMeList` shows `SkeletonGrid` on the first render after activation, not the empty state. Track whether an initial fetch has completed and derive `isLoading` from that.
-2. **(Optional)** Reduce `home_list_nearme_skipped` log noise by de-duping consecutive identical emissions.
-3. **(Optional)** Replace `fireEvent.click` with `userEvent.click` in `HomeNearMeList.test.tsx` for consistency with repo conventions.
+1. **(Optional)** Reduce `home_list_nearme_skipped` log noise by de-duping consecutive identical emissions.
+2. **(Optional)** Replace `fireEvent.click` with `userEvent.click` in `HomeNearMeList.test.tsx` for consistency with repo conventions.
 
 ## Next Steps
 
 - Route to **QA** for functional sign-off and manual device verification (geolocation grant/deny on home List view, distance ordering, ≤25 km radius, open-now interplay).
-- Ensure the MEDIUM loading-state fix is picked up before release; QA can validate the fix if it lands in the same branch.
+- No blocking findings remain; QA can proceed directly to functional sign-off.
 - **DevOps** creates the PR and confirms `v0.15.18` release readiness.
