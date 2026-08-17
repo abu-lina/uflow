@@ -2,7 +2,7 @@
 ID: 217
 Origin: 217
 UUID: e7b4f2a9
-Status: Code Review Approved
+Status: QA Complete
 ---
 
 # Plan 217 — Fix "Near me" on the Home List View
@@ -23,6 +23,7 @@ Status: Code Review Approved
 | --- | --- | --- |
 | 2026-08-17 | Planner | Opened plan from analysis 217. Target release v0.15.18. |
 | 2026-08-17 | Code Reviewer | Code review completed. Verdict: APPROVED. One MEDIUM finding (loading-state flash on activation) + two LOW findings routed to QA as awareness. |
+| 2026-08-17 | QA | QA Complete. Verdict: APPROVED FOR RELEASE. 44 tests re-run independently (0 failures), type-check + delta lint clean, live-browser smoke confirmed distance-ordered <=25 km results with distance badges via the live RPC. Pre-existing map observation routed separately; UAT checklist handed to human pass. |
 
 ---
 
