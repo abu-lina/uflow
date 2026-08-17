@@ -2,7 +2,7 @@
 ID: 218
 Origin: 218
 UUID: 377700d3
-Status: Code Review Approved
+Status: QA Complete
 ---
 
 # Plan 218 — Lucide "Dot" separator between open tag and distance on ProviderCard
@@ -12,7 +12,7 @@ Status: Code Review Approved
 | Plan ID | 218 |
 | Target Release | v0.15.18 |
 | Epic Alignment | Near-me search UX (extends Plan 196 distance badge + Plan 217 home near-me list) |
-| Status | Code Review Approved |
+| Status | QA Complete |
 | Related Issues | None |
 | Branch | feature/218-near-me-list-dot-separator |
 
@@ -22,6 +22,7 @@ Status: Code Review Approved
 |------|-------|--------|
 | 2026-08-17 | Planner | Opened plan. Decisions resolved (dot size/color, icon library, scope, guard, testid). Awaiting Architect review. |
 | 2026-08-17 | Code Reviewer | Code review approved. Implementation matches plan; no findings. |
+| 2026-08-17 | QA | QA Complete. Independent test execution (64 targeted + 1929 full-suite pass), static gates clean, release blockers clear. Verdict: APPROVED FOR RELEASE, UAT device check UAT-218-1 pending. |
 
 ## Release Strategy
 
