@@ -445,7 +445,7 @@ export const ProviderCard = React.memo(
                     {provider_name}
                   </span>
                   {(openStatus.visible || distanceLabel) && (
-                    <div className="mt-0.5 flex items-center gap-2" data-testid="provider-open-status">
+                    <div className="mt-0.5 flex items-center gap-1" data-testid="provider-open-status">
                       {openStatus.visible && (
                         <span
                           className={`font-inter text-sm font-medium leading-normal ${openStatus.isOpen ? 'text-success-dark' : 'text-danger-dark'}`}
