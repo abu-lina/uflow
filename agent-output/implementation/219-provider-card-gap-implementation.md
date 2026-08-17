@@ -62,6 +62,7 @@ The change was done TDD-first: a `toHaveClass('gap-1')` / `not.toHaveClass('gap-
 | Vitest (target + regression) | `npx vitest run src/__tests__/components/ProviderCard-distance.test.tsx src/__tests__/components/ProviderCard.test.tsx src/__tests__/features/search/HomeNearMeList.test.tsx src/__tests__/regression/plan217-near-me-list.test.tsx src/__tests__/regression/plan212-near-me-viewport.test.tsx` | ✅ 59 passed |
 | Type check | `npm run type-check` | ✅ exit 0 |
 | Lint changed files | `npx eslint src/components/providers/ProviderCard.tsx src/__tests__/components/ProviderCard-distance.test.tsx` | ✅ no errors |
+| Build | `npm run build` | ✅ exit 0 (completed static generation 234/234) |
 | Version unchanged | `package.json` remains `0.15.18` | ✅ no bump |
 
 ## Value Statement Validation
