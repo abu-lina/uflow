@@ -42,7 +42,8 @@ export function useHomeNearMe({
   const isActive = enabled && coords !== null;
 
   const [rawResults, setRawResults] = useState<NearMeFoodResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [fetchKey, setFetchKey] = useState(0);
 
@@ -52,7 +53,8 @@ export function useHomeNearMe({
     if (!isActive || !coords) {
       setRawResults([]);
       setError(null);
-      setIsLoading(false);
+      setIsFetching(false);
+      setHasFetched(false);
       return () => {
         cancelled = true;
       };
@@ -60,7 +62,7 @@ export function useHomeNearMe({
 
     const { lat, lon } = coords;
 
-    setIsLoading(true);
+    setIsFetching(true);
     setError(null);
 
     logApp('info', {
@@ -76,7 +78,8 @@ export function useHomeNearMe({
         const data = await searchFoodNearMe({ lat, lon, radiusKm: RADIUS_KM });
         if (cancelled) return;
         setRawResults(data);
-        setIsLoading(false);
+        setIsFetching(false);
+        setHasFetched(true);
         logApp('info', {
           event: 'home_list_nearme_success',
           resultCount: data.length,
@@ -87,7 +90,8 @@ export function useHomeNearMe({
         const normalizedError = err instanceof Error ? err : new Error(String(err));
         setError(normalizedError);
         setRawResults([]);
-        setIsLoading(false);
+        setIsFetching(false);
+        setHasFetched(true);
         logApp('error', {
           event: 'home_list_nearme_error',
           error: normalizedError.message,
@@ -104,6 +108,8 @@ export function useHomeNearMe({
     () => filterOpenNow(rawResults, openNowActive),
     [rawResults, openNowActive],
   );
+
+  const isLoading = isActive && (!hasFetched || isFetching);
 
   return {
     isActive,

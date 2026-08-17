@@ -12,12 +12,14 @@ Status: Active
 | Date (UTC) | Agent | Action |
 | --- | --- | --- |
 | 2026-08-17 | Implementer | Completed M1–M5 implementation, validation, and branch push. |
+| 2026-08-17 | Implementer | Applied Code Reviewer MEDIUM follow-up: fixed loading-state flash on activation and added TDD regression test. |
 
 ## Plan Reference
 
 - **Plan**: [217-near-me-list-fix-plan.md](../planning/217-near-me-list-fix-plan.md)
 - **Analysis**: [217-near-me-bug-analysis.md](../analysis/217-near-me-bug-analysis.md)
 - **Critique**: [217-plan-critique.md](../critiques/217-plan-critique.md) — APPROVED, 6 non-blocking findings
+- **Code Review**: [217-code-review.md](../code-review/217-code-review.md) — APPROVED w/ 1 MEDIUM follow-up (fixed)
 - **Branch**: `fix/217-near-me-list-fix`
 
 ## Implementation Summary
@@ -33,6 +35,15 @@ All new code was written TDD-first: failing tests were created before the implem
 - [x] M3 — `RootPageContent` wiring + regression test
 - [x] M4 — Instrumentation (`home_list_nearme_*`) + `plan212` mock updates
 - [x] M5 — Version bump to `0.15.18` + CHANGELOG entry
+- [x] Code Review follow-up — fixed loading-state flash on activation
+
+## Code Review Follow-up (MEDIUM finding)
+
+**Finding**: `useHomeNearMe` initialized `isLoading` to `false`, so the first render after activation could flash the empty state before the effect set `isLoading=true`.
+
+**Fix**: Replaced the `isLoading` state with `isFetching` + `hasFetched` flags and derived `isLoading = isActive && (!hasFetched || isFetching)`. This guarantees the first active render reports loading, while refetches keep existing results on screen. The flags reset when the hook becomes inactive so the next activation starts in the loading state.
+
+**TDD regression test**: Added `active state reports isLoading true on the very first render before the effect fires` to `src/__tests__/hooks/useHomeNearMe.test.tsx`. It captures the render-phase `isLoading` value with a hanging RPC and asserts it is `true`.
 
 ## Files Created
 
@@ -54,13 +65,16 @@ All new code was written TDD-first: failing tests were created before the implem
 | 3 | `package.json` | Bumped `version` to `0.15.18`. | +1 / -1 |
 | 4 | `package-lock.json` | Lockfile regenerated; version aligned to `0.15.18`. | +1 / -1 |
 | 5 | `CHANGELOG.md` | Added `[Unreleased] - 2026-08-17` entry for Plan 217. | +7 |
+| 6 | `src/features/search/hooks/useHomeNearMe.ts` | Follow-up fix: replaced `isLoading` state with `isFetching`/`hasFetched` flags; derived `isLoading` so the first active render reports loading. | ~+8 / -6 |
+| 7 | `src/__tests__/hooks/useHomeNearMe.test.tsx` | Added regression test asserting `isLoading` is `true` on the first render before the effect fires. | +20 |
 
 ## Code Quality Validation
 
 | Check | Result | Notes |
 | --- | --- | --- |
-| `npm run type-check` | ✅ Pass | No TypeScript errors. |
-| `npx eslint <Plan 217 files>` | ✅ Pass | All created/modified Plan 217 files lint clean. |
+| `npm run type-check` | ✅ Pass | No TypeScript errors (including after follow-up). |
+| `npx eslint <Plan 217 files>` | ✅ Pass | All created/modified Plan 217 files lint clean (including follow-up hook + test). |
+| `npx eslint src/features/search/hooks/useHomeNearMe.ts src/__tests__/hooks/useHomeNearMe.test.tsx` | ✅ Pass | Follow-up files lint clean. |
 | `npm run lint` (full) | ⚠️ Blocked by pre-existing unrelated errors | 42 errors/164 warnings, all in files outside Plan 217 scope (chat feature files and unrelated pre-existing lint debt). Left untouched per working-tree instructions. |
 | `npx vitest run` | ✅ Pass | 1925 tests passed, 24 skipped. |
 | `npm run build` | ✅ Pass | Build completed and generated static pages. Dynamic-server warnings for `/city/[cityName]` are pre-existing and non-blocking. |
@@ -81,16 +95,30 @@ The fix delivers the stated value: mobile users on the home List view can now ta
 
 ## Test Coverage
 
-- **Unit**: `useHomeNearMe` hook (7 tests)
+- **Unit**: `useHomeNearMe` hook (8 tests)
 - **Component**: `HomeNearMeList` (5 tests)
 - **Regression**: Plan 217 wiring (3 tests) + updated Plan 212 near-me viewport (1 test)
 
 ## Test Execution Results
 
+### Original full-suite run
+
 ```
 npx vitest run
 Test Files  236 passed | 2 skipped (238)
      Tests  1925 passed | 24 skipped (1949)
+```
+
+### Follow-up targeted runs
+
+```
+npx vitest run src/__tests__/hooks/useHomeNearMe.test.tsx
+Test Files  1 passed (1)
+     Tests  8 passed (8)
+
+npx vitest run src/__tests__/regression/plan217-near-me-list.test.tsx src/__tests__/regression/plan212-near-me-viewport.test.tsx
+Test Files  2 passed (2)
+     Tests  4 passed (4)
 ```
 
 All Plan 217 tests pass, and the updated `plan212` test continues to pass.
@@ -107,6 +135,6 @@ Per the Architect critique, the near-me list derives open-now status from `locat
 
 ## Next Steps
 
-- Hand off to **Code Reviewer** for quality review.
-- After review, route to **QA** for manual device verification and functional sign-off.
+- Route back to **Code Reviewer** for re-check of the MEDIUM loading-state fix.
+- After Code Reviewer approval, route to **QA** for manual device verification and functional sign-off.
 - **DevOps** will create the PR and confirm `v0.15.18` release readiness.

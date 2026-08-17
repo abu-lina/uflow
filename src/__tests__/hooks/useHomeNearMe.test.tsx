@@ -77,6 +77,34 @@ describe('useHomeNearMe', () => {
     expect(searchFoodNearMeMock).not.toHaveBeenCalled();
   });
 
+  it('[post-fix PASSES] active state reports isLoading true on the very first render before the effect fires', () => {
+    // Hang the RPC so the effect never settles; we want the render-phase value.
+    searchFoodNearMeMock.mockImplementation(() => new Promise(() => {}));
+
+    let firstRenderLoading: boolean | undefined;
+
+    renderHook(() => {
+      const state = useHomeNearMe({
+        coords: { lat: 52.52, lon: 13.405 },
+        enabled: true,
+        openNowActive: false,
+      });
+
+      if (firstRenderLoading === undefined) {
+        firstRenderLoading = state.isLoading;
+      }
+
+      return state;
+    });
+
+    expect(firstRenderLoading).toBe(true);
+    expect(searchFoodNearMeMock).toHaveBeenCalledWith({
+      lat: 52.52,
+      lon: 13.405,
+      radiusKm: 25,
+    });
+  });
+
   it('[post-fix PASSES] active calls searchFoodNearMe with { lat, lon, radiusKm: 25 }', async () => {
     searchFoodNearMeMock.mockResolvedValue([]);
 
