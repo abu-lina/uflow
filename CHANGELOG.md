@@ -8,6 +8,8 @@
 
 - **Dot separator between open tag and distance on provider cards (Plan 218)**: Provider cards on the home near-me list and the search near-me grid now show a small dot between the open/closed tag and the distance badge, so the two fields read as separate pieces of information. The dot renders only when both fields are present, never as a dangling separator.
 
+- **Tighter status-row spacing on provider cards (Plan 219)**: The open/closed status label, dot separator, and distance badge on provider cards now sit closer together (4px gap instead of 8px), so the status row reads as one cohesive unit on both the home near-me list and the search near-me results. Footer action buttons keep their original spacing.
+
 ## [0.15.17] - 2026-08-17
 
 ### Fixed

@@ -75,6 +75,8 @@ describe('ProviderCard — distance label (Plan 196)', () => {
 
       expect(separator).toBeInTheDocument();
       expect(row).toContainElement(separator);
+      expect(row).toHaveClass('gap-1');
+      expect(row).not.toHaveClass('gap-2');
     });
 
     it('does not render the dot separator when distanceKm is undefined', () => {
