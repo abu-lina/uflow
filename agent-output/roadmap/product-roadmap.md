@@ -1,6 +1,6 @@
 # UFlow (Ummah Flow) - Product Roadmap
 
-**Last Updated**: 2026-08-17
+**Last Updated**: 2026-08-24
 **Roadmap Owner**: roadmap agent
 **Current Version**: v0.15.17
 **Strategic Vision**: UFlow empowers the global Muslim community by making halal businesses and community services easily discoverable, strengthening the bonds of Ummah through transparent, trust-first connections that drive economic growth and mutual support across cities and countries.
@@ -9,6 +9,7 @@
 
 | Date & Time      | Change                                                             | Rationale                                                                                                                                                 |
 | ---------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-08-24T12:00Z | Plans 217+218+219 deployed to UAT (v0.15.18 combined): near-me home List fix, dot separator, status-row gap tightening | Combined v0.15.18 UAT deployment on uat.ummahflow.com: Plan 217 near-me home List view (PR #326), Plan 218 dot separator (PR #327), Plan 219 status-row gap-2→gap-1 (PR #329, squash-merged 1e9b88f8). deploy-uat run 32724056485 SUCCESS; UAT health HTTP 200. Combined UAT pass pending: 217 U1–U11 + UAT-218-1 + UAT-219-1 (human device checks). PROD release of v0.15.18 (tag + PROD deploy) deferred until combined UAT device pass approved. |
 | 2026-08-17T01:25Z | Plan 216 released (v0.15.17): filter button lands on filters, map is opt-in via view=map | Fixed mobile filter-button taps (home searchbar sliders, results edit button) landing on full-screen map instead of filter page — regression of Plan 208 (issue #307). `/search` now renders filter accordions by default; mobile map is explicit opt-in via `?view=map`; unknown/missing view values fail safe to filters. Single predicate change in `search/page.tsx` + regression tests (1910 passed, 12/12 real-browser checks). PR #325 squash-merged (212f9668). Tag v0.15.17 pushed. PROD deploy run 31978780554 SUCCESS. |
 | 2026-08-16T22:04Z | Plan 215 released (v0.15.16): iOS PWA geolocation hang watchdog | Fixed Near Me never resolving on iPhone SE standalone PWA: 12 s client-side watchdog in `useGeolocation` forces terminal state when `getCurrentPosition` never fires callbacks (standalone hang → denied + Plan 209 iOS Settings hint; non-standalone → timeout). Timer cleared on success/error/reset/unmount. Outcome logging `{ status, errorCode?, standalone, elapsedMs }` + SearchMap setView instrumentation. 12 new hook tests + SearchMap regression, all pre-fix FAIL/post-fix PASS. PR #324 squash-merged (3b8c8a72). Tag v0.15.16 pushed. PROD deploy run 31975012863 SUCCESS. GitHub issue #323 closed. Plan 212 DF-3 closed (user validated on-device, scenarios A–F). |
 | 2026-08-16T15:10Z | Plan 212 released (v0.15.14): Near Me map viewport fix on iPhone SE PWA | Centralized geolocation ownership in RootPageContent via useGeolocation hook. Removed duplicate getCurrentPosition() from SearchMap. Chip now reflects geolocation lifecycle (prompting/granted/denied). Map pans only on granted coordinates. 6 regression tests. PR #317 squash-merged (5b69d740). Tag v0.15.14 pushed. GitHub issue #316 closed. On-device iPhone SE validation deferred (DF-3, owner: UAT, due 2026-08-17 EOD). |
@@ -150,10 +151,10 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 ## Active Release Tracker
 
-**Current Working Release**: v0.15.7 — Released 2026-08-05 · Plan 203: Fix provider edit auth — sync DB role to auth metadata
+**Current Working Release**: v0.15.18 — Combined UAT deployment (Plans 217 + 218 + 219) on uat.ummahflow.com — awaiting human UAT device pass (217 U1–U11 + UAT-218-1 + UAT-219-1) before PROD release (tag + PROD deploy)
 
-**Release Status**: Released  
-**Ready for Release**: ✅ v0.15.7 complete  
+**Release Status**: UAT deployed (PROD release pending)
+**Ready for Release**: ⏳ v0.15.18 in UAT — human device checks pending
 **Blocking Items**:
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
