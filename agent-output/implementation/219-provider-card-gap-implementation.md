@@ -2,7 +2,7 @@
 ID: 219
 Origin: 219
 UUID: 881ebb4e
-Status: Active
+Status: Committed
 ---
 
 # Implementation 219 — Tighten gap between open/closed status, dot separator, and distance badge on ProviderCard
@@ -23,6 +23,7 @@ Status: Active
 | 2026-08-17 14:30 | Implementer | Added TDD class assertion in `ProviderCard-distance.test.tsx`; verified it failed with `gap-2`. |
 | 2026-08-17 14:31 | Implementer | Changed `ProviderCard.tsx:448` `gap-2` → `gap-1`; assertion passed. |
 | 2026-08-17 14:31 | Implementer | Ran regression suites (59 tests), type-check, and ESLint; all green. |
+| 2026-08-24 | DevOps | Document closed | Status: Committed |
 
 ## Implementation Summary
 
