@@ -52,10 +52,10 @@ export function AdminStatusFilter({ selectedStatus, onStatusChange }: AdminStatu
           <motion.button
             key={label}
             aria-selected={isSelected}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+            className={`inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
               isSelected
                 ? 'bg-primary text-white'
-                : 'bg-neutral-100 text-content hover:bg-neutral-200'
+                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
             }`}
             role="tab"
             tabIndex={isSelected ? 0 : -1}

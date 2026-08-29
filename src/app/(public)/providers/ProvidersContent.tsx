@@ -1,20 +1,22 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
+import { List, Map as MapIcon } from 'lucide-react';
 
 import { SectionSelector } from '@/features/search/components/SectionSelector';
-import { NearMeOpenNowFilters } from '@/features/search/components/NearMeOpenNowFilters';
-import { NearMeResultsGrid } from '@/features/search/components/NearMeResultsGrid';
-import { useNearMeSearch } from '@/features/search/hooks/useNearMeSearch';
-import { useNearMeToggle } from '@/features/search/hooks/useNearMeToggle';
+import { DiscoveryFilterBar } from '@/features/search/components/DiscoveryFilterBar';
+import { DiscoveryResultsGrid, type DiscoveryCardItem } from '@/features/search/components/DiscoveryResultsGrid';
+import { DiscoveryHeader } from '@/features/search/components/DiscoveryHeader';
+import { useNearMe } from '@/features/search/hooks/useNearMe';
+import { HomeSearchInput } from '@/features/search/components/HomeSearchInput';
+import { useGeolocation } from '@/hooks/useGeolocation';
 import { filterOpenNow } from '@/utils/filterOpenNow';
-import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
-import { SearchResultsList } from '@/components/providers/SearchResultsList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { MobileGreetingHeader } from '@/components/shared/MobileGreetingHeader';
@@ -33,9 +35,51 @@ import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';
-import { getCategories } from '@/services/categories';
-import type { Provider, SearchResult } from '@/services/providers';
+import type { SearchResult, NearMeFoodResult } from '@/services/providers';
 import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
+import type { MapPin } from '@/features/search/components/SearchMap';
+import type { OpeningHours } from '@/types/openingHours';
+
+const SearchMap = dynamic(
+  () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
+  { ssr: false },
+);
+
+const DEFAULT_RADIUS_KM = 5;
+
+type RawCategoryRow = { name_de?: string | null; name_en?: string | null; category_images?: Record<string, unknown> | null };
+type RawProviderRow = {
+  provider_name?: string | null;
+  opening_hours?: OpeningHours | null;
+  provider_images?: string | { urls?: string[] } | null;
+  address_city?: string | null;
+  category_id?: string | null;
+  categories?: RawCategoryRow | RawCategoryRow[] | null;
+};
+type RawLocationRow = {
+  provider_id: string;
+  location_latitude: number | null;
+  location_longitude: number | null;
+  providers: RawProviderRow | RawProviderRow[] | null;
+};
+
+function adaptMapPinToDiscoveryItem(pin: MapPin): DiscoveryCardItem {
+  return {
+    id: pin.providerId,
+    provider_id: pin.providerId,
+    provider_name: pin.providerName,
+    provider_images: pin.provider_images ?? null,
+    category: pin.category,
+    category_id: pin.category_id ?? null,
+    address_city: pin.address_city ?? null,
+    listing_type: 'food',
+    location_latitude: pin.lat,
+    location_longitude: pin.lng,
+    opening_hours: pin.opening_hours ?? null,
+    offers_ids: [],
+    needs_ids: [],
+  };
+}
 
 /**
  * Fetch search results from the server-side route handler.
@@ -91,7 +135,7 @@ export function ProvidersContent({
   const queryClient = useQueryClient();
   const { user, isLoading: userLoading } = useAuth();
   const { isAdmin } = useIsAdmin();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
@@ -160,19 +204,92 @@ export function ProvidersContent({
   const hasMatchingInitialFilters =
     (initialFilters ?? []).join(',') === (normalizedFilters ?? []).join(',');
 
-  // Plan 196 bug fix: "Open now" must work standalone, not only when combined
-  // with "Near me". Previously, open_now=1 was only honored inside
-  // useNearMeSearch, which is a no-op unless near_lat/near_lon are ALSO
-  // present — so toggling "Open now" by itself silently did nothing.
-  const openNowParam = searchParams.get('open_now') === '1';
+  // Plan 220: Near-me state — geolocation-based (matches home page pattern)
+  const [nearMeActive, setNearMeActive] = useState(false);
+  const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
+  const [isOpenNow, setIsOpenNow] = useState(false);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
+  const [allRows, setAllRows] = useState<RawLocationRow[]>([]);
+  const [pinsLoading, setPinsLoading] = useState(true);
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(120);
 
-  // Plan 196: "Near me" + "Open now" — consumes near_lat/near_lon/near_radius/open_now
-  // URL params emitted by the chip row rendered on THIS page (results page, not the
-  // filter-building /search page — corrected placement per product owner feedback).
-  // When active, this takes over result rendering entirely (see renderContent below);
-  // the paginated infinite-query path below remains unchanged for the non-geo search experience.
-  const nearMeSearch = useNearMeSearch(searchParams, section);
-  const nearMeToggle = useNearMeToggle(router, searchParams, pathname);
+  const geolocation = useGeolocation();
+
+  const userCoords = useMemo(
+    () =>
+      geolocation.status === 'granted' && geolocation.coords
+        ? { lat: geolocation.coords.latitude, lon: geolocation.coords.longitude }
+        : null,
+    [geolocation.status, geolocation.coords],
+  );
+
+  const nearMe = useNearMe({
+    coords: userCoords,
+    active: nearMeActive && viewMode === 'list',
+    openNow: isOpenNow,
+    radiusKm,
+    urlSync: false,
+  });
+
+  const handleToggleNearMe = () => {
+    if (nearMeActive || geolocation.status === 'granted') {
+      setNearMeActive(false);
+      geolocation.reset();
+      return;
+    }
+    setNearMeActive(true);
+    geolocation.requestLocation();
+  };
+
+  // Plan 220: Load all map pins
+  useEffect(() => {
+    const load = async () => {
+      setPinsLoading(true);
+      try {
+        const { data } = await supabase
+          .from('locations')
+          .select('provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories(name_de, name_en, category_images))')
+          .not('location_latitude', 'is', null)
+          .not('location_longitude', 'is', null)
+          .eq('providers.listing_type', 'food')
+          .eq('providers.review_status', 'approved');
+        if (Array.isArray(data)) setAllRows(data as RawLocationRow[]);
+      } finally {
+        setPinsLoading(false);
+      }
+    };
+    void load();
+  }, []);
+
+  // Plan 220: Compute map pins from allRows
+  const pins = useMemo<MapPin[]>(() => {
+    const unique = new Map<string, MapPin>();
+    for (const row of allRows) {
+      if (row.location_latitude === null || row.location_longitude === null) continue;
+      if (unique.has(row.provider_id)) continue;
+      const p = Array.isArray(row.providers) ? (row.providers[0] ?? null) : row.providers;
+      const rawCat = p?.categories;
+      const cat = rawCat ? (Array.isArray(rawCat) ? (rawCat[0] ?? null) : rawCat) : null;
+      const name = Array.isArray(row.providers)
+        ? (row.providers[0]?.provider_name ?? 'Provider')
+        : (row.providers?.provider_name ?? 'Provider');
+      unique.set(row.provider_id, {
+        providerId: row.provider_id,
+        providerName: name,
+        lat: Number(row.location_latitude),
+        lng: Number(row.location_longitude),
+        opening_hours: p?.opening_hours ?? null,
+        provider_images: p?.provider_images ?? null,
+        address_city: p?.address_city ?? null,
+        category_id: p?.category_id ?? null,
+        category: cat
+          ? { name_de: cat.name_de ?? '', name_en: cat.name_en ?? undefined, category_images: cat.category_images ?? undefined }
+          : undefined,
+      });
+    }
+    return filterOpenNow(Array.from(unique.values()), isOpenNow);
+  }, [allRows, isOpenNow]);
 
   // Use React Query infinite query for paginated search results
   // Page size: 12 provides good balance between initial load and frequent pagination
@@ -203,41 +320,16 @@ export function ProvidersContent({
       // Show cached data immediately while refetching in background
       placeholderData: (previousData) => previousData,
       // Plan 196: Skip the paginated text/category search entirely while "near me" is active.
-      enabled: !nearMeSearch.isNearMeMode,
+      enabled: !nearMe.isActive,
     });
 
   // Flatten all pages into a single array — memoized so stable reference for useCallback deps.
   // Plan 196 bug fix: apply the "Open now" filter here too, so it takes effect
-  // even when "Near me" is not active (see openNowParam above).
+  // even when "Near me" is not active.
   const searchResults = useMemo(
-    () => filterOpenNow(data?.pages.flatMap((page) => page.results) ?? [], openNowParam),
-    [data, openNowParam],
+    () => filterOpenNow(data?.pages.flatMap((page) => page.results) ?? [], isOpenNow),
+    [data, isOpenNow],
   );
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories', 'providers-header'],
-    queryFn: getCategories,
-    staleTime: 10 * 60 * 1000,
-    enabled: !!category,
-  });
-
-  const selectedCategoryLabel = useMemo(() => {
-    if (!category) return null;
-
-    const resultCategory = searchResults.find((result) => result.category_id === category)?.category;
-    if (resultCategory) {
-      return language === 'en'
-        ? resultCategory.name_en || resultCategory.name_de
-        : resultCategory.name_de || resultCategory.name_en || null;
-    }
-
-    const matchedCategory = categories.find((item) => item.category_id === category);
-    if (!matchedCategory) return null;
-
-    return language === 'en'
-      ? matchedCategory.name_en || matchedCategory.name_de
-      : matchedCategory.name_de || matchedCategory.name_en || null;
-  }, [category, categories, language, searchResults]);
 
   // Use React Query for bookmarks - includes both providers and community services
   const { data: bookmarkedProviderIds = [] } = useQuery({
@@ -276,16 +368,6 @@ export function ProvidersContent({
     },
     [queryClient, user?.id],
   );
-
-  const handleProviderClick = useCallback(
-    (provider: Provider) => {
-      // M-5a: all providers (including ummah) navigate via /providers/[id]
-      router.push(`/providers/${provider.provider_id}`);
-    },
-    [router],
-  );
-
-  const peopleSummary = searchParams.get('wer');
 
   const handleSectionChange = useCallback(
     (nextSection: Section) => {
@@ -403,45 +485,92 @@ export function ProvidersContent({
     }
   }, [user, isLoading, userLoading, router]);
 
+  // Plan 221: Adapter functions to convert results to DiscoveryCardItem shape
+  function adaptNearMeResult(result: NearMeFoodResult): DiscoveryCardItem {
+    return {
+      id: result.provider_id,
+      provider_id: result.provider_id,
+      provider_name: result.provider_name,
+      provider_images: result.provider_images,
+      category: result.category_name_de
+        ? { name_de: result.category_name_de, name_en: result.category_name_en ?? undefined, category_images: result.category_images ?? undefined }
+        : null,
+      category_id: result.category_id,
+      address_city: result.address_city,
+      opening_hours: result.opening_hours,
+      listing_type: 'food',
+      location_latitude: result.location_latitude,
+      location_longitude: result.location_longitude,
+      distanceKm: result.distance_km,
+      isBookmarked: bookmarkedProviderIds.includes(result.provider_id),
+    };
+  }
+
+  function adaptSearchResultToDiscoveryItem(result: SearchResult): DiscoveryCardItem {
+    return {
+      id: result.id,
+      provider_id: result.id,
+      provider_name: result.name,
+      provider_images: result.images,
+      category: result.category ?? null,
+      category_id: result.category_id,
+      address_city: result.address_city,
+      address_street: result.address_street,
+      address_zip: result.address_zip,
+      address_country: result.address_country,
+      contact_email: result.contact_email,
+      contact_phone: result.contact_phone,
+      created_at: result.created_at,
+      updated_at: result.updated_at,
+      offers_ids: result.offers_ids,
+      needs_ids: result.needs_ids,
+      opening_hours: result.opening_hours ?? result.originalProvider?.opening_hours ?? null,
+      listing_type: result.listing_type,
+      location_latitude: result.location_latitude,
+      location_longitude: result.location_longitude,
+      social_website: result.social_website,
+      social_instagram: result.social_instagram,
+      badges: result.badges,
+      offers: result.offers,
+      verification_method: result.originalProvider?.verification_method,
+      has_certificate: result.originalProvider?.has_certificate,
+      review_status: status,
+      review_feedback: result.review_feedback,
+      isBookmarked: bookmarkedProviderIds.includes(result.id),
+    };
+  }
+
   // Render content based on state
-  // Only show loading skeleton on true initial load (isLoading = true means no cached data)
-  // If we have cached data, show it immediately even if isFetching (background refetch)
+  const enableModeration = isAdmin && !!status && section !== 'ummah';
+
   const renderContent = () => {
-    // Plan 196: "Near me" takes over rendering entirely — distance-sorted results,
-    // optionally open-now filtered, via the dedicated near-me RPC (not the paginated
-    // text/category search below).
-    if (nearMeSearch.isNearMeMode) {
+    // Plan 196: "Near me" takes over rendering entirely
+    if (nearMe.isActive) {
       return (
-        <NearMeResultsGrid
-          bookmarkedProviderIds={bookmarkedProviderIds}
-          error={nearMeSearch.error}
-          isLoading={nearMeSearch.isLoading}
-          results={nearMeSearch.results}
-          t={t}
-          onBookmarkChange={handleBookmarkChange}
-          onProviderClick={(providerId) => router.push(`/providers/${providerId}`)}
-          onRetry={nearMeSearch.refetch}
+        <DiscoveryResultsGrid
+          items={nearMe.results.map(adaptNearMeResult)}
+          isLoading={nearMe.isLoading}
+          error={nearMe.error}
+          headerOffset={headerHeight}
+          openNow={isOpenNow}
+          enableDistance
+          enableBookmarks
+          onRetry={nearMe.refetch}
         />
       );
     }
 
-    // True initial load: isLoading is true only when there's no cached data AND currently fetching
-    // In React Query v5: isLoading = isPending && isFetching
-    // Show skeleton grid matching the actual grid layout
     if (isLoading) {
       return <SkeletonGrid count={12} />;
     }
 
     if (error) {
-      // Log error for debugging
       console.error('[ProvidersContent] Search error:', error);
-
       return (
         <EmptyState description={t('providers.errorLoading')} title={t('providers.errorTitle')} />
       );
     }
 
-    // Empty state: only show if we have no results
     if (searchResults.length === 0) {
       return (
         <EmptyState
@@ -451,26 +580,24 @@ export function ProvidersContent({
       );
     }
 
-    // Plan 058: Determine card mode - use moderation when admin has status filter active.
-    // Plan 089 CR-H2: Exclude UMMAH section — UMMAH returns community_service rows which
-    // have no provider review lifecycle; provider moderation actions must not be rendered.
-    const cardMode = isAdmin && status && section !== 'ummah' ? 'moderation' : 'bookmark';
-
-    // Show results (cached data shown immediately, background refetch doesn't block UI)
     return (
-      <SearchResultsList
-        bookmarkedProviderIds={bookmarkedProviderIds}
+      <DiscoveryResultsGrid
+        items={searchResults.map(adaptSearchResultToDiscoveryItem)}
+        isLoading={false}
         error={error}
+        headerOffset={headerHeight}
+        openNow={isOpenNow}
+        enableBookmarks
+        bookmarkedIds={bookmarkedProviderIds}
+        onBookmarkChange={handleBookmarkChange}
+        enableModeration={enableModeration}
+        onApprove={handleApprove}
+        onReject={handleRejectClick}
+        reviewingProviderId={reviewingProviderId}
+        enableInfiniteScroll
         hasNextPage={hasNextPage ?? false}
         isFetchingNextPage={isFetchingNextPage}
-        mode={cardMode}
-        reviewingProviderId={reviewingProviderId}
-        searchResults={searchResults}
-        onApprove={handleApprove}
-        onBookmarkChange={handleBookmarkChange}
         onLoadMore={fetchNextPage}
-        onProviderClick={handleProviderClick}
-        onReject={handleRejectClick}
         onRetry={() => refetch()}
       />
     );
@@ -533,14 +660,12 @@ export function ProvidersContent({
         onConfirm={handleRejectConfirm}
       />
       {showGreeting ? (
-        // Fixed greeting header for Stage 2 (matches ProvidersPageHeader style)
+        // Fixed greeting header for Stage 2 (matches DiscoveryHeader style)
         <header
           className="fixed left-0 right-0 top-0 z-50 sm:hidden"
           style={{
-            // Smooth transition for all properties including backdrop-filter
             transition:
               'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
-            // Glassy blur effect - always applied for consistent visual effect
             background: 'rgba(255, 255, 255, 0.15)',
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -555,8 +680,6 @@ export function ProvidersContent({
           <div
             className="px-4 py-4"
             style={{
-              // Add safe area padding to content, not header background
-              // Use max() to ensure minimum 24px padding on devices without safe area (like iPhone SE)
               paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
             }}
           >
@@ -572,14 +695,31 @@ export function ProvidersContent({
           </div>
         </header>
       ) : (
-        // Search bar and category filter header (fixed)
-        <ProvidersPageHeader
-          categoryId={category}
-          categoryLabel={selectedCategoryLabel}
-          peopleSummary={peopleSummary}
-          searchTerm={query}
+        <DiscoveryHeader
+          ref={headerRef}
           section={section}
+          selectedSection={section}
+          viewMode={viewMode}
           onSectionChange={handleSectionChange}
+          searchSlot={<HomeSearchInput activeSection={section} />}
+          filterBarSlot={
+            section === 'food' ? (
+              <DiscoveryFilterBar
+                geoStatus={geolocation.status}
+                nearMeActive={nearMeActive}
+                openNowActive={isOpenNow}
+                radiusKm={radiusKm}
+                onToggleNearMe={handleToggleNearMe}
+                onToggleOpenNow={() => setIsOpenNow((v) => !v)}
+                onRadiusChange={setRadiusKm}
+                adminSlot={
+                  isAdmin ? (
+                    <AdminStatusFilter selectedStatus={status} onStatusChange={handleStatusChange} />
+                  ) : undefined
+                }
+              />
+            ) : undefined
+          }
         />
       )}
 
@@ -590,43 +730,44 @@ export function ProvidersContent({
             : 'pt-0 sm:pt-0 md:pt-[153px]'
         }`}
       >
-        {!showGreeting && (
-          <>
-            {/* Spacer reserves the fixed mobile header's real height (155px measured) */}
-            <div
-              className="sm:hidden"
-              style={{ height: 'max(155px, calc(env(safe-area-inset-top) + 155px))' }}
-            />
-          </>
-        )}
-        {/* Plan 058: Admin status filter - only visible to admin/moderator users */}
-        {isAdmin && (
-          <div className="mb-6 px-4 sm:px-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-content-heading">{t('providers.adminFilterLabel')}</span>
-              <AdminStatusFilter
-                selectedStatus={status}
-                onStatusChange={handleStatusChange}
-              />
-            </div>
-          </div>
-        )}
-        {/* Plan 196: "Near me" + "Open now" quick filters — results page only (food) */}
-        {section === 'food' && (
-          <div className="mt-3 mb-6 px-4 sm:px-6">
-            <NearMeOpenNowFilters
-              geoStatus={nearMeToggle.geoStatus}
-              nearMeActive={nearMeToggle.nearMeActive}
-              openNowActive={nearMeToggle.openNowActive}
-              radiusKm={nearMeToggle.radiusKm}
-              t={t}
-              onRadiusChange={nearMeToggle.onRadiusChange}
-              onToggleNearMe={nearMeToggle.onToggleNearMe}
-              onToggleOpenNow={nearMeToggle.onToggleOpenNow}
+        {!showGreeting && section === 'food' && (
+          <div
+            style={{
+              visibility: viewMode === 'map' ? 'visible' : 'hidden',
+              position: 'absolute',
+              inset: 0,
+            }}
+          >
+            <SearchMap
+              pins={pins}
+              userCoords={userCoords}
             />
           </div>
         )}
-        {renderContent()}
+
+        {viewMode === 'list' && renderContent()}
+
+        {/* Toggle button: map <-> list, sits above navbar — food results only */}
+        {!showGreeting && section === 'food' && (
+          <button
+            aria-label={viewMode === 'map' ? t('map.switchToList') : t('map.switchToMap')}
+            className="fixed left-1/2 z-[500] -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 font-inter-tight text-sm font-semibold text-content-heading shadow-lg transition-colors hover:bg-neutral-50"
+            style={{ bottom: 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))' }}
+            type="button"
+            onClick={() => {
+              if (viewMode === 'map') {
+                setHeaderHeight(headerRef.current?.offsetHeight ?? 120);
+              }
+              setViewMode((v) => (v === 'map' ? 'list' : 'map'));
+            }}
+          >
+            {viewMode === 'map' ? (
+              <><List aria-hidden="true" className="h-4 w-4" /><span>{t('map.listViewLabel')}</span></>
+            ) : (
+              <><MapIcon aria-hidden="true" className="h-4 w-4" /><span>{t('map.mapViewLabel')}</span></>
+            )}
+          </button>
+        )}
       </main>
     </>
   );
