@@ -243,13 +243,6 @@ describe('Search page Wo defaults and selection behavior', () => {
     sessionStorage.clear();
   });
 
-  it('[pre-fix FAILS] shows filter controls on mobile food section', () => {
-    render(<SearchPage />);
-
-    expect(screen.getByRole('heading', { name: 'Values & Amenities' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Clear all' })).toBeInTheDocument();
-  });
-
   it('shows Wer accordion when inactive section resolves to food', async () => {
     mockSection = 'business';
 

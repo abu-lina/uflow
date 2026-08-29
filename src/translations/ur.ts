@@ -194,6 +194,10 @@ export const ur = {
       "chipLabel": "میرے قریب",
       "radiusLabel": "فاصلہ:",
       "permissionDenied": "مقام دستیاب نہیں",
+      // TODO: Refine iOS/Android path wording with native-speaker review.
+      "permissionDeniedHintIos": "مقام بلاک ہے۔ براہ کرم ڈیوائس سیٹنگز میں لوکیشن رسائی کی اجازت دیں۔",
+      "permissionDeniedHintAndroid": "مقام بلاک ہے۔ براہ کرم ڈیوائس سیٹنگز میں لوکیشن رسائی کی اجازت دیں۔",
+      "permissionDeniedHintFallback": "مقام بلاک ہے۔ براہ کرم ڈیوائس سیٹنگز میں لوکیشن رسائی کی اجازت دیں۔",
       "loading": "فراہم کنندگان لوڈ ہو رہے ہیں...",
       "emptyTitle": "قریب کوئی کھلا ریسٹورانٹ نہیں",
       "errorTitle": "تلاش دستیاب نہیں",

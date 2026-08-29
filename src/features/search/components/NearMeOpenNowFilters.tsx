@@ -40,6 +40,15 @@ export function NearMeOpenNowFilters({
 }: NearMeOpenNowFiltersProps) {
   const showPermissionDenied =
     nearMeActive && (geoStatus === 'denied' || geoStatus === 'unavailable' || geoStatus === 'timeout');
+  const showPermissionDeniedHint = nearMeActive && geoStatus === 'denied';
+  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
+  const isIOS = /iphone|ipad|ipod/.test(userAgent) || (userAgent.includes('macintosh') && navigator.maxTouchPoints > 1);
+  const isAndroid = userAgent.includes('android');
+  const permissionDeniedHintKey = isIOS
+    ? 'suchen.nearMe.permissionDeniedHintIos'
+    : isAndroid
+      ? 'suchen.nearMe.permissionDeniedHintAndroid'
+      : 'suchen.nearMe.permissionDeniedHintFallback';
   // Show radius pills whenever near-me is active and geolocation hasn't failed —
   // includes 'idle' after a page reload where near params come from the URL.
   const showRadiusPills = nearMeActive && !showPermissionDenied;
@@ -99,7 +108,8 @@ export function NearMeOpenNowFilters({
 
       {showPermissionDenied ? (
         <p aria-live="polite" className="px-0.5 text-sm text-text-muted" role="status">
-          {t('suchen.nearMe.permissionDenied')}
+          <span className="block">{t('suchen.nearMe.permissionDenied')}</span>
+          {showPermissionDeniedHint ? <span className="block text-xs">{t(permissionDeniedHintKey)}</span> : null}
         </p>
       ) : null}
     </div>

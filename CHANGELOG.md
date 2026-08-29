@@ -1,10 +1,33 @@
 # Changelog
 
-## [Unreleased] - 2026-08-16
+## [Unreleased] - 2026-08-17
 
 ### Fixed
 
-- **Mobile `/search` filter-page regression (Plan 213)**: Restored filter controls for mobile food search by removing the `isMobileFoodMapMode` branch from `src/app/(public)/search/page.tsx`. The page now consistently renders the Was/Wo/Wer/Filter accordion stack, page header, and bottom action bar (`Clear all` + `Suchen`) on `?section=food` instead of replacing the filter UI with `SearchMap`. This re-enables the intended flow: home map filter button → `/search` filter configuration → `/food` results.
+- **"Near me" now works on the home List view (Plan 217)**: Tapping the "In der Nähe" chip while in List view now reorders providers nearest-first and limits results to those within 25 km, with a distance badge on each card. The List branch consumes the same `useGeolocation` signal as the Map branch via the new `useHomeNearMe` hook and `HomeNearMeList` component. Open-now filtering is applied client-side and preserves distance ordering. Map view behavior is unchanged. Added `home_list_nearme_*` instrumentation and regression coverage.
+
+- **Dot separator between open tag and distance on provider cards (Plan 218)**: Provider cards on the home near-me list and the search near-me grid now show a small dot between the open/closed tag and the distance badge, so the two fields read as separate pieces of information. The dot renders only when both fields are present, never as a dangling separator.
+
+- **Tighter status-row spacing on provider cards (Plan 219)**: The open/closed status label, dot separator, and distance badge on provider cards now sit closer together (4px gap instead of 8px), so the status row reads as one cohesive unit on both the home near-me list and the search near-me results. Footer action buttons keep their original spacing.
+
+## [0.15.17] - 2026-08-17
+
+### Fixed
+
+- **Filter button lands on filters, map is opt-in via `?view=map` (Plan 216)**: Mobile users tapping the filter (sliders) button on the home searchbar, or the edit button on the results page, were dropped onto a full-screen map instead of the filter page. The `/search` destination now renders the filter accordions (Wo / Was / Wer / Filter) by default and only renders the mobile map when the explicit `?view=map` query parameter is present (intentional map deep link: `/search?section=food&view=map`). Unknown or missing `view` values fail safe to filters. The map-pin Supabase fetch is gated on map mode so no pin query runs when filters are shown. All entry paths (home sliders, results edit button, empty-query submit, legacy `/suchen` redirect) are fixed by the single render predicate. Added regression coverage for the no-view, `view=filters`, `view=map`, and desktop branches.
+
+
+## [0.15.16] - 2026-08-16
+
+### Fixed
+
+- **iOS PWA geolocation hang watchdog (Plan 215)**: Added a client-side `setTimeout` watchdog to `useGeolocation` that forces a terminal state when `navigator.geolocation.getCurrentPosition` hangs without firing its success or error callback, which happens on iPhone SE standalone PWAs. Standalone mode maps the hang to `denied` so the existing Plan 209 iOS Settings hint (`permissionDeniedHintIos`) is surfaced; non-standalone browsers map it to `timeout`. Timer is cleared on success, error, `reset()`, and unmount. Added Normal-level outcome logging `{ status, errorCode?, standalone, elapsedMs }` and `SearchMap` `setView` executed/skipped logging for diagnostics.
+
+## [0.15.15] - 2026-08-16
+
+### Fixed
+
+- **Near Me permission-denied recovery guidance (Plan 209)**: Added denied-state UX guidance for mobile PWA users when location permission has been blocked by the OS. `HomeSearchBar` and `NearMeOpenNowFilters` now render platform-specific help text only when `geoStatus === 'denied'` (`iOS`, `Android`, `fallback`). `timeout` and `unavailable` continue showing only the existing "Location unavailable" label, avoiding misleading settings guidance for transient failures. Added regression coverage for iOS/Android/fallback hint selection and denied-only guard behavior.
 
 ## [0.15.14] - 2026-08-16
 

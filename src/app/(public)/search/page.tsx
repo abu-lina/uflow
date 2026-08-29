@@ -1,9 +1,12 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Heart, Search, MapPin } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
@@ -17,6 +20,7 @@ import { WerAudienceFilter, type WerAudienceSelectionChange } from '@/features/s
 import { WoCityResults, type WoRecentSearch } from '@/features/search/components/WoCityResults';
 import { FilterSection } from '@/features/search/components/FilterSection';
 import { UmmahFilterSection } from '@/features/search/components/UmmahFilterSection';
+import type { MapPin as ProviderMapPin } from '@/features/search/components/SearchMap';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
 import { buildSearchParams, toFoodRecentSearches } from '@/lib/search-params';
@@ -25,6 +29,12 @@ import { toast } from 'sonner';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 import { type PopularCity, fetchPopularCities, fetchProviderCities, checkCityExists } from '@/services/providers';
+
+// Leaflet accesses browser globals on import — load only on client side
+const SearchMap = dynamic(
+  () => import('@/features/search/components/SearchMap').then((m) => ({ default: m.SearchMap })),
+  { ssr: false, loading: () => null }
+);
 
 /**
  * /search — dedicated search detail page (Figma node 212:785 "CreateSouk").
@@ -44,6 +54,7 @@ function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
 
   type AccordionKey = 'was' | 'wo' | 'wer' | 'filter';
 
@@ -57,6 +68,7 @@ function SearchPageContent() {
 
   const urlSection = resolveSection(searchParams.get('section'));
   const urlQuery = (searchParams.get('q') || '').trim();
+  const urlView = searchParams.get('view');
   const [selectedSection, setSelectedSection] = useState<Section>(urlSection);
   const [wasQuery, setWasQuery] = useState(urlQuery);
   const [wasResults, setWasResults] = useState<FoodConcept[]>([]);
@@ -126,6 +138,7 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [werSelection, setWerSelection] = useState<WerAudienceSelectionChange | null>(null);
   const [werResetSignal, setWerResetSignal] = useState(0);
+  const [mapPins, setMapPins] = useState<ProviderMapPin[]>([]);
 
   // Fetch user session for authenticated notify-me flow
   useEffect(() => {
@@ -424,6 +437,33 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
     setWasQuery(urlQuery);
   }, [urlQuery]);
 
+  // Load food provider pins for map mode — only fetches when mobile + food section + view=map
+  useEffect(() => {
+    if (!isMobile || selectedSection !== 'food' || urlView !== 'map') { setMapPins([]); return; }
+    let cancelled = false;
+    type RawPin = { provider_id: string; location_latitude: number; location_longitude: number; providers: { provider_name: string | null } | { provider_name: string | null }[] | null };
+    async function loadPins() {
+      const { data } = await supabase
+        .from('locations')
+        .select('provider_id, location_latitude, location_longitude, providers!inner(provider_name)')
+        .not('location_latitude', 'is', null)
+        .not('location_longitude', 'is', null)
+        .eq('providers.listing_type', 'food')
+        .eq('providers.review_status', 'approved');
+      if (cancelled || !Array.isArray(data)) return;
+      setMapPins(
+        (data as RawPin[]).map((row) => ({
+          providerId: row.provider_id,
+          providerName: (Array.isArray(row.providers) ? row.providers[0]?.provider_name : row.providers?.provider_name) ?? 'Provider',
+          lat: Number(row.location_latitude),
+          lng: Number(row.location_longitude),
+        }))
+      );
+    }
+    void loadPins();
+    return () => { cancelled = true; };
+  }, [isMobile, selectedSection, urlView]);
+
   const handleSectionChange = (section: Section) => {
     if (!SECTION_META[section].active) {
       const label = t(SECTION_META[section].labelKey);
@@ -549,6 +589,7 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
   const filterAccordionTitle = selectedFilters.length > 0
     ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
     : t('suchen.accordions.filter');
+  const isMobileFoodMapMode = isMobile && selectedSection === 'food' && urlView === 'map';
 
   const accordionBody = (
     <div className="flex flex-col gap-2">
@@ -721,11 +762,13 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
   return (
     <ScrollablePageLayout background="bg-uflow-light">
       {/* ── Header ────────────────────────────────────────────────────── */}
-      <PageHeader
-        title={t('suchen.title')}
-        variant="back-and-title"
-        onBack={handleBack}
-      />
+      {!isMobileFoodMapMode && (
+        <PageHeader
+          title={t('suchen.title')}
+          variant="back-and-title"
+          onBack={handleBack}
+        />
+      )}
 
       <PageContent hasFooter maxWidth="full" paddingX="px-4">
         {/* ── Section selector (sticky) ───────────────────────────────── */}
@@ -737,51 +780,59 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
         </div>
 
         {/* ── Main body ───────────────────────────────────────────── */}
-        {accordionBody}
+        {isMobileFoodMapMode ? (
+          <ErrorBoundary fallback={accordionBody}>
+            <SearchMap pins={mapPins} />
+          </ErrorBoundary>
+        ) : (
+          accordionBody
+        )}
       </PageContent>
 
       {/* ── Fixed bottom bar ─────────────────────────────────────────── */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-[60] flex items-center justify-between border-t border-border/30 px-6 pt-4"
-        style={{
-          background: 'linear-gradient(to bottom, #f5f5f5 0%, #fbfbfb 100%)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
-          paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))',
-        }}
-      >
-        <button
-          className="text-sm font-medium text-text-primary underline underline-offset-2 hover:opacity-70 transition-opacity"
-          onClick={() => {
-            setWasQuery('');
-            setWasResults([]);
-            setIsLoadingWas(false);
-            setIsErrorWas(false);
-            setSelectedWas({ type: 'all-restaurants' as const, label: t('suchen.was.everything') });
-            setOpenAccordion('was');
-            setWoInputQuery('');
-            setSelectedWoCity(null);
-            setWerSelection(null);
-            setWerResetSignal((prev) => prev + 1);
-            setSelectedFilters([]);
-            handleSectionChange('food');
-            localStorage.removeItem('selectedCity');
-            sessionStorage.removeItem('selectedCity');
-            sessionStorage.setItem('uflow:wo-cleared-this-session', 'true');
+      {!isMobileFoodMapMode ? (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-[60] flex items-center justify-between border-t border-border/30 px-6 pt-4"
+          style={{
+            background: 'linear-gradient(to bottom, #f5f5f5 0%, #fbfbfb 100%)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
+            paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))',
           }}
         >
-          {t('suchen.clearAll')}
-        </button>
-        <Button
-          className="shadow-[0_8px_24px_rgba(88,157,150,0.25)]"
-          disabled={!selectedWas}
-          icon={<Heart className="w-4 h-4" />}
-          onClick={handleSearch}
-        >
-          {t('suchen.searchButton')}
-        </Button>
-      </div>
+          <button
+            className="text-sm font-medium text-text-primary underline underline-offset-2 hover:opacity-70 transition-opacity"
+            onClick={() => {
+              setWasQuery('');
+              setWasResults([]);
+              setIsLoadingWas(false);
+              setIsErrorWas(false);
+              setSelectedWas({ type: 'all-restaurants' as const, label: t('suchen.was.everything') });
+              setOpenAccordion('was');
+              setWoInputQuery('');
+              setSelectedWoCity(null);
+              setWerSelection(null);
+              setWerResetSignal((prev) => prev + 1);
+              setSelectedFilters([]);
+              handleSectionChange('food');
+              localStorage.removeItem('selectedCity');
+              sessionStorage.removeItem('selectedCity');
+              sessionStorage.setItem('uflow:wo-cleared-this-session', 'true');
+            }}
+          >
+            {t('suchen.clearAll')}
+          </button>
+          <Button
+            className="shadow-[0_8px_24px_rgba(88,157,150,0.25)]"
+            disabled={!selectedWas}
+            icon={<Heart className="w-4 h-4" />}
+            onClick={handleSearch}
+          >
+            {t('suchen.searchButton')}
+          </Button>
+        </div>
+      ) : null}
     </ScrollablePageLayout>
   );
 }

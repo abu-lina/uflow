@@ -194,6 +194,10 @@ export const ar = {
       "chipLabel": "بالقرب مني",
       "radiusLabel": "المسافة:",
       "permissionDenied": "الموقع غير متاح",
+      // TODO: Refine iOS/Android path wording with native-speaker review.
+      "permissionDeniedHintIos": "تم حظر الموقع. يُرجى السماح بالوصول من إعدادات جهازك.",
+      "permissionDeniedHintAndroid": "تم حظر الموقع. يُرجى السماح بالوصول من إعدادات جهازك.",
+      "permissionDeniedHintFallback": "تم حظر الموقع. يُرجى السماح بالوصول من إعدادات جهازك.",
       "loading": "جارٍ تحميل مقدمي الخدمة...",
       "emptyTitle": "لا توجد مطاعم مفتوحة قريبة",
       "errorTitle": "البحث غير متاح",

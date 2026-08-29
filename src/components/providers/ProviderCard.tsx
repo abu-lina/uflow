@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 
 import { Icon } from '@iconify/react';
+import { Dot } from 'lucide-react';
 
 import { Button } from '@/components/ui/Button';
 import { BadgeLabel } from '@/components/ui/BadgeLabel';
@@ -444,13 +445,19 @@ export const ProviderCard = React.memo(
                     {provider_name}
                   </span>
                   {(openStatus.visible || distanceLabel) && (
-                    <div className="mt-0.5 flex items-center gap-2" data-testid="provider-open-status">
+                    <div className="mt-0.5 flex items-center gap-1" data-testid="provider-open-status">
                       {openStatus.visible && (
                         <span
                           className={`font-inter text-sm font-medium leading-normal ${openStatus.isOpen ? 'text-success-dark' : 'text-danger-dark'}`}
                         >
                           {openStatusLabel}
                         </span>
+                      )}
+                      {openStatus.visible && distanceLabel && (
+                        <Dot
+                          className="h-icon-sm w-icon-sm text-text-muted"
+                          data-testid="provider-distance-separator"
+                        />
                       )}
                       {distanceLabel && (
                         <span className="font-inter text-sm font-medium leading-normal text-text-muted" data-testid="provider-distance">
