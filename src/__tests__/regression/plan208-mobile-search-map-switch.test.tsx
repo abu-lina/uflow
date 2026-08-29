@@ -102,7 +102,7 @@ vi.mock('@/components/ui/Button', () => ({
   Button: ({ children }: { children: React.ReactNode }) => <button>{children}</button>,
 }));
 
-describe('Plan 208 mobile map switch', () => {
+describe('Plan 213 mobile search filter page behavior', () => {
   beforeEach(() => {
     mockIsMobile = false;
     mockSection = 'food';
@@ -114,13 +114,14 @@ describe('Plan 208 mobile map switch', () => {
     cleanup();
   });
 
-  it('renders map on mobile for food section', async () => {
+  it('[post-fix PASSES] does not render map on mobile for food section', () => {
     mockIsMobile = true;
     mockSection = 'food';
 
     render(<SearchPage />);
 
-    expect(await screen.findByTestId('search-map')).toBeInTheDocument();
+    expect(screen.queryByTestId('search-map')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'suchen.accordions.filter' })).toBeInTheDocument();
   });
 
   it('does not render map on desktop', async () => {
@@ -132,7 +133,7 @@ describe('Plan 208 mobile map switch', () => {
     expect(screen.queryByTestId('search-map')).not.toBeInTheDocument();
   });
 
-  it('[post-fix] passes provider pins to SearchMap when location data is returned', async () => {
+  it('[post-fix PASSES] does not query map pin locations on search filter page', async () => {
     const locationData = [
       { provider_id: 'p1', location_latitude: 52.52, location_longitude: 13.405, providers: { provider_name: 'Test Restaurant' } },
       { provider_id: 'p2', location_latitude: 48.14, location_longitude: 11.58, providers: [{ provider_name: 'Second Place' }] },
@@ -153,9 +154,8 @@ describe('Plan 208 mobile map switch', () => {
 
     render(<SearchPage />);
 
-    await screen.findByTestId('search-map');
     await waitFor(() => {
-      expect(capturedPins.current.length).toBeGreaterThan(0);
+      expect(mockSupabaseFrom).not.toHaveBeenCalled();
     });
   });
 });

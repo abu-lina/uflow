@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] - 2026-08-16
+
+### Fixed
+
+- **Mobile `/search` filter-page regression (Plan 213)**: Restored filter controls for mobile food search by removing the `isMobileFoodMapMode` branch from `src/app/(public)/search/page.tsx`. The page now consistently renders the Was/Wo/Wer/Filter accordion stack, page header, and bottom action bar (`Clear all` + `Suchen`) on `?section=food` instead of replacing the filter UI with `SearchMap`. This re-enables the intended flow: home map filter button → `/search` filter configuration → `/food` results.
+
 ## [0.15.14] - 2026-08-16
 
 ### Fixed
