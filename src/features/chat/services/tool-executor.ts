@@ -362,8 +362,7 @@ export async function executeToolCall(
         throw new Error(`City "${city}" not found`);
       }
 
-      const { formData, user } = await mapChatArgsToFormData(args, userId);
-      const regListingType = (args.listing_type as string) || 'food';
+      const { formData } = await mapChatArgsToFormData(args, userId);
 
       // Use admin client for provider creation (bypasses RLS)
       const adminForCreate = getSupabaseAdmin();
@@ -397,9 +396,28 @@ export async function executeToolCall(
         throw new Error(`Registration failed: ${createError.message}`);
       }
 
-      // Insert Muslim-friendly flags into extension tables
-      if (regListingType === 'food' || listingType === 'store') {
-        const extTable = regListingType === 'food' ? 'food_providers' : 'store_providers';
+      // Create primary location record (matches web form behavior)
+      const { error: locationError } = await adminForCreate
+        .from('locations')
+        .insert({
+          provider_id: providerId,
+          location_name: null,
+          address_street: formData.street || null,
+          address_zip: formData.zip || null,
+          address_city: formData.city || null,
+          address_country: formData.country || 'DE',
+          show_address: formData.showAddress !== false,
+          contact_phone: formData.phone || null,
+          is_primary: true,
+        });
+
+      if (locationError) {
+        console.error('[Registration] Failed to create primary location:', locationError);
+      }
+
+      // Insert halal attestation into extension tables
+      if (listingType === 'food' || listingType === 'store') {
+        const extTable = listingType === 'food' ? 'food_providers' : 'store_providers';
         const noAlcohol = !!(args.no_alcohol as boolean);
         const noPork = !!(args.no_pork as boolean);
         const noGambling = !!(args.no_gambling as boolean);

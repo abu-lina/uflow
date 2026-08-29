@@ -387,6 +387,10 @@ export const en = {
       "description": "Recommend someone you know so others can find them.",
       "buttonText": "Recommend provider"
     },
+    "chatHint": {
+      "prefix": "You can also register quickly via the",
+      "link": "Chat Assistant"
+    },
     "recommend": {
       "title": "Recommend Provider",
       "step1Title": "Basic Information",
@@ -1120,6 +1124,10 @@ export const en = {
       "title": "Login required",
       "body": "You must be logged in to use the chatbot.",
       "action": "Log in now"
+    },
+    "fallback": {
+      "prefix": "Prefer to do it manually?",
+      "link": "Use the form"
     },
     "openChat": "Open chat",
     "closeChat": "Close chat",
