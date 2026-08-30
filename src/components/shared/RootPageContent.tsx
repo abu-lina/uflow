@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { getOnboardingState, setOnboardingState } from '@/lib/utils/onboarding-state';
+import { getOnboardingState } from '@/lib/utils/onboarding-state';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAppStage } from '@/hooks/useAppStage';
+import { useOnboardingGate } from '@/hooks/useOnboardingGate';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
 import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 import { HomeListView } from '@/features/search/components/HomeListView';
@@ -20,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
 import { ViewToggleButton } from '@/features/search/components/ViewToggleButton';
-import { useHomeNearMe } from '@/features/search/hooks/useHomeNearMe';
+import { useNearMe } from '@/features/search/hooks/useNearMe';
 import { HomeNearMeList } from '@/features/search/components/HomeNearMeList';
 import { logApp } from '@/lib/logger';
 
@@ -51,9 +52,7 @@ const SearchMap = dynamic(
  * This ensures proper client-side state checking and conditional rendering.
  */
 export function RootPageContent() {
-  const [shouldShowCityContent, setShouldShowCityContent] = useState<boolean | null>(null);
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [isRecovering, setIsRecovering] = useState(false);
+  const { ready: shouldShowCityContent, city: selectedCity, isRecovering } = useOnboardingGate();
   const [activeSection, setActiveSection] = useState<Section>('food');
 
   const geolocation = useGeolocation();
@@ -64,10 +63,11 @@ export function RootPageContent() {
     toggleViewMode, headerRef, headerHeight, userCoords,
   } = useMapDiscovery(geolocation, 'map');
 
-  const homeNearMe = useHomeNearMe({
+  const homeNearMe = useNearMe({
     coords: userCoords,
-    enabled: viewMode === 'list',
-    openNowActive: isOpenNow,
+    active: viewMode === 'list',
+    openNow: isOpenNow,
+    radiusKm: 25,
   });
 
   useEffect(() => {
@@ -89,101 +89,6 @@ export function RootPageContent() {
 
   // Get app stage to determine which content to show
   const { stage, cityName, isLoading: stageLoading } = useAppStage();
-
-  useEffect(() => {
-    // When app is fully launched, bypass all onboarding/city gates
-    const isAppLaunched = getFeatureFlag('isAppLaunched');
-    if (isAppLaunched) {
-      setShouldShowCityContent(true);
-      return;
-    }
-
-    // Check if waitlist should be skipped
-    const skipWaitlist = getFeatureFlag('skipWaitlist');
-
-    // Check onboarding state client-side
-    const onboardingState = getOnboardingState();
-    const hasEarlyAccess = skipWaitlist ? true : (onboardingState?.earlyAccessUnlocked ?? false);
-
-    // Check if city is selected
-    const cityFromStorage =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity')
-        : null;
-
-    // RECOVERY: If city is selected but onboarding state is missing
-    if (!hasEarlyAccess && cityFromStorage) {
-      if (skipWaitlist) {
-        // When waitlist is skipped, create minimal onboarding state directly
-        setOnboardingState({
-          email: '',
-          waitlistSubmitted: false,
-          earlyAccessUnlocked: true,
-          submittedAt: new Date().toISOString(),
-        });
-        setSelectedCity(cityFromStorage);
-        setShouldShowCityContent(true);
-        return;
-      }
-
-      // When waitlist is not skipped, check API (uses HTTP-only cookie)
-      setIsRecovering(true);
-
-      // Check API to restore onboarding state (API uses HTTP-only cookie, more reliable)
-      fetch('/api/waitlist/status')
-        .then((response) => response.json())
-        .then(
-          (data: {
-            data?: { email?: string; selected_city?: string | null } | null;
-            error?: { message: string } | null;
-          }) => {
-            if (data.error) {
-              console.error('[RootPageContent] Recovery: API error:', data.error);
-              setShouldShowCityContent(false);
-              return;
-            }
-
-            if (data.data?.email) {
-              // User has valid waitlist entry (via cookie) - restore onboarding state
-              setOnboardingState({
-                email: data.data.email,
-                waitlistSubmitted: true,
-                earlyAccessUnlocked: true,
-                submittedAt: new Date().toISOString(),
-              });
-              setSelectedCity(cityFromStorage);
-              setShouldShowCityContent(true);
-            } else {
-              // No waitlist entry found - cookie expired or user bypassed waitlist
-              console.warn(
-                '[RootPageContent] Recovery: No waitlist entry found. Showing onboarding.',
-              );
-              setShouldShowCityContent(false);
-            }
-          },
-        )
-        .catch((error) => {
-          console.error('[RootPageContent] Recovery: API check failed:', error);
-          // On error, show onboarding (safe fallback)
-          setShouldShowCityContent(false);
-        })
-        .finally(() => {
-          setIsRecovering(false);
-        });
-
-      return; // Wait for recovery to complete
-    }
-
-    // Show city content if user has completed onboarding
-    // When skipWaitlist is true: only check for city selection (ignore earlyAccess requirement)
-    // When skipWaitlist is false: require both earlyAccess and city selection
-    const hasCompletedOnboarding = skipWaitlist
-      ? cityFromStorage !== null
-      : hasEarlyAccess && cityFromStorage !== null;
-
-    setSelectedCity(cityFromStorage);
-    setShouldShowCityContent(hasCompletedOnboarding);
-  }, []);
 
   // Wait for client-side check or recovery to complete
   if (shouldShowCityContent === null || isRecovering || stageLoading) {

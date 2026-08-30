@@ -56,8 +56,8 @@ vi.mock('@/features/search/components/HomeListView', () => ({
   HomeListView: () => <div data-testid="home-list-view" />,
 }));
 
-vi.mock('@/features/search/hooks/useHomeNearMe', () => ({
-  useHomeNearMe: () => ({
+vi.mock('@/features/search/hooks/useNearMe', () => ({
+  useNearMe: () => ({
     isActive: false,
     results: [],
     isLoading: false,

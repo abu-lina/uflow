@@ -1,35 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { getMapLocations } from '@/services/providers';
+import type { RawLocationRow } from '@/services/providers';
 import { filterOpenNow } from '@/utils/filterOpenNow';
 import type { MapPin } from '@/features/search/components/SearchMap';
-import type { OpeningHours } from '@/types/openingHours';
 import type { GeolocationCoords } from '@/hooks/useGeolocation';
 
-// ---- Supabase row shapes (shared between discovery surfaces) ----
-
-export type RawCategoryRow = {
-  name_de?: string | null;
-  name_en?: string | null;
-  category_images?: Record<string, unknown> | null;
-};
-
-export type RawProviderRow = {
-  provider_name?: string | null;
-  opening_hours?: OpeningHours | null;
-  provider_images?: string | { urls?: string[] } | null;
-  address_city?: string | null;
-  category_id?: string | null;
-  categories?: RawCategoryRow | RawCategoryRow[] | null;
-};
-
-export type RawLocationRow = {
-  provider_id: string;
-  location_latitude: number | null;
-  location_longitude: number | null;
-  providers: RawProviderRow | RawProviderRow[] | null;
-};
+// Re-export row types for existing consumers
+export type { RawCategoryRow, RawProviderRow, RawLocationRow } from '@/services/providers';
 
 // ---- View mode ----
 
@@ -119,20 +98,8 @@ export function useMapDiscovery(
       setPinsLoading(true);
       setPinsError(null);
       try {
-        const { data, error } = await supabase
-          .from('locations')
-          .select(
-            'provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories(name_de, name_en, category_images))',
-          )
-          .not('location_latitude', 'is', null)
-          .not('location_longitude', 'is', null)
-          .eq('providers.listing_type', 'food')
-          .eq('providers.review_status', 'approved');
-        if (error) {
-          setPinsError(new Error(error.message));
-        } else if (Array.isArray(data)) {
-          setAllRows(data as RawLocationRow[]);
-        }
+        const rows = await getMapLocations();
+        setAllRows(rows);
       } catch (err) {
         setPinsError(err instanceof Error ? err : new Error(String(err)));
       } finally {
