@@ -1,7 +1,7 @@
 module.exports = {
   // TypeScript files — type-check, lint, format
   '*.{ts,tsx}': [
-    'tsc --noEmit',
+    () => 'tsc --noEmit',
     'eslint --fix --max-warnings=0',
     'prettier --write',
     (files) => {
@@ -9,14 +9,14 @@ module.exports = {
         (file) => file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__'),
       );
       if (testFiles.length > 0) {
-        return 'npm test -- --findRelatedTests ' + testFiles.join(' ');
+        return 'npx vitest run ' + testFiles.join(' ');
       }
       return [];
     },
   ],
 
   // JavaScript files — lint and format (no tsc)
-  '*.{js,jsx}': ['eslint --fix --max-warnings=0', 'prettier --write'],
+  '*.{js,jsx}': ['eslint --fix --max-warnings=0 --no-warn-ignored', 'prettier --write'],
 
   // Style files
   '*.{css,scss,sass,less}': ['prettier --write'],
