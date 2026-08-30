@@ -171,7 +171,6 @@ export function ProvidersContent({
 
   // Plan 220: Near-me state — geolocation-based (matches home page pattern)
   const [nearMeActive, setNearMeActive] = useState(false);
-  const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
 
   const geolocation = useGeolocation();
 
@@ -185,7 +184,7 @@ export function ProvidersContent({
     coords: userCoords,
     active: nearMeActive && viewMode === 'list',
     openNow: isOpenNow,
-    radiusKm,
+    radiusKm: DEFAULT_RADIUS_KM,
     urlSync: false,
   });
 
@@ -616,10 +615,8 @@ export function ProvidersContent({
                 geoStatus={geolocation.status}
                 nearMeActive={nearMeActive}
                 openNowActive={isOpenNow}
-                radiusKm={radiusKm}
                 onToggleNearMe={handleToggleNearMe}
                 onToggleOpenNow={() => setIsOpenNow((v) => !v)}
-                onRadiusChange={setRadiusKm}
                 adminSlot={
                   isAdmin ? (
                     <AdminStatusFilter selectedStatus={status} onStatusChange={handleStatusChange} />

@@ -43,7 +43,7 @@ export function AdminStatusFilter({ selectedStatus, onStatusChange }: AdminStatu
   return (
     <div
       aria-label="Filter providers by review status"
-      className="flex flex-wrap gap-2"
+      className="contents"
       role="tablist"
     >
       {statuses.map(({ value, label }) => {
@@ -52,7 +52,7 @@ export function AdminStatusFilter({ selectedStatus, onStatusChange }: AdminStatu
           <motion.button
             key={label}
             aria-selected={isSelected}
-            className={`inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
               isSelected
                 ? 'bg-primary text-white'
                 : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
