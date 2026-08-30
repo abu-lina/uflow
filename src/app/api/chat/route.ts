@@ -19,7 +19,7 @@ import type { ChatMessage, ToolCall } from '@/features/chat/types';
 import type { ProviderCardData } from '@/features/chat/types';
 
 const CHAT_HISTORY_LIMIT = parseInt(
-  process.env.CHAT_HISTORY_LIMIT || '10',
+  process.env.CHAT_HISTORY_LIMIT || '30',
   10,
 );
 const MAX_TOOL_CALLS = 2;
@@ -244,11 +244,21 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     const firstUserMsg = history.find(m => m.role === 'user')?.content || '';
     const isRegistrationMode = /(?:registrieren|anmelden|eintragen|hinzufügen|neues restaurant|neuen laden)/i.test(firstUserMsg);
 
+    // Detect if the last assistant message was a confirmation prompt and user is confirming
+    const lastAssistantMsg = [...history].reverse().find(m => m.role === 'assistant')?.content || '';
+    const isConfirmationResponse = isRegistrationMode
+      && /(?:korrekt|registrieren|bestätig|soll ich)/i.test(lastAssistantMsg)
+      && /^(?:ja|yes|korrekt|stimmt|passt|genau|ok|okay|sicher|mach|bitte|do it|go ahead)\b/i.test(trimmedMessage.trim());
+
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...(isRegistrationMode ? [{
         role: 'system' as const,
         content: 'CRITICAL: You are in REGISTRATION MODE. The user is answering your registration questions. Do NOT call search_providers. Continue collecting registration data.',
+      }] : []),
+      ...(isConfirmationResponse ? [{
+        role: 'system' as const,
+        content: 'URGENT: The user has CONFIRMED the registration. You MUST call register_provider NOW with all collected data. Do NOT ask any more questions. Do NOT show the summary again. CALL THE TOOL IMMEDIATELY. Use listing_type "food" for restaurants. Pass the category name directly as category_id — it will be resolved automatically.',
       }] : []),
       ...history,
       { role: 'user', content: trimmedMessage },
@@ -261,13 +271,18 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
       ? TOOL_DEFINITIONS.filter(t => t.function.name !== 'search_providers')
       : TOOL_DEFINITIONS;
 
+    // Force register_provider tool call when user confirms registration
+    const toolChoice = isConfirmationResponse
+      ? { type: 'function' as const, function: { name: 'register_provider' } }
+      : 'auto' as const;
+
     let llmResponse = await measureDependency(
       ctx,
       'openrouter.chat_completion',
       () =>
         sendChatRequest(messages, {
           tools: availableTools,
-          tool_choice: 'auto',
+          tool_choice: toolChoice,
         }),
     );
 

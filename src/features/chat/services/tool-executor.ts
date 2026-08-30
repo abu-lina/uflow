@@ -147,7 +147,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           },
           category_id: {
             type: 'string',
-            description: 'Category UUID from get_categories',
+            description: 'Category name (e.g. "Kebab / Döner") or UUID. Names are resolved automatically.',
           },
           city: {
             type: 'string',
@@ -176,7 +176,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           },
           no_pork: {
             type: 'boolean',
-            description: 'Does not serve/sell alcohol',
+            description: 'Does not serve/sell pork',
           },
           no_gambling: {
             type: 'boolean',
@@ -185,6 +185,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           makes_donations: {
             type: 'boolean',
             description: 'For ummah listing_type only',
+          },
+          verification_method: {
+            type: 'string',
+            enum: ['online', 'vor_ort'],
+            description: 'How halal compliance was verified: online or vor_ort (in person)',
+          },
+          has_certificate: {
+            type: 'boolean',
+            description: 'Whether the provider has a halal certificate',
           },
         },
         required: ['name', 'listing_type', 'category_id', 'city'],
