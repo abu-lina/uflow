@@ -8,7 +8,7 @@ import { Icon } from '@iconify/react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
-import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
+import { MobileProviderDetail } from '@/features/providers/components/MobileProviderDetail';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { supabase } from '@/lib/supabase/client';

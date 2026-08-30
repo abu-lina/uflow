@@ -42,7 +42,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({ t: (key: string) => key, language: 'de' }),
 }));
 
-vi.mock('@/components/providers/ProviderCard', () => ({
+vi.mock('@/features/providers/components/ProviderCard', () => ({
   ProviderCard: vi.fn(({ provider_name }: { provider_name: string }) => (
     <div data-testid="provider-card">{provider_name}</div>
   )),
@@ -58,9 +58,9 @@ vi.mock('@/components/ui/Button', () => ({
   ),
 }));
 
-import { SearchResultsList } from '@/components/providers/SearchResultsList';
+import { SearchResultsList } from '@/features/providers/components/SearchResultsList';
 import type { SearchResult } from '@/services/providers';
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 
 /**
  * Helper: generate N mock SearchResult items for testing threshold behavior

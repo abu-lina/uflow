@@ -1,6 +1,6 @@
 'use client';
 
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import type { NearMeFoodResult } from '@/services/providers';

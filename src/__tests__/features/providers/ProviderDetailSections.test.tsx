@@ -16,7 +16,7 @@ beforeAll(async () => {
   )).ProviderDetailSections;
 });
 
-vi.mock('@/components/providers/TrustBadgesSection', () => ({
+vi.mock('@/features/providers/components/TrustBadgesSection', () => ({
   TrustBadgesSection: ({ badges, isLoading }: { badges: unknown[]; isLoading: boolean }) => (
     <div data-testid="trust-badges-section-mock">
       badges:{badges.length};loading:{String(isLoading)}

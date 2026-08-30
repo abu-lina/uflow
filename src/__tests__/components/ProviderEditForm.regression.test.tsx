@@ -165,7 +165,7 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
-import { ProviderEditForm } from '@/components/providers/ProviderEditForm';
+import { ProviderEditForm } from '@/features/providers/pages/ProviderEditForm';
 import type { Provider } from '@/services/providers';
 
 const baseProvider: Provider = {

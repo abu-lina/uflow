@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { ProviderEditForm, type ProviderEditFormData } from '@/components/providers/ProviderEditForm';
+import { ProviderEditForm, type ProviderEditFormData } from '@/features/providers/pages/ProviderEditForm';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { RejectModal } from '@/features/admin/components/RejectModal';
 import { DeleteProviderModal } from '@/features/admin/components/DeleteProviderModal';

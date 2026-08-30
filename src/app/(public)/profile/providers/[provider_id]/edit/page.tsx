@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { ProviderEditPage } from '@/components/providers/ProviderEditPage';
+import { ProviderEditPage } from '@/features/providers/pages/ProviderEditPage';
 import { getProviderById } from '@/services/providers';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 

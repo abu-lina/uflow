@@ -112,7 +112,7 @@ vi.mock('@/components/ui/Button', () => ({
   ),
 }));
 
-import { ProviderEditForm } from '@/components/providers/ProviderEditForm';
+import { ProviderEditForm } from '@/features/providers/pages/ProviderEditForm';
 
 const mockProvider = {
   provider_id: 'test-provider-id',

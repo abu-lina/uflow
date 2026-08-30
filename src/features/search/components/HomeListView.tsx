@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { MapPin } from './SearchMap';

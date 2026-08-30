@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
-import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
+import { TrustBadgesSection } from '@/features/providers/components/TrustBadgesSection';
 import { ExpandSection } from '@/components/ui/ExpandSection';
 import { ProofTierCard } from '@/features/providers/components/ProofTierCard';
 import { PrayerRug } from '@/components/icons/PrayerRug';

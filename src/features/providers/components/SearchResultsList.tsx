@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback, memo, useMemo } from 'react';
 
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { Button } from '@/components/ui/Button';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { usePrefetchProvider } from '@/hooks/useProvider';

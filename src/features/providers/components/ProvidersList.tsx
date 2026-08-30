@@ -1,6 +1,6 @@
 'use client';
 
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import type { Provider } from '@/services/providers';
 
 interface ProvidersListProps {
