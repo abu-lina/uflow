@@ -26,7 +26,7 @@ export interface ChatCompletionResult {
 
 interface SendChatRequestOptions {
   tools?: ToolDefinition[];
-  tool_choice?: 'auto' | 'none';
+  tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
   max_tokens?: number;
   temperature?: number;
   timeout?: number;
