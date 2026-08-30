@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
-import { ProviderDetailPage } from '@/components/providers/ProviderDetailPage';
-import { ProfileProviderDetailButtons } from '@/components/providers/ProfileProviderDetailButtons';
+import { ProviderDetailPage } from '@/features/providers/pages/ProviderDetailPage';
+import { ProfileProviderDetailButtons } from '@/features/providers/pages/ProfileProviderDetailButtons';
 import { getProviderById } from '@/services/providers';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 

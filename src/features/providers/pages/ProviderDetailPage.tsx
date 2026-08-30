@@ -6,7 +6,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
-import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
+import { MobileProviderDetail } from '@/features/providers/components/MobileProviderDetail';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';

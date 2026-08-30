@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render, mockMatchMedia } from '../utils/test-utils';
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { mockProviders } from '../mocks/providerData';
 import type { Provider } from '@/services/providers';
 import * as AuthProviderModule from '@/providers/auth-provider';

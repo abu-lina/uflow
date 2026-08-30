@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../utils/test-utils';
-import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
+import { ProviderDetailModal } from '@/features/providers/pages/ProviderDetailModal';
 import { mockProviders } from '../mocks/providerData';
 import type { Provider } from '@/services/providers';
 import { TrustLevel, EntityType, BadgeKey } from '@/types/badges';

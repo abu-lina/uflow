@@ -19,13 +19,13 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 // Mock all components consumed by the profile pages (Server Components don't render in test env)
-vi.mock('@/components/providers/ProviderDetailPage', () => ({
+vi.mock('@/features/providers/pages/ProviderDetailPage', () => ({
   ProviderDetailPage: () => null,
 }));
-vi.mock('@/components/providers/ProfileProviderDetailButtons', () => ({
+vi.mock('@/features/providers/pages/ProfileProviderDetailButtons', () => ({
   ProfileProviderDetailButtons: () => null,
 }));
-vi.mock('@/components/providers/ProviderEditPage', () => ({
+vi.mock('@/features/providers/pages/ProviderEditPage', () => ({
   ProviderEditPage: () => null,
 }));
 vi.mock('next/navigation', () => ({

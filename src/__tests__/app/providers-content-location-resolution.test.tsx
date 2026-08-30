@@ -45,7 +45,7 @@ vi.mock('@/providers/search-provider', () => ({
   LOCATION_ALL: '',
 }));
 
-vi.mock('@/components/providers/ProvidersPageHeader', () => ({
+vi.mock('@/features/providers/components/ProvidersPageHeader', () => ({
   ProvidersPageHeader: () => null,
 }));
 
@@ -53,7 +53,7 @@ vi.mock('@/features/search/components/SectionSelector', () => ({
   SectionSelector: () => null,
 }));
 
-vi.mock('@/components/providers/SearchResultsList', () => ({
+vi.mock('@/features/providers/components/SearchResultsList', () => ({
   SearchResultsList: () => null,
 }));
 

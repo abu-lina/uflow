@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
-import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
+import { MobileProviderDetail } from '@/features/providers/components/MobileProviderDetail';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';

@@ -10,7 +10,7 @@ const capturedCards: Array<{
   category?: { name_de?: string; name_en?: string; category_images?: Record<string, unknown> };
 }> = [];
 
-vi.mock('@/components/providers/ProviderCard', () => ({
+vi.mock('@/features/providers/components/ProviderCard', () => ({
   ProviderCard: (props: {
     provider_id: string;
     distanceKm?: number;

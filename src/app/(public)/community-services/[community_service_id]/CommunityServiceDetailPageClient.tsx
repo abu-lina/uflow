@@ -26,7 +26,7 @@ const CommunityServiceDetailModal = dynamic(
 
 // Lazy load provider detail page component - only loads on mobile
 const ProviderDetailPageComponent = dynamic(
-  () => import('@/components/providers/ProviderDetailPage').then(mod => ({ default: mod.ProviderDetailPage })),
+  () => import('@/features/providers/pages/ProviderDetailPage').then(mod => ({ default: mod.ProviderDetailPage })),
   {
     loading: () => (
       <div className="flex min-h-screen flex-col">

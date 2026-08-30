@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { NearMeResultsGrid } from './NearMeResultsGrid';
 import type { NearMeFoodResult } from '@/services/providers';
 
-vi.mock('@/components/providers/ProviderCard', () => ({
+vi.mock('@/features/providers/components/ProviderCard', () => ({
   ProviderCard: ({
     provider_name,
     distanceKm,

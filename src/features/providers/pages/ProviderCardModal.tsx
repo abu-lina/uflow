@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
-import { ProviderActionBar } from '@/components/providers/ProviderActionBar';
+import { ProviderActionBar } from '@/features/providers/components/ProviderActionBar';
 import { trackEvent } from '@/lib/analytics/plausible';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
