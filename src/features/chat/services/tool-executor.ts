@@ -5,7 +5,7 @@ import type { ProviderFormData } from '@/providers/form-provider';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { getProviderById, fetchProviderCities, checkCityExists } from '@/services/providers';
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 import { getOpenStatus } from '@/utils/openStatus';
 import type { OpeningHours } from '@/types/openingHours';
 import type { ToolCall, ToolDefinition } from '@/features/chat/types';

@@ -2,23 +2,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { EntityType } from '@/types/badges';
 
-const createSupabaseServerClientMock = vi.fn();
 const logSupabaseErrorMock = vi.fn();
-
-vi.mock('@/lib/supabase/server', () => ({
-  createSupabaseServerClient: () => createSupabaseServerClientMock(),
-}));
 
 vi.mock('@/utils/errorUtils', () => ({
   logSupabaseError: (...args: unknown[]) => logSupabaseErrorMock(...args),
 }));
 
-describe('badges.server getBadgesForEntityServer', () => {
+// Mock the default client so it doesn't fail in test env
+vi.mock('@/lib/supabase/client', () => ({
+  supabase: {},
+}));
+
+describe('badges.getBadgesForEntity is_active fallback (formerly badges.server)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('[pre-fix FAILS] falls back to query without is_active when column is missing (42703)', async () => {
+  it('falls back to query without is_active when column is missing (42703)', async () => {
     const rows = [
       {
         id: 'badge-1',
@@ -58,12 +58,12 @@ describe('badges.server getBadgesForEntityServer', () => {
       return queryBuilder;
     };
 
-    createSupabaseServerClientMock.mockReturnValue({
+    const mockClient = {
       from: () => createQueryBuilder(),
-    });
+    } as never;
 
-    const { getBadgesForEntityServer } = await import('@/services/badges.server');
-    const result = await getBadgesForEntityServer('provider-1', EntityType.PROVIDER);
+    const { getBadgesForEntity } = await import('@/services/badges');
+    const result = await getBadgesForEntity('provider-1', EntityType.PROVIDER, mockClient);
 
     expect(result).toEqual([
       {

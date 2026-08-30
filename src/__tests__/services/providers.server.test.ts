@@ -1,21 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockFrom = vi.fn();
-const mockGetBadgesForEntityServer = vi.fn();
+const mockGetBadgesForEntity = vi.fn();
 const mockAdminFrom = vi.fn();
 
-vi.mock('@/lib/supabase/server', () => ({
-  createSupabaseServerClient: () => ({
-    from: (...args: unknown[]) => mockFrom(...args),
-  }),
+vi.mock('@/services/badges', () => ({
+  getBadgesForEntity: (...args: unknown[]) => mockGetBadgesForEntity(...args),
+  getBadgesForEntities: vi.fn().mockResolvedValue(new Map()),
 }));
 
-vi.mock('@/services/badges.server', () => ({
-  getBadgesForEntityServer: (...args: unknown[]) => mockGetBadgesForEntityServer(...args),
-}));
-
-vi.mock('@/lib/supabase/admin', () => ({
-  getSupabaseAdmin: () => ({
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: () => ({
     from: (...args: unknown[]) => mockAdminFrom(...args),
   }),
 }));
@@ -24,10 +19,23 @@ vi.mock('@/utils/errorUtils', () => ({
   logSupabaseError: vi.fn(),
 }));
 
-describe('providers.server.getProviderById', () => {
+// Mock the default client import so it doesn't fail in test env
+vi.mock('@/lib/supabase/client', () => ({
+  supabase: {},
+}));
+
+/** Build a fake SupabaseClient whose `.from()` delegates to mockFrom */
+function makeMockClient() {
+  return { from: (...args: unknown[]) => mockFrom(...args) } as never;
+}
+
+describe('providers.getProviderById (unified, formerly providers.server)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetBadgesForEntityServer.mockResolvedValue([]);
+    // Admin fallback checks env vars before constructing admin client
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+    mockGetBadgesForEntity.mockResolvedValue([]);
     mockAdminFrom.mockImplementation((table: string) => {
       if (table === 'provider_offers') {
         return {
@@ -143,16 +151,16 @@ describe('providers.server.getProviderById', () => {
     });
   });
 
-  it('[pre-fix FAILS] returns provider with resolved offers and needs for SSR initialData parity', async () => {
-    const { getProviderById } = await import('@/services/providers.server');
+  it('returns provider with resolved offers and needs via injected client', async () => {
+    const { getProviderById } = await import('@/services/providers');
 
-    const result = await getProviderById('p-1');
+    const result = await getProviderById('p-1', makeMockClient());
 
     expect(result?.offers).toEqual([{ name_de: 'Angebot A' }]);
     expect(result?.needs).toEqual([{ name_de: 'Bedarf B' }]);
   });
 
-  it('[pre-fix FAILS] falls back to admin relation reads when anon relation queries return no rows', async () => {
+  it('falls back to admin relation reads when injected client relation queries return no rows', async () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === 'providers') {
         return {
@@ -238,8 +246,8 @@ describe('providers.server.getProviderById', () => {
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    const { getProviderById } = await import('@/services/providers.server');
-    const result = await getProviderById('p-1');
+    const { getProviderById } = await import('@/services/providers');
+    const result = await getProviderById('p-1', makeMockClient());
 
     expect(result?.offers).toEqual([{ name_de: 'Angebot A' }]);
     expect(result?.needs).toEqual([{ name_de: 'Bedarf B' }]);

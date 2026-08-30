@@ -8,6 +8,7 @@ import {
 import { searchProvidersAndCommunityServices } from '@/services/providers';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
+import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import type { Section } from '@/providers/search-provider';
 import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
 
@@ -111,6 +112,9 @@ export async function GET(request: Request): Promise<NextResponse> {
       adminOptions = { status: statusParam, isAdmin: true };
     }
 
+    // Admin queries need service-role client to bypass RLS
+    const adminClient = adminOptions ? getSupabaseAdmin() : undefined;
+
     const data = await measureDependency(
       ctx,
       'supabase.providers.search',
@@ -124,6 +128,7 @@ export async function GET(request: Request): Promise<NextResponse> {
           adminOptions,
           section,
           filters,
+          adminClient,
         ),
     );
 

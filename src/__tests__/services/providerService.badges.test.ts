@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 
 const mockStorageUpload = vi.fn();
 const mockStorageGetPublicUrl = vi.fn();

@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
-import { createProviderCommunityServiceRelationship } from './communityServices';
+import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { TrustLevel } from '@/types/badges';
 
 // Extended form data type that may include userEmail for anonymous recommendations

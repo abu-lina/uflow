@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabase/client';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { supabase as defaultClient } from '@/lib/supabase/client';
 import { searchOffers } from './offers';
 import { searchNeeds } from './needs';
 import { logSupabaseError } from '@/utils/errorUtils';
@@ -12,6 +13,15 @@ import {
 } from '@/features/search/constants/filterKeys';
 import type { OpeningHours } from '@/types/openingHours';
 import type { Location } from '@/types/location';
+
+/**
+ * Returns the provided Supabase client or falls back to the default browser client.
+ * Mirrors the badges.ts pattern: server callers pass createSupabaseServerClient(),
+ * client callers omit the parameter.
+ */
+function getSupabaseClient(client?: SupabaseClient): SupabaseClient {
+  return client || defaultClient;
+}
 
 export interface FoodMenuItem {
   name_de: string;
@@ -53,8 +63,9 @@ export async function searchFoodNearMe(params: {
   lon: number;
   radiusKm: number;
   limit?: number;
-}): Promise<NearMeFoodResult[]> {
+}, client?: SupabaseClient): Promise<NearMeFoodResult[]> {
   const { lat, lon, radiusKm, limit = 100 } = params;
+  const supabase = getSupabaseClient(client);
 
   const { data, error } = await supabase.rpc('search_food_near_me', {
     p_lat: lat,
@@ -233,7 +244,7 @@ export function transformProviderToSearchResult(provider: Provider): SearchResul
   };
 }
 
-async function loadProviderRelationIds(providerIds: string[]): Promise<{
+async function loadProviderRelationIds(providerIds: string[], client?: SupabaseClient): Promise<{
   offersByProvider: Map<string, string[]>;
   needsByProvider: Map<string, string[]>;
 }> {
@@ -244,6 +255,7 @@ async function loadProviderRelationIds(providerIds: string[]): Promise<{
     };
   }
 
+  const supabase = getSupabaseClient(client);
   const [providerOffersResult, providerNeedsResult] = await Promise.all([
     supabase
       .from('provider_offers')
@@ -339,6 +351,7 @@ export async function searchProvidersAndCommunityServices(
   adminOptions?: AdminSearchOptions,
   section?: Section,
   barakahFilters?: SearchFilterKey[],
+  client?: SupabaseClient,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   try {
     const normalizedCategory = category || '';
@@ -347,19 +360,19 @@ export async function searchProvidersAndCommunityServices(
     if (section !== undefined) {
       switch (section) {
         case 'ummah':
-          return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize);
+          return await searchCommunityServicesOnly(query, normalizedCategory, location, page, pageSize, client);
         case 'food':
-          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters);
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters, client);
         case 'store':
-          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'store', barakahFilters);
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'store', barakahFilters, client);
         default:
           // D9: default section is FOOD
-          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters);
+          return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters, client);
       }
     }
 
     // Plan 089 D9: when no section provided, default to FOOD section.
-    return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters);
+    return await searchProvidersOnly(query, normalizedCategory, location, page, pageSize, adminOptions, 'food', barakahFilters, client);
   } catch (error) {
     // Log error for debugging
     console.error('[searchProvidersAndCommunityServices] Error:', error);
@@ -378,8 +391,9 @@ async function searchCommunityServicesOnly(
   location: string,
   page: number = 0,
   pageSize: number = 5,
+  client?: SupabaseClient,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
-  return searchProvidersOnly(query, category, location, page, pageSize, undefined, 'ummah');
+  return searchProvidersOnly(query, category, location, page, pageSize, undefined, 'ummah', undefined, client);
 }
 
 /**
@@ -395,11 +409,12 @@ async function searchProvidersOnly(
   adminOptions?: AdminSearchOptions,
   listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
+  client?: SupabaseClient,
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const offset = page * pageSize;
   const limit = pageSize + 1; // Fetch one extra to check if there are more
   
-  const providers = await searchProviders(query, category, location, limit, offset, adminOptions, listingType, barakahFilters);
+  const providers = await searchProviders(query, category, location, limit, offset, adminOptions, listingType, barakahFilters, client);
   const hasMore = providers.length > pageSize;
   const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
   const sortedResults = sortByCreationDate(results);
@@ -407,20 +422,20 @@ async function searchProvidersOnly(
   return { results: sortedResults, hasMore };
 }
 
-export async function getProviders(limit?: number, includeLocations?: boolean): Promise<Provider[]> {
+export async function getProviders(limit?: number, includeLocations?: boolean, client?: SupabaseClient): Promise<Provider[]> {
   try {
+    const supabase = getSupabaseClient(client);
+
+    const selectFields = includeLocations
+      ? '*, category:categories(name_de, name_en, category_images), locations(*)'
+      : '*, category:categories(name_de, name_en, category_images)';
+
     let query = supabase
       .from('providers')
-      .select('*, category:categories(name_de, name_en)')
+      .select(selectFields)
+      .eq('review_status', 'approved')
       .order('created_at', { ascending: false });
 
-    if (includeLocations) {
-      query = supabase
-        .from('providers')
-        .select('*, category:categories(name_de, name_en, category_images), locations(*)')
-        .order('created_at', { ascending: false });
-    }
-    
     // Add limit if provided (for performance optimization)
     if (limit !== undefined && limit > 0) {
       query = query.limit(limit);
@@ -458,64 +473,104 @@ export async function getProviders(limit?: number, includeLocations?: boolean): 
   }
 }
 
-export async function getProviderById(id: string): Promise<Provider | null> {
+export async function getProviderById(id: string, client?: SupabaseClient): Promise<Provider | null> {
   try {
-    // First, try to fetch as a provider
-    const { data } = await supabase
+    const supabase = getSupabaseClient(client);
+
+    const { data, error } = await supabase
       .from('providers')
-      .select(`
-        *,
-        category:categories(name_de, name_en),
-        locations(*)
-      `)
+      .select('*, category:categories(name_de, name_en, category_images), locations(*)')
       .eq('provider_id', id)
-      .maybeSingle();
+      .single();
 
-    // If found in providers table, process and return
-    if (data) {
-      const [{ offersByProvider, needsByProvider }, badges, foodProvider, storeProvider] = await Promise.all([
-        loadProviderRelationIds([id]),
-        getBadgesForEntity(id, EntityType.PROVIDER),
-        supabase
-          .from('food_providers')
-          .select('verification_method, has_certificate, no_alcohol, no_pork, no_gambling')
-          .eq('provider_id', id)
-          .maybeSingle(),
-        supabase
-          .from('store_providers')
-          .select('no_gambling')
-          .eq('provider_id', id)
-          .maybeSingle(),
-      ]);
-
-      const offerIds = offersByProvider.get(id) || [];
-      const needIds = needsByProvider.get(id) || [];
-
-      const [offersResult, needsResult] = await Promise.all([
-        offerIds.length > 0
-          ? supabase.from('offers').select('name_de').in('offer_id', offerIds)
-          : Promise.resolve({ data: [], error: null }),
-        needIds.length > 0
-          ? supabase.from('needs').select('name_de').in('need_id', needIds)
-          : Promise.resolve({ data: [], error: null }),
-      ]);
-
-      const offers = offersResult.data || [];
-      const needs = needsResult.data || [];
-
-      return {
-        ...data,
-        ...(foodProvider.data ?? {}),
-        ...(storeProvider.data ?? {}),
-        offers_ids: offerIds,
-        needs_ids: needIds,
-        offers,
-        needs,
-        badges,
-      };
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // Not found - this is expected behavior
+        return null;
+      }
+      logSupabaseError('Error fetching provider:', error);
+      throw error;
     }
 
-    return null;
+    if (!data) return null;
+
+    // Fetch offers, needs, badges, and extension-table fields in parallel
+    const [providerOffersResult, providerNeedsResult, badges, foodProvider, storeProvider] = await Promise.all([
+      supabase.from('provider_offers').select('offer_id').eq('provider_id', id),
+      supabase.from('provider_needs').select('need_id').eq('provider_id', id),
+      getBadgesForEntity(id, EntityType.PROVIDER, client),
+      supabase
+        .from('food_providers')
+        .select('verification_method, has_certificate, no_alcohol, no_pork, no_gambling')
+        .eq('provider_id', id)
+        .maybeSingle(),
+      supabase
+        .from('store_providers')
+        .select('no_gambling')
+        .eq('provider_id', id)
+        .maybeSingle(),
+    ]);
+
+    let offerIds = (providerOffersResult.data || []).map((row) => row.offer_id);
+    let needIds = (providerNeedsResult.data || []).map((row) => row.need_id);
+
+    // Some environments restrict anon/server-cookie reads on relation tables.
+    // If relation reads are empty, retry with admin client so provider detail
+    // SSR can still hydrate menu/needs for publicly readable providers.
+    // NOTE: we construct the admin client inline rather than importing from
+    // @/lib/supabase/admin because that module has `import 'server-only'`
+    // which breaks the Next.js client bundle at build time.
+    if (offerIds.length === 0 && needIds.length === 0) {
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (supabaseUrl && serviceRoleKey) {
+          const { createClient } = await import('@supabase/supabase-js');
+          const admin = createClient(supabaseUrl, serviceRoleKey, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          });
+          const [adminOffersResult, adminNeedsResult] = await Promise.all([
+            admin.from('provider_offers').select('offer_id').eq('provider_id', id),
+            admin.from('provider_needs').select('need_id').eq('provider_id', id),
+          ]);
+
+          offerIds = (adminOffersResult.data || []).map((row) => row.offer_id);
+          needIds = (adminNeedsResult.data || []).map((row) => row.need_id);
+        }
+      } catch {
+        // Keep anon-read result when admin env vars are not available.
+      }
+    }
+
+    const [offersResult, needsResult, foodMenuResult] = await Promise.all([
+      offerIds.length > 0
+        ? supabase.from('offers').select('name_de').in('offer_id', offerIds)
+        : Promise.resolve({ data: [], error: null }),
+      needIds.length > 0
+        ? supabase.from('needs').select('name_de').in('need_id', needIds)
+        : Promise.resolve({ data: [], error: null }),
+      supabase
+        .from('food_menu')
+        .select('name_de, name_en, description_de, price_cents, category, sort_order, is_available')
+        .eq('provider_id', id)
+        .order('sort_order', { ascending: true })
+        .order('name_de', { ascending: true }),
+    ]);
+
+    const offers = offersResult.data || [];
+    const needs = needsResult.data || [];
+
+    return {
+      ...data,
+      ...(foodProvider.data ?? {}),
+      ...(storeProvider.data ?? {}),
+      offers_ids: offerIds,
+      needs_ids: needIds,
+      offers,
+      needs,
+      food_menu_items: foodMenuResult.data || [],
+      badges,
+    } as Provider;
   } catch (error) {
     console.error('Error in getProviderById:', error);
     throw error;
@@ -538,31 +593,19 @@ export async function searchProviders(
   adminOptions?: AdminSearchOptions,
   listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
+  client?: SupabaseClient,
 ): Promise<Provider[]> {
   // Plan 058: Include review fields when admin
   const selectFields = adminOptions?.isAdmin
     ? '*, category:categories(name_de, name_en, category_images), review_status, review_feedback'
     : '*, category:categories(name_de, name_en, category_images)';
 
-  // Plan 058 fix: admin queries must use the service-role client to bypass RLS.
-  // The anon client only sees approved providers; non-approved rows are invisible to it
-  // regardless of any eq('review_status', ...) filter applied at the application layer.
-  // getSupabaseAdmin() has 'server-only' so we replicate its pattern inline here.
-  // This branch is only reached from the API route after isAdminOrModerator() has passed.
-  let dbClient = supabase;
-  if (adminOptions?.isAdmin) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error('Missing Supabase environment variables for admin search');
-    }
-    const { createClient } = await import('@supabase/supabase-js');
-    dbClient = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-  }
+  // Plan 058: admin queries must use the service-role client to bypass RLS.
+  // The caller (API route) passes the admin client directly via the `client` parameter
+  // after verifying isAdminOrModerator().
+  const supabase = getSupabaseClient(client);
 
-  let req = dbClient.from('providers').select(selectFields);
+  let req = supabase.from('providers').select(selectFields);
   
   // Plan 058: Apply review_status filter when admin options provided
   if (adminOptions?.status) {
@@ -673,7 +716,7 @@ export async function searchProviders(
   }
 
   const providerIds = data.map((provider) => provider.provider_id);
-  const { offersByProvider, needsByProvider } = await loadProviderRelationIds(providerIds);
+  const { offersByProvider, needsByProvider } = await loadProviderRelationIds(providerIds, client);
 
   // Batch fetch all offers and needs at once to avoid N+1 query problem
   const allOfferIds = Array.from(new Set(Array.from(offersByProvider.values()).flat()));
@@ -732,8 +775,9 @@ export async function searchProviders(
  * Fetch all valid cities from the cities table
  * (includes cities that exist but may not have providers yet)
  */
-export async function fetchAllValidCities(): Promise<string[]> {
+export async function fetchAllValidCities(client?: SupabaseClient): Promise<string[]> {
   try {
+    const supabase = getSupabaseClient(client);
     const { data, error } = await supabase
       .from('cities')
       .select('city_name')
@@ -754,7 +798,7 @@ export async function fetchAllValidCities(): Promise<string[]> {
  * Check whether a city exists in the canonical cities table.
  * Uses an exact, case-insensitive match and returns a boolean only.
  */
-export async function checkCityExists(cityName: string): Promise<boolean> {
+export async function checkCityExists(cityName: string, client?: SupabaseClient): Promise<boolean> {
   const normalizedCity = cityName.trim();
 
   if (!normalizedCity) {
@@ -762,6 +806,7 @@ export async function checkCityExists(cityName: string): Promise<boolean> {
   }
 
   try {
+    const supabase = getSupabaseClient(client);
     const { data, error } = await supabase
       .from('cities')
       .select('city_name')
@@ -782,8 +827,9 @@ export async function checkCityExists(cityName: string): Promise<boolean> {
 /**
  * Fetch cities that currently have providers (includes all listing_types: food, store, ummah).
  */
-export async function fetchProviderCities(): Promise<string[]> {
+export async function fetchProviderCities(client?: SupabaseClient): Promise<string[]> {
   try {
+    const supabase = getSupabaseClient(client);
     const { data, error } = await supabase
       .from('providers')
       .select('address_city')
@@ -830,12 +876,13 @@ export interface PopularCity {
  * Fetch most popular cities by listing count across providers.
  * Optionally filter by section (listing_type).
  */
-export async function fetchPopularCities(limit = 5, section?: Section): Promise<PopularCity[]> {
+export async function fetchPopularCities(limit = 5, section?: Section, client?: SupabaseClient): Promise<PopularCity[]> {
   if (limit <= 0) {
     return [];
   }
 
   try {
+    const supabase = getSupabaseClient(client);
     let query = supabase
       .from('providers')
       .select('address_city');
@@ -885,15 +932,17 @@ export async function fetchPopularCities(limit = 5, section?: Section): Promise<
 export async function fetchFilteredCities(
   selectedCategory?: string | null,
   searchQuery?: string | null,
+  client?: SupabaseClient,
 ): Promise<string[]> {
   try {
+    const supabase = getSupabaseClient(client);
     const trimmedQuery = searchQuery?.trim() || '';
 
     if (trimmedQuery) {
       const normalizedCategory =
         selectedCategory && selectedCategory !== 'Alle' ? selectedCategory : '';
 
-      const providers = await searchProviders(trimmedQuery, normalizedCategory, '');
+      const providers = await searchProviders(trimmedQuery, normalizedCategory, '', undefined, undefined, undefined, undefined, undefined, client);
 
       const cities = Array.from(
         new Set(
@@ -951,7 +1000,8 @@ export async function fetchFilteredCities(
   }
 }
 
-export async function getProviderCount(): Promise<number> {
+export async function getProviderCount(client?: SupabaseClient): Promise<number> {
+  const supabase = getSupabaseClient(client);
   const { count, error } = await supabase
     .from('providers')
     .select('*', { count: 'exact', head: true });
@@ -963,10 +1013,11 @@ export async function getProviderCount(): Promise<number> {
 }
 
 // Get providers owned by a specific user (where user is the actual owner)
-export async function getCreatedProviders(userId: string): Promise<Provider[]> {
+export async function getCreatedProviders(userId: string, client?: SupabaseClient): Promise<Provider[]> {
+  const supabase = getSupabaseClient(client);
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en)')
+    .select('*, category:categories(name_de, name_en, category_images)')
     .eq('provider_owner_id', userId)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
@@ -981,11 +1032,12 @@ export async function getCreatedProviders(userId: string): Promise<Provider[]> {
 
 // Get recommendations by a specific user (where user recommended but is not the owner)
 // Excludes items where user is both owner and creator (those should only appear in "content")
-export async function getRecommendations(userId: string): Promise<Provider[]> {
+export async function getRecommendations(userId: string, client?: SupabaseClient): Promise<Provider[]> {
+  const supabase = getSupabaseClient(client);
   // First, get all providers where user is the creator
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en)')
+    .select('*, category:categories(name_de, name_en, category_images)')
     .eq('user_created_id', userId)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
@@ -1008,76 +1060,102 @@ export async function getRecommendations(userId: string): Promise<Provider[]> {
 }
 
 // Get all bookmarked providers for a user
-export async function getAllBookmarkedItems(userId: string): Promise<SearchResult[]> {
-  const { data: bookmarks, error: bookmarksError } = await supabase
-    .from('bookmarks')
-    .select('provider_id')
-    .eq('user_id', userId);
+export async function getAllBookmarkedItems(userId: string, client?: SupabaseClient): Promise<SearchResult[]> {
+  const supabase = getSupabaseClient(client);
 
-  if (bookmarksError) {
-    console.error('[getAllBookmarkedItems] Error:', bookmarksError);
-    throw bookmarksError;
+  // Efficient single join query (absorbed from providers.server.ts)
+  const { data: bookmarks, error } = await supabase
+    .from('bookmarks')
+    .select('provider_id, providers(*, category:categories(name_de, name_en, category_images), locations(*))')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    logSupabaseError('[getAllBookmarkedItems] Error:', error);
+    throw error;
   }
 
   if (!bookmarks || bookmarks.length === 0) {
     return [];
   }
 
-  const providerIds = bookmarks
-    .map((b) => b.provider_id)
-    .filter((id): id is string => typeof id === 'string' && id.length > 0);
-
   const results: SearchResult[] = [];
+  const orphanedIds: string[] = [];
 
-  if (providerIds.length > 0) {
-    const { data: providers, error: providersError } = await supabase
-      .from('providers')
-      .select('*, category:categories(name_de, name_en, category_images), locations(*)')
-      .in('provider_id', providerIds)
-      .returns<Provider[]>();
-
-    if (providersError) {
-      console.error('[getAllBookmarkedItems] Error fetching bookmarked providers:', providersError);
-    } else if (providers && providers.length > 0) {
-      const transformed = providers.map(transformProviderToSearchResult);
-      results.push(...transformed);
-
-      // Clean up orphaned bookmarks in the background
-      if (providers.length < providerIds.length) {
-        const foundIds = new Set(providers.map((p) => p.provider_id));
-        const missingIds = providerIds.filter((id) => !foundIds.has(id));
-        if (missingIds.length > 0) {
-          void (async () => {
-            try {
-              const { error } = await supabase
-                .from('bookmarks')
-                .delete()
-                .in('provider_id', missingIds);
-              if (error) {
-                console.error('[getAllBookmarkedItems] Error cleaning up orphaned bookmarks:', error);
-              }
-            } catch (err) {
-              console.error('[getAllBookmarkedItems] Exception cleaning bookmarks:', err);
-            }
-          })();
-        }
-      }
+  for (const bookmark of bookmarks) {
+    if (bookmark.provider_id && bookmark.providers) {
+      const provider = bookmark.providers as unknown as Provider;
+      results.push(transformProviderToSearchResult(provider));
+    } else if (bookmark.provider_id) {
+      orphanedIds.push(bookmark.provider_id);
     }
+  }
+
+  // Clean up orphaned bookmarks in the background
+  if (orphanedIds.length > 0) {
+    void (async () => {
+      try {
+        const { error: deleteError } = await supabase
+          .from('bookmarks')
+          .delete()
+          .in('provider_id', orphanedIds);
+        if (deleteError) {
+          console.error('[getAllBookmarkedItems] Error cleaning up orphaned bookmarks:', deleteError);
+        }
+      } catch (err) {
+        console.error('[getAllBookmarkedItems] Exception cleaning bookmarks:', err);
+      }
+    })();
   }
 
   return sortByCreationDate(results);
 }
 
-// Fetch cities from bookmarked items
-export async function fetchBookmarkedCities(userId: string): Promise<string[]> {
-  const bookmarkedItems = await getAllBookmarkedItems(userId);
-  
-  const allCities = bookmarkedItems
-    .map(item => item.address_city)
-    .filter((city): city is string => 
-      typeof city === 'string' && city.trim() !== '' && city !== 'null'
-    );
+// Fetch cities from bookmarked items (efficient: queries only address_city, not full provider data)
+export async function fetchBookmarkedCities(userId: string, client?: SupabaseClient): Promise<string[]> {
+  const supabase = getSupabaseClient(client);
 
-  const uniqueCities = Array.from(new Set(allCities));
-  return uniqueCities.sort((a, b) => a.localeCompare(b, 'de'));
+  const { data: bookmarks, error } = await supabase
+    .from('bookmarks')
+    .select('providers(address_city)')
+    .eq('user_id', userId);
+
+  if (error) {
+    logSupabaseError('Error fetching bookmarked cities:', error);
+    throw error;
+  }
+
+  if (!bookmarks) return [];
+
+  const cities = new Set<string>();
+  for (const bookmark of bookmarks) {
+    if (bookmark.providers) {
+      const provider = bookmark.providers as unknown as Provider;
+      if (provider.address_city) cities.add(provider.address_city);
+    }
+  }
+
+  return Array.from(cities).sort((a, b) => a.localeCompare(b, 'de'));
+}
+
+/**
+ * Get recently approved providers (placeholder recommendation engine).
+ * Formerly the server-only `getRecommendations` in providers.server.ts.
+ */
+export async function getRecentApprovedProviders(limit = 10, client?: SupabaseClient): Promise<Provider[]> {
+  const supabase = getSupabaseClient(client);
+
+  const { data, error } = await supabase
+    .from('providers')
+    .select('*, category:categories(name_de, name_en, category_images)')
+    .eq('review_status', 'approved')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    logSupabaseError('Error fetching recent approved providers:', error);
+    throw error;
+  }
+
+  return (data || []) as Provider[];
 }
