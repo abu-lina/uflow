@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { RootPageContent } from '@/components/shared/RootPageContent';
-import type { UseHomeNearMeInput } from '@/features/search/hooks/useHomeNearMe';
+import type { UseNearMeOptions } from '@/features/search/hooks/useNearMe';
 import type { NearMeFoodResult } from '@/services/providers';
 
-const mockUseHomeNearMe = vi.fn();
+const mockUseNearMe = vi.fn();
 
-vi.mock('@/features/search/hooks/useHomeNearMe', () => ({
-  useHomeNearMe: (input: UseHomeNearMeInput) => mockUseHomeNearMe(input),
+vi.mock('@/features/search/hooks/useNearMe', () => ({
+  useNearMe: (input: UseNearMeOptions) => mockUseNearMe(input),
 }));
 
 vi.mock('@/features/search/components/HomeNearMeList', () => ({
@@ -114,7 +114,7 @@ function mockHomeNearMe(overrides: {
 describe('Plan 217 near-me List view regression', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseHomeNearMe.mockReturnValue(mockHomeNearMe());
+    mockUseNearMe.mockReturnValue(mockHomeNearMe());
   });
 
   async function switchToListView() {
@@ -123,7 +123,7 @@ describe('Plan 217 near-me List view regression', () => {
   }
 
   it('[pre-fix FAILS / post-fix PASSES] near-me granted + list view renders the near-me list component (not HomeListView)', async () => {
-    mockUseHomeNearMe.mockReturnValue(
+    mockUseNearMe.mockReturnValue(
       mockHomeNearMe({
         isActive: true,
         results: [
@@ -157,7 +157,7 @@ describe('Plan 217 near-me List view regression', () => {
   });
 
   it('[pre-fix FAILS / post-fix PASSES] near-me denied/idle + list view renders HomeListView, near-me list NOT rendered', async () => {
-    mockUseHomeNearMe.mockReturnValue(mockHomeNearMe({ isActive: false }));
+    mockUseNearMe.mockReturnValue(mockHomeNearMe({ isActive: false }));
 
     render(<RootPageContent />);
     await switchToListView();
@@ -169,7 +169,7 @@ describe('Plan 217 near-me List view regression', () => {
   });
 
   it('[post-fix PASSES] map view with granted coords still renders SearchMap, near-me list NOT rendered', async () => {
-    mockUseHomeNearMe.mockReturnValue(mockHomeNearMe({ isActive: false }));
+    mockUseNearMe.mockReturnValue(mockHomeNearMe({ isActive: false }));
 
     render(<RootPageContent />);
 
