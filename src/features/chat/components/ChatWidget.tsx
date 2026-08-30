@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { ChevronUp, Plus, Info, Sparkles } from 'lucide-react';
 import { useChat } from '@/features/chat/hooks/useChat';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -65,6 +66,17 @@ export function ChatWidget({ userName }: { userName?: string }) {
                 onClick={() => sendMessage('Welche Kriterien wendet UFlow an?')}
               />
             </div>
+
+            {/* Fallback: form-based registration */}
+            <p className="text-center text-sm text-[#7A7A7A]">
+              {t('chat.fallback.prefix')}{' '}
+              <Link
+                className="text-primary font-medium underline underline-offset-2 hover:opacity-70 transition-opacity"
+                href="/create/basics"
+              >
+                {t('chat.fallback.link')}
+              </Link>
+            </p>
           </div>
         )}
 

@@ -385,6 +385,10 @@ export const tr = {
       "description": "Tanıdığınız birini önerin ki başkaları onu bulabilsin.",
       "buttonText": "Sağlayıcı öner"
     },
+    "chatHint": {
+      "prefix": "Sohbet asistani ile de hizlica kayit olabilirsiniz:",
+      "link": "Sohbet Asistani"
+    },
     "recommend": {
       "title": "Sağlayıcı Öner",
       "step1Title": "Temel Bilgiler",
@@ -1119,6 +1123,10 @@ export const tr = {
       "title": "Giriş yapmanız gerekiyor",
       "body": "Sohbet botunu kullanmak için giriş yapmanız gerekiyor.",
       "action": "Şimdi giriş yap"
+    },
+    "fallback": {
+      "prefix": "Manuel mi tercih edersiniz?",
+      "link": "Formu kullanin"
     },
     "openChat": "Sohbeti aç",
     "closeChat": "Sohbeti kapat",

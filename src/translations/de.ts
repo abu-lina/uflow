@@ -387,6 +387,10 @@ export const de = {
       "description": "Empfiehl jemanden, den du kennst, damit andere ihn finden können.",
       "buttonText": "Anbieter empfehlen"
     },
+    "chatHint": {
+      "prefix": "Du kannst auch schnell registrieren per",
+      "link": "Chat-Assistent"
+    },
     "recommend": {
       "title": "Anbieter empfehlen",
       "step1Title": "Basics",
@@ -1120,6 +1124,10 @@ export const de = {
       "title": "Anmeldung erforderlich",
       "body": "Um den Chatbot zu nutzen, musst du angemeldet sein.",
       "action": "Jetzt anmelden"
+    },
+    "fallback": {
+      "prefix": "Lieber manuell?",
+      "link": "Zum Formular"
     },
     "openChat": "Chat öffnen",
     "closeChat": "Chat schließen",

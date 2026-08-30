@@ -368,7 +368,6 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
         { max_tokens: 768, model: 'mistral-small-latest' },
       );
 
-      // Return SSE response directly — no more processing
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
@@ -405,6 +404,30 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                     controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
                   }
                   controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+
+                  // Save messages to DB after tool call streaming completes
+                  try {
+                    const adminDb = getSupabaseAdmin();
+                    await adminDb.from('messages').insert({
+                      conversation_id: conversationId,
+                      role: 'user',
+                      content: trimmedMessage,
+                      token_count: 0,
+                    });
+                    await adminDb.from('messages').insert({
+                      conversation_id: conversationId,
+                      role: 'assistant',
+                      content: collectedContent || 'Entschuldigung, ich konnte keine Antwort generieren.',
+                      token_count: 0,
+                    });
+                    await adminDb.from('conversations').update({
+                      updated_at: new Date().toISOString(),
+                      redirect_count: redirectCounter.count,
+                    }).eq('id', conversationId);
+                  } catch (e) {
+                    console.error('[Tool stream save error]', e);
+                  }
+
                   controller.close();
                   return;
                 }
