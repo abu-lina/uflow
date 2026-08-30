@@ -35,8 +35,6 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "format:tailwind": "prettier --plugin-search-dir=. --write 'src/**/*.{js,jsx,ts,tsx,mdx}'",
-    "fix:imports": "./fix-imports.sh",
-    "fix:imports:file": "./fix-imports.sh",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",

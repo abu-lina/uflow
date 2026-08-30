@@ -1,9 +1,6 @@
 module.exports = {
   // TypeScript and JavaScript files
   '*.{js,jsx,ts,tsx}': [
-    // Fix imports first
-    './fix-imports.sh',
-
     // Type checking
     'tsc --noEmit',
 
