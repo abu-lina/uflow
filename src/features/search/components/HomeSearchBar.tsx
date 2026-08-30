@@ -2,29 +2,33 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Clock, MapPin, Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal } from 'lucide-react';
 import type { Section } from '@/providers/search-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { GeolocationStatus } from '@/hooks/useGeolocation';
+import { DiscoveryFilterBar } from './DiscoveryFilterBar';
 
 interface HomeSearchBarProps {
   /** The currently active section — used for sliders navigation and search submission */
   activeSection: Section;
   className?: string;
   geoStatus?: GeolocationStatus;
+  nearMeActive?: boolean;
   isOpenNow?: boolean;
-  onNearMeChange?: (v: boolean) => void;
-  onOpenNowChange?: (v: boolean) => void;
+  onToggleNearMe?: () => void;
+  onToggleOpenNow?: () => void;
+  /** Optional admin-only content rendered inline with the filter chips. */
+  adminSlot?: React.ReactNode;
 }
 
 /**
  * Plan 090 M2 / Plan 091 M3: Home screen search affordance.
  *
- * Renders an inline search bar with a sliders button:
- * - Typing and pressing Enter navigates to the providers results page
- *   with the query pre-filled (/providers?q=...&section=...).
- * - The SlidersHorizontal button navigates to /search?section=... for
- *   the full filter experience.
+ * Renders an inline search bar with a sliders button and delegates
+ * the filter chip row to DiscoveryFilterBar. Typing and pressing
+ * Enter navigates to the providers results page with the query
+ * pre-filled; the sliders button navigates to /search for the full
+ * filter experience.
  *
  * Does NOT use autoFocus to avoid triggering the iOS PWA keyboard on
  * home page load.
@@ -33,30 +37,15 @@ export function HomeSearchBar({
   activeSection,
   className = '',
   geoStatus = 'idle',
+  nearMeActive = false,
   isOpenNow = false,
-  onNearMeChange,
-  onOpenNowChange,
+  onToggleNearMe,
+  onToggleOpenNow,
+  adminSlot,
 }: HomeSearchBarProps) {
   const router = useRouter();
   const { t } = useLanguage();
   const [query, setQuery] = useState('');
-
-  const placeholder = t('home.searchPlaceholder');
-  const ariaLabel = t('home.searchAriaLabel');
-  const nearMeLabel = t('suchen.nearMe.chipLabel');
-  const openNowLabel = t('suchen.openNow.chipLabel');
-  const showNearMeDenied = geoStatus === 'denied' || geoStatus === 'timeout' || geoStatus === 'unavailable';
-  const showNearMeDeniedHint = geoStatus === 'denied';
-  const nearMeIsActive = geoStatus === 'granted';
-  const nearMeIsPrompting = geoStatus === 'prompting';
-  const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
-  const isIOS = /iphone|ipad|ipod/.test(userAgent) || (userAgent.includes('macintosh') && navigator.maxTouchPoints > 1);
-  const isAndroid = userAgent.includes('android');
-  const nearMeDeniedHintKey = isIOS
-    ? 'suchen.nearMe.permissionDeniedHintIos'
-    : isAndroid
-      ? 'suchen.nearMe.permissionDeniedHintAndroid'
-      : 'suchen.nearMe.permissionDeniedHintFallback';
 
   const handleSubmit = () => {
     const trimmed = query.trim();
@@ -76,21 +65,17 @@ export function HomeSearchBar({
     }
   };
 
-  const handleSlidersClick = () => {
-    router.push(`/search?section=${activeSection}`);
-  };
-
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
       <div
-        aria-label={ariaLabel}
+        aria-label={t('home.searchAriaLabel')}
         className="flex h-12 items-center gap-0 rounded-xl border border-gray-200 bg-white px-4 shadow-sm transition-all hover:border-gray-300 hover:shadow-md"
         role="search"
       >
         <Search aria-hidden="true" className="h-5 w-5 shrink-0 text-gray-400" />
         <input
           className="flex-1 min-w-0 appearance-none border-0 bg-transparent text-sm text-gray-800 shadow-none outline-none ring-0 placeholder:text-gray-400 focus:border-0 focus:outline-none focus:ring-0"
-          placeholder={placeholder}
+          placeholder={t('home.searchPlaceholder')}
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -101,49 +86,20 @@ export function HomeSearchBar({
           aria-label={t('home.searchFiltersAriaLabel')}
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-gray-500 transition-opacity hover:opacity-70 active:opacity-50"
           type="button"
-          onClick={handleSlidersClick}
+          onClick={() => router.push(`/search?section=${activeSection}`)}
         >
           <SlidersHorizontal aria-hidden="true" className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Quick-filter chips */}
-      <div className="flex items-center gap-2">
-        <button
-          aria-pressed={nearMeIsActive}
-          className={`inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-            nearMeIsActive
-              ? 'bg-primary text-white'
-              : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-          }`}
-          type="button"
-          onClick={() => onNearMeChange?.(!nearMeIsActive)}
-        >
-          <MapPin aria-hidden="true" className={`h-3.5 w-3.5 shrink-0 ${nearMeIsPrompting ? 'animate-pulse' : ''}`} />
-          <span className={nearMeIsPrompting ? 'animate-pulse' : ''}>{nearMeLabel}</span>
-        </button>
-
-        {showNearMeDenied && (
-          <div className="flex flex-col text-xs text-content-muted">
-            <span>{t('suchen.nearMe.permissionDenied')}</span>
-            {showNearMeDeniedHint ? <span>{t(nearMeDeniedHintKey)}</span> : null}
-          </div>
-        )}
-
-        <button
-          aria-pressed={isOpenNow}
-          className={`inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-            isOpenNow
-              ? 'bg-primary text-white'
-              : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-          }`}
-          type="button"
-          onClick={() => onOpenNowChange?.(!isOpenNow)}
-        >
-          <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-          <span>{openNowLabel}</span>
-        </button>
-      </div>
+      <DiscoveryFilterBar
+        geoStatus={geoStatus}
+        nearMeActive={nearMeActive}
+        openNowActive={isOpenNow}
+        onToggleNearMe={onToggleNearMe ?? (() => {})}
+        onToggleOpenNow={onToggleOpenNow ?? (() => {})}
+        adminSlot={adminSlot}
+      />
     </div>
   );
 }

@@ -178,7 +178,7 @@ export function ProvidersContent({
   const {
     pins, isOpenNow, setIsOpenNow, viewMode,
     toggleViewMode, headerRef, headerHeight, userCoords,
-  } = useMapDiscovery(geolocation);
+  } = useMapDiscovery(geolocation, 'list', isAdmin ? status : null);
 
   const nearMe = useNearMe({
     coords: userCoords,

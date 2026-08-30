@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { getOnboardingState } from '@/lib/utils/onboarding-state';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAppStage } from '@/hooks/useAppStage';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
 import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 import { HomeListView } from '@/features/search/components/HomeListView';
 import { SectionSelector } from '@/features/search/components/SectionSelector';
+import { AdminStatusFilter, type ReviewStatusFilter } from '@/features/admin/components/AdminStatusFilter';
 import { AboutSection } from './AboutSection';
 import type { Section } from '@/config/sectionFilters';
 import { DesktopWaitlistSection } from './DesktopWaitlistSection';
@@ -53,7 +55,10 @@ const SearchMap = dynamic(
  */
 export function RootPageContent() {
   const { ready: shouldShowCityContent, city: selectedCity, isRecovering } = useOnboardingGate();
+  const { isAdmin } = useIsAdmin();
   const [activeSection, setActiveSection] = useState<Section>('food');
+  const [nearMeActive, setNearMeActive] = useState(false);
+  const [adminStatus, setAdminStatus] = useState<ReviewStatusFilter>(null);
 
   const geolocation = useGeolocation();
 
@@ -61,13 +66,14 @@ export function RootPageContent() {
   const {
     pins, pinsLoading, isOpenNow, setIsOpenNow, viewMode,
     toggleViewMode, headerRef, headerHeight, userCoords,
-  } = useMapDiscovery(geolocation, 'map');
+  } = useMapDiscovery(geolocation, 'map', isAdmin ? adminStatus : null);
 
   const homeNearMe = useNearMe({
     coords: userCoords,
-    active: viewMode === 'list',
+    active: nearMeActive && viewMode === 'list',
     openNow: isOpenNow,
     radiusKm: 25,
+    reviewStatus: isAdmin ? adminStatus : null,
   });
 
   useEffect(() => {
@@ -79,13 +85,15 @@ export function RootPageContent() {
     }
   }, [viewMode, userCoords, geolocation.status]);
 
-  const handleNearMeChange = (nextNearMe?: boolean) => {
-    if (nextNearMe === false || geolocation.status === 'granted') {
+  const handleToggleNearMe = useCallback(() => {
+    if (nearMeActive || geolocation.status === 'granted') {
+      setNearMeActive(false);
       geolocation.reset();
       return;
     }
+    setNearMeActive(true);
     geolocation.requestLocation();
-  };
+  }, [nearMeActive, geolocation]);
 
   // Get app stage to determine which content to show
   const { stage, cityName, isLoading: stageLoading } = useAppStage();
@@ -208,9 +216,15 @@ export function RootPageContent() {
                     <HomeSearchBar
                       activeSection={activeSection}
                       geoStatus={geolocation.status}
+                      nearMeActive={nearMeActive}
                       isOpenNow={isOpenNow}
-                      onNearMeChange={handleNearMeChange}
-                      onOpenNowChange={setIsOpenNow}
+                      onToggleNearMe={handleToggleNearMe}
+                      onToggleOpenNow={() => setIsOpenNow((v) => !v)}
+                      adminSlot={
+                        isAdmin ? (
+                          <AdminStatusFilter selectedStatus={adminStatus} onStatusChange={setAdminStatus} />
+                        ) : undefined
+                      }
                     />
                   </div>
                 </header>

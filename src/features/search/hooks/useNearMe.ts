@@ -15,6 +15,8 @@ export interface UseNearMeOptions {
   active: boolean;
   openNow: boolean;
   radiusKm: number;
+  /** Review status filter for admin users. Defaults to 'approved' server-side. */
+  reviewStatus?: string | null;
   /** When true, the hook syncs near-me state to URL params (results page). */
   urlSync?: boolean;
   /** Router replace function — required when urlSync is true. */
@@ -86,6 +88,7 @@ export function useNearMe({
   active,
   openNow,
   radiusKm,
+  reviewStatus,
   urlSync = false,
   router,
   pathname,
@@ -129,7 +132,7 @@ export function useNearMe({
 
     void (async () => {
       try {
-        const data = await searchFoodNearMe({ lat, lon, radiusKm });
+        const data = await searchFoodNearMe({ lat, lon, radiusKm, reviewStatus });
         if (cancelled) return;
         setRawResults(data);
         setIsFetching(false);
@@ -156,7 +159,7 @@ export function useNearMe({
     return () => {
       cancelled = true;
     };
-  }, [isActive, coords?.lat, coords?.lon, radiusKm, fetchKey, urlSync]);
+  }, [isActive, coords?.lat, coords?.lon, radiusKm, reviewStatus, fetchKey, urlSync]);
 
   const results = useMemo(
     () => filterOpenNow(rawResults, openNow),

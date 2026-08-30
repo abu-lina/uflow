@@ -26,10 +26,16 @@ export interface RawCategoryRow {
 }
 
 /**
- * Fetch all map pin locations for approved food providers.
+ * Fetch all map pin locations for food providers.
  * Returns raw location rows with joined provider data for map rendering.
+ *
+ * @param reviewStatus - Review status to filter by (defaults to 'approved').
+ *   Admin callers can pass a different status to see pending/rejected providers.
  */
-export async function getMapLocations(client?: SupabaseClient): Promise<RawLocationRow[]> {
+export async function getMapLocations(
+  reviewStatus?: string | null,
+  client?: SupabaseClient,
+): Promise<RawLocationRow[]> {
   const supabase = getSupabaseClient(client);
 
   const { data, error } = await supabase
@@ -40,7 +46,7 @@ export async function getMapLocations(client?: SupabaseClient): Promise<RawLocat
     .not('location_latitude', 'is', null)
     .not('location_longitude', 'is', null)
     .eq('providers.listing_type', 'food')
-    .eq('providers.review_status', 'approved');
+    .eq('providers.review_status', reviewStatus ?? 'approved');
 
   if (error) {
     throw new Error(error.message);

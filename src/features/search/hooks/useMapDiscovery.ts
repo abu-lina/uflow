@@ -64,10 +64,14 @@ export interface UseMapDiscoveryResult {
  * useMapDiscovery — shared hook for map pin loading, view-mode state,
  * and open-now filtering. Consumed by both ProvidersContent and
  * RootPageContent to eliminate verbatim duplication.
+ *
+ * @param reviewStatus - Optional review status filter for admin users.
+ *   Defaults to 'approved' when null/undefined.
  */
 export function useMapDiscovery(
   geolocation: { status: string; coords: GeolocationCoords | null },
   defaultViewMode: ViewMode = 'list',
+  reviewStatus?: string | null,
 ): UseMapDiscoveryResult {
   const [isOpenNow, setIsOpenNow] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
@@ -92,13 +96,13 @@ export function useMapDiscovery(
     setViewMode((v) => (v === 'map' ? 'list' : 'map'));
   };
 
-  // Load all map pins once on mount
+  // Load map pins on mount and when reviewStatus changes
   useEffect(() => {
     const load = async () => {
       setPinsLoading(true);
       setPinsError(null);
       try {
-        const rows = await getMapLocations();
+        const rows = await getMapLocations(reviewStatus);
         setAllRows(rows);
       } catch (err) {
         setPinsError(err instanceof Error ? err : new Error(String(err)));
@@ -107,7 +111,7 @@ export function useMapDiscovery(
       }
     };
     void load();
-  }, []);
+  }, [reviewStatus]);
 
   // Compute map pins from allRows, filtering by open-now when active
   const pins = useMemo<MapPin[]>(() => {
