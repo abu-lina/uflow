@@ -1,19 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { List, Map as MapIcon } from 'lucide-react';
 
 import { SectionSelector } from '@/features/search/components/SectionSelector';
 import { DiscoveryFilterBar } from '@/features/search/components/DiscoveryFilterBar';
 import { DiscoveryResultsGrid, type DiscoveryCardItem } from '@/features/search/components/DiscoveryResultsGrid';
 import { DiscoveryHeader } from '@/features/search/components/DiscoveryHeader';
 import { useNearMe } from '@/features/search/hooks/useNearMe';
+import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
+import { ViewToggleButton } from '@/features/search/components/ViewToggleButton';
 import { HomeSearchInput } from '@/features/search/components/HomeSearchInput';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { filterOpenNow } from '@/utils/filterOpenNow';
@@ -37,8 +38,6 @@ import type { Section } from '@/providers/search-provider';
 import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';
 import type { SearchResult, NearMeFoodResult } from '@/services/providers';
 import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
-import type { MapPin } from '@/features/search/components/SearchMap';
-import type { OpeningHours } from '@/types/openingHours';
 
 const SearchMap = dynamic(
   () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
@@ -46,40 +45,6 @@ const SearchMap = dynamic(
 );
 
 const DEFAULT_RADIUS_KM = 5;
-
-type RawCategoryRow = { name_de?: string | null; name_en?: string | null; category_images?: Record<string, unknown> | null };
-type RawProviderRow = {
-  provider_name?: string | null;
-  opening_hours?: OpeningHours | null;
-  provider_images?: string | { urls?: string[] } | null;
-  address_city?: string | null;
-  category_id?: string | null;
-  categories?: RawCategoryRow | RawCategoryRow[] | null;
-};
-type RawLocationRow = {
-  provider_id: string;
-  location_latitude: number | null;
-  location_longitude: number | null;
-  providers: RawProviderRow | RawProviderRow[] | null;
-};
-
-function adaptMapPinToDiscoveryItem(pin: MapPin): DiscoveryCardItem {
-  return {
-    id: pin.providerId,
-    provider_id: pin.providerId,
-    provider_name: pin.providerName,
-    provider_images: pin.provider_images ?? null,
-    category: pin.category,
-    category_id: pin.category_id ?? null,
-    address_city: pin.address_city ?? null,
-    listing_type: 'food',
-    location_latitude: pin.lat,
-    location_longitude: pin.lng,
-    opening_hours: pin.opening_hours ?? null,
-    offers_ids: [],
-    needs_ids: [],
-  };
-}
 
 /**
  * Fetch search results from the server-side route handler.
@@ -207,22 +172,14 @@ export function ProvidersContent({
   // Plan 220: Near-me state — geolocation-based (matches home page pattern)
   const [nearMeActive, setNearMeActive] = useState(false);
   const [radiusKm, setRadiusKm] = useState(DEFAULT_RADIUS_KM);
-  const [isOpenNow, setIsOpenNow] = useState(false);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
-  const [allRows, setAllRows] = useState<RawLocationRow[]>([]);
-  const [pinsLoading, setPinsLoading] = useState(true);
-  const headerRef = useRef<HTMLElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(120);
 
   const geolocation = useGeolocation();
 
-  const userCoords = useMemo(
-    () =>
-      geolocation.status === 'granted' && geolocation.coords
-        ? { lat: geolocation.coords.latitude, lon: geolocation.coords.longitude }
-        : null,
-    [geolocation.status, geolocation.coords],
-  );
+  // Shared map/discovery state: pins, view mode, open-now, header metrics
+  const {
+    pins, isOpenNow, setIsOpenNow, viewMode,
+    toggleViewMode, headerRef, headerHeight, userCoords,
+  } = useMapDiscovery(geolocation);
 
   const nearMe = useNearMe({
     coords: userCoords,
@@ -241,55 +198,6 @@ export function ProvidersContent({
     setNearMeActive(true);
     geolocation.requestLocation();
   };
-
-  // Plan 220: Load all map pins
-  useEffect(() => {
-    const load = async () => {
-      setPinsLoading(true);
-      try {
-        const { data } = await supabase
-          .from('locations')
-          .select('provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories(name_de, name_en, category_images))')
-          .not('location_latitude', 'is', null)
-          .not('location_longitude', 'is', null)
-          .eq('providers.listing_type', 'food')
-          .eq('providers.review_status', 'approved');
-        if (Array.isArray(data)) setAllRows(data as RawLocationRow[]);
-      } finally {
-        setPinsLoading(false);
-      }
-    };
-    void load();
-  }, []);
-
-  // Plan 220: Compute map pins from allRows
-  const pins = useMemo<MapPin[]>(() => {
-    const unique = new Map<string, MapPin>();
-    for (const row of allRows) {
-      if (row.location_latitude === null || row.location_longitude === null) continue;
-      if (unique.has(row.provider_id)) continue;
-      const p = Array.isArray(row.providers) ? (row.providers[0] ?? null) : row.providers;
-      const rawCat = p?.categories;
-      const cat = rawCat ? (Array.isArray(rawCat) ? (rawCat[0] ?? null) : rawCat) : null;
-      const name = Array.isArray(row.providers)
-        ? (row.providers[0]?.provider_name ?? 'Provider')
-        : (row.providers?.provider_name ?? 'Provider');
-      unique.set(row.provider_id, {
-        providerId: row.provider_id,
-        providerName: name,
-        lat: Number(row.location_latitude),
-        lng: Number(row.location_longitude),
-        opening_hours: p?.opening_hours ?? null,
-        provider_images: p?.provider_images ?? null,
-        address_city: p?.address_city ?? null,
-        category_id: p?.category_id ?? null,
-        category: cat
-          ? { name_de: cat.name_de ?? '', name_en: cat.name_en ?? undefined, category_images: cat.category_images ?? undefined }
-          : undefined,
-      });
-    }
-    return filterOpenNow(Array.from(unique.values()), isOpenNow);
-  }, [allRows, isOpenNow]);
 
   // Use React Query infinite query for paginated search results
   // Page size: 12 provides good balance between initial load and frequent pagination
@@ -749,24 +657,7 @@ export function ProvidersContent({
 
         {/* Toggle button: map <-> list, sits above navbar — food results only */}
         {!showGreeting && section === 'food' && (
-          <button
-            aria-label={viewMode === 'map' ? t('map.switchToList') : t('map.switchToMap')}
-            className="fixed left-1/2 z-[500] -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 font-inter-tight text-sm font-semibold text-content-heading shadow-lg transition-colors hover:bg-neutral-50"
-            style={{ bottom: 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))' }}
-            type="button"
-            onClick={() => {
-              if (viewMode === 'map') {
-                setHeaderHeight(headerRef.current?.offsetHeight ?? 120);
-              }
-              setViewMode((v) => (v === 'map' ? 'list' : 'map'));
-            }}
-          >
-            {viewMode === 'map' ? (
-              <><List aria-hidden="true" className="h-4 w-4" /><span>{t('map.listViewLabel')}</span></>
-            ) : (
-              <><MapIcon aria-hidden="true" className="h-4 w-4" /><span>{t('map.mapViewLabel')}</span></>
-            )}
-          </button>
+          <ViewToggleButton viewMode={viewMode} onToggle={toggleViewMode} />
         )}
       </main>
     </>
