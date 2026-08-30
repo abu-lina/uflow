@@ -28,6 +28,14 @@ vi.mock('@/config/feature-flags', () => ({
   getFeatureFlag: () => true,
 }));
 
+vi.mock('@/providers/auth-provider', () => ({
+  useAuth: () => ({ user: null, isLoading: false }),
+}));
+
+vi.mock('@/hooks/useIsAdmin', () => ({
+  useIsAdmin: () => ({ isAdmin: false }),
+}));
+
 vi.mock('@/lib/utils/onboarding-state', () => ({
   getOnboardingState: () => ({ earlyAccessUnlocked: true }),
   setOnboardingState: vi.fn(),
@@ -102,8 +110,8 @@ vi.mock('@/features/search/components/SearchMap', () => ({
 }));
 
 vi.mock('@/features/search/components/HomeSearchBar', () => ({
-  HomeSearchBar: (props: { onNearMeChange?: (v: boolean) => void }) => (
-    <button data-testid="near-me-chip" onClick={() => props.onNearMeChange?.(true)} type="button">
+  HomeSearchBar: (props: { onToggleNearMe?: () => void }) => (
+    <button data-testid="near-me-chip" onClick={() => props.onToggleNearMe?.()} type="button">
       near me
     </button>
   ),

@@ -158,23 +158,19 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     expect(screen.getByRole('button', { name: /near me/i }).className).not.toContain('bg-primary text-white');
   });
 
-  it('[pre-fix FAILS / post-fix PASSES] near-me callback keeps boolean compatibility', () => {
-    const onNearMeChange = vi.fn();
-    const { rerender } = render(
-      <HomeSearchBar activeSection="food" geoStatus="idle" onNearMeChange={onNearMeChange} />,
+  it('[pre-fix FAILS / post-fix PASSES] near-me toggle callback fires on click', () => {
+    const onToggleNearMe = vi.fn();
+    render(
+      <HomeSearchBar activeSection="food" geoStatus="idle" onToggleNearMe={onToggleNearMe} />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: /near me/i }));
-    expect(onNearMeChange).toHaveBeenCalledWith(true);
-
-    rerender(<HomeSearchBar activeSection="food" geoStatus="granted" onNearMeChange={onNearMeChange} />);
-    fireEvent.click(screen.getByRole('button', { name: /near me/i }));
-    expect(onNearMeChange).toHaveBeenLastCalledWith(false);
+    expect(onToggleNearMe).toHaveBeenCalledTimes(1);
   });
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows iOS-specific recovery hint', () => {
     setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
-    render(<HomeSearchBar activeSection="food" geoStatus="denied" />);
+    render(<HomeSearchBar activeSection="food" geoStatus="denied" nearMeActive />);
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
     expect(
@@ -184,7 +180,7 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows Android-specific recovery hint', () => {
     setUserAgent('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36');
-    render(<HomeSearchBar activeSection="food" geoStatus="denied" />);
+    render(<HomeSearchBar activeSection="food" geoStatus="denied" nearMeActive />);
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
     expect(
@@ -194,7 +190,7 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows fallback recovery hint', () => {
     setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
-    render(<HomeSearchBar activeSection="food" geoStatus="denied" />);
+    render(<HomeSearchBar activeSection="food" geoStatus="denied" nearMeActive />);
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
     expect(
@@ -203,14 +199,14 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
   });
 
   it('timeout state does not show any settings guidance hint', () => {
-    render(<HomeSearchBar activeSection="food" geoStatus="timeout" />);
+    render(<HomeSearchBar activeSection="food" geoStatus="timeout" nearMeActive />);
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
     expect(screen.queryByText(/Standort gesperrt\./)).not.toBeInTheDocument();
   });
 
   it('unavailable state does not show any settings guidance hint', () => {
-    render(<HomeSearchBar activeSection="food" geoStatus="unavailable" />);
+    render(<HomeSearchBar activeSection="food" geoStatus="unavailable" nearMeActive />);
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
     expect(screen.queryByText(/Standort gesperrt\./)).not.toBeInTheDocument();

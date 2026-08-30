@@ -37,6 +37,14 @@ vi.mock('@/config/feature-flags', () => ({
   getFeatureFlag: (key: string) => key === 'isAppLaunched',
 }));
 
+vi.mock('@/providers/auth-provider', () => ({
+  useAuth: () => ({ user: null, isLoading: false }),
+}));
+
+vi.mock('@/hooks/useIsAdmin', () => ({
+  useIsAdmin: () => ({ isAdmin: false }),
+}));
+
 vi.mock('@/lib/utils/onboarding-state', () => ({
   getOnboardingState: () => ({ earlyAccessUnlocked: true }),
   setOnboardingState: vi.fn(),
