@@ -14,7 +14,7 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 
 function setupSupabaseMock() {
   mockFrom.mockImplementation((table: string) => {

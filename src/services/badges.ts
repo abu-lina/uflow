@@ -164,7 +164,17 @@ export async function getBadgesForEntity(
     // M-5a: provider_badges.community_service_id dropped; all badges use provider_id
     query = query.eq('provider_id', entityId);
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    // Try with is_active filter first; fall back without it for environments
+    // that do not yet have the provider_badges.is_active column.
+    let { data, error } = await query.eq('is_active', true).order('created_at', { ascending: false });
+
+    if (error?.code === '42703') {
+      ({ data, error } = await supabase
+        .from('provider_badges')
+        .select('*, badge_type:badge_types(*)')
+        .eq('provider_id', entityId)
+        .order('created_at', { ascending: false }));
+    }
 
     if (error) {
       logSupabaseError('getBadgesForEntity', error);
