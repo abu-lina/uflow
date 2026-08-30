@@ -4,8 +4,8 @@
   "thresholds": {
     "firstLoadJS": {
       "providers": {
-        "max": 366000,
-        "description": "First Load JS for /providers (browse) — Plan 210 fallback: measured at 361 kB after map changes; +5 kB headroom"
+        "max": 368000,
+        "description": "First Load JS for /providers (browse) — measured at 367 kB after chat fallback translations; +1 kB headroom"
       },
       "providersDetail": {
         "max": 286000,

@@ -118,15 +118,21 @@ vi.mock('@/components/shared/LegalLinksModal', () => ({
   LegalLinksModal: () => null,
 }));
 
-vi.mock('@/lib/supabase/client', () => ({
-  supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({ data: [], error: null }),
-      }),
-    }),
-  },
-}));
+vi.mock('@/lib/supabase/client', () => {
+  const chainable: Record<string, unknown> = {
+    data: [],
+    error: null,
+    then: (resolve: (v: { data: never[]; error: null }) => void) => resolve({ data: [], error: null }),
+  };
+  chainable.eq = () => chainable;
+  chainable.not = () => chainable;
+  chainable.order = () => chainable;
+  chainable.limit = () => chainable;
+  chainable.select = () => chainable;
+  return {
+    supabase: { from: () => chainable },
+  };
+});
 
 vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() },
