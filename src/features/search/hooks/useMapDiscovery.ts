@@ -81,6 +81,18 @@ export function useMapDiscovery(
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(120);
 
+  // Keep headerHeight in sync with the actual element size so content
+  // is never hidden behind the fixed header (fixes /food overlap).
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (entry) setHeaderHeight(entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const userCoords = useMemo(
     () =>
       geolocation.status === 'granted' && geolocation.coords
