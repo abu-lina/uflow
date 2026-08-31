@@ -46,14 +46,14 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
           {options.map((option, i) => (
             <button
               key={i}
-              type="button"
-              onClick={() => toggleOption(i)}
-              disabled={disabled}
               className={`px-3 py-1.5 text-sm border rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 selected.has(i)
                   ? 'bg-primary text-white border-primary'
                   : 'bg-primary/10 text-primary-dark border-primary/20 hover:bg-primary/20 hover:border-primary/30'
               }`}
+              disabled={disabled}
+              type="button"
+              onClick={() => toggleOption(i)}
             >
               {option.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')}
             </button>
@@ -61,9 +61,9 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
         </div>
         {selected.size > 0 && (
           <button
-            onClick={confirmSelection}
-            disabled={disabled}
             className="self-start px-4 py-1.5 text-sm font-medium bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors"
+            disabled={disabled}
+            onClick={confirmSelection}
           >
             Bestätigen ({selected.size})
           </button>
@@ -78,10 +78,10 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
       {options.map((option, i) => (
         <button
           key={i}
+          className="px-3 py-1.5 text-sm bg-primary/10 text-primary-dark border border-primary/20 rounded-xl hover:bg-primary/20 hover:border-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={disabled}
           type="button"
           onClick={() => onSelect(option)}
-          disabled={disabled}
-          className="px-3 py-1.5 text-sm bg-primary/10 text-primary-dark border border-primary/20 rounded-xl hover:bg-primary/20 hover:border-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {option.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1')}
         </button>

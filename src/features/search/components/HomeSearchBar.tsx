@@ -114,12 +114,12 @@ export function HomeSearchBar({
 
       {!hideFilters && (
         <DiscoveryFilterBar
+          adminSlot={adminSlot}
           geoStatus={geoStatus}
           nearMeActive={nearMeActive}
           openNowActive={isOpenNow}
           onToggleNearMe={onToggleNearMe ?? (() => {})}
           onToggleOpenNow={onToggleOpenNow ?? (() => {})}
-          adminSlot={adminSlot}
         />
       )}
     </div>

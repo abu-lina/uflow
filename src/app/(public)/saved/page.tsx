@@ -507,8 +507,8 @@ export default function SavedProvidersPage() {
       >
         {shouldShowSearchBar && (
           <HomeSearchBar
-            activeSection={selectedSection}
             hideFilters
+            activeSection={selectedSection}
             query={searchQuery}
             onQueryChange={setSearchQuery}
           />
@@ -561,8 +561,8 @@ export default function SavedProvidersPage() {
               return (
                 <li key={provider.id}>
                   <SelectableCard
-                    backgroundColor={categoryBgColor}
                     actionType="unsave"
+                    backgroundColor={categoryBgColor}
                     bottomText={address}
                     category={provider.category?.name_de || ''}
                     imageUrl={imageUrl}

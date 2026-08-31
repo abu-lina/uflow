@@ -16,8 +16,8 @@ export function ProviderCard({ provider }: ProviderCardProps) {
 
   return (
     <Link
-      href={`/providers/${provider.provider_id}`}
       className="block p-3 bg-white rounded-xl border border-gray-200 hover:border-primary/40 hover:shadow-sm transition-all mb-2"
+      href={`/providers/${provider.provider_id}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">

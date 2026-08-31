@@ -455,13 +455,13 @@ export function ProvidersContent({
     if (nearMe.isActive) {
       return (
         <DiscoveryResultsGrid
-          items={nearMe.results.map(adaptNearMeResult)}
-          isLoading={nearMe.isLoading}
+          enableBookmarks
+          enableDistance
           error={nearMe.error}
           headerOffset={headerHeight}
+          isLoading={nearMe.isLoading}
+          items={nearMe.results.map(adaptNearMeResult)}
           openNow={isOpenNow}
-          enableDistance
-          enableBookmarks
           onRetry={nearMe.refetch}
         />
       );
@@ -489,22 +489,22 @@ export function ProvidersContent({
 
     return (
       <DiscoveryResultsGrid
-        items={searchResults.map(adaptSearchResultToDiscoveryItem)}
-        isLoading={false}
-        error={error}
-        headerOffset={headerHeight}
-        openNow={isOpenNow}
         enableBookmarks
-        bookmarkedIds={bookmarkedProviderIds}
-        onBookmarkChange={handleBookmarkChange}
-        enableModeration={enableModeration}
-        onApprove={handleApprove}
-        onReject={handleRejectClick}
-        reviewingProviderId={reviewingProviderId}
         enableInfiniteScroll
+        bookmarkedIds={bookmarkedProviderIds}
+        enableModeration={enableModeration}
+        error={error}
         hasNextPage={hasNextPage ?? false}
+        headerOffset={headerHeight}
         isFetchingNextPage={isFetchingNextPage}
+        isLoading={false}
+        items={searchResults.map(adaptSearchResultToDiscoveryItem)}
+        openNow={isOpenNow}
+        reviewingProviderId={reviewingProviderId}
+        onApprove={handleApprove}
+        onBookmarkChange={handleBookmarkChange}
         onLoadMore={fetchNextPage}
+        onReject={handleRejectClick}
         onRetry={() => refetch()}
       />
     );
@@ -604,27 +604,27 @@ export function ProvidersContent({
       ) : (
         <DiscoveryHeader
           ref={headerRef}
-          section={section}
-          selectedSection={section}
-          viewMode={viewMode}
-          onSectionChange={handleSectionChange}
-          searchSlot={<HomeSearchInput activeSection={section} />}
           filterBarSlot={
             section === 'food' ? (
               <DiscoveryFilterBar
-                geoStatus={geolocation.status}
-                nearMeActive={nearMeActive}
-                openNowActive={isOpenNow}
-                onToggleNearMe={handleToggleNearMe}
-                onToggleOpenNow={() => setIsOpenNow((v) => !v)}
                 adminSlot={
                   isAdmin ? (
                     <AdminStatusFilter selectedStatus={status} onStatusChange={handleStatusChange} />
                   ) : undefined
                 }
+                geoStatus={geolocation.status}
+                nearMeActive={nearMeActive}
+                openNowActive={isOpenNow}
+                onToggleNearMe={handleToggleNearMe}
+                onToggleOpenNow={() => setIsOpenNow((v) => !v)}
               />
             ) : undefined
           }
+          searchSlot={<HomeSearchInput activeSection={section} />}
+          section={section}
+          selectedSection={section}
+          viewMode={viewMode}
+          onSectionChange={handleSectionChange}
         />
       )}
 

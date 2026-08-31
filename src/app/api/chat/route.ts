@@ -15,7 +15,7 @@ import {
 } from '@/features/chat/services/guardrails';
 import { buildSystemPrompt } from '@/features/chat/prompts/system-prompt';
 import { MAX_MESSAGE_LENGTH } from '@/features/chat/types';
-import type { ChatMessage, ToolCall } from '@/features/chat/types';
+import type { ChatMessage } from '@/features/chat/types';
 import type { ProviderCardData } from '@/features/chat/types';
 
 const CHAT_HISTORY_LIMIT = parseInt(
@@ -38,19 +38,19 @@ function extractOptions(content: string): string[] | undefined {
   
   // Pattern 2: Ja/Nein questions
   if (/möchtest du|soll ich|willst du|brauchst du|kann ich/i.test(content)) {
-    if (/(ja|nein|yes|no)/i.test(content)) {
+    if (/\b(ja|nein|yes|no)\b/i.test(content)) {
       options.push('Ja', 'Nein');
     }
   }
   
   // Pattern 3: Bullet points (• or -)
-  const bulletMatch = content.match(/^[•\-]\s+(.+)$/gm);
+  const bulletMatch = content.match(/^[•-]\s+(.+)$/gm);
   if (bulletMatch && bulletMatch.length >= 2) {
-    return bulletMatch.map(m => m.replace(/^[•\-]\s+/, '').trim());
+    return bulletMatch.map(m => m.replace(/^[•-]\s+/, '').trim());
   }
   
   // Pattern 4: Newline-separated simple options (plain text list without numbers)
-  const lineMatch = content.match(/^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&()\/,.-]*(?: [A-Za-zÄÖÜäöüß&()\/,.-]+)*$/gm);
+  const lineMatch = content.match(/^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&()/,.-]*(?: [A-Za-zÄÖÜäöüß&()/,.-]+)*$/gm);
   if (lineMatch && lineMatch.length >= 3) {
     const filtered = lineMatch
       .map(l => l.trim())
@@ -103,7 +103,7 @@ async function saveStreamToDb(
         try {
           const parsed = JSON.parse(data);
           if (parsed.content) assistantContent += parsed.content;
-        } catch {}
+        } catch { /* ignore */ }
       }
     }
 
@@ -414,7 +414,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                     if (opts && opts.length > 0) {
                       controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
                     }
-                  } catch {}
+                  } catch { /* ignore */ }
                   if (providerResults && providerResults.length > 0) {
                     controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
                   }
@@ -506,7 +506,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                     if (opts && opts.length > 0) {
                       controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
                     }
-                  } catch {}
+                  } catch { /* ignore */ }
                   if (providerResults && providerResults.length > 0) {
                     controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
                   }
@@ -514,7 +514,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                   controller.close();
                   return;
                 }
-                try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) { collectedContent += c; controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } } catch {}
+                try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) { collectedContent += c; controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } } catch { /* ignore */ }
               }
             }
           } catch (e) { controller.error(e); }
@@ -547,7 +547,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     if (options && options.length > 0 && finalMessage.content) {
       let cleaned = finalMessage.content
         .replace(/^\d+\.\s+.+$/gm, '')
-        .replace(/^[•\-]\s+.+$/gm, '');
+        .replace(/^[•-]\s+.+$/gm, '');
       // Strip lines that match extracted options exactly
       for (const opt of options) {
         const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

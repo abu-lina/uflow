@@ -178,7 +178,7 @@ export function useNearMe({
     prevUrlSyncRef.current = urlSync;
 
     syncNearMeUrl(router, pathname, searchParams, isActive, coords, radiusKm, openNow);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [urlSync, isActive, coords?.lat, coords?.lon, radiusKm, openNow, router, pathname, searchParams]);
 
   const isLoading = isActive && (!hasFetched || isFetching);

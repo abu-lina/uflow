@@ -18,11 +18,11 @@ export default function ChatPage() {
             Chat
           </h1>
           <button
-            onClick={() => router.back()}
             aria-label="Schließen"
             className="w-8 h-8 flex items-center justify-center -mr-1"
+            onClick={() => router.back()}
           >
-            <X size={22} className="text-content-heading" strokeWidth={2} />
+            <X className="text-content-heading" size={22} strokeWidth={2} />
           </button>
         </div>
       </header>

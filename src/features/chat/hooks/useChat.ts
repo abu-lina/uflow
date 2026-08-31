@@ -82,7 +82,7 @@ export function useChat(): UseChatReturn {
           const decoder = new TextDecoder();
           let buffer = '';
           let streamedContent = '';
-          let streamedConvId: string | null = null;
+          let _streamedConvId: string | null = null;
 
           // Add placeholder assistant message that we'll update
           setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
@@ -104,7 +104,7 @@ export function useChat(): UseChatReturn {
                 const parsed = JSON.parse(data);
                 
                 if (parsed.conversation_id) {
-                  streamedConvId = parsed.conversation_id;
+                  _streamedConvId = parsed.conversation_id;
                   setConversationId(parsed.conversation_id);
                 }
                 

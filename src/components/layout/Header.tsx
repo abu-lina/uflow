@@ -21,7 +21,6 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { toast } from 'sonner';
 import {
   getResultsPathForSection,
-  inferSectionFromCategory,
   resolveSectionFromRoute,
   SECTION_META,
 } from '@/config/sectionFilters';

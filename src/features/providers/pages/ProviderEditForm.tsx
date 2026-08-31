@@ -123,7 +123,7 @@ export function ProviderEditForm({
   const formRef = useRef<HTMLFormElement>(null);
   const websiteInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeFooterAction, setActiveFooterAction] = useState<'reject' | 'approve' | null>(null);
+  const [_activeFooterAction, setActiveFooterAction] = useState<'reject' | 'approve' | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     basics: true,
@@ -481,7 +481,7 @@ export function ProviderEditForm({
     }
   };
 
-  const handleReviewFooterAction = async (
+  const _handleReviewFooterAction = async (
     actionKey: 'reject' | 'approve',
     action: ProviderEditFooterAction
   ) => {

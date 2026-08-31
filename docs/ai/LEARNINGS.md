@@ -295,3 +295,9 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Learning**: Two root causes: (1) All subagents were configured with `anthropic/` and `openai/` model prefixes that don't exist in opencode Go — only `opencode-go/` models are available. (2) Analyst and code-reviewer had `edit: deny` globally with no path-specific overrides, so they couldn't create documents in their `agent-output/` directories. Always verify subagent model availability (`opencode models`) and edit permission path overrides when agents fail to initialize.
 - **Change to prevent repeat**: When adding or modifying subagent configurations, verify the model ID exists in `opencode models` output and that document-creating agents have path-specific `edit` overrides matching the QA/Planner pattern.
 - **Task/PR**: Plan 186, PR #264
+
+### 2026-08-31 — ESLint continue-on-error silently hid 86 errors
+- **Context**: CI lint step had `continue-on-error: true`, letting 86 ESLint errors accumulate across the codebase without blocking any PR.
+- **Learning**: `continue-on-error` in CI is acceptable during a transition period but must have a deadline. In this case it was set once and forgotten for months while errors compounded. Also: running `eslint --fix` globally can pick up untracked WIP files and cause cascading contamination. Fix targeted files, not the whole repo, when there are untracked changes in the working tree.
+- **Change to prevent repeat**: Never add `continue-on-error: true` to lint/type-check CI steps without a JIRA/issue to remove it within 2 sprints. Added `varsIgnorePattern: '^_'` to ESLint config so intentionally unused vars can be marked with `_` prefix instead of deleted.
+- **Task/PR**: Pipeline hardening (fix/pipeline-hardening branch)

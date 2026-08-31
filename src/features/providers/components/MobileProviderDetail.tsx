@@ -28,12 +28,12 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
 
   const locations = (provider.locations as Location[] | undefined) || [];
   const selectedLocationId = searchParams.get('location') ?? null;
-  const selectedLocation = locations.find((l: Location) => l.location_id === selectedLocationId)
+  const _selectedLocation = locations.find((l: Location) => l.location_id === selectedLocationId)
     ?? locations.find((l: Location) => l.is_primary)
     ?? locations[0]
     ?? null;
 
-  const handleLocationSelect = (locationId: string) => {
+  const _handleLocationSelect = (locationId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('location', locationId);
     router.replace(`${pathname}?${params.toString()}`);

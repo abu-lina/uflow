@@ -53,7 +53,7 @@ const eslintConfig = [
       ...tseslint.configs.strict.rules,
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-non-null-assertion': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       // Emoji policy: Use Lucide icons instead of emojis for consistency and accessibility
       // Example: Replace 🔐 with <Lock className="h-4 w-4" /> from lucide-react
     },
