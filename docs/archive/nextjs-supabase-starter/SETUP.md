@@ -42,8 +42,8 @@ npm install
 2. Go to **Settings** → **API**
 3. Copy these values:
    - **Project URL**: `https://xxxxx.supabase.co`
-   - **anon public key**: Long string starting with `eyJ...`
-   - **service_role key**: Another long string (keep this secret!)
+   - **anon public key**: Starts with `sb_publishable_...` (new) or `eyJ...` (legacy JWT)
+   - **service_role key**: Starts with `sb_secret_...` (new) or `eyJ...` (legacy JWT) - keep this secret!
 
 ### Configure Environment Variables
 
@@ -56,8 +56,8 @@ npm install
 2. Open `.env.local` and fill in your credentials:
    ```bash
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...your-anon-key
-   SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...your-service-role-key
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key       # sb_publishable_... (new) or eyJ... (legacy)
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key   # sb_secret_... (new) or eyJ... (legacy)
    NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
 

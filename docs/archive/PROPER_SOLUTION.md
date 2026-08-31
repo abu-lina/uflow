@@ -108,7 +108,7 @@ supabase link --project-ref rdtdtcfntopcxcigkqoq
 supabase functions deploy send-confirmation-email --no-verify-jwt
 
 # Set secrets
-supabase secrets set RESEND_API_KEY=re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL
+supabase secrets set RESEND_API_KEY=$RESEND_API_KEY
 supabase secrets set SITE_URL=https://ummahflow.com
 ```
 

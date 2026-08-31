@@ -36,7 +36,7 @@ echo ""
 
 # Deploy the function
 echo "📦 Deploying Edge Function..."
-supabase functions deploy send-confirmation-email --project-ref rdtdtcfntopcxcigkqoq
+supabase functions deploy send-confirmation-email --project-ref "${SUPABASE_PROJECT_REF}"
 
 if [ $? -eq 0 ]; then
     echo "✅ Edge Function deployed successfully"
@@ -51,16 +51,16 @@ echo ""
 echo "🔑 Setting environment secrets..."
 
 echo "Setting RESEND_API_KEY..."
-supabase secrets set RESEND_API_KEY=re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL --project-ref rdtdtcfntopcxcigkqoq
+supabase secrets set RESEND_API_KEY="${RESEND_API_KEY:?Set RESEND_API_KEY env var before running}" --project-ref "${SUPABASE_PROJECT_REF:?Set SUPABASE_PROJECT_REF env var}"
 
 echo "Setting SITE_URL..."
-supabase secrets set SITE_URL=https://ummahflow.com --project-ref rdtdtcfntopcxcigkqoq
+supabase secrets set SITE_URL=https://ummahflow.com --project-ref "${SUPABASE_PROJECT_REF}"
 
 echo ""
 echo "⚠️  IMPORTANT: After creating the auth hook in the dashboard:"
 echo "1. Copy the generated webhook secret (starts with v1,whsec_)"
 echo "2. Run this command to set it:"
-echo "   supabase secrets set WEBHOOK_SECRET=YOUR_SECRET_HERE --project-ref rdtdtcfntopcxcigkqoq"
+echo "   supabase secrets set WEBHOOK_SECRET=YOUR_SECRET_HERE --project-ref \$SUPABASE_PROJECT_REF"
 echo ""
 
 echo "✅ Basic secrets set successfully"
@@ -68,18 +68,18 @@ echo ""
 
 # List secrets to verify
 echo "📋 Verifying secrets..."
-supabase secrets list --project-ref rdtdtcfntopcxcigkqoq
+supabase secrets list --project-ref "${SUPABASE_PROJECT_REF}"
 
 echo ""
 echo "🎉 Deployment Complete!"
 echo ""
 echo "📝 Next Steps:"
-echo "1. Go to: https://supabase.com/dashboard/project/rdtdtcfntopcxcigkqoq/auth/hooks"
+echo "1. Go to: https://supabase.com/dashboard/project/${SUPABASE_PROJECT_REF}/auth/hooks"
 echo "2. Create a new hook:"
 echo "   - Hook name: send-confirmation-email"
 echo "   - Hook type: Send Email"
 echo "   - Events: User created"
-echo "   - Function URL: https://rdtdtcfntopcxcigkqoq.supabase.co/functions/v1/send-confirmation-email"
+echo "   - Function URL: https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/send-confirmation-email"
 echo "   - Enable the hook"
 echo "3. Test by signing up a new user!"
 echo ""

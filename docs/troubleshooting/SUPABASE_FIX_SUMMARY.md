@@ -47,7 +47,7 @@ docker build \
 **Changes**:
 - Added comprehensive environment variable validation
 - Added Supabase URL format validation (must match `https://*.supabase.co`)
-- Added JWT token format validation (must start with `eyJ`)
+- Added API key format validation (must start with `sb_publishable_` or `eyJ`)
 - Improved error messages with references to documentation
 
 ### 3. Added Build-Time Validation to Dockerfile
@@ -115,7 +115,7 @@ docker run --env-file .env.production uflow
 2. ✅ Check `NEXT_PUBLIC_SUPABASE_URL` is set
 3. ✅ Check `NEXT_PUBLIC_SUPABASE_ANON_KEY` is set
 4. ✅ Validate Supabase URL format matches `https://*.supabase.co`
-5. ✅ Validate anon key format starts with `eyJ` (JWT)
+5. ✅ Validate anon key format starts with `sb_publishable_` (new) or `eyJ` (legacy JWT)
 6. ✅ Health check after container starts
 7. ✅ Verify container stays running
 
