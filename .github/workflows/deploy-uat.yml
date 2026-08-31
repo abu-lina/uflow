@@ -74,7 +74,7 @@ jobs:
           [[ -z "$UAT_URL" ]] && echo "❌ Missing SUPABASE_URL" && exit 1
           [[ ! "$UAT_URL" =~ ^https://.*\.supabase\.co$ ]] && echo "❌ Invalid SUPABASE_URL format" && exit 1
           [[ -z "$UAT_KEY" ]] && echo "❌ Missing SUPABASE_ANON_KEY" && exit 1
-          [[ ! "$UAT_KEY" =~ ^eyJ ]] && echo "❌ Invalid SUPABASE_ANON_KEY format" && exit 1
+          [[ ! "$UAT_KEY" =~ ^(eyJ|sb_publishable_) ]] && echo "❌ Invalid SUPABASE_ANON_KEY format (expected eyJ... or sb_publishable_...)" && exit 1
 
           {
             echo "supabase_url=$UAT_URL"
