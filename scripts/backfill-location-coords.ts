@@ -36,7 +36,8 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const USER_AGENT = 'UmmahFlow-coord-backfill/1.0 (https://ummahflow.com; support@ummahflow.com)';
-const RATE_LIMIT_MS = 1100;
+const RATE_LIMIT_MS = 1500;
+const MAX_RETRIES = 3;
 
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
@@ -86,21 +87,33 @@ async function geocode(row: LocationRow): Promise<{ lat: number; lon: number } |
   if (row.address_zip?.trim()) params.set('postalcode', row.address_zip.trim());
   params.set('country', row.address_country?.trim() || 'Germany');
 
-  const res = await fetch(`${NOMINATIM_URL}?${params.toString()}`, {
-    headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-  });
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const res = await fetch(`${NOMINATIM_URL}?${params.toString()}`, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+    });
 
-  if (!res.ok) {
-    console.warn(`  geocode HTTP ${res.status} for ${row.location_id}`);
-    return null;
+    if (res.status === 429) {
+      const backoff = RATE_LIMIT_MS * (attempt + 2);
+      console.warn(`  429 rate-limited, backing off ${backoff}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+      await sleep(backoff);
+      continue;
+    }
+
+    if (!res.ok) {
+      console.warn(`  geocode HTTP ${res.status} for ${row.location_id}`);
+      return null;
+    }
+
+    const results = (await res.json()) as Array<{ lat: string; lon: string }>;
+    if (!Array.isArray(results) || results.length === 0) return null;
+
+    const lat = Number.parseFloat(results[0].lat);
+    const lon = Number.parseFloat(results[0].lon);
+    return isValidCoord(lat, lon) ? { lat, lon } : null;
   }
 
-  const results = (await res.json()) as Array<{ lat: string; lon: string }>;
-  if (!Array.isArray(results) || results.length === 0) return null;
-
-  const lat = Number.parseFloat(results[0].lat);
-  const lon = Number.parseFloat(results[0].lon);
-  return isValidCoord(lat, lon) ? { lat, lon } : null;
+  console.warn(`  geocode exhausted retries for ${row.location_id}`);
+  return null;
 }
 
 async function main(): Promise<void> {
