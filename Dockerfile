@@ -35,9 +35,6 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Fix SSL issues for Google Fonts
-ENV NODE_TLS_REJECT_UNAUTHORIZED=0
-
 # Validate critical environment variables and build in one step
 # This reduces layers while maintaining validation
 # Add Next.js build cache mount for faster rebuilds
@@ -56,7 +53,7 @@ RUN --mount=type=cache,target=/app/.next/cache \
       exit 1; \
     fi && \
     echo "✅ Build-time environment variables validated" && \
-    npm run build:standalone
+    NODE_TLS_REJECT_UNAUTHORIZED=0 npm run build:standalone
 
 # Verify build outputs exist
 RUN echo "Verifying build outputs..." && \

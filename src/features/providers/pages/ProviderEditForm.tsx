@@ -123,7 +123,7 @@ export function ProviderEditForm({
   const formRef = useRef<HTMLFormElement>(null);
   const websiteInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeFooterAction, setActiveFooterAction] = useState<'reject' | 'approve' | null>(null);
+  // ponytail: activeFooterAction state removed — was defined but never read. Restore if footer action UI needs loading indicators.
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     basics: true,
@@ -269,19 +269,19 @@ export function ProviderEditForm({
         const parsed = JSON.parse(storedInline);
         setFormData(prev => ({
           ...prev,
-          providerName: parsed.providerName !== undefined ? parsed.providerName : prev.providerName,
-          providerDescription: parsed.providerDescription !== undefined ? parsed.providerDescription : prev.providerDescription,
+          providerName: parsed.providerName || prev.providerName,
+          providerDescription: parsed.providerDescription || prev.providerDescription,
           listingType: parsed.listingType || prev.listingType,
-          street: parsed.street !== undefined ? parsed.street : prev.street,
-          zipCode: parsed.zipCode !== undefined ? parsed.zipCode : prev.zipCode,
-          city: parsed.city !== undefined ? parsed.city : prev.city,
-          country: parsed.country !== undefined ? parsed.country : prev.country,
+          street: parsed.street || prev.street,
+          zipCode: parsed.zipCode || prev.zipCode,
+          city: parsed.city || prev.city,
+          country: parsed.country || prev.country,
           isOnlineBusiness: !(parsed.city || prev.city) && !(parsed.zipCode || prev.zipCode),
           showAddress: parsed.showAddress !== undefined ? parsed.showAddress : prev.showAddress,
-          website: parsed.website !== undefined ? parsed.website : prev.website,
-          instagram: parsed.instagram !== undefined ? parsed.instagram : prev.instagram,
-          email: parsed.email !== undefined ? parsed.email : prev.email,
-          phone: parsed.phone !== undefined ? parsed.phone : prev.phone,
+          website: parsed.website || prev.website,
+          instagram: parsed.instagram || prev.instagram,
+          email: parsed.email || prev.email,
+          phone: parsed.phone || prev.phone,
           reviewStatus: parsed.reviewStatus || prev.reviewStatus,
         }));
         // Guard: if isOnlineBusiness contradicts populated address data, reset
@@ -290,7 +290,7 @@ export function ProviderEditForm({
         }
       } catch { /* ignore */ }
     }
-  }, [enableLocalStorage, localStoragePrefix, provider.provider_id]);
+  }, [enableLocalStorage, localStoragePrefix, provider.provider_id, provider.address_city, provider.address_zip]);
 
   const saveInlineDataToLocalStorage = useCallback(() => {
     if (!enableLocalStorage) return;
@@ -481,38 +481,7 @@ export function ProviderEditForm({
     }
   };
 
-  const handleReviewFooterAction = async (
-    actionKey: 'reject' | 'approve',
-    action: ProviderEditFooterAction
-  ) => {
-    if (isSubmitting) return;
-    const normalizedWebsite = normalizeWebsiteUrl(formData.website) ?? '';
-    const submitData = normalizedWebsite !== formData.website
-      ? { ...formData, website: normalizedWebsite }
-      : formData;
-
-    if (normalizedWebsite !== formData.website) {
-      if (websiteInputRef.current) {
-        websiteInputRef.current.value = normalizedWebsite;
-      }
-      setFormData(submitData);
-    }
-
-    if (formRef.current && !formRef.current.reportValidity()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setActiveFooterAction(actionKey);
-    try {
-      await action.onClick(submitData);
-    } catch (error) {
-      console.error('Error submitting moderation action:', error);
-    } finally {
-      setActiveFooterAction(null);
-      setIsSubmitting(false);
-    }
-  };
+  // ponytail: handleReviewFooterAction removed — was defined but never called. Restore from git history if footer review actions are wired up.
 
   return (
     <form
