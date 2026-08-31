@@ -18,7 +18,6 @@ export const ADMIN_CONTROLLED_FIELDS: ReadonlyArray<string> = [
   'provider_owner_id',
   'created_at',
   'provider_images',
-  'barakah_effects',
   'needs_ids',
   'show_address',
 ] as const;
@@ -36,6 +35,11 @@ export const SOURCE_ENRICHABLE_FIELDS: ReadonlyArray<string> = [
   'address_zip',
   'address_city',
   'address_country',
+  'opening_hours',
+  'no_alcohol',
+  'provider_description',
+  'location_latitude',
+  'location_longitude',
 ] as const;
 
 const adminFieldSet = new Set(ADMIN_CONTROLLED_FIELDS);

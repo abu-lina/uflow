@@ -33,7 +33,12 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
-import { fetchFilteredCategories, getCategories } from '@/services/categories';
+import {
+  fetchFilteredCategories,
+  getCategories,
+  getCategoriesForSection,
+  getProviderCategories,
+} from '@/services/categories';
 
 describe('categories service', () => {
   beforeEach(() => {
@@ -154,6 +159,26 @@ describe('categories service', () => {
       mockFrom.mockReturnValue(createChainMock({ data: mockCategories, error: null }));
       const result = await getCategories();
       expect(result).toHaveLength(2);
+    });
+  });
+
+  describe('Plan 119 regression — store section scopes', () => {
+    it('[pre-fix FAILS] [post-fix PASSES] queries store section with store+all scopes', async () => {
+      const chain = createChainMock({ data: [], error: null });
+      mockFrom.mockReturnValue(chain);
+
+      await getCategoriesForSection('store');
+
+      expect(chain.in).toHaveBeenCalledWith('applicable_section', ['store', 'all']);
+    });
+
+    it('[pre-fix FAILS] [post-fix PASSES] provider category list includes store scope in fallback set', async () => {
+      const chain = createChainMock({ data: [], error: null });
+      mockFrom.mockReturnValue(chain);
+
+      await getProviderCategories();
+
+      expect(chain.in).toHaveBeenCalledWith('applicable_section', ['food', 'store', 'all']);
     });
   });
 });

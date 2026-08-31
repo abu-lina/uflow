@@ -24,9 +24,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!entityType || (entityType !== 'provider' && entityType !== 'community_service')) {
+    if (!entityType || entityType !== 'provider') {
       return NextResponse.json(
-        { error: 'entityType must be either "provider" or "community_service"' },
+        { error: 'entityType must be "provider"' },
         { status: 400 }
       );
     }

@@ -8,3 +8,33 @@ After each build chunk: review, then test, then **capture one learning**.
 - Run `@capture-learning.md` after review/test. The AI derives the learning from recent context (diffs, test results, review feedback); no paste required.
 - Persist the output: append the learning entry to `docs/ai/LEARNINGS.md` and apply any proposed diff to the right place (Notion task, rule, command, or agent) after you review it.
 - Do not consider the chunk done until at least one learning is captured and persisted (or explicitly "nothing to capture this time").
+
+## Branch-first rule (Plan 172 learning)
+
+Create a feature branch **before any code changes** — at the Implementer handoff, not at DevOps time.
+
+1. When the pipeline transitions from Planner → Implementer, the orchestrator creates `fix/<ID>-<slug>` or `feature/<ID>-<slug>` from the latest `main`
+2. Push the branch to origin
+3. Pass the branch name to the Implementer
+4. All code commits go onto this branch
+5. DevOps phase only pushes remaining commits and creates the PR
+
+This gives CI visibility during implementation and surfaces pre-existing failures early.
+
+## Verify DB schema from Supabase, not local files (Plan 172 learning)
+
+When an investigation or fix depends on database schema — enum values, column types, constraints, RPC signatures — verify against the actual Supabase database, not local type definitions or migration files.
+
+**Commands to use**:
+```bash
+# Dump public schema
+supabase db dump --schema public --local > /tmp/schema.sql
+
+# Check enums
+psql "$SUPABASE_DB_URL" -c "SELECT typname, enumlabels FROM pg_enum e JOIN pg_type t ON e.enumtypid = t.oid WHERE t.typname LIKE '%listing%';"
+
+# Check table columns
+psql "$SUPABASE_DB_URL" -c "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'providers';"
+```
+
+Add this step to the Analyst phase when the bug touches data validation, enums, or column constraints. The analysis doc should cite actual DB state as ground truth.

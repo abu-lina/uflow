@@ -34,12 +34,12 @@ supabase db reset
 ### Option 2: Using Supabase Dashboard
 1. Go to your Supabase project dashboard
 2. Navigate to SQL Editor
-3. Copy and paste the contents of `supabase/migrations/001_create_offers_and_needs_tables.sql`
+3. Copy and paste the contents of `supabase/migrations/archive/001_create_offers_and_needs_tables.sql`
 4. Run the SQL script
 
 ### Option 3: Using psql (if you have direct database access)
 ```bash
-psql -h your-db-host -U postgres -d postgres -f supabase/migrations/001_create_offers_and_needs_tables.sql
+psql -h your-db-host -U postgres -d postgres -f supabase/migrations/archive/001_create_offers_and_needs_tables.sql
 ```
 
 ## Sample Data

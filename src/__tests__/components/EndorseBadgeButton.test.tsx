@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render } from '../utils/test-utils';
-import { EndorseBadgeButton } from '@/components/providers/EndorseBadgeButton';
+import { EndorseBadgeButton } from '@/features/providers/components/EndorseBadgeButton';
 import type { BadgeWithConfirmationStatus } from '@/types/badges';
 import { TrustLevel, EntityType, BadgeKey } from '@/types/badges';
 

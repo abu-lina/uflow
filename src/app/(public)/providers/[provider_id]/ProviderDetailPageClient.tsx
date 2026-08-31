@@ -13,7 +13,7 @@ import { AdminProviderDetailButtons } from '@/features/admin/components/AdminPro
 
 // Lazy load heavy modal component - only loads when needed (desktop view)
 const ProviderDetailModal = dynamic(
-  () => import('@/components/providers/ProviderDetailModal').then(mod => ({ default: mod.ProviderDetailModal })),
+  () => import('@/features/providers/pages/ProviderDetailModal').then(mod => ({ default: mod.ProviderDetailModal })),
   {
     loading: () => (
       <div className="flex min-h-screen items-center justify-center">
@@ -26,7 +26,7 @@ const ProviderDetailModal = dynamic(
 
 // Lazy load provider detail page component - only loads on mobile
 const ProviderDetailPageComponent = dynamic(
-  () => import('@/components/providers/ProviderDetailPage').then(mod => ({ default: mod.ProviderDetailPage })),
+  () => import('@/features/providers/pages/ProviderDetailPage').then(mod => ({ default: mod.ProviderDetailPage })),
   {
     loading: () => (
       <div className="flex min-h-screen flex-col">
@@ -69,7 +69,7 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
 
   // Handle modal close - navigate back to providers page
   const handleModalClose = () => {
-    router.push('/providers');
+    router.back();
   };
 
   // Show loading skeleton while fetching (only if no initial data)

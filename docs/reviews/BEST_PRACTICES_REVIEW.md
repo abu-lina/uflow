@@ -308,5 +308,5 @@ The system is **production-ready** and follows industry best practices. The opti
 - [Category Suggestions Migration Guide](./guides/CATEGORY_SUGGESTIONS_MIGRATION.md)
 - [Improved Offers/Needs UX](./guides/IMPROVED_OFFERS_NEEDS_UX.md)
 - [Architecture Recommendation (Revised)](./ARCHITECTURE_RECOMMENDATION_REVISED.md)
-- [Synonym Merge Migration](../supabase/migrations/009_merge_synonym_offers_needs.sql)
+- [Synonym Merge Migration](../supabase/migrations/archive/009_merge_synonym_offers_needs.sql)
 

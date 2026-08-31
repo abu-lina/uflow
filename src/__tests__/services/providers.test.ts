@@ -38,6 +38,7 @@ const mockLimit = vi.fn();
 const mockRange = vi.fn();
 const mockReturns = vi.fn();
 const mockIlike = vi.fn();
+const mockIn = vi.fn();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockFrom = vi.fn((..._args: any[]) => ({
@@ -62,6 +63,7 @@ function setupChain() {
     range: mockRange,
     returns: mockReturns,
     ilike: mockIlike,
+    in: mockIn,
   };
 
   mockSelect.mockReturnValue(chain);
@@ -71,45 +73,38 @@ function setupChain() {
   mockLimit.mockReturnValue(chain);
   mockRange.mockReturnValue(chain);
   mockIlike.mockReturnValue(chain);
+  mockIn.mockReturnValue(chain);
   mockReturns.mockResolvedValue({ data: [], error: null });
 }
 
-import { fetchFilteredCities, fetchProviderCities } from '@/services/providers';
+import { fetchFilteredCities, fetchPopularCities, fetchProviderCities, searchProviders } from '@/services/providers';
 
 describe('providers service', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     setupChain();
     mockFrom.mockReturnValue({ select: mockSelect });
   });
 
   describe('fetchFilteredCities', () => {
     it('returns empty array when no cities match', async () => {
-      // Mock both provider and community service queries returning empty
-      mockReturns
-        .mockResolvedValueOnce({ data: [], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+      // Only one providers query now (M-5: CS table dropped)
+      mockReturns.mockResolvedValueOnce({ data: [], error: null });
 
       const result = await fetchFilteredCities(null, null);
       expect(result).toEqual([]);
     });
 
-    it('returns deduplicated sorted cities from both providers and community services', async () => {
-      mockReturns
-        .mockResolvedValueOnce({
-          data: [
-            { address_city: 'Berlin' },
-            { address_city: 'München' },
-          ],
-          error: null,
-        })
-        .mockResolvedValueOnce({
-          data: [
-            { address_city: 'Berlin' },  // Duplicate
-            { address_city: 'Hamburg' },
-          ],
-          error: null,
-        });
+    it('returns deduplicated sorted cities from providers only (M-5: CS dropped)', async () => {
+      mockReturns.mockResolvedValueOnce({
+        data: [
+          { address_city: 'Berlin' },
+          { address_city: 'München' },
+          { address_city: 'Berlin' },  // Duplicate
+          { address_city: 'Hamburg' },
+        ],
+        error: null,
+      });
 
       const result = await fetchFilteredCities(null, null);
       expect(result).toContain('Berlin');
@@ -120,41 +115,58 @@ describe('providers service', () => {
     });
 
     it('applies category filter when specified', async () => {
-      mockReturns
-        .mockResolvedValueOnce({ data: [{ address_city: 'Berlin' }], error: null })
-        .mockResolvedValueOnce({ data: [], error: null });
+      // Only one providers query now (M-5: CS table dropped)
+      mockReturns.mockResolvedValueOnce({ data: [{ address_city: 'Berlin' }], error: null });
 
       const result = await fetchFilteredCities('some-category-id', null);
       expect(result).toContain('Berlin');
     });
 
-    it('uses RPC search when search query is provided', async () => {
-      // After refactor, should use RPC instead of ILIKE
+    it('uses providers-only search path when search query is provided', async () => {
+      const { searchOffers } = await import('@/services/offers');
+      const { searchNeeds } = await import('@/services/needs');
+      const { getBadgesForEntities } = await import('@/services/badges');
+
+      vi.mocked(searchOffers).mockResolvedValueOnce([]);
+      vi.mocked(searchNeeds).mockResolvedValueOnce([]);
+      vi.mocked(getBadgesForEntities).mockResolvedValueOnce(new Map());
+
+      // searchProviders() internals call this provider-name RPC
       mockRpc.mockResolvedValueOnce({
-        data: [{ city: 'Berlin' }, { city: 'Hamburg' }],
+        data: [{ provider_id: 'p-1' }, { provider_id: 'p-2' }],
+        error: null,
+      });
+
+      // providers result set used to derive unique cities
+      mockReturns.mockResolvedValueOnce({
+        data: [
+          { provider_id: 'p-1', address_city: 'Berlin' },
+          { provider_id: 'p-2', address_city: 'Hamburg' },
+          { provider_id: 'p-3', address_city: 'Berlin' },
+        ],
         error: null,
       });
 
       const result = await fetchFilteredCities(null, 'test query');
-      expect(Array.isArray(result)).toBe(true);
-      // Must call the RPC, NOT use ILIKE
-      expect(mockRpc).toHaveBeenCalledWith('get_filtered_cities_by_search', expect.objectContaining({
+
+      expect(result).toEqual(['Berlin', 'Hamburg']);
+      expect(mockRpc).toHaveBeenCalledWith('search_provider_ids_by_name', {
         search_query: 'test query',
-      }));
+      });
+      // searchProviders now uses ILIKE for category name search (legitimate, alongside tsvector for providers)
+      expect(mockIlike).toHaveBeenCalled();
     });
 
     it('filters out null and empty cities', async () => {
-      mockReturns
-        .mockResolvedValueOnce({
-          data: [
-            { address_city: 'Berlin' },
-            { address_city: null },
-            { address_city: '' },
-            { address_city: 'null' },
-          ],
-          error: null,
-        })
-        .mockResolvedValueOnce({ data: [], error: null });
+      mockReturns.mockResolvedValueOnce({
+        data: [
+          { address_city: 'Berlin' },
+          { address_city: null },
+          { address_city: '' },
+          { address_city: 'null' },
+        ],
+        error: null,
+      });
 
       const result = await fetchFilteredCities(null, null);
       expect(result).toEqual(['Berlin']);
@@ -162,19 +174,85 @@ describe('providers service', () => {
   });
 
   describe('fetchProviderCities', () => {
-    it('returns sorted unique cities', async () => {
-      mockReturns
-        .mockResolvedValueOnce({
-          data: [{ address_city: 'München' }, { address_city: 'Berlin' }],
-          error: null,
-        })
-        .mockResolvedValueOnce({
-          data: [{ address_city: 'Hamburg' }],
-          error: null,
-        });
+    it('returns sorted unique cities from providers only', async () => {
+      mockReturns.mockResolvedValueOnce({
+        data: [
+          { address_city: 'München' },
+          { address_city: 'Berlin' },
+          { address_city: 'Hamburg' },
+        ],
+        error: null,
+      });
 
       const result = await fetchProviderCities();
       expect(result).toEqual(['Berlin', 'Hamburg', 'München']);
+    });
+  });
+
+  describe('searchProviders', () => {
+    it('[post-fix PASSES] selects category_images for overview fallback stock image rendering', async () => {
+      await searchProviders('', '', '', 12, 0);
+
+      expect(mockSelect).toHaveBeenCalledWith(
+        expect.stringContaining('category:categories(name_de, name_en, category_images)'),
+      );
+    });
+  });
+
+  describe('fetchPopularCities', () => {
+    it('returns cities sorted by provider_count desc with city name tie-break', async () => {
+      mockReturns.mockResolvedValueOnce({
+        data: [
+          { address_city: 'Berlin' },
+          { address_city: 'Berlin' },
+          { address_city: 'Köln' },
+          { address_city: 'Hamburg' },
+          { address_city: 'Berlin' },
+          { address_city: 'Köln' },
+        ],
+        error: null,
+      });
+
+      const result = await fetchPopularCities();
+
+      expect(result).toEqual([
+        { city: 'Berlin', provider_count: 3 },
+        { city: 'Köln', provider_count: 2 },
+        { city: 'Hamburg', provider_count: 1 },
+      ]);
+    });
+
+    it('applies limit to the sorted result set', async () => {
+      mockReturns.mockResolvedValueOnce({
+        data: [
+          { address_city: 'Berlin' },
+          { address_city: 'Berlin' },
+          { address_city: 'Köln' },
+          { address_city: 'Hamburg' },
+          { address_city: 'Berlin' },
+          { address_city: 'Köln' },
+        ],
+        error: null,
+      });
+
+      const result = await fetchPopularCities(2);
+      expect(result).toEqual([
+        { city: 'Berlin', provider_count: 3 },
+        { city: 'Köln', provider_count: 2 },
+      ]);
+    });
+
+    it('returns empty array when query errors and logs error', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      mockReturns.mockResolvedValueOnce({ data: null, error: new Error('providers fail') });
+
+      const result = await fetchPopularCities();
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalled();
+
+      errorSpy.mockRestore();
     });
   });
 });

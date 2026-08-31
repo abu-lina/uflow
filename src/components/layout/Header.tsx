@@ -12,10 +12,19 @@ import { Logo } from '@/components/ui/Logo';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { Button } from '@/components/ui/Button';
 import { SearchBar } from '@/features/search/components/SearchBar';
-import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
+import { SectionSelector } from '@/features/search/components/SectionSelector';
 import { useAuth } from '@/providers/auth-provider';
+import { useSearch } from '@/providers/search-provider';
+import type { Section } from '@/providers/search-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { toast } from 'sonner';
+import {
+  getResultsPathForSection,
+  inferSectionFromCategory,
+  resolveSectionFromRoute,
+  SECTION_META,
+} from '@/config/sectionFilters';
 
 // Dynamic imports for modals (Plan 007: reduce shared bundle)
 const SignupModal = dynamic(
@@ -37,47 +46,73 @@ export function Header() {
   const { user, signOut, isLoading: loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { selectedSection, setSelectedSection } = useSearch();
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();
+  const handleSectionChange = (section: Section) => {
+    if (!SECTION_META[section].active) {
+      const label = t(SECTION_META[section].labelKey);
+      toast.info(`${label} is coming soon`, {
+        description: "We're working on it — stay tuned.",
+        position: 'bottom-center',
+      });
+      return;
+    }
+    setSelectedSection(section);
+    const params = new URLSearchParams({ section });
+    router.push(`${getResultsPathForSection(section)}?${params.toString()}`);
+  };
+
+  const pushResultsRoute = (params: URLSearchParams) => {
+    const section = resolveSectionFromRoute(pathname, params);
+    params.set('section', section);
+    router.push(`${getResultsPathForSection(section)}?${params.toString()}`);
+  };
+
+  const buildSearchSubmitParams = () => {
+    const current = new URLSearchParams(window.location.search);
+    const next = new URLSearchParams();
+    // Preserve only user-facing context that should survive a new search submit.
+    const preservedKeys: Array<'filters' | 'wer'> = ['filters', 'wer'];
+    for (const key of preservedKeys) {
+      const value = current.get(key);
+      if (value) {
+        next.set(key, value);
+      }
+    }
+    return next;
+  };
 
   // Handle search submission - navigate to providers page
-  const handleSearchSubmit = (query: string, category: string | null, location: string) => {
-    const params = new URLSearchParams();
+  const handleSearchSubmit = (query: string, location: string) => {
+    const params = buildSearchSubmitParams();
+    const section = resolveSectionFromRoute(pathname, params);
+    params.set('section', section);
     if (query) {
       params.set('q', query);
-    }
-    if (category) {
-      params.set('category', category);
+    } else {
+      params.delete('q');
     }
     if (location) {
       params.set('location', location);
+    } else {
+      params.delete('location');
     }
-    router.push(`/providers?${params.toString()}`);
+    router.push(`${getResultsPathForSection(section)}?${params.toString()}`);
   };
 
   // Handle clear search - navigate to providers without query
   const handleClearSearch = () => {
     const params = new URLSearchParams(window.location.search);
     params.delete('q');
-    router.push(`/providers?${params.toString()}`);
-  };
-
-  // Handle category change - navigate to providers with new category
-  const handleCategoryChange = (category: string | null) => {
-    const params = new URLSearchParams(window.location.search);
-    if (category) {
-      params.set('category', category);
-    } else {
-      params.delete('category');
-    }
-    router.push(`/providers?${params.toString()}`);
+    pushResultsRoute(params);
   };
 
   // Handle location change - navigate to providers with new location
   const handleLocationChange = (location: string) => {
     const params = new URLSearchParams(window.location.search);
     params.set('location', location);
-    router.push(`/providers?${params.toString()}`);
+    pushResultsRoute(params);
   };
 
   // Close dropdown on outside click
@@ -116,108 +151,119 @@ export function Header() {
           isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className="mx-auto w-full max-w-7xl px-4">
-          <nav className="flex h-20 w-full items-center justify-between">
-            {/* Left */}
-            <div className="flex flex-row items-center gap-16">
-              <Link
-                aria-label="Zur Startseite"
-                className="relative flex flex-shrink-0 items-center justify-center"
-                href="/"
-              >
-                <Logo className="size-8 flex-shrink-0 text-white" height={32} width={32} />
-              </Link>
-              {!user && (
+        <nav className="flex w-full flex-col items-center gap-4 py-2">
+            {/* Top row: Logo + About + SectionSelector + Auth */}
+            <div className="grid w-full grid-cols-[1fr_800px_1fr] items-center px-12">
+              {/* Left: Logo + About */}
+              <div className="h-14 flex justify-start items-center gap-8">
                 <Link
-                  className="flex h-10 items-center rounded-xl border-none px-3.5 text-base font-medium text-content-heading hover:bg-neutral-light hover:text-content focus:text-content-heading focus:outline-none active:text-content-heading"
-                  href="/about"
-                  onClick={handleAboutClick}
+                  aria-label="Zur Startseite"
+                  className="relative flex flex-shrink-0 items-center justify-center"
+                  href="/"
                 >
-                  {t('navigation.about')}
-                </Link>
-              )}
-            </div>
-
-            {/* Search Bar */}
-            <SearchBar
-              className="!w-[640px] !shadow-none"
-              onCategoryChange={handleCategoryChange}
-              onClearSearch={handleClearSearch}
-              onLocationChange={handleLocationChange}
-              onSearchSubmit={handleSearchSubmit}
-            />
-
-            {/* Right */}
-            <div className="flex flex-row items-center gap-3">
-              {/* Language Switcher - visible to all users, compact variant for header */}
-              <LanguageSwitcher className="flex" variant="compact" />
-              {loading ? (
-                <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-neutral-100" />
-              ) : user ? (
-                <>
-                  <Button
-                    className="hidden h-10 w-[89px] rounded-xl border border-border px-[14px] md:flex"
-                    variant="primary"
-                    onClick={() => router.push('/create')}
-                  >
-                    {t('navigation.create')}
-                  </Button>
-                  <div ref={dropdownRef} className="relative">
-                    <button
-                      aria-label="Profil Dropdown öffnen"
-                      className="flex items-center gap-0 rounded-full focus:outline-none"
-                      onClick={() => setDropdownOpen((open) => !open)}
-                    >
-                      <ProfileIcon className="shrink-0" isActive={dropdownOpen} />
-                      <ChevronDown
-                        aria-hidden="true"
-                        className={`-ml-2 size-6 text-content transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
-                      />
-                    </button>
-                    {dropdownOpen && (
-                      <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
-                        <button
-                          className="block w-full px-4 py-2 text-left text-base hover:bg-neutral-50"
-                          onClick={() => {
-                            setDropdownOpen(false);
-                            router.push('/profile');
-                          }}
-                        >
-                          {t('profile.accountSettings')}
-                        </button>
-                        <button
-                          className="block w-full px-4 py-2 text-left text-base text-danger hover:bg-neutral-50"
-                          onClick={async () => {
-                            setDropdownOpen(false);
-                            await signOut();
-                            router.push('/');
-                          }}
-                        >
-                          {t('auth.logout')}
-                        </button>
-                      </div>
-                    )}
+                  <div className="flex items-center gap-1">
+                    <Logo className="size-8 flex-shrink-0 text-white" height={32} width={32} />
+                    <span className="font-inter-tight font-semibold text-lg text-primary">UMMAH FLOW</span>
                   </div>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="flex h-10 items-center rounded-xl border border-neutral px-3.5 text-base font-medium text-content"
-                    onClick={() => setShowLoginModal(true)}
+                </Link>
+                {!user && (
+                  <Link
+                    className="h-12 px-5 rounded-xl flex justify-start items-center text-base font-medium text-content-heading hover:bg-neutral-light hover:text-content"
+                    href="/about"
+                    onClick={handleAboutClick}
                   >
-                    {t('navigation.login')}
-                  </button>
-                  <button
-                    className="flex h-10 items-center rounded-xl bg-primary px-3.5 text-base font-medium text-white hover:bg-primary/90"
-                    onClick={() => setShowSignupModal(true)}
-                  >
-                    {t('navigation.register')}
-                  </button>
-                </>
-              )}
+                    {t('navigation.about')}
+                  </Link>
+                )}
+              </div>
+
+              {/* Center: SectionSelector */}
+              <div className="w-[800px]">
+                <SectionSelector
+                  selectedSection={selectedSection}
+                  onSectionChange={handleSectionChange}
+                />
+              </div>
+
+              {/* Right: Auth */}
+              <div className="h-12 flex justify-end items-center gap-4">
+                {loading ? (
+                  <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-neutral-100" />
+                ) : user ? (
+                  <>
+                    <Button
+                      className="hidden h-10 w-[89px] rounded-xl border border-border px-[14px] md:flex"
+                      variant="primary"
+                      onClick={() => router.push('/create')}
+                    >
+                      {t('navigation.create')}
+                    </Button>
+                    <div ref={dropdownRef} className="relative">
+                      <button
+                        aria-label="Profil Dropdown öffnen"
+                        className="flex items-center gap-0 rounded-full focus:outline-none"
+                        onClick={() => setDropdownOpen((open) => !open)}
+                      >
+                        <ProfileIcon className="shrink-0" isActive={dropdownOpen} />
+                        <ChevronDown
+                          aria-hidden="true"
+                          className={`-ml-2 size-6 text-content transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+                      {dropdownOpen && (
+                        <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
+                          <button
+                            className="block w-full px-4 py-2 text-left text-base hover:bg-neutral-50"
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              router.push('/profile');
+                            }}
+                          >
+                            {t('profile.accountSettings')}
+                          </button>
+                          <button
+                            className="block w-full px-4 py-2 text-left text-base text-danger hover:bg-neutral-50"
+                            onClick={async () => {
+                              setDropdownOpen(false);
+                              await signOut();
+                              router.push('/');
+                            }}
+                          >
+                            {t('auth.logout')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="self-stretch px-5 rounded-xl border border-neutral text-base font-medium text-content flex items-center"
+                      onClick={() => setShowLoginModal(true)}
+                    >
+                      {t('navigation.login')}
+                    </button>
+                    <button
+                      className="self-stretch px-5 bg-primary rounded-xl text-base font-medium text-white hover:bg-primary/90 flex items-center"
+                      onClick={() => setShowSignupModal(true)}
+                    >
+                      {t('navigation.register')}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
-          </nav>
-        </div>
+
+            {/* Bottom row: SearchBar centered */}
+            <div className="flex w-full justify-center px-12">
+              <SearchBar
+                className="!w-[800px] !shadow-none"
+                onClearSearch={handleClearSearch}
+                onLocationChange={handleLocationChange}
+                onSearchSubmit={handleSearchSubmit}
+              />
+            </div>
+        </nav>
       </header>
 
       {showSignupModal && (

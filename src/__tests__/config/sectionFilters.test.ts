@@ -8,6 +8,7 @@ import {
   getDefaultFilters,
   getAllowedFilters,
   inferSectionFromCategory,
+  resolveSectionFromRoute,
   type SectionFilter,
 } from '@/config/sectionFilters';
 
@@ -19,7 +20,7 @@ describe('SECTION_FILTER_CONFIG', () => {
   it('exports config for food, ummah, and business sections', () => {
     expect(SECTION_FILTER_CONFIG).toHaveProperty('food');
     expect(SECTION_FILTER_CONFIG).toHaveProperty('ummah');
-    expect(SECTION_FILTER_CONFIG).toHaveProperty('business');
+    expect(SECTION_FILTER_CONFIG).toHaveProperty('store');
   });
 
   it('food section has muslim_owned as a default filter', () => {
@@ -28,7 +29,7 @@ describe('SECTION_FILTER_CONFIG', () => {
   });
 
   it('business section has muslim_owned as a default filter', () => {
-    const business = SECTION_FILTER_CONFIG['business'];
+    const business = SECTION_FILTER_CONFIG['store'];
     expect(business.defaults).toHaveProperty('muslim_owned', true);
   });
 
@@ -43,16 +44,16 @@ describe('SECTION_FILTER_CONFIG', () => {
   });
 
   it('business section does NOT have prayer space as optional filter', () => {
-    const business = SECTION_FILTER_CONFIG['business'];
+    const business = SECTION_FILTER_CONFIG['store'];
     expect(business.optional).not.toContain('has_prayer_space');
   });
 
   it('food section has all seven optional filters', () => {
     const food = SECTION_FILTER_CONFIG['food'];
     const expected: SectionFilter[] = [
-      'accepts_donations',
+      'makes_donations',
       'has_parking',
-      'solidarity_pricing',
+      'economic_solidarity',
       'family_friendly',
       'children_friendly',
       'women_friendly',
@@ -62,9 +63,9 @@ describe('SECTION_FILTER_CONFIG', () => {
   });
 
   it('business section has only two optional filters', () => {
-    const business = SECTION_FILTER_CONFIG['business'];
-    expect(business.optional).toContain('accepts_donations');
-    expect(business.optional).toContain('solidarity_pricing');
+    const business = SECTION_FILTER_CONFIG['store'];
+    expect(business.optional).toContain('makes_donations');
+    expect(business.optional).toContain('economic_solidarity');
     expect(business.optional).toHaveLength(2);
   });
 });
@@ -76,7 +77,7 @@ describe('getDefaultFilters', () => {
   });
 
   it('returns muslim_owned=true for business section', () => {
-    const filters = getDefaultFilters('business');
+    const filters = getDefaultFilters('store');
     expect(filters).toEqual({ muslim_owned: true });
   });
 
@@ -92,7 +93,7 @@ describe('getAllowedFilters', () => {
   });
 
   it('business section does not allow has_prayer_space', () => {
-    expect(getAllowedFilters('business')).not.toContain('has_prayer_space');
+    expect(getAllowedFilters('store')).not.toContain('has_prayer_space');
   });
 
   it('includes defaults + optional filters', () => {
@@ -100,7 +101,7 @@ describe('getAllowedFilters', () => {
     // defaults
     expect(food).toContain('muslim_owned');
     // optional
-    expect(food).toContain('accepts_donations');
+    expect(food).toContain('makes_donations');
   });
 });
 
@@ -114,11 +115,38 @@ describe('inferSectionFromCategory', () => {
   });
 
   it('returns business for any other category UUID', () => {
-    expect(inferSectionFromCategory(DIENSTLEISTUNGEN_ID)).toBe('business');
+    expect(inferSectionFromCategory(DIENSTLEISTUNGEN_ID)).toBe('store');
   });
 
   it('returns business for null/undefined category', () => {
-    expect(inferSectionFromCategory(null)).toBe('business');
-    expect(inferSectionFromCategory(undefined)).toBe('business');
+    expect(inferSectionFromCategory(null)).toBe('store');
+    expect(inferSectionFromCategory(undefined)).toBe('store');
+  });
+});
+
+describe('resolveSectionFromRoute', () => {
+  it('resolves stores pathname to business when section and category are absent', () => {
+    const params = new URLSearchParams('');
+    expect(resolveSectionFromRoute('/stores', params)).toBe('store');
+  });
+
+  it('resolves ummah pathname when section and category are absent', () => {
+    const params = new URLSearchParams('');
+    expect(resolveSectionFromRoute('/ummah', params)).toBe('ummah');
+  });
+
+  it('keeps explicit section as highest priority', () => {
+    const params = new URLSearchParams('section=food');
+    expect(resolveSectionFromRoute('/ummah', params)).toBe('food');
+  });
+
+  it('uses category inference before pathname fallback when section is absent', () => {
+    const params = new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`);
+    expect(resolveSectionFromRoute('/stores', params)).toBe('food');
+  });
+
+  it('resolves locale-prefixed stores pathname to business when section and category are absent', () => {
+    const params = new URLSearchParams('');
+    expect(resolveSectionFromRoute('/de/stores', params)).toBe('store');
   });
 });

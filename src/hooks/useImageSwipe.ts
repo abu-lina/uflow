@@ -37,10 +37,13 @@ export const useImageSwipe = ({
 }: UseImageSwipeOptions): UseImageSwipeReturn => {
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStartX, setDragStartX] = useState(0);
-  const [dragStartY, setDragStartY] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Use refs for immediate access in callbacks to avoid closure stale values
+  const dragStartXRef = useRef<number>(0);
+  const dragStartYRef = useRef<number>(0);
+  const isDraggingRef = useRef<boolean>(false);
   
   // Velocity tracking for better swipe detection
   const touchStartTime = useRef<number>(0);
@@ -65,10 +68,11 @@ export const useImageSwipe = ({
     if (!enableSwipe || totalImages <= 1 || !e.touches.length) return;
     
     setIsDragging(true);
+    isDraggingRef.current = true;
     const touchX = e.touches[0].clientX;
     const touchY = e.touches[0].clientY;
-    setDragStartX(touchX);
-    setDragStartY(touchY);
+    dragStartXRef.current = touchX;
+    dragStartYRef.current = touchY;
     setDragOffset(0);
     
     // Initialize velocity tracking
@@ -76,19 +80,16 @@ export const useImageSwipe = ({
     touchStartTime.current = now;
     lastTouchTime.current = now;
     lastTouchX.current = touchX;
-    
-    // Prevent default to avoid scrolling
-    e.preventDefault();
   }, [enableSwipe, totalImages]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!enableSwipe || !isDragging || totalImages <= 1 || !e.touches.length) return;
+    if (!enableSwipe || !isDraggingRef.current || totalImages <= 1 || !e.touches.length) return;
 
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
     const currentTime = Date.now();
-    const offsetX = currentX - dragStartX;
-    const offsetY = Math.abs(currentY - dragStartY);
+    const offsetX = currentX - dragStartXRef.current;
+    const offsetY = Math.abs(currentY - dragStartYRef.current);
 
     // Update velocity tracking
     lastTouchX.current = currentX;
@@ -108,10 +109,11 @@ export const useImageSwipe = ({
       // Prevent default to avoid scrolling
       e.preventDefault();
     }
-  }, [enableSwipe, isDragging, totalImages, dragStartX, dragStartY, selectedImageIdx, boundaryResistance]);
+  }, [enableSwipe, totalImages, selectedImageIdx, boundaryResistance]);
 
   const handleTouchEnd = useCallback(() => {
-    if (!enableSwipe || !isDragging || totalImages <= 1) {
+    if (!enableSwipe || !isDraggingRef.current || totalImages <= 1) {
+      isDraggingRef.current = false;
       setIsDragging(false);
       setDragOffset(0);
       return;
@@ -133,19 +135,21 @@ export const useImageSwipe = ({
         goToNext();
       }
     }
+    isDraggingRef.current = false;
     setIsDragging(false);
     setDragOffset(0);
-  }, [enableSwipe, isDragging, totalImages, dragOffset, swipeThreshold, minSwipeDistance, velocityThreshold, selectedImageIdx, goToNext, goToPrevious]);
+  }, [enableSwipe, totalImages, dragOffset, swipeThreshold, minSwipeDistance, velocityThreshold, selectedImageIdx, goToNext, goToPrevious]);
 
   // Mouse event handlers for desktop testing
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (!enableSwipe || totalImages <= 1) return;
     
     setIsDragging(true);
+    isDraggingRef.current = true;
     const mouseX = e.clientX;
     const mouseY = e.clientY;
-    setDragStartX(mouseX);
-    setDragStartY(mouseY);
+    dragStartXRef.current = mouseX;
+    dragStartYRef.current = mouseY;
     setDragOffset(0);
     
     touchStartTime.current = Date.now();
@@ -156,13 +160,13 @@ export const useImageSwipe = ({
   }, [enableSwipe, totalImages]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!enableSwipe || !isDragging || totalImages <= 1) return;
+    if (!enableSwipe || !isDraggingRef.current || totalImages <= 1) return;
 
     const currentX = e.clientX;
     const currentY = e.clientY;
     const currentTime = Date.now();
-    const offsetX = currentX - dragStartX;
-    const offsetY = Math.abs(currentY - dragStartY);
+    const offsetX = currentX - dragStartXRef.current;
+    const offsetY = Math.abs(currentY - dragStartYRef.current);
 
 
     lastTouchX.current = currentX;
@@ -179,10 +183,11 @@ export const useImageSwipe = ({
       }
       e.preventDefault();
     }
-  }, [enableSwipe, isDragging, totalImages, dragStartX, dragStartY, selectedImageIdx, boundaryResistance]);
+  }, [enableSwipe, totalImages, selectedImageIdx, boundaryResistance]);
 
   const handleMouseUp = useCallback(() => {
-    if (!enableSwipe || !isDragging || totalImages <= 1) {
+    if (!enableSwipe || !isDraggingRef.current || totalImages <= 1) {
+      isDraggingRef.current = false;
       setIsDragging(false);
       setDragOffset(0);
       return;
@@ -203,9 +208,10 @@ export const useImageSwipe = ({
         goToNext();
       }
     }
+    isDraggingRef.current = false;
     setIsDragging(false);
     setDragOffset(0);
-  }, [enableSwipe, isDragging, totalImages, dragOffset, swipeThreshold, minSwipeDistance, velocityThreshold, selectedImageIdx, goToNext, goToPrevious]);
+  }, [enableSwipe, totalImages, dragOffset, swipeThreshold, minSwipeDistance, velocityThreshold, selectedImageIdx, goToNext, goToPrevious]);
 
   // Add global mouse event listeners for better tracking
   useEffect(() => {

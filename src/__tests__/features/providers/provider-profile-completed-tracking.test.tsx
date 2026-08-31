@@ -25,7 +25,7 @@ vi.mock('@/lib/analytics/plausible', () => ({
   trackEvent: vi.fn(),
 }));
 
-vi.mock('@/services/providerService', () => ({
+vi.mock('@/features/providers/services/mutations', () => ({
   createProviderOrService: vi.fn().mockResolvedValue({ provider_id: 'test-id-123' }),
 }));
 
@@ -70,7 +70,7 @@ vi.mock('@/services/placeAutocompleteService', () => ({
 }));
 
 import { trackEvent } from '@/lib/analytics/plausible';
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 import { StreamlinedRecommendForm } from '@/features/providers/StreamlinedRecommendForm';
 import { StreamlinedImportForm } from '@/features/providers/StreamlinedImportForm';
 

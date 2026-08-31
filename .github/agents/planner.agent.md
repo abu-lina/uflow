@@ -5,20 +5,56 @@ target: vscode
 argument-hint: Describe the feature, epic, or change to plan
 tools:
   [
-    'execute/getTerminalOutput',
-    'execute/runInTerminal',
-    'read/readFile',
-    'read/terminalSelection',
-    'read/terminalLastCommand',
-    'edit/createDirectory',
-    'edit/createFile',
-    'edit/editFiles',
-    'edit',
-    'search',
-    'web',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'todo',
+    execute/getTerminalOutput,
+    execute/runInTerminal,
+    read/readFile,
+    read/terminalSelection,
+    read/terminalLastCommand,
+    edit/createDirectory,
+    edit/createFile,
+    edit/createJupyterNotebook,
+    edit/editFiles,
+    edit/editNotebook,
+    edit/rename,
+    search/changes,
+    search/codebase,
+    search/fileSearch,
+    search/listDirectory,
+    search/searchResults,
+    search/textSearch,
+    search/usages,
+    web/fetch,
+    web/githubRepo,
+    com.figma.mcp/mcp/add_code_connect_map,
+    com.figma.mcp/mcp/create_design_system_rules,
+    com.figma.mcp/mcp/create_new_file,
+    com.figma.mcp/mcp/generate_diagram,
+    com.figma.mcp/mcp/generate_figma_design,
+    com.figma.mcp/mcp/get_code_connect_map,
+    com.figma.mcp/mcp/get_code_connect_suggestions,
+    com.figma.mcp/mcp/get_context_for_code_connect,
+    com.figma.mcp/mcp/get_design_context,
+    com.figma.mcp/mcp/get_figjam,
+    com.figma.mcp/mcp/get_metadata,
+    com.figma.mcp/mcp/get_screenshot,
+    com.figma.mcp/mcp/get_variable_defs,
+    com.figma.mcp/mcp/search_design_system,
+    com.figma.mcp/mcp/send_code_connect_mappings,
+    com.figma.mcp/mcp/use_figma,
+    com.figma.mcp/mcp/whoami,
+    figma/add_code_connect_map,
+    figma/create_design_system_rules,
+    figma/get_code_connect_map,
+    figma/get_code_connect_suggestions,
+    figma/get_design_context,
+    figma/get_figjam,
+    figma/get_metadata,
+    figma/get_screenshot,
+    figma/get_variable_defs,
+    figma/send_code_connect_mappings,
+    uflow.uflow-memory/flowbaby_storeMemory,
+    uflow.uflow-memory/flowbaby_retrieveMemory,
+    todo,
   ]
 model: Claude Opus 4.6
 handoffs:
@@ -140,6 +176,34 @@ For each surface, state one of:
 - out of scope with owner and follow-up plan
 
 Do not treat route deletion alone as proof that the feature is no longer discoverable.
+
+### Schema Mutation Inventories (MANDATORY when applicable)
+
+If a plan includes an enum value rename, column drop, or table rename, the plan MUST enumerate **both** a write inventory and a read inventory for the mutated value or column.
+
+**Write inventory** — all locations that write, filter, or insert using the old enum value or column:
+- DB queries with `.eq('column', 'old_value')` or equivalent filters
+- Supabase RPC calls passing the old value
+- Migration files referencing the old label
+
+**Read inventory** — all locations that read or SELECT using the old enum value or column:
+- `.select('column_name')` in app queries
+- Destructuring or mapping of the old column (`row.column_name`)
+- Test fixtures or mocks that assert on the old column name
+
+**Verification command pattern** (run before writing milestones, record output in plan):
+```bash
+# Enum rename 'old_value' → 'new_value':
+grep -rn "'old_value'" src/ supabase/
+grep -rn '"old_value"' src/ supabase/
+
+# Column or table drop:
+grep -rn "column_name" src/ supabase/
+```
+
+For each match: classify as write-path, read-path, or irrelevant. Document in the plan milestone that covers the rename/drop. Any file in the inventory that is NOT updated by the plan milestone is a guaranteed QA blocker.
+
+**Applies to**: Any plan milestone containing `ALTER TYPE ... RENAME VALUE`, `ALTER TABLE ... DROP COLUMN`, `ALTER TABLE ... RENAME TO`, or equivalent table/column/enum mutations.
 
 14. Include version management milestone. Update release artifacts to match roadmap target version.
 15. Retrieve/store memory.

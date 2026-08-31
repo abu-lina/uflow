@@ -42,7 +42,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({ t: (key: string) => key, language: 'de' }),
 }));
 
-vi.mock('@/components/providers/ProviderCard', () => ({
+vi.mock('@/features/providers/components/ProviderCard', () => ({
   ProviderCard: vi.fn(({ provider_name }: { provider_name: string }) => (
     <div data-testid="provider-card">{provider_name}</div>
   )),
@@ -58,8 +58,9 @@ vi.mock('@/components/ui/Button', () => ({
   ),
 }));
 
-import { SearchResultsList } from '@/components/providers/SearchResultsList';
+import { SearchResultsList } from '@/features/providers/components/SearchResultsList';
 import type { SearchResult } from '@/services/providers';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 
 /**
  * Helper: generate N mock SearchResult items for testing threshold behavior
@@ -82,7 +83,7 @@ function generateMockResults(count: number): SearchResult[] {
     location_longitude: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
-    barakah_effects: [],
+
     offers_ids: [],
     needs_ids: [],
     category: { name_de: 'Test Category' },
@@ -117,8 +118,8 @@ describe('SearchResultsList — layout rendering contract (Plan 053)', () => {
     // The CSS grid container should be present
     const gridContainer = container.querySelector('.grid');
     expect(gridContainer).toBeTruthy();
-    // Should have responsive column classes
-    expect(gridContainer?.className).toContain('grid-cols-1');
+    // Should have responsive column classes (2-column on mobile for better UX)
+    expect(gridContainer?.className).toContain('grid-cols-2');
 
     // All provider cards should render
     expect(screen.getAllByTestId('provider-card')).toHaveLength(12);
@@ -134,7 +135,7 @@ describe('SearchResultsList — layout rendering contract (Plan 053)', () => {
     // at 50+ items, losing the CSS grid. Post-fix, the grid must persist.
     const gridContainer = container.querySelector('.grid');
     expect(gridContainer).toBeTruthy();
-    expect(gridContainer?.className).toContain('grid-cols-1');
+    expect(gridContainer?.className).toContain('grid-cols-2');
 
     // All 60 cards should render in the grid (no virtualization hiding items)
     expect(screen.getAllByTestId('provider-card')).toHaveLength(60);
@@ -238,5 +239,46 @@ describe('SearchResultsList — data filtering', () => {
 
     // Should only render the 3 valid results
     expect(screen.getAllByTestId('provider-card')).toHaveLength(3);
+  });
+
+  it('[pre-fix FAILS] [post-fix PASSES] passes offers and opening_hours through to ProviderCard', () => {
+    const openingHours = {
+      monday: { open: '09:00', close: '21:00' },
+    };
+
+    const providerResult = {
+      ...generateMockResults(1)[0],
+      offers: [{ name_de: 'Shawarma' }, { name_de: 'Falafel' }],
+      originalProvider: {
+        provider_id: 'provider-0',
+        provider_name: 'Provider 0',
+        provider_images: null,
+        category_id: 'cat-1',
+        address_city: 'Berlin',
+        social_website: null,
+        social_instagram: null,
+        contact_email: null,
+        contact_phone: null,
+        address_street: null,
+        address_country: null,
+        address_zip: null,
+        location_latitude: null,
+        location_longitude: null,
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        barakah_effects: [],
+        offers_ids: [],
+        needs_ids: [],
+        opening_hours: openingHours,
+      },
+    } as SearchResult;
+
+    render(<SearchResultsList {...defaultProps} searchResults={[providerResult]} />);
+
+    const providerCardMock = vi.mocked(ProviderCard);
+    const firstCallProps = providerCardMock.mock.calls[0]?.[0] as Record<string, unknown>;
+
+    expect(firstCallProps.offers).toEqual(providerResult.offers);
+    expect(firstCallProps.opening_hours).toEqual(openingHours);
   });
 });

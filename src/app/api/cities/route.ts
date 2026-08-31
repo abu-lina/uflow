@@ -58,10 +58,12 @@ export async function GET(request: Request) {
       );
     }
 
-    // Log for debugging
-    console.log('[Cities API] Returning cities with provider counts:', 
-      (citiesWithCounts || []).map((c: { city_name: string; provider_count: number }) => 
-        `${c.city_name}: ${c.provider_count} providers`).join(', '));
+    // Log for debugging (production-only guard to reduce log noise)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[Cities API] Returning cities with provider counts:', 
+        (citiesWithCounts || []).map((c: { city_name: string; provider_count: number }) => 
+          `${c.city_name}: ${c.provider_count} providers`).join(', '));
+    }
 
     // 3. Return success response
     return NextResponse.json(
@@ -69,7 +71,12 @@ export async function GET(request: Request) {
         data: citiesWithCounts || [],
         error: null 
       },
-      { status: 200 }
+      { 
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
     );
 
   } catch (error) {

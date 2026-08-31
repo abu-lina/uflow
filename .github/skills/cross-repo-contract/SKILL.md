@@ -1,3 +1,12 @@
+---
+name: cross-repo-contract
+description: Cross-repository API contract management for type-safe multi-repo development. Use when implementing APIs spanning multiple repositories, consuming external contracts, or proposing contract changes.
+license: MIT
+metadata:
+  author: groupzer0
+  version: "1.0"
+---
+
 # Cross-Repository API Contract Skill
 
 ## Purpose

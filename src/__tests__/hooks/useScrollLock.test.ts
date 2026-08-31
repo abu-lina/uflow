@@ -6,16 +6,21 @@ describe('useScrollLock', () => {
   beforeEach(() => {
     _resetScrollLockForTesting();
     document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    document.body.removeAttribute('data-scroll-lock-count');
   });
 
   afterEach(() => {
     _resetScrollLockForTesting();
     document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+    document.body.removeAttribute('data-scroll-lock-count');
   });
 
   it('sets overflow hidden when isOpen becomes true', () => {
     renderHook(() => useScrollLock(true));
     expect(document.body.style.overflow).toBe('hidden');
+    expect(document.documentElement.style.overflow).toBe('hidden');
   });
 
   it('does not lock when isOpen is false', () => {
@@ -25,10 +30,13 @@ describe('useScrollLock', () => {
 
   it('restores overflow when unmounted', () => {
     document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'scroll';
     const { unmount } = renderHook(() => useScrollLock(true));
     expect(document.body.style.overflow).toBe('hidden');
+    expect(document.documentElement.style.overflow).toBe('hidden');
     unmount();
     expect(document.body.style.overflow).toBe('auto');
+    expect(document.documentElement.style.overflow).toBe('scroll');
   });
 
   it('stack-safe: two open hooks — closing one does NOT restore scroll', () => {
@@ -45,8 +53,22 @@ describe('useScrollLock', () => {
 
   it('restores original overflow value (not hardcoded empty string)', () => {
     document.body.style.overflow = 'scroll';
+    document.documentElement.style.overflow = 'auto';
     const { unmount } = renderHook(() => useScrollLock(true));
     unmount();
     expect(document.body.style.overflow).toBe('scroll');
+    expect(document.documentElement.style.overflow).toBe('auto');
+  });
+
+  it('recovers stale DOM lock marker when hook mounts closed', () => {
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.setAttribute('data-scroll-lock-count', '1');
+
+    renderHook(() => useScrollLock(false));
+
+    expect(document.body.style.overflow).toBe('');
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.body.hasAttribute('data-scroll-lock-count')).toBe(false);
   });
 });

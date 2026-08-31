@@ -30,6 +30,35 @@ export const providerReviewUpdateSchema = z.object({
   },
 );
 
+const menuItemSchema = z.object({
+  name_de: z.string().min(1),
+  name_en: z.string().optional(),
+  description_de: z.string().optional(),
+  price_cents: z.number().int().min(0),
+  category: z.string().optional(),
+  sort_order: z.number().int().min(0),
+  is_available: z.boolean(),
+});
+
+const deliveryLinkSchema = z.object({
+  platform: z.enum(['wolt', 'lieferando', 'ubereats', 'website']),
+  platform_url: z.string().url(),
+  platform_slug: z.string().optional(),
+  is_active: z.boolean(),
+});
+
+const locationSchema = z.object({
+  location_id: z.string(),
+  location_name: z.string().nullable().optional(),
+  address_street: z.string().nullable().optional(),
+  address_zip: z.string().nullable().optional(),
+  address_city: z.string().nullable().optional(),
+  address_country: z.string().nullable().optional(),
+  contact_phone: z.string().nullable().optional(),
+  show_address: z.boolean().optional(),
+  is_primary: z.boolean(),
+});
+
 /**
  * Provider edit update schema (admin/moderator editing provider fields)
  */
@@ -38,10 +67,12 @@ export const providerEditUpdateSchema = z.object({
   providerName: z.string().min(1).max(200).optional(),
   providerDescription: z.string().max(5000).nullable().optional(),
   categoryId: z.string().uuid().optional(),
+  listingType: z.enum(['food', 'store', 'ummah']).nullable().optional(),
   addressStreet: z.string().max(500).nullable().optional(),
   addressZip: z.string().max(20).nullable().optional(),
   addressCity: z.string().max(200).nullable().optional(),
   addressCountry: z.string().max(200).nullable().optional(),
+  showAddress: z.boolean().optional(),
   contactEmail: z.string().email().max(320).nullable().optional(),
   contactPhone: z.string().max(50).nullable().optional(),
   socialWebsite: z.string().url().max(2000).nullable().optional(),
@@ -52,19 +83,42 @@ export const providerEditUpdateSchema = z.object({
         if (val === null || val === undefined) return true;
         try {
           const parsed = JSON.parse(val);
-          return parsed !== null
-            && typeof parsed === 'object'
-            && Array.isArray(parsed.urls)
-            && parsed.urls.every((u: unknown) => typeof u === 'string');
+          // Accept null/empty objects and arrays as valid (treat as 'no images')
+          if (parsed === null) return true;
+          if (Array.isArray(parsed)) return parsed.every((u: unknown) => typeof u === 'string');
+          if (typeof parsed === 'object') {
+            // Accept { urls: string[] } or empty object
+            if (!('urls' in parsed)) return Object.keys(parsed).length === 0;
+            return Array.isArray(parsed.urls)
+              && parsed.urls.every((u: unknown) => typeof u === 'string');
+          }
+          return false;
         } catch {
           return false;
         }
       },
-      { message: 'providerImages must be valid JSON with shape { urls: string[] }' }
+      { message: 'providerImages must be valid JSON' }
     ),
-  offersIds: z.array(z.string().uuid()).optional(),
-  needsIds: z.array(z.string().uuid()).optional(),
   communityServiceIds: z.array(z.string().uuid()).optional(),
+  reviewStatus: z.enum(['pending', 'approved', 'rejected', 'needs_revision']).optional(),
+  openingHours: z.any().optional(),
+  verificationMethod: z.enum(['online', 'onsite']).nullable().optional(),
+  hasCertificate: z.boolean().optional(),
+  certificateUrl: z.string().url().max(2000).nullable().optional(),
+  noAlcohol: z.boolean().optional(),
+  noPork: z.boolean().optional(),
+  noGambling: z.boolean().optional(),
+  muslimOwned: z.boolean().optional(),
+  hasPrayerSpace: z.boolean().optional(),
+  familyFriendly: z.boolean().optional(),
+  womenFriendly: z.boolean().optional(),
+  childrenFriendly: z.boolean().optional(),
+  makesDonations: z.boolean().optional(),
+  hasParking: z.boolean().optional(),
+  economicSolidarity: z.boolean().optional(),
+  menuItems: z.array(menuItemSchema).optional(),
+  deliveryLinks: z.array(deliveryLinkSchema).optional(),
+  locations: z.array(locationSchema).optional(),
 });
 
 /**
@@ -89,8 +143,6 @@ export const communityServiceEditUpdateSchema = z.object({
   socialWebsite: z.string().url().max(2000).nullable().optional(),
   socialInstagram: z.string().max(200).nullable().optional(),
   communityServiceImages: z.array(z.string().url()).max(20).nullable().optional(),
-  offersIds: z.array(z.string().uuid()).optional(),
-  needsIds: z.array(z.string().uuid()).optional(),
 });
 
 /**

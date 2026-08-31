@@ -1,7 +1,7 @@
 /**
- * Tests for communityServices service — fallback-on-empty regression tests
- * Plan 008: Verify searchCommunityServices does NOT fallback to ILIKE
- * when RPC returns an empty result set (only on error / function-missing).
+ * Tests for communityServices service — M-5 rewrite (Plan 116)
+ * After M-5, searchCommunityServices queries providers WHERE listing_type='ummah'.
+ * Uses search_offers RPC for full-text search; falls back to ilike on provider_name.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -71,51 +71,39 @@ describe('communityServices service', () => {
     mockFrom.mockReturnValue({ select: mockSelect });
   });
 
-  describe('searchCommunityServices — fallback-on-empty fix (Plan 008, M3)', () => {
-    it('returns empty array when RPC returns empty results (no ILIKE fallback)', async () => {
-      // RPC returns empty array — valid result, NO error
-      mockRpc.mockResolvedValueOnce({
-        data: [],
-        error: null,
-      });
-
-      const result = await searchCommunityServices('nonexistent-term');
-
-      // Should NOT call .or() for ILIKE fallback
-      expect(mockOr).not.toHaveBeenCalled();
-      // Should return empty array from the main query
+  describe('searchCommunityServices — M-5 providers-based implementation', () => {
+    it('returns empty array when no query provided (no RPC call)', async () => {
+      const result = await searchCommunityServices('');
+      // No query → no RPC call, direct providers query
+      expect(mockRpc).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
-    it('uses ILIKE fallback when RPC returns function-not-found error (42883)', async () => {
-      // RPC returns function-not-found error
+    it('[post-fix PASSES] uses ilike fallback on provider_name when RPC returns error', async () => {
       mockRpc.mockResolvedValueOnce({
         data: null,
-        error: { code: '42883', message: 'function search_community_services_enhanced does not exist' },
+        error: { code: '42883', message: 'function not found' },
       });
 
       await searchCommunityServices('test-query');
 
-      // SHOULD call .or() for ILIKE fallback when function is missing
+      // SHOULD use provider_name ilike fallback (not community_service_name)
       expect(mockOr).toHaveBeenCalledWith(
-        expect.stringContaining('community_service_name.ilike')
+        expect.stringContaining('provider_name.ilike'),
       );
     });
 
-    it('uses ILIKE fallback when RPC throws an exception', async () => {
-      // RPC throws an exception
+    it('[post-fix PASSES] uses ilike fallback on provider_name when RPC throws exception', async () => {
       mockRpc.mockRejectedValueOnce(new Error('Network error'));
 
       await searchCommunityServices('test-query');
 
-      // SHOULD call .or() for ILIKE fallback on exception
       expect(mockOr).toHaveBeenCalledWith(
-        expect.stringContaining('community_service_name.ilike')
+        expect.stringContaining('provider_name.ilike'),
       );
     });
 
-    it('uses ILIKE fallback when RPC returns a non-function-not-found error', async () => {
-      // RPC returns a generic error (not function-not-found)
+    it('[post-fix PASSES] uses ilike fallback when RPC returns a generic error', async () => {
       mockRpc.mockResolvedValueOnce({
         data: null,
         error: { code: 'PGRST', message: 'Some other database error' },
@@ -123,26 +111,24 @@ describe('communityServices service', () => {
 
       await searchCommunityServices('test-query');
 
-      // SHOULD call .or() for ILIKE fallback on error
       expect(mockOr).toHaveBeenCalledWith(
-        expect.stringContaining('community_service_name.ilike')
+        expect.stringContaining('provider_name.ilike'),
       );
     });
 
-    it('filters by IDs when RPC returns results', async () => {
-      // RPC returns some results
+    it('[post-fix PASSES] filters by provider_id when RPC returns results', async () => {
       mockRpc.mockResolvedValueOnce({
         data: [
-          { community_service_id: 'id-1' },
-          { community_service_id: 'id-2' },
+          { provider_id: 'id-1' },
+          { provider_id: 'id-2' },
         ],
         error: null,
       });
 
       await searchCommunityServices('test-query');
 
-      // Should use .in() to filter by returned IDs
-      expect(mockIn).toHaveBeenCalledWith('community_service_id', ['id-1', 'id-2']);
+      // Should use .in() to filter by provider_id (not community_service_id)
+      expect(mockIn).toHaveBeenCalledWith('provider_id', ['id-1', 'id-2']);
       // Should NOT use ILIKE fallback
       expect(mockOr).not.toHaveBeenCalled();
     });

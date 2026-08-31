@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render } from '../utils/test-utils';
-import { ProviderDetailPage } from '@/components/providers/ProviderDetailPage';
+import { ProviderDetailPage } from '@/features/providers/pages/ProviderDetailPage';
 import { mockProviders } from '../mocks/providerData';
 
 describe('ProviderDetailPage Hero Image Performance', () => {

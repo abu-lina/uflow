@@ -28,6 +28,7 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
     // Every field in the import payload excluding conflict-key columns
     // (import_source, import_source_id) which are neither source- nor admin-controlled.
     // provider_description removed from payload fields per Plan 055 (column absent in production).
+    // barakah_effects removed from payload fields per Plan 114 Phase 2 (column dropped; booleans are sole source of truth).
     const importPayloadFields = [
       'provider_name',
       'category_id',
@@ -39,13 +40,14 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
       'contact_phone',
       'social_website',
       'social_instagram',
-      'offers_ids',
+      'offer_ids',
+      'verification_method',
+      'has_certificate',
       'review_status',
       'user_created_id',
       'provider_owner_id',
       'show_address',
       'needs_ids',
-      'barakah_effects',
     ];
     for (const field of importPayloadFields) {
       expect(
@@ -72,11 +74,12 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
         'contact_phone',
         'social_website',
         'social_instagram',
-        'offers_ids',
+        'offer_ids',
         // Plan 089 M4: section fields are source-controlled
         'listing_type',
         'no_alcohol',
-        'halal_level',
+        'verification_method',
+        'has_certificate',
       ].sort()
     );
   });
@@ -84,6 +87,7 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
   it('admin-controlled fields are never updated on conflict', () => {
     // These fields must be preserved when a conflict update occurs.
     // Adding a field here without updating the SQL function is a safety check.
+    // Plan 114 Phase 2: barakah_effects removed — column dropped, booleans are sole source of truth.
     const adminFields = [...ADMIN_CONTROLLED_FIELDS] as string[];
     expect(adminFields.sort()).toEqual(
       [
@@ -94,7 +98,6 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
         'provider_images',
         'show_address',
         'needs_ids',
-        'barakah_effects',
       ].sort()
     );
   });

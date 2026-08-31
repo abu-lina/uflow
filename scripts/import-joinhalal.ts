@@ -127,9 +127,12 @@ interface ProviderUpsert {
   user_created_id: string;
   provider_owner_id: null;
   show_address: boolean;
-  offers_ids: string[];
-  needs_ids: string[];
-  barakah_effects: string[];
+  offer_ids: string[];
+  verification_method: 'online' | 'onsite';
+  has_certificate: boolean;
+  no_alcohol: boolean;
+  no_pork: boolean;
+  no_gambling: boolean;
   import_source: string | null;
   import_source_id: string | null;
   import_source_url: string | null;
@@ -389,7 +392,7 @@ function transformPageToProvider(
   const instagram = extractInstagramFromSameAs(schema.sameAs);
   const website = schema.url ?? null;
 
-  // Resolve Speisen → offers_ids
+  // Resolve Speisen -> offer_ids
   const speisen = extractSpeisen(schema);
   const { matchedIds, unmatchedSpeisen } = resolveOfferIds(speisen, offers);
 
@@ -411,9 +414,12 @@ function transformPageToProvider(
     user_created_id: IMPORT_BOT_UUID,
     provider_owner_id: null,
     show_address: true,
-    offers_ids: matchedIds,
-    needs_ids: [],
-    barakah_effects: [],
+    offer_ids: matchedIds,
+    verification_method: 'online',
+    has_certificate: false,
+    no_alcohol: true,
+    no_pork: false,
+    no_gambling: false,
     import_source: postId ? 'joinhalal' : null,
     import_source_id: postId,
     import_source_url: url,
@@ -1223,7 +1229,7 @@ async function main() {
 
     stats.parsed++;
     if (record.review_status === 'rejected') stats.autoRejected++;
-    totalMatchedOffers += record.offers_ids.length;
+    totalMatchedOffers += record.offer_ids.length;
 
     if (unmapped) {
       stats.unmapped++;
@@ -1278,12 +1284,12 @@ async function main() {
       // Build lookup from newly created/resolved offers
       const newLookup = new Map(createdOffers.map((o) => [o.name_de.toLowerCase(), o.offer_id]));
 
-      // Merge new offer IDs into provider records' offers_ids
+      // Merge new offer IDs into provider records' offer_ids
       for (const [record, terms] of Array.from(providerUnmatchedSpeisen)) {
         for (const term of terms) {
           const offerId = newLookup.get(term.toLowerCase());
-          if (offerId && !record.offers_ids.includes(offerId)) {
-            record.offers_ids.push(offerId);
+          if (offerId && !record.offer_ids.includes(offerId)) {
+            record.offer_ids.push(offerId);
           }
         }
       }
@@ -1344,9 +1350,32 @@ async function main() {
       const batch = toInsertOnly.slice(offset, offset + BATCH_SIZE);
       // import_source_url is now persisted (Plan 058, migration 065)
 
-      const { error } = await supabase
+      const providerRows = batch.map((record) => ({
+        provider_name: record.provider_name,
+        provider_description: record.provider_description,
+        category_id: record.category_id,
+        address_street: record.address_street,
+        address_zip: record.address_zip,
+        address_city: record.address_city,
+        address_country: record.address_country,
+        contact_email: record.contact_email,
+        contact_phone: record.contact_phone,
+        social_website: record.social_website,
+        social_instagram: record.social_instagram,
+        review_status: record.review_status,
+        user_created_id: record.user_created_id,
+        provider_owner_id: record.provider_owner_id,
+        show_address: record.show_address,
+        import_source: record.import_source,
+        import_source_id: record.import_source_id,
+        import_source_url: record.import_source_url,
+        listing_type: 'food' as const,
+      }));
+
+      const { data: insertedRows, error } = await supabase
         .from('providers')
-        .insert(batch);
+        .insert(providerRows)
+        .select('provider_id');
 
       if (error) {
         console.error(
@@ -1354,6 +1383,42 @@ async function main() {
         );
         stats.failed += batch.length;
         continue;
+      }
+
+      if (insertedRows && insertedRows.length > 0) {
+        const foodRows = insertedRows.map((row, idx) => ({
+          provider_id: row.provider_id,
+          verification_method: batch[idx]?.verification_method ?? 'online',
+          has_certificate: batch[idx]?.has_certificate ?? false,
+          no_alcohol: batch[idx]?.no_alcohol ?? true,
+          no_pork: batch[idx]?.no_pork ?? false,
+          no_gambling: batch[idx]?.no_gambling ?? false,
+        }));
+
+        const { error: foodError } = await supabase
+          .from('food_providers')
+          .upsert(foodRows, { onConflict: 'provider_id' });
+
+        if (foodError) {
+          console.error(`  ⚠ Could not upsert food_providers extension rows: ${foodError.message}`);
+        }
+
+        const offerRows = insertedRows.flatMap((row, idx) =>
+          (batch[idx]?.offer_ids ?? []).map((offerId) => ({
+            provider_id: row.provider_id,
+            offer_id: offerId,
+          })),
+        );
+
+        if (offerRows.length > 0) {
+          const { error: offerError } = await supabase
+            .from('provider_offers')
+            .upsert(offerRows, { onConflict: 'provider_id,offer_id' });
+
+          if (offerError) {
+            console.error(`  ⚠ Could not upsert provider_offers rows: ${offerError.message}`);
+          }
+        }
       }
 
       stats.inserted += batch.length;

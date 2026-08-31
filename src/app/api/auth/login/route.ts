@@ -39,6 +39,8 @@ function isTestMode(request: Request): boolean {
   return false;
 }
 
+const VALID_ROLES = new Set(['user', 'owner', 'admin', 'moderator']);
+
 export async function POST(request: Request) {
   const ip = getClientIP(request);
   
@@ -121,6 +123,52 @@ export async function POST(request: Request) {
     console.log('[LOGIN API] Received login request:', { email, isTest });
     
     const tempClient = createSupabaseServerClient();
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const syncRoleMetadataFromDb = async (authUser: {
+      id: string;
+      user_metadata?: Record<string, unknown>;
+    } | null | undefined) => {
+      if (!authUser?.id) {
+        return;
+      }
+
+      try {
+        const { data: roleRow, error: roleError } = await supabaseAdmin
+          .from('users')
+          .select('role')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+
+        if (roleError || !roleRow?.role || !VALID_ROLES.has(roleRow.role)) {
+          return;
+        }
+
+        const currentRole = typeof authUser.user_metadata?.role === 'string'
+          ? authUser.user_metadata.role
+          : undefined;
+
+        if (currentRole === roleRow.role) {
+          return;
+        }
+
+        const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+          user_metadata: {
+            ...(authUser.user_metadata || {}),
+            role: roleRow.role,
+          },
+        });
+
+        if (metadataError) {
+          console.warn('[LOGIN API] Role metadata sync failed:', {
+            userId: authUser.id,
+            error: metadataError.message,
+          });
+        }
+      } catch (syncError) {
+        console.warn('[LOGIN API] Role metadata sync threw an error:', syncError);
+      }
+    };
 
     // Attempt to sign in - this will verify credentials
     const { data: sessionData, error: signInError } = await tempClient.auth.signInWithPassword({
@@ -148,8 +196,6 @@ export async function POST(request: Request) {
         // In test mode, auto-confirm the email and retry
         console.log('[LOGIN API] Auto-confirming email in test mode for:', email);
         try {
-          const supabaseAdmin = getSupabaseAdmin();
-          
           // Use pagination to find user (handles large user lists)
           let user = null;
           let page = 1;
@@ -205,6 +251,8 @@ export async function POST(request: Request) {
                 { status: 500 }
               );
             }
+
+            await syncRoleMetadataFromDb(retryData.user);
             
             console.log('[LOGIN API] ✅ Login successful (after auto-confirm) for:', email);
             return NextResponse.json({ 
@@ -237,6 +285,8 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    await syncRoleMetadataFromDb(sessionData.user);
     
     console.log('[LOGIN API] ✅ Login successful for:', email);
     

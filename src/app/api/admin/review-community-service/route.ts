@@ -104,7 +104,7 @@ export async function PATCH(request: Request) {
       {
         reviewStatus: validatedData.reviewStatus,
         reviewFeedback: validatedData.reviewFeedback || null,
-        communityServiceName: updatedCS.community_service_name,
+        communityServiceName: updatedCS.provider_name,
       },
       {
         ipAddress: getClientIp(request),
@@ -114,8 +114,8 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({
       data: {
-        community_service_id: updatedCS.community_service_id,
-        community_service_name: updatedCS.community_service_name,
+        provider_id: updatedCS.provider_id,
+        provider_name: updatedCS.provider_name,
         review_status: updatedCS.review_status,
         review_feedback: updatedCS.review_feedback,
         updated_at: updatedCS.updated_at,

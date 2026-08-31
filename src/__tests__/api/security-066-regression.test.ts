@@ -213,6 +213,9 @@ describe('H-2: Needs/Offers error message sanitization in production', () => {
 
 // ─── M-3: UUID Validation on Array Fields ────────────────────────────────────
 // These tests need real Zod (not the global mock from setup.ts)
+//
+// Plan 145: offersIds and needsIds were removed from providerEditUpdateSchema.
+// Zod strips unknown fields in .strip() mode, so these are silently ignored.
 
 describe('M-3: UUID validation on array fields in adminSchemas', () => {
   beforeEach(() => {
@@ -220,22 +223,24 @@ describe('M-3: UUID validation on array fields in adminSchemas', () => {
     vi.doUnmock('zod');
   });
 
-  it('should reject non-UUID strings in offersIds', async () => {
+  it('[Plan 145] offersIds is silently stripped (field removed from schema)', async () => {
     const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
     const result = providerEditUpdateSchema.safeParse({
       providerId: '550e8400-e29b-41d4-a716-446655440000',
       offersIds: ['not-a-uuid', 'also-invalid'],
     });
-    expect(result.success).toBe(false);
+    // Field is no longer in schema — silently stripped, validation passes
+    expect(result.success).toBe(true);
   });
 
-  it('should reject non-UUID strings in needsIds', async () => {
+  it('[Plan 145] needsIds is silently stripped (field removed from schema)', async () => {
     const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
     const result = providerEditUpdateSchema.safeParse({
       providerId: '550e8400-e29b-41d4-a716-446655440000',
       needsIds: ['arbitrary-string'],
     });
-    expect(result.success).toBe(false);
+    // Field is no longer in schema — silently stripped, validation passes
+    expect(result.success).toBe(true);
   });
 
   it('should reject non-UUID strings in communityServiceIds', async () => {
@@ -247,15 +252,54 @@ describe('M-3: UUID validation on array fields in adminSchemas', () => {
     expect(result.success).toBe(false);
   });
 
-  it('should accept valid UUID arrays', async () => {
+  it('[Plan 145] should accept valid communityServiceIds only', async () => {
     const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
     const result = providerEditUpdateSchema.safeParse({
       providerId: '550e8400-e29b-41d4-a716-446655440000',
-      offersIds: ['550e8400-e29b-41d4-a716-446655440001'],
-      needsIds: ['550e8400-e29b-41d4-a716-446655440002'],
       communityServiceIds: ['550e8400-e29b-41d4-a716-446655440003'],
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe('Plan 128 listingType enum regression in providerEditUpdateSchema', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.doUnmock('zod');
+  });
+
+  it('[pre-fix FAILS] should accept listingType store after enum rename migration', async () => {
+    const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
+    const result = providerEditUpdateSchema.safeParse({
+      providerId: '550e8400-e29b-41d4-a716-446655440000',
+      listingType: 'store',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should still accept listingType food and null', async () => {
+    const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
+
+    const foodResult = providerEditUpdateSchema.safeParse({
+      providerId: '550e8400-e29b-41d4-a716-446655440000',
+      listingType: 'food',
+    });
+    expect(foodResult.success).toBe(true);
+
+    const nullResult = providerEditUpdateSchema.safeParse({
+      providerId: '550e8400-e29b-41d4-a716-446655440000',
+      listingType: null,
+    });
+    expect(nullResult.success).toBe(true);
+  });
+
+  it('should reject invalid listingType values', async () => {
+    const { providerEditUpdateSchema } = await import('@/lib/validations/adminSchemas');
+    const result = providerEditUpdateSchema.safeParse({
+      providerId: '550e8400-e29b-41d4-a716-446655440000',
+      listingType: 'unknown',
+    });
+    expect(result.success).toBe(false);
   });
 });
 

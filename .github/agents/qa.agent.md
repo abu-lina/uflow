@@ -82,6 +82,69 @@ If the change uses `focus()` (or can indirectly trigger input focus/keyboard beh
 
 If manual mobile validation is deferred, QA MUST document: owner, rationale, severity, and fallback execution path.
 
+### Accordion / Controlled-Open Mock Fidelity (WHEN APPLICABLE)
+
+**Trigger**: When the plan adds or modifies a component rendered inside a controlled-open container (accordion, modal, collapsible, or any component with an `isOpen` / `open` / `expanded` prop that gates child visibility).
+
+QA MUST audit whether the test mock for the container respects the `isOpen` prop:
+
+**Failing pattern** (unconditional — masks idle-state bugs):
+```tsx
+vi.mock('@/components/ui/ExpandSection', () => ({
+  ExpandSection: ({ title, children }) => <section><h3>{title}</h3><div>{children}</div></section>,
+}));
+```
+
+**Correct pattern** (conditional — gates children on isOpen):
+```tsx
+vi.mock('@/components/ui/ExpandSection', () => ({
+  ExpandSection: ({ title, isOpen, children }) => (
+    <section>
+      <h3>{title}</h3>
+      {isOpen !== false && <div>{children}</div>}
+    </section>
+  ),
+}));
+```
+
+**If the test uses the unconditional pattern**:
+- Flag as QA finding (INFO/LOW) and document
+- Add at least one test asserting that children are hidden when `isOpen=false`
+- Tests using the unconditional mock cannot validate idle-state correctness — record this as a coverage limitation explicitly
+
+**Evidence to record**: State in the QA report which mock pattern is in use and whether idle-state (`isOpen=false`) coverage exists.
+
+### Post-UAT Re-Test Section Pattern (WHEN APPLICABLE)
+
+**Trigger**: When a post-UAT fix (code correction made after UAT approval, due to user-reported UX issues or delta-CR findings) requires QA re-validation of the **same plan** that already has a QA doc.
+
+**PREFERRED approach**: Append a `## Re-test: [short description]` section to the **existing QA doc** for that plan rather than creating a new QA document.
+
+```markdown
+## Re-test: [Short description of post-UAT fix]
+
+**Date**: YYYY-MM-DDTHH:MMZ
+**Trigger**: Post-UAT [issue list]
+**Changed files**: [list]
+**Changes**: [brief description]
+
+### Re-test Gates
+
+| Gate | Result | Evidence |
+|---|---|---|
+| npm run type-check | ✅ PASS | [output summary] |
+| npm test | ✅ PASS | [N tests, 0 failures] |
+| Delta lint | ✅ PASS | [evidence] |
+
+### Re-test Verdict
+
+[PASS / FAIL with rationale]
+```
+
+**Exception**: If the post-UAT fix is substantial enough to require a full strategy re-run (new feature scope, not just a UX correction), creating a new QA doc is appropriate. Record the reason for the new doc in the original QA doc's changelog.
+
+**Benefits**: Single source of truth per plan; simpler audit trail; delta-CR can reference re-test evidence in the same document.
+
 ### CSS/Layout-Only Changes (WHEN APPLICABLE)
 
 If the change is **CSS/layout-only** (no TS/JS runtime behavior changes), QA SHOULD treat automated gates as the primary evidence and avoid forcing unit tests that cannot validate the behavior in jsdom.
@@ -104,6 +167,12 @@ When `npm run build` fails due to missing environment variables required for pag
 3. `public/sw.js` content contains the expected patterns for the change (verify with `grep` and record evidence in the QA report)
 
 If QA accepts this exception, QA MUST explicitly document it in the QA report (owner + rationale + evidence). This exception is NOT a general allowance to ship with failing builds.
+
+   **DF-3 resolution path**: When accepting this exception, QA SHOULD indicate the preferred resolution path in the QA report so DevOps can close it cleanly:
+   - **CI (preferred)**: "Build gate deferred to CI — PR must pass GitHub Actions build job before merge."
+   - **OR manual**: "Owner: [name]; Timeline: [date/trigger]; Evidence: `npm run build` exit 0 with real Supabase env."
+
+   Recording a resolution path here ensures the deferred gate has a named owner rather than silently remaining open.
 
 ### PWA / Service-Worker Runtime Validation Gate (MANDATORY when applicable)
 
@@ -178,6 +247,44 @@ Minimum evidence:
 - document whether stale references remained in tests, mocks, scripts, manifests, or docs
 
 If residue remains, QA cannot classify the implementation as QA Complete.
+
+### Migration Prefix Collision Check (MANDATORY before `supabase db push`)
+
+Before executing `supabase db push --include-all` or any bulk migration apply, verify no two migration files share the same numeric prefix:
+
+```bash
+ls supabase/migrations/*.sql | sed 's/_[^/]*$//' | sort | uniq -d
+```
+
+Any output = collision. Rename the newer file to the next available prefix before continuing.
+
+**Why**: `supabase db push` applies files in filename sort order. Two files sharing a prefix cause unpredictable apply order or apply failure — not reported as an error, silently corrupts migration ordering.
+
+**Cascade risk**: A mid-QA rename breaks any test file that hardcodes the old filename as a literal string. If you rename a migration file, immediately search for the old filename in `src/__tests__/` and `tests/`:
+
+```bash
+grep -r "<old_migration_filename>" src/__tests__/ tests/
+```
+
+Fix any matches before the rename is committed.
+
+### EXPLAIN ANALYZE Gate (MANDATORY for schema-affecting migrations)
+
+**Trigger**: When the plan includes migrations that change PRIMARY KEY structure, drop/add indexed columns, or restructure table constraints on frequently-queried tables.
+
+QA MUST provide one of:
+
+- **Option A (preferred)**: `EXPLAIN (ANALYZE, BUFFERS)` output for the primary query on each affected table — before and after migration — showing index scan vs seq scan and estimated cost. Record evidence in QA report.
+
+- **Option B (deferral)**: When the execution environment lacks direct DB access:
+  - Owner (name or role)
+  - Trigger/due window (example: "within 7 days of PROD deploy")
+  - Exact evidence required: `EXPLAIN ANALYZE` for `<table>` query showing ≤10% cost regression vs pre-migration baseline
+  - Tracked in `agent-output/planning/[ID]-open-actions.md`
+
+**Why this matters**: PK promotion changes index structure. Without a before/after baseline it is impossible to detect query regressions introduced by the migration. Option B deferral is a named obligation, not a silent waiver.
+
+**Scope**: Applies to tables with >100 rows of production data or that appear in search RPCs. Pure static reference tables with <100 rows may use a lighter gate (sequential scan on small tables is not a regression).
 
 ### SSR / Server-Defaults Check (MANDATORY when applicable)
 

@@ -120,6 +120,42 @@ Core Responsibilities:
   - if deleted modules were part of a user-visible feature, verify no obvious entry-point references remain in navigation or account/profile surfaces
 - If stale references remain, record at least a MEDIUM finding unless the plan explicitly documents them as intentional follow-up work.
 
+  6i. **Migration Filename Reference Check (MANDATORY when applicable)**:
+
+- Trigger when the implementation creates, renames, or renumbers migration files under `supabase/migrations/`.
+- Search for the exact migration filename(s) as literal strings in test files:
+  ```bash
+  grep -r "<migration_filename>" src/__tests__/ tests/
+  ```
+- If any test file hardcodes a migration filename, flag as a finding (MEDIUM if file still exists at a different path, HIGH if file no longer exists at the referenced path).
+- Recommended fix: tests should locate migration files by pattern rather than exact name:
+  ```ts
+  // ✅ Correct — survives renaming
+  const files = fs.readdirSync(migrationsDir).filter(f => f.includes('phase4'));
+  // ❌ Fragile — breaks on rename
+  const file = '006_phase4_semantic_constraints.sql';
+  ```
+- Scope: check `src/__tests__/migrations/`, `tests/`, and any vitest config that enumerates migration paths.
+
+  6j. **Migration SQL Correctness Review (MANDATORY when applicable)**:
+
+- Trigger when the implementation creates or modifies migration files under `supabase/migrations/`.
+- Review the SQL for these common error classes:
+  - **Invalid aggregates**: Does any SELECT use `min()`, `max()`, `count()`, etc. on a `uuid` or `text` column? If so, is the aggregate valid for that type? (`min(uuid)` is invalid in Postgres — use `ORDER BY + LIMIT 1` or target by name/PK instead.)
+  - **Mutable display-name targeting**: Does the migration UPDATE/DELETE rows by matching a mutable display name (e.g., `WHERE name_de = 'Example'`)? If so, is a **uniqueness guard** present (e.g., a `SELECT count(*) = 1` check before the update)?
+  - **Idempotence**: If the migration is run twice, does it error or produce a different result? Guards like `IF NOT EXISTS`, `ON CONFLICT DO NOTHING`, or count-before-update patterns are required.
+- If any of the above issues are found, record as **MEDIUM** finding (or **HIGH** if the migration targets production data without a guard).
+- Record in the Code Review doc (one-liner per check): `Migration SQL: no invalid aggregates ✅ / uniqueness guard present ✅ / idempotent ✅`.
+
+  6k. **i18n String Literal Scan (MANDATORY when applicable)**:
+
+- Trigger: When the implementation modifies any UI component that renders text visible to the user (JSX/TSX files in `src/components/`, `src/features/`, or `src/app/`).
+- For each modified component file, scan for bare string literals in JSX context:
+  - Look for quoted strings used directly as rendered content (e.g., `>"Open"<`, `>"Closed"<`, chip labels, button text, badge labels, placeholder text).
+  - For each found: verify it is wrapped in `t()`, a translation key lookup, or is explicitly exempted (e.g., debug-only output, purely numeric, symbol-only such as `+`, `/`, `·`).
+  - If any user-visible label is hardcoded in a single language, record as a **HIGH** finding — not a concern, not a note.
+- Record in the Code Review doc: `i18n scan: [n] components checked — [n] hardcoded labels found / none found`.
+
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
 8. Create Code Review document in `agent-output/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions
@@ -136,7 +172,10 @@ Workflow:
    a. Read the file
    b. Evaluate against Review Focus Areas (from `code-review-standards` skill)
    c. Document findings with severity, location, and fix suggestion
-5. Verify TDD Compliance table is present and complete
+5. Verify TDD Compliance table is present and complete.
+   - If the plan's **primary value-delivery behavior** (the core "user can now do X" feature contract) lacks a direct regression test, record this as a **blocking MEDIUM finding** — not a concern, not a note. Do not approve with an implicit "add tests later" expectation.
+   - "Primary behavior" = the test that would fail if the feature were entirely reverted. For example: if the plan adds specialty tags to a card, there must be a test that asserts specialty tags render with real offer data.
+   - A concern without an explicit severity rating does not block QA. Use `MEDIUM` severity to ensure it blocks.
 6. Synthesize findings into verdict
 7. Create Code Review document using template from `code-review-standards` skill
 8. If REJECTED: handoff to Implementer with specific fixes required

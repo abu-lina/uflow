@@ -5,15 +5,80 @@ target: vscode
 argument-hint: Reference the implementation or plan to validate (e.g., plan 002)
 tools:
   [
-    'read/problems',
-    'read/readFile',
-    'search',
-    'edit/createDirectory',
-    'edit/createFile',
-    'edit/editFiles',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'todo',
+    read/problems,
+    read/readFile,
+    edit/createDirectory,
+    edit/createFile,
+    edit/editFiles,
+    search/changes,
+    search/codebase,
+    search/fileSearch,
+    search/listDirectory,
+    search/textSearch,
+    search/usages,
+    supabase-dev/apply_migration,
+    supabase-dev/create_branch,
+    supabase-dev/delete_branch,
+    supabase-dev/deploy_edge_function,
+    supabase-dev/execute_sql,
+    supabase-dev/generate_typescript_types,
+    supabase-dev/get_advisors,
+    supabase-dev/get_edge_function,
+    supabase-dev/get_logs,
+    supabase-dev/get_project_url,
+    supabase-dev/get_publishable_keys,
+    supabase-dev/list_branches,
+    supabase-dev/list_edge_functions,
+    supabase-dev/list_extensions,
+    supabase-dev/list_migrations,
+    supabase-dev/list_tables,
+    supabase-dev/merge_branch,
+    supabase-dev/rebase_branch,
+    supabase-dev/reset_branch,
+    supabase-dev/search_docs,
+    supabase-prod/apply_migration,
+    supabase-prod/create_branch,
+    supabase-prod/delete_branch,
+    supabase-prod/deploy_edge_function,
+    supabase-prod/execute_sql,
+    supabase-prod/generate_typescript_types,
+    supabase-prod/get_advisors,
+    supabase-prod/get_edge_function,
+    supabase-prod/get_logs,
+    supabase-prod/get_project_url,
+    supabase-prod/get_publishable_keys,
+    supabase-prod/list_branches,
+    supabase-prod/list_edge_functions,
+    supabase-prod/list_extensions,
+    supabase-prod/list_migrations,
+    supabase-prod/list_tables,
+    supabase-prod/merge_branch,
+    supabase-prod/rebase_branch,
+    supabase-prod/reset_branch,
+    supabase-prod/search_docs,
+    supabase/apply_migration,
+    supabase/create_branch,
+    supabase/delete_branch,
+    supabase/deploy_edge_function,
+    supabase/execute_sql,
+    supabase/generate_typescript_types,
+    supabase/get_advisors,
+    supabase/get_edge_function,
+    supabase/get_logs,
+    supabase/get_project_url,
+    supabase/get_publishable_keys,
+    supabase/list_branches,
+    supabase/list_edge_functions,
+    supabase/list_extensions,
+    supabase/list_migrations,
+    supabase/list_tables,
+    supabase/merge_branch,
+    supabase/rebase_branch,
+    supabase/reset_branch,
+    supabase/search_docs,
+    uflow.uflow-memory/flowbaby_storeMemory,
+    uflow.uflow-memory/flowbaby_retrieveMemory,
+    todo,
   ]
 model: Claude Haiku 4.5
 handoffs:
@@ -140,6 +205,25 @@ If the change can affect mobile input focus/keyboard/scroll behavior (direct `fo
 
 If manual mobile validation is deferred, UAT MUST document: owner, rationale, severity, and fallback execution path.
 
+### Accordion / Typeahead Idle-State Scenarios (WHEN APPLICABLE)
+
+**Trigger**: When the plan adds or modifies an accordion, typeahead, or controlled-open component that can have a pre-selected or pre-filled value (e.g., from onboarding data, localStorage, URL params, or a prior plan's state).
+
+UAT MUST include an **idle-state scenario** that covers:
+
+1. **Page load with pre-selected value** — Open the accordion/control WITHOUT typing. Verify:
+   - The pre-selected value is visually displayed (not empty, not showing a hardcoded default label)
+   - Idle content renders correctly (e.g., popular cities, recent searches, or the selection row)
+   - The collapsed header shows the dynamic selection (not a hardcoded placeholder)
+
+2. **No-selection idle state** — Open the accordion/control with no prior selection. Verify:
+   - Default idle content renders (e.g., popular items, empty state, or placeholder)
+   - No stale selection from another session bleeds in
+
+If manual validation is deferred (e.g., DF-N), UAT MUST document: owner, rationale, severity, and fallback execution path with a specific trigger window.
+
+**Applies to**: Was, Wo, Wer, Filter, and any future accordion or typeahead component on `/search` and similar surfaces.
+
 ### Design-Review UAT for CSS/Layout-Only Changes (CONDITIONALLY ALLOWED)
 
 If the change is **CSS/layout-only** (no TS/JS runtime behavior changes), UAT MAY rely primarily on doc/design verification **only when all of the following are true**:
@@ -182,6 +266,35 @@ If live validation is infeasible at UAT time, UAT MUST:
 - Downgrade the release decision to **CONDITIONAL APPROVAL** with explicit next actions
 - NOT issue an unqualified "APPROVED FOR RELEASE"
 
+### UI Visual Validation Gate (MANDATORY when applicable)
+
+**Trigger**: When the plan adds or modifies user-visible UI that is rendered from **database records** (e.g., provider cards, result lists, detail pages, status indicators) and the plan's value statement is about what the user *sees* on that surface.
+
+UAT MUST complete all of the following before issuing APPROVED FOR RELEASE:
+
+1. **Verify dev data exists**: Use `supabase-dev/execute_sql` to confirm at least one record in the dev database has the relevant fields populated (e.g., `offers` array non-empty, `opening_hours` non-null). Example query:
+   ```sql
+   SELECT provider_id, offers, opening_hours
+   FROM providers
+   WHERE offers IS NOT NULL AND array_length(offers, 1) > 0
+   LIMIT 3;
+   ```
+2. **Provision if needed**: If no suitable record exists, use `supabase-dev/execute_sql` to INSERT or UPDATE one test provider record with representative data. Note the provider ID used.
+3. **Navigate the live route**: Confirm the dev server is running (`npm run dev`) and navigate to the route that renders the feature (e.g., `/providers?section=food`, `/providers/[id]`).
+4. **Visually confirm**: Verify the new UI element renders correctly with real data — not just mock props in a test.
+5. **Record evidence in the UAT doc**:
+   ```
+   Visual validation: Provider [ID] at /providers?section=food showed [observed output].
+   ```
+   A text note suffices; a screenshot is not required.
+
+**If visual validation cannot be completed** (dev server unavailable, Supabase dev unreachable), UAT MUST:
+- Downgrade to **CONDITIONAL APPROVAL** (not unqualified APPROVED FOR RELEASE)
+- Record as a DF-N with: owner, trigger window, and exact closure evidence required
+- State explicitly why dev validation was skipped
+
+This gate eliminates the deferred-visual-validation anti-pattern where DF-N open actions depend on production data coincidentally including the relevant records.
+
 ### Removed Capability Discoverability Gate (MANDATORY when applicable)
 
 If the release removes or hides a user-visible capability, UAT MUST NOT issue an unqualified "APPROVED FOR RELEASE" unless there is evidence that the capability is no longer discoverable in the primary user-facing surfaces identified by the plan/QA report.
@@ -193,9 +306,11 @@ Minimum evidence:
 
 If discoverability validation is incomplete, UAT must downgrade the decision to CONDITIONAL APPROVAL or REJECTED, with explicit next actions.
 
-### Release Version Discipline (SHOULD)
+### Release Version Discipline (MANDATORY)
 
-When recommending a version in the release decision, reference the plan's version language (e.g., "next available patch after current origin/main") rather than hard-coding a specific version number. The authoritative version is confirmed only at DevOps Stage 1 after `git fetch --tags`. Hard-coding a version in the UAT doc that DevOps later overrides creates unnecessary doc churn.
+Do **NOT** recommend a specific semver (e.g., `v0.11.4`) in the UAT release decision. Version selection is exclusively DevOps's responsibility and is confirmed only after `git fetch --tags` at Stage 1. Instead use: `"next available patch after current origin/main"`.
+
+Reason: hard-coding a version that turns out to be already released forces a DevOps correction and creates CHANGELOG block misplacement risk (the implementer targets the wrong block header based on the stale UAT version recommendation).
 
 Exception: If DevOps Stage 1 has already run and confirmed the version (e.g., the plan's Target Release field has been updated with a confirmed version), UAT may reference that confirmed version.
 

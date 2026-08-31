@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0  # Full history for diff comparison
 
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -130,11 +130,11 @@ jobs:
 
       - name: Run build verification
         env:
-          # Use secrets if available, otherwise use valid placeholder values that pass validation
+          # Use secrets if available, otherwise use placeholder values that pass validation
           # Placeholder URL format: https://*.supabase.co (required by client validation)
-          # Placeholder key format: Valid JWT token (starts with eyJ, 100+ chars, no "placeholder" text)
+          # Placeholder key format: sb_publishable_ prefix (new format, 30+ chars)
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ci-build-test.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ci_build_placeholder_not_a_real_key' }}
         run: |
           echo "## 🔨 Build Verification" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

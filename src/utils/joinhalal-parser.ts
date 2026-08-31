@@ -31,6 +31,11 @@ export interface JoinHalalSchemaData {
   email?: string;
   telephone?: string;
   sameAs?: string | string[];
+  openingHoursSpecification?: unknown;
+  openingHours?: unknown;
+  image?: string | string[];
+  servesCuisine?: string | string[];
+  priceRange?: string;
   additionalProperty?: Array<{
     '@type'?: string;
     name?: string;
@@ -335,6 +340,79 @@ export function extractSpeisen(schema: JoinHalalSchemaData): string[] {
 }
 
 // ---------------------------------------------------------------------------
+// extractEnrichmentData (Plan 159)
+// ---------------------------------------------------------------------------
+
+export interface JoinHalalEnrichmentData {
+  description: string | null;
+  openingHours: Record<string, unknown> | null;
+  latitude: number | null;
+  longitude: number | null;
+  image: string | null;
+  servesCuisine: string | null;
+  priceRange: string | null;
+}
+
+/**
+ * Extracts additional enrichment data from JoinHalal Schema.org data
+ * that wasn't captured during initial import.
+ */
+export function extractEnrichmentData(schema: JoinHalalSchemaData): JoinHalalEnrichmentData {
+  const result: JoinHalalEnrichmentData = {
+    description: null,
+    openingHours: null,
+    latitude: null,
+    longitude: null,
+    image: null,
+    servesCuisine: null,
+    priceRange: null,
+  };
+
+  if (schema.description && typeof schema.description === 'string') {
+    result.description = schema.description.trim();
+  }
+
+  const ohs = schema.openingHoursSpecification;
+  if (ohs) {
+    result.openingHours = { source: 'joinhalal', hours: ohs } as unknown as Record<string, unknown>;
+  } else if (schema.openingHours) {
+    result.openingHours = { source: 'joinhalal', hours: schema.openingHours } as unknown as Record<string, unknown>;
+  }
+
+  if (schema.geo) {
+    const geo = schema.geo;
+    if (geo.latitude) {
+      const lat = parseFloat(geo.latitude);
+      if (!isNaN(lat)) result.latitude = lat;
+    }
+    if (geo.longitude) {
+      const lon = parseFloat(geo.longitude);
+      if (!isNaN(lon)) result.longitude = lon;
+    }
+  }
+
+  if (schema.image && typeof schema.image === 'string') {
+    result.image = schema.image;
+  } else if (schema.image && Array.isArray(schema.image)) {
+    result.image = schema.image[0] as string || null;
+  }
+
+  if (schema.servesCuisine) {
+    if (typeof schema.servesCuisine === 'string') {
+      result.servesCuisine = schema.servesCuisine;
+    } else if (Array.isArray(schema.servesCuisine)) {
+      result.servesCuisine = schema.servesCuisine.join(', ');
+    }
+  }
+
+  if (schema.priceRange && typeof schema.priceRange === 'string') {
+    result.priceRange = schema.priceRange;
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
@@ -475,4 +553,93 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&nbsp;/g, ' ')
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
+}
+
+// ---------------------------------------------------------------------------
+// extractDeliveryLinks (Plan 161)
+// ---------------------------------------------------------------------------
+
+export interface DeliveryLink {
+  platform: 'wolt' | 'lieferando' | 'ubereats';
+  platform_url: string;
+  platform_slug: string;
+}
+
+const DELIVERY_PLATFORM_PATTERNS: Array<{
+  domain: string;
+  platform: DeliveryLink['platform'];
+  slugExtract: (url: string) => string;
+}> = [
+  {
+    domain: 'wolt.com',
+    platform: 'wolt',
+    slugExtract: (url: string) => {
+      // https://wolt.com/de/deu/{city}/restaurant/{slug}
+      const match = url.match(/\/restaurant\/([^/?#]+)/);
+      return match ? decodeURIComponent(match[1]) : '';
+    },
+  },
+  {
+    domain: 'lieferando.de',
+    platform: 'lieferando',
+    slugExtract: (url: string) => {
+      // https://www.lieferando.de/speisekarte/{slug}
+      const match = url.match(/\/speisekarte\/([^/?#]+)/);
+      return match ? decodeURIComponent(match[1]) : '';
+    },
+  },
+  {
+    domain: 'ubereats.com',
+    platform: 'ubereats',
+    slugExtract: (url: string) => {
+      // https://www.ubereats.com/de/store/{slug}
+      const match = url.match(/\/store\/([^/?#]+)/);
+      return match ? decodeURIComponent(match[1]) : '';
+    },
+  },
+];
+
+/**
+ * Extracts delivery platform links (Wolt, Lieferando, UberEats) from the
+ * JoinHalal Schema.org `additionalProperty` array with name "Lieferservice".
+ *
+ * The Lieferservice value is a comma-separated list of URLs:
+ *   "https://wolt.com/..., https://www.lieferando.de/..."
+ *
+ * Returns an empty array when no delivery links are present.
+ */
+export function extractDeliveryLinks(schema: JoinHalalSchemaData): DeliveryLink[] {
+  const props = schema.additionalProperty;
+  if (!props || props.length === 0) return [];
+
+  const entry = props.find(
+    (p) => p.name?.toLowerCase().replace(/[\s-]/g, '') === 'lieferservice'
+  );
+  if (!entry?.value) return [];
+
+  // Split comma-separated URLs, trim whitespace
+  const rawUrls = entry.value
+    .split(',')
+    .map((u: string) => u.trim())
+    .filter((u: string) => u.length > 0);
+
+  const result: DeliveryLink[] = [];
+
+  for (const rawUrl of rawUrls) {
+    // Remove trailing punctuation that might be attached
+    const url = rawUrl.replace(/[.,;!?]+$/, '');
+    const matched = DELIVERY_PLATFORM_PATTERNS.find((p) =>
+      url.toLowerCase().includes(p.domain)
+    );
+    if (!matched) continue;
+
+    const slug = matched.slugExtract(url);
+    result.push({
+      platform: matched.platform,
+      platform_url: url,
+      platform_slug: slug,
+    });
+  }
+
+  return result;
 }

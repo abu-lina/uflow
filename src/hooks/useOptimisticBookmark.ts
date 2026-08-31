@@ -5,7 +5,7 @@ import { useAuth } from '@/providers/auth-provider';
 
 interface UseOptimisticBookmarkOptions {
   bookmarkableId: string;
-  bookmarkableType: 'provider' | 'community_service';
+  bookmarkableType: 'provider';
   onBookmarkChange?: (isBookmarked: boolean) => void;
 }
 
@@ -52,15 +52,13 @@ export function useOptimisticBookmark({
     // 4. Toast notifications removed
 
     try {
+      const matchFilter = { provider_id: bookmarkableId, user_id: user.id };
+
       // 5. Server sync
       const { data: existingBookmark, error: fetchError } = await supabase
         .from('bookmarks')
         .select('id')
-        .match({
-          bookmarkable_id: bookmarkableId,
-          bookmarkable_type: bookmarkableType,
-          user_id: user.id,
-        })
+        .match(matchFilter)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
@@ -74,11 +72,9 @@ export function useOptimisticBookmark({
         if (deleteError) throw deleteError;
       } else {
         // Add bookmark
-        const { error: insertError } = await supabase.from('bookmarks').insert({
-          bookmarkable_id: bookmarkableId,
-          bookmarkable_type: bookmarkableType,
-          user_id: user.id,
-        });
+        const insertPayload = { provider_id: bookmarkableId, user_id: user.id };
+
+        const { error: insertError } = await supabase.from('bookmarks').insert(insertPayload);
         if (insertError) throw insertError;
       }
 

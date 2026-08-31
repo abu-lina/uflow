@@ -21,13 +21,8 @@ const APP_ROUTES = [
   '/terms',
   '/privacy-policy',
   '/create-quick',
-  '/figma-test',
-  '/test-header',
-  '/test-notifications',
-  '/test-session',
   '/manual-user',
   '/api-docs',
-  '/auth-debug',
 ];
 
 /**
@@ -190,6 +185,12 @@ export async function shouldRedirectToWaitlist(
   // authentication checks and show login screen if needed.
   if (!isAppLaunched && pathname === '/saved') {
     return false; // Allow access, let page component handle auth/authorization
+  }
+
+  // Special case: Allow access to /profile routes in early access mode.
+  // Profile pages apply their own auth guards and redirect unauthenticated users to /login.
+  if (!isAppLaunched && (pathname === '/profile' || pathname.startsWith('/profile/'))) {
+    return false;
   }
 
   // Special case: Legal pages must always be publicly accessible (GDPR/TMG compliance)

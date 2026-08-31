@@ -63,7 +63,7 @@ const MobileAboutModal = dynamic(
   { ssr: false },
 );
 import { authService } from '@/features/auth/services/authService';
-import { getFirstImageUrl } from '@/utils/imageUtils';
+import { getFirstImageUrl, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 import { dataExportService } from '@/services/dataExport';
 import { toast } from 'sonner';
 import type { SupabaseUser } from '@/types/supabase-user';
@@ -126,7 +126,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         'No community_service_images for:',
         communityService.community_service_name || 'unknown',
       );
-      return '/images/placeholder.jpg';
+      return PLACEHOLDER_IMAGE;
     }
 
     // Handle array format (TEXT[] from database)
@@ -137,7 +137,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
           'Empty images array for:',
           communityService.community_service_name || 'unknown',
         );
-        return '/images/placeholder.jpg';
+        return PLACEHOLDER_IMAGE;
       }
       // Get first image and validate it's a non-empty string
       const firstImage = images[0];
@@ -168,7 +168,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
     }
 
     // Fallback to placeholder
-    return '/images/placeholder.jpg';
+    return PLACEHOLDER_IMAGE;
   };
 
   // Helper function to get provider image URL using the utility function
@@ -557,7 +557,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
                     onClick={() =>
-                      router.push(`/community-services/${communityService.community_service_id}`)
+                      router.push(`/providers/${communityService.community_service_id}`)
                     }
                   />
                 ))}
@@ -602,7 +602,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
                     onClick={() =>
-                      router.push(`/community-services/${communityService.community_service_id}`)
+                      router.push(`/providers/${communityService.community_service_id}`)
                     }
                   />
                 ))}
@@ -807,7 +807,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
                       onClick={() =>
-                        router.push(`/community-services/${communityService.community_service_id}`)
+                        router.push(`/providers/${communityService.community_service_id}`)
                       }
                     />
                   );
@@ -844,11 +844,8 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     imageUrl={getFirstImageUrl(provider.images)}
                     title={provider.name}
                     onClick={() => {
-                      if (provider.type === 'community_service') {
-                        router.push(`/community-services/${provider.id}`);
-                      } else {
-                        router.push(`/providers/${provider.id}`);
-                      }
+                      // M-5a: ummah providers now at /providers/[id]
+                      router.push(`/providers/${provider.id}`);
                     }}
                     onRemove={() => handleRemoveFromSaved(provider.id)}
                   />
@@ -903,7 +900,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
                       onClick={() =>
-                        router.push(`/community-services/${communityService.community_service_id}`)
+                        router.push(`/providers/${communityService.community_service_id}`)
                       }
                     />
                   );

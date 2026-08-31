@@ -149,6 +149,7 @@ const eslintConfig = [
       'tools/**', // Standalone tooling projects with their own tsconfig (excluded from app tsconfig)
       'next-env.d.ts', // Next.js generated file
       'docs/archive/**', // Archived starter template and other reference material
+      'docs/references/**', // Third-party reference snapshots (non-app code)
       'docs/implementation/**', // Implementation reference scripts (browser context)
       'tests/**', // Performance and integration tests (k6, etc.)
       'agent-output/qa/tmp/**', // QA temporary test files (not part of app tsconfig)

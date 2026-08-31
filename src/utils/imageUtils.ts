@@ -11,7 +11,7 @@ export interface CategoryImageData {
 }
 
 export type ProviderImages = string | string[] | ImageData | null | undefined;
-export type CategoryImages = string | CategoryImageData | null | undefined;
+export type CategoryImages = string | CategoryImageData | Record<string, unknown> | null | undefined;
 
 /**
  * Utility functions for handling image URLs and processing
@@ -33,6 +33,7 @@ export function getFirstImageUrl(providerImages: ProviderImages): string {
     
     if (typeof providerImages === 'string') {
       imagesData = JSON.parse(providerImages);
+      if (imagesData === null) return PLACEHOLDER_IMAGE;
     } else if (Array.isArray(providerImages)) {
       imagesData.urls = providerImages;
     } else if (
@@ -67,6 +68,7 @@ export function getAllTrustedImageUrls(providerImages: ProviderImages): string[]
     
     if (typeof providerImages === 'string') {
       imagesData = JSON.parse(providerImages);
+      if (imagesData === null) return [];
     } else if (Array.isArray(providerImages)) {
       imagesData.urls = providerImages;
     } else if (
@@ -117,7 +119,7 @@ export function getAllTrustedImageUrlsWithFallback(
 /**
  * Parse category images from various data structures
  */
-function parseCategoryImages(categoryImages: CategoryImages): string[] {
+export function parseCategoryImages(categoryImages: CategoryImages): string[] {
   if (!categoryImages) return [];
 
   try {
@@ -179,4 +181,35 @@ export function formatProviderAddress(street?: string | null, city?: string | nu
   
   // If only city, show just the city
   return city;
+}
+
+// ─── Relocated from categoryImages.ts (Plan 122 — D8) ────────────────────────
+// These utilities are image-source-independent: they work with any URL array.
+
+/**
+ * Stable numeric hash of a string. Same input → same non-negative integer.
+ * Used for deterministic variant selection so the same provider always shows
+ * the same image, while neighbouring cards look varied.
+ */
+export function hashId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = (Math.imul(31, h) + id.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+const CARD_BACKGROUND_COLORS = ['#CBE6E2', '#DDEBF0', '#FBF1D9', '#FAE6E6'] as const;
+
+/**
+ * Returns a deterministic pastel background colour for a provider card.
+ * Colour depends on providerId so neighbouring cards look varied.
+ */
+export function getCategoryCardBackgroundColor(
+  categoryId: string | null | undefined,
+  providerId: string | null | undefined,
+): string {
+  const seed = providerId ?? categoryId ?? 'default';
+  const idx = hashId(seed) % CARD_BACKGROUND_COLORS.length;
+  return CARD_BACKGROUND_COLORS[idx];
 }

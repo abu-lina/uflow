@@ -65,12 +65,24 @@ export default function CsEditOffersPage({ params }: { params: Promise<{ id: str
           return;
         }
 
-        // CS-specific table and ID column
-        const { data, error } = await supabase
-          .from('community_services')
-          .select('offers_ids, category_id')
-          .eq('community_service_id', communityServiceId)
+        // M-5a: community_services dropped; ummah providers in providers table
+        const { data: providerData, error: providerError } = await supabase
+          .from('providers')
+          .select('category_id')
+          .eq('provider_id', communityServiceId)
+          .eq('listing_type', 'ummah')
           .single();
+
+        const { data: offerRows, error: offersError } = await supabase
+          .from('provider_offers')
+          .select('offer_id')
+          .eq('provider_id', communityServiceId);
+
+        const error = providerError || offersError;
+        const data = providerData ? {
+          offers_ids: offerRows?.map((r: { offer_id: string }) => r.offer_id) ?? [],
+          category_id: providerData.category_id,
+        } : null;
 
         if (!error && data) {
           if (data.offers_ids) {

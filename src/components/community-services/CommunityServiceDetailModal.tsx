@@ -13,10 +13,10 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { Icon } from '@iconify/react';
-import { ChevronLeft, ChevronRight, Sparkles, Moon, Building2, Tag, ChevronDown, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
-import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
+import { MobileProviderDetail } from '@/features/providers/components/MobileProviderDetail';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { supabase } from '@/lib/supabase/client';
@@ -27,7 +27,11 @@ import { useQuery } from '@tanstack/react-query';
 import type { CommunityService } from '@/services/communityServices';
 import { getProvidersForCommunityService } from '@/services/communityServices';
 import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
-import { getAllTrustedImageUrlsWithFallback, type CategoryImages } from '@/utils/imageUtils';
+import {
+  getAllTrustedImageUrlsWithFallback,
+  PLACEHOLDER_IMAGE,
+  type CategoryImages,
+} from '@/utils/imageUtils';
 
 interface CommunityServiceDetailModalProps {
   communityService: CommunityService;
@@ -50,7 +54,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: communityService.community_service_id,
-    bookmarkableType: 'community_service',
+    bookmarkableType: 'provider',
     onBookmarkChange: (isBookmarked) => {
       setIsSaved(isBookmarked);
       if (typeof onBookmarkChange === 'function') {
@@ -69,8 +73,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
       return false;
     }
   }
-
-  const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
 
   const allImageUrls = (() => {
     try {
@@ -110,8 +112,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
 
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
-  const [expandedOffers, setExpandedOffers] = useState(false);
-  const [expandedNeeds, setExpandedNeeds] = useState(false);
   const [expandedProviders, setExpandedProviders] = useState(false);
 
   // Use React Query for bookmark status (cached, non-blocking)
@@ -121,10 +121,10 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
       if (!user) return [];
       const { data: bookmarks } = await supabase
         .from('bookmarks')
-        .select('bookmarkable_id, bookmarkable_type')
+        .select('provider_id')
         .eq('user_id', user.id)
-        .eq('bookmarkable_type', 'community_service');
-      return bookmarks?.map((b) => b.bookmarkable_id) || [];
+        .not('provider_id', 'is', null);
+      return bookmarks?.map((b) => b.provider_id).filter((id): id is string => !!id) || [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -283,7 +283,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
     location_longitude: communityService.location_longitude || null,
     created_at: communityService.created_at,
     updated_at: communityService.updated_at,
-    barakah_effects: communityService.barakah_effects || [],
     offers_ids: communityService.offers_ids || [],
     needs_ids: communityService.needs_ids || [],
     offers: communityService.offers || [],
@@ -456,32 +455,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
             <div className="absolute right-24 top-10 flex gap-2">{customActionButtons}</div>
           )}
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
-            {/* Barakah Effects Section */}
-            {communityService.barakah_effects && communityService.barakah_effects.length > 0 && (
-              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
-                <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                  <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                    {t('providers.ourBarakahEffect')}:
-                  </div>
-                  <div className="flex min-h-[120px] flex-col flex-wrap items-start gap-2">
-                    {communityService.barakah_effects.map((effect, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-2 rounded border border-[#CDCDCD] bg-white px-3 py-1 font-inter-tight text-[16px] font-medium text-[#232323] shadow-sm"
-                      >
-                        {effect === 'Iman' && <Sparkles className="h-4 w-4 text-gray-600" />}
-                        {effect === 'Zakat' && <Moon className="h-4 w-4 text-gray-600" />}
-                        {effect === 'Sunnah' && <Building2 className="h-4 w-4 text-gray-600" />}
-                        {!(effect === 'Iman' || effect === 'Zakat' || effect === 'Sunnah') && (
-                          <Tag className="h-4 w-4 text-gray-600" />
-                        )}
-                        {effect}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Supporting Providers Section */}
             {supportingProviders.length > 0 && (
@@ -543,83 +516,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
               </div>
             )}
 
-            {/* Offers & Needs Section */}
-            {((communityService.offers && communityService.offers.length > 0) || (communityService.needs && communityService.needs.length > 0)) && (
-              <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
-                <div className="flex flex-col items-start justify-start gap-4 self-stretch overflow-hidden">
-                  {/* Offers Section */}
-                  {communityService.offers && communityService.offers.length > 0 && (
-                    <div className="flex w-full flex-col gap-2.5">
-                      <button
-                        className="flex w-full items-center justify-between"
-                        onClick={() => setExpandedOffers(!expandedOffers)}
-                      >
-                        <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                          {t('providers.weOffer')}
-                        </div>
-                        <ChevronDown 
-                          className={`h-6 w-6 text-gray-600 transition-transform ${
-                            expandedOffers ? 'rotate-180' : ''
-                          }`} 
-                        />
-                      </button>
-                      {expandedOffers && (
-                        <div className="mt-2">
-                          <div className="flex flex-wrap gap-2">
-                            {communityService.offers.map((offer, index) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                              >
-                                {offer.name_de}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Divider */}
-                  {communityService.offers && communityService.offers.length > 0 && communityService.needs && communityService.needs.length > 0 && (
-                    <hr className="w-full border-gray-200" />
-                  )}
-
-                  {/* Needs Section */}
-                  {communityService.needs && communityService.needs.length > 0 && (
-                    <div className="flex w-full flex-col gap-2.5">
-                      <button
-                        className="flex w-full items-center justify-between"
-                        onClick={() => setExpandedNeeds(!expandedNeeds)}
-                      >
-                        <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
-                          {t('providers.weAreLookingFor')}
-                        </div>
-                        <ChevronDown 
-                          className={`h-6 w-6 text-gray-600 transition-transform ${
-                            expandedNeeds ? 'rotate-180' : ''
-                          }`} 
-                        />
-                      </button>
-                      {expandedNeeds && (
-                        <div className="mt-2">
-                          <div className="flex flex-wrap gap-2">
-                            {communityService.needs.map((need, index) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center rounded-xl bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
-                              >
-                                {need.name_de}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
         {/* Actions Bar */}

@@ -72,7 +72,7 @@ Run the migration to create the new tables:
 supabase db push
 
 # Or apply manually
-psql $DATABASE_URL -f supabase/migrations/003_create_category_suggestions_tables.sql
+psql $DATABASE_URL -f supabase/migrations/archive/003_create_category_suggestions_tables.sql
 ```
 
 ### Step 2: Seed Data
@@ -307,7 +307,7 @@ USING (auth.jwt()->>'role' = 'admin');
 
 ## Related Files
 
-- **Schema Migration**: `supabase/migrations/003_create_category_suggestions_tables.sql`
+- **Schema Migration**: `supabase/migrations/archive/003_create_category_suggestions_tables.sql`
 - **Data Seed**: `sql/migrations/004_seed_category_suggestions.sql`
 - **Service Layer**: `src/services/category-suggestions.ts`
 - **Old Constants** (deprecated): `src/constants/category-suggestions.ts`

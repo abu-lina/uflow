@@ -100,14 +100,10 @@ export function LoginPageContent() {
         return;
       }
 
-      // Success - redirect only if we have valid data
+      // Success path intentionally does not navigate here.
+      // Navigation is driven by the user-based useEffect after auth state commits.
       if (data) {
-        const returnUrl = searchParams.get('returnUrl');
-        if (returnUrl) {
-          router.push(decodeURIComponent(returnUrl));
-        } else {
-          router.push('/profile');
-        }
+        return;
       }
     } catch (error) {
       console.error('Login error:', error);

@@ -29,7 +29,7 @@
 ### 2. ✅ Database Design Improvements
 
 #### Created Audit Log Table
-- Migration: `supabase/migrations/20251120_admin_audit_logs.sql`
+- Migration: `supabase/migrations/archive/20251120_admin_audit_logs.sql`
 - Includes foreign key to users table
 - Proper indexes for performance
 - RLS policies for security
@@ -70,7 +70,7 @@
 2. `docs/BACKEND_REVIEW_FIXES.md` - This file
 3. `src/services/admin/providers.ts` - Service layer
 4. `src/lib/validation/adminSchemas.ts` - Validation schemas
-5. `supabase/migrations/20251120_admin_audit_logs.sql` - Audit log table
+5. `supabase/migrations/archive/20251120_admin_audit_logs.sql` - Audit log table
 6. `supabase/migrations/20251120_providers_indexes.sql` - Performance indexes
 
 ## Files Modified

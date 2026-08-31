@@ -121,7 +121,6 @@ interface ProviderUpsert {
   show_address: boolean;
   offers_ids: string[];
   needs_ids: string[];
-  barakah_effects: string[];
 }
 
 interface ImportStats {
@@ -303,10 +302,12 @@ const BRANCHEN_CATEGORY_MAP: Record<string, string> = {
 };
 
 // ─── Supabase client ──────────────────────────────────────────────────────────
-
-const supabase = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
-  auth: { persistSession: false },
-});
+// Initialized lazily inside main() after argument validation so that invalid-arg
+// exits can occur before @supabase/realtime-js checks for WebSocket support.
+// Node.js 20 lacks native WebSocket and would crash createClient() at module load
+// time, preventing the --limit validation error from ever being printed.
+// eslint-disable-next-line prefer-const
+let supabase!: ReturnType<typeof createClient>;
 
 // ─── Import bot user setup ────────────────────────────────────────────────────
 
@@ -607,7 +608,6 @@ function transformCardToProvider(
     show_address: true,
     offers_ids: [],
     needs_ids: [],
-    barakah_effects: [],
   };
 
   const unmappedBranchen = !categoryId && branchen.length > 0
@@ -762,6 +762,11 @@ async function main() {
 
   // ─ Load categories
   console.log('▶ Loading categories from Supabase...');
+  // Initialize Supabase here (after argument validation and the DRY-RUN header)
+  // so that Node.js 20's missing-WebSocket crash does not prevent arg errors from printing.
+  supabase = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+  });
   const categories = await loadCategories();
   console.log(`  ✓ Loaded ${categories.length} categories`);
   if (categories.length === 0) {

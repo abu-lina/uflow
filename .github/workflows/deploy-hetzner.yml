@@ -42,7 +42,7 @@ jobs:
           fi
 
       - name: Upload Nginx config to Hetzner
-        if: steps.nginx-check.outputs.changed == 'true'
+        if: steps.nginx-check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1.0.0
         with:
           host: ${{ secrets.HETZNER_HOST }}
@@ -61,10 +61,10 @@ jobs:
           echo "✅ Deployment confirmed - proceeding with production deployment"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -146,7 +146,9 @@ jobs:
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
               -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
+              -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
+              -e MISTRAL_API_KEY="${{ secrets.MISTRAL_API_KEY }}" \
               -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-new \
               --restart unless-stopped \
@@ -198,7 +200,9 @@ jobs:
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
               -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
+              -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
+              -e MISTRAL_API_KEY="${{ secrets.MISTRAL_API_KEY }}" \
               -v uflow-image-cache:/app/.next/cache/images \
               --name uflow-app \
               --restart unless-stopped \
@@ -207,7 +211,17 @@ jobs:
             echo "✅ Container swap complete"
 
             echo "🔧 Updating Nginx..."
-            sed "s/{{DOMAIN}}/ummahflow.com/g" /tmp/nginx-template.conf > /etc/nginx/sites-available/ummahflow
+            # scp-action v1.0.0 preserves relative source path, so file may be
+            # at /tmp/nginx-template.conf (legacy) or /tmp/deploy/nginx/nginx-template.conf
+            if [ -f /tmp/nginx-template.conf ]; then
+              CONFIG_SRC=/tmp/nginx-template.conf
+            elif [ -f /tmp/deploy/nginx/nginx-template.conf ]; then
+              CONFIG_SRC=/tmp/deploy/nginx/nginx-template.conf
+            else
+              echo "❌ Error: nginx-template.conf not found (checked /tmp/ and /tmp/deploy/nginx/)"
+              exit 1
+            fi
+            sed "s/{{DOMAIN}}/ummahflow.com/g" "$CONFIG_SRC" > /etc/nginx/sites-available/ummahflow
 
             echo "🧪 Testing Nginx config..."
             if nginx -t; then

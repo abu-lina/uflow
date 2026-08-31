@@ -182,7 +182,7 @@ If the community service relationship fails to create:
 ## 🔗 Related Documentation
 
 - **`PROVIDER_SOCIAL_RELATIONSHIPS.md`** - Database schema and relationship setup
-- **`supabase/migrations/002_create_provider_community_services_relationship.sql`** - Migration file
+- **`supabase/migrations/archive/002_create_provider_community_services_relationship.sql`** - Migration file
 - **`src/services/community_services.ts`** - Service functions including `createProviderCommunityServiceRelationship()`
 
 ## ✅ Verification Checklist

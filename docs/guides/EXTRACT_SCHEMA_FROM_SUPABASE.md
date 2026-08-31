@@ -88,8 +88,8 @@ Create a script that applies all migrations:
 
 MIGRATIONS=(
   "sql/queries/supabase-schema.sql"
-  "supabase/migrations/001_create_offers_and_needs_tables.sql"
-  "supabase/migrations/002_create_provider_community_services_relationship.sql"
+  "supabase/migrations/archive/001_create_offers_and_needs_tables.sql"
+  "supabase/migrations/archive/002_create_provider_community_services_relationship.sql"
   # ... etc
 )
 

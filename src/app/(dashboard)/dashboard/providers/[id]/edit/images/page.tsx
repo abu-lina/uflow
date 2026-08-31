@@ -95,15 +95,33 @@ export default function EditImagesPage({ params }: { params: Promise<{ id: strin
 
       const allImages = [...existingImageUrls, ...uploadedUrls];
       const imageJson = allImages.length > 0 ? JSON.stringify({ urls: allImages }) : null;
-      
+
+      // Defence-in-depth: normalise to avoid Zod rejection (mirrors saveProviderEdits logic)
+      const normaliseProviderImages = (rawImages: string | null): string | undefined => {
+        if (!rawImages || rawImages === 'null') return undefined;
+        try {
+          const parsed = JSON.parse(rawImages);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && Array.isArray(parsed.urls)) {
+            if (parsed.urls.length === 0) return undefined;
+            if (parsed.urls.every((u: unknown) => typeof u === 'string')) return rawImages;
+          }
+          return undefined;
+        } catch {
+          return undefined;
+        }
+      };
+
+      const normalisedImages = normaliseProviderImages(imageJson);
+      const requestBody: Record<string, unknown> = { providerId };
+      if (normalisedImages !== undefined) {
+        requestBody.providerImages = normalisedImages;
+      }
+
       // Update via admin API (bypasses RLS)
       const saveRes = await fetch('/api/admin/edit-provider', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          providerId,
-          providerImages: imageJson,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!saveRes.ok) {

@@ -91,7 +91,10 @@ export async function POST(request: Request) {
             message: authError?.message || 'Authentication failed',
             details: authError?.message || 'Token verification failed',
             hint: authError?.message || 'Token verification failed',
-            code: authError?.status?.toString() || '400'
+            code: authError?.status?.toString() || '400',
+            toJSON() {
+              return { name: this.name, message: this.message, details: this.details, hint: this.hint, code: this.code };
+            }
           };
         } else {
           console.log(`[CONFIRM] Supabase auth verification successful for user:`, authData.user.email);
@@ -115,7 +118,10 @@ export async function POST(request: Request) {
           message: authVerifyError instanceof Error ? authVerifyError.message : 'Token verification failed',
           details: authVerifyError instanceof Error ? authVerifyError.message : 'Token verification failed',
           hint: authVerifyError instanceof Error ? authVerifyError.message : 'Token verification failed',
-          code: '500'
+          code: '500',
+          toJSON() {
+            return { name: this.name, message: this.message, details: this.details, hint: this.hint, code: this.code };
+          }
         };
       }
     }

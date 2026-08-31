@@ -14,7 +14,7 @@ import type { Offer, Need } from '@/types/offer';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { Button } from '@/components/ui/Button';
 import { useQueryClient } from '@tanstack/react-query';
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 
 interface UnifiedProviderCreateFormProps {
   onSuccess?: () => void;
@@ -91,6 +91,8 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       country: address.country,
       street: address.street,
       zip: address.zip,
+      latitude: address.latitude ?? null,
+      longitude: address.longitude ?? null,
     });
     setValidationErrors({});
   }, [updateFormData]);

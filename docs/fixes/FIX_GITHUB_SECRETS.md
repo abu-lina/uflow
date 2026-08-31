@@ -19,13 +19,13 @@ Click on each secret name to **edit** (or **New repository secret** if it doesn'
 
 #### 1. `NEXT_PUBLIC_SUPABASE_URL`
 ```
-https://rdtdtcfntopcxcigkqoq.supabase.co
+https://YOUR_PROJECT_REF.supabase.co
 ```
 ⚠️ **No quotes, no trailing slash**
 
 #### 2. `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkdGR0Y2ZudG9wY3hjaWdrcW9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ1MTEyMjYsImV4cCI6MjA1MDA4NzIyNn0.xJRJPZMT_bKMZDDtGdVBJtWRDnAG5Ht9Ek-9zzs_Yy4
+(copy from your .env.local)
 ```
 ⚠️ **Copy from your `.env.local` file** (the value after `NEXT_PUBLIC_SUPABASE_ANON_KEY=`)
 
@@ -37,11 +37,11 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkdGR0Y2Z
 
 #### 4. `RESEND_API_KEY`
 ```
-re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL
+(copy from your .env.local)
 ```
 
 #### 5. Verify These Exist:
-- ✅ `HETZNER_HOST` (should be `91.98.207.106`)
+- ✅ `HETZNER_HOST` (your Hetzner server IP)
 - ✅ `HETZNER_SSH_KEY` (your SSH private key)
 
 ---
@@ -90,7 +90,7 @@ Copy the values (without the quotes) into GitHub Secrets.
 If you can't wait for GitHub Actions, SSH to your server and restart the container:
 
 ```bash
-ssh root@91.98.207.106
+ssh root@YOUR_HETZNER_IP
 
 # Stop old container
 docker stop uflow-app
@@ -98,10 +98,10 @@ docker rm uflow-app
 
 # Start with correct env vars
 docker run -d -p 3000:3000 \
-  -e NEXT_PUBLIC_SUPABASE_URL="https://rdtdtcfntopcxcigkqoq.supabase.co" \
+  -e NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co" \
   -e NEXT_PUBLIC_SUPABASE_ANON_KEY="your_anon_key_here" \
   -e SUPABASE_SERVICE_ROLE_KEY="your_service_role_key_here" \
-  -e RESEND_API_KEY="re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL" \
+  -e RESEND_API_KEY="your_resend_api_key_here" \
   -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
   --name uflow-app uflow:latest
 ```

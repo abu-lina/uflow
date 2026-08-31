@@ -18,7 +18,6 @@ const baseService: CommunityService = {
   community_service_images: ['https://mock-supabase-url.com/img1.jpg'],
   created_at: '2026-01-01T00:00:00.000Z',
   updated_at: '2026-01-01T00:00:00.000Z',
-  barakah_effects: ['effect1'],
   offers_ids: ['offer-1'],
   needs_ids: ['need-1'],
   offers: [{ name_de: 'Beratung' }],
@@ -136,7 +135,6 @@ describe('buildProviderShapeFromCommunityService (Plan 082)', () => {
       updated_at: '2026-01-01T00:00:00.000Z',
     };
     const result = buildProviderShapeFromCommunityService(minimal);
-    expect(result.barakah_effects).toEqual([]);
     expect(result.offers_ids).toEqual([]);
     expect(result.needs_ids).toEqual([]);
     expect(result.offers).toEqual([]);

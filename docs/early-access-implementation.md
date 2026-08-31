@@ -225,8 +225,8 @@ const CITY_UNLOCK_CONFIG = {
 - `src/components/shared/CitySelectionModal.tsx`
 - `src/app/api/waitlist/update/route.ts`
 - `src/lib/utils/waitlist-token.ts`
-- `supabase/migrations/016_extend_waitlist_table.sql`
-- `supabase/migrations/017_create_cities_table.sql`
+- `supabase/migrations/archive/0161_extend_waitlist_table.sql`
+- `supabase/migrations/archive/017_create_cities_table.sql`
 - `docs/early-access-implementation.md`
 
 ### Modified Files

@@ -1,0 +1,214 @@
+'use client';
+
+import { useState, useCallback, useRef, useEffect } from 'react';
+import type { ChatMessage } from '@/features/chat/types';
+
+const CHAT_SESSION_KEY = 'uflow_chat';
+// Shared regex so both SSE and JSON branches detect single-select identically
+const SINGLE_SELECT_RE = /(?:kategorie|k\u00fcche|k\u00fcchenart)/i;
+
+function loadSession(): { messages: ChatMessage[]; conversationId: string | null } {
+  if (typeof window === 'undefined') return { messages: [], conversationId: null };
+  try {
+    const raw = sessionStorage.getItem(CHAT_SESSION_KEY);
+    if (!raw) return { messages: [], conversationId: null };
+    return JSON.parse(raw) as { messages: ChatMessage[]; conversationId: string | null };
+  } catch {
+    return { messages: [], conversationId: null };
+  }
+}
+
+function saveSession(messages: ChatMessage[], conversationId: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(CHAT_SESSION_KEY, JSON.stringify({ messages, conversationId }));
+  } catch {
+    // sessionStorage may be unavailable (e.g., quota exceeded in private mode)
+  }
+}
+
+interface UseChatReturn {
+  messages: ChatMessage[];
+  isLoading: boolean;
+  error: string | null;
+  conversationId: string | null;
+  sendMessage: (content: string) => Promise<void>;
+}
+
+export function useChat(): UseChatReturn {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadSession().messages);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(() => loadSession().conversationId);
+  const sendingRef = useRef(false);
+
+  useEffect(() => {
+    saveSession(messages, conversationId);
+  }, [messages, conversationId]);
+
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (sendingRef.current || isLoading) return;
+      sendingRef.current = true;
+      setError(null);
+      setIsLoading(true);
+
+      const userMessage: ChatMessage = { role: 'user', content };
+      setMessages((prev) => [...prev, userMessage]);
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: content,
+            conversation_id: conversationId,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Chat request failed');
+        }
+
+        // Check if response is SSE (streaming) or JSON
+        const contentType = response.headers.get('content-type') || '';
+
+        if (contentType.includes('text/event-stream')) {
+          // SSE streaming response
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error('No response body');
+
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let streamedContent = '';
+          let streamedConvId: string | null = null;
+
+          // Add placeholder assistant message that we'll update
+          setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const data = line.slice(6);
+              if (data === '[DONE]') break;
+
+              try {
+                const parsed = JSON.parse(data);
+                
+                if (parsed.conversation_id) {
+                  streamedConvId = parsed.conversation_id;
+                  setConversationId(parsed.conversation_id);
+                }
+                
+                if (parsed.results) {
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const last = updated[updated.length - 1];
+                    if (last && last.role === 'assistant') {
+                      updated[updated.length - 1] = { ...last, results: parsed.results };
+                    }
+                    return updated;
+                  });
+                  continue;
+                }
+                if (parsed.options) {
+                  // Update last message with options, and strip matching lines from content
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const last = updated[updated.length - 1];
+                    if (last && last.role === 'assistant') {
+                      // Remove lines that match extracted options (avoid redundancy)
+                      let cleanContent = last.content || '';
+                      // Remove lines that CONTAIN any extracted option text (handles *, **, bullets)
+                      for (const opt of parsed.options) {
+                        const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        cleanContent = cleanContent.replace(new RegExp('^.*' + escaped + '.*$', 'gm'), '');
+                      }
+                      // Also strip the comma-separated line containing all options
+                      if (parsed.options.length >= 3) {
+                        const joined = parsed.options.join(', ');
+                        cleanContent = cleanContent.replace(joined, '');
+                        const joinedAmp = parsed.options.join(', ').replace(/&/g, '&amp;');
+                        cleanContent = cleanContent.replace(joinedAmp, '');
+                      }
+                      updated[updated.length - 1] = { ...last, content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(), options: parsed.options, singleSelect: SINGLE_SELECT_RE.test(last.content || '') };
+                    }
+                    return updated;
+                  });
+                  continue;
+                }
+                if (parsed.content) {
+                  streamedContent += parsed.content;
+                  // Update the last message progressively
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const last = updated[updated.length - 1];
+                    if (last && last.role === 'assistant') {
+                      updated[updated.length - 1] = { ...last, content: streamedContent };
+                    }
+                    return updated;
+                  });
+                }
+              } catch {
+                // Skip unparseable
+              }
+            }
+          }
+
+          // If stream produced no content, add empty message
+          if (!streamedContent) {
+            setMessages((prev) => {
+              const updated = [...prev];
+              const last = updated[updated.length - 1];
+              if (last && last.role === 'assistant' && !last.content) {
+                updated[updated.length - 1] = { ...last, content: 'Entschuldigung, ich konnte keine Antwort generieren.' };
+              }
+              return updated;
+            });
+          }
+        } else {
+          // Standard JSON response
+          const data = await response.json();
+
+          if (!conversationId && data.conversation_id) {
+            setConversationId(data.conversation_id);
+          }
+
+          const assistantMessage: ChatMessage = {
+            role: data.message.role || 'assistant',
+            content: data.message.content || '',
+            results: data.results,
+            options: data.options,
+            singleSelect: SINGLE_SELECT_RE.test(data.message.content || ''),
+          };
+
+          setMessages((prev) => [...prev, assistantMessage]);
+        }
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'An unexpected error occurred';
+        setError(message);
+      } finally {
+        setIsLoading(false);
+        sendingRef.current = false;
+      }
+    },
+    [conversationId, isLoading],
+  );
+
+  return {
+    messages,
+    isLoading,
+    error,
+    conversationId,
+    sendMessage,
+  };
+}

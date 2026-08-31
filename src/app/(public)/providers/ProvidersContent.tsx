@@ -3,13 +3,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { ProvidersPageHeader } from '@/components/providers/ProvidersPageHeader';
-import { SearchResultsList } from '@/components/providers/SearchResultsList';
+import { SectionSelector } from '@/features/search/components/SectionSelector';
+import { DiscoveryFilterBar } from '@/features/search/components/DiscoveryFilterBar';
+import { DiscoveryResultsGrid, type DiscoveryCardItem } from '@/features/search/components/DiscoveryResultsGrid';
+import { DiscoveryHeader } from '@/features/search/components/DiscoveryHeader';
+import { useNearMe } from '@/features/search/hooks/useNearMe';
+import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
+import { ViewToggleButton } from '@/features/search/components/ViewToggleButton';
+import { HomeSearchInput } from '@/features/search/components/HomeSearchInput';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { filterOpenNow } from '@/utils/filterOpenNow';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { MobileGreetingHeader } from '@/components/shared/MobileGreetingHeader';
@@ -23,17 +31,20 @@ import { AdminStatusFilter, type ReviewStatusFilter } from '@/features/admin/com
 import { toast } from 'sonner';
 import { useProviderReview } from '@/features/admin/hooks/useProviderReview';
 import { RejectModal } from '@/features/admin/components/RejectModal';
+import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 
-// Dynamic import for modal (Plan 007: reduce shared bundle)
-const LegalLinksModal = dynamic(
-  () =>
-    import('@/components/shared/LegalLinksModal').then((mod) => ({ default: mod.LegalLinksModal })),
+import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
+import type { Section } from '@/providers/search-provider';
+import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';
+import type { SearchResult, NearMeFoodResult } from '@/services/providers';
+import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
+
+const SearchMap = dynamic(
+  () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
   { ssr: false },
 );
-import { useSearch } from '@/providers/search-provider';
-import type { Section } from '@/providers/search-provider';
-import { inferSectionFromCategory } from '@/config/sectionFilters';
-import type { Provider, SearchResult } from '@/services/providers';
+
+const DEFAULT_RADIUS_KM = 5;
 
 /**
  * Fetch search results from the server-side route handler.
@@ -50,6 +61,7 @@ async function fetchProvidersFromAPI(
   pageSize: number,
   status?: ReviewStatusFilter,
   section?: Section,
+  filters?: SearchFilterKey[],
 ): Promise<{ results: SearchResult[]; hasMore: boolean }> {
   const params = new URLSearchParams();
   if (query) params.set('q', query);
@@ -61,6 +73,7 @@ async function fetchProvidersFromAPI(
   if (status) params.set('status', status);
   // Plan 089: Include section filter
   if (section) params.set('section', section);
+  if (filters && filters.length > 0) params.set('filters', filters.join(','));
 
   const response = await fetch(`/api/providers/search?${params.toString()}`);
   if (!response.ok) {
@@ -74,18 +87,21 @@ interface ProvidersContentProps {
   showGreeting?: boolean; // Show greeting header instead of search bar and category filter
   /** Server-rendered initial data for the first page of results (Plan 010 P1a) */
   initialData?: { results: SearchResult[]; hasMore: boolean };
+  initialFilters?: SearchFilterKey[];
 }
 
 export function ProvidersContent({
   defaultLocation,
   showGreeting = false,
   initialData,
+  initialFilters,
 }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, isLoading: userLoading } = useAuth();
   const { isAdmin } = useIsAdmin();
   const { t } = useLanguage();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
@@ -116,10 +132,7 @@ export function ProvidersContent({
 
   // Plan 089 M8: Infer section from URL params with legacy URL support
   // Priority: ?section= > infer from ?category= (only when category param IS present) > default 'food' (D9)
-  const sectionParam = searchParams.get('section') as Section | null;
-  const categoryParam = searchParams.get('category');
-  const inferredSection: Section = sectionParam ?? (categoryParam ? inferSectionFromCategory(categoryParam) : 'food');
-  const section = inferredSection;
+  const section = resolveSectionFromRoute(pathname, new URLSearchParams(searchParams.toString()));
 
   // Resolve the location for use as a query transport value (not for display).
   // searchParams.get('location') returns null when absent, '' when ?location= is present.
@@ -129,12 +142,13 @@ export function ProvidersContent({
   const rawLocationParam = searchParams.get('location'); // null | string
   const normalizedUrlLocation =
     rawLocationParam === null
-      ? null // param absent — fall through to context
+      ? LOCATION_ALL // param absent → all locations (never fall through to context)
       : rawLocationParam === 'Everywhere' || rawLocationParam === 'Überall'
-        ? '' // legacy all-locations labels → LOCATION_ALL sentinel
+        ? LOCATION_ALL // legacy all-locations labels → LOCATION_ALL sentinel
         : rawLocationParam; // real city name or '' (LOCATION_ALL)
-  // Priority: defaultLocation > URL param ('' preserved) > context > LOCATION_ALL ('')
-  const location = defaultLocation ?? normalizedUrlLocation ?? selectedLocation ?? '';
+  // Priority: defaultLocation > URL param ('' preserved) > LOCATION_ALL ('')
+  // URL is sole source of truth. Context is never used as fallback for location.
+  const location = defaultLocation ?? normalizedUrlLocation;
   const query = searchParams.get('q') || '';
 
   // URL param is the canonical source of truth for category filter.
@@ -146,6 +160,43 @@ export function ProvidersContent({
   // Only applied when user is admin (non-admins can't use status filter)
   const statusParam = searchParams.get('status') as ReviewStatusFilter;
   const status = isAdmin ? statusParam : null;
+  const rawFilters = searchParams.get('filters') || '';
+  const filters = rawFilters
+    .split(',')
+    .map((key) => key.trim())
+    .filter((key): key is SearchFilterKey => SEARCH_FILTER_KEY_SET.has(key));
+  const normalizedFilters = filters.length > 0 ? filters : undefined;
+  const hasMatchingInitialFilters =
+    (initialFilters ?? []).join(',') === (normalizedFilters ?? []).join(',');
+
+  // Plan 220: Near-me state — geolocation-based (matches home page pattern)
+  const [nearMeActive, setNearMeActive] = useState(false);
+
+  const geolocation = useGeolocation();
+
+  // Shared map/discovery state: pins, view mode, open-now, header metrics
+  const {
+    pins, isOpenNow, setIsOpenNow, viewMode,
+    toggleViewMode, headerRef, headerHeight, userCoords,
+  } = useMapDiscovery(geolocation, 'list', isAdmin ? status : null);
+
+  const nearMe = useNearMe({
+    coords: userCoords,
+    active: nearMeActive && viewMode === 'list',
+    openNow: isOpenNow,
+    radiusKm: DEFAULT_RADIUS_KM,
+    urlSync: false,
+  });
+
+  const handleToggleNearMe = () => {
+    if (nearMeActive || geolocation.status === 'granted') {
+      setNearMeActive(false);
+      geolocation.reset();
+      return;
+    }
+    setNearMeActive(true);
+    geolocation.requestLocation();
+  };
 
   // Use React Query infinite query for paginated search results
   // Page size: 12 provides good balance between initial load and frequent pagination
@@ -154,14 +205,14 @@ export function ProvidersContent({
   // Plan 058 + 089: Include status and section in query key for proper cache management
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } =
     useInfiniteQuery({
-      queryKey: ['providers', query, category, location, status, section],
+      queryKey: ['providers', query, category, location, status, section, normalizedFilters?.join(',') ?? ''],
       queryFn: ({ pageParam = 0 }) =>
-        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE, status, section),
+        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE, status, section, normalizedFilters),
       getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
       initialPageParam: 0,
       // Use server-rendered initial data when available (Plan 010 P1a)
       // Note: initialData only applies when no status filter is active
-      ...(!status && initialData && {
+      ...(!status && initialData && hasMatchingInitialFilters && {
         initialData: {
           pages: [initialData],
           pageParams: [0],
@@ -175,12 +226,16 @@ export function ProvidersContent({
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
       // Show cached data immediately while refetching in background
       placeholderData: (previousData) => previousData,
+      // Plan 196: Skip the paginated text/category search entirely while "near me" is active.
+      enabled: !nearMe.isActive,
     });
 
-  // Flatten all pages into a single array — memoized so stable reference for useCallback deps
+  // Flatten all pages into a single array — memoized so stable reference for useCallback deps.
+  // Plan 196 bug fix: apply the "Open now" filter here too, so it takes effect
+  // even when "Near me" is not active.
   const searchResults = useMemo(
-    () => data?.pages.flatMap((page) => page.results) ?? [],
-    [data],
+    () => filterOpenNow(data?.pages.flatMap((page) => page.results) ?? [], isOpenNow),
+    [data, isOpenNow],
   );
 
   // Use React Query for bookmarks - includes both providers and community services
@@ -192,7 +247,7 @@ export function ProvidersContent({
       // Fetch all bookmarks (providers and community services)
       const { data: bookmarks, error } = await supabase
         .from('bookmarks')
-        .select('bookmarkable_id, bookmarkable_type')
+        .select('provider_id')
         .eq('user_id', user.id);
 
       if (error) {
@@ -200,8 +255,8 @@ export function ProvidersContent({
         return [];
       }
 
-      // Return all bookmarkable IDs (both providers and community services)
-      return bookmarks?.map((b) => b.bookmarkable_id) || [];
+      // Return all bookmarked IDs (both providers and community services)
+      return bookmarks?.map((b) => b.provider_id).filter((id): id is string => !!id) || [];
     },
     enabled: !!user && !userLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -214,83 +269,23 @@ export function ProvidersContent({
       queryClient.setQueryData(['bookmarks', user?.id], (old: string[] = []) => {
         if (isBookmarked) {
           return [...old, providerId];
-        } else {
-          return old.filter((id) => id !== providerId);
         }
+        return old.filter((id) => id !== providerId);
       });
     },
     [queryClient, user?.id],
   );
 
-  const handleProviderClick = useCallback(
-    (provider: Provider) => {
-      // Navigate to appropriate detail page based on type
-      if (provider.community_service_id) {
-        // This is a community service
-        router.push(`/community-services/${provider.community_service_id}`);
-      } else {
-        // This is a provider
-        router.push(`/providers/${provider.provider_id}`);
-      }
-    },
-    [router],
-  );
-
-  // Handle search submission - update URL with new parameters.
-  // Plan 089 CR-H1: Start from current URL params (not a fresh set) so that
-  // ?section=, ?status=, and other persistent params are preserved across submits.
-  const handleSearchSubmit = useCallback(
-    (query: string, category: string | null, location: string) => {
+  const handleSectionChange = useCallback(
+    (nextSection: Section) => {
+      if (nextSection === section) return;
       const params = new URLSearchParams(window.location.search);
-      if (query) {
-        params.set('q', query);
-      } else {
-        params.delete('q');
-      }
-      if (category) {
-        params.set('category', category);
-      } else {
-        params.delete('category');
-      }
-      if (location) {
-        params.set('location', location);
-      } else {
-        params.delete('location');
-      }
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
+      params.set('section', nextSection);
+      params.delete('category');
+      const nextPath = getResultsPathForSection(nextSection);
+      router.replace(`${nextPath}?${params.toString()}`, { scroll: false });
     },
-    [router],
-  );
-
-  // Handle clear search - remove query from URL
-  const handleClearSearch = useCallback(() => {
-    const params = new URLSearchParams(window.location.search);
-    params.delete('q');
-    router.replace(`/providers?${params.toString()}`, { scroll: false });
-  }, [router]);
-
-  // Handle category change - update URL with new category
-  const handleCategoryChange = useCallback(
-    (category: string | null) => {
-      const params = new URLSearchParams(window.location.search);
-      if (category) {
-        params.set('category', category);
-      } else {
-        params.delete('category');
-      }
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
-    },
-    [router],
-  );
-
-  // Handle location change - update URL with new location
-  const handleLocationChange = useCallback(
-    (location: string) => {
-      const params = new URLSearchParams(window.location.search);
-      params.set('location', location);
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
-    },
-    [router],
+    [section, router],
   );
 
   // Plan 058: Handle admin status filter change - update URL with new status
@@ -302,22 +297,13 @@ export function ProvidersContent({
       } else {
         params.delete('status');
       }
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
+      const resolvedSection = resolveSectionFromRoute(pathname, params);
+      params.set('section', resolvedSection);
+      router.replace(`${getResultsPathForSection(resolvedSection)}?${params.toString()}`, {
+        scroll: false,
+      });
     },
-    [router],
-  );
-
-  // Plan 089 M6: Handle section change - update URL and context
-  const handleSectionChange = useCallback(
-    (newSection: Section) => {
-      setSelectedSection(newSection);
-      const params = new URLSearchParams(window.location.search);
-      params.set('section', newSection);
-      // Clear category when switching sections to avoid cross-section contamination
-      params.delete('category');
-      router.replace(`/providers?${params.toString()}`, { scroll: false });
-    },
-    [router, setSelectedSection],
+    [pathname, router],
   );
 
   // Plan 058: Handle admin approve action
@@ -326,8 +312,9 @@ export function ProvidersContent({
       try {
         await approveProvider(providerId);
       } catch (err) {
-        console.error('[handleApprove] Failed to approve provider:', err);
-        toast.error('Failed to approve provider. Please try again.');
+        const message = err instanceof Error ? err.message : 'Failed to approve provider. Please try again.';
+        console.error('[handleApprove] Failed to approve provider:', message);
+        toast.error(message);
       }
     },
     [approveProvider],
@@ -405,27 +392,92 @@ export function ProvidersContent({
     }
   }, [user, isLoading, userLoading, router]);
 
+  // Plan 221: Adapter functions to convert results to DiscoveryCardItem shape
+  function adaptNearMeResult(result: NearMeFoodResult): DiscoveryCardItem {
+    return {
+      id: result.provider_id,
+      provider_id: result.provider_id,
+      provider_name: result.provider_name,
+      provider_images: result.provider_images,
+      category: result.category_name_de
+        ? { name_de: result.category_name_de, name_en: result.category_name_en ?? undefined, category_images: result.category_images ?? undefined }
+        : null,
+      category_id: result.category_id,
+      address_city: result.address_city,
+      opening_hours: result.opening_hours,
+      listing_type: 'food',
+      location_latitude: result.location_latitude,
+      location_longitude: result.location_longitude,
+      distanceKm: result.distance_km,
+      isBookmarked: bookmarkedProviderIds.includes(result.provider_id),
+    };
+  }
+
+  function adaptSearchResultToDiscoveryItem(result: SearchResult): DiscoveryCardItem {
+    return {
+      id: result.id,
+      provider_id: result.id,
+      provider_name: result.name,
+      provider_images: result.images,
+      category: result.category ?? null,
+      category_id: result.category_id,
+      address_city: result.address_city,
+      address_street: result.address_street,
+      address_zip: result.address_zip,
+      address_country: result.address_country,
+      contact_email: result.contact_email,
+      contact_phone: result.contact_phone,
+      created_at: result.created_at,
+      updated_at: result.updated_at,
+      offers_ids: result.offers_ids,
+      needs_ids: result.needs_ids,
+      opening_hours: result.opening_hours ?? result.originalProvider?.opening_hours ?? null,
+      listing_type: result.listing_type,
+      location_latitude: result.location_latitude,
+      location_longitude: result.location_longitude,
+      social_website: result.social_website,
+      social_instagram: result.social_instagram,
+      badges: result.badges,
+      offers: result.offers,
+      verification_method: result.originalProvider?.verification_method,
+      has_certificate: result.originalProvider?.has_certificate,
+      review_status: status,
+      review_feedback: result.review_feedback,
+      isBookmarked: bookmarkedProviderIds.includes(result.id),
+    };
+  }
+
   // Render content based on state
-  // Only show loading skeleton on true initial load (isLoading = true means no cached data)
-  // If we have cached data, show it immediately even if isFetching (background refetch)
+  const enableModeration = isAdmin && !!status && section !== 'ummah';
+
   const renderContent = () => {
-    // True initial load: isLoading is true only when there's no cached data AND currently fetching
-    // In React Query v5: isLoading = isPending && isFetching
-    // Show skeleton grid matching the actual grid layout
+    // Plan 196: "Near me" takes over rendering entirely
+    if (nearMe.isActive) {
+      return (
+        <DiscoveryResultsGrid
+          items={nearMe.results.map(adaptNearMeResult)}
+          isLoading={nearMe.isLoading}
+          error={nearMe.error}
+          headerOffset={headerHeight}
+          openNow={isOpenNow}
+          enableDistance
+          enableBookmarks
+          onRetry={nearMe.refetch}
+        />
+      );
+    }
+
     if (isLoading) {
       return <SkeletonGrid count={12} />;
     }
 
     if (error) {
-      // Log error for debugging
       console.error('[ProvidersContent] Search error:', error);
-
       return (
         <EmptyState description={t('providers.errorLoading')} title={t('providers.errorTitle')} />
       );
     }
 
-    // Empty state: only show if we have no results
     if (searchResults.length === 0) {
       return (
         <EmptyState
@@ -435,26 +487,24 @@ export function ProvidersContent({
       );
     }
 
-    // Plan 058: Determine card mode - use moderation when admin has status filter active.
-    // Plan 089 CR-H2: Exclude UMMAH section — UMMAH returns community_service rows which
-    // have no provider review lifecycle; provider moderation actions must not be rendered.
-    const cardMode = isAdmin && status && section !== 'ummah' ? 'moderation' : 'bookmark';
-
-    // Show results (cached data shown immediately, background refetch doesn't block UI)
     return (
-      <SearchResultsList
-        bookmarkedProviderIds={bookmarkedProviderIds}
+      <DiscoveryResultsGrid
+        items={searchResults.map(adaptSearchResultToDiscoveryItem)}
+        isLoading={false}
         error={error}
+        headerOffset={headerHeight}
+        openNow={isOpenNow}
+        enableBookmarks
+        bookmarkedIds={bookmarkedProviderIds}
+        onBookmarkChange={handleBookmarkChange}
+        enableModeration={enableModeration}
+        onApprove={handleApprove}
+        onReject={handleRejectClick}
+        reviewingProviderId={reviewingProviderId}
+        enableInfiniteScroll
         hasNextPage={hasNextPage ?? false}
         isFetchingNextPage={isFetchingNextPage}
-        mode={cardMode}
-        reviewingProviderId={reviewingProviderId}
-        searchResults={searchResults}
-        onApprove={handleApprove}
-        onBookmarkChange={handleBookmarkChange}
         onLoadMore={fetchNextPage}
-        onProviderClick={handleProviderClick}
-        onReject={handleRejectClick}
         onRetry={() => refetch()}
       />
     );
@@ -517,14 +567,12 @@ export function ProvidersContent({
         onConfirm={handleRejectConfirm}
       />
       {showGreeting ? (
-        // Fixed greeting header for Stage 2 (matches ProvidersPageHeader style)
+        // Fixed greeting header for Stage 2 (matches DiscoveryHeader style)
         <header
           className="fixed left-0 right-0 top-0 z-50 sm:hidden"
           style={{
-            // Smooth transition for all properties including backdrop-filter
             transition:
               'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
-            // Glassy blur effect - always applied for consistent visual effect
             background: 'rgba(255, 255, 255, 0.15)',
             backdropFilter: 'blur(20px) saturate(180%)',
             WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -539,48 +587,75 @@ export function ProvidersContent({
           <div
             className="px-4 py-4"
             style={{
-              // Add safe area padding to content, not header background
-              // Use max() to ensure minimum 24px padding on devices without safe area (like iPhone SE)
               paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
             }}
           >
+            <div className="pb-3">
+              <SectionSelector
+                selectedSection={section}
+                onSectionChange={handleSectionChange}
+              />
+            </div>
             <div className="mx-auto max-w-72">
               <MobileGreetingHeader cityName={defaultLocation} />
             </div>
           </div>
         </header>
       ) : (
-        // Search bar and category filter header (fixed)
-        <ProvidersPageHeader
+        <DiscoveryHeader
+          ref={headerRef}
+          section={section}
           selectedSection={section}
-          onCategoryChange={handleCategoryChange}
-          onClearSearch={handleClearSearch}
-          onLocationChange={handleLocationChange}
-          onSearchSubmit={handleSearchSubmit}
+          viewMode={viewMode}
           onSectionChange={handleSectionChange}
+          searchSlot={<HomeSearchInput activeSection={section} />}
+          filterBarSlot={
+            section === 'food' ? (
+              <DiscoveryFilterBar
+                geoStatus={geolocation.status}
+                nearMeActive={nearMeActive}
+                openNowActive={isOpenNow}
+                onToggleNearMe={handleToggleNearMe}
+                onToggleOpenNow={() => setIsOpenNow((v) => !v)}
+                adminSlot={
+                  isAdmin ? (
+                    <AdminStatusFilter selectedStatus={status} onStatusChange={handleStatusChange} />
+                  ) : undefined
+                }
+              />
+            ) : undefined
+          }
         />
       )}
 
       <main
         className={`mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden ${
           showGreeting
-            ? 'pt-0 sm:pt-8 md:pt-28' // No top padding - CityCard pb-8 provides the gap, fixed header overlays
-            : 'pt-[max(128px,calc(env(safe-area-inset-top)+128px))] sm:pt-8 md:pt-28' // Plan 077: safe-area-aware padding for notch devices
+            ? 'pt-0 sm:pt-0 md:pt-[153px]'
+            : 'pt-0 sm:pt-0 md:pt-[153px]'
         }`}
       >
-        {/* Plan 058: Admin status filter - only visible to admin/moderator users */}
-        {isAdmin && (
-          <div className="mb-6 px-4 sm:px-6">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-content-heading">Admin Filter:</span>
-              <AdminStatusFilter
-                selectedStatus={status}
-                onStatusChange={handleStatusChange}
-              />
-            </div>
+        {!showGreeting && section === 'food' && (
+          <div
+            style={{
+              visibility: viewMode === 'map' ? 'visible' : 'hidden',
+              position: 'absolute',
+              inset: 0,
+            }}
+          >
+            <SearchMap
+              pins={pins}
+              userCoords={userCoords}
+            />
           </div>
         )}
-        {renderContent()}
+
+        {viewMode === 'list' && renderContent()}
+
+        {/* Toggle button: map <-> list, sits above navbar — food results only */}
+        {!showGreeting && section === 'food' && (
+          <ViewToggleButton viewMode={viewMode} onToggle={toggleViewMode} />
+        )}
       </main>
     </>
   );

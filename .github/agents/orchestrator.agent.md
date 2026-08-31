@@ -5,20 +5,54 @@ target: vscode
 argument-hint: Describe the task, feature, bugfix, or improvement you want to execute
 tools:
   [
-    'execute/getTerminalOutput',
-    'execute/runInTerminal',
-    'read/readFile',
-    'read/problems',
-    'read/terminalSelection',
-    'read/terminalLastCommand',
-    'edit/createDirectory',
-    'edit/createFile',
-    'edit/editFiles',
-    'search',
-    'web',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'todo',
+    execute/getTerminalOutput,
+    execute/runInTerminal,
+    read/terminalSelection,
+    read/terminalLastCommand,
+    read/problems,
+    read/readFile,
+    edit/createDirectory,
+    edit/createFile,
+    edit/editFiles,
+    search/changes,
+    search/codebase,
+    search/fileSearch,
+    search/listDirectory,
+    search/searchResults,
+    search/textSearch,
+    search/usages,
+    web/fetch,
+    web/githubRepo,
+    figma/add_code_connect_map,
+    figma/create_design_system_rules,
+    figma/get_code_connect_map,
+    figma/get_code_connect_suggestions,
+    figma/get_design_context,
+    figma/get_figjam,
+    figma/get_metadata,
+    figma/get_screenshot,
+    figma/get_variable_defs,
+    figma/send_code_connect_mappings,
+    com.figma.mcp/mcp/add_code_connect_map,
+    com.figma.mcp/mcp/create_design_system_rules,
+    com.figma.mcp/mcp/create_new_file,
+    com.figma.mcp/mcp/generate_diagram,
+    com.figma.mcp/mcp/generate_figma_design,
+    com.figma.mcp/mcp/get_code_connect_map,
+    com.figma.mcp/mcp/get_code_connect_suggestions,
+    com.figma.mcp/mcp/get_context_for_code_connect,
+    com.figma.mcp/mcp/get_design_context,
+    com.figma.mcp/mcp/get_figjam,
+    com.figma.mcp/mcp/get_metadata,
+    com.figma.mcp/mcp/get_screenshot,
+    com.figma.mcp/mcp/get_variable_defs,
+    com.figma.mcp/mcp/search_design_system,
+    com.figma.mcp/mcp/send_code_connect_mappings,
+    com.figma.mcp/mcp/use_figma,
+    com.figma.mcp/mcp/whoami,
+    uflow.uflow-memory/flowbaby_storeMemory,
+    uflow.uflow-memory/flowbaby_retrieveMemory,
+    todo,
   ]
 model: Claude Sonnet 4.6
 handoffs:
@@ -196,13 +230,14 @@ Single entry point for all development work. When invoked with a task descriptio
 
 ## Session Start Protocol
 
-1. Load `document-lifecycle` skill and `memory-contract` skill (MANDATORY)
-2. Retrieve uflow memory for prior workflow context
-3. Read `agent-output/.next-id` to understand current document state
-4. Scan `agent-output/` subdirectories for in-progress work
-5. **Release-ready stall detection (MANDATORY)**: Identify any plans with Status `UAT Approved` that are not yet `Committed`/`Released`. Surface them explicitly as “Ready for DevOps” and suggest handoff to `⑨ DevOps`. Note: long delays increase version drift and coordination cost.
-6. If resuming an existing workflow, display the current Workflow Card with updated status
-7. If starting fresh, proceed to Task Classification
+1. **Sync main (MANDATORY)**: Run `git pull origin main` in the control window to ensure the local main branch is up-to-date before any work begins or worktrees are created. If there are uncommitted local changes, warn the user and halt until resolved.
+2. Load `document-lifecycle` skill and `memory-contract` skill (MANDATORY)
+3. Retrieve uflow memory for prior workflow context
+4. Read `agent-output/.next-id` to understand current document state
+5. Scan `agent-output/` subdirectories for in-progress work
+6. **Release-ready stall detection (MANDATORY)**: Identify any plans with Status `UAT Approved` that are not yet `Committed`/`Released`. Surface them explicitly as "Ready for DevOps" and suggest handoff to `⑨ DevOps`. Note: long delays increase version drift and coordination cost.
+7. If resuming an existing workflow, display the current Workflow Card with updated status
+8. If starting fresh, proceed to Task Classification
 
 ---
 
@@ -286,6 +321,10 @@ If the user only asks to plan or preview, stay in preview mode.
 
 ```bash
 # Control window only
+
+# Step 1: Sync main to ensure the worktree branches from the latest code
+git pull origin main
+
 NEXT_ID=$(cat agent-output/.next-id)
 while find agent-output/ -name "${NEXT_ID}-*" -type f 2>/dev/null | grep -q .; do
   NEXT_ID=$((NEXT_ID + 1))

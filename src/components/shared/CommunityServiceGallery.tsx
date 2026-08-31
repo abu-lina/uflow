@@ -5,17 +5,16 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import { supabase } from '@/lib/supabase/client';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { Category } from '@/services/categories';
-
-interface CommunityServiceImage {
-  community_service_images: string | null;
-}
+import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 
 interface CommunityServiceGalleryProps {
   category?: Category; // Optional category data for fallback images
 }
 
 export default function CommunityServiceGallery({ category }: CommunityServiceGalleryProps) {
+  const { t } = useLanguage();
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,40 +22,33 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        // Priority 1: Get community service images
+        // M-5a: community_services dropped; ummah providers in providers table
         const { data, error } = await supabase
-          .from('community_services')
-          .select('community_service_images')
+          .from('providers')
+          .select('provider_images')
+          .eq('listing_type', 'ummah')
           .eq('review_status', 'approved')
           .limit(3);
 
         if (error) throw error;
 
         const communityServiceImages = data
-          .map((item: CommunityServiceImage) => {
+          .map((item: { provider_images: string | string[] | null }) => {
             try {
-              if (!item.community_service_images) return null;
+              if (!item.provider_images) return null;
 
-              // Handle different data formats
-              if (typeof item.community_service_images === 'string') {
-                // If it's a direct URL string
-                if (item.community_service_images.startsWith('http')) {
-                  return item.community_service_images;
+              if (typeof item.provider_images === 'string') {
+                if (item.provider_images.startsWith('http')) {
+                  return item.provider_images;
                 }
-                // If it's a JSON string
-                const parsed = JSON.parse(item.community_service_images);
-                if (Array.isArray(parsed)) {
-                  return parsed[0] || null;
-                }
-                if (parsed.urls && Array.isArray(parsed.urls)) {
-                  return parsed.urls[0] || null;
-                }
+                const parsed = JSON.parse(item.provider_images);
+                if (Array.isArray(parsed)) return parsed[0] || null;
+                if (parsed.urls && Array.isArray(parsed.urls)) return parsed.urls[0] || null;
                 return null;
               }
 
-              // If it's already an array
-              if (Array.isArray(item.community_service_images)) {
-                return item.community_service_images[0] || null;
+              if (Array.isArray(item.provider_images)) {
+                return item.provider_images[0] || null;
               }
 
               return null;
@@ -114,19 +106,19 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
         setImages(combinedImages);
       } catch (err) {
         console.error('Error fetching community service images:', err);
-        setError('Failed to load images');
+        setError(t('providers.failedToLoadImages'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchImages();
-  }, [category]);
+  }, [category, t]);
 
   // Always ensure we have exactly 3 images
   const displayImages = [...images];
   while (displayImages.length < 3) {
-    displayImages.push('/images/placeholder.jpg');
+    displayImages.push(PLACEHOLDER_IMAGE);
   }
 
   if (loading) {
@@ -175,9 +167,9 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
             <Image
               fill
               alt={
-                imageUrl === '/images/placeholder.jpg'
-                  ? `Placeholder image ${index + 1}`
-                  : `Community service image ${index + 1}`
+                imageUrl === PLACEHOLDER_IMAGE
+                  ? t('providers.placeholderImage', { index: index + 1 })
+                  : t('providers.communityServiceImage', { index: index + 1 })
               }
               className={`object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
               loading={index === 0 ? 'eager' : 'lazy'}

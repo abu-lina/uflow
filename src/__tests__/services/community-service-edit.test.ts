@@ -39,42 +39,45 @@ const VALID_ADMIN_ID = 'ffffffff-1111-2222-3333-444444444444';
 describe('getCommunityServiceForAdmin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSelect.mockResolvedValue({ data: [], error: null });
-    mockEq.mockReturnValue({ eq: mockEq, select: mockSelect });
+    // GET chain: .from().select().eq(provider_id).eq(listing_type)
+    // First eq must chain; second eq must resolve
+    mockSelect.mockReturnValue({ eq: mockEq });
+    mockEq.mockReturnValueOnce({ eq: mockEq }); // first .eq() → chainable
+    // individual tests set mockResolvedValue for the terminal second .eq()
     mockFrom.mockReturnValue({ select: mockSelect });
   });
 
-  it('queries community_services table (not providers)', async () => {
+  it('queries providers table (ummah listing_type)', async () => {
     const mockCS = {
-      community_service_id: VALID_CS_ID,
-      community_service_name: 'Test Service',
-      community_service_images: ['https://example.com/img.jpg'],
+      provider_id: VALID_CS_ID,
+      provider_name: 'Test Service',
+      provider_images: ['https://example.com/img.jpg'],
+      listing_type: 'ummah',
       updated_at: '2026-01-01T00:00:00.000Z',
     };
-    mockSelect.mockReturnValue({ eq: mockEq });
+    // Only set terminal resolution; beforeEach already set up the chain Once
     mockEq.mockResolvedValue({ data: [mockCS], error: null });
 
     await getCommunityServiceForAdmin(VALID_CS_ID);
 
-    expect(mockFrom).toHaveBeenCalledWith('community_services');
+    expect(mockFrom).toHaveBeenCalledWith('providers');
   });
 
   it('returns null when not found', async () => {
-    mockSelect.mockReturnValue({ eq: mockEq });
     mockEq.mockResolvedValue({ data: [], error: null });
 
     const result = await getCommunityServiceForAdmin(VALID_CS_ID);
     expect(result).toBeNull();
   });
 
-  it('returns the community service when found', async () => {
+  it('returns the provider record when found', async () => {
     const mockCS = {
-      community_service_id: VALID_CS_ID,
-      community_service_name: 'Test Service',
-      community_service_images: ['https://example.com/img.jpg'],
+      provider_id: VALID_CS_ID,
+      provider_name: 'Test Service',
+      provider_images: ['https://example.com/img.jpg'],
+      listing_type: 'ummah',
       updated_at: '2026-01-01T00:00:00.000Z',
     };
-    mockSelect.mockReturnValue({ eq: mockEq });
     mockEq.mockResolvedValue({ data: [mockCS], error: null });
 
     const result = await getCommunityServiceForAdmin(VALID_CS_ID);
@@ -82,7 +85,6 @@ describe('getCommunityServiceForAdmin', () => {
   });
 
   it('throws when supabase returns an error', async () => {
-    mockSelect.mockReturnValue({ eq: mockEq });
     mockEq.mockResolvedValue({ data: null, error: { message: 'DB error' } });
 
     await expect(getCommunityServiceForAdmin(VALID_CS_ID)).rejects.toThrow('DB error');
@@ -99,10 +101,11 @@ describe('updateCommunityServiceFields', () => {
     mockFrom.mockReturnValue({ update: mockUpdate, select: mockSelect });
   });
 
-  it('updates community_services table (not providers)', async () => {
+  it('updates providers table (ummah listing_type)', async () => {
     const mockCS = {
-      community_service_id: VALID_CS_ID,
-      community_service_name: 'Updated Name',
+      provider_id: VALID_CS_ID,
+      provider_name: 'Updated Name',
+      listing_type: 'ummah',
       updated_at: new Date().toISOString(),
     };
     mockSelect.mockResolvedValue({ data: [mockCS], error: null });
@@ -110,13 +113,14 @@ describe('updateCommunityServiceFields', () => {
     const editData: AdminCommunityServiceEditData = { serviceName: 'Updated Name' };
     await updateCommunityServiceFields(VALID_CS_ID, editData, VALID_ADMIN_ID);
 
-    expect(mockFrom).toHaveBeenCalledWith('community_services');
+    expect(mockFrom).toHaveBeenCalledWith('providers');
   });
 
   it('includes updated_at in the payload', async () => {
     const mockCS = {
-      community_service_id: VALID_CS_ID,
-      community_service_name: 'Test',
+      provider_id: VALID_CS_ID,
+      provider_name: 'Test',
+      listing_type: 'ummah',
       updated_at: new Date().toISOString(),
     };
     mockSelect.mockResolvedValue({ data: [mockCS], error: null });
@@ -128,21 +132,22 @@ describe('updateCommunityServiceFields', () => {
     expect(updateArg).toHaveProperty('updated_at');
   });
 
-  it('accepts community_service_images as string array (not JSON string)', async () => {
+  it('accepts provider_images as string array (TEXT[])', async () => {
     const mockCS = {
-      community_service_id: VALID_CS_ID,
-      community_service_images: ['https://example.com/img.jpg'],
+      provider_id: VALID_CS_ID,
+      provider_images: ['https://example.com/img.jpg'],
+      listing_type: 'ummah',
       updated_at: new Date().toISOString(),
     };
     mockSelect.mockResolvedValue({ data: [mockCS], error: null });
 
     const editData: AdminCommunityServiceEditData = {
-      communityServiceImages: ['https://example.com/img.jpg'],
+      providerImages: ['https://example.com/img.jpg'],
     };
     await updateCommunityServiceFields(VALID_CS_ID, editData, VALID_ADMIN_ID);
 
     const updateArg = (mockUpdate as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<string, unknown>;
-    expect(Array.isArray(updateArg.community_service_images)).toBe(true);
+    expect(Array.isArray(updateArg.provider_images)).toBe(true);
   });
 
   it('throws when community service not found', async () => {
@@ -174,10 +179,11 @@ describe('updateCommunityServiceReview', () => {
     mockFrom.mockReturnValue({ update: mockUpdate });
   });
 
-  it('updates community_services table (not providers)', async () => {
+  it('updates providers table (ummah listing_type) for review', async () => {
     const mockCS = {
-      community_service_id: VALID_CS_ID,
-      community_service_name: 'Test Service',
+      provider_id: VALID_CS_ID,
+      provider_name: 'Test Service',
+      listing_type: 'ummah',
       review_status: 'approved',
       updated_at: new Date().toISOString(),
     };
@@ -185,7 +191,7 @@ describe('updateCommunityServiceReview', () => {
 
     await updateCommunityServiceReview(VALID_CS_ID, 'approved', null, undefined);
 
-    expect(mockFrom).toHaveBeenCalledWith('community_services');
+    expect(mockFrom).toHaveBeenCalledWith('providers');
   });
 
   it('throws CONFLICT error when expectedUpdatedAt does not match', async () => {

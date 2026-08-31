@@ -56,12 +56,12 @@ grep "NEXT_PUBLIC_SUPABASE_URL" .env.production | head -1
 
 **Expected format**: `NEXT_PUBLIC_SUPABASE_URL=https://[project-ref].supabase.co`
 
-### Check anon key format (should start with eyJ):
+### Check anon key format (should start with sb_publishable_ or eyJ):
 ```bash
-grep "NEXT_PUBLIC_SUPABASE_ANON_KEY" .env.production | cut -d'=' -f2 | cut -c1-3
+grep "NEXT_PUBLIC_SUPABASE_ANON_KEY" .env.production | cut -d'=' -f2 | cut -c1-16
 ```
 
-**Expected output**: `eyJ` (start of JWT token)
+**Expected output**: `sb_publishable_` (new format) or `eyJ` (legacy JWT)
 
 ## If Files Don't Exist
 
@@ -101,7 +101,7 @@ This ensures only the owner can read/write these sensitive files.
 ## Verification Checklist
 
 - [ ] `.env.production` exists and has correct Supabase URL
-- [ ] `.env.production` has valid anon key (starts with eyJ)
+- [ ] `.env.production` has valid anon key (starts with `sb_publishable_` or `eyJ`)
 - [ ] `.env.production` has service role key
 - [ ] `.env.uat` exists and has correct Supabase URL
 - [ ] `.env.uat` has valid anon key

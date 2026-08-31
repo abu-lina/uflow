@@ -1,11 +1,907 @@
 # Changelog
 
-All notable changes to UFlow will be documented in this file.
+## [Unreleased] - 2026-08-17
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Fixed
 
-## [Unreleased]
+- **"Near me" now works on the home List view (Plan 217)**: Tapping the "In der Nähe" chip while in List view now reorders providers nearest-first and limits results to those within 25 km, with a distance badge on each card. The List branch consumes the same `useGeolocation` signal as the Map branch via the new `useHomeNearMe` hook and `HomeNearMeList` component. Open-now filtering is applied client-side and preserves distance ordering. Map view behavior is unchanged. Added `home_list_nearme_*` instrumentation and regression coverage.
+
+- **Dot separator between open tag and distance on provider cards (Plan 218)**: Provider cards on the home near-me list and the search near-me grid now show a small dot between the open/closed tag and the distance badge, so the two fields read as separate pieces of information. The dot renders only when both fields are present, never as a dangling separator.
+
+- **Tighter status-row spacing on provider cards (Plan 219)**: The open/closed status label, dot separator, and distance badge on provider cards now sit closer together (4px gap instead of 8px), so the status row reads as one cohesive unit on both the home near-me list and the search near-me results. Footer action buttons keep their original spacing.
+
+## [0.15.17] - 2026-08-17
+
+### Fixed
+
+- **Filter button lands on filters, map is opt-in via `?view=map` (Plan 216)**: Mobile users tapping the filter (sliders) button on the home searchbar, or the edit button on the results page, were dropped onto a full-screen map instead of the filter page. The `/search` destination now renders the filter accordions (Wo / Was / Wer / Filter) by default and only renders the mobile map when the explicit `?view=map` query parameter is present (intentional map deep link: `/search?section=food&view=map`). Unknown or missing `view` values fail safe to filters. The map-pin Supabase fetch is gated on map mode so no pin query runs when filters are shown. All entry paths (home sliders, results edit button, empty-query submit, legacy `/suchen` redirect) are fixed by the single render predicate. Added regression coverage for the no-view, `view=filters`, `view=map`, and desktop branches.
+
+
+## [0.15.16] - 2026-08-16
+
+### Fixed
+
+- **iOS PWA geolocation hang watchdog (Plan 215)**: Added a client-side `setTimeout` watchdog to `useGeolocation` that forces a terminal state when `navigator.geolocation.getCurrentPosition` hangs without firing its success or error callback, which happens on iPhone SE standalone PWAs. Standalone mode maps the hang to `denied` so the existing Plan 209 iOS Settings hint (`permissionDeniedHintIos`) is surfaced; non-standalone browsers map it to `timeout`. Timer is cleared on success, error, `reset()`, and unmount. Added Normal-level outcome logging `{ status, errorCode?, standalone, elapsedMs }` and `SearchMap` `setView` executed/skipped logging for diagnostics.
+
+## [0.15.15] - 2026-08-16
+
+### Fixed
+
+- **Near Me permission-denied recovery guidance (Plan 209)**: Added denied-state UX guidance for mobile PWA users when location permission has been blocked by the OS. `HomeSearchBar` and `NearMeOpenNowFilters` now render platform-specific help text only when `geoStatus === 'denied'` (`iOS`, `Android`, `fallback`). `timeout` and `unavailable` continue showing only the existing "Location unavailable" label, avoiding misleading settings guidance for transient failures. Added regression coverage for iOS/Android/fallback hint selection and denied-only guard behavior.
+
+## [0.15.14] - 2026-08-16
+
+### Fixed
+
+- **Near Me map viewport on iPhone SE PWA (Plan 212)**: Refactored home Near Me flow to use the shared `useGeolocation` lifecycle in `RootPageContent` and removed duplicate geolocation calls from `SearchMap`. The map now pans to user coordinates only after geolocation is granted (`setView` zoom 14), Near Me chip state is driven by `geoStatus` (idle/prompting/granted/denied/timeout/unavailable), prompting uses Tailwind `animate-pulse`, and deactivation uses `reset()` without snapping back to Germany centroid. Added regression tests for prop-driven map pan, removal of `getCurrentPosition` from `SearchMap`, and RootPageContent request/reset wiring.
+
+## [0.15.13] - 2026-08-16
+
+### Fixed
+
+- **iPhone map tile rendering regression (Plan 211)**: Fixed mobile `/search` map tiles turning grey on iOS Safari while pins remained visible. Scoped PWA `runtimeCaching` image route to Supabase storage URLs only so OpenStreetMap tile requests are no longer intercepted by Service Worker CacheFirst logic, removed unnecessary `crossOrigin: 'anonymous'` from Leaflet tile layer, and corrected CSP `connect-src` tile host from `tile.openstreetmap.org` to `tile.openstreetmap.de`. Added regression coverage guarding SW regex scope, CSP tile host, and tile-layer crossOrigin configuration.
+
+## [0.15.12] - 2026-08-15
+
+### Fixed
+
+- **CI pipeline recovery (Plan 210)**: Removed stale review-provider gate tests that no longer matched production behavior, updated search and city-selection tests to align with current i18n and navigation behavior, added missing provider-context mocking in RootPageContent regression coverage, and fixed HomeSearchBar wrapper class assertion.
+- **CLI test stability under runtime warnings (Plan 210)**: Hardened `import-muslimbusiness` CLI tests by filtering npm/node warning noise from assertions and increasing timeout headroom for `npx tsx` startup variance.
+- **Performance budget gate restored (Plan 210)**: Re-baselined `/providers` and `/providers/[provider_id]` first-load JS thresholds using current measured build output with +5kB headroom, restoring deterministic perf-check pass/fail behavior.
+
+## [0.15.11] - 2026-08-15
+
+### Fixed
+
+- **Fix UAT deployment: Leaflet SSR build failure (hotfix for v0.15.10)**: `SearchMap` was imported with a direct static import in `search/page.tsx`, causing `import L from 'leaflet'` to execute in a Node.js server context during static page generation (`npm run build:standalone`). Changed to a `next/dynamic` import with `ssr: false` so Leaflet is only loaded client-side. Build now exits 0 with `STANDALONE_BUILD=true`. No functional changes to the map feature.
+
+## [0.15.10] - 2026-08-15
+
+### Added
+
+- **Mobile search map with restaurant pins (Plan 208)**: Mobile users visiting the Search page food section now see an interactive Leaflet map with pins for all approved food providers that have coordinates, instead of category tiles. Pins are tappable and navigate to the provider detail page. Map uses OSM DE tile server with no API key. Map/list toggle controls are fully i18n'd across 6 locales (en/de/ar/tr/ur/ps). Section "coming soon" toast uses localised template interpolation. Error boundary provides fallback to the accordion if the map fails to load. Feature is mobile-only; desktop retains the existing category accordion. Fixes #306.
+
+## [0.15.9] - 2026-08-09
+
+### Fixed
+
+- **iOS keyboard UX for chatbot input (Plan 205)**: Added `autoCorrect="on"`, `autoCapitalize="sentences"`, `spellCheck={true}`, and `enterKeyHint="send"` to the ChatInput textarea, restoring QuickType autocorrect, auto-capitalisation, spell-check suggestions, and a contextual Send key hint on iOS Safari. No state or logic changes; purely additive HTML hints. Added regression test to assert all four attributes are present, preventing silent removal.
+
+## [0.15.8] - 2026-08-09
+
+### Fixed
+
+- **Near-me category badge fallback fix (Plan 204)**: Fixed provider cards in near-me mode showing `search.unnamed` for every result by extending the `search_food_near_me` RPC with category metadata (`category_id`, `category_name_de`, `category_name_en`, `category_images`) and forwarding those fields through `NearMeFoodResult` and `NearMeResultsGrid` into `ProviderCard`. Added regression coverage to ensure near-me category props are passed to card rendering.
+
+## [0.15.7] - 2026-08-05
+
+### Fixed
+
+- **Auth role sync split-brain (Plan 203)**: Admin/moderator role grants no longer silently fail to propagate to the client UI hint (`user_metadata.role`). The `set-role` API now syncs `public.users.role` into `auth.user_metadata.role` after every DB role write; the login endpoint syncs on each successful sign-in when DB and metadata roles differ; the magic-link verification endpoint performs the same sync during successful token verification. All three paths are non-blocking (sync failure is logged as a warning, never hard-fails login or role assignment), preserve existing metadata fields, and leave server-side authorization gates (`isAdminOrModerator`) fully DB-backed and unchanged. Fixes #297.
+
+## [0.15.6] - 2026-08-05
+
+### Fixed
+
+- **Provider detail accordion exclusivity (Plan 201)**: Converted all remaining uncontrolled sections in provider detail (`Opening Hours`, `Weitere Standorte`, `Nearby`) to controlled `ExpandSection` mode using shared `openSection` state, so only one section can be open at a time and opening any section now collapses the others.
+- **Provider detail section spacing consistency (Plan 201)**: Normalized internal section stack spacing from `gap-8` to `gap-4` in `ProviderDetailSections`, aligning inter-section spacing with the existing first-section offset and producing uniform 16px rhythm on mobile.
+
+## [0.15.5] - 2026-08-05
+
+### Fixed
+
+- **Weitere Standorte guard for single-location providers (Plan 202)**: The provider detail section in `src/features/providers/components/ProviderDetailSections.tsx` now renders the "Weitere Standorte" accordion only when a provider has more than one location. The guard was changed from `(locations?.length ?? 0) > 0` to `(locations?.length ?? 0) > 1`, preventing the section from appearing for single-location providers.
+
+## [0.15.4] - 2026-08-02
+
+### Changed
+
+- **Desktop search bar simplified (Plan 200)**: Restructured the desktop search bar to follow a Google Maps-style pattern with clear visual hierarchy. The primary bar (800px, white rounded container) now contains only essential controls — location selector, search input, and a green "Suchen" CTA button — with no visual dividers. Secondary filters (Wer: person count, Werte & Ausstattung: amenity filters) moved to a separate pill row below the bar, displayed only on desktop (≥768px) to preserve mobile touch targets. All controls use consistent sizing (text-sm, smaller icons), softer colors (neutral-600), and hover states. This reduces visual clutter while maintaining full functionality. Desktop users see the refined bar + pills; mobile users see the existing accordion (no changes). Closes #288.
+
+## [0.15.3] - 2026-08-02
+
+### Fixed
+
+- **Chatbot "open now" filter (Plan 199)**: The chatbot's restaurant search now supports "open now"/"geöffnet"/"offen"/"jetzt" queries. Previously, asking for e.g. "open burger restaurants in Stuttgart" returned both open and closed providers with no way to filter or indicate status. Added `open_now` parameter to the `search_providers` chatbot tool, `opening_hours` column to the `search_providers_chat` RPC (migration 121), and an `is_open` annotation on every result computed via the existing `getOpenStatus()` utility (device-local time, overnight-window aware — same logic used by `/search`'s "Open now" chip). Providers without opening-hours data are annotated `is_open: null` and excluded when `open_now: true` is requested.
+
+## [0.15.2] - 2026-08-02
+
+### Added
+
+- **Near me + Open now restaurant search (Plan 196)**: Public `/search` page now offers a "Near me" quick-filter chip that requests device geolocation and searches approved food providers within a selectable radius (2/5/10 km), distance-sorted, via a new additive `search_food_near_me` Postgres RPC (nearest-location-per-provider semantics against the `locations` table). A companion "Open now" chip filters results to currently-open providers client-side, reusing the existing `getOpenStatus` logic (device-local time, overnight-window aware) — result cards always show open/closed status regardless of the toggle. Includes graceful fallback to manual city search when geolocation is denied, unavailable, or times out. Existing `find_nearby_food_providers` (related-provider lookup on the detail page) is unchanged.
+- **Admin delete provider (Plan 162)**: Red "Delete Provider" button on /dashboard/providers/[id]/edit with confirmation dialog. Cascading delete (all child tables have ON DELETE CASCADE). Security: auth required, admin/moderator only, rate limited (20/hr, 5/min), audit logged.
+
+### Fixed
+
+- **Chatbot UX improvements (Plan 198)**: Three UX fixes: (1) "Empfehlung erhalten" card and chatbot scope now focuses on food/restaurants only — stores and community services are no longer offered; (2) conversational copy polished — removed machine artifact "Folgendes trifft zu: " prefix from multi-select confirmations, updated CONVERSATION STYLE guidance to be warm and concise; (3) back-navigation state loss fixed — chat session (messages + conversationId) is now persisted to `sessionStorage` so returning from a provider detail page restores the full conversation. Fixes Rules-of-Hooks violation in `ChatFloatingWidget.tsx`.
+- **Chat auth-required copy (Plan 197)**: ChatWidget no longer shows the misleading "Um ein Restaurant zu registrieren" text when the user is unauthenticated. The auth-required card now displays a generic chatbot login message sourced from the i18n system (`chat.authRequired.*` keys added to all 6 locale files).
+- **Auth-outcome observability (Plan 197)**: `getUserFromCookie()` now emits `console.warn({ event: 'auth_outcome', result: 'no_user', reason: '<code>' })` at each auth-failure path (`ssr_client_no_user`, `no_access_token_cookie`, `missing_env_vars`, `auth_api_error`, `token_expired_refresh_failed`, `fetch_error`). Logs fire on all environments (not gated by `NODE_ENV`), with no PII. content on `/create`, `/saved`, `/profile` and other mobile pages by correcting Tailwind `header-spacing` tokens from flat `160px` to per-breakpoint values (80px mobile / 96px tablet / 104px desktop). `PageContent.tsx` inline padding updated to match.
+- Provider edit form now saves inline field state before sub-page navigation (no more lost edits)
+- Review status now shows stored value instead of always defaulting to "Pending"
+- Category selection page now filters by listing_type (food/store)
+- Halal check page reads from store_providers extension table for store-type providers
+
+### Changed
+
+- Moved Section (listing_type) dropdown to directly under Description field
+- Delivery Links renamed to "Order Links" for store-type providers
+- Delivery/order links now support custom website URLs beyond Wolt/Lieferando/UberEats
+- Values page: Food section hidden for non-food, Store section hidden for non-store providers
+
+
+## [0.12.17] - 2026-05-14
+
+### Fixed
+
+- **Amenities dietary restrictions removed (Plan 132)**: Removed `no_alcohol` and `no_pork` entries from the Values & Amenities section in the provider detail page. These dietary attestation flags belong to the Nachweise/Proofs section where they are already displayed as attestation commitments, not in the general amenities list.
+
+## [0.12.16] - 2026-05-13
+
+### Fixed
+
+- **Attestation proofs icon background removed (Plan 131 delta)**: Removed `bg-icon-surface` class from the proofs commitment icon wrapper in `AttestationCard`. The halalOnly, noAlcohol, noPork, and noGambling icons now render without a colored background square, delivering the intended flat icon-on-surface visual presentation globally across all food/store providers with declared attestations.
+
+## [0.12.15] - 2026-05-12
+
+### Changed
+
+- **Reusable IconListRow layout primitive (Plan 130, #227)**: Added `IconListRow` in `src/components/ui/` and refactored repeated icon-label-detail row layouts to use it across search sections (`WasCategoryResults`, `WasServiceTypeResults`, `WoCityResults`, `FilterSection`) and provider detail attestation display (`AttestationCard`).
+- **Provider attestation token alignment (Plan 130)**: Replaced hardcoded attestation row text and icon background colors with semantic design tokens (`text-text-primary`, `bg-background-selection`, `text-primary-dark`) to keep row styling consistent with search surface patterns while preserving attestation-specific typography.
+- **RowItem component system rollout (Plan 131, #228)**: Added `RowItem`, `InfoTrailing`, and controlled `CounterTrailing` components in `src/components/ui/`, then migrated search/provider consumers (`WasCategoryResults`, `WasServiceTypeResults`, `WoCityResults`, `FilterSection`, `AttestationCard`, `WerAudienceFilter`) from ad-hoc row markup to shared semantics with standardized subtitle typography and consistent selectable/multi-select state handling.
+
+## [0.12.14] - 2026-05-12
+
+### Added
+
+- **Nachweise attestation display card (Plan 126, #219)**: Added `AttestationCard` to the provider detail Nachweise section to show declared halal commitments (`no_alcohol`, `no_pork`, `no_gambling`) for eligible `food` and `store` providers. The card renders only when at least one commitment is declared and is fully localized across all 6 locales (`en`, `de`, `ar`, `tr`, `ur`, `ps`).
+
+### Changed
+
+- **Provider detail attestation data hydration (Plan 126)**: Updated both `getProviderById()` implementations (client and server) to fetch extension-table fields from `food_providers` and `store_providers` with parallel `maybeSingle()` reads by `provider_id`, ensuring attestation booleans are available at runtime.
+
+## [0.12.12] - 2026-05-12
+
+### Fixed
+
+- **Food search RPC restored — `search_food_concepts` junction-table hotfix (Plan 129)**: Production `/search?section=food` was returning HTTP 400 with Postgres error 42703 (`column p.offers_ids does not exist`). Root cause: migration 006 replaced `providers.offers_ids` uuid[] with the `provider_offers` junction table but did not update the `search_food_concepts` SQL function. New migration 089 recreates the function with the correct `INNER JOIN public.provider_offers` join pattern. Function signature, ranking logic, and all GRANT/REVOKE permissions are preserved. Other food search RPCs (`search_food_categories`, `search_food_menu_items`) are unaffected.
+
+## [0.12.11] - 2026-05-12
+
+### Fixed
+
+- **Admin edit-provider section save no longer fails with HTTP 400 (Plan 128, #221)**: Updated provider edit validation and related typing/tests to align listing type values with the post-migration enum rename (`business` -> `store`). Admins can now change section to Business/Store from the edit panel without triggering "Invalid request body".
+
+## [0.12.10] - 2026-05-12
+
+### Security
+
+- **Dependency security patch (Plan 127)**: Applied safe semver-compatible dependency updates to resolve all high-severity npm audit advisories. Updated `next` from `^15.5.9` to `^15.5.18` (patch) and `resend` from `^6.6.0` to `^6.12.3` (minor). Added `.npmrc` with `audit-level=high` to align local developer audit behavior with CI threshold. Zero breaking changes; all 1243 tests pass. Two residual moderate advisories (postcss <8.5.10 in Next.js internals) are accepted — build-time only, no runtime exposure.
+
+## [0.12.9] - 2026-05-04
+
+### Changed
+
+- **Remove location field from providers search bar (Plan 124)**: The location selector is completely removed from the `/providers` fixed search header. The search bar now shows query input, section tabs, and people summary only — no location dropdown. Existing URL parameters (`?location=Berlin`) continue to work for backend filtering. Regression tests confirm location combobox is absent from the DOM.
+
+## [0.12.7] - 2026-05-04
+
+### Changed
+
+- **Profile route middleware exemption in early access (Plan 123 Iteration 2)**: Added an explicit `/profile` and `/profile/*` exemption in `shouldRedirectToWaitlist` so non-admin users in early-access mode are no longer redirected to `/providers` when navigating to profile pages after login. Added regression tests covering `/profile` and `/profile/edit` behavior and guard checks for existing exemptions.
+- **Navbar auth state updates reactively after login (Plan 123)**: Removed premature `router.push` calls from both `LoginPageContent` and `LoginModal` success handlers. Post-login routing now occurs only after auth context user state commits (`useEffect([user])`), fixing the UAT issue where the navbar remained in logged-out state until reload. Added regression tests covering pre-fix failure mode and post-fix behavior for both login entry points, including `returnUrl` handling.
+- **Category image unification — DB-driven Supabase Storage (Plan 122)**: Eliminated the hardcoded UUID→static-PNG map (`categoryImages.ts`, 7.2 MB of PNGs) that caused the v0.12.4 Turkish category image bug. All 5 callsites (ProviderCard, ProviderDetailPage, ProviderDetailModal, MobileProviderDetail, UnifiedGallery) now resolve category images from `categories.category_images` JSONB in the database. Images are served from the Supabase Storage `category-images` bucket (Turkish: 8 images, Arabic: 6 images, Italian: 4 images). Adding or changing category images no longer requires a code change or Docker rebuild.
+- **Removed static category PNG assets**: `public/images/categories/` directory (22 PNGs, 7.2 MB) removed from repository; images migrated to Supabase Storage as WebP.
+- **Background color utility relocated**: `getCategoryCardBackgroundColor`, `CARD_BACKGROUND_COLORS`, and `hashId` moved from the deleted `categoryImages.ts` to `imageUtils.ts`. Category image rendering in `UnifiedGallery` simplified to always use `object-cover` (real food photos from Storage).
+
+## [0.12.4] - 2026-05-03
+
+### Added
+
+- **Provider image fallback redesign — ornament placeholder (Plan 119 M1b)**: Provider cards and detail pages now display a branded ornament-masked placeholder instead of a generic gray image when no provider image is available. The design follows the Figma spec (node 460:2818): mint background (`#d8efe5`), optional category stock photo visible through Islamic geometric ornament diamond-grid cutouts, and a UFlow logo mark with luminosity blend. All 10 placeholder.jpg callsites replaced. Responsive 320 px – 1920 px. Graceful degradation when no stock image is available.
+- **Category-based stock image pool (Plan 119 M1b)**: 20 production categories mapped to local PNG image variants in `public/images/categories/`. Deterministic per-provider image selection ensures visual variety across cards in the same category.
+- **Unsplash image enrichment workflow — CLI (Plan 119 M3)**: New `npm run enrich:images` script with `--curate` (search, download, upload to Supabase Storage) and `--assign` (deterministically stage candidates per provider) modes. Reuses Plan 065 `enrichment_candidates` admin review flow with append-only merge into `provider_images`. Ownership fail-close enforced (unclaimed providers only).
+- **Provider image label i18n (Plan 119)**: Added translation keys for provider image labels (`providers.placeholderImage`, `providers.providerImage`, `providers.communityServiceImage`, `providers.categoryImage`, `providers.failedToLoadImages`, and others) across all 6 supported locales (en, de, ar, tr, ur, ps). `UnifiedGallery` alt/error text and `useImageFallback` error token are now fully localized.
+- **Image enrichment schema extension (Plan 119 M3)**: Migration 088 adds `enrichment_type`, `image_url`, `source_service`, `source_category`, and `attribution` columns to `enrichment_candidates` table with idempotent guards.
+
+## [0.12.3] - 2026-05-03
+
+### Changed
+
+- **Search header fixed + section tabs scroll with content** (Plan 109): The search bar and context summary (query · location · audience) are now pinned at the top of the screen on both the home page (Stage 2/3) and the providers listing page. Section tabs were moved to the scrollable content area so they scroll naturally with results instead of overlapping the fixed header.
+- **i18n: Search context and providers UI labels localized** (Plan 109): Back-to-home aria-label and admin filter label are now fully translated across all six supported languages (EN/DE/AR/TR/UR/PS). Removes the last hardcoded English fallback strings from the search/providers UI surface.
+
+## [0.12.2] - 2026-05-02
+
+### Added
+
+- **Provider cards: specialty tags on list cards** (Plan 115): Discovery cards now show up to two dish/specialty tags from provider `offers` (for example `Shawarma · Falafel`) with `+N` overflow when more specialties exist.
+- **Provider cards: compact open/closed status indicator** (Plan 115): Discovery cards now show a localized `Open`/`Closed` status chip with a green/red dot when `opening_hours` is available, using existing `getOpenStatus()` logic.
+- **Provider trust chip i18n** (Plan 115): Trust attribute labels (e.g. Muslim-owned, family-friendly) are now fully localized across all six supported languages (EN/DE/AR/TR/UR/PS).
+
+## [0.12.1] - 2026-05-02
+
+### Fixed
+
+- **Category gallery section leakage fixed** (Plan 119): `fetchCategoriesBySection()` now enforces `applicable_section` guardrails so categories are filtered by section scope (`food`, `store`, `ummah`) while still allowing shared (`all`) categories.
+- **Data alignment for wrong-section category exposure** (Plan 119): Added migration `087_plan_119_category_section_alignment.sql` to scope legacy `Gesundheit & Sport` from `all` to `store` when present and to reconcile all provider/category section mismatches by aligning provider `listing_type` to the linked category scope (`food`, `store`, `ummah`).
+- **Dead category filter cleanup** (Plan 119): Removed unused `src/components/providers/CategoryFilter.tsx` to reduce stale code paths and maintenance surface.
+
+## [0.12.0] - 2026-05-02
+
+### Changed — Schema Remediation (Plan 116, Architecture 118, 28 findings)
+
+This is a MINOR release. All 28 field-level schema findings from Architecture Review 118 are resolved.
+The primary breaking structural changes (supertype unification, table drops, enum rename) were applied
+to PROD before app-code changes, making each schema step individually safe during the pre-consumer window.
+
+**M-1 — Phase A Quick Wins** (migration 079, FL-14, FL-15, FL-17, FL-18, FL-22, FL-3)
+
+- Dropped 3 redundant UNIQUE constraints on PK columns (`categories`, `providers`, `users`)
+- Added FK on `enrichment_candidates.run_id → enrichment_run_logs.id ON DELETE SET NULL` (FL-14)
+- Added EUR-only CHECK constraints on `provider_menu.price_currency`, `provider_catalog.price_currency`, `community_projects.price_currency` (FL-22; tables renamed in M-6)
+- Backfilled `waitlist.is_provider` NULLs → `false` and enforced `NOT NULL DEFAULT false` (FL-18)
+- Dropped dead column `categories.applicable_to` and its GIN index (FL-3)
+
+**M-2 — Phase B Nullable Boolean Backfills** (migration 080, FL-5, FL-7, FL-8, FL-9, FL-13)
+
+- Backfilled `providers.review_status` NULLs → `'pending'`, enforced `NOT NULL` (FL-7)
+- Backfilled `providers.show_address` NULLs → `true`, enforced `NOT NULL DEFAULT true` (FL-13)
+- Backfilled `categories.applicable_section` NULLs → `'all'`, enforced `NOT NULL DEFAULT 'all'` (FL-5)
+- Added verified `admin_audit_logs.action` CHECK constraint based on live value audit (FL-9)
+
+**M-3 — Phase C Column Renames** (migration 081, FL-24, FL-25)
+
+- Renamed `providers.solidarity_pricing` → `economic_solidarity` (FL-24)
+- Renamed `providers.accepts_donations` → `makes_donations` (FL-25)
+- Dropped all three section-scoped CHECK constraints (`food_only_ck`, `business_only_ck`, `ummah_only_ck`) from `providers` supertype — structurally replaced by extension tables in M-5
+
+**M-4 — FK Integrity, Enum, Badge Registry** (migration 082, FL-4, FL-10, FL-11, FL-23)
+
+- Changed `needs.category_id` and `offers.category_id` FK to `ON DELETE RESTRICT` (FL-4)
+- Changed `providers.category_id` FK to `ON DELETE SET NULL` (FL-11)
+- Created `task_status_enum` and migrated `provider_outreach_tasks.task_status` from TEXT+CHECK (FL-10)
+- Added `attribute_category`, `provider_column_name`, `is_filterable` columns to `badge_types` (FL-23)
+- Inserted 6 new badge type rows (`CHILDREN_FRIENDLY`, `ECONOMIC_SOLIDARITY`, `HAS_PARKING`, `NO_ALCOHOL`, `NO_GAMBLING`, `NO_PORK`)
+- Rewrote `sync_provider_badge_to_boolean()` trigger as data-driven via `badge_types.provider_column_name` registry (fixes live regression where stale `accepts_donations` reference caused silent badge sync failures)
+
+**M-5a — Supertype Unification + Enum Rename** (migration 083, FL-26, FL-28 Part 1)
+
+- Renamed `listing_type_enum` value `'business'` → `'store'` (with strict DROP/RENAME/RECREATE ordering per AF-1)
+- Created 1:1 extension tables `food_providers`, `store_providers`, `ummah_providers` with RLS enabled
+- Migrated food/store type-exclusive columns (`halal_level`, `no_alcohol`, `no_pork`, `no_gambling`) to extension tables; dropped from `providers` supertype
+- Migrated `community_services` (8 rows) → `providers` with `listing_type = 'ummah'`; populated `ummah_providers` extension
+- Created `provider_engagements` table (replaces `provider_community_services`); migrated 3 rows
+- Merged `community_service_offers` and `community_service_needs` → `provider_offers` / `provider_needs`; dropped CS junction tables
+- Simplified `bookmarks`: merged `community_service_id` → `provider_id`, dropped CS FK column, enforced `provider_id NOT NULL`
+- Dropped `community_services` and `provider_community_services` tables
+- Renamed `community_projects.community_service_id` → `provider_id` with FK to `providers`
+
+**M-5b/c — App Code Layer** (no migration, service + component rewrites)
+
+- All 50+ source files referencing dropped tables/columns updated to use `providers` unified supertype
+- `from('community_services')` → `from('providers').eq('listing_type', 'ummah')` across all services
+- `community_service_id` → `provider_id`, `community_service_name` → `provider_name`, etc.
+- Bookmark and badge hooks simplified to `bookmarkableType: 'provider'` only
+- Navigation: all CS routes unified under `/providers/[id]`
+
+**M-6 — Table Renames** (migration 084, FL-28 Parts 2+3)
+
+- Renamed `provider_menu_items` → `provider_menu`
+- Renamed `provider_service_offers` → `provider_catalog`
+- Rewrote `search_food_menu_items()` and `search_provider_items()` RPCs to reference new table names
+
+**M-7 — Advisory Documentation** (migration 085, FL-6, FL-12, FL-21)
+
+- Added SQL comment on `providers.listing_type`: no DEFAULT by design, app-layer validation required
+- Added SQL comment on `deletion_logs.user_id`: intentional FK absence (user deleted before log written)
+- Added SQL comment on `provider_owner_outreach.dispatch_after`: 24h cool-down business rule
+
+### Deferred (YAGNI)
+
+- FL-16: `category_suggested_offers/needs` surrogate PK retained; composite PK migration deferred
+- FL-19: `email_confirmation_tokens.type` TEXT+CHECK retained; enum migration deferred
+- FL-20: `community_service_view_count` moved to `ummah_providers`; `provider_stats` MV decision deferred
+- FL-27: `category-suggestions.ts` RPC optimisation deferred to next opportunity
+
+## [0.11.7] - 2026-04-30
+
+### Changed
+
+- **F-1 dual-PK anti-pattern eliminated** (Plan 114 Phase 5): Promoted `<entity>_id` as the sole PRIMARY KEY on four tables (`categories`, `users`, `community_services`, `providers`) and dropped the vestigial `id` column from each. All inbound FK references already targeted `<entity>_id` — no FK remapping required. FK-safe cutover strategy preserved UNIQUE constraints during PK promotion (26+ inbound FKs on `providers` remain valid). Phase 4 migration file renamed from `006_phase4_semantic_constraints.sql` to `0061_phase4_semantic_constraints.sql` to resolve a version-prefix collision during dev push.
+- **Admin authorization fix** (Plan 114 Phase 5): Updated badge `verify` and `unverify` endpoints (`/api/admin/badges/verify`, `/api/admin/badges/unverify`) to authorize via `public.users.role` column instead of non-existent `raw_user_meta_data`. Also cleaned stale `id` column references from `roles.ts`, `check-role`, `debug-auth`, `set-role`, and `diagnose` admin routes. Service layer `getCategoryById()` now uses `.eq('category_id', id)`.
+
+## [0.11.6] - 2026-04-30
+
+### Changed
+
+- **F-5 semantic constraints for provider section fields** (Plan 114 Phase 4): Added migration `006_phase4_semantic_constraints.sql` to extend `listing_type_enum` with `ummah`, backfill `providers.listing_type` from `NULL` to `ummah`, enforce `listing_type NOT NULL`, and add section-scoped CHECK constraints that prevent invalid boolean/section combinations (`food`-only, `business`-only, `ummah`-only attributes).
+
+### Tests
+
+- Added migration contract test `src/__tests__/migrations/006-phase4-semantic-constraints-tdd.test.ts` validating enum extension, backfill + NOT NULL enforcement, and all three semantic CHECK constraints.
+
+## [0.11.5] - 2026-04-29
+
+### Changed
+
+- **F-2 referential integrity: junction tables replace UUID array columns** (Plan 114 Phase 3): Created four junction tables (`provider_offers`, `provider_needs`, `community_service_offers`, `community_service_needs`) with FK constraints and ON DELETE CASCADE. Backfilled from existing `offers_ids`/`needs_ids` arrays then dropped the array columns and GIN indexes. All service-layer queries and matching logic updated to join via junction tables.
+- **F-4 referential integrity: typed FK columns replace polymorphic associations** (Plan 114 Phase 3): Added `provider_id` and `community_service_id` typed FK columns to `bookmarks` and `provider_badges`, replacing polymorphic `bookmarkable_id`/`bookmarkable_type` and `entity_id`/`entity_type` pairs. Mutual exclusion CHECK (`num_nonnulls = 1`) enforced at DB level. Legacy polymorphic columns and `entity_type` enum dropped. All runtime bookmark query paths (five UI components + one hook) migrated to typed FK columns. Service layer provides backward-compatible field mapping for consumers expecting legacy response shapes.
+
+## [0.11.4] - 2026-04-29
+
+### Fixed
+
+- **F-3 data coherence: boolean columns now sole source of truth for provider attributes** (Plan 114 Phase 2): Eliminated the triple-source incoherence bug where providers created via the form were invisible to search filters. Dropped `barakah_effects TEXT[]` from `providers` and `community_services` tables (migration 005). All writes to this field removed from create forms, import scripts, and RPC functions. Boolean columns (`muslim_owned`, `family_friendly`, etc.) remain the authoritative filter source. Updated `get_community_services_for_provider` and `upsert_joinhalal_providers` RPC signatures to exclude the dropped column.
+
+## [0.11.3] - 2026-04-29
+
+### Fixed
+
+- **City-selection redirect fix** (Plan 111): CTA now navigates to `/` (home) instead of the broken `/city/{name}` route. City is stored in context/cookie; URL-based city routing was removed in an earlier architecture cycle.
+- **Navbar/footer hidden on city-selection page** (Plan 111): `shouldShowMobileFooter` and `shouldShowCityEarlyAccessNavbar` now use suffix-based matching (`pathname.endsWith('/city-selection')`) so locale-prefixed paths (e.g. `/de/city-selection`) are correctly excluded.
+
+### Added
+
+- **Canonical section routes** (Plan 111): `/food`, `/stores`, and `/ummah` are now first-class bookmarkable routes. Each is a thin Next.js App Router alias page that delegates to `ProvidersContent` with the correct section forced via `searchParams`. Legacy `/providers` routes are fully preserved for backward compatibility.
+- **Locale-safe route resolver** (Plan 111): `sectionFilters.ts` gains three new helpers — `getResultsPathForSection()`, `resolveSectionFromSearchParams()`, and `resolveSectionFromRoute()` — all using suffix matching so locale prefixes (e.g. `/de/food`) resolve correctly.
+- **Section-aware navigation** (Plan 111): Header, CategoryFilter, ProvidersContent, Search page, and gallery components updated to push canonical routes; `categoryLabel` prop wired into `SearchContextBar` for section context display.
+
+### Tests
+
+- Added `src/app/city-selection/page.test.tsx` (120 lines): regression suite for the redirect-to-home fix.
+- Updated `src/__tests__/utils/navigationUtils-063.test.ts` (12 tests): suffix-matching navbar exclusion coverage including locale-prefixed paths.
+- Updated `src/__tests__/config/sectionFilters.test.ts` (23 tests): canonical route resolution with locale prefix edge cases.
+- Updated `src/features/search/components/SearchContextBar.test.tsx`: 14 lines of category label regression coverage.
+- Updated `src/__tests__/app/(public)/search/page-meal-search.test.tsx`: routing assertions updated for canonical `/food` paths.
+
+## [0.11.2] - 2026-04-29
+
+### Changed
+
+- **Infrastructure: Cross-environment schema alignment for compliance tables** (Plan 114 Phase 1, F-9): Added `004_phase1_environment_alignment.sql` — idempotent migration that reconciles `consent_type` enum, `consent_logs` table, and `deletion_logs` table across local, dev, and prod environments. Resolves schema divergence where `consent_logs` was absent from prod and `deletion_logs` was prod-only. All three environments now share identical schema for compliance tables.
+
+### Added
+
+- **Migration contract test** (Plan 114 Phase 1): `004-phase1-environment-alignment-tdd.test.ts` validates migration 004 presence and required schema markers across environments.
+
+## [0.11.1] - 2026-04-29
+
+### Changed
+
+- **Infrastructure: Deterministic migration baseline established** (Plan 114 Phase 0-prime): Prod schema captured as canonical baseline (`001_baseline.sql`, 158 KB). All three environments (local/dev/prod) now share identical schema lineage via a forward-only migration chain (`001` → `002` → `003`). Eliminates the zero-shared-lineage problem that previously made cross-environment schema verification impossible.
+- **Infrastructure: Historical migration chain archived** (Plan 114 Phase 0-prime): 84 historical migration files moved to `supabase/migrations/archive/`. Active root now contains only the forward migration chain. Historical chain preserved for audit/traceability.
+- **Infrastructure: Phase 0 schema hygiene migration added** (Plan 114 Phase 0-prime): `003_phase0_schema_hygiene.sql` removes 10 redundant indexes and a duplicate `update_providers_updated_at` trigger that were present in the prod-derived baseline. Adds 2 composite indexes for query performance.
+- **Infrastructure: Supabase config aligned to Postgres 17** (Plan 114 Phase 0-prime): `supabase/config.toml` `major_version` updated from 15 → 17 to match linked prod.
+
+### Fixed
+
+- **Migration tooling: Archive-aware path resolution** (Plan 114 Phase 0-prime): `scripts/apply-provider-social-migration.sh` now resolves migration files from both active root and `archive/` paths via fallback logic. Prevents operational failure when migration files are reorganised.
+- **Migration tooling: Seed replication role safety** (Plan 114 Phase 0-prime): `002_seed.sql` now explicitly restores `session_replication_role = origin` before `RESET ALL`, ensuring FK/trigger enforcement is preserved in downstream migration-runner sessions.
+- **Migration tooling: Stale path references swept** (Plan 114 Phase 0-prime): 20 docs/scripts files updated to reference archived migration paths after historical chain moved to `archive/`.
+
+### Tests
+
+- Updated 6 migration contract test files (`068`–`077`) with archive-aware path resolution: tests now locate migration files from either active root or `archive/` path, preventing test breakage after migration file reorganisation.
+
+## [0.11.0] - 2026-04-29
+
+### Added
+
+- **Provider Details: Real-time open/closed status line** (Plan 113 M2): Displays green "Geöffnet" or red "Geschlossen" label beneath provider title, derived from `opening_hours` JSONB data. Shows next opening time when closed. Hidden gracefully when no schedule data exists.
+- **Provider Details: 6 accordion sections** (Plan 113 M3): Structured collapsible sections — Werte & Amenities, Angebote (menu), Öffnungszeiten (full week schedule), Feedback (placeholder), Nachweise (trust certificates), In der Nähe (same-city providers). Applied to both mobile and desktop detail paths.
+- **Provider Details: Halal Trust Banner** (Plan 113 M4): Static section at page bottom with teal Halal seal, headline, body text, and `/halal` info link. Matches Figma design specification.
+- **Provider Details: Halal Trust Popup** (Plan 113 M5): First-visit popup displayed for the first 10 provider detail opens (global counter via `localStorage`). Dismissible via close button, ESC key, or click-outside. Includes full keyboard focus trap and ARIA accessibility attributes.
+- **Provider Details: Keyboard-accessible popup focus trap** (Plan 113 M5): Tab/Shift+Tab cycles within popup; focus does not escape to background; ESC closes popup; `aria-modal="true"` present.
+- **Database: `opening_hours` JSONB column on `providers` table** (Plan 113 M1, migration 078): Nullable JSONB column stores structured weekly schedule. Backward-compatible — existing providers unaffected.
+
+### Fixed
+
+- **Provider Detail: Scroll-lock extends to `<html>` element** (Plan 113 M6): `useScrollLock` now locks both `body` and `html` overflow to prevent page scroll in all browsers. Includes DOM-attribute counter (`data-scroll-lock-count`) for HMR/dev-mode recovery when module state resets but DOM remains locked.
+- **Provider Detail: Image carousel swipe no longer blocks vertical scroll** (Plan 113 M6): `useImageSwipe` move handler now gates `preventDefault()` behind an active drag-session ref. Touch moves that are not part of a swipe gesture allow native vertical scroll to proceed.
+- **Provider Detail: Touch-pan override removed from image container** (Plan 113 M6): Removed `touch-pan-x` Tailwind class and `touchAction: 'pan-x'` style from mobile and desktop image containers — vertical panning was blocked on some devices.
+- **Provider Detail: Nearby section loading state** (Plan 113 M3): "In der Nähe" section now shows loading text while the city-match query is in-flight instead of a premature empty-state message.
+- **Provider Detail: Trust badges 42703 fallback** (Plan 113 M6): `getBadgesForEntityServer()` now uses independent query builders for its primary and fallback paths, preventing a stale `is_active` filter from persisting across the retry and causing a PostgreSQL 42703 (undefined column) error.
+- **Provider Detail: ARIA labels localised in image gallery** (Plan 113 M6): Image gallery container and pagination dots now use `t()` i18n calls instead of hardcoded English strings.
+
+## [0.10.42] - 2026-04-28
+
+### Fixed
+
+- **i18n: All 6 locales now have full key parity with the EN canonical reference** (Plan 111 M1): Key-diff script (`npm run i18n:check`) now reports 0 missing keys for de, ar, tr, ur, ps. Closes the key-structure gap that caused raw translation keys to render for non-DE/EN users.
+- **i18n: Forgot-password and reset-password pages fully localised** (Plan 111 M2): Replaced all `language === 'de' ? ... : ...` ternaries with `t()` calls from `LanguageProvider`. Auth recovery pages now render correctly in all 6 supported locales.
+- **i18n: Auth error messages now localised** (Plan 111 M2): Backend error codes (`EMAIL_NOT_FOUND`, `INVALID_OR_EXPIRED_TOKEN`) are now mapped to human-readable localized messages instead of being rendered raw to the user.
+- **i18n: Reset→forgot-password email prefill** (Plan 111 M2): After a reset-password failure, navigation to the forgot-password page now pre-populates the email field via query param, completing the cross-page user journey.
+- **i18n: Bookmark toast messages now locale-aware** (Plan 111 M2): `useBookmarkWithAuth` hook migrated from legacy 2-language (`de`/`en`) fallback to `LanguageProvider`, enabling toast messages for all 6 supported locales.
+
+### Added
+
+- **i18n: Deterministic locale parity checker** (`scripts/check-i18n.mjs`, `npm run i18n:check`): Automated script verifies all locale files have identical key structure to the EN canonical. Exits with code 1 if gaps are detected.
+- **i18n: Regression test for parity checker** (`tests/scripts/check-i18n.test.ts`): Vitest unit test covering `collectMissingKeys()` detection logic.
+- **i18n: `forgotPassword.*` and `resetPassword.*` translation namespaces** added to all 6 locale files (en, de, ar, tr, ur, ps) with localised strings.
+
+## [0.10.41] - 2026-04-28
+
+### Changed
+
+- **ProviderCard bookmark overlay** (Plan 112): Relocated bookmark/heart button from the bottom action row to a top-right image overlay (circular icon, `top-3 right-3`). Removes the bottom Save/Saved and Website rows in bookmark mode for a cleaner card layout. Moderation mode (Approve/Reject buttons) is unaffected.
+- **Providers navbar visibility** (Plan 112): Mobile footer navbar now consistently visible on the `/providers` discovery page. `RootClientLayout` treats `/providers` as a discovery route and forces `mobileUiMode='footer'`.
+- **Search tab active state** (Plan 112): Explore/Search tab in `MobileFooterBar` now shows as active when visiting the `/providers` listing route.
+
+### Tests
+
+- Added/updated 53 unit tests across `ProviderCard`, `RootClientLayout`, and `MobileFooterBar` to cover overlay behaviour, moderation mode preservation, PO Barik decision, navbar visibility regression, and explore-tab active-state logic.
+- Regression test `[post-fix PASSES] /providers forces footer mode even when stage is loading` added to `RootClientLayout.test.tsx`.
+
+## [0.10.40] - 2026-04-27
+
+### Changed
+
+- **i18n: Section (listing_type) field labels localised** (DF-1): The admin Section field labels (`Section (listing_type)`, `Unclassified`, `Food`, `Business`) now use the LanguageProvider translation system (`t()` keys) instead of hardcoded English strings. Translation keys added to all six locale files (en, de, ar, tr, ur, ps).
+
+### Tests
+
+- **Route test schema fidelity** (DF-2): Enhanced `providerEditUpdateSchema` mock in `admin-edit-provider.test.ts` to validate the `listingType` enum contract at route level. Added regression test `[pre-fix FAILS] returns 400 when listingType is outside allowed enum` confirming invalid values are rejected with HTTP 400.
+- Added i18n regression test `[pre-fix FAILS] moderation section selector uses translation keys for label and options` to `ProviderEditForm.regression.test.tsx` confirming all UI strings use `t()` keys.
+
+## [0.10.39] - 2026-04-27
+
+### Added
+
+- **Admin Section (listing_type) editing**: Admin moderators can now change a provider's Section classification (Food / Business / Unclassified) directly from the provider edit dashboard (`/dashboard/providers/[id]/edit`). The field was previously read-only for all users; it is now an editable dropdown in the admin moderation context.
+
+### Tests
+
+- Added regression test `[pre-fix FAILS] admin moderation flow should allow editing Section (listing_type)` to `ProviderEditForm.regression.test.tsx`.
+- Added regression test `[pre-fix FAILS] includes listing_type when explicitly provided by admin edit flow` to `admin-provider-edit.test.ts`.
+
+## [0.10.38] - 2026-04-27
+
+### Added
+
+- **Providers results search context bar (Plan 109 / Issue #175)**:
+  - Added `SearchContextBar` component at `src/features/search/components/SearchContextBar.tsx`.
+  - Added shared section icon renderers at `src/features/search/constants/sectionIconRenderers.tsx` and reused them in `SectionSelector`.
+  - Search context bar now shows section icon, search term fallback, location fallback (`Everywhere`), optional `wer` audience summary, and an edit affordance routing to `/search?section={section}`.
+
+### Changed
+
+- Updated `ProvidersPageHeader` to use `SearchContextBar` instead of `FigmaSearchBar`.
+- Removed redundant `SectionSelector` row from `/providers` header.
+- Updated `/search` submit URL builder to include:
+  - `location` when a city is selected (functional providers filter)
+  - `wer` when audience selection exists (display-only context transport)
+
+### Tests
+
+- Added `src/features/search/components/SearchContextBar.test.tsx`.
+- Added `src/components/providers/ProvidersPageHeader.test.tsx`.
+- Added `src/__tests__/components/MobileFooterBar.providers-active.test.tsx` to lock `/providers` active-nav behavior.
+- Extended `src/__tests__/app/(public)/search/page-meal-search.test.tsx` with regression coverage for `location` and `wer` URL params.
+
+## [0.10.37] - 2026-04-27
+
+### Fixed
+
+- **CI dependency-review action**: Replaced invalid SHA pin `4081bf99...` with verified v4.6.0 commit SHA `ce3cf9537a52e8119d91fd484ab5b8a807627bf8`; resolves Dependency Review workflow failures and Dependabot `github_actions` updater crashes on all PR branches
+- **CI performance budget**: Raised `/providers/[provider_id]` First Load JS budget ceiling from 220 kB to 260 kB to match current measured bundle size (244 kB) with headroom; removes deterministic CI budget failures introduced by organic feature growth since Plan 033
+
+### Improved
+
+- **CI build reliability**: Added `shell: bash` and `set -o pipefail` to the CI build step so `next build` failures propagate correctly through the `tee` pipeline; previously a build failure could be silently masked by tee's exit code
+
+## [0.10.36] - 2026-04-27
+
+### Fixed
+
+- **Stores search Wer accordion removal**: The `Wer` (audience) accordion is now hidden when the Stores (`business`) section is selected on `/search`, so users no longer see irrelevant Männer/Frauen/Kinder audience controls for stores.
+- **Accordion section-switch behavior**: Switching from an open `Wer` accordion to Stores now resets the open panel to `Was`, preventing an all-collapsed accordion state.
+
+### Tests
+
+- Added regression coverage in `src/app/(public)/search/page.test.tsx` for hidden `Wer` in Stores and section-switch reset behavior.
+
+## [0.10.35] - 2026-04-27
+
+### Fixed
+
+- **Ummah section tab state rollback**: Switching between search sections (Food/Ummah) no longer transiently reverts to the previous section during async `router.replace` propagation; URL is now the authoritative state source
+- **Redundant tab navigation**: Clicking the already-active search section tab no longer triggers a `router.replace` (no-op guard added)
+
+### Improved
+
+- **3-item preview parity**: All search sections (WAS service types, filter rows, and popular cities) now cap to 3 items in the idle/empty-query state, matching the existing food categories and meal preview behavior
+- **Ummah service type recent searches**: Selecting an Ummah community service type (e.g., Beratung, Islamische Bildung) now persists to localStorage (`uflow:recent-ummah-service-types`, max 3, deduped) and surfaces as recent-first suggestions on next open
+- **Section switch state clearing**: Stale WAS selections, query text, and filter toggles from the previous section are cleared when switching sections
+
+### Tests
+
+- Added `[regression] section switching updates URL section param` test
+- Added `[regression] no router.replace when clicking already-active section tab` test
+- Added `[regression] mounted URL sync updates selectedSection` test
+- Added `[regression] delayed router.replace does not revert section state` test
+- Added `[regression] food WAS selection cleared on switch to Ummah` test
+- Extended `WasServiceTypeResults`, `UmmahFilterSection`, `WoCityResults` test suites for 3-item preview and recent-search behavior
+
+## [0.10.34] - 2026-04-27
+
+### Fixed
+
+- **Food search prefix matching**: Typing partial cuisine names (e.g., "Afgh") now returns matching results in all three food search RPCs (`search_food_concepts`, `search_food_categories`, `search_food_menu_items`); previously, `plainto_tsquery` only matched whole lexemes
+
+### Improved
+
+- **Cuisine label normalization**: Food category labels no longer include the redundant "Küche" suffix; "-ische" endings are normalized to "-isch" (e.g., "Afghanische Küche" → "Afghanisch")
+
+### Tests
+
+- Added TDD migration contract test for food search prefix matching RPC (migration 077)
+
+## [0.10.33] - 2026-04-27
+
+### Fixed
+
+- **Food search recent history contamination**: Non-food items (service-type entries) no longer appear in the Food "What" section recent history; only `category` and `dish` type entries are stored and displayed
+- **Legacy storage cleanup**: Mixed-section recent entries written by older app versions are automatically cleaned from localStorage on mount
+- **Food-only persistence guard**: Selections in non-food sections no longer write to the food recent searches key
+
+### Improved
+
+- **"Wo?" empty-state label**: The "Where" accordion now shows a localized question form ("Wo?", "Where?", "أين؟", "Nerede?", "کہاں؟", "چیرته؟") when no city is selected, matching the "Was?" accordion style, across all 6 supported locales
+
+### Tests
+
+- Added `[regression] excludes non-food recent items from food What section` test
+- Added `[regression] shows Wo? when no Wo city is selected` test
+
+## [0.10.32] - 2026-04-27
+
+### Added
+
+- **Search expand show-all preview** (feature-flagged, default OFF — `NEXT_PUBLIC_FEATURE_ENABLESEARCHEXPANDSHOWALLPREVIEW`):
+  - `WasMealResults`, `WasCategoryResults`, `WoCityResults`, `FilterSection` sections now show max 3 items in idle state when flag enabled, with a section-specific reveal button
+  - Section-aware "Show all" CTA labels across 6 locales (DE, EN, AR, TR, UR, PS): `suchen.was.showAllCuisines`, `suchen.was.showAllDishes`, `suchen.wo.showAllCities`, `suchen.filter.showAllFilters`
+  - `FilterSection` preview respects `selectedSection` context (ummah = empty, business = no muslim filter, others = all)
+  - **Recent-over-Popular mutual exclusivity**: Recent searches hide Popular listings when any recent search history exists; Popular renders only as fallback when recent list is empty — enforced in both `WasCategoryResults` and `WoCityResults`
+  - **FigmaSearchBar** new compact search bar component with hamburger collapse/expand and location filtering, integrated into `ProvidersPageHeader`
+
+### Improved
+
+- Provider search result grid uses 2-column layout on mobile for better card density
+- City rows in `WoCityResults` styled with `hover:bg-background-selection/50`, `focus:ring-2 focus:ring-primary/30`, `h-6 w-6` map icon, and `text-base font-light` subtitle for visual alignment with filter rows
+- Search action aria-labels (`search.open`, `search.submit`, `search.filter`) localized across all 6 locales
+
+### Tests
+
+- Added feature-flag ON/OFF tests for `WasMealResults`, `WasCategoryResults`, `WoCityResults`, `FilterSection`
+- Added business-section and ummah-section filter hiding tests for `FilterSection`
+- Added recent-priority + popular-fallback tests for `WasCategoryResults` and `WoCityResults`
+- Added `FigmaSearchBar.test.tsx` covering localized labels, submit, and location dropdown
+
+## [0.10.31] - 2026-04-27
+
+### Added
+
+- **Ummah tab section-conditional search options (Plan 107 / Issue #172)**:
+  - Added `WasServiceTypeResults` component in `src/features/search/components/WasServiceTypeResults.tsx` for Ummah WAS discovery.
+  - Added static Ummah service types with client-side filtering (`islamische-bildung`, `beratung`, `rechtshilfe`, `jugenddienste`, `gesundheitsversorgung`, `eheberatung`, `bestattungsdienste`, `soziale-hilfe`, `sprachkurse`, `quran-unterricht`).
+  - Added `UmmahFilterSection` component in `src/features/search/components/UmmahFilterSection.tsx` with Ummah-specific filters:
+    - `kostenlos`
+    - `online`
+    - `sprache`
+    - `zertifiziert`
+    - `geschlechtergetrennt`
+  - Added Ummah filter key constants in `src/features/search/constants/ummahFilterKeys.ts`.
+  - Added Ummah translations under `suchen.was.ummah.*` and `suchen.filter.ummahItems.*` in all locales (`de`, `en`, `tr`, `ur`, `ps`, `ar`).
+
+### Changed
+
+- Updated `/search` page (`src/app/(public)/search/page.tsx`) to render section-conditional WAS and Filter content:
+  - Ummah section now renders `WasServiceTypeResults` and `UmmahFilterSection`.
+  - Food/Business sections retain existing `WasCategoryResults`/`WasMealResults` and `FilterSection` behavior.
+- Added section-change state hygiene via `useEffect` to clear stale WAS/filter state when switching sections.
+- Guarded food RPC effects (`searchFoodConcepts`, `searchFoodMenuItems`) to avoid requests when section is not `food`.
+- Extended `WasSelection` union in `src/features/search/components/WasCategoryResults.tsx` to include `'service-type'` with optional `serviceTypeId`.
+
+### Tests
+
+- Added `src/features/search/components/WasServiceTypeResults.test.tsx`.
+- Added `src/features/search/components/UmmahFilterSection.test.tsx`.
+- Extended `src/__tests__/app/(public)/search/page-meal-search.test.tsx` with regression coverage for Food -> Ummah switch clearing stale WAS selection.
+
+## [0.10.30] - 2026-04-27
+
+### Added
+
+- **Badge/Boolean data coherence for provider filters (Plan 106 / Issue #170)**:
+  - Added migration `supabase/migrations/076_provider_badge_boolean_sync_trigger.sql`:
+    - New trigger function `sync_provider_badge_to_boolean()` on `public.provider_badges` (`AFTER INSERT OR DELETE`)
+    - Resolves `badge_key` via `badge_types` JOIN (`provider_badges` stores `badge_type_id`)
+    - Applies provider-only mapping (`entity_type = 'provider'`):
+      - `MUSLIM_OWNED` → `providers.muslim_owned`
+      - `PRAYER_FRIENDLY` → `providers.has_prayer_space`
+      - `SUPPORTS_SADAQAH` → `providers.accepts_donations`
+    - Insert path sets mapped booleans to `true`
+    - Delete path unsets mapped booleans only when the deleted badge was the last provider badge of that type
+  - Updated provider creation flow in `src/services/providerService.ts`:
+    - Added form-tag normalization and mapping for filter-relevant attributes
+    - Writes direct booleans for non-badge attributes on provider INSERT:
+      - `has_parking`
+      - `solidarity_pricing`
+    - Creates `provider_badges` rows with `trust_level = SELF_DECLARED` for badge-mapped attributes after provider INSERT
+    - Adds fallback strategy: if badge creation fails, directly updates corresponding provider booleans (`muslim_owned`, `has_prayer_space`, `accepts_donations`) so search filtering remains correct
+
+### Changed
+
+- Made `FilterSection` section-aware:
+  - `src/features/search/components/FilterSection.tsx` now accepts `selectedSection`
+  - FOOD shows all 5 filters
+  - BUSINESS/STORES hides `muslim` filter
+  - UMMAH hides provider-only filters
+- Wired `selectedSection` through `src/app/(public)/search/page.tsx` into `FilterSection`.
+
+### Tests
+
+- Extended `src/features/search/components/FilterSection.test.tsx` with section-visibility coverage.
+- Added `src/__tests__/services/providerService.badges.test.ts` for creation-path badge/boolean wiring and fallback behavior.
+
+## [0.10.29] - 2026-04-26
+
+### Added
+
+- **Values & Amenities filter data wiring on `/search` and `/providers` (Plan 105 / Issue #168)**:
+  - Added search filter key mapping constants in `src/features/search/constants/filterKeys.ts`:
+    - `muslim` → `muslim_owned`
+    - `spenden` → `accepts_donations`
+    - `solidaritaet` → `solidarity_pricing`
+    - `parken` → `has_parking`
+    - `gebet` → `has_prayer_space`
+  - Wired `/search` submit flow (`src/app/(public)/search/page.tsx`) to include selected filters in URL as comma-separated `filters` query param.
+  - Wired `/providers` server initial fetch (`src/app/(public)/providers/page.tsx`) to parse, validate, and pass filters into provider search.
+  - Wired `/providers` client pagination (`src/app/(public)/providers/ProvidersContent.tsx`) to preserve filters across API requests and React Query cache keys.
+  - Wired API route `GET /api/providers/search` (`src/app/api/providers/search/route.ts`) to parse and allowlist-filter `filters`, silently strip unknown keys, forward validated keys to service layer, and apply `Cache-Control: no-store` when filters are present.
+  - Wired provider service search (`src/services/providers.ts`) to apply selected filters as AND predicates via boolean columns (`.eq(column, true)`), while preserving the `ummah` section behavior (community services unaffected by these provider-only filters).
+
+### Tests
+
+- Extended route tests: `src/__tests__/api/providers-search.test.ts` (validated filter forwarding, unknown-key stripping, filter cache-control semantics)
+- Extended SSR page tests: `src/__tests__/app/providers-page-location.test.tsx` (filters passthrough)
+- Extended service routing tests: `src/__tests__/services/providers-section-routing.test.ts` (AND semantics + ummah isolation)
+- Added regression test with explicit pre-fix naming in `src/__tests__/app/(public)/search/page-meal-search.test.tsx`:
+  - `[pre-fix FAILS] includes selected filters in providers URL on search submit`
+
+## [0.10.28] - 2026-04-26
+
+### Added
+
+- **Filter accordion UI redesign on `/search` (Plan 104 / Issue #166)**:
+  - Added new `FilterSection` component in `src/features/search/components/FilterSection.tsx` with 5 interactive filter rows:
+    - `muslim` (`Moon`)
+    - `spenden` (`HandHeart`)
+    - `solidaritaet` (`HeartHandshake`)
+    - `parken` (`CircleParking`)
+    - `gebet` (`PrayerRug` custom SVG)
+  - Added custom `PrayerRug` icon component in `src/components/icons/PrayerRug.tsx` with MIT attribution comment (Hugeicons source).
+  - Replaced `/search` filter stub with controlled accordion state in `src/app/(public)/search/page.tsx`:
+    - `selectedFilters` local state
+    - `filterOpen` accordion state
+    - required collapsed title badge `Filter · N` when filters are selected
+    - clear-all now resets filter state and title back to `Filter`
+  - Added `suchen.filter.items.*` translation keys for all 6 locales (`de`, `en`, `ar`, `tr`, `ur`, `ps`).
+
+### Tests
+
+- Added component test: `src/components/icons/PrayerRug.test.tsx`
+- Added component test: `src/features/search/components/FilterSection.test.tsx`
+- Extended page integration tests: `src/app/(public)/search/page.test.tsx`
+
+### Fixed
+
+- Updated Gebet filter icon to use `prayer-rug-02` stroke-rounded design matching Figma node 245:11586. Prior implementation used a simplified rug shape; new design shows rectangular prayer mat with fringe tassels and mihrab arch motif (Hugeicons CDN, MIT).
+
+### Notes
+
+- Filter UI is interactive (items toggle with visual feedback and collapsed title count) but does not execute backend queries yet.
+- Selected filters are not applied to search results in this release.
+- Full filter execution wiring is deferred to a future plan.
+
+## [0.10.27] - 2026-04-25
+
+### Added
+
+- **Wer audience filter component — Plan 103 / Issue #164**:
+  - Added `WerAudienceFilter` client component (`src/features/search/components/WerAudienceFilter.tsx`) with three audience rows: Männer, Frauen, Kinder.
+  - Each row renders a colored 48×48 icon, bold label, subtitle, and a circular −/N/+ stepper counter.
+  - Steppers are fully independent per row; minimum of one total selected person enforced (cannot decrement below 0 or reach 0 total).
+  - Component accepts `onSelectionChange` callback and `resetSignal` prop for parent-driven clear-all integration.
+  - Wired into the existing `ExpandSection` Wer placeholder in `src/app/(public)/search/page.tsx`; "Alles löschen" now resets Wer counters to default (1 Männer) via `werResetSignal`.
+  - Added 6 translation keys under `suchen.wer.*` namespace in `de.ts` / `en.ts`: `maennerLabel`, `frauenLabel`, `kinderLabel`, `subtitle`, `decrementAriaLabel`, `incrementAriaLabel`.
+  - Added audience icon SVGs: `public/icons/audience/maenner.svg`, `frauen.svg`, `kinder.svg`.
+  - Added 3 unit tests (`WerAudienceFilter.test.tsx`) covering render, counter independence, and decrement guard.
+  - Added 2 page-level regression tests covering Wer clear-all reset path and single-open accordion invariant.
+
+## [0.10.26] - 2026-04-24
+
+### Added
+
+- **Wo onboarding default + Was-parity city results redesign (Plans 101 + 102 / Issues #159 + #162)**:
+  - Added `fetchPopularCities(limit)` in `src/services/providers.ts` to aggregate city-level listing counts across `providers` and approved `community_services`.
+  - Added new `WoCityResults` component (`src/features/search/components/WoCityResults.tsx`) with 5-state rendering:
+    - loading
+    - error
+    - idle (popular cities + recent city searches + selected city card)
+    - query results
+    - empty/no-provider fallback
+  - Refactored `/search` Wo accordion in `src/app/(public)/search/page.tsx` to match Was interaction patterns:
+    - controlled accordion mode (`isOpen` + `onToggle`)
+    - persistent recent Wo searches via `localStorage['uflow:recent-wo-searches']` (max 3, deduplicated)
+    - selection row with remove action in idle state
+    - dynamic Wo header remains `Wo · {city}` when city selected
+  - Added Wo i18n namespace (`suchen.wo.*`) in all locales (`de`, `en`, `tr`, `ar`, `ps`, `ur`):
+    - `loading`
+    - `searchError`
+    - `providerCount`
+    - `popularLabel`
+    - `recentLabel`
+    - `selectionLabel`
+    - `selectedWhere`
+    - `removeSelection`
+    - `noResults`
+
+### Tests
+
+- Added component tests: `src/features/search/components/WoCityResults.test.tsx`
+- Extended service tests: `src/__tests__/services/providers.test.ts` with `fetchPopularCities` coverage
+- Updated page regression tests: `src/app/(public)/search/page.test.tsx`
+
+## [0.10.25] - 2026-04-24
+
+### Added
+
+- **Was? category row Figma redesign (Plan 098 / Issue #156)**:
+  - Added migration `supabase/migrations/075_search_food_categories_add_images.sql` to extend RPC `search_food_categories(search_query, limit_count)` with additive `category_images` output for icon rendering.
+  - Extended `FoodCategory` type in `src/services/offers.ts` with `category_images: string | null`.
+  - Redesigned `WasCategoryResults` to match Figma selection/category row spec:
+    - 48x48 rounded icon slot per category row.
+    - Active AUSWAHL row with `bg-primary/10`, filled teal remove button, and divider before following sections.
+    - Accessible remove action via localized `aria-label` (`suchen.was.removeSelection`).
+    - Dish-type recent rows now render localized `dishLabel` subtitle and no icon slot.
+    - Fallback icon switched from emoji to Lucide `UtensilsCrossed` for cross-platform visual consistency.
+  - Added new i18n keys in all locales (`de`, `en`, `tr`, `ar`, `ps`, `ur`):
+    - `suchen.was.dishLabel`
+    - `suchen.was.removeSelection`
+
+### Tests
+
+- Added migration contract test: `src/__tests__/migrations/075-food-category-images-rpc-tdd.test.ts`
+- Added component tests: `src/features/search/components/WasCategoryResults.test.tsx`
+
+### Fixed
+
+- **PWA fallback asset gitignore consistency (Plan 099 / Issue #157)**:
+  - Updated `.gitignore` to exclude all hashed PWA fallback files (`**/public/fallback-*.js`, `**/public/fallback-*.js.map`), consistent with other PWA build outputs (`sw.js`, `workbox-*.js`).
+  - Untracked `public/fallback-ce627215c0e4a9af.js` from git index — file remains on disk and is generated at build time.
+  - Removed obsolete `guard-fallback-assets` script and lint-staged hooks (root cause fixed by consistent gitignoring).
+
+### Changed
+
+- **Design system: Convert `background.selection` token to CSS variable (Plan 100)**:
+  - Added CSS custom property `--color-background-selection: 170 30% 96%` to `:root` in `src/styles/globals.css`.
+  - Converted `background.selection` Tailwind token from hardcoded `#F2F8F7` to `hsl(var(--color-background-selection))`.
+  - Expanded `background` token in `src/design-system/tokens/colors.ts` from flat string to object with `DEFAULT` and `selection` keys.
+  - Token now participates in runtime theme switching alongside the rest of the design system.
+
+## [0.10.24] - 2026-04-21
+
+### Added
+
+- **Food concept search for `Was?` in `/search?section=food` (Plan 097 / Issue #154)**:
+  - Added migration `supabase/migrations/070_search_food_concepts_rpc.sql` with new RPC `search_food_concepts(search_query, limit_count)` returning canonical food concepts with `provider_count`.
+  - RPC searches offer names using German + English tsvector branches and filters to approved food providers using GIN-friendly array containment (`providers.offers_ids @> ARRAY[offer_id]`).
+  - Added typed `FoodConcept` model and `searchFoodConcepts()` service wrapper in `src/services/offers.ts`.
+  - Rewired `/search` Was flow in `src/app/(public)/search/page.tsx` from `searchProviderItems` to `searchFoodConcepts` with `limit_count: 10`.
+  - Removed provider lookup augmentation effect from search page; concept rows now render directly from RPC results.
+  - Updated `WasMealResults` to concept-level rendering (name + localized provider count) and switched row key from `item_id` to `offer_id`.
+  - Added new i18n key `suchen.was.providerCount` to all 6 locale files (`de`, `en`, `tr`, `ar`, `ps`, `ur`).
+
+### Tests
+
+- Added migration contract test: `src/__tests__/migrations/070-food-concept-search-tdd.test.ts`
+- Extended service tests: `src/__tests__/services/offers.test.ts` with `searchFoodConcepts` coverage
+- Updated component tests: `src/features/search/components/WasMealResults.test.tsx`
+- Updated page integration tests: `src/__tests__/app/(public)/search/page-meal-search.test.tsx`
+
+## [0.10.23] - 2026-04-21
+
+### Added
+
+- **Meal search in `Was?` accordion (`/search?section=food`) (Plan 096 / Issue #153)**:
+  - Added new service `src/services/provider-catalog.ts` with typed RPC wrapper `searchProviderItems()` for `search_provider_items`.
+  - Added `WasMealResults` component (`src/features/search/components/WasMealResults.tsx`) with 5 UI states: empty, loading, error, results, no-results.
+  - Wired debounced meal search (300ms) in `src/app/(public)/search/page.tsx` with a minimum 2-character guard and `listing_type_filter = 'food'` when food section is active.
+  - Implemented client-side `provider_id -> provider_name/provider_image` augmentation for RPC rows (frontend-only approach; no RPC schema change).
+  - Added i18n keys under `suchen.was.*` across all 6 locales (`de`, `en`, `tr`, `ar`, `ps`, `ur`):
+    - `searchPlaceholder`
+    - `loading`
+    - `noResults`
+    - `notFoundEncouragement`
+    - `searchError`
+
+### Tests
+
+- Added service tests: `src/__tests__/services/provider-catalog.test.ts`
+- Added component tests: `src/features/search/components/WasMealResults.test.tsx`
+- Added page integration tests: `src/__tests__/app/(public)/search/page-meal-search.test.tsx`
+
+## [0.10.22] - 2026-04-20
+
+### Added
+
+- **Unified Catalog Architecture — Ummah Section (Plan 095 / Issue #151)**: Completes the three-section catalog architecture by adding item-level publishing for ummah organisations, establishing a consistent `org → item` hierarchy across all sections (FOOD / STORES / UMMAH):
+  - **`community_projects` table**: Ummah item-level catalog under `community_services`, with typed fields for all ummah activity types — `project_type TEXT CHECK IN ('event', 'donation', 'class', 'volunteer')`, `ticket_price_cents INTEGER`, `donation_goal_cents INTEGER`, `raised_cents INTEGER DEFAULT 0`, `price_currency TEXT DEFAULT 'EUR'`, `is_active BOOLEAN DEFAULT true`, `start_date / end_date TIMESTAMPTZ`, `max_attendees INTEGER`, `sort_order INTEGER`, and German full-text search via `search_vector TSVECTOR GENERATED ALWAYS AS (...) STORED` with GIN index.
+  - **RLS security**: Owner-based row-level security — SELECT is public; INSERT/UPDATE/DELETE require ownership via 2-hop join `community_projects.community_service_id → community_services.provider_id → providers.provider_owner_id = auth.uid()`. 4 policies total.
+  - **`categories.applicable_section` column**: Section-scoped category filtering — CHECK constraint enforces `'food' | 'business' | 'ummah' | 'all'`; NULL allowed for legacy unscoped categories. Partial B-tree index for efficient section-filtered queries.
+  - **`search_community_projects` RPC**: Full-text search over `community_projects` with filters for `community_service_id`, `project_type`, `active_only`, `limit_count`, `offset_count`. Uses `plainto_tsquery('german', ...)` + `ts_rank` for relevance ranking. `SECURITY INVOKER` preserves RLS context.
+  - **`provider_stats` MV extension**: Extended with `community_project_count BIGINT` column (count of active projects) — backward compatible, all 8 existing columns preserved.
+  - **ADR-095**: Formal Architecture Decision Record codifying the three-section hierarchy, three-table ordering FK pattern, and CTI base table rejection rationale.
+
+### Technical
+
+- Migration 069 is additive and idempotent — `IF NOT EXISTS`, `CREATE OR REPLACE`, `DROP ... IF EXISTS` throughout; safe to re-run
+- Backward compatible: `community_services` table structure unchanged; `search_community_services_enhanced` RPC (migration 014) unmodified; all Plan 094 tables and RPCs unaffected
+- Ordering-ready schema: typed `ticket_price_cents`/`donation_goal_cents` are typed database columns (not JSONB) — prerequisite for Epic 4.2 ordering without destructive migration
+- Pre-QA ownership diagnostic: `DO $$ RAISE NOTICE $$` block logs any `community_services` rows with `provider_id IS NULL` at migration time
+
+## [0.10.21] - 2026-04-19
+
+### Added
+
+- **Provider Catalog Schema Evolution (Plan 094 / Issue #148)**: Introduces per-provider typed catalog tables as the data foundation for food menu and business service offerings:
+  - **`provider_menu_items` table (M1)**: Per-provider food catalog with typed ordering-ready fields — `price_cents INTEGER`, `is_available BOOLEAN NOT NULL DEFAULT true`, `allergens TEXT[]`, `is_halal BOOLEAN`, `image_path TEXT` (Supabase Storage), and `sort_order INTEGER`. German-language tsvector full-text search via `search_vector TSVECTOR GENERATED ALWAYS AS (...) STORED` with GIN index.
+  - **`provider_service_offers` table (M1)**: Per-provider service catalog with booking-ready fields — `price_cents INTEGER`, `is_available BOOLEAN NOT NULL DEFAULT true`, `duration_minutes INTEGER`, `booking_url TEXT`, and `sort_order INTEGER`. Same STORED tsvector GIN search pattern.
+  - **RLS security (M1)**: Owner-based row-level security on both tables — SELECT is public (USING true); INSERT/UPDATE/DELETE require `provider_id IN (SELECT provider_id FROM providers WHERE provider_owner_id = auth.uid())`, matching existing provider ownership model. 8 policies total.
+  - **`search_provider_items` RPC (M2)**: Unified full-text search across both catalog tables via `UNION ALL` with `item_type` discriminator (`'menu_item'` | `'service_offer'`). Accepts `search_query`, `listing_type_filter`, `provider_id_filter`, `limit_count`, `offset_count`. Uses `SECURITY INVOKER` to preserve RLS. Fallback ordering by `sort_order, name_de` for empty query.
+  - **`provider_stats` MV extension (M3)**: Materialized view extended with `menu_item_count BIGINT` and `service_offer_count BIGINT` columns for dashboard display. Singleton UNIQUE index preserved for `CONCURRENTLY` refresh support.
+  - **`offer_tag_id` vocabulary bridge (M1)**: Optional FK to global `offers` vocabulary entry on both tables — links provider-specific items to shared taxonomy without breaking existing vocabulary search.
+  - **Updated-at triggers (M1)**: BEFORE UPDATE triggers on both tables reuse existing `update_updated_at_column()` function, consistent with providers (migration 062) and badge tables (migration 016).
+
+### Technical
+
+- Migration 068 is additive and idempotent — uses `IF NOT EXISTS`, `CREATE OR REPLACE`, `DROP POLICY IF EXISTS` throughout; safe to re-run
+- Backward compatible: existing `offers` vocabulary table, `search_offers` RPC, and `providers.offers_ids[]` are unchanged
+- Ordering-ready schema: `price_cents`, `is_available`, `duration_minutes` are typed database columns (not JSONB) — prerequisite for Epic 4.2 (Simple Booking System)
+- Schema foundation for Epic 2.3 (Enhanced Provider Profiles) catalog display
+- GIN indexes on `search_vector` columns plus partial indexes (`WHERE is_available = true`) for hot-path menu display performance
+
+## [0.10.20] - 2026-04-19
+
+### Added
+
+- **City Interest: "Notify Me" for Unavailable Cities (Plan 093 / Issue #147)**: Converts empty-city search dead-ends into interest capture opportunities for demand-side users:
+  - **i18n (M3)**: Added `notifyMe`, `notifyMeSuccess`, `notifyMeError`, `notifyMeEmailPlaceholder`, `notifyMeCityUnavailable`, `providerCTA` translation keys to all 6 language files (de, en, ar, tr, ur, ps). Updated existing `noCitiesFound` from placeholder-quality to proper messaging.
+  - **POST /api/city-interest/subscribe endpoint (M2)**: New API route at `src/app/api/city-interest/subscribe/route.ts` — handles city interest submissions for both authenticated (session-based, no email required) and anonymous users (email in body). Uses `getSupabaseAdmin()` service role client to upsert `waitlist.selected_city` directly (bypasses RLS). Includes rate limiting (20 req/hr per IP via `@/lib/rate-limit`), manual input validation (email format, cityName trim/max 100 chars), and idempotent upsert. 11 unit tests covering auth/anon paths, validation, error handling, idempotency.
+  - **EmptyCityCard component (M1)**: New `src/features/search/components/EmptyCityCard.tsx` — renders in `/search` Wo section when city query has no matching providers. Shows warm unavailability message, one-tap "Notify me" button for authenticated users (email from session), or email input + button for anonymous users. Inline success/error feedback (no toast). Subtle secondary provider CTA link to `/recommend`. Accessibility: ARIA labels, `role="status"` + `aria-live="polite"` for success, `role="alert"` + `aria-live="assertive"` for errors. RTL support via `dir="auto"`. 14 component tests covering auth/anon flows, success/error states, accessibility, provider CTA.
+  - **Search page integration (M1)**: Updated `src/app/(public)/search/page.tsx` to fetch user session (via `supabase.auth.getUser()`), pass `userEmail` to `EmptyCityCard`, and replace plain "noCitiesFound" text with `EmptyCityCard` component when city search returns no results.
+
+## [0.10.19] - 2026-04-19
+
+### Added
+
+- **Home Screen Redesign — Merged Home + Search Page (Plan 090 / Issue #144)**: Redesigns the mobile home screen (Stage 3) to merge the Home and Search pages into a single discovery-first view:
+  - **i18n (M1)**: Added `home.searchPlaceholder`, `home.searchAriaLabel`, `sections.food`, `sections.ummah`, `sections.stores` keys to all 6 translation files (de, en, ar, tr, ur, ps). `sections.stores` globally renames "Business" to "Stores" across the app.
+  - **HomeSearchBar component (M2)**: New `src/features/search/components/HomeSearchBar.tsx` — tap-to-navigate affordance (`div[role="search"]`, not `<input>`) navigating to `/providers?section={activeSection}`. Avoids iOS PWA keyboard on home load.
+  - **Section-filtered category galleries (M3)**: `fetchCategoriesBySection(section)` in `src/services/categories.ts` queries categories via `providers.listing_type` (food/business) or `community_services` (ummah). `CategoryGallerySection` accepts optional `section` prop; when provided uses `fetchCategoriesBySection` with React Query key `['categories-by-section', section]`; category clicks preserve `?section=` in navigation URL.
+  - **Home page assembly (M4)**: Stage 3 block in `RootPageContent` replaced — removes `MobileGreetingHeader`, adds glassmorphism fixed header with `HomeSearchBar` + `SectionSelector` and active section state (`useState<Section>('food')`). Scrollable body renders `CategoryGallerySection` with `section={activeSection}`.
+  - **SectionSelector i18n (M1)**: `SectionSelector.tsx` now uses `useLanguage()` hook for tab labels replacing hardcoded strings.
+- **Home Redesign Increment 2 — SectionSelector Visual Polish + /suchen Stub (Plan 091 / Issue #145)**: Continues home redesign with Figma-aligned visual polish and dedicated search entry point:
+  - **SectionSelector visual restyle (M1)**: Restyled `SectionSelector` component to match Figma teal-pill design — white rounded container (`bg-background`, `h-14`, `rounded-2xl`), teal active tab (`bg-primary`, `h-10`, `rounded-xl`), grey inactive tabs (`text-neutral-500`), Inter Tight Medium 16px (`font-inter-tight font-medium text-base`).
+  - **/suchen search page stub (M2)**: New `src/app/(public)/suchen/page.tsx` — dedicated search entry point with back header ("← Suchen"), `SectionSelector`, 4 accordion sections (Was?/Wo:/Wer:/Filter; Was? open by default), and fixed bottom bar ("Clear all" + "♡ Suchen" button). Search execution deferred to future plan — accordions and buttons are styled stubs. Uses `<Suspense>` boundary for `useSearchParams()` per Next.js App Router requirement. Back button navigates to `/` when no history (direct URL access fallback).
+  - **HomeSearchBar URL update (M3)**: `HomeSearchBar` now navigates to `/suchen?section={activeSection}` instead of `/providers?section=...` (supersedes Plan 090 SC5). CategoryGallerySection category clicks still navigate to `/providers` (unchanged).
+  - **i18n (M2)**: Added `suchen.title`, `suchen.accordions.{was,wo,wer,filter}`, `suchen.clearAll`, `suchen.searchButton` keys to all 6 translation files (de, en, ar, tr, ur, ps).
+
+- **Search Page Accordion Consistency — ExpandSection Component (Plan 092 / Issue #146)**: Pre-QA UI consistency fix for `/search` page accordions to match provider detail expand pattern:
+  - **ExpandSection component (M1)**: New `src/components/ui/ExpandSection.tsx` — reusable expand/collapse card component extracted from the provider detail page expand pattern. Uses single rotating `ChevronDown` icon (no Up/Down swap), borderless `rounded-2xl bg-background shadow-sm` card, `font-inter-tight text-lg font-semibold text-content-heading` title. Accepts `title`, `defaultOpen`, and `children` props. Manages internal open/close state.
+  - **Search page update (M2)**: Updated `/search` page to use `ExpandSection` for all 4 accordion rows (Was?, Wo, Wer, Filter). Removed bespoke `open` state object, `toggle` function, `renderLabel` helper, and `rows` array. Was? accordion uses `defaultOpen` prop to remain open by default.
+  - **Unit tests (M3)**: Added `src/__tests__/components/ui/ExpandSection.test.tsx` with 5 tests covering render, default state, `defaultOpen` prop, toggle behavior, and icon rotation.
 
 ## [0.10.18] - 2026-04-11
 
@@ -20,6 +916,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **JoinHalal Pipeline (M4)**: Import pipeline sets `listing_type='food'`, `no_alcohol=true`, `halal_level=1` for all JoinHalal records. `SOURCE_CONTROLLED_FIELDS` updated. Upsert RPC in migration updated.
   - **Backward Compatibility (M8)**: Legacy `/providers?category=UUID` URLs without `?section=` infer section from category via `inferSectionFromCategory()`. Admin edit UI surfaces `listing_type` display field alongside category.
   - **Verification SQL (M7)**: `sql/089_section_classification_verification.sql` with 6 verification queries for post-migration audit.
+
 ## [0.10.17] - 2026-04-07
 
 ### Fixed
@@ -80,6 +977,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Profile provider pages: server Supabase client for RLS (Plan 082 M8)**: Profile provider detail (`/profile/providers/[id]`) and edit (`/profile/providers/[id]/edit`) pages were silently using the anonymous Supabase client in Server Components, causing RLS failures for non-approved providers. Both pages now import `getProviderById` from `@/services/providers.server` (cookie-based auth context), matching the fix applied to the public provider and community-service pages in Plan 081.
 
 ### Added
+
 ### Added
 
 - **Admin community service edit page (Plan 083)**: Full admin CRUD surface for community services. Admins and moderators can now view (bypassing RLS), edit fields, and review (approve/reject/request revision) any community service from `/dashboard/community-services/[id]/edit`. New API routes: `GET /api/admin/community-services/[id]` and `PATCH /api/admin/edit-community-service` and `PATCH /api/admin/review-community-service`. New admin service layer at `src/services/admin/communityServices.ts` with sanitized partial-update and review functions. Zod validation schemas added to `src/lib/validations/adminSchemas.ts`. Resolves `AdminCommunityServiceDetailButtons` OA-1 (edit button now routes to a working page).

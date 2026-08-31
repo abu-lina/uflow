@@ -1,13 +1,13 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
-import { CityEarlyAccessNavbar } from '@/components/shared/CityEarlyAccessNavbar';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getFeatureFlag } from '@/config/feature-flags';
@@ -102,12 +102,19 @@ export default function CreateProviderPage() {
             onClick={handleRecommendProvider}
           />
         </div>
+
+        {/* Chat alternative hint */}
+        <p className="text-center text-sm text-[#7A7A7A]">
+          {t('create.chatHint.prefix')}{' '}
+          <Link
+            className="text-primary font-medium underline underline-offset-2 hover:opacity-70 transition-opacity"
+            href="/"
+          >
+            {t('create.chatHint.link')}
+          </Link>
+        </p>
       </PageContent>
       
-      {/* Bottom Navigation Bar - Mobile Only */}
-      <div className="block md:hidden">
-        <CityEarlyAccessNavbar />
-      </div>
     </Layout>
   );
 }

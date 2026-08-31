@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../utils/test-utils';
-import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
+import { ProviderDetailModal } from '@/features/providers/pages/ProviderDetailModal';
 import { mockProviders } from '../mocks/providerData';
 import type { Provider } from '@/services/providers';
 import { TrustLevel, EntityType, BadgeKey } from '@/types/badges';
@@ -14,6 +14,7 @@ describe('ProviderDetailModal Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.setItem('preferred-language', 'de');
   });
 
   describe('Basic Rendering', () => {
@@ -510,7 +511,7 @@ describe('ProviderDetailModal Component', () => {
         />,
       );
 
-      const saveButton = screen.getByRole('button', { name: /save/i });
+      const saveButton = screen.getByRole('button', { name: /save|speichern/i });
       expect(saveButton).toBeInTheDocument();
     });
 
@@ -523,8 +524,8 @@ describe('ProviderDetailModal Component', () => {
         />,
       );
 
-      // Check that save button is present (English locale in tests)
-      const saveButton = screen.getByRole('button', { name: /save/i });
+      // Check that save button is present (supports both EN/DE locale)
+      const saveButton = screen.getByRole('button', { name: /save|speichern/i });
       expect(saveButton).toBeInTheDocument();
 
       // The other buttons don't show text until expanded, but we can check they exist
@@ -625,7 +626,7 @@ describe('ProviderDetailModal Component', () => {
     });
 
     it('should show empty state when provider has no badges', () => {
-      const providerWithoutBadges = { ...mockProvider, badges: [], barakah_effects: [] };
+      const providerWithoutBadges = { ...mockProvider, badges: [] };
 
       render(
         <ProviderDetailModal
@@ -654,11 +655,12 @@ describe('ProviderDetailModal Component', () => {
 
       // BadgeLabel components render with role="status"
       const badgeLabels = screen.getAllByRole('status');
-      expect(badgeLabels.length).toBe(2);
+      // TrustBadgesSection now renders outside the closed Halal Check section
+      expect(badgeLabels.length).toBe(4);
     });
 
     it('should show empty state text when no badges exist [post-fix]', () => {
-      const providerWithoutBadges = { ...mockProvider, badges: [], barakah_effects: [] };
+      const providerWithoutBadges = { ...mockProvider, badges: [] };
 
       render(
         <ProviderDetailModal
@@ -754,7 +756,6 @@ describe('ProviderDetailModal Component', () => {
         location_longitude: null,
         created_at: null,
         updated_at: null,
-        barakah_effects: [],
         offers_ids: [],
         needs_ids: [],
       } as Provider;

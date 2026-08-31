@@ -1,0 +1,131 @@
+name: Food Provider Enrichment
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'  # Weekly Sunday 3am UTC
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: 'Sources to run (comma-separated: wolt,lieferando,ubereats,joinhalal)'
+        required: false
+        default: 'wolt,lieferando,ubereats,joinhalal'
+        type: string
+      mode:
+        description: 'Execution mode'
+        required: true
+        default: 'auto-apply'
+        type: choice
+        options:
+          - auto-apply
+          - dry-run
+          - write
+      limit:
+        description: 'Max providers per source (blank = all)'
+        required: false
+        default: ''
+        type: string
+      provider-id:
+        description: 'Single provider ID to enrich (skips per-source enrichment)'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Resolve sources (supports schedule + workflow_dispatch)
+        id: resolve-sources
+        run: |
+          SOURCES="${{ github.event.inputs.sources }}"
+          echo "resolved_sources=${SOURCES:-wolt,lieferando,ubereats,joinhalal}" >> "$GITHUB_OUTPUT"
+
+      - name: Install Playwright Chromium
+        if: contains(steps.resolve-sources.outputs.resolved_sources, 'ubereats') || contains(steps.resolve-sources.outputs.resolved_sources, 'lieferando')
+        run: npx playwright install chromium --with-deps
+
+      - name: Run enrichment sources
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set +e
+          SOURCES="${{ steps.resolve-sources.outputs.resolved_sources }}"
+          MODE="${{ github.event.inputs.mode || 'auto-apply' }}"
+          LIMIT="${{ github.event.inputs.limit }}"
+          if [ -n "${{ github.event.inputs.provider-id }}" ]; then
+            SOURCES="none"
+          fi
+          mkdir -p /tmp/enrichment-logs
+          for SOURCE in joinhalal wolt lieferando ubereats; do
+            if echo "$SOURCES" | grep -qw "$SOURCE"; then
+              echo ""
+              echo "═══════════════════════════════════════════════"
+              echo "  ▶️  Running source: $SOURCE"
+              echo "═══════════════════════════════════════════════"
+              ARGS="--source $SOURCE --mode $MODE"
+              if [ -n "$LIMIT" ]; then
+                ARGS="$ARGS --limit $LIMIT"
+              fi
+              npx tsx scripts/enrich-providers.ts $ARGS > "/tmp/enrichment-logs/${SOURCE}.log" 2>&1
+              RC=$?
+              cat "/tmp/enrichment-logs/${SOURCE}.log"
+              if [ $RC -ne 0 ]; then
+                echo "  ⚠️  Source $SOURCE failed (exit $RC) — continuing"
+              else
+                echo "  ✅ Source $SOURCE complete"
+              fi
+            fi
+          done
+          echo ""
+          echo "═══════════════════════════════════════════════"
+          echo "  ✅ All enrichment sources complete"
+          echo "═══════════════════════════════════════════════"
+
+      - name: Install Playwright for delivery menu enrichment
+        if: always()
+        run: npx playwright install chromium --with-deps
+
+      - name: Run delivery menu enrichment (URL-based)
+        continue-on-error: true
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+        run: |
+          echo ""
+          echo "═══════════════════════════════════════════════"
+          echo "  ▶️  Running delivery menu enrichment"
+          echo "═══════════════════════════════════════════════"
+          DM_ARGS=""
+          if [ -n "${{ github.event.inputs.provider-id }}" ]; then
+            DM_ARGS="--provider-id ${{ github.event.inputs.provider-id }}"
+          fi
+          npx tsx scripts/enrich-delivery-menus.ts $DM_ARGS > "/tmp/enrichment-logs/delivery-menus.log" 2>&1
+          RC=$?
+          cat "/tmp/enrichment-logs/delivery-menus.log"
+          if [ $RC -ne 0 ]; then
+            echo "  ⚠️  Delivery menu enrichment completed with warnings (exit $RC)"
+          else
+            echo "  ✅ Delivery menu enrichment complete"
+          fi
+          echo "═══════════════════════════════════════════════"
+
+      - name: Upload run logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: enrichment-logs-${{ github.run_id }}
+          path: /tmp/enrichment-logs/
+          retention-days: 30

@@ -4,6 +4,7 @@ import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudi
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { providerReviewUpdateSchema } from '@/lib/validations/adminSchemas';
 import { updateProviderReview } from '@/services/admin/providers';
+import { checkHalalAttestation } from '@/services/admin/halal-gate';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**

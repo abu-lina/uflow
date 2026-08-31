@@ -11,7 +11,21 @@
  */
 
 /** Canonical section type. */
-export type Section = 'food' | 'ummah' | 'business';
+export type Section = 'food' | 'ummah' | 'store';
+
+/** Section metadata for active/inactive state and i18n label keys. */
+export interface SectionMeta {
+  active: boolean;
+  labelKey: string;
+  badgeKey?: string;
+}
+
+/** Per-section metadata registry. Single source of truth for active state. */
+export const SECTION_META: Record<Section, SectionMeta> = {
+  food: { active: true, labelKey: 'sections.food' },
+  ummah: { active: false, labelKey: 'sections.ummah', badgeKey: 'sections.soon' },
+  store: { active: false, labelKey: 'sections.stores', badgeKey: 'sections.soon' },
+};
 
 /** Boolean filter attribute keys that exist as columns on providers. */
 export type SectionFilter =
@@ -23,9 +37,9 @@ export type SectionFilter =
   | 'family_friendly'
   | 'women_friendly'
   | 'children_friendly'
-  | 'accepts_donations'
+  | 'makes_donations'
   | 'has_parking'
-  | 'solidarity_pricing';
+  | 'economic_solidarity';
 
 export interface SectionFilterConfig {
   /** Filters ON by default when entering the section. User can toggle off. */
@@ -41,9 +55,9 @@ export const SECTION_FILTER_CONFIG: Record<Section, SectionFilterConfig> = {
       muslim_owned: true,
     },
     optional: [
-      'accepts_donations',
+      'makes_donations',
       'has_parking',
-      'solidarity_pricing',
+      'economic_solidarity',
       'family_friendly',
       'children_friendly',
       'women_friendly',
@@ -54,11 +68,11 @@ export const SECTION_FILTER_CONFIG: Record<Section, SectionFilterConfig> = {
     defaults: {},
     optional: [],
   },
-  business: {
+  store: {
     defaults: {
       muslim_owned: true,
     },
-    optional: ['accepts_donations', 'solidarity_pricing'],
+    optional: ['makes_donations', 'economic_solidarity'],
   },
 };
 
@@ -91,8 +105,52 @@ const GEMEINSCHAFT_SPENDEN_CATEGORY_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
  * uuids to stay consistent with the listing_type backfill strategy.
  */
 export function inferSectionFromCategory(categoryId: string | null | undefined): Section {
-  if (!categoryId) return 'business';
+  if (!categoryId) return 'store';
   if (categoryId === ESSEN_TRINKEN_CATEGORY_ID) return 'food';
   if (categoryId === GEMEINSCHAFT_SPENDEN_CATEGORY_ID) return 'ummah';
-  return 'business';
+  return 'store';
+}
+
+/** Maps a section to its canonical public results route. */
+export function getResultsPathForSection(section: Section): '/food' | '/stores' | '/ummah' {
+  if (section === 'food') return '/food';
+  if (section === 'ummah') return '/ummah';
+  return '/stores';
+}
+
+/** Resolves section from URL params with legacy category fallback (D9 default: food). */
+export function resolveSectionFromSearchParams(params: URLSearchParams): Section {
+  const sectionParam = params.get('section');
+  if (sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'store') {
+    return sectionParam;
+  }
+  // Legacy backward compat: 'business' maps to 'store'
+  if (sectionParam === 'business') {
+    return 'store';
+  }
+
+  const categoryParam = params.get('category');
+  if (categoryParam) {
+    return inferSectionFromCategory(categoryParam);
+  }
+
+  return 'food';
+}
+
+/** Resolves section from route context (query/category first, then canonical pathname fallback). */
+export function resolveSectionFromRoute(
+  pathname: string | null | undefined,
+  params: URLSearchParams,
+): Section {
+  const fromParams = resolveSectionFromSearchParams(params);
+  if (params.has('section') || params.has('category')) {
+    return fromParams;
+  }
+
+  const routePath = pathname || '';
+  if (routePath === '/food' || routePath.endsWith('/food')) return 'food';
+  if (routePath === '/ummah' || routePath.endsWith('/ummah')) return 'ummah';
+  if (routePath === '/stores' || routePath.endsWith('/stores')) return 'store';
+
+  return fromParams;
 }

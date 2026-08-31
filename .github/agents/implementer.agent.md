@@ -5,19 +5,127 @@ target: vscode
 argument-hint: Reference the approved plan to implement (e.g., plan 002)
 tools:
   [
-    'vscode/vscodeAPI',
-    'execute',
-    'read',
-    'edit',
-    'search',
-    'web',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'ms-python.python/getPythonEnvironmentInfo',
-    'ms-python.python/getPythonExecutableCommand',
-    'ms-python.python/installPythonPackage',
-    'ms-python.python/configurePythonEnvironment',
-    'todo',
+    vscode/vscodeAPI,
+    execute/runNotebookCell,
+    execute/getTerminalOutput,
+    execute/killTerminal,
+    execute/sendToTerminal,
+    execute/createAndRunTask,
+    execute/runInTerminal,
+    read/getNotebookSummary,
+    read/problems,
+    read/readFile,
+    read/viewImage,
+    read/terminalSelection,
+    read/terminalLastCommand,
+    edit/createDirectory,
+    edit/createFile,
+    edit/createJupyterNotebook,
+    edit/editFiles,
+    edit/editNotebook,
+    edit/rename,
+    search/changes,
+    search/codebase,
+    search/fileSearch,
+    search/listDirectory,
+    search/textSearch,
+    search/usages,
+    web/fetch,
+    web/githubRepo,
+    supabase-dev/apply_migration,
+    supabase-dev/create_branch,
+    supabase-dev/delete_branch,
+    supabase-dev/deploy_edge_function,
+    supabase-dev/execute_sql,
+    supabase-dev/generate_typescript_types,
+    supabase-dev/get_advisors,
+    supabase-dev/get_edge_function,
+    supabase-dev/get_logs,
+    supabase-dev/get_project_url,
+    supabase-dev/get_publishable_keys,
+    supabase-dev/list_branches,
+    supabase-dev/list_edge_functions,
+    supabase-dev/list_extensions,
+    supabase-dev/list_migrations,
+    supabase-dev/list_tables,
+    supabase-dev/merge_branch,
+    supabase-dev/rebase_branch,
+    supabase-dev/reset_branch,
+    supabase-dev/search_docs,
+    supabase-prod/apply_migration,
+    supabase-prod/create_branch,
+    supabase-prod/delete_branch,
+    supabase-prod/deploy_edge_function,
+    supabase-prod/execute_sql,
+    supabase-prod/generate_typescript_types,
+    supabase-prod/get_advisors,
+    supabase-prod/get_edge_function,
+    supabase-prod/get_logs,
+    supabase-prod/get_project_url,
+    supabase-prod/get_publishable_keys,
+    supabase-prod/list_branches,
+    supabase-prod/list_edge_functions,
+    supabase-prod/list_extensions,
+    supabase-prod/list_migrations,
+    supabase-prod/list_tables,
+    supabase-prod/merge_branch,
+    supabase-prod/rebase_branch,
+    supabase-prod/reset_branch,
+    supabase-prod/search_docs,
+    com.figma.mcp/mcp/add_code_connect_map,
+    com.figma.mcp/mcp/create_design_system_rules,
+    com.figma.mcp/mcp/create_new_file,
+    com.figma.mcp/mcp/generate_diagram,
+    com.figma.mcp/mcp/generate_figma_design,
+    com.figma.mcp/mcp/get_code_connect_map,
+    com.figma.mcp/mcp/get_code_connect_suggestions,
+    com.figma.mcp/mcp/get_context_for_code_connect,
+    com.figma.mcp/mcp/get_design_context,
+    com.figma.mcp/mcp/get_figjam,
+    com.figma.mcp/mcp/get_metadata,
+    com.figma.mcp/mcp/get_screenshot,
+    com.figma.mcp/mcp/get_variable_defs,
+    com.figma.mcp/mcp/search_design_system,
+    com.figma.mcp/mcp/send_code_connect_mappings,
+    com.figma.mcp/mcp/use_figma,
+    com.figma.mcp/mcp/whoami,
+    figma/add_code_connect_map,
+    figma/create_design_system_rules,
+    figma/get_code_connect_map,
+    figma/get_code_connect_suggestions,
+    figma/get_design_context,
+    figma/get_figjam,
+    figma/get_metadata,
+    figma/get_screenshot,
+    figma/get_variable_defs,
+    figma/send_code_connect_mappings,
+    supabase/apply_migration,
+    supabase/create_branch,
+    supabase/delete_branch,
+    supabase/deploy_edge_function,
+    supabase/execute_sql,
+    supabase/generate_typescript_types,
+    supabase/get_advisors,
+    supabase/get_edge_function,
+    supabase/get_logs,
+    supabase/get_project_url,
+    supabase/get_publishable_keys,
+    supabase/list_branches,
+    supabase/list_edge_functions,
+    supabase/list_extensions,
+    supabase/list_migrations,
+    supabase/list_tables,
+    supabase/merge_branch,
+    supabase/rebase_branch,
+    supabase/reset_branch,
+    supabase/search_docs,
+    ms-python.python/getPythonEnvironmentInfo,
+    ms-python.python/getPythonExecutableCommand,
+    ms-python.python/installPythonPackage,
+    ms-python.python/configurePythonEnvironment,
+    uflow.uflow-memory/flowbaby_storeMemory,
+    uflow.uflow-memory/flowbaby_retrieveMemory,
+    todo,
   ]
 model: GPT-5.3-Codex
 handoffs:
@@ -156,14 +264,31 @@ Best design meeting requirements without over-engineering. Pragmatic craft (good
 8. Run/report tests, linters, checks per plan.
 9. Build/run test coverage for all work. Create unit + integration tests per `testing-patterns` skill.
 10. NOT complete until tests pass. Verify all tests before handoff.
-    10b. **Pre-QA Static Gate (MANDATORY before any Code Review or QA handoff)**: Run both commands and confirm each exits 0 before handoff:
+    10b. **Pre-QA Static Gate (MANDATORY before any Code Review or QA handoff)**: Run all checks below and confirm each exits 0 / clean before handoff:
 
 ```
 npm run lint
 npm run type-check
 ```
 
-If either fails, fix all errors before handoff. Do not hand off to Code Review or QA with known lint or type errors. QA remains the authoritative lint and type gate; this is a mandatory self-check only to prevent resetting QA on IDE-level warnings. 11. Track deviations. Refuse to proceed without updated guidance. 12. Validate implementation delivers value statement before complete. 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
+> ⚠️ Always run `npm run lint` (full-repo). Do NOT substitute with a delta-only command such as `npx eslint [explicit-file-list]` — manual file lists silently miss files touched indirectly (e.g. via migration or import changes). Only full-repo lint provides a reliable gate.
+
+If either fails, fix all errors before handoff. Do not hand off to Code Review or QA with known lint or type errors. QA remains the authoritative lint and type gate; this is a mandatory self-check only to prevent resetting QA on IDE-level warnings.
+
+    **i18n self-scan (MANDATORY for any plan that touches UI component files — PI-121)**:
+    Before requesting code review, scan every modified component file for hardcoded user-visible string literals:
+    - Any quoted string rendered directly to the DOM (not a class name, key name, or config value) MUST use `t()`.
+    - Common offenders: button labels, aria-labels, placeholder text, error messages, section headers.
+    - If found: replace with a translation key and add that key to all 6 locale files (`en/de/ar/tr/ur/ps`) before handoff.
+    - This mirrors the code-reviewer's step 6k check — catch it yourself first; do not rely on the reviewer to catch it for you.
+    - Rule: if your PR would cause code-reviewer step 6k to fire, fix it here instead.
+
+    **Implementation artifact pre-flight (MANDATORY before any Code Review handoff — PI-121)**:
+    Confirm `agent-output/implementation/<ID>-*.md` exists and is populated before initiating the code review handoff:
+    - [ ] All milestones listed and marked complete
+    - [ ] Files modified table populated
+    - [ ] TDD compliance table present (per `copilot-instructions.md` Bugfix Handoff Completeness)
+    If any item is missing, create or complete the artifact BEFORE sending the code review handoff. A missing implementation doc is a blocking MEDIUM finding at code review. 11. Track deviations. Refuse to proceed without updated guidance. 12. Validate implementation delivers value statement before complete. 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
 13c. **Version bump is preliminary (MANDATORY)**:
 The version number in the plan is a placeholder until DevOps Stage 1 confirms it via `git fetch --tags`.
 When bumping, note in the implementation doc: `Version bumped to X.Y.Z (preliminary - final version confirmed at DevOps Stage 1)`.
@@ -182,7 +307,15 @@ Then verify both files show the same version:
 grep '"version"' package-lock.json | head -2
 ```
 
-Do NOT hand off to Code Review or QA without this step completed and verified. Failure to do this causes a guaranteed QA blocking finding. 14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly. 15. Retrieve/store memory. 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
+Do NOT hand off to Code Review or QA without this step completed and verified. Failure to do this causes a guaranteed QA blocking finding.
+13d. **CHANGELOG date convention (MANDATORY)**:
+When writing or updating a CHANGELOG entry, use **today's date** (the date the entry is written or committed) — NOT the date implementation work started.
+
+- If the release date is uncertain, use `Unreleased` as the date; DevOps will set the final date at Stage 1 (step 4b).
+- Do NOT use the date the plan was created or the date you began coding.
+- Use `[Unreleased]` as the CHANGELOG **version block header** (the `## [x.y.z]` part), not an anticipated version number. Example: `## [Unreleased] - 2026-05-02`. DevOps Stage 1 renames this to the confirmed semver at step 4b. Reason: the correct version is only known after `git fetch --tags` at DevOps Stage 1; any version written earlier is a prediction and risks placing entries inside an already-released block.
+
+14. **Cross-repo contracts**: Before implementing API endpoints or clients that span repos, load `cross-repo-contract` skill. Verify contract definitions exist and import types directly. 15. Retrieve/store memory. 16. **Status tracking**: When starting implementation, update the plan's Status field to "In Progress" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
 
 ### Dependency Override Guardrails (MANDATORY when applicable)
 
@@ -226,6 +359,20 @@ If you create or modify a migration that references **existing** tables/columns 
 
 - If schema drift is detected, STOP and resolve (update migration, or align schemas) before handoff.
 - Document the verification evidence in the implementation doc.
+
+### FK-Safe PK Cutover (MANDATORY when promoting a column to PRIMARY KEY)
+
+Before writing any migration that promotes a column to PRIMARY KEY or changes PK structure:
+
+1. **Enumerate inbound FKs**: Query `information_schema.referential_constraints` or `pg_constraint` to list all FKs pointing at the table.
+2. **Preserve UNIQUE constraints**: Do NOT drop UNIQUE constraints on the target column before the PK promotion — doing so breaks FK validation mid-transaction. Correct sequence:
+   - Drop old PK constraint (`DROP CONSTRAINT <table>_pkey`)
+   - Add new PK on the target column (`ADD CONSTRAINT <table>_pkey PRIMARY KEY (<entity_id>)`)
+   - Only then drop the now-redundant UNIQUE constraint (if desired)
+3. **Wrap in a transaction**: All constraint changes in one migration should be inside `BEGIN; ... COMMIT;` for atomic rollback.
+4. **Document inbound FK count** in the implementation doc (example: "26 inbound FKs to `providers.provider_id` — all already target `<entity_id>`; no FK remapping needed").
+
+**Why**: Dropping a UNIQUE constraint that FKs depend on before the new PK is in place causes `ERROR: there is no unique constraint matching given keys for referenced table`. This is a known Postgres migration anti-pattern.
 
 ### DB Plan Evidence Gate (Search) (MANDATORY WHEN APPLICABLE)
 
@@ -318,6 +465,54 @@ If the caller is intentionally deferred (rare):
 
 - Document the deferral explicitly in the Implementation doc (owner + trigger + evidence to close).
 - Do NOT claim the milestone is complete unless the plan explicitly allows deferral.
+
+### Search/Filter Client-Interaction Trace (MANDATORY when applicable)
+
+**Trigger**: When you add or modify a form submit handler, URL parameter builder, or inline action in a component that renders a result list that could contain mixed entity types (e.g., `provider` + `community_service` rows — identifiable by sections like UMMAH that route to a different table, or by `section !== 'ummah'`-style guards elsewhere in the file).
+
+Before handing off to Code Reviewer, verify and document:
+
+**URL Lifecycle Trace** (for every modified or new submit handler):
+
+1. Trace what query params are constructed in the submit handler.
+2. Explicitly verify: which params are **preserved** from the current URL, and which are **dropped**.
+3. Confirm that persistent navigation state (e.g., `section`, `status`, `location`) is NOT accidentally dropped by building from an empty `new URLSearchParams()` rather than `new URLSearchParams(window.location.search)`.
+4. Write a unit or regression test that validates persistent params survive a submit-and-navigate cycle.
+
+**Inline Action Entity-Type Guard** (for every inline action rendered in a result list):
+
+1. For every action button in a result list (e.g., Approve, Reject, Bookmark): identify which entity types can appear in that list.
+2. Confirm the action is statically or dynamically restricted to the correct entity type.
+3. If the list can contain mixed entity types, confirm the action is guarded (e.g., `section !== 'ummah' && ...` or `entityType === 'provider' && ...`).
+4. Write a test asserting the action does NOT render for the wrong entity type.
+
+**Evidence**: Record in the implementation doc (one-liner per item):
+
+- `URL lifecycle: section preserved via window.location.search reuse — ✅`
+- `Inline action guard: section !== 'ummah' confirmed — ✅`
+
+If the trigger does not apply, write: `Search/Filter Client-Interaction Trace: N/A — [reason]`.
+
+### Multi-Plan State Extension Audit (MANDATORY when applicable)
+
+**Trigger**: When the current plan extends, depends on, or builds on top of state introduced or modified by a **prior plan** — including state set in `useEffect` hooks, `useState` initializers, localStorage hydration effects, or derived/computed state expressions.
+
+Before starting implementation, read all `useEffect`, `useState`, and localStorage hydration code that was introduced or modified by prior plans in the same component or hook. For each state mutation from prior plans, explicitly verify:
+
+1. **Semantic compatibility**: Does the current plan's new state semantics (e.g., new derived expressions, new idle/results/empty states) still work correctly when the prior plan's mutation runs? Example: if a prior plan sets `someQuery = city` during hydration and the current plan's idle state requires `someQuery = ''`, the mutation must be updated.
+
+2. **Derived state review**: If the current plan introduces a new computed/derived expression (e.g., `displayQuery = selected ? '' : inputQuery`), verify every upstream mutation that affects the inputs to that expression.
+
+3. **Idle-state compatibility**: If the current plan adds an idle state (i.e., a value is selected but no user input has occurred), verify that prior plan initialization does not bypass the idle state by setting both "selected" and "input" state simultaneously.
+
+**Evidence**: Record in the implementation doc:
+
+```
+Multi-Plan State Audit: Plan [prior IDs] mutations reviewed.
+- [mutation line/file]: compatible ✅ / updated [description] ✅ / incompatible ⚠️ [description]
+```
+
+If the trigger does not apply, write: `Multi-Plan State Audit: N/A — no prior-plan state mutations in scope`.
 
 ### API Route Coverage Gate (MANDATORY when applicable)
 

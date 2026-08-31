@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import { supabase } from '@/lib/supabase/client';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { Category } from '@/services/categories';
+import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 
 interface CategoryGalleryProps {
   categoryId: string;
@@ -17,6 +19,7 @@ interface ProviderImage {
 }
 
 export default function CategoryGallery({ categoryId, category }: CategoryGalleryProps) {
+  const { t } = useLanguage();
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,19 +96,19 @@ export default function CategoryGallery({ categoryId, category }: CategoryGaller
         setImages(combinedImages);
       } catch (err) {
         console.error('Error fetching images:', err);
-        setError('Failed to load images');
+        setError(t('providers.failedToLoadImages'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchImages();
-  }, [categoryId, category]);
+  }, [categoryId, category, t]);
 
   // Always ensure we have exactly 3 images
   const displayImages = [...images];
   while (displayImages.length < 3) {
-    displayImages.push('/images/placeholder.jpg');
+    displayImages.push(PLACEHOLDER_IMAGE);
   }
 
   if (loading) {
@@ -135,11 +138,11 @@ export default function CategoryGallery({ categoryId, category }: CategoryGaller
           <Image
             fill
             alt={
-              imageUrl === '/images/placeholder.jpg'
-                ? `Placeholder image ${index + 1}`
+              imageUrl === PLACEHOLDER_IMAGE
+                ? t('providers.placeholderImage', { index: index + 1 })
                 : imageUrl.includes('provider-images') || imageUrl.includes('providers')
-                ? `Provider image ${index + 1}`
-                : `Category image ${index + 1}`
+                ? t('providers.providerImage', { index: index + 1 })
+                : t('providers.categoryImage', { index: index + 1 })
             }
             className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
             loading={index === 0 ? 'eager' : 'lazy'}

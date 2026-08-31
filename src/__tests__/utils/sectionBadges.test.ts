@@ -2,7 +2,7 @@
  * Plan 089 M5: Computed badge logic tests
  *
  * Tests for:
- *   - computeHalalStars(provider): returns halal_level (0 if absent)
+ *   - computeHalalStars(provider): derives level from verification_method + has_certificate
  *   - computeBarakahBadge(provider): muslim_owned + ≥2 community attributes
  *
  * TDD Gate: written BEFORE implementation of src/utils/sectionBadges.ts
@@ -14,24 +14,28 @@ import { computeHalalStars, computeBarakahBadge } from '@/utils/sectionBadges';
 // ─── computeHalalStars ───────────────────────────────────────────────────────
 
 describe('computeHalalStars (Plan 089 M5)', () => {
-  it('returns 0 when halal_level is null', () => {
-    expect(computeHalalStars({ halal_level: null })).toBe(0);
+  it('[pre-impl FAILS] returns 0 when verification_method is null', () => {
+    expect(computeHalalStars({ verification_method: null })).toBe(0);
   });
 
-  it('returns 0 when halal_level is undefined', () => {
+  it('returns 0 when verification_method is undefined', () => {
     expect(computeHalalStars({})).toBe(0);
   });
 
-  it('returns 1 for halal_level = 1', () => {
-    expect(computeHalalStars({ halal_level: 1 })).toBe(1);
+  it('returns 1 for online without certificate', () => {
+    expect(computeHalalStars({ verification_method: 'online', has_certificate: false })).toBe(1);
   });
 
-  it('returns 2 for halal_level = 2', () => {
-    expect(computeHalalStars({ halal_level: 2 })).toBe(2);
+  it('returns 2 for online with certificate', () => {
+    expect(computeHalalStars({ verification_method: 'online', has_certificate: true })).toBe(2);
   });
 
-  it('returns 3 for halal_level = 3', () => {
-    expect(computeHalalStars({ halal_level: 3 })).toBe(3);
+  it('returns 3 for onsite without certificate', () => {
+    expect(computeHalalStars({ verification_method: 'onsite', has_certificate: false })).toBe(3);
+  });
+
+  it('returns 4 for onsite with certificate', () => {
+    expect(computeHalalStars({ verification_method: 'onsite', has_certificate: true })).toBe(4);
   });
 });
 
@@ -42,8 +46,8 @@ describe('computeBarakahBadge (Plan 089 M5)', () => {
     expect(
       computeBarakahBadge({
         muslim_owned: false,
-        accepts_donations: true,
-        solidarity_pricing: true,
+        makes_donations: true,
+        economic_solidarity: true,
       }),
     ).toBe(false);
   });
@@ -52,8 +56,8 @@ describe('computeBarakahBadge (Plan 089 M5)', () => {
     expect(
       computeBarakahBadge({
         muslim_owned: true,
-        accepts_donations: true,
-        solidarity_pricing: false,
+        makes_donations: true,
+        economic_solidarity: false,
         has_prayer_space: false,
         family_friendly: false,
         women_friendly: false,
@@ -65,8 +69,8 @@ describe('computeBarakahBadge (Plan 089 M5)', () => {
     expect(
       computeBarakahBadge({
         muslim_owned: true,
-        accepts_donations: true,
-        solidarity_pricing: true,
+        makes_donations: true,
+        economic_solidarity: true,
         has_prayer_space: false,
         family_friendly: false,
         women_friendly: false,
@@ -78,8 +82,8 @@ describe('computeBarakahBadge (Plan 089 M5)', () => {
     expect(
       computeBarakahBadge({
         muslim_owned: true,
-        accepts_donations: true,
-        solidarity_pricing: true,
+        makes_donations: true,
+        economic_solidarity: true,
         has_prayer_space: true,
         family_friendly: false,
         women_friendly: false,

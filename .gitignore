@@ -72,7 +72,8 @@ Thumbs.db
 **/public/sw.js.map
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
-**/public/fallback-development.js
+**/public/fallback-*.js
+**/public/fallback-*.js.map
 
 # Supabase
 .branches
@@ -86,6 +87,9 @@ logs
 *.log.*
 .eslintcache
 .stylelintcache
+
+# Research reference snapshots (browser-saved pages, large assets)
+docs/references/
 
 # Build artifacts
 dist-ssr
@@ -116,6 +120,12 @@ memories/
 imports/**/*.backup
 imports/**/*.processed
 imports/**/*.tmp
+# Category image source files (PNG/JPG dropped by operator — do not commit)
+imports/category-images/**/*.png
+imports/category-images/**/*.jpg
+imports/category-images/**/*.jpeg
+imports/category-images/**/*.webp
+imports/category-images/**/*.avif
 
 # Lottie conversion temporary files
 imports/lottie/.temp-gif-frames/.flowbaby/
@@ -129,3 +139,10 @@ imports/lottie/.temp-gif-frames/.flowbaby/
 
 # VS Code workspace files (worktree-specific, not shared)
 *.code-workspace
+
+# AI agent configuration directories (local tool installs, not project source)
+.agents/
+.claude/
+.env.local.localdb
+.env.local.remote-backup
+supabase/seed-multi-location-example.sql

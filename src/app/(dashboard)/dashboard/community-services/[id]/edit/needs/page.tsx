@@ -65,12 +65,24 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
           return;
         }
 
-        // CS-specific table and ID column
-        const { data, error } = await supabase
-          .from('community_services')
-          .select('needs_ids, category_id')
-          .eq('community_service_id', communityServiceId)
+        // M-5a: community_services dropped; ummah providers in providers table
+        const { data: providerData, error: providerError } = await supabase
+          .from('providers')
+          .select('category_id')
+          .eq('provider_id', communityServiceId)
+          .eq('listing_type', 'ummah')
           .single();
+
+        const { data: needRows, error: needsError } = await supabase
+          .from('provider_needs')
+          .select('need_id')
+          .eq('provider_id', communityServiceId);
+
+        const error = providerError || needsError;
+        const data = providerData ? {
+          needs_ids: needRows?.map((r: { need_id: string }) => r.need_id) ?? [],
+          category_id: providerData.category_id,
+        } : null;
 
         if (!error && data) {
           if (data.needs_ids) {

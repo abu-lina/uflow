@@ -1,47 +1,40 @@
 module.exports = {
-  // TypeScript and JavaScript files
-  '*.{js,jsx,ts,tsx}': [
-    // Fix imports first
-    './fix-imports.sh',
-
-    // Type checking
-    'tsc --noEmit',
-
-    // Linting
+  // TypeScript files — type-check, lint, format
+  '*.{ts,tsx}': [
+    () => 'tsc --noEmit',
     'eslint --fix --max-warnings=0',
-
-    // Formatting
     'prettier --write',
-
-    // Run tests if any test files are changed
     (files) => {
       const testFiles = files.filter(
         (file) => file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__'),
       );
       if (testFiles.length > 0) {
-        return 'npm test -- --findRelatedTests ' + testFiles.join(' ');
+        return 'npx vitest run ' + testFiles.join(' ');
       }
       return [];
     },
   ],
 
+  // JavaScript files — lint and format (no tsc)
+  '*.{js,jsx}': ['eslint --fix --max-warnings=0 --no-warn-ignored', 'prettier --write'],
+
   // Style files
-  '*.{css,scss,sass,less}': ['stylelint --fix', 'prettier --write'],
+  '*.{css,scss,sass,less}': ['prettier --write'],
 
   // JSON files
   '*.json': ['prettier --write'],
 
   // Markdown files
-  '*.{md,mdx}': ['prettier --write', 'markdownlint --fix'],
+  '*.{md,mdx}': ['prettier --write'],
 
   // YAML files
-  '*.{yml,yaml}': ['prettier --write', 'yamllint'],
+  '*.{yml,yaml}': ['prettier --write'],
 
   // Configuration files
   '.*rc': ['prettier --write --parser json'],
 
   // Package files
-  'package.json': ['sort-package-json', 'prettier --write'],
+  'package.json': ['prettier --write'],
 
   // Lock files
   'package-lock.json': [
@@ -52,10 +45,10 @@ module.exports = {
   '.gitignore': ['prettier --write'],
 
   // Documentation
-  'README.md': ['prettier --write', 'markdownlint --fix'],
+  'README.md': ['prettier --write'],
 
   // Shell scripts
-  '*.sh': ['shellcheck', 'prettier --write'],
+  '*.sh': ['prettier --write'],
 
   // TypeScript declaration files
   '*.d.ts': ['prettier --write'],

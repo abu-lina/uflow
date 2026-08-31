@@ -1,0 +1,66 @@
+'use client';
+
+import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChatWidget } from '@/features/chat/components/ChatWidget';
+import { MessageCircle } from 'lucide-react';
+import { useAuth } from '@/providers/auth-provider';
+
+export function ChatFloatingWidget() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Don't show FAB on /chat page — early return AFTER all hooks (Rules-of-Hooks)
+  if (pathname === '/chat') return null;
+  const userName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0];
+
+  return (
+    <>
+      {/* FAB button */}
+      <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50">
+        {!isOpen && (
+          <button
+            onClick={() => { if (window.innerWidth < 768) { router.push('/chat'); } else { setIsOpen(true); } }}
+            aria-label="Chat öffnen"
+            className="w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark hover:shadow-xl transition-all flex items-center justify-center"
+          >
+            <MessageCircle size={24} strokeWidth={2} />
+          </button>
+        )}
+      </div>
+
+      {/* Chat modal */}
+      {isOpen && (
+        <>
+          {/* Overlay — shows app screen behind */}
+          <div
+            className="fixed inset-0 bg-black/30 z-50 md:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Modal panel */}
+          <div className="fixed inset-4 md:inset-auto md:bottom-20 md:right-4 z-50 bg-white rounded-3xl shadow-xl shadow-black/5 border border-gray-100 flex flex-col overflow-hidden md:w-[400px] md:h-[600px] md:max-h-[calc(100vh-100px)]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-primary text-white rounded-t-3xl">
+              <h3 className="font-semibold text-sm">Ummah Flow Assistant</h3>
+              <button
+                onClick={() => setIsOpen(false)}
+                aria-label="Chat schließen"
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary-dark transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <ChatWidget userName={userName} />
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  );
+}

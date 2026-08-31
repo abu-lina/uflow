@@ -5,7 +5,6 @@ import { vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/providers/auth-provider';
 import { SearchProvider } from '@/providers/search-provider';
-import { LoadingProvider } from '@/providers/LoadingProvider';
 import { LanguageProvider } from '@/providers/LanguageProvider';
 import { mockAuthContext, mockSearchContext } from '../mocks/providerData';
 
@@ -15,8 +14,11 @@ let mockSearchParams = new URLSearchParams();
 let mockPathname = '/providers';
 let searchParamsListeners: Array<() => void> = [];
 
+/** Shared mock router push function — can be imported by tests for assertions. */
+export const mockRouterPush = vi.fn();
+
 const createMockRouter = () => ({
-  push: vi.fn(),
+  push: mockRouterPush,
   replace: vi.fn((url: string) => {
     // Update mock search params when router.replace is called
     const urlObj = new URL(url, 'http://localhost');
@@ -64,7 +66,7 @@ vi.mock('next/image', () => ({
         (onLoad as () => void)();
       }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
-    // eslint-disable-next-line @next/next/no-img-element
+     
     return (
       <img
         src={String(src || '')}
@@ -207,9 +209,7 @@ function customRender(
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
           <AuthProvider>
-            <SearchProvider>
-              <LoadingProvider>{children}</LoadingProvider>
-            </SearchProvider>
+            <SearchProvider>{children}</SearchProvider>
           </AuthProvider>
         </LanguageProvider>
       </QueryClientProvider>

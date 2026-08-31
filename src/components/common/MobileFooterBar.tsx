@@ -5,9 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
-import { HomeIcon } from '@/components/ui/icons/HomeIcon';
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
-import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { useAuth } from '@/providers/auth-provider';
@@ -17,19 +15,7 @@ const navItems = [
   {
     label: 'Home',
     href: '/',
-    icon: (isActive: boolean) => <HomeIcon isActive={isActive} />,
-    noFrame: true,
-  },
-  {
-    label: 'Explore',
-    href: '/providers',
     icon: (isActive: boolean) => <ExploreIcon isActive={isActive} />,
-    noFrame: true,
-  },
-  {
-    label: 'Create',
-    href: '/create',
-    icon: (isActive: boolean) => <CreateIcon isActive={isActive} />,
     noFrame: true,
   },
   {
@@ -76,6 +62,15 @@ export function MobileFooterBar() {
     [router, pathname, isNavigating],
   );
 
+  const isExploreActive =
+    pathname === '/' ||
+    pathname === '/search' ||
+    pathname.startsWith('/city/') ||
+    pathname === '/providers' ||
+    pathname === '/food' ||
+    pathname === '/stores' ||
+    pathname === '/ummah';
+
   return (
     <>
       <nav
@@ -89,7 +84,7 @@ export function MobileFooterBar() {
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6">
+        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-10">
           {navItems.map((item) => (
             <div
               key={item.href}
@@ -132,9 +127,9 @@ export function MobileFooterBar() {
                       ? pathname.startsWith('/profile') ||
                           pathname === '/login' ||
                           pathname === '/signup'
-                      : item.href === '/create'
-                        ? pathname.startsWith('/create') || pathname === '/create'
-                        : pathname === item.href,
+                        : item.href === '/'
+                          ? isExploreActive
+                          : pathname === item.href,
                   )}
               </Link>
             </div>

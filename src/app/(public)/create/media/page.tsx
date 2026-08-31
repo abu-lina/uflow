@@ -16,7 +16,7 @@ import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
 import { useAuth } from '@/providers/auth-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
 
@@ -46,6 +46,10 @@ export default function MediaUploadPage() {
     {
       title: t('create.steps.contact'),
       icon: 'mdi:account-group',
+    },
+    {
+      title: 'Halal',
+      icon: 'mdi:check-decagram',
     },
     {
       title: t('create.steps.media'),
@@ -134,7 +138,7 @@ export default function MediaUploadPage() {
       <PageHeader
         title={t('create.media.title')}
         variant="back-and-title"
-        onBack="/create/contact"
+        onBack="/create/halal"
       />
 
       <PageContent 
@@ -147,7 +151,7 @@ export default function MediaUploadPage() {
         <div className="flex w-full flex-1 flex-col gap-8">
           {/* Step Indicator */}
           <div className="mb-6">
-            <StepIndicator currentStep={3} steps={STEPS} />
+            <StepIndicator currentStep={4} steps={STEPS} />
           </div>
 
 

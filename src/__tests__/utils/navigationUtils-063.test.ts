@@ -79,6 +79,10 @@ describe('Plan 063 — Fresh-user mobile auth entry (Bug B)', () => {
     it('shouldShowCityEarlyAccessNavbar returns false on /welcome without onboarding', () => {
       expect(shouldShowCityEarlyAccessNavbar('/welcome', false, false, null, 'onboarding')).toBe(false);
     });
+
+    it('[post-fix PASSES] should remain hidden on locale-prefixed /city-selection routes', () => {
+      expect(shouldShowCityEarlyAccessNavbar('/de/city-selection', false, false, null, 'stage2')).toBe(false);
+    });
   });
 
   // ---------- Splash screen hides navbar (regression fix) ----------

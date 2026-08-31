@@ -1,0 +1,43 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "orchestrator",
+  "instructions": [
+    ".github/copilot-instructions.md",
+    ".cursor/rules/workflow.mdc",
+    ".cursor/rules/writing.mdc"
+  ],
+  "agent": {
+    "orchestrator": {
+      "mode": "primary",
+      "color": "primary"
+    },
+    "analyst": {
+      "mode": "subagent",
+      "color": "info"
+    },
+    "planner": {
+      "mode": "subagent",
+      "color": "info"
+    },
+    "architect": {
+      "mode": "subagent",
+      "color": "info"
+    },
+    "implementer": {
+      "mode": "subagent",
+      "color": "success"
+    },
+    "code-reviewer": {
+      "mode": "subagent",
+      "color": "warning"
+    },
+    "qa": {
+      "mode": "subagent",
+      "color": "warning"
+    },
+    "devops": {
+      "mode": "subagent",
+      "color": "accent"
+    }
+  }
+}

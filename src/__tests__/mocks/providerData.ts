@@ -25,7 +25,6 @@ export const mockProviders: Provider[] = [
     }),
     created_at: '2024-01-15T10:00:00Z',
     updated_at: '2024-01-15T10:00:00Z',
-    barakah_effects: ['Iman', 'Zakat', 'Sunnah'],
     offers_ids: [],
     needs_ids: [],
     category: {
@@ -54,7 +53,6 @@ export const mockProviders: Provider[] = [
     }),
     created_at: '2024-01-10T14:00:00Z',
     updated_at: '2024-01-10T14:00:00Z',
-    barakah_effects: ['Iman', 'Education'],
     offers_ids: [],
     needs_ids: [],
     category: {
@@ -83,7 +81,6 @@ export const mockProviders: Provider[] = [
     }),
     created_at: '2024-01-05T12:00:00Z',
     updated_at: '2024-01-05T12:00:00Z',
-    barakah_effects: ['Sunnah'],
     offers_ids: [],
     needs_ids: [],
     category: {
@@ -97,7 +94,7 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[0].provider_id,
     name: mockProviders[0].provider_name,
-    images: mockProviders[0].provider_images,
+    images: mockProviders[0].provider_images as string,
     category_id: mockProviders[0].category_id,
     address_city: mockProviders[0].address_city,
     social_website: mockProviders[0].social_website,
@@ -111,7 +108,6 @@ export const mockSearchResults: SearchResult[] = [
     location_longitude: mockProviders[0].location_longitude,
     created_at: mockProviders[0].created_at,
     updated_at: mockProviders[0].updated_at,
-    barakah_effects: mockProviders[0].barakah_effects,
     offers_ids: mockProviders[0].offers_ids,
     needs_ids: mockProviders[0].needs_ids,
     category: mockProviders[0].category,
@@ -121,7 +117,7 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[1].provider_id,
     name: mockProviders[1].provider_name,
-    images: mockProviders[1].provider_images,
+    images: mockProviders[1].provider_images as string,
     category_id: mockProviders[1].category_id,
     address_city: mockProviders[1].address_city,
     social_website: mockProviders[1].social_website,
@@ -135,7 +131,6 @@ export const mockSearchResults: SearchResult[] = [
     location_longitude: mockProviders[1].location_longitude,
     created_at: mockProviders[1].created_at,
     updated_at: mockProviders[1].updated_at,
-    barakah_effects: mockProviders[1].barakah_effects,
     offers_ids: mockProviders[1].offers_ids,
     needs_ids: mockProviders[1].needs_ids,
     category: mockProviders[1].category,
@@ -145,7 +140,7 @@ export const mockSearchResults: SearchResult[] = [
   {
     id: mockProviders[2].provider_id,
     name: mockProviders[2].provider_name,
-    images: mockProviders[2].provider_images,
+    images: mockProviders[2].provider_images as string,
     category_id: mockProviders[2].category_id,
     address_city: mockProviders[2].address_city,
     social_website: mockProviders[2].social_website,
@@ -159,7 +154,6 @@ export const mockSearchResults: SearchResult[] = [
     location_longitude: mockProviders[2].location_longitude,
     created_at: mockProviders[2].created_at,
     updated_at: mockProviders[2].updated_at,
-    barakah_effects: mockProviders[2].barakah_effects,
     offers_ids: mockProviders[2].offers_ids,
     needs_ids: mockProviders[2].needs_ids,
     category: mockProviders[2].category,
@@ -173,7 +167,7 @@ export const mockBilalSearchResults: SearchResult[] = [
   {
     id: mockProviders[0].provider_id,
     name: mockProviders[0].provider_name,
-    images: mockProviders[0].provider_images,
+    images: mockProviders[0].provider_images as string,
     category_id: mockProviders[0].category_id,
     address_city: mockProviders[0].address_city,
     social_website: mockProviders[0].social_website,
@@ -187,7 +181,6 @@ export const mockBilalSearchResults: SearchResult[] = [
     location_longitude: mockProviders[0].location_longitude,
     created_at: mockProviders[0].created_at,
     updated_at: mockProviders[0].updated_at,
-    barakah_effects: mockProviders[0].barakah_effects,
     offers_ids: mockProviders[0].offers_ids,
     needs_ids: mockProviders[0].needs_ids,
     category: mockProviders[0].category,

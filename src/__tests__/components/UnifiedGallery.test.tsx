@@ -38,6 +38,30 @@ vi.mock('@/hooks/useImageFallback', () => ({
   useImageFallback: vi.fn(),
 }));
 
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({
+    t: (key: string, params?: { index?: number }) => {
+      if (key === 'providers.categoryImage') {
+        return `Category image ${params?.index}`;
+      }
+      if (key === 'providers.providerImage') {
+        return `Provider image ${params?.index}`;
+      }
+      if (key === 'providers.placeholderImage') {
+        return `Placeholder image ${params?.index}`;
+      }
+      if (key === 'providers.communityServiceImage') {
+        return `Community service image ${params?.index}`;
+      }
+      if (key === 'providers.failedToLoadImages') {
+        return 'Failed to load images';
+      }
+
+      return key;
+    },
+  }),
+}));
+
 // Mock the entityTypeUtils
 vi.mock('@/utils/entityTypeUtils', () => ({
   getEntityTypeForCategory: vi.fn(() => 'provider'),
@@ -141,5 +165,54 @@ describe('UnifiedGallery — image error fallback [Plan 055]', () => {
     expect(images[0]).toHaveAttribute('src', 'https://example.com/valid1.jpg');
     expect(images[1]).toHaveAttribute('src', 'https://example.com/valid2.jpg');
     expect(images[2]).toHaveAttribute('src', 'https://example.com/valid3.jpg');
+  });
+
+  it('[Plan 122] renders category Storage images with object-cover and pastel background', () => {
+    mockUseImageFallback.mockReturnValue({
+      images: [
+        'https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/232c2870/1.webp',
+        '/images/placeholder.jpg',
+        '/images/placeholder.jpg',
+      ],
+      loading: false,
+      error: null,
+    });
+
+    render(
+      <UnifiedGallery
+        categoryId="category-palette-test"
+        entityType="provider"
+        category={{
+          id: 'category-palette-test',
+          name_en: 'Test',
+          name_de: 'Test',
+          category_images: {
+            urls: [
+              'https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/232c2870/1.webp',
+            ],
+          },
+        } as unknown as Parameters<typeof UnifiedGallery>[0]['category']}
+      />,
+    );
+
+    const categoryImage = screen.getByAltText('Category image 1');
+    // Plan 122: all images use object-cover — no special contain/padding for category images
+    expect(categoryImage.className).toContain('object-cover');
+    expect(categoryImage.className).not.toContain('object-contain');
+    // Category fallback images now get pastel background color on the container
+    expect((categoryImage.parentElement as HTMLElement).style.backgroundColor).toBeTruthy();
+    expect((categoryImage.parentElement as HTMLElement).style.backgroundColor).not.toBe('');
+  });
+
+  it('renders localized error text from hook translation key', () => {
+    mockUseImageFallback.mockReturnValue({
+      images: [],
+      loading: false,
+      error: 'providers.failedToLoadImages',
+    });
+
+    render(<UnifiedGallery categoryId="test-category-id" entityType="provider" />);
+
+    expect(screen.getByText('Failed to load images')).toBeInTheDocument();
   });
 });

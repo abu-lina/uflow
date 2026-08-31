@@ -6,9 +6,12 @@ import { describe, expect, it } from 'vitest';
 
 const repoRoot = process.cwd();
 const scriptPath = path.join(repoRoot, 'scripts', 'import-muslimbusiness.ts');
+// Use the locally installed tsx binary (devDependency) instead of npx to avoid
+// CI environment issues with npx auto-install producing noise in stderr.
+const tsxBin = path.join(repoRoot, 'node_modules', '.bin', 'tsx');
 
 function runImport(args: string[]) {
-  return spawnSync('npx', ['tsx', scriptPath, ...args], {
+  return spawnSync(tsxBin, [scriptPath, ...args], {
     cwd: repoRoot,
     encoding: 'utf8',
     env: {
@@ -24,18 +27,22 @@ describe('import-muslimbusiness CLI', () => {
     const result = runImport(['--dry-run', '--limit']);
 
     expect(result.status).not.toBe(0);
-    expect(result.stderr || result.stdout).toContain(
+    // The script writes argument validation errors to stderr
+    expect(result.stderr).toContain(
       '--limit requires a positive integer (got: undefined)'
     );
   }, 15_000);
 
   it('accepts a positive --limit and reaches category loading', () => {
     const result = runImport(['--dry-run', '--limit', '3']);
-    const output = `${result.stdout}\n${result.stderr}`;
 
-    expect(output).toContain('Mode       : 🔍 DRY-RUN (no writes)');
-    expect(output).toContain('Limit      : 3');
-    expect(output).toContain('▶ Loading categories from Supabase...');
-    expect(output).toContain('Failed to load categories');
-  });
+    // The script writes its DRY-RUN header and progress to stdout
+    expect(result.stdout).toContain('Mode       : 🔍 DRY-RUN (no writes)');
+    expect(result.stdout).toContain('Limit      : 3');
+    expect(result.stdout).toContain('▶ Loading categories from Supabase...');
+    // The script always exits non-zero when Supabase is unreachable:
+    // Node.js 22+: "Failed to load categories" in stderr
+    // Node.js 20:  WebSocket not found error in stderr (realtime-js restriction)
+    expect(result.status).toBe(1);
+  }, 15_000);
 });

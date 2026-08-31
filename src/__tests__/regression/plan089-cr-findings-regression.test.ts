@@ -145,13 +145,13 @@ describe('CR-H2: cardMode ummah entity safety', () => {
   });
 
   it('[post-fix PASSES] moderation still enabled for business section with admin+status', () => {
-    expect(resolveCardMode_postfixExpr(true, 'pending', 'business')).toBe('moderation');
+    expect(resolveCardMode_postfixExpr(true, 'pending', 'store')).toBe('moderation');
   });
 
   it('[post-fix PASSES] bookmark mode when status is null for all sections', () => {
     expect(resolveCardMode_postfixExpr(true, null, 'food')).toBe('bookmark');
     expect(resolveCardMode_postfixExpr(true, null, 'ummah')).toBe('bookmark');
-    expect(resolveCardMode_postfixExpr(true, null, 'business')).toBe('bookmark');
+    expect(resolveCardMode_postfixExpr(true, null, 'store')).toBe('bookmark');
   });
 
   it('[post-fix PASSES] bookmark mode when not admin regardless of section', () => {

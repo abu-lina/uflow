@@ -68,7 +68,7 @@ export interface MockQueryBuilder {
   select: (columns?: string) => MockQueryBuilder;
   eq: (column: string, value: unknown) => MockQueryBuilder;
   ilike: (column: string, value: unknown) => MockQueryBuilder;
-  maybeSingle: () => Promise<{ data: MockTokenData | null; error: null | { message: string } }>;
+  maybeSingle: () => Promise<{ data: unknown; error: null | { message: string } }>;
   update: (values: Partial<MockTokenData>) => { eq: (column: string, value: unknown) => Promise<{ error: null | { message: string } }> };
 }
 
@@ -78,6 +78,7 @@ export interface MockQueryBuilder {
 export function createMockSupabaseAdmin(
   options: {
     tokenData?: MockTokenData | null;
+    userRole?: 'user' | 'owner' | 'admin' | 'moderator' | null;
     tokenError?: { message: string } | null;
     users?: MockUser[];
     userError?: { message: string } | null;
@@ -88,6 +89,7 @@ export function createMockSupabaseAdmin(
 ): SupabaseClient {
   const {
     tokenData = null,
+    userRole = null,
     tokenError = null,
     users = [],
     userError = null,
@@ -98,6 +100,7 @@ export function createMockSupabaseAdmin(
 
   // Track query chain for testing
   let queryChain: Array<{ method: string; args: unknown[] }> = [];
+  let currentTable = '';
 
   const queryBuilder: MockQueryBuilder = {
     select: vi.fn((columns?: string) => {
@@ -116,6 +119,9 @@ export function createMockSupabaseAdmin(
       if (tokenError) {
         return { data: null, error: tokenError };
       }
+      if (currentTable === 'users') {
+        return { data: userRole ? { role: userRole } : null, error: null };
+      }
       return { data: tokenData, error: null };
     }),
     update: vi.fn((values: Partial<MockTokenData>) => {
@@ -130,8 +136,9 @@ export function createMockSupabaseAdmin(
   };
 
   return {
-    from: vi.fn((_table: string) => {
+    from: vi.fn((table: string) => {
       queryChain = [];
+      currentTable = table;
       return queryBuilder;
     }),
     auth: {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { AdminStatusFilter, type ReviewStatusFilter } from '../AdminStatusFilter';
+import { AdminStatusFilter } from '../AdminStatusFilter';
 
 /**
  * Tests for AdminStatusFilter component (Plan 058 M2)

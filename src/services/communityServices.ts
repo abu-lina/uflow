@@ -2,17 +2,33 @@ import { supabase } from '@/lib/supabase/client';
 import { logSupabaseError } from '@/utils/errorUtils';
 import type { ProviderBadgeWithType } from '@/types/badges';
 
+// ============================================================================
+// CommunityService — adapter interface mapping ummah providers to the legacy
+// shape consumed by components.  All DB queries target `providers` with
+// listing_type = 'ummah' joined with `ummah_providers` extension table.
+// ============================================================================
+
 export interface CommunityService {
   id?: string;
+  /** Maps to providers.provider_id */
   community_service_id: string;
+  /** Maps to providers.provider_name */
   community_service_name: string;
+  /** Maps to providers.provider_description */
   community_service_description?: string;
-  community_service_logo?: Record<string, unknown>; // JSONB
+  /** Not exposed in DB (logo stored as part of provider images) */
+  community_service_logo?: Record<string, unknown>;
+  /** Maps to providers.provider_images.urls[] */
   community_service_images?: string[];
+  /** Maps to ummah_providers.is_verified */
   is_verified?: boolean;
+  /** Maps to ummah_providers.verified_at */
   verified_at?: string;
+  /** Maps to ummah_providers.verified_by */
   verified_by?: string;
+  /** Maps to ummah_providers.community_service_view_count */
   community_service_view_count?: number;
+  /** Maps to ummah_providers.donation_count */
   donation_count?: number;
   category_id?: string;
   category?: {
@@ -32,133 +48,179 @@ export interface CommunityService {
   location_longitude?: number;
   review_status?: 'pending' | 'approved' | 'rejected' | 'needs_revision' | 'removed_by_owner';
   review_feedback?: string;
-  barakah_effects?: string[];
   offers_ids?: string[];
   needs_ids?: string[];
   offers?: Array<{ name_de: string }>;
   needs?: Array<{ name_de: string }>;
   show_address?: boolean;
   user_created_id?: string;
+  /** Maps to providers.provider_owner_id — the linked provider organisation */
   provider_id?: string;
   created_at: string;
   updated_at: string;
   badges?: ProviderBadgeWithType[];
 }
 
-// Fetch all community services
-export async function getCommunityServices(): Promise<CommunityService[]> {
-  const { data, error } = await supabase
-    .from('community_services')
-    .select('*, category:categories(name_de, name_en)')
-    .eq('review_status', 'approved') // Only show approved services
-    .order('community_service_name')
-    .returns<CommunityService[]>();
-  
-  if (error) {
-    console.error('Error fetching community services:', error);
-    throw error;
-  }
-  return Array.isArray(data) ? data : [];
+// Legacy type alias
+export type CommunityServiceData = CommunityService;
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+const UMMAH_SELECT = `
+  provider_id,
+  provider_name,
+  provider_description,
+  provider_images,
+  provider_owner_id,
+  category_id,
+  category:categories(name_de, name_en),
+  contact_email,
+  contact_phone,
+  social_website,
+  social_instagram,
+  address_street,
+  address_zip,
+  address_city,
+  address_country,
+  location_latitude,
+  location_longitude,
+  review_status,
+  review_feedback,
+  show_address,
+  user_created_id,
+  recommender_email,
+  created_at,
+  updated_at,
+  ummah_providers (
+    community_service_view_count,
+    donation_count,
+    is_verified,
+    verified_at,
+    verified_by
+  )
+` as const;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRowToCS(row: any): CommunityService {
+  const up = Array.isArray(row.ummah_providers) ? row.ummah_providers[0] : row.ummah_providers;
+  const images: string[] =
+    row.provider_images?.urls ??
+    (Array.isArray(row.provider_images) ? row.provider_images : []);
+  return {
+    community_service_id:          row.provider_id,
+    community_service_name:        row.provider_name,
+    community_service_description: row.provider_description ?? undefined,
+    community_service_images:      images.length > 0 ? images : undefined,
+    is_verified:                   up?.is_verified ?? false,
+    verified_at:                   up?.verified_at ?? undefined,
+    verified_by:                   up?.verified_by ?? undefined,
+    community_service_view_count:  up?.community_service_view_count ?? 0,
+    donation_count:                up?.donation_count ?? 0,
+    category_id:                   row.category_id ?? undefined,
+    category:                      row.category ?? undefined,
+    contact_email:                 row.contact_email ?? undefined,
+    contact_phone:                 row.contact_phone ?? undefined,
+    social_website:                row.social_website ?? undefined,
+    social_instagram:              row.social_instagram ?? undefined,
+    address_street:                row.address_street ?? undefined,
+    address_zip:                   row.address_zip ?? undefined,
+    address_city:                  row.address_city ?? undefined,
+    address_country:               row.address_country ?? undefined,
+    location_latitude:             row.location_latitude != null ? Number(row.location_latitude) : undefined,
+    location_longitude:            row.location_longitude != null ? Number(row.location_longitude) : undefined,
+    review_status:                 row.review_status ?? undefined,
+    review_feedback:               row.review_feedback ?? undefined,
+    show_address:                  row.show_address ?? true,
+    user_created_id:               row.user_created_id ?? undefined,
+    provider_id:                   row.provider_owner_id ?? undefined,
+    created_at:                    row.created_at,
+    updated_at:                    row.updated_at,
+  };
 }
 
-/**
- * Check if a category value is a valid category ID (UUID) or a translated "all" string
- * Category IDs are UUIDs, so if it's not a UUID, it's likely a translation and should be ignored
- */
 function isValidCategoryId(category: string | null | undefined): boolean {
   if (!category) return false;
-  
-  // Check if it's a known "all" translation
   const allTranslations = ['All', 'Alle', 'الكل', 'Tümü'];
   if (allTranslations.includes(category)) return false;
-  
-  // Check if it's a valid UUID format (category IDs are UUIDs)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(category);
 }
 
-/**
- * Check if a location value is a valid city name (not empty/falsy)
- * Empty string or falsy values represent "all locations" (no filter)
- */
 function isValidLocation(location: string | null | undefined): boolean {
-  // Empty string, null, undefined all mean "all locations"
-  if (!location) return false;
-  return true;
+  return Boolean(location);
 }
 
-// Search community services by name or description with pagination
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/** Fetch all approved ummah community services */
+export async function getCommunityServices(): Promise<CommunityService[]> {
+  const { data, error } = await supabase
+    .from('providers')
+    .select(UMMAH_SELECT)
+    .eq('listing_type', 'ummah')
+    .eq('review_status', 'approved')
+    .order('provider_name');
+
+  if (error) {
+    console.error('Error fetching community services:', error);
+    throw error;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (Array.isArray(data) ? data : []).map((row: any) => mapRowToCS(row));
+}
+
+/** Search ummah community services with optional query, category, location, and pagination */
 export async function searchCommunityServices(
-  query: string, 
-  category: string = '', 
+  query: string,
+  category: string = '',
   location: string = '',
   limit?: number,
   offset?: number,
 ): Promise<CommunityService[]> {
   let req = supabase
-    .from('community_services')
-    .select('*, category:categories(name_de, name_en)')
-    .eq('review_status', 'approved'); // Only show approved services
+    .from('providers')
+    .select(UMMAH_SELECT)
+    .eq('listing_type', 'ummah')
+    .eq('review_status', 'approved');
 
-  // Apply search query filter if specified (before pagination for better query optimization)
-  // Use full-text search via RPC function for better performance with tsvector indexes
   if (query && query.trim()) {
+    // Full-text search via RPC (targets providers tsvector)
     try {
-      const { data: searchResults, error: rpcError } = await supabase.rpc('search_community_services_enhanced', {
+      const { data: searchResults, error: rpcError } = await supabase.rpc('search_offers', {
         search_query: query.trim(),
-        category_filter: isValidCategoryId(category) ? category : null,
-        city_filter: isValidLocation(location) ? location : null,
-        limit_count: limit || 1000, // Default 1000 — paginated listing; higher than offers/needs because community services have richer browsing UX
+        limit_count: limit || 1000,
         offset_count: offset || 0,
       });
-
-      // If RPC succeeded (no error), use the results — even if empty.
-      // Empty results from full-text search are valid (no matches), NOT a reason to fallback.
-      if (!rpcError && searchResults && Array.isArray(searchResults)) {
-        if (searchResults.length > 0) {
-          // Use the IDs from full-text search results
-          const serviceIds = searchResults.map((s: { community_service_id: string }) => s.community_service_id);
-          req = req.in('community_service_id', serviceIds);
-        }
-        // else: empty result set — no matches found, no fallback needed
-      } else {
-        // RPC error occurred — fallback to ILIKE
-        const isFunctionNotFound = 
-          rpcError?.code === '42883' || 
-          rpcError?.message?.includes('does not exist') ||
-          rpcError?.message?.includes('function') && rpcError?.message?.includes('not found');
-
-        if (isFunctionNotFound) {
-          // Silently fallback - this is expected during migration
-          console.debug('Full-text search function not available, using ILIKE fallback');
-        } else if (rpcError) {
-          // Log other errors but still fallback
-          console.warn('Error using full-text search, falling back to ILIKE:', rpcError);
-        }
-        // Fallback to ILIKE only on RPC error / function-missing
-        req = req.or(`community_service_name.ilike.%${query.trim()}%,community_service_description.ilike.%${query.trim()}%`);
+      if (!rpcError && Array.isArray(searchResults) && searchResults.length > 0) {
+        const ids = searchResults.map((r: { provider_id: string }) => r.provider_id);
+        req = req.in('provider_id', ids);
+      } else if (rpcError) {
+        // Fallback to ilike
+        req = req.or(
+          `provider_name.ilike.%${query.trim()}%,provider_description.ilike.%${query.trim()}%`,
+        );
       }
-    } catch (error) {
-      // Catch any exceptions (e.g., function doesn't exist)
-      console.debug('Full-text search not available, using ILIKE fallback:', error);
-      req = req.or(`community_service_name.ilike.%${query.trim()}%,community_service_description.ilike.%${query.trim()}%`);
+    } catch {
+      req = req.or(
+        `provider_name.ilike.%${query.trim()}%,provider_description.ilike.%${query.trim()}%`,
+      );
     }
   }
 
-  // Apply location filter if specified
   if (isValidLocation(location)) {
     req = req.eq('address_city', location);
   }
 
-  // Apply category filter if specified
   if (isValidCategoryId(category)) {
     req = req.eq('category_id', category);
   }
 
-  // Always order by created_at descending for consistent pagination
   req = req.order('created_at', { ascending: false });
 
-  // Apply pagination if provided (after ordering)
   if (limit !== undefined) {
     req = req.limit(limit);
   }
@@ -166,57 +228,52 @@ export async function searchCommunityServices(
     req = req.range(offset, offset + (limit || 1000) - 1);
   }
 
-  const { data, error } = await req.returns<CommunityService[]>();
-  
-  if (error) {
-    throw error;
-  }
-  return Array.isArray(data) ? data : [];
+  const { data, error } = await req;
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (Array.isArray(data) ? data : []).map((row: any) => mapRowToCS(row));
 }
 
-// Get community service by ID
+/** Get a single community service by ID (= provider_id) */
 export async function getCommunityServiceById(id: string): Promise<CommunityService | null> {
   try {
-  const { data, error } = await supabase
-    .from('community_services')
-    .select('*, category:categories(name_de, name_en)')
-    .eq('community_service_id', id)
-    .single<CommunityService>();
-  
-  if (error) {
-    throw error;
-  }
+    const { data, error } = await supabase
+      .from('providers')
+      .select(UMMAH_SELECT)
+      .eq('provider_id', id)
+      .eq('listing_type', 'ummah')
+      .single();
 
-    if (!data) {
-      return null;
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
     }
+    if (!data) return null;
 
-    // Fetch offers and needs in parallel (similar to getProviderById)
     const [offersResult, needsResult] = await Promise.all([
-      // Fetch offers if they exist
-      data.offers_ids && data.offers_ids.length > 0
-        ? supabase
-            .from('offers')
-            .select('name_de')
-            .in('offer_id', data.offers_ids)
+      supabase.from('provider_offers').select('offer_id').eq('provider_id', id),
+      supabase.from('provider_needs').select('need_id').eq('provider_id', id),
+    ]);
+
+    const offerIds = (offersResult.data || []).map((r) => r.offer_id);
+    const needIds  = (needsResult.data  || []).map((r) => r.need_id);
+
+    const [offersData, needsData] = await Promise.all([
+      offerIds.length > 0
+        ? supabase.from('offers').select('name_de').in('offer_id', offerIds)
         : Promise.resolve({ data: [], error: null }),
-      
-      // Fetch needs if they exist
-      data.needs_ids && data.needs_ids.length > 0
-        ? supabase
-            .from('needs')
-            .select('name_de')
-            .in('need_id', data.needs_ids)
+      needIds.length > 0
+        ? supabase.from('needs').select('name_de').in('need_id', needIds)
         : Promise.resolve({ data: [], error: null }),
     ]);
 
-    const offers = offersResult.data || [];
-    const needs = needsResult.data || [];
-
+    const cs = mapRowToCS(data);
     return {
-      ...data,
-      offers,
-      needs,
+      ...cs,
+      offers_ids: offerIds,
+      needs_ids:  needIds,
+      offers:     offersData.data || [],
+      needs:      needsData.data  || [],
     };
   } catch (error) {
     console.error('Error in getCommunityServiceById:', error);
@@ -224,246 +281,167 @@ export async function getCommunityServiceById(id: string): Promise<CommunityServ
   }
 }
 
-// Get community services by category
+/** Get ummah providers for a given category */
 export async function getCommunityServicesByCategory(categoryId: string): Promise<CommunityService[]> {
   const { data, error } = await supabase
-    .from('community_services')
-    .select('*')
+    .from('providers')
+    .select(UMMAH_SELECT)
+    .eq('listing_type', 'ummah')
     .eq('category_id', categoryId)
-    .eq('review_status', 'approved') // Only show approved services
-    .order('community_service_name')
-    .returns<CommunityService[]>();
-  
-  if (error) {
-    throw error;
-  }
-  return Array.isArray(data) ? data : [];
+    .eq('review_status', 'approved')
+    .order('provider_name');
+
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (Array.isArray(data) ? data : []).map((row: any) => mapRowToCS(row));
 }
 
-// Get community services for a specific provider using the new many-to-many relationship
-// Optimized to use a single query through the relationship table
+/**
+ * Get ummah providers that have an engagement with a given initiating provider.
+ * Replaces the old provider_community_services lookup.
+ */
 export async function getCommunityServicesForProvider(providerId: string): Promise<CommunityService[]> {
   try {
-    // Use a single query through the relationship table to fetch community services
-    // This avoids the 2-query pattern and is more efficient
-    const { data: relationshipData, error: relationshipError } = await supabase
-      .from('provider_community_services')
-      .select(`
-        community_services:community_services(
-          *,
-          category:categories(name_de, name_en)
-        )
-      `)
-      .eq('provider_id', providerId);
-    
-    if (relationshipError) {
-      throw relationshipError;
-    }
-    
-    if (!relationshipData || relationshipData.length === 0) {
-      // Try fallback to old method if no relationships found
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('community_services')
-        .select('*, category:categories(name_de, name_en)')
-        .eq('provider_id', providerId)
-        .eq('review_status', 'approved')
-        .order('community_service_name')
-        .returns<CommunityService[]>();
-      
-      if (fallbackError) {
-        console.error('Error fetching community services (fallback):', fallbackError);
-        return [];
-      }
-      
-      return Array.isArray(fallbackData) ? fallbackData : [];
-    }
-    
-    // Extract community services from relationship data and filter by review_status
-    // Handle both array and single object cases from Supabase nested select
-    const communityServices = relationshipData
-      .map((rel: { community_services: CommunityService | CommunityService[] | null }) => {
-        const cs = rel.community_services;
-        // If it's an array, take the first element; otherwise return as-is
-        return Array.isArray(cs) ? cs[0] : cs;
-      })
-      .filter((cs: CommunityService | null | undefined): cs is CommunityService => 
-        cs !== null && cs !== undefined && cs.review_status === 'approved'
-      )
-      .sort((a: CommunityService, b: CommunityService) => 
-        a.community_service_name.localeCompare(b.community_service_name)
-      );
-    
-    return communityServices;
-    
-  } catch (error) {
-    // Fallback to old method if new relationship doesn't exist yet
-    console.error('Error fetching community services, trying fallback:', error);
-    const { data: fallbackData, error: fallbackError } = await supabase
-      .from('community_services')
-      .select('*, category:categories(name_de, name_en)')
-      .eq('provider_id', providerId)
+    const { data: engagements, error: engErr } = await supabase
+      .from('provider_engagements')
+      .select('engaged_provider_id')
+      .eq('initiating_provider_id', providerId);
+
+    if (engErr) throw engErr;
+    if (!engagements || engagements.length === 0) return [];
+
+    const ids = engagements.map((e) => e.engaged_provider_id);
+    const { data, error } = await supabase
+      .from('providers')
+      .select(UMMAH_SELECT)
+      .in('provider_id', ids)
+      .eq('listing_type', 'ummah')
       .eq('review_status', 'approved')
-      .order('community_service_name')
-      .returns<CommunityService[]>();
-    
-    if (fallbackError) {
-      console.error('Error fetching community services (fallback):', fallbackError);
-      return [];
-    }
-    
-    return Array.isArray(fallbackData) ? fallbackData : [];
+      .order('provider_name');
+
+    if (error) throw error;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (Array.isArray(data) ? data : []).map((row: any) => mapRowToCS(row));
+  } catch (error) {
+    console.error('Error fetching community services for provider:', error);
+    return [];
   }
 }
 
-// Create relationship between provider and community service
+/**
+ * Create an engagement between an initiating provider and an ummah provider.
+ * Replaces createProviderCommunityServiceRelationship.
+ */
 export async function createProviderCommunityServiceRelationship(
-  providerId: string, 
-  communityServiceId: string
+  providerId: string,
+  communityServiceId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase
-      .from('provider_community_services')
+      .from('provider_engagements')
       .insert({
-        provider_id: providerId,
-        community_service_id: communityServiceId
+        initiating_provider_id: providerId,
+        engaged_provider_id:    communityServiceId,
       });
-    
+
     if (error) {
-      console.error('Error creating provider-community service relationship:', error);
+      console.error('Error creating provider engagement:', error);
       return { success: false, error: error.message };
     }
-    
     return { success: true };
   } catch (error) {
-    console.error('Error creating provider-community service relationship:', error);
+    console.error('Error creating provider engagement:', error);
     return { success: false, error: 'Unknown error occurred' };
   }
 }
 
-// Remove relationship between provider and community service
+/**
+ * Remove an engagement between an initiating provider and an ummah provider.
+ * Replaces removeProviderCommunityServiceRelationship.
+ */
 export async function removeProviderCommunityServiceRelationship(
-  providerId: string, 
-  communityServiceId: string
+  providerId: string,
+  communityServiceId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase
-      .from('provider_community_services')
+      .from('provider_engagements')
       .delete()
-      .eq('provider_id', providerId)
-      .eq('community_service_id', communityServiceId);
-    
+      .eq('initiating_provider_id', providerId)
+      .eq('engaged_provider_id', communityServiceId);
+
     if (error) {
-      console.error('Error removing provider-community service relationship:', error);
+      console.error('Error removing provider engagement:', error);
       return { success: false, error: error.message };
     }
-    
     return { success: true };
   } catch (error) {
-    console.error('Error removing provider-community service relationship:', error);
+    console.error('Error removing provider engagement:', error);
     return { success: false, error: 'Unknown error occurred' };
   }
 }
 
-// Get providers supporting a specific community service
+/**
+ * Get provider organisations that have an engagement with a given ummah provider.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getProvidersForCommunityService(communityServiceId: string): Promise<any[]> {
   try {
-    // First, get the provider IDs from the relationship table
-    const { data: relationshipData, error: relationshipError } = await supabase
-      .from('provider_community_services')
-      .select('provider_id')
-      .eq('community_service_id', communityServiceId);
-    
-    if (relationshipError) {
-      throw relationshipError;
-    }
-    
-    if (!relationshipData || relationshipData.length === 0) {
-      return [];
-    }
-    
-    const providerIds = relationshipData.map(r => r.provider_id);
-    
-    // Then, query providers with category relationship
-    const { data: providersData, error: providersError } = await supabase
+    const { data: engagements, error: engErr } = await supabase
+      .from('provider_engagements')
+      .select('initiating_provider_id')
+      .eq('engaged_provider_id', communityServiceId);
+
+    if (engErr) throw engErr;
+    if (!engagements || engagements.length === 0) return [];
+
+    const providerIds = engagements.map((e) => e.initiating_provider_id);
+    const { data, error } = await supabase
       .from('providers')
-      .select(`
-        provider_id,
-        provider_name,
-        provider_images,
-        address_city,
-        category:categories(
-          name_de,
-          name_en
-        )
-      `)
+      .select('provider_id, provider_name, provider_images, address_city, category:categories(name_de, name_en)')
       .in('provider_id', providerIds)
       .eq('review_status', 'approved')
       .order('provider_name');
-    
-    if (providersError) {
-      throw providersError;
-    }
-    
-    return providersData || [];
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
     console.error('Error fetching providers for community service:', error);
     return [];
   }
 }
 
-// Legacy type alias for backward compatibility
-export type CommunityServiceData = CommunityService;
-
-// Get community services created by a specific user
+/** Get ummah providers created by a specific user */
 export async function getCreatedCommunityServices(userId: string): Promise<CommunityService[]> {
   try {
     const { data, error } = await supabase
-      .from('community_services')
-      .select('*, category:categories(name_de, name_en)')
+      .from('providers')
+      .select(UMMAH_SELECT)
+      .eq('listing_type', 'ummah')
       .eq('user_created_id', userId)
-      .order('created_at', { ascending: false })
-      .returns<CommunityService[]>();
+      .order('created_at', { ascending: false });
 
     if (error) {
       logSupabaseError('communityServices.getCreatedCommunityServices', error);
-      // Log additional details before throwing
-      if (error instanceof Error) {
-        console.error('Error fetching created community services:', error.message, error);
-      } else {
-        console.error('Error fetching created community services:', JSON.stringify(error, null, 2), error);
-      }
       throw error;
     }
-
-    return Array.isArray(data) ? data : [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (Array.isArray(data) ? data : []).map((row: any) => mapRowToCS(row));
   } catch (error) {
-    // Handle network errors specifically
     if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
       const enhancedError = new Error(
-        `Network error fetching created community services: ${error.message}. ` +
-        'This usually means:\n' +
-        '1. Check your internet connection\n' +
-        '2. Verify NEXT_PUBLIC_SUPABASE_URL is correct in .env.local\n' +
-        '3. Check if Supabase project is accessible\n' +
-        '4. Restart your dev server after updating .env.local'
+        `Network error fetching created community services: ${(error as Error).message}. ` +
+          'Check NEXT_PUBLIC_SUPABASE_URL in .env.local.',
       );
-      enhancedError.cause = error;
+      (enhancedError as Error & { cause: unknown }).cause = error;
       throw enhancedError;
     }
-    // Re-throw other errors
     throw error;
   }
 }
 
-// Get recommended community services by a specific user (where user created but there's no owner)
-// Note: Community services don't have an owner concept like providers
-// Since community services created by the user should only appear in "content", 
-// this function returns an empty array to avoid duplicates
-// If you want recommendations for community services, define the logic here
+/** Ummah services recommended by user — always empty (no separate recommendation model) */
 export async function getRecommendedCommunityServices(_userId: string): Promise<CommunityService[]> {
-  // For now, return empty array since community services created by user should only appear in "content"
-  // This prevents duplicates where the same community service appears in both sections
-  // If recommendations for community services are needed in the future, add logic here
   return [];
 }
+

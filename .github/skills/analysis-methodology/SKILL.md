@@ -1,3 +1,12 @@
+---
+name: analysis-methodology
+description: Systematic investigation methodology for converting unknowns to knowns using confidence levels, gap tracking, and structured analysis. Use when debugging, investigating root causes, or performing code/architecture analysis.
+license: MIT
+metadata:
+  author: groupzer0
+  version: "1.0"
+---
+
 # Analysis Methodology
 
 A systematic approach to converting unknowns to knowns through structured investigation.

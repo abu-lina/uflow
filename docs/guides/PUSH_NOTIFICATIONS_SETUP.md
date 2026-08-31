@@ -54,7 +54,7 @@ Apply the push subscriptions migration:
 supabase migration up
 
 # Or apply manually via Supabase dashboard
-# Run: supabase/migrations/010_create_push_subscriptions.sql
+# Run: supabase/migrations/archive/010_create_push_subscriptions.sql
 ```
 
 This creates the `push_subscriptions` table with:

@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Global setup mocks zod — restore the real implementation for this test suite
+vi.unmock('zod');
+
 // Mock dependencies before imports
 vi.mock('@/lib/supabase/getUserFromCookie', () => ({
   getUserFromCookie: vi.fn(),
@@ -38,27 +41,11 @@ vi.mock('@/lib/rate-limit', () => ({
   getClientIdentifier: vi.fn(() => 'user:test-admin'),
 }));
 
-// Mock the validation schema — return parsed data as-is with uuid check
-vi.mock('@/lib/validations/adminSchemas', () => ({
-  providerEditUpdateSchema: {
-    parse: (data: Record<string, unknown>) => {
-      if (!data.providerId || typeof data.providerId !== 'string') {
-        throw new Error('Invalid provider ID format');
-      }
-      // Simple UUID format check
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(data.providerId as string)) {
-        throw new Error('Invalid provider ID format');
-      }
-      return data;
-    },
-  },
-}));
-
 import { PATCH } from '@/app/api/admin/edit-provider/route';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { updateProviderFields } from '@/services/admin/providerEdit';
+import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
 const mockGetUserFromCookie = getUserFromCookie as ReturnType<typeof vi.fn>;
 const mockIsAdminOrModerator = isAdminOrModerator as ReturnType<typeof vi.fn>;
@@ -120,6 +107,17 @@ describe('PATCH /api/admin/edit-provider', () => {
     expect(response.status).toBe(400);
   });
 
+  it('[pre-fix FAILS] returns 400 when listingType is outside allowed enum', async () => {
+    const response = await PATCH(
+      createRequest({
+        ...validBody,
+        listingType: 'other',
+      })
+    );
+
+    expect(response.status).toBe(400);
+  });
+
   it('returns 200 on successful admin edit', async () => {
     const response = await PATCH(createRequest(validBody));
     expect(response.status).toBe(200);
@@ -167,6 +165,53 @@ describe('PATCH /api/admin/edit-provider', () => {
 
     const response = await PATCH(createRequest(validBody));
     expect(response.status).toBe(500);
+  });
+
+  // Plan 191: Regression tests for providerImages schema hardening
+  describe('[Plan 191] providerImages schema hardening — prevent HTTP 400 on empty shapes', () => {
+    it('[post-fix PASSES] providerImages as \'[]\' should not reject', async () => {
+      const body = { ...validBody, providerImages: '[]' };
+      const response = await PATCH(createRequest(body));
+      expect(response.status).toBe(200);
+    });
+
+    it('[post-fix PASSES] providerImages as \'{}\' should not reject', async () => {
+      const body = { ...validBody, providerImages: '{}' };
+      const response = await PATCH(createRequest(body));
+      expect(response.status).toBe(200);
+    });
+
+    it('[post-fix PASSES] providerImages as \'{"urls":[]}\' should not reject', async () => {
+      const body = { ...validBody, providerImages: '{"urls":[]}' };
+      const response = await PATCH(createRequest(body));
+      expect(response.status).toBe(200);
+    });
+
+    it('[post-fix PASSES] location with show_address: undefined should succeed', async () => {
+      const body = {
+        ...validBody,
+        locations: [{
+          location_id: 'loc-1',
+          location_name: 'Main Location',
+          address_street: 'Test St 1',
+          address_zip: '12345',
+          address_city: 'Berlin',
+          address_country: 'Germany',
+          contact_phone: '+49123456789',
+          is_primary: true,
+        }],
+      };
+      const response = await PATCH(createRequest(body));
+      expect(response.status).toBe(200);
+    });
+
+    it('[post-fix PASSES] certificateUrl without protocol should normalise', async () => {
+      const rawUrl = 'example.com/cert.pdf';
+      const normalisedUrl = normalizeWebsiteUrl(rawUrl);
+      const body = { ...validBody, certificateUrl: normalisedUrl };
+      const response = await PATCH(createRequest(body));
+      expect(response.status).toBe(200);
+    });
   });
 
   // Plan 073 M2: Regression tests for providerImages contract drift

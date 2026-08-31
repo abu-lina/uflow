@@ -4,22 +4,7 @@ name: DevOps
 target: vscode
 argument-hint: Specify the version to release or deployment task to perform
 tools:
-  [
-    'execute/getTerminalOutput',
-    'execute/runInTerminal',
-    'read/problems',
-    'read/readFile',
-    'read/terminalSelection',
-    'read/terminalLastCommand',
-    'edit/createDirectory',
-    'edit/createFile',
-    'edit/editFiles',
-    'search',
-    'web/fetch',
-    'uflow.uflow-memory/flowbaby_storeMemory',
-    'uflow.uflow-memory/flowbaby_retrieveMemory',
-    'todo',
-  ]
+  [execute/getTerminalOutput, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/problems, read/readFile, supabase/apply_migration, supabase/create_branch, supabase/delete_branch, supabase/deploy_edge_function, supabase/execute_sql, supabase/generate_typescript_types, supabase/get_advisors, supabase/get_edge_function, supabase/get_logs, supabase/get_project_url, supabase/get_publishable_keys, supabase/list_branches, supabase/list_edge_functions, supabase/list_extensions, supabase/list_migrations, supabase/list_tables, supabase/merge_branch, supabase/rebase_branch, supabase/reset_branch, supabase/search_docs, edit/createDirectory, edit/createFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, web/fetch, supabase-dev/apply_migration, supabase-dev/create_branch, supabase-dev/delete_branch, supabase-dev/deploy_edge_function, supabase-dev/execute_sql, supabase-dev/generate_typescript_types, supabase-dev/get_advisors, supabase-dev/get_edge_function, supabase-dev/get_logs, supabase-dev/get_project_url, supabase-dev/get_publishable_keys, supabase-dev/list_branches, supabase-dev/list_edge_functions, supabase-dev/list_extensions, supabase-dev/list_migrations, supabase-dev/list_tables, supabase-dev/merge_branch, supabase-dev/rebase_branch, supabase-dev/reset_branch, supabase-dev/search_docs, todo, uflow.uflow-memory/flowbaby_storeMemory, uflow.uflow-memory/flowbaby_retrieveMemory]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Request Implementation Fixes
@@ -122,9 +107,19 @@ git tag --list "v*" | sort -V | tail -5
 git show origin/main:package.json | grep '"version"'
 ```
 
-If the target version tag already exists, increment and update the plan's `Target Release` field before continuing. Document the adjustment in the Stage 1 deployment doc. 4. Check version consistency for target release per `release-procedures` skill.
-4b. **CHANGELOG date sanity-check (MANDATORY)**: - If the latest `CHANGELOG.md` entry includes a date, verify it matches the actual release day. - Preferred check: compare against `date -u +%Y-%m-%d` and correct obvious mismatches before committing. - If you intentionally do not correct it, record rationale in the Stage 1 deployment doc.
-4c. **Chain timestamp sanity-check (MANDATORY)**:
+If the target version tag already exists, increment and update the plan's `Target Release` field before continuing. Document the adjustment in the Stage 1 deployment doc.
+
+**Working target formula (MANDATORY, run before editing any files)**: Determine the correct version target _before_ touching `package.json`, `CHANGELOG.md`, or any other file:
+
+```
+git tag --list "v*" | sort -V | tail -1
+```
+
+The working target is that result + 1 patch. For example, if `v0.10.37` is the highest tag, the target is `v0.10.38`. This prevents stale-target conflicts when parallel sessions have merged to main since planning — the collision is discovered before any file is edited rather than requiring an amend cycle after.
+
+4. Check version consistency for target release per `release-procedures` skill.
+   4b. **CHANGELOG date sanity-check (MANDATORY)**: - If the latest `CHANGELOG.md` entry includes a date, verify it matches the actual release day. - Preferred check: compare against `date -u +%Y-%m-%d` and correct obvious mismatches before committing. - If you intentionally do not correct it, record rationale in the Stage 1 deployment doc.
+   4c. **Chain timestamp sanity-check (MANDATORY)**:
 
 - Review the current plan's implementation, code-review, QA, and UAT docs for UTC timestamps in status changes, timeline tables, or changelog entries.
 - Verify timestamps are **causally monotonic** across the handoff order (do not allow later phases to appear earlier than predecessor phases).
@@ -133,7 +128,28 @@ If the target version tag already exists, increment and update the plan's `Targe
   - correct an obvious typo before commit when ownership is clear, or
   - leave the source doc unchanged and record follow-up rationale (mark uncertain times as `approx.` rather than inventing exact times).
 
-5. Review .gitignore: Run `git status`, analyze untracked, propose changes if needed.
+4d. **Stage 1 origin sync (MANDATORY)**:
+
+   First, check for branch divergence (PI-7 — mandatory for all plans, including multi-iteration follow-ons where the previous iteration's squash-merge produces a guaranteed ahead/behind state):
+
+   ```bash
+   git fetch origin --tags
+   git rev-list --left-right --count origin/main...HEAD
+   # Expected: "0  K" (0 behind, K ahead).
+   # If left count > 0: rebase before staging (see sequence below).
+   ```
+
+   If behind (`N  K` where N > 0), rebase:
+
+   ```bash
+   git stash --include-untracked
+   git rebase origin/main
+   git stash pop
+   ```
+
+- If the rebase produces conflicts: resolve them, then re-run `npm run type-check` and a representative test subset to confirm the post-rebase build is still clean before continuing.
+- **Rationale**: Moving the rebase to Stage 1 means conflicts are resolved before the commit structure is formed. Stage 2 push is then conflict-free and lower-risk. (Stage 2 step 8 remote-sync check remains as a final safety gate.)
+- Record the outcome in the Stage 1 deployment doc: "rebased X commits", "already up-to-date", or "stash → rebase → pop (diverged after previous iteration squash-merge)".
 
 5b. **PWA dev-artifact check (MANDATORY if dev server ran)**:
 
@@ -269,7 +285,20 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 2. If any plans incomplete: Report status, list pending plans, await further commits.
 3. Verify version consistency across ALL committed changes.
    3b. **Security audit evidence (MANDATORY)**:
-   - Run `npm audit` (or an equivalent audit command agreed for this repo).
+   - Run `npm audit --audit-level=high` (or an equivalent audit command agreed for this repo).
+   - If HIGH or CRITICAL vulnerabilities appear, **verify whether they are pre-existing on `origin/main` before treating them as a blocker** (PI-8):
+
+     ```bash
+     git show origin/main:package-lock.json | \
+       python3 -c "import json,sys; d=json.load(sys.stdin); \
+       pkg=d.get('packages',{}).get('node_modules/<package>',{}); \
+       print('version on main:', pkg.get('version','not found'))"
+     ```
+
+     - **Same version as `origin/main`** → pre-existing; document in deployment doc; do NOT block release.
+     - **Newer version (bumped by this release)** → investigate; potentially a blocker.
+     - **New package not present on `origin/main`** → investigate before releasing.
+
    - Record whether any **new** HIGH/CRITICAL vulnerabilities appear compared to the start of Stage 2.
    - If new HIGH/CRITICAL vulnerabilities are introduced by this release work, treat as a blocker unless the user explicitly accepts the risk.
 4. Validate packaging: Build, package, verify all bundled changes.
@@ -343,6 +372,7 @@ If a follow-up push is still required (for example: unavoidable docs corrections
   3. Run `npm install --package-lock-only`
   4. Rename and update Stage 1 deployment doc to reflect new version
   5. Update plan's `Target Release` field and all changelog references
+     5b. Scan the implementation doc for any "Version updated to [X]" or "version bump to [X]" text. If the recorded version differs from the final bumped version, update it in the same amend pass. This keeps the implementation doc accurate for future audit — the bump is already an amend cycle so the cost is negligible.
   6. `git commit --amend` to fold the version bump into the fix commit (squash one layer only)
   7. Resume rebase
      Document the collision source, bumped version, and resolution steps in the deployment doc.
@@ -386,10 +416,55 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 **Phase 2C: Release Execution (After Approval)**
 
-1. Push branch: `git push origin [branch]`.
+0. **Draft Stage 2 execution block before pushing (MANDATORY — PI-121)**:
+   Before executing `git push origin main`, add the Stage 2 execution block template to the deployment doc. Use placeholder values for fields not yet known (SHA, timestamp, CI URL):
+
+   ```markdown
+   ## Stage 2: Release Execution
+   **User Confirmation**: "[exact confirmation text]" — [timestamp]
+   **Confirmed by**: User (explicit)
+
+   ### Release Execution Log
+   | Step | Command | Result |
+   | ---- | ------- | ------ |
+   | Push branch | `git push origin main` | ⏳ Pending |
+   | Tag creation | `git tag -a v[X.Y.Z] <sha> -m "..."` | ⏳ Pending |
+   | Tag push | `git push origin v[X.Y.Z]` | ⏳ Pending |
+   ```
+
+   After each push/tag command completes, immediately update the corresponding row with the actual result, SHA, and timestamp. Stage the completed deployment doc and commit it in the same session. If a follow-up commit is unavoidable (e.g., post-push doc correction), keep it scoped: single file, `chore(devops):` prefix, explanation of why it was unavoidable.
+
+1. **Final pre-push sync guard (MANDATORY)**: Immediately before pushing, confirm the branch is still current with `origin/main`. Parallel sessions can merge between Phase 2A and the actual push — especially during the Phase 2B user-confirmation window:
+
+   ```
+   git fetch origin main --tags
+   git merge-base --is-ancestor origin/main HEAD || echo "⚠️ REBASE NEEDED"
+   ```
+
+   If the check prints `REBASE NEEDED`, rebase onto `origin/main`, resolve any conflicts, and re-run the full post-rebase integrity gate (Step 8e: conflict markers, JSON parse, type-check, audit) before proceeding. Do not push into a known-conflict state — the PR will show "can't auto-merge" and require a second force-push cycle.
+
+   Push branch: `git push origin [branch]`.
+
 2. **Surface PR URL (MANDATORY)**: After every branch push, include the PR comparison URL in the agent response: `https://github.com/<org>/<repo>/compare/main...<branch>`. Do not rely on GitHub's transient "create a pull request" banner.
 3. Verify the PR comparison has no merge conflicts. If conflicts exist, rebase onto `origin/main`, resolve, and force-push with `--force-with-lease` before proceeding.
-4. Tag: `git tag -a v[X.Y.Z] -m "Release v[X.Y.Z] - [plan summaries]"`, push tag. If a post-push rebase changes `HEAD`, delete and recreate the tag on the new `HEAD` before pushing it.
+4a. **Wait for CI** before merging. Monitor CI with the non-interactive polling pattern:
+
+   ```bash
+   # Standard CI poll — works in all terminal contexts (PI-5)
+   sleep 90 && gh pr checks <PR#> --repo <org>/<repo> 2>&1 | cat
+   ```
+
+   Set `N=90` for standard pipelines; `N=150` for test-heavy suites. Repeat with longer delays if still pending. **Never use `gh pr checks --watch`** — it opens the terminal alternate buffer and is inaccessible to automated polling. Do not merge while checks are pending or failing.
+
+4b. **PR merge and tag (squash-merge workflow)**:
+   - Merge the PR: `gh pr merge <PR#> --repo <org>/<repo> --squash --delete-branch`
+   - Fetch the squash commit: `git fetch origin --tags`
+   - Confirm squash commit SHA: `git rev-parse origin/main`
+   - Create annotated tag on the squash commit: `git tag -a v[X.Y.Z] <squash-sha> -m "Release v[X.Y.Z] — [plan summary]"`
+   - Push tag: `git push origin v[X.Y.Z]`
+
+   **NEVER** create the tag on the session branch before merge. On squash-merge the session branch commit is not in `main`'s history and the tag becomes orphaned. If a pre-merge tag was created by mistake: `git tag -d v[X.Y.Z] && git push origin :refs/tags/v[X.Y.Z]` then recreate on the squash commit after merge.
+
 5. Publish: vsce/npm/twine/GitHub (environment-specific).
 6. Verify: visible, version correct, assets accessible.
 7. Update log with timestamp/URLs.
@@ -412,9 +487,18 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 If any smoke check fails: stop and treat as a release failure. Coordinate rollback or hotfix before marking Stage 2 complete.
 
+**Worktree / DF-3 exception (WHEN APPLICABLE)**: If the plan's open-actions tracker includes an accepted DF-3 constraint (Supabase env vars unavailable in the worktree), HTTP 200 smoke checks cannot succeed. Use compilation evidence as the substitute signal:
+
+1.  Start a **fresh** dev server instance from current HEAD
+2.  Wait for `✓ Compiled /` and `✓ Compiled /providers` in server output
+3.  Record module counts (e.g., "2073 modules") — zero import/TS errors is the meaningful signal
+4.  Document in the deployment doc: "HTTP 500 — env constraint per DF-3 (accepted). Compilation clean: X modules / Y modules. Not a Plan regression."
+
+This exception applies **only** when DF-3 is already a pre-accepted, documented risk in the open-actions tracker. It does **not** apply when env vars are available — HTTP validation remains the gold standard in environments with real credentials.
+
 3c. **Deferred validation follow-ups (MANDATORY when applicable)**:
 
-- If the UAT report records any **DEFERRED** measurable performance targets (timing gates), capture the follow-up evidence post-deploy (or explicitly assign and timebox an owner) before declaring the release fully complete.
+- If the UAT report records any **DEFERRED** validations — including measurable performance targets (timing gates), visual browser checks (mobile viewport, device rendering, safe-area padding), or integration flows (browser end-to-end) — capture the follow-up evidence post-deploy (or explicitly assign and timebox an owner with a concrete due date) before declaring the release fully complete. (PI-121: scope extended from timing gates only to all deferred validation types.)
 - Document: what was measured, where, numbers observed, and any rollback trigger if targets are missed.
 - Ensure any deferred post-deploy validations have a visible tracker (`agent-output/planning/[ID]-open-actions.md`) with owner + closure criteria.
 
@@ -431,6 +515,44 @@ After release is confirmed complete, normalize the main deployment doc:
 - If the doc contains a "Remaining Work" or "Stage 2 Blockers" section left over from pre-release gating, update it to reflect the final resolution (e.g., "Cleared by release completion" or "Cleared by user gate relaxation on [date]").
 - Ensure no open-language blocker text (e.g., "X is still required before push") survives unfalsified after the release is complete.
 - This normalization may be part of the final release-record commit or a separate docs-only commit.
+
+3f. **DF-3 build gate acceptance procedure (WHEN APPLICABLE)**: When `npm run build` cannot be verified in the worktree due to missing Supabase env vars (DF-3), the release owner MUST explicitly choose one of the following before declaring Stage 2 complete:
+
+**(a) CI verification (preferred)**: Confirm the GitHub Actions build job on the PR passes with full env vars. Reference the CI run URL in the deployment doc.
+
+**(b) Named owner acceptance**: Record in the deployment doc and open-actions tracker:
+
+- Owner (name or role)
+- Timeline (e.g., "Verify on merge CI within 24h")
+- Closure evidence ("npm run build exit 0 in CI build job")
+
+Neither option is a general allowance to skip build verification permanently. Option (b) creates a named obligation that must be closed before the next plan's Stage 1 commit.
+
+   3g. **PROD migration apply (MANDATORY when release includes migration files)**:
+
+   The GitHub Actions deploy workflow builds and pushes a Docker image only — it does NOT run `supabase db push`. Migrations must be applied manually after every release that includes migration files.
+
+   **Tool options** (use whichever is available in the session):
+   - MCP: `mcp_supabase_apply_migration` per migration file, in filename-sort order
+   - CLI: `supabase db push --linked` against the PROD project ref
+
+   **Known environment mapping** (confirm in `docs/architecture/ENVIRONMENTS.md` or from user if uncertain):
+   - DEV: `qrekonfhaenjdnjhwdum` (CLI-linked, `.env.local`)
+   - PROD: `rdtdtcfntopcxcigkqoq` (MCP tool default)
+
+   **Apply order**: Filename sort order (same as Supabase CLI). When using MCP tools, apply each migration individually and verify each returns `{"success":true}` before continuing.
+
+   **Verification SQL** (run after all migrations applied):
+   ```sql
+   SELECT table_name, constraint_type, constraint_name
+   FROM information_schema.table_constraints
+   WHERE table_schema = 'public' AND constraint_type = 'PRIMARY KEY'
+   ORDER BY table_name;
+   ```
+
+   **Record in deployment doc**: tool used, project ref, each migration applied (filename + result), verification SQL output.
+
+   If a migration was already applied (idempotent-safe with `IF NOT EXISTS` guards): note it and continue — do not treat as an error.
 
 4. **Close GitHub Issues for released plans (MANDATORY when applicable)**:
    For each plan included in this release, check the plan document header for a `GitHub Issue` field containing a full URL (e.g., `GitHub Issue: https://github.com/abu-lina/uflow/issues/N`).
@@ -565,7 +687,23 @@ If a referenced skill path is missing or appears stale:
 - If the critique exists and all findings are resolved, ensure it is closed per the Critic closure rule (Status → `Resolved`, move to `agent-output/critiques/closed/`).
 - If the critique cannot be closed yet (OPEN findings remain, or resolution is unclear), explicitly record that status in the Stage 1 deployment doc (do not silently leave it ambiguous).
 
-2. Move all to their respective `closed/` folders:
+2. Move all to their respective `closed/` folders (PI-6 — avoid double-staging):
+
+   **For tracked files** (previously committed to git): use `git mv`:
+   ```bash
+   git mv agent-output/planning/<file> agent-output/planning/closed/<file>
+   ```
+
+   **For new files** (never committed — created during this pipeline): do NOT `git add` the original path first. Use the safe sequence:
+   ```bash
+   # Option A (preferred): create directly in closed/ from the start
+   # Option B: if already created at original path
+   git rm --cached <original_path>   # deindex original
+   mv <original_path> closed/
+   git add closed/<filename>          # index only the closed/ path
+   ```
+
+   Double-staging (adding both original and `closed/` path) creates orphaned index entries that require `git restore --staged` cleanup and obscure the final diff.
 
 - `agent-output/planning/closed/`
 - `agent-output/implementation/closed/`

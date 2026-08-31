@@ -6,7 +6,7 @@ import { Icon } from '@iconify/react';
 
 import type { Category } from '@/types/supabase';
 import { supabase } from '@/lib/supabase/client';
-import { getProviderCategories } from '@/services/categories';
+import { getProviderCategories, PROVIDER_CATEGORY_SECTION_SCOPES } from '@/services/categories';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function EditCategoryPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,13 +25,27 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
     async function fetchCategories() {
       setCategoriesLoading(true);
       try {
-        const categoriesData = await getProviderCategories();
+        // Try to read listing_type from localStorage
+        let listingType: 'food' | 'store' | undefined;
+        try {
+          const stored = localStorage.getItem(`admin_edit_inline_${providerId}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.listingType === 'food' || parsed.listingType === 'store') {
+              listingType = parsed.listingType;
+            }
+          }
+        } catch {
+          // Ignore malformed draft payloads from localStorage.
+        }
+        const categoriesData = await getProviderCategories(listingType);
         setCategories(categoriesData);
       } catch (error) {
         console.error('Error fetching categories:', error);
         const { data, error: fallbackError } = await supabase
           .from('categories')
           .select('*')
+          .in('applicable_section', [...PROVIDER_CATEGORY_SECTION_SCOPES])
           .order('name_de', { ascending: true });
         if (!fallbackError && data) {
           setCategories(data);
