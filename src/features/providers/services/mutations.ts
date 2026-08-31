@@ -27,6 +27,8 @@ async function createPrimaryLocation(
       address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
       address_city: formData.isOnlineBusiness ? null : (formData.city || null),
       address_country: formData.isOnlineBusiness ? null : (formData.country || null),
+      location_latitude: formData.isOnlineBusiness ? null : (formData.latitude ?? null),
+      location_longitude: formData.isOnlineBusiness ? null : (formData.longitude ?? null),
       show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
       contact_phone: formData.phone || null,
       is_primary: true,

@@ -82,6 +82,8 @@ const baseFormData: ProviderFormData = {
   zip: '12345',
   city: 'Berlin',
   country: 'DE',
+  latitude: null,
+  longitude: null,
   showAddress: true,
   website: '',
   instagram: '',
