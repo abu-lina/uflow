@@ -31,13 +31,6 @@ const DEFAULT_LINK: AdminProviderDeliveryLink = {
   is_active: true,
 };
 
-function PlatformNameDisplay({ platform, platform_slug }: { platform: string; platform_slug?: string | null }) {
-  if (platform === 'website' && platform_slug) {
-    return <>{platform_slug}</>;
-  }
-  return <>{PLATFORM_LABELS[platform] ?? platform}</>;
-}
-
 export default function EditDeliveryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();

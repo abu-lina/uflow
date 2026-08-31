@@ -30,7 +30,7 @@ interface DiscoveryHeaderProps {
  */
 export const DiscoveryHeader = forwardRef<HTMLElement, DiscoveryHeaderProps>(
   function DiscoveryHeader(
-    { section, selectedSection, onSectionChange, searchSlot, filterBarSlot, viewMode = 'list', className = '' },
+    { section: _section, selectedSection, onSectionChange, searchSlot, filterBarSlot, viewMode = 'list', className = '' },
     ref,
   ) {
     return (

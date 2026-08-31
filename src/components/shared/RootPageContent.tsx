@@ -215,16 +215,16 @@ export function RootPageContent() {
                     </div>
                     <HomeSearchBar
                       activeSection={activeSection}
-                      geoStatus={geolocation.status}
-                      nearMeActive={nearMeActive}
-                      isOpenNow={isOpenNow}
-                      onToggleNearMe={handleToggleNearMe}
-                      onToggleOpenNow={() => setIsOpenNow((v) => !v)}
                       adminSlot={
                         isAdmin ? (
                           <AdminStatusFilter selectedStatus={adminStatus} onStatusChange={setAdminStatus} />
                         ) : undefined
                       }
+                      geoStatus={geolocation.status}
+                      isOpenNow={isOpenNow}
+                      nearMeActive={nearMeActive}
+                      onToggleNearMe={handleToggleNearMe}
+                      onToggleOpenNow={() => setIsOpenNow((v) => !v)}
                     />
                   </div>
                 </header>

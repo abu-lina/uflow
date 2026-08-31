@@ -97,7 +97,7 @@ export function ChatWidget({ userName }: { userName?: string }) {
               <ChatMessage
                 content=""
                 isLoading={true}
-                role="assistant"
+                role="assistant" // eslint-disable-line jsx-a11y/aria-role -- component prop, not ARIA attribute
               />
             )}
             <div ref={messagesEndRef} />

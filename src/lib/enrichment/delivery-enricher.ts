@@ -2,7 +2,6 @@ import type { OpeningHours } from '@/types/openingHours';
 import { detectConflict, type EnrichmentCandidate } from './joinhalal-enricher';
 import type { WoltClient } from './delivery-platform/wolt-client';
 import { matchProviderToVenues } from './delivery-platform/provider-matcher';
-import { normalizeWoltOpeningHours } from './delivery-platform/normalizer';
 import { detectAlcohol } from './delivery-platform/alcohol-detector';
 
 export interface DeliveryPlatformSnapshot {

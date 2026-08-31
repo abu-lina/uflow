@@ -22,9 +22,9 @@ export function ChatFloatingWidget() {
       <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50">
         {!isOpen && (
           <button
-            onClick={() => { if (window.innerWidth < 768) { router.push('/chat'); } else { setIsOpen(true); } }}
             aria-label="Chat öffnen"
             className="w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark hover:shadow-xl transition-all flex items-center justify-center"
+            onClick={() => { if (window.innerWidth < 768) { router.push('/chat'); } else { setIsOpen(true); } }}
           >
             <MessageCircle size={24} strokeWidth={2} />
           </button>
@@ -45,13 +45,13 @@ export function ChatFloatingWidget() {
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-primary text-white rounded-t-3xl">
               <h3 className="font-semibold text-sm">Ummah Flow Assistant</h3>
               <button
-                onClick={() => setIsOpen(false)}
                 aria-label="Chat schließen"
                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary-dark transition-colors"
+                onClick={() => setIsOpen(false)}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+                <svg fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="16">
+                  <line x1="18" x2="6" y1="6" y2="18" />
+                  <line x1="6" x2="18" y1="6" y2="18" />
                 </svg>
               </button>
             </div>

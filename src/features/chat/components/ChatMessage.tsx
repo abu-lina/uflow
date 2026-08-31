@@ -68,10 +68,10 @@ export function ChatMessage({ role, content, isLoading = false, results, options
             {results.map((provider) => (
               <SuggestionCard
                 key={provider.provider_id}
-                icon={getProviderIcon(provider.listing_type)}
-                title={provider.provider_name}
-                subtitle={[provider.address_city, provider.category_name].filter(Boolean).join(' | ')}
                 href={`/providers/${provider.provider_id}`}
+                icon={getProviderIcon(provider.listing_type)}
+                subtitle={[provider.address_city, provider.category_name].filter(Boolean).join(' | ')}
+                title={provider.provider_name}
               />
             ))}
           </div>

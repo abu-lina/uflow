@@ -82,7 +82,7 @@ async function resolveListingType(categoryId: string): Promise<'food' | 'store' 
     if (data?.applicable_section && ['food', 'store', 'ummah'].includes(data.applicable_section)) {
       return data.applicable_section as 'food' | 'store' | 'ummah';
     }
-  } catch {}
+  } catch { /* intentionally empty */ }
   return null;
 }
 

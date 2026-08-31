@@ -6,7 +6,6 @@ import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
-import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { ProviderBadgeWithType } from '@/types/badges';
 import type { OpeningHours } from '@/types/openingHours';
@@ -121,7 +120,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   error = null,
   headerOffset,
   openNow,
-  enableDistance = true,
+  enableDistance: _enableDistance = true,
   enableBookmarks = false,
   bookmarkedIds = [],
   onBookmarkChange,
@@ -238,7 +237,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
       }}
     >
       <div className="grid grid-cols-2 gap-3 px-4 pt-3 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
-        {items.map((item, index) => (
+        {items.map((item, _index) => (
           <div
             key={item.id}
             className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
@@ -255,16 +254,16 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
             <ProviderCard
               {...itemToProviderCardProps(item)}
               isBookmarked={enableBookmarks ? bookmarkedIds.includes(item.provider_id) : undefined}
+              isReviewing={reviewingProviderId === item.provider_id}
               mode={enableModeration ? 'moderation' : 'bookmark'}
               reviewStatus={enableModeration ? item.review_status : undefined}
-              isReviewing={reviewingProviderId === item.provider_id}
+              onApprove={
+                enableModeration && onApprove ? () => onApprove(item.provider_id) : undefined
+              }
               onBookmarkChange={
                 enableBookmarks && onBookmarkChange
                   ? (isBookmarked) => onBookmarkChange(item.provider_id, isBookmarked)
                   : undefined
-              }
-              onApprove={
-                enableModeration && onApprove ? () => onApprove(item.provider_id) : undefined
               }
               onReject={
                 enableModeration && onReject ? () => onReject(item.provider_id) : undefined

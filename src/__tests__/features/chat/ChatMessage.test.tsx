@@ -1,5 +1,6 @@
+/* eslint-disable jsx-a11y/aria-role */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { ChatMessage } from '@/features/chat/components/ChatMessage';
 import type { ProviderCardData } from '@/features/chat/types';
 
