@@ -23,7 +23,7 @@ import { UmmahFilterSection } from '@/features/search/components/UmmahFilterSect
 import type { MapPin as ProviderMapPin } from '@/features/search/components/SearchMap';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
-import { buildSearchParams, toFoodRecentSearches } from '@/lib/search-params';
+import { buildSearchResultsUrl, toFoodRecentSearches } from '@/lib/search-params';
 import { getResultsPathForSection, SECTION_META } from '@/config/sectionFilters';
 import { toast } from 'sonner';
 import { type FoodConcept, type FoodCategory, type FoodMenuItem, searchFoodConcepts, searchFoodCategories, searchFoodMenuItems } from '@/services/offers';
@@ -522,20 +522,15 @@ const [selectedWas, setSelectedWas] = useState<WasSelection | null>(() => {
 
   const handleSearch = () => {
     if (!selectedWas) return;
-    const params = buildSearchParams(selectedWas, selectedSection);
-    if (selectedFilters.length > 0) {
-      params.set('filters', selectedFilters.join(','));
-    }
 
-    if (selectedWoCity) {
-      params.set('location', selectedWoCity);
-    }
+    const url = buildSearchResultsUrl({
+      selectedWas,
+      selectedSection,
+      selectedCity: selectedWoCity,
+      selectedFilters,
+    });
 
-    if (werSelection?.hasUserInteracted && werSelection.hasSelection && werSelection.summary.trim()) {
-      params.set('wer', werSelection.summary.trim());
-    }
-
-    router.push(`${getResultsPathForSection(selectedSection)}?${params.toString()}`);
+    router.push(url);
   };
 
   const handleWoSelect = (city: string) => {

@@ -25,6 +25,7 @@ import {
   resolveSectionFromRoute,
   SECTION_META,
 } from '@/config/sectionFilters';
+import { buildResultsUrl } from '@/lib/search-params';
 
 // Dynamic imports for modals (Plan 007: reduce shared bundle)
 const SignupModal = dynamic(
@@ -59,60 +60,42 @@ export function Header() {
       return;
     }
     setSelectedSection(section);
-    const params = new URLSearchParams({ section });
-    router.push(`${getResultsPathForSection(section)}?${params.toString()}`);
-  };
-
-  const pushResultsRoute = (params: URLSearchParams) => {
-    const section = resolveSectionFromRoute(pathname, params);
-    params.set('section', section);
-    router.push(`${getResultsPathForSection(section)}?${params.toString()}`);
-  };
-
-  const buildSearchSubmitParams = () => {
-    const current = new URLSearchParams(window.location.search);
-    const next = new URLSearchParams();
-    // Preserve only user-facing context that should survive a new search submit.
-    const preservedKeys: Array<'filters' | 'wer'> = ['filters', 'wer'];
-    for (const key of preservedKeys) {
-      const value = current.get(key);
-      if (value) {
-        next.set(key, value);
-      }
-    }
-    return next;
+    router.push(getResultsPathForSection(section));
   };
 
   // Handle search submission - navigate to providers page
   const handleSearchSubmit = (query: string, location: string) => {
-    const params = buildSearchSubmitParams();
-    const section = resolveSectionFromRoute(pathname, params);
-    params.set('section', section);
-    if (query) {
-      params.set('q', query);
-    } else {
-      params.delete('q');
-    }
-    if (location) {
-      params.set('location', location);
-    } else {
-      params.delete('location');
-    }
-    router.push(`${getResultsPathForSection(section)}?${params.toString()}`);
+    const section = resolveSectionFromRoute(pathname, new URLSearchParams());
+    const current = new URLSearchParams(window.location.search);
+    const filters = current.get('filters')?.split(',').filter(Boolean);
+    const url = buildResultsUrl({
+      section,
+      city: location || null,
+      query: query || null,
+      filters,
+    });
+    router.push(url);
   };
 
   // Handle clear search - navigate to providers without query
   const handleClearSearch = () => {
-    const params = new URLSearchParams(window.location.search);
-    params.delete('q');
-    pushResultsRoute(params);
+    const section = resolveSectionFromRoute(pathname, new URLSearchParams());
+    router.push(getResultsPathForSection(section));
   };
 
   // Handle location change - navigate to providers with new location
   const handleLocationChange = (location: string) => {
-    const params = new URLSearchParams(window.location.search);
-    params.set('location', location);
-    pushResultsRoute(params);
+    const section = resolveSectionFromRoute(pathname, new URLSearchParams());
+    const current = new URLSearchParams(window.location.search);
+    const q = current.get('q');
+    const filters = current.get('filters')?.split(',').filter(Boolean);
+    const url = buildResultsUrl({
+      section,
+      city: location || null,
+      query: q || null,
+      filters,
+    });
+    router.push(url);
   };
 
   // Close dropdown on outside click

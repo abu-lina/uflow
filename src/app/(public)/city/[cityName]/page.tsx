@@ -134,7 +134,7 @@ export default async function CityPage({ params }: CityPageProps) {
             </div>
           </header>
           <div className="w-full px-6 pt-[max(141px,calc(env(safe-area-inset-top)+141px))]">
-            <CategoryGallerySection />
+            <CategoryGallerySection city={displayName} />
           </div>
         </div>
       )}

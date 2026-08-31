@@ -137,20 +137,19 @@ export function resolveSectionFromSearchParams(params: URLSearchParams): Section
   return 'food';
 }
 
-/** Resolves section from route context (query/category first, then canonical pathname fallback). */
+/** Resolves section from route context (pathname first, then query param fallback). */
 export function resolveSectionFromRoute(
   pathname: string | null | undefined,
   params: URLSearchParams,
 ): Section {
-  const fromParams = resolveSectionFromSearchParams(params);
-  if (params.has('section') || params.has('category')) {
-    return fromParams;
-  }
-
   const routePath = pathname || '';
-  if (routePath === '/food' || routePath.endsWith('/food')) return 'food';
-  if (routePath === '/ummah' || routePath.endsWith('/ummah')) return 'ummah';
-  if (routePath === '/stores' || routePath.endsWith('/stores')) return 'store';
 
+  // Path-based resolution: /food/... -> food, /ummah/... -> ummah, /stores/... -> store
+  if (routePath === '/food' || routePath.startsWith('/food/')) return 'food';
+  if (routePath === '/ummah' || routePath.startsWith('/ummah/')) return 'ummah';
+  if (routePath === '/stores' || routePath.startsWith('/stores/')) return 'store';
+
+  // Fallback to query param for legacy/non-section routes
+  const fromParams = resolveSectionFromSearchParams(params);
   return fromParams;
 }

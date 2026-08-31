@@ -52,7 +52,7 @@ export function SearchContextBar({
 
   const navigateWithQuery = (nextQuery: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('section', section);
+    params.delete('section');
 
     const trimmed = nextQuery.trim();
     if (trimmed) {

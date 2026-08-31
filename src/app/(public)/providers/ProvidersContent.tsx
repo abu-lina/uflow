@@ -279,11 +279,15 @@ export function ProvidersContent({
   const handleSectionChange = useCallback(
     (nextSection: Section) => {
       if (nextSection === section) return;
-      const params = new URLSearchParams(window.location.search);
-      params.set('section', nextSection);
-      params.delete('category');
+      const currentParams = new URLSearchParams(window.location.search);
+      const nextParams = new URLSearchParams();
+      const q = currentParams.get('q');
+      const filters = currentParams.get('filters');
+      if (q) nextParams.set('q', q);
+      if (filters) nextParams.set('filters', filters);
       const nextPath = getResultsPathForSection(nextSection);
-      router.replace(`${nextPath}?${params.toString()}`, { scroll: false });
+      const qs = nextParams.toString();
+      router.replace(qs ? `${nextPath}?${qs}` : nextPath, { scroll: false });
     },
     [section, router],
   );
@@ -297,11 +301,9 @@ export function ProvidersContent({
       } else {
         params.delete('status');
       }
-      const resolvedSection = resolveSectionFromRoute(pathname, params);
-      params.set('section', resolvedSection);
-      router.replace(`${getResultsPathForSection(resolvedSection)}?${params.toString()}`, {
-        scroll: false,
-      });
+      params.delete('section');
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [pathname, router],
   );
