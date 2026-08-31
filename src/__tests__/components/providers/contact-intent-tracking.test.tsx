@@ -12,8 +12,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../../utils/test-utils';
-import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
-import { ProviderCardModal } from '@/components/providers/ProviderCardModal';
+import { ProviderDetailModal } from '@/features/providers/pages/ProviderDetailModal';
+import { ProviderCardModal } from '@/features/providers/pages/ProviderCardModal';
 import { mockProviders } from '../../mocks/providerData';
 
 // Mock trackEvent — must be declared before component imports resolve

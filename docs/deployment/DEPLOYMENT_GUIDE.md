@@ -135,7 +135,7 @@ cat .env.uat | grep NEXT_PUBLIC_SUPABASE
 Verify format matches:
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJxxx...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_xxx...   # or eyJxxx... (legacy)
 ```
 
 #### Issue: Container starts but crashes
@@ -375,17 +375,17 @@ sudo nginx -t
 ### Production (.env.production)
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://[prod-ref].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ[prod-key]...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[prod-anon-key]       # sb_publishable_... (new) or eyJ... (legacy)
 NEXT_PUBLIC_SITE_URL=https://ummahflow.com
-SUPABASE_SERVICE_ROLE_KEY=[prod-service-key]
+SUPABASE_SERVICE_ROLE_KEY=[prod-service-key]         # sb_secret_... (new) or eyJ... (legacy)
 ```
 
 ### UAT (.env.uat)
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://[uat-ref].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ[uat-key]...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[uat-anon-key]         # sb_publishable_... (new) or eyJ... (legacy)
 NEXT_PUBLIC_SITE_URL=https://uat.ummahflow.com
-SUPABASE_SERVICE_ROLE_KEY=[uat-service-key]
+SUPABASE_SERVICE_ROLE_KEY=[uat-service-key]          # sb_secret_... (new) or eyJ... (legacy)
 ```
 
 ## Success Criteria

@@ -38,7 +38,7 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.searchButton': 'Suchen',
     'suchen.citySearchPlaceholder': 'Stadt suchen',
     'suchen.searchCityPrompt': 'Suche nach deiner Stadt',
-    'suchen.was.searchPlaceholder': 'Was suchst du?',
+    'suchen.was.searchPlaceholder': 'Angebote suchen',
     'suchen.was.ummah.searchPlaceholder': 'Welchen Dienst suchst du?',
     'suchen.was.loading': 'Suche laeuft...',
     'suchen.was.searchError': 'Suche nicht verfuegbar. Bitte versuche es erneut.',

@@ -1,14 +1,121 @@
 # Changelog
 
-## [Unreleased] - 2026-06-12
+## [Unreleased] - 2026-08-17
+
+### Fixed
+
+- **"Near me" now works on the home List view (Plan 217)**: Tapping the "In der Nähe" chip while in List view now reorders providers nearest-first and limits results to those within 25 km, with a distance badge on each card. The List branch consumes the same `useGeolocation` signal as the Map branch via the new `useHomeNearMe` hook and `HomeNearMeList` component. Open-now filtering is applied client-side and preserves distance ordering. Map view behavior is unchanged. Added `home_list_nearme_*` instrumentation and regression coverage.
+
+- **Dot separator between open tag and distance on provider cards (Plan 218)**: Provider cards on the home near-me list and the search near-me grid now show a small dot between the open/closed tag and the distance badge, so the two fields read as separate pieces of information. The dot renders only when both fields are present, never as a dangling separator.
+
+- **Tighter status-row spacing on provider cards (Plan 219)**: The open/closed status label, dot separator, and distance badge on provider cards now sit closer together (4px gap instead of 8px), so the status row reads as one cohesive unit on both the home near-me list and the search near-me results. Footer action buttons keep their original spacing.
+
+## [0.15.17] - 2026-08-17
+
+### Fixed
+
+- **Filter button lands on filters, map is opt-in via `?view=map` (Plan 216)**: Mobile users tapping the filter (sliders) button on the home searchbar, or the edit button on the results page, were dropped onto a full-screen map instead of the filter page. The `/search` destination now renders the filter accordions (Wo / Was / Wer / Filter) by default and only renders the mobile map when the explicit `?view=map` query parameter is present (intentional map deep link: `/search?section=food&view=map`). Unknown or missing `view` values fail safe to filters. The map-pin Supabase fetch is gated on map mode so no pin query runs when filters are shown. All entry paths (home sliders, results edit button, empty-query submit, legacy `/suchen` redirect) are fixed by the single render predicate. Added regression coverage for the no-view, `view=filters`, `view=map`, and desktop branches.
+
+
+## [0.15.16] - 2026-08-16
+
+### Fixed
+
+- **iOS PWA geolocation hang watchdog (Plan 215)**: Added a client-side `setTimeout` watchdog to `useGeolocation` that forces a terminal state when `navigator.geolocation.getCurrentPosition` hangs without firing its success or error callback, which happens on iPhone SE standalone PWAs. Standalone mode maps the hang to `denied` so the existing Plan 209 iOS Settings hint (`permissionDeniedHintIos`) is surfaced; non-standalone browsers map it to `timeout`. Timer is cleared on success, error, `reset()`, and unmount. Added Normal-level outcome logging `{ status, errorCode?, standalone, elapsedMs }` and `SearchMap` `setView` executed/skipped logging for diagnostics.
+
+## [0.15.15] - 2026-08-16
+
+### Fixed
+
+- **Near Me permission-denied recovery guidance (Plan 209)**: Added denied-state UX guidance for mobile PWA users when location permission has been blocked by the OS. `HomeSearchBar` and `NearMeOpenNowFilters` now render platform-specific help text only when `geoStatus === 'denied'` (`iOS`, `Android`, `fallback`). `timeout` and `unavailable` continue showing only the existing "Location unavailable" label, avoiding misleading settings guidance for transient failures. Added regression coverage for iOS/Android/fallback hint selection and denied-only guard behavior.
+
+## [0.15.14] - 2026-08-16
+
+### Fixed
+
+- **Near Me map viewport on iPhone SE PWA (Plan 212)**: Refactored home Near Me flow to use the shared `useGeolocation` lifecycle in `RootPageContent` and removed duplicate geolocation calls from `SearchMap`. The map now pans to user coordinates only after geolocation is granted (`setView` zoom 14), Near Me chip state is driven by `geoStatus` (idle/prompting/granted/denied/timeout/unavailable), prompting uses Tailwind `animate-pulse`, and deactivation uses `reset()` without snapping back to Germany centroid. Added regression tests for prop-driven map pan, removal of `getCurrentPosition` from `SearchMap`, and RootPageContent request/reset wiring.
+
+## [0.15.13] - 2026-08-16
+
+### Fixed
+
+- **iPhone map tile rendering regression (Plan 211)**: Fixed mobile `/search` map tiles turning grey on iOS Safari while pins remained visible. Scoped PWA `runtimeCaching` image route to Supabase storage URLs only so OpenStreetMap tile requests are no longer intercepted by Service Worker CacheFirst logic, removed unnecessary `crossOrigin: 'anonymous'` from Leaflet tile layer, and corrected CSP `connect-src` tile host from `tile.openstreetmap.org` to `tile.openstreetmap.de`. Added regression coverage guarding SW regex scope, CSP tile host, and tile-layer crossOrigin configuration.
+
+## [0.15.12] - 2026-08-15
+
+### Fixed
+
+- **CI pipeline recovery (Plan 210)**: Removed stale review-provider gate tests that no longer matched production behavior, updated search and city-selection tests to align with current i18n and navigation behavior, added missing provider-context mocking in RootPageContent regression coverage, and fixed HomeSearchBar wrapper class assertion.
+- **CLI test stability under runtime warnings (Plan 210)**: Hardened `import-muslimbusiness` CLI tests by filtering npm/node warning noise from assertions and increasing timeout headroom for `npx tsx` startup variance.
+- **Performance budget gate restored (Plan 210)**: Re-baselined `/providers` and `/providers/[provider_id]` first-load JS thresholds using current measured build output with +5kB headroom, restoring deterministic perf-check pass/fail behavior.
+
+## [0.15.11] - 2026-08-15
+
+### Fixed
+
+- **Fix UAT deployment: Leaflet SSR build failure (hotfix for v0.15.10)**: `SearchMap` was imported with a direct static import in `search/page.tsx`, causing `import L from 'leaflet'` to execute in a Node.js server context during static page generation (`npm run build:standalone`). Changed to a `next/dynamic` import with `ssr: false` so Leaflet is only loaded client-side. Build now exits 0 with `STANDALONE_BUILD=true`. No functional changes to the map feature.
+
+## [0.15.10] - 2026-08-15
 
 ### Added
 
+- **Mobile search map with restaurant pins (Plan 208)**: Mobile users visiting the Search page food section now see an interactive Leaflet map with pins for all approved food providers that have coordinates, instead of category tiles. Pins are tappable and navigate to the provider detail page. Map uses OSM DE tile server with no API key. Map/list toggle controls are fully i18n'd across 6 locales (en/de/ar/tr/ur/ps). Section "coming soon" toast uses localised template interpolation. Error boundary provides fallback to the accordion if the map fails to load. Feature is mobile-only; desktop retains the existing category accordion. Fixes #306.
+
+## [0.15.9] - 2026-08-09
+
+### Fixed
+
+- **iOS keyboard UX for chatbot input (Plan 205)**: Added `autoCorrect="on"`, `autoCapitalize="sentences"`, `spellCheck={true}`, and `enterKeyHint="send"` to the ChatInput textarea, restoring QuickType autocorrect, auto-capitalisation, spell-check suggestions, and a contextual Send key hint on iOS Safari. No state or logic changes; purely additive HTML hints. Added regression test to assert all four attributes are present, preventing silent removal.
+
+## [0.15.8] - 2026-08-09
+
+### Fixed
+
+- **Near-me category badge fallback fix (Plan 204)**: Fixed provider cards in near-me mode showing `search.unnamed` for every result by extending the `search_food_near_me` RPC with category metadata (`category_id`, `category_name_de`, `category_name_en`, `category_images`) and forwarding those fields through `NearMeFoodResult` and `NearMeResultsGrid` into `ProviderCard`. Added regression coverage to ensure near-me category props are passed to card rendering.
+
+## [0.15.7] - 2026-08-05
+
+### Fixed
+
+- **Auth role sync split-brain (Plan 203)**: Admin/moderator role grants no longer silently fail to propagate to the client UI hint (`user_metadata.role`). The `set-role` API now syncs `public.users.role` into `auth.user_metadata.role` after every DB role write; the login endpoint syncs on each successful sign-in when DB and metadata roles differ; the magic-link verification endpoint performs the same sync during successful token verification. All three paths are non-blocking (sync failure is logged as a warning, never hard-fails login or role assignment), preserve existing metadata fields, and leave server-side authorization gates (`isAdminOrModerator`) fully DB-backed and unchanged. Fixes #297.
+
+## [0.15.6] - 2026-08-05
+
+### Fixed
+
+- **Provider detail accordion exclusivity (Plan 201)**: Converted all remaining uncontrolled sections in provider detail (`Opening Hours`, `Weitere Standorte`, `Nearby`) to controlled `ExpandSection` mode using shared `openSection` state, so only one section can be open at a time and opening any section now collapses the others.
+- **Provider detail section spacing consistency (Plan 201)**: Normalized internal section stack spacing from `gap-8` to `gap-4` in `ProviderDetailSections`, aligning inter-section spacing with the existing first-section offset and producing uniform 16px rhythm on mobile.
+
+## [0.15.5] - 2026-08-05
+
+### Fixed
+
+- **Weitere Standorte guard for single-location providers (Plan 202)**: The provider detail section in `src/features/providers/components/ProviderDetailSections.tsx` now renders the "Weitere Standorte" accordion only when a provider has more than one location. The guard was changed from `(locations?.length ?? 0) > 0` to `(locations?.length ?? 0) > 1`, preventing the section from appearing for single-location providers.
+
+## [0.15.4] - 2026-08-02
+
+### Changed
+
+- **Desktop search bar simplified (Plan 200)**: Restructured the desktop search bar to follow a Google Maps-style pattern with clear visual hierarchy. The primary bar (800px, white rounded container) now contains only essential controls — location selector, search input, and a green "Suchen" CTA button — with no visual dividers. Secondary filters (Wer: person count, Werte & Ausstattung: amenity filters) moved to a separate pill row below the bar, displayed only on desktop (≥768px) to preserve mobile touch targets. All controls use consistent sizing (text-sm, smaller icons), softer colors (neutral-600), and hover states. This reduces visual clutter while maintaining full functionality. Desktop users see the refined bar + pills; mobile users see the existing accordion (no changes). Closes #288.
+
+## [0.15.3] - 2026-08-02
+
+### Fixed
+
+- **Chatbot "open now" filter (Plan 199)**: The chatbot's restaurant search now supports "open now"/"geöffnet"/"offen"/"jetzt" queries. Previously, asking for e.g. "open burger restaurants in Stuttgart" returned both open and closed providers with no way to filter or indicate status. Added `open_now` parameter to the `search_providers` chatbot tool, `opening_hours` column to the `search_providers_chat` RPC (migration 121), and an `is_open` annotation on every result computed via the existing `getOpenStatus()` utility (device-local time, overnight-window aware — same logic used by `/search`'s "Open now" chip). Providers without opening-hours data are annotated `is_open: null` and excluded when `open_now: true` is requested.
+
+## [0.15.2] - 2026-08-02
+
+### Added
+
+- **Near me + Open now restaurant search (Plan 196)**: Public `/search` page now offers a "Near me" quick-filter chip that requests device geolocation and searches approved food providers within a selectable radius (2/5/10 km), distance-sorted, via a new additive `search_food_near_me` Postgres RPC (nearest-location-per-provider semantics against the `locations` table). A companion "Open now" chip filters results to currently-open providers client-side, reusing the existing `getOpenStatus` logic (device-local time, overnight-window aware) — result cards always show open/closed status regardless of the toggle. Includes graceful fallback to manual city search when geolocation is denied, unavailable, or times out. Existing `find_nearby_food_providers` (related-provider lookup on the detail page) is unchanged.
 - **Admin delete provider (Plan 162)**: Red "Delete Provider" button on /dashboard/providers/[id]/edit with confirmation dialog. Cascading delete (all child tables have ON DELETE CASCADE). Security: auth required, admin/moderator only, rate limited (20/hr, 5/min), audit logged.
 
 ### Fixed
 
-- **Mobile header gap (Plan 167)**: Fixed excessive 96px gap between header and content on `/create`, `/saved`, `/profile` and other mobile pages by correcting Tailwind `header-spacing` tokens from flat `160px` to per-breakpoint values (80px mobile / 96px tablet / 104px desktop). `PageContent.tsx` inline padding updated to match.
+- **Chatbot UX improvements (Plan 198)**: Three UX fixes: (1) "Empfehlung erhalten" card and chatbot scope now focuses on food/restaurants only — stores and community services are no longer offered; (2) conversational copy polished — removed machine artifact "Folgendes trifft zu: " prefix from multi-select confirmations, updated CONVERSATION STYLE guidance to be warm and concise; (3) back-navigation state loss fixed — chat session (messages + conversationId) is now persisted to `sessionStorage` so returning from a provider detail page restores the full conversation. Fixes Rules-of-Hooks violation in `ChatFloatingWidget.tsx`.
+- **Chat auth-required copy (Plan 197)**: ChatWidget no longer shows the misleading "Um ein Restaurant zu registrieren" text when the user is unauthenticated. The auth-required card now displays a generic chatbot login message sourced from the i18n system (`chat.authRequired.*` keys added to all 6 locale files).
+- **Auth-outcome observability (Plan 197)**: `getUserFromCookie()` now emits `console.warn({ event: 'auth_outcome', result: 'no_user', reason: '<code>' })` at each auth-failure path (`ssr_client_no_user`, `no_access_token_cookie`, `missing_env_vars`, `auth_api_error`, `token_expired_refresh_failed`, `fetch_error`). Logs fire on all environments (not gated by `NODE_ENV`), with no PII. content on `/create`, `/saved`, `/profile` and other mobile pages by correcting Tailwind `header-spacing` tokens from flat `160px` to per-breakpoint values (80px mobile / 96px tablet / 104px desktop). `PageContent.tsx` inline padding updated to match.
 - Provider edit form now saves inline field state before sub-page navigation (no more lost edits)
 - Review status now shows stored value instead of always defaulting to "Pending"
 - Category selection page now filters by listing_type (food/store)

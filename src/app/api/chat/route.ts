@@ -19,7 +19,7 @@ import type { ChatMessage, ToolCall } from '@/features/chat/types';
 import type { ProviderCardData } from '@/features/chat/types';
 
 const CHAT_HISTORY_LIMIT = parseInt(
-  process.env.CHAT_HISTORY_LIMIT || '10',
+  process.env.CHAT_HISTORY_LIMIT || '30',
   10,
 );
 const MAX_TOOL_CALLS = 2;
@@ -244,11 +244,21 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     const firstUserMsg = history.find(m => m.role === 'user')?.content || '';
     const isRegistrationMode = /(?:registrieren|anmelden|eintragen|hinzufügen|neues restaurant|neuen laden)/i.test(firstUserMsg);
 
+    // Detect if the last assistant message was a confirmation prompt and user is confirming
+    const lastAssistantMsg = [...history].reverse().find(m => m.role === 'assistant')?.content || '';
+    const isConfirmationResponse = isRegistrationMode
+      && /(?:korrekt|registrieren|bestätig|soll ich)/i.test(lastAssistantMsg)
+      && /^(?:ja|yes|korrekt|stimmt|passt|genau|ok|okay|sicher|mach|bitte|do it|go ahead)\b/i.test(trimmedMessage.trim());
+
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...(isRegistrationMode ? [{
         role: 'system' as const,
         content: 'CRITICAL: You are in REGISTRATION MODE. The user is answering your registration questions. Do NOT call search_providers. Continue collecting registration data.',
+      }] : []),
+      ...(isConfirmationResponse ? [{
+        role: 'system' as const,
+        content: 'URGENT: The user has CONFIRMED the registration. You MUST call register_provider NOW with all collected data. Do NOT ask any more questions. Do NOT show the summary again. CALL THE TOOL IMMEDIATELY. Use listing_type "food" for restaurants. Pass the category name directly as category_id — it will be resolved automatically.',
       }] : []),
       ...history,
       { role: 'user', content: trimmedMessage },
@@ -261,13 +271,18 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
       ? TOOL_DEFINITIONS.filter(t => t.function.name !== 'search_providers')
       : TOOL_DEFINITIONS;
 
+    // Force register_provider tool call when user confirms registration
+    const toolChoice = isConfirmationResponse
+      ? { type: 'function' as const, function: { name: 'register_provider' } }
+      : 'auto' as const;
+
     let llmResponse = await measureDependency(
       ctx,
       'openrouter.chat_completion',
       () =>
         sendChatRequest(messages, {
           tools: availableTools,
-          tool_choice: 'auto',
+          tool_choice: toolChoice,
         }),
     );
 
@@ -282,7 +297,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
     if (guardrailResult.status === 'block') {
       const blockContent =
-        'I can only help you find and register services on UFlow. Please ask me about restaurants, stores, or community services.';
+        'I can only help you find and register restaurants on UFlow. Please ask me about restaurants or Muslim-friendly dining near you.';
 
       await measureDependency(ctx, 'supabase.messages.save', async () => {
         await supabase.from('messages').insert({
@@ -368,7 +383,6 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
         { max_tokens: 768, model: 'mistral-small-latest' },
       );
 
-      // Return SSE response directly — no more processing
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
@@ -405,6 +419,30 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                     controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
                   }
                   controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+
+                  // Save messages to DB after tool call streaming completes
+                  try {
+                    const adminDb = getSupabaseAdmin();
+                    await adminDb.from('messages').insert({
+                      conversation_id: conversationId,
+                      role: 'user',
+                      content: trimmedMessage,
+                      token_count: 0,
+                    });
+                    await adminDb.from('messages').insert({
+                      conversation_id: conversationId,
+                      role: 'assistant',
+                      content: collectedContent || 'Entschuldigung, ich konnte keine Antwort generieren.',
+                      token_count: 0,
+                    });
+                    await adminDb.from('conversations').update({
+                      updated_at: new Date().toISOString(),
+                      redirect_count: redirectCounter.count,
+                    }).eq('id', conversationId);
+                  } catch (e) {
+                    console.error('[Tool stream save error]', e);
+                  }
+
                   controller.close();
                   return;
                 }

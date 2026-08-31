@@ -3,12 +3,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SearchPage from './page';
 
 let mockSection: 'food' | 'ummah' | 'business' = 'food';
+const mockPush = vi.fn();
+const mockReplace = vi.fn();
+const mockBack = vi.fn();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
-    push: vi.fn(),
-    back: vi.fn(),
-    replace: vi.fn(),
+    push: mockPush,
+    back: mockBack,
+    replace: mockReplace,
   }),
   useSearchParams: () => new URLSearchParams(`section=${mockSection}`),
 }));
@@ -27,6 +30,12 @@ vi.mock('@/providers/LanguageProvider', () => ({
       }
       if (key === 'suchen.accordions.was') {
         return 'Was';
+      }
+      if (key === 'suchen.was.searchPlaceholder') {
+        return 'Angebote suchen';
+      }
+      if (key === 'suchen.was.ummah.searchPlaceholder') {
+        return 'Welchen Dienst suchst du?';
       }
       if (key === 'suchen.accordions.wer') {
         return 'Wer';
@@ -69,6 +78,18 @@ vi.mock('@/providers/LanguageProvider', () => ({
       }
       if (key === 'suchen.searchButton') {
         return 'Search';
+      }
+      if (key === 'suchen.nearMe.chipLabel') {
+        return 'In der Nähe';
+      }
+      if (key === 'suchen.nearMe.radiusLabel') {
+        return 'Radius:';
+      }
+      if (key === 'suchen.nearMe.permissionDenied') {
+        return 'Standort nicht verfügbar';
+      }
+      if (key === 'suchen.openNow.chipLabel') {
+        return 'Jetzt geöffnet';
       }
       if (key === 'suchen.wer.forMe') {
         return 'For me';
@@ -349,5 +370,12 @@ describe('Search page Wo defaults and selection behavior', () => {
 
     expect(screen.getByRole('heading', { name: 'Values & Amenities' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Values & Amenities: 1' })).not.toBeInTheDocument();
+  });
+
+  it('[Plan 196 — corrected placement] does not render the near-me/open-now chip row on the filter page', () => {
+    render(<SearchPage />);
+
+    expect(screen.queryByRole('button', { name: /In der Nähe/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Jetzt geöffnet/i })).not.toBeInTheDocument();
   });
 });

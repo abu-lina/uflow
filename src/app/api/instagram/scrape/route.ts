@@ -1,7 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
+    // Require authentication — scraping is only available to signed-in users
+    const supabase = createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Rate limit: 10 scrape requests per hour per user
+    const identifier = getClientIdentifier(request, user.id);
+    if (!checkRateLimit(identifier, 10, 60 * 60 * 1000, 'instagram-scrape')) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const { username } = await request.json();
 
     if (!username) {

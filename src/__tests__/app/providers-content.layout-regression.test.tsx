@@ -30,13 +30,15 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ setQueryData: vi.fn() }),
 }));
 
-vi.mock('@/components/providers/ProvidersPageHeader', () => ({
-  ProvidersPageHeader: () => (
+vi.mock('@/features/search/components/DiscoveryHeader', () => ({
+  DiscoveryHeader: ({ searchSlot, filterBarSlot }: { searchSlot?: React.ReactNode; filterBarSlot?: React.ReactNode }) => (
     <header
       className="fixed left-0 right-0 top-0 z-50"
-      data-testid="providers-search-header"
+      data-testid="discovery-header"
     >
       <div aria-label="browse sections" data-testid="providers-section-selector" role="tablist" />
+      {searchSlot}
+      {filterBarSlot}
     </header>
   ),
 }));
@@ -47,14 +49,39 @@ vi.mock('@/features/search/components/SectionSelector', () => ({
   ),
 }));
 
-vi.mock('@/features/search/components/SectionSelector', () => ({
-  SectionSelector: () => (
-    <div aria-label="browse sections" data-testid="providers-section-selector" role="tablist" />
-  ),
+vi.mock('@/features/search/components/DiscoveryResultsGrid', () => ({
+  DiscoveryResultsGrid: () => <div data-testid="discovery-results-grid" />,
 }));
 
-vi.mock('@/components/providers/SearchResultsList', () => ({
-  SearchResultsList: () => <div data-testid="search-results-list" />,
+vi.mock('@/features/search/components/SearchMap', () => ({
+  SearchMap: () => <div data-testid="search-map" />,
+}));
+
+vi.mock('@/features/search/components/DiscoveryFilterBar', () => ({
+  DiscoveryFilterBar: () => <div data-testid="discovery-filter-bar" />,
+}));
+
+vi.mock('@/features/search/components/HomeSearchInput', () => ({
+  HomeSearchInput: () => <div data-testid="home-search-input" />,
+}));
+
+vi.mock('@/features/search/hooks/useNearMe', () => ({
+  useNearMe: () => ({
+    isActive: false,
+    results: [],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
+
+vi.mock('@/hooks/useGeolocation', () => ({
+  useGeolocation: () => ({
+    status: 'idle',
+    coords: null,
+    requestLocation: vi.fn(),
+    reset: vi.fn(),
+  }),
 }));
 
 vi.mock('@/components/ui/EmptyState', () => ({
@@ -131,13 +158,16 @@ vi.mock('@/providers/search-provider', () => ({
   }),
 }));
 
+const chainable = (): Record<string, unknown> => {
+  const self: Record<string, unknown> = { data: [], error: null };
+  self.select = () => self;
+  self.eq = () => self;
+  self.not = () => self;
+  return self;
+};
 vi.mock('@/lib/supabase/client', () => ({
   supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({ data: [], error: null }),
-      }),
-    }),
+    from: () => chainable(),
   },
 }));
 
@@ -145,7 +175,7 @@ describe('ProvidersContent layout regression (Plan 109)', () => {
   it('renders section tabs inside the fixed mobile header above the search bar', () => {
     render(<ProvidersContent />);
 
-    const fixedSearchHeader = screen.getByTestId('providers-search-header');
+    const fixedSearchHeader = screen.getByTestId('discovery-header');
     expect(fixedSearchHeader).toHaveClass('fixed', 'left-0', 'right-0', 'top-0', 'z-50');
 
     const sectionTablist = screen.getByRole('tablist', { name: /browse sections/i });

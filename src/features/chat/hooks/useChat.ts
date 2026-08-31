@@ -1,7 +1,31 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { ChatMessage } from '@/features/chat/types';
+
+const CHAT_SESSION_KEY = 'uflow_chat';
+// Shared regex so both SSE and JSON branches detect single-select identically
+const SINGLE_SELECT_RE = /(?:kategorie|k\u00fcche|k\u00fcchenart)/i;
+
+function loadSession(): { messages: ChatMessage[]; conversationId: string | null } {
+  if (typeof window === 'undefined') return { messages: [], conversationId: null };
+  try {
+    const raw = sessionStorage.getItem(CHAT_SESSION_KEY);
+    if (!raw) return { messages: [], conversationId: null };
+    return JSON.parse(raw) as { messages: ChatMessage[]; conversationId: string | null };
+  } catch {
+    return { messages: [], conversationId: null };
+  }
+}
+
+function saveSession(messages: ChatMessage[], conversationId: string | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(CHAT_SESSION_KEY, JSON.stringify({ messages, conversationId }));
+  } catch {
+    // sessionStorage may be unavailable (e.g., quota exceeded in private mode)
+  }
+}
 
 interface UseChatReturn {
   messages: ChatMessage[];
@@ -12,11 +36,15 @@ interface UseChatReturn {
 }
 
 export function useChat(): UseChatReturn {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadSession().messages);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(() => loadSession().conversationId);
   const sendingRef = useRef(false);
+
+  useEffect(() => {
+    saveSession(messages, conversationId);
+  }, [messages, conversationId]);
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -111,7 +139,7 @@ export function useChat(): UseChatReturn {
                         const joinedAmp = parsed.options.join(', ').replace(/&/g, '&amp;');
                         cleanContent = cleanContent.replace(joinedAmp, '');
                       }
-                      updated[updated.length - 1] = { ...last, content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(), options: parsed.options, singleSelect: /(?:kategorie|küche|küchenart|küche)/i.test(last.content || '') };
+                      updated[updated.length - 1] = { ...last, content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(), options: parsed.options, singleSelect: SINGLE_SELECT_RE.test(last.content || '') };
                     }
                     return updated;
                   });
@@ -159,7 +187,7 @@ export function useChat(): UseChatReturn {
             content: data.message.content || '',
             results: data.results,
             options: data.options,
-            singleSelect: /(?:kategorie|küche|küchenart)/i.test(data.message.content || ''),
+            singleSelect: SINGLE_SELECT_RE.test(data.message.content || ''),
           };
 
           setMessages((prev) => [...prev, assistantMessage]);

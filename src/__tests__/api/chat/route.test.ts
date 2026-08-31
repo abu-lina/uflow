@@ -66,6 +66,7 @@ const mockSupabaseServer = {
   from: vi.fn().mockReturnThis(),
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
+  in: vi.fn().mockReturnThis(),
   order: vi.fn().mockReturnThis(),
   limit: vi.fn().mockReturnThis(),
   insert: vi.fn().mockReturnThis(),

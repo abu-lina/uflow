@@ -61,6 +61,14 @@ vi.mock('@/services/providers', () => ({
   searchProviders: vi.fn(),
 }));
 
+const { mockGetOpenStatus } = vi.hoisted(() => ({
+  mockGetOpenStatus: vi.fn(),
+}));
+
+vi.mock('@/utils/openStatus', () => ({
+  getOpenStatus: mockGetOpenStatus,
+}));
+
 import { executeToolCall, TOOL_DEFINITIONS } from '@/features/chat/services/tool-executor';
 import type { ToolCall } from '@/features/chat/types';
 import { getProviderById, fetchProviderCities, checkCityExists } from '@/services/providers';
@@ -68,6 +76,7 @@ import { getProviderById, fetchProviderCities, checkCityExists } from '@/service
 describe('Tool Executor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetOpenStatus.mockReturnValue({ visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null });
   });
 
   describe('TOOL_DEFINITIONS', () => {
@@ -250,6 +259,74 @@ describe('Tool Executor', () => {
         const result = await executeToolCall(toolCall);
         const parsed = JSON.parse(result);
         expect(parsed.results).toBeDefined();
+      });
+
+      it('[Plan 199] annotates each result with is_open computed from opening_hours', async () => {
+        const mockResults = [
+          { provider_id: 'p1', provider_name: 'Open Burger', opening_hours: { monday: { open: '00:00', close: '23:59' } } },
+          { provider_id: 'p2', provider_name: 'Closed Burger', opening_hours: { monday: null } },
+          { provider_id: 'p3', provider_name: 'No Hours Data Burger', opening_hours: null },
+        ];
+        mockRpcSearch.mockResolvedValue({ data: mockResults, error: null });
+        mockGetOpenStatus.mockImplementation((hours: unknown) => {
+          if (hours === null) return { visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null };
+          const h = hours as { monday: unknown };
+          return h.monday ? { visible: true, isOpen: true, nextChangeTime: null, nextChangeDay: null }
+                          : { visible: true, isOpen: false, nextChangeTime: null, nextChangeDay: null };
+        });
+
+        const toolCall: ToolCall = {
+          id: 'call_open_1',
+          type: 'function',
+          function: {
+            name: 'search_providers',
+            arguments: JSON.stringify({ city: 'Stuttgart' }),
+          },
+        };
+
+        const result = await executeToolCall(toolCall);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.results).toHaveLength(3);
+        expect(parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p1').is_open).toBe(true);
+        expect(parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p2').is_open).toBe(false);
+        expect(parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p3').is_open).toBeNull();
+      });
+
+      it('[Plan 199] open_now: true filters out closed and unknown-status providers', async () => {
+        const mockResults = [
+          { provider_id: 'p1', provider_name: 'Open Burger', opening_hours: { monday: { open: '00:00', close: '23:59' } } },
+          { provider_id: 'p2', provider_name: 'Closed Burger', opening_hours: { monday: null } },
+          { provider_id: 'p3', provider_name: 'No Hours Data Burger', opening_hours: null },
+        ];
+        mockRpcSearch.mockResolvedValue({ data: mockResults, error: null });
+        mockGetOpenStatus.mockImplementation((hours: unknown) => {
+          if (hours === null) return { visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null };
+          const h = hours as { monday: unknown };
+          return h.monday ? { visible: true, isOpen: true, nextChangeTime: null, nextChangeDay: null }
+                          : { visible: true, isOpen: false, nextChangeTime: null, nextChangeDay: null };
+        });
+
+        const toolCall: ToolCall = {
+          id: 'call_open_2',
+          type: 'function',
+          function: {
+            name: 'search_providers',
+            arguments: JSON.stringify({ city: 'Stuttgart', open_now: true }),
+          },
+        };
+
+        const result = await executeToolCall(toolCall);
+        const parsed = JSON.parse(result);
+
+        expect(parsed.results).toHaveLength(1);
+        expect(parsed.results[0].provider_id).toBe('p1');
+        expect(parsed.results[0].is_open).toBe(true);
+      });
+
+      it('[Plan 199] search_providers tool definition exposes open_now parameter', () => {
+        const searchTool = TOOL_DEFINITIONS.find((t) => t.function.name === 'search_providers');
+        expect(searchTool?.function.parameters.properties).toHaveProperty('open_now');
       });
     });
 

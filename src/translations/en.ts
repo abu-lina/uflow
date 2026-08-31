@@ -142,7 +142,9 @@ export const en = {
     "food": "Food",
     "ummah": "Ummah",
     "stores": "Stores",
-    "soon": "Soon"
+    "soon": "Soon",
+    "comingSoon": "{{section}} is coming soon",
+    "comingSoonDescription": "We're working on it — stay tuned."
   },
   "search": {
     "placeholder": "Search in your Ummah",
@@ -155,6 +157,12 @@ export const en = {
     "filter": "Filter by location",
     "personSingular": "{{count}} Person",
     "personPlural": "{{count}} People",
+    "searchButton": "Search",
+    "suggestions": {
+      "provider": "Restaurant",
+      "cuisine": "Cuisine",
+      "menuItem": "Menu"
+    },
     "context": {
       "allResults": "All results",
       "edit": "Edit search",
@@ -182,6 +190,25 @@ export const en = {
     "notifyMeCityUnavailable": "No providers in {{city}} yet – we're working on it.",
     "providerCTA": "Are you a provider? Add your listing →",
     "cityNotRecognized": "{{city}} is not recognized. Please check the spelling.",
+    "nearMe": {
+      "chipLabel": "Near me",
+      "radiusLabel": "Radius:",
+      "permissionDenied": "Location unavailable",
+      "permissionDeniedHintIos": "Location blocked. Open Settings → Privacy & Security → Location Services.",
+      "permissionDeniedHintAndroid": "Location blocked. Allow access in your browser settings.",
+      "permissionDeniedHintFallback": "Location blocked. Please allow location access in your device settings.",
+      "loading": "Loading providers...",
+      "emptyTitle": "No open restaurants nearby",
+      "errorTitle": "Search unavailable",
+      "errorLoading": "Search is currently unavailable. Please try again.",
+      "retry": "Try again"
+    },
+    "openNow": {
+      "chipLabel": "Open now"
+    },
+    "empty": {
+      "noNearby": "Try a larger radius or check back later."
+    },
     "was": {
       "searchPlaceholder": "What are you looking for?",
       "loading": "Searching...",
@@ -359,6 +386,10 @@ export const en = {
       "title": "I know a provider",
       "description": "Recommend someone you know so others can find them.",
       "buttonText": "Recommend provider"
+    },
+    "chatHint": {
+      "prefix": "You can also register quickly via the",
+      "link": "Chat Assistant"
     },
     "recommend": {
       "title": "Recommend Provider",
@@ -950,8 +981,10 @@ export const en = {
       "menu": "Menu",
       "offers": "Offers",
       "openingHours": "Opening Hours",
+      "furtherLocations": "Further Locations",
       "nearby": "Nearby"
     },
+    "locationFallback": "Location",
     "days": {
       "monday": "Monday",
       "tuesday": "Tuesday",
@@ -1085,5 +1118,31 @@ export const en = {
     "subtitle": "Install the app for the best experience",
     "preparing": "Preparing installation...",
     "continueInBrowser": "Continue in Browser"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "Login required",
+      "body": "You must be logged in to use the chatbot.",
+      "action": "Log in now"
+    },
+    "fallback": {
+      "prefix": "Prefer to do it manually?",
+      "link": "Use the form"
+    },
+    "openChat": "Open chat",
+    "closeChat": "Close chat",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "noProviders": "No providers found",
+    "noProvidersHint": "Check back soon.",
+    "noOpenProviders": "No open providers right now",
+    "noOpenProvidersHint": "Try turning off the Open now filter.",
+    "switchToList": "Switch to list view",
+    "switchToMap": "Switch to map view",
+    "listViewLabel": "List",
+    "mapViewLabel": "Map"
   }
 } as const;

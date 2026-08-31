@@ -133,6 +133,9 @@ const { mockSearch } = vi.hoisted(() => ({ mockSearch: vi.fn() }));
 vi.mock('@/services/providers', () => ({
   searchProvidersAndCommunityServices: mockSearch,
 }));
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: () => ({}),
+}));
 
 import { GET } from '@/app/api/providers/search/route';
 
@@ -148,13 +151,14 @@ describe('Plan 045 — GET /api/providers/search category transport', () => {
         'http://localhost:3000/api/providers/search?category=df8e549d-54c4-48ef-8e0b-c5a6646fcb7d',
       ),
     );
-    // Plan 058: 6 params; Plan 089: 7 params; Plan 105: 8 params (last is filters=undefined when not provided)
+    // Plan 058: 6 params; Plan 089: 7 params; Plan 105: 8 params; +1 for client injection
     expect(mockSearch).toHaveBeenCalledWith(
       '',
       'df8e549d-54c4-48ef-8e0b-c5a6646fcb7d',
       '',
       0,
       12,
+      undefined,
       undefined,
       undefined,
       undefined,

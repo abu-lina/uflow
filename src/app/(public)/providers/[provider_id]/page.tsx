@@ -1,4 +1,5 @@
-import { getProviderById } from '@/services/providers.server';
+import { getProviderById } from '@/services/providers';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getCommunityServicesForProvider } from '@/services/communityServices';
 import { ProviderDetailPageClient } from './ProviderDetailPageClient';
 
@@ -14,10 +15,11 @@ import { ProviderDetailPageClient } from './ProviderDetailPageClient';
 export default async function ProviderDetailPage({ params }: { params: Promise<{ provider_id: string }> }) {
   const { provider_id } = await params;
   
+  const serverClient = createSupabaseServerClient();
   // Fetch provider and community services in parallel for better performance
   // This eliminates the client-side waterfall and improves Time to Interactive
   const [provider, communityServices] = await Promise.all([
-    getProviderById(provider_id),
+    getProviderById(provider_id, serverClient),
     getCommunityServicesForProvider(provider_id).catch(() => []), // Gracefully handle errors
   ]);
 

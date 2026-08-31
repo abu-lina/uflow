@@ -142,7 +142,9 @@ export const ps = {
     "food": "خواړه",
     "ummah": "امت",
     "stores": "دکانونه",
-    "soon": "ژر"
+    "soon": "ژر",
+    "comingSoon": "{{section}} ژر راځي",
+    "comingSoonDescription": "مونږ پرې کار کوو — پاته اوسئ."
   },
   "search": {
     "placeholder": "په خپل امت کې لټون وکړئ",
@@ -155,6 +157,12 @@ export const ps = {
     "filter": "د ځای له مخې فلټر کړه",
     "personSingular": "{{count}} کس",
     "personPlural": "{{count}} کسانو",
+    "searchButton": "لټون",
+    "suggestions": {
+      "provider": "رسټوران",
+      "cuisine": "خواړه",
+      "menuItem": "مینو"
+    },
     "context": {
       "allResults": "All results",
       "edit": "Edit search",
@@ -182,6 +190,26 @@ export const ps = {
     "notifyMeCityUnavailable": "په {{city}} کې لا هم دمه چمتو چمتووونکي نه دی – موږ پرې کار کوو۔",
     "providerCTA": "ایا تاسو دمه چمتو چمتووونکي یاست؟ خپل لیسټ زیات کړئ →",
     "cityNotRecognized": "{{city}} ونه پیژندل شو۔ مهرباني وکړئ املا چک کړئ۔",
+    "nearMe": {
+      "chipLabel": "زما په نږدې",
+      "radiusLabel": "واډن:",
+      "permissionDenied": "موقعیت شتون نلري",
+      // TODO: Refine iOS/Android path wording with native-speaker review.
+      "permissionDeniedHintIos": "موقعیت بند شوی دی. مهرباني وکړئ د وسیلې په تنظیماتو کې د موقعیت لاسرسی فعال کړئ.",
+      "permissionDeniedHintAndroid": "موقعیت بند شوی دی. مهرباني وکړئ د وسیلې په تنظیماتو کې د موقعیت لاسرسی فعال کړئ.",
+      "permissionDeniedHintFallback": "موقعیت بند شوی دی. مهرباني وکړئ د وسیلې په تنظیماتو کې د موقعیت لاسرسی فعال کړئ.",
+      "loading": "چمتو کوونکي پورته کیږي...",
+      "emptyTitle": "هیڅ خلاص چمتو رستورانت نږدې نشته",
+      "errorTitle": "لټون شتون نلري",
+      "errorLoading": "لټون اوس مهال شتون نلري. مهرباني وکړئ بیا هڅه وکړئ.",
+      "retry": "بیا هڅه وکړئ"
+    },
+    "openNow": {
+      "chipLabel": "اوس خلاص دی"
+    },
+    "empty": {
+      "noNearby": "لوی واټن هڅه وکړئ یا وروسته بیا وګورئ."
+    },
     "was": {
       "searchPlaceholder": "څه لټوې؟",
       "loading": "لټون روان دی...",
@@ -357,6 +385,10 @@ export const ps = {
       "title": "زه یو وړاندې کوونکی پېژنم",
       "description": "د خپل پېژندل شوي کس وړاندیز وکړئ ترڅو نور یې ومومي.",
       "buttonText": "وړاندې کوونکی وړاندیز کړئ"
+    },
+    "chatHint": {
+      "prefix": "تاسو د چیٹ مرستیال له لارې هم ګړندی ثبت کولی شئ:",
+      "link": "چیٹ مرستیال"
     },
     "recommend": {
       "title": "وړاندې کوونکی وړاندیز کړئ",
@@ -948,8 +980,10 @@ export const ps = {
       "menu": "مېنو",
       "offers": "وړاندیزونه",
       "openingHours": "د کار وختونه",
+      "furtherLocations": "نور موقعیتونه",
       "nearby": "نږدې"
     },
+    "locationFallback": "موقعیت",
     "days": {
       "monday": "دوشنبه",
       "tuesday": "سه شنبه",
@@ -1084,5 +1118,31 @@ export const ps = {
     "subtitle": "د غوره تجربې لپاره اپلیکیشن نصب کړئ",
     "preparing": "د نصب تیاري کیږي...",
     "continueInBrowser": "په براوزر کې دوام ورکړئ"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "لاګ ان اړین دی",
+      "body": "د چیټ بوټ د کارولو لپاره باید لاګ ان شئ.",
+      "action": "اوس لاګ ان کړئ"
+    },
+    "fallback": {
+      "prefix": "په لاسي ډول غواړئ؟",
+      "link": "فورمه وکاروئ"
+    },
+    "openChat": "چیټ پرانیزئ",
+    "closeChat": "چیټ وتړئ",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "لوی کول",
+    "zoomOut": "وړوکی کول",
+    "noProviders": "هیڅ چمتو کوونکی ونه موندل شو",
+    "noProvidersHint": "ژر بیرته وګورئ.",
+    "noOpenProviders": "اوس مهال هیڅ خلاص چمتو کوونکی نشته",
+    "noOpenProvidersHint": "اوس خلاص فلټر بند کولو هڅه وکړئ.",
+    "switchToList": "د لیست لیدلو ته لاړ شئ",
+    "switchToMap": "د نقشې لیدلو ته لاړ شئ",
+    "listViewLabel": "لیست",
+    "mapViewLabel": "نقشه"
   }
 } as const;

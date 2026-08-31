@@ -15,7 +15,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 import { cn } from '@/lib/utils';
 
 export default function ContactPage() {

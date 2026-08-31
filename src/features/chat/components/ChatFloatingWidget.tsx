@@ -9,11 +9,11 @@ import { useAuth } from '@/providers/auth-provider';
 export function ChatFloatingWidget() {
   const pathname = usePathname();
   const router = useRouter();
-
-  // Don't show FAB on /chat page
-  if (pathname === '/chat') return null;
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Don't show FAB on /chat page — early return AFTER all hooks (Rules-of-Hooks)
+  if (pathname === '/chat') return null;
   const userName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0];
 
   return (

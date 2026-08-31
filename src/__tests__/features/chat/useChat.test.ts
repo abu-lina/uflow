@@ -10,6 +10,7 @@ import { useChat } from '@/features/chat/hooks/useChat';
 
 describe('useChat', () => {
   beforeEach(() => {
+    sessionStorage.clear();
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
       ok: true,
@@ -190,5 +191,56 @@ describe('useChat', () => {
     });
 
     expect(result.current.messages[1].results).toBeUndefined();
+  });
+});
+
+describe('useChat session persistence (Plan 198 — M3)', () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    vi.clearAllMocks();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: () =>
+        Promise.resolve({
+          conversation_id: 'conv-1',
+          message: { role: 'assistant', content: 'Hallo! Wie kann ich helfen?' },
+        }),
+    });
+  });
+
+  it('[pre-fix FAILS] restores messages from sessionStorage on remount', () => {
+    const storedMessages = [
+      { role: 'user', content: 'Empfiehl mir etwas' },
+      { role: 'assistant', content: 'Hier sind Empfehlungen' },
+    ];
+    sessionStorage.setItem(
+      'uflow_chat',
+      JSON.stringify({ messages: storedMessages, conversationId: 'conv-restored' }),
+    );
+
+    const { result } = renderHook(() => useChat());
+
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.conversationId).toBe('conv-restored');
+  });
+
+  it('[post-fix PASSES] saves conversationId and messages to sessionStorage after API response', async () => {
+    const { result } = renderHook(() => useChat());
+
+    await act(async () => {
+      await result.current.sendMessage('Hallo');
+    });
+
+    const stored = JSON.parse(sessionStorage.getItem('uflow_chat') || '{}');
+    expect(stored.conversationId).toBe('conv-1');
+    expect(stored.messages).toHaveLength(2);
+  });
+
+  it('starts fresh when sessionStorage is empty (no regression to existing behavior)', () => {
+    const { result } = renderHook(() => useChat());
+
+    expect(result.current.messages).toHaveLength(0);
+    expect(result.current.conversationId).toBeNull();
   });
 });

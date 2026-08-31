@@ -48,10 +48,14 @@ function runSqlExpectFailure(dbName: string, sql: string) {
 describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral checks', () => {
   const dbName = `phase4_semantic_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
   const scratchDir = mkdtempSync(join(tmpdir(), 'phase4-semantic-'));
+  const enumMigrationPath = join(process.cwd(), 'supabase', 'migrations', '0060_plan_145_enum_value.sql');
   const migrationPath = join(process.cwd(), 'supabase', 'migrations', '0061_phase4_semantic_constraints.sql');
+  const enumMigrationSqlPath = join(scratchDir, '0060_plan_145_enum_value.sql');
   const migrationSqlPath = join(scratchDir, '0061_phase4_semantic_constraints.sql');
 
   beforeAll(() => {
+    const enumMigrationSql = readFileSync(enumMigrationPath, 'utf8');
+    writeFileSync(enumMigrationSqlPath, enumMigrationSql, 'utf8');
     const migrationSql = readFileSync(migrationPath, 'utf8');
     writeFileSync(migrationSqlPath, migrationSql, 'utf8');
 
@@ -80,6 +84,12 @@ describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral 
       VALUES (NULL, TRUE);
       `
     );
+
+    // Apply prerequisite migration 0060: adds 'ummah' to listing_type_enum
+    const applyEnumResult = runCommand('psql', ['-d', dbName, '-v', 'ON_ERROR_STOP=1', '-f', enumMigrationSqlPath]);
+    if (applyEnumResult.status !== 0) {
+      throw new Error(applyEnumResult.stderr || applyEnumResult.stdout || 'failed to apply migration 0060 (enum)');
+    }
 
     const applyResult = runCommand('psql', ['-d', dbName, '-v', 'ON_ERROR_STOP=1', '-f', migrationSqlPath]);
     if (applyResult.status !== 0) {

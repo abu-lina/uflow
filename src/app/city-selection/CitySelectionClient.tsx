@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 import { Search } from 'lucide-react';
@@ -50,7 +49,6 @@ interface NominatimCityResult {
  * via initialCities prop; React Query handles background refresh.
  */
 export default function CitySelectionClient({ initialCities }: { initialCities?: CityData[] }) {
-  const router = useRouter();
   const { t } = useLanguage();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -329,7 +327,10 @@ export default function CitySelectionClient({ initialCities }: { initialCities?:
   // Handle discover CTA
   const handleDiscoverClick = () => {
     if (selectedCityName) {
-      router.push('/');
+      // Force a full page reload so RootPageContent re-reads localStorage with the new
+      // selectedCity value. router.push('/') would serve the cached page and skip the
+      // useEffect that gates the map display.
+      window.location.href = '/';
     }
   };
 

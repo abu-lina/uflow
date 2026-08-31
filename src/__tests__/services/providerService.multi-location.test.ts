@@ -14,7 +14,7 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 
 function setupSupabaseMock() {
   mockFrom.mockImplementation((table: string) => {
@@ -113,6 +113,8 @@ describe('providerService multi-location creation', () => {
         zip: '10115',
         city: 'Berlin',
         country: 'DE',
+        latitude: null,
+        longitude: null,
         showAddress: true,
         website: '',
         instagram: '',
@@ -196,6 +198,8 @@ describe('providerService multi-location creation', () => {
         zip: '10115',
         city: 'Berlin',
         country: 'DE',
+        latitude: null,
+        longitude: null,
         showAddress: true,
         website: '',
         instagram: '',
@@ -284,6 +288,8 @@ describe('providerService multi-location creation', () => {
           zip: '10115',
           city: 'Berlin',
           country: 'DE',
+          latitude: null,
+          longitude: null,
           showAddress: true,
           website: '',
           instagram: '',

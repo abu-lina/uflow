@@ -33,6 +33,7 @@ const mockReturns = vi.fn();
 const mockIlike = vi.fn();
 const mockIn = vi.fn();
 const mockMaybeSingle = vi.fn();
+const mockSingle = vi.fn();
 
 const mockFrom = vi.fn((..._args: unknown[]) => ({
   select: mockSelect,
@@ -58,6 +59,7 @@ function setupChain() {
     ilike: mockIlike,
     in: mockIn,
     maybeSingle: mockMaybeSingle,
+    single: mockSingle,
   };
 
   mockSelect.mockReturnValue(chain);
@@ -70,6 +72,7 @@ function setupChain() {
   mockIn.mockReturnValue(chain);
   mockReturns.mockResolvedValue({ data: [], error: null });
   mockMaybeSingle.mockResolvedValue({ data: null, error: null });
+  mockSingle.mockResolvedValue({ data: null, error: { code: 'PGRST116', message: 'not found' } });
 }
 
 import { getProviderById, getProviders, transformProviderToSearchResult, fetchProviderCities, fetchPopularCities, fetchFilteredCities } from '@/services/providers';
@@ -89,7 +92,7 @@ describe('multi-location provider service', () => {
         { location_id: 'loc-1', provider_id: 'p-1', address_city: 'Berlin', is_primary: true },
         { location_id: 'loc-2', provider_id: 'p-1', address_city: 'Hamburg', is_primary: false },
       ];
-      mockMaybeSingle.mockResolvedValue({
+      mockSingle.mockResolvedValue({
         data: {
           provider_id: 'p-1',
           provider_name: 'Provider One',

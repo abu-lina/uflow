@@ -22,6 +22,8 @@ export interface ProviderFormData {
   zip: string;
   city: string;
   country: string;
+  latitude: number | null;
+  longitude: number | null;
   showAddress: boolean;
   
   // Contact
@@ -71,6 +73,8 @@ const initialFormData: ProviderFormData = {
   zip: '',
   city: '',
   country: '',
+  latitude: null,
+  longitude: null,
   showAddress: true,
   website: '',
   instagram: '',

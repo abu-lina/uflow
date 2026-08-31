@@ -6,8 +6,9 @@ import { afterAll, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 
 // Set up environment variables
+// Use sb_publishable_ prefix to match the new key format accepted by client validation
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://mock-supabase-url.com';
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'mock-anon-key';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'sb_publishable_mock_anon_key_for_tests';
 
 // Silence React error boundary warnings in test
 const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

@@ -1,0 +1,142 @@
+---
+ID: 216
+Origin: 216
+UUID: c91f3a2e
+Status: Active
+---
+
+# Deployment Record: v0.15.17 — Stage 1 (Plan 216)
+
+**Plan Reference**: `agent-output/planning/216-filter-button-redirect-plan.md`
+**Target Version**: v0.15.17
+**Type**: Bugfix patch
+**Environment**: production (https://ummahflow.com) — via PR, then Stage 2/3
+**Agent**: devops
+**Date**: 2026-08-17
+
+## Changelog
+
+| Date (UTC) | Agent | Change |
+| --- | --- | --- |
+| 2026-08-17 | devops | Stage 1: version pre-flight, v0.15.17 bump committed, branch pushed, PR #325 raised; awaiting user approval for merge/tag/PROD deploy |
+| 2026-08-17 | devops | CI verified — all PR #325 checks green (Build 3m5s, Lint & Type 1m40s, Tests 6m59s, Audit 55s, IOC 6s, Snyk pass); docs-only record update pushed |
+| 2026-08-17 | devops | Stage 2 released: PR #325 squash-merged (212f9668), tag v0.15.17 pushed, PROD deploy run 31978780554 SUCCESS, health healthy; chain docs closed → Committed |
+
+---
+
+## Release Context
+
+| Field | Value |
+| --- | --- |
+| Plan ID | 216 |
+| Epic | Search funnel — mobile filter access (regression of Plan 208) |
+| Classification | Bugfix (filter button redirects to map instead of filter page) |
+| GitHub Issue | #307 (Plan 208 commit `4c10e903` introduced the regression) |
+| Plan doc | `agent-output/planning/216-filter-button-redirect-plan.md` |
+| QA doc | `agent-output/qa/216-filter-button-redirect-qa.md` |
+| QA Status | QA COMPLETE — 1910/1910 full suite, 12/12 real-browser checks, type-check + build exit 0, delta lint 0 errors |
+| Code Review | APPROVED (no findings; `433cc04b`) |
+| UAT Status | Checklist included in QA doc (real-device tap-check recommended); no release approval yet — **awaiting user confirmation** |
+
+**Plans included in this release**: Plan 216 (single-plan patch, v0.15.17)
+
+---
+
+## Version Pre-Flight (Confirmed — v0.15.17 is FREE)
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Latest tags on origin | `git fetch origin --tags && git tag --list "v*" \| sort -V \| tail -6` | `v0.15.11 … v0.15.16` — **v0.15.17 does NOT exist** → next free patch |
+| `package.json` version (pre-bump) | `jq -r .version package.json` | `0.15.16` |
+| `package-lock.json` version (pre-bump) | `jq -r .version package-lock.json` | `0.15.16` |
+| `CHANGELOG.md` heading (pre-bump) | `head -5 CHANGELOG.md` | `## [0.15.16] - 2026-08-16` |
+| origin/main HEAD | `git log --oneline -1 origin/main` | `e22a4aa7` (chore(devops): Plan 215 Released — v0.15.16) |
+
+**Conclusion**: `0.15.17` is the next available patch after `v0.15.16`. Bump applied to `package.json`, `package-lock.json` (root + `packages[""]`), and a new `## [0.15.17] - 2026-08-17` CHANGELOG entry added (release-procedures skill).
+
+---
+
+## Stage 1: Pre-Release Verification
+
+### Branch & Sync
+
+| Check | Result |
+| --- | --- |
+| Branch | `fix/216-filter-button-redirect` (checked out) |
+| Divergence | `git rev-list --left-right --count main...HEAD` → `0 2` (0 behind, 2 ahead) — no rebase needed |
+| Plan 216 commits (pre-bump) | `752469f1` (implementation), `433cc04b` (review docs) — exactly the intended commits, no unrelated changes |
+
+### Packaging Integrity (QA evidence + this session)
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| Full test suite (1910) | ✅ PASS | QA doc — `1910 passed \| 24 skipped (1934)` |
+| Real-browser checks (12) | ✅ PASS | QA doc — C1-C3, M1-M6, D1-D2, C7, S1-S2 all pass |
+| Type-check | ✅ PASS | QA doc — exit 0 |
+| Build | ✅ PASS | QA doc — exit 0 (full route table) |
+| Delta lint (3 changed files) | ✅ PASS | QA doc — 0 errors, 1 pre-existing warning (`search/page.tsx:428`) |
+| Full-repo lint | ⚠️ Pre-existing errors (unrelated chat/dashboard/API files) | QA doc — not introduced by this plan |
+| Version consistency (post-bump) | ✅ PASS | package.json `0.15.17` = package-lock `0.15.17` = CHANGELOG `## [0.15.17]` |
+| Debug artifacts | No `console.log` / `debugger` / `TODO: remove` in changed files | Implementation doc |
+| Migrations | None — no schema/data migration in Plan 216 | Plan doc |
+
+---
+
+## PR & CI
+
+| Item | Value |
+| --- | --- |
+| PR | https://github.com/abu-lina/uflow/pull/325 |
+| Title | `fix(search): filter button lands on filters, map is opt-in via view=map (Plan 216)` |
+| Base / Head | `main` ← `fix/216-filter-button-redirect` |
+| Mergeable | Pending CI (reported after push) |
+
+### CI Status (`gh pr checks 325` — final HEAD `79f3ee56`, run 31977899065)
+
+| Check | Status | Duration |
+| --- | --- | --- |
+| Build Verification | ✅ pass | 3m5s |
+| Lint & Type Check | ✅ pass | 1m40s |
+| Run Tests | ✅ pass | 6m59s |
+| Security Audit | ✅ pass | 55s |
+| Supply Chain IOC Scan | ✅ pass | 6s |
+| CI Summary | ✅ pass | 3s |
+| security/snyk (abu-lina) | ✅ pass | 1 security test passed |
+| Verify Snyk PR | skipping | n/a |
+
+All checks green on the branch HEAD containing the fix, review docs, version bump, and release records. Docs-only update below does not touch build/lint scope; CI re-runs on the new HEAD and the result is reported in the DevOps session summary.
+
+---
+
+## Deferred Gates (block Stage 2/3, NOT Stage 1)
+
+| Gate | Owner | What must happen |
+| --- | --- | --- |
+| **User release approval** | User | Explicit approval to release v0.15.17 (merge PR #325, tag `v0.15.17`, PROD deploy). Per release-procedures skill: never push/merge/tag without explicit approval. |
+| **UAT tap-check (optional per QA)** | UAT operator | One manual home filter-button tap on a real device (<768px) confirming filters render (QA environmental finding: headless client navigation from home page could not be committed; URL contract pinned by `HomeSearchBar.test.tsx`). |
+
+---
+
+## Stage 2 — Executed (2026-08-17, user approval granted)
+
+| Step | Status |
+| --- | --- |
+| PR #325 squash-merge | ✅ MERGED — `212f96682c717498e962cb2efcd36ce1bbdc7b83` |
+| Annotated tag `v0.15.17` + push | ✅ Tag created on `212f9668`, pushed to origin |
+| PROD deploy (`deploy-hetzner.yml`) | ✅ Run 31978780554 — SUCCESS (head `212f9668`, all steps green) |
+| PROD health check | ✅ https://ummahflow.com/api/health → healthy, HTTP 200 (fresh container) |
+| Lifecycle docs → Committed → `closed/` | ✅ analysis/planning/implementation/code-review/qa 216 all Status: Committed, moved to `closed/` |
+| Roadmap sync | ✅ Current Version → v0.15.17 + changelog row |
+
+**Final state**: PROD is at **v0.15.17**. tag `v0.15.17` == package.json `0.15.17` == main HEAD `212f9668`.
+
+---
+
+## Known Limitations (Pre-Stage 2)
+
+| Item | Detail |
+| --- | --- |
+| User release approval | Mandatory before merge/tag/PROD deploy (Stage 2/3) — deferred |
+| Full-repo lint debt | Pre-existing, unrelated to Plan 216; tracked separately |
+| QA environmental finding | Home-page client navigation in headless dev; covered by unit contract + recommended manual tap-check |
+| G1/G2 desktop repro | Explained / non-blocking (QA disposition; narrow-viewport repro fixed, no desktop code path) |

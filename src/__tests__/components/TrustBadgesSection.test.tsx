@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render } from '../utils/test-utils';
-import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
+import { TrustBadgesSection } from '@/features/providers/components/TrustBadgesSection';
 import type { BadgeWithConfirmationStatus } from '@/types/badges';
 import { TrustLevel, EntityType, BadgeKey } from '@/types/badges';
 

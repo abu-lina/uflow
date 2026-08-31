@@ -35,7 +35,9 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
               listingType = parsed.listingType;
             }
           }
-        } catch {}
+        } catch {
+          // Ignore malformed draft payloads from localStorage.
+        }
         const categoriesData = await getProviderCategories(listingType);
         setCategories(categoriesData);
       } catch (error) {

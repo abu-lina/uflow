@@ -142,7 +142,9 @@ export const tr = {
     "food": "Yemek",
     "ummah": "Ümmet",
     "stores": "Mağazalar",
-    "soon": "Yakında"
+    "soon": "Yakında",
+    "comingSoon": "{{section}} çok yakında",
+    "comingSoonDescription": "Üzerinde çalışıyoruz — takipte kalın."
   },
   "search": {
     "placeholder": "Ümmetinde ara",
@@ -155,6 +157,12 @@ export const tr = {
     "filter": "Konuma göre filtrele",
     "personSingular": "{{count}} Kişi",
     "personPlural": "{{count}} Kişi",
+    "searchButton": "Ara",
+    "suggestions": {
+      "provider": "Restoran",
+      "cuisine": "Mutfak",
+      "menuItem": "Menü"
+    },
     "context": {
       "allResults": "Tüm sonuçlar",
       "edit": "Aramayı düzenle",
@@ -182,6 +190,25 @@ export const tr = {
     "notifyMeCityUnavailable": "{{city}} şehrinde henüz sağlayıcı yok – üzerinde çalışıyoruz.",
     "providerCTA": "Sağlayıcı mısın? Listelemenizi ekleyin →",
     "cityNotRecognized": "{{city}} tanınmadı. Lütfen yazımı kontrol edin.",
+    "nearMe": {
+      "chipLabel": "Yakınımda",
+      "radiusLabel": "Mesafe:",
+      "permissionDenied": "Konum kullanılamıyor",
+      "permissionDeniedHintIos": "Konum engellendi. Ayarlar → Gizlilik ve Güvenlik → Konum Servisleri yolunu açın.",
+      "permissionDeniedHintAndroid": "Konum engellendi. Erişime tarayıcı ayarlarından izin verin.",
+      "permissionDeniedHintFallback": "Konum engellendi. Lütfen cihaz ayarlarından konum erişimine izin verin.",
+      "loading": "Sağlayıcılar yükleniyor...",
+      "emptyTitle": "Yakında açık restoran yok",
+      "errorTitle": "Arama kullanılamıyor",
+      "errorLoading": "Arama şu anda kullanılamıyor. Lütfen tekrar deneyin.",
+      "retry": "Tekrar dene"
+    },
+    "openNow": {
+      "chipLabel": "Şimdi açık"
+    },
+    "empty": {
+      "noNearby": "Daha geniş bir mesafe deneyin veya daha sonra tekrar bakın."
+    },
     "was": {
       "searchPlaceholder": "Ne arıyorsun?",
       "loading": "Aranıyor...",
@@ -357,6 +384,10 @@ export const tr = {
       "title": "Bir sağlayıcı tanıyorum",
       "description": "Tanıdığınız birini önerin ki başkaları onu bulabilsin.",
       "buttonText": "Sağlayıcı öner"
+    },
+    "chatHint": {
+      "prefix": "Sohbet asistani ile de hizlica kayit olabilirsiniz:",
+      "link": "Sohbet Asistani"
     },
     "recommend": {
       "title": "Sağlayıcı Öner",
@@ -948,8 +979,10 @@ export const tr = {
       "menu": "Menü",
       "offers": "Teklifler",
       "openingHours": "Çalışma Saatleri",
+      "furtherLocations": "Diğer Konumlar",
       "nearby": "Yakında"
     },
+    "locationFallback": "Konum",
     "days": {
       "monday": "Pazartesi",
       "tuesday": "Salı",
@@ -1084,5 +1117,31 @@ export const tr = {
     "subtitle": "En iyi deneyim için uygulamayı yükleyin",
     "preparing": "Kurulum hazırlanıyor...",
     "continueInBrowser": "Tarayıcıda Devam Et"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "Giriş yapmanız gerekiyor",
+      "body": "Sohbet botunu kullanmak için giriş yapmanız gerekiyor.",
+      "action": "Şimdi giriş yap"
+    },
+    "fallback": {
+      "prefix": "Manuel mi tercih edersiniz?",
+      "link": "Formu kullanin"
+    },
+    "openChat": "Sohbeti aç",
+    "closeChat": "Sohbeti kapat",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "Yakınlaştır",
+    "zoomOut": "Uzaklaştır",
+    "noProviders": "Sağlayıcı bulunamadı",
+    "noProvidersHint": "Yakında tekrar kontrol edin.",
+    "noOpenProviders": "Şu an açık sağlayıcı yok",
+    "noOpenProvidersHint": "Şimdi Açık filtresini kapatmayı deneyin.",
+    "switchToList": "Liste görünümü",
+    "switchToMap": "Harita görünümü",
+    "listViewLabel": "Liste",
+    "mapViewLabel": "Harita"
   }
 } as const;

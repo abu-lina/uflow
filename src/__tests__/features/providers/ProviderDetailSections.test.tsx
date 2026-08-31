@@ -16,7 +16,7 @@ beforeAll(async () => {
   )).ProviderDetailSections;
 });
 
-vi.mock('@/components/providers/TrustBadgesSection', () => ({
+vi.mock('@/features/providers/components/TrustBadgesSection', () => ({
   TrustBadgesSection: ({ badges, isLoading }: { badges: unknown[]; isLoading: boolean }) => (
     <div data-testid="trust-badges-section-mock">
       badges:{badges.length};loading:{String(isLoading)}
@@ -391,5 +391,182 @@ describe('ProviderDetailSections', () => {
     fireEvent.click(screen.getByText('Falafel Teller'));
 
     expect(localMockPush).not.toHaveBeenCalled();
+  });
+
+  it('[BUG-202 pre-fix FAILS] single-location provider: "Further Locations" must NOT render', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        locations={[
+          {
+            location_id: 'loc-1',
+            provider_id: 'provider-1',
+            location_name: 'Berlin',
+            address_street: 'Musterstrasse 1',
+            address_zip: '10115',
+            address_city: 'Berlin',
+            address_country: 'DE',
+            location_latitude: null,
+            location_longitude: null,
+            opening_hours: null,
+            show_address: true,
+            contact_phone: null,
+            is_primary: true,
+            created_at: null,
+            updated_at: null,
+          },
+        ]}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Further Locations' })).not.toBeInTheDocument();
+  });
+
+  it('[BUG-202 post-fix PASSES] multi-location provider: "Further Locations" must render', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        locations={[
+          {
+            location_id: 'loc-1',
+            provider_id: 'provider-1',
+            location_name: 'Berlin',
+            address_street: 'Musterstrasse 1',
+            address_zip: '10115',
+            address_city: 'Berlin',
+            address_country: 'DE',
+            location_latitude: null,
+            location_longitude: null,
+            opening_hours: null,
+            show_address: true,
+            contact_phone: null,
+            is_primary: true,
+            created_at: null,
+            updated_at: null,
+          },
+          {
+            location_id: 'loc-2',
+            provider_id: 'provider-1',
+            location_name: 'Hamburg',
+            address_street: 'Musterstrasse 2',
+            address_zip: '20095',
+            address_city: 'Hamburg',
+            address_country: 'DE',
+            location_latitude: null,
+            location_longitude: null,
+            opening_hours: null,
+            show_address: true,
+            contact_phone: null,
+            is_primary: false,
+            created_at: null,
+            updated_at: null,
+          },
+        ]}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Further Locations' })).toBeInTheDocument();
+  });
+
+  it('[pre-fix FAILS] keeps exactly one section open across all six sections', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    const locations = [
+      {
+        location_id: 'loc-1',
+        provider_id: 'provider-1',
+        location_name: 'Hauptstandort',
+        address_street: null,
+        address_zip: null,
+        address_city: 'Berlin',
+        address_country: null,
+        location_latitude: null,
+        location_longitude: null,
+        opening_hours: null,
+        show_address: true,
+        contact_phone: null,
+        is_primary: true,
+        created_at: null,
+        updated_at: null,
+      },
+      {
+        location_id: 'loc-2',
+        provider_id: 'provider-1',
+        location_name: 'Zweigstelle',
+        address_street: null,
+        address_zip: null,
+        address_city: 'Hamburg',
+        address_country: null,
+        location_latitude: null,
+        location_longitude: null,
+        opening_hours: null,
+        show_address: true,
+        contact_phone: null,
+        is_primary: false,
+        created_at: null,
+        updated_at: null,
+      },
+    ];
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        locations={locations}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    const halalButton = screen.getByRole('button', { name: 'Halal Check' });
+    const valuesButton = screen.getByRole('button', { name: 'Values & Amenities' });
+    const menuButton = screen.getByRole('button', { name: 'Menu' });
+    const hoursButton = screen.getByRole('button', { name: 'Opening Hours' });
+    const standorteButton = screen.getByRole('button', { name: 'Further Locations' });
+    const nearbyButton = screen.getByRole('button', { name: 'Nearby' });
+
+    expect(halalButton).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.click(valuesButton);
+    expect(valuesButton).toHaveAttribute('aria-expanded', 'true');
+    expect(halalButton).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(menuButton);
+    expect(menuButton).toHaveAttribute('aria-expanded', 'true');
+    expect(valuesButton).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(hoursButton);
+    expect(hoursButton).toHaveAttribute('aria-expanded', 'true');
+    expect(menuButton).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(standorteButton);
+    expect(standorteButton).toHaveAttribute('aria-expanded', 'true');
+    expect(hoursButton).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(nearbyButton);
+    expect(nearbyButton).toHaveAttribute('aria-expanded', 'true');
+    expect(standorteButton).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('[pre-fix FAILS] uses gap-4 spacing for provider detail section stack', () => {
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    const { container } = render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+      />,
+    );
+
+    expect(container.firstElementChild).toHaveClass('gap-4');
+    expect(container.firstElementChild).not.toHaveClass('gap-8');
   });
 });

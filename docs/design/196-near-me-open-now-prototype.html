@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plan 196 — Near Me + Open Now — Design Prototype</title>
+  <style>
+    /* ═══════════════════════════════════════════════════
+       UFlow Design Tokens (from tailwind.config.ts)
+       ═══════════════════════════════════════════════════ */
+    :root {
+      --color-primary: 180 24% 48%;
+      --color-primary-light: 180 24% 78%;
+      --color-primary-dark: 180 24% 38%;
+      --color-primary-darker: 180 24% 28%;
+      --color-success: 158 36% 48%;
+      --color-success-soft: 158 40% 93%;
+      --color-danger: 0 52% 63%;
+      --color-warning: 38 76% 60%;
+      --color-neutral-50: 0 0% 96%;
+      --color-neutral-100: 0 0% 91%;
+      --color-neutral-200: 0 0% 82%;
+      --color-neutral-300: 0 0% 69%;
+      --color-neutral-400: 0 0% 53%;
+      --color-neutral-500: 0 0% 43%;
+      --color-neutral-700: 0 0% 31%;
+      --color-neutral-900: 0 0% 24%;
+      --color-background: 0 0% 100%;
+      --color-background-selection: 170 30% 96%;
+      --color-surface: 0 0% 98%;
+      --color-text-primary: 0 0% 12%;
+      --color-text-secondary: 0 0% 31%;
+      --color-text-muted: 0 0% 43%;
+      --color-text-inverse: 0 0% 100%;
+      --color-border-default: 0 0% 82%;
+      --color-border-light: 0 0% 91%;
+
+      /* Spacing (Rule of 8) */
+      --sp-1: 4px;
+      --sp-2: 8px;
+      --sp-3: 12px;
+      --sp-4: 16px;
+      --sp-5: 20px;
+      --sp-6: 24px;
+      --sp-8: 32px;
+
+      /* Border radius */
+      --radius-xs: 8px;
+      --radius-sm: 12px;
+      --radius-md: 14px;
+      --radius-lg: 16.8px;
+      --radius-xl: 20px;
+      --radius-full: 9999px;
+
+      /* Typography */
+      --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-inter-tight: 'Inter Tight', 'Inter', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-inter);
+      background: #f0f0f0;
+      color: hsl(var(--color-text-primary));
+      padding: 24px;
+    }
+
+    /* Layout: side-by-side on desktop, stacked on mobile */
+    .prototype-container {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .device-frame {
+      background: hsl(var(--color-background));
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .device-frame--mobile {
+      width: 375px;
+      min-height: 812px;
+    }
+
+    .device-frame--desktop {
+      width: 720px;
+      min-height: 680px;
+    }
+
+    .device-label {
+      text-align: center;
+      font-family: var(--font-inter-tight);
+      font-size: 13px;
+      font-weight: 600;
+      color: hsl(var(--color-text-muted));
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    /* ─── Header ─── */
+    .header {
+      display: flex;
+      align-items: center;
+      padding: var(--sp-4);
+      padding-top: calc(var(--sp-4) + 20px); /* safe area sim */
+      gap: var(--sp-3);
+      background: hsl(var(--color-background));
+      border-bottom: 1px solid hsl(var(--color-border-light));
+    }
+    .header__back {
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      color: hsl(var(--color-text-primary));
+    }
+    .header__title {
+      font-family: var(--font-inter-tight);
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    /* ─── Section Tabs ─── */
+    .section-tabs {
+      display: flex;
+      gap: var(--sp-2);
+      padding: var(--sp-3) var(--sp-4);
+      border-bottom: 1px solid hsl(var(--color-border-light));
+    }
+    .section-tab {
+      font-family: var(--font-inter-tight);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .section-tab--active {
+      background: hsl(var(--color-primary));
+      color: white;
+    }
+    .section-tab--inactive {
+      background: hsl(var(--color-neutral-50));
+      color: hsl(var(--color-text-muted));
+    }
+
+    /* ─── Accordion / ExpandSection ─── */
+    .expand-section {
+      background: hsl(var(--color-background));
+      border-radius: var(--radius-xl);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      margin: var(--sp-3) var(--sp-4);
+    }
+    .expand-section__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--sp-4);
+      cursor: pointer;
+    }
+    .expand-section__title {
+      font-family: var(--font-inter-tight);
+      font-size: 16px;
+      font-weight: 600;
+      color: hsl(var(--color-text-primary));
+    }
+    .expand-section__chevron {
+      width: 20px; height: 20px;
+      color: hsl(var(--color-text-muted));
+      transition: transform 0.2s;
+    }
+    .expand-section__chevron--open { transform: rotate(180deg); }
+    .expand-section__body {
+      padding: 0 var(--sp-4) var(--sp-4);
+    }
+
+    /* ─── Near Me Row ─── */
+    .near-me-row {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-2);
+      border-radius: var(--radius-xl);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .near-me-row:hover { background: hsl(var(--color-background-selection)); }
+    .near-me-row--active {
+      background: hsl(var(--color-background-selection));
+    }
+    .near-me-row__icon {
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius-xl);
+      background: hsl(var(--color-background-selection));
+      color: hsl(var(--color-primary));
+      flex-shrink: 0;
+      position: relative;
+    }
+    .near-me-row__icon--active {
+      box-shadow: 0 0 0 2px hsl(var(--color-primary));
+    }
+    .near-me-row__icon .check-badge {
+      position: absolute;
+      top: -4px; right: -4px;
+      width: 16px; height: 16px;
+      background: hsl(var(--color-primary));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .near-me-row__icon .check-badge svg { width: 10px; height: 10px; color: white; }
+    .near-me-row__text { flex: 1; min-width: 0; }
+    .near-me-row__title {
+      font-family: var(--font-inter-tight);
+      font-size: 16px;
+      font-weight: 600;
+      color: hsl(var(--color-text-primary));
+    }
+    .near-me-row__subtitle {
+      font-family: var(--font-inter);
+      font-size: 13px;
+      color: hsl(var(--color-text-muted));
+    }
+
+    /* ─── Radius Pills ─── */
+    .radius-pills {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-3) var(--sp-2);
+    }
+    .radius-pills__label {
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(var(--color-text-muted));
+      margin-right: var(--sp-1);
+    }
+    .radius-pill {
+      font-family: var(--font-inter-tight);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: var(--radius-lg);
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .radius-pill--active {
+      background: hsl(var(--color-primary));
+      color: white;
+    }
+    .radius-pill--inactive {
+      background: hsl(var(--color-neutral-100));
+      color: hsl(var(--color-text-secondary));
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      border: none;
+      border-top: 1px solid hsl(var(--color-border-light));
+      margin: var(--sp-3) var(--sp-2);
+    }
+    .divider-label {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: hsl(var(--color-text-muted));
+      margin: var(--sp-2) 0;
+    }
+
+    /* ─── City Input ─── */
+    .city-input-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: 0 var(--sp-3);
+      height: 40px;
+      border-radius: var(--radius-xl);
+      background: hsl(var(--color-neutral-50));
+    }
+    .city-input-bar svg { width: 16px; height: 16px; color: hsl(var(--color-text-muted)); flex-shrink: 0; }
+    .city-input-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      color: hsl(var(--color-text-primary));
+    }
+    .city-input-bar input::placeholder { color: hsl(var(--color-text-muted)); }
+
+    /* ─── City Row ─── */
+    .city-row {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-2);
+      border-radius: var(--radius-xl);
+      cursor: pointer;
+    }
+    .city-row:hover { background: hsl(var(--color-background-selection) / 0.5); }
+    .city-row__icon {
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius-xl);
+      background: hsl(var(--color-background-selection));
+      color: hsl(var(--color-primary));
+      flex-shrink: 0;
+    }
+    .city-row__text { flex: 1; }
+    .city-row__title { font-family: var(--font-inter-tight); font-size: 16px; font-weight: 600; }
+    .city-row__subtitle { font-size: 13px; color: hsl(var(--color-text-muted)); }
+
+    /* ─── Open Now Toggle (inside Filter section) ─── */
+    .open-now-row {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-2);
+      border-radius: var(--radius-xl);
+      cursor: pointer;
+    }
+    .open-now-row:hover { background: hsl(var(--color-background-selection)); }
+    .open-now-row__icon {
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius-xl);
+      background: hsl(var(--color-success-soft));
+      color: hsl(var(--color-success));
+      flex-shrink: 0;
+      position: relative;
+    }
+    .open-now-row__icon--active {
+      box-shadow: 0 0 0 2px hsl(var(--color-primary));
+    }
+    .open-now-row__icon--active .check-badge {
+      position: absolute; top: -4px; right: -4px;
+      width: 16px; height: 16px;
+      background: hsl(var(--color-primary));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .open-now-row__text { flex: 1; }
+    .open-now-row__title { font-family: var(--font-inter-tight); font-size: 16px; font-weight: 600; }
+    .open-now-row__subtitle { font-size: 13px; color: hsl(var(--color-text-muted)); }
+
+    /* ─── Bottom Bar ─── */
+    .bottom-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--sp-4) var(--sp-6);
+      padding-bottom: calc(var(--sp-4) + 20px); /* safe area */
+      background: linear-gradient(to bottom, #f5f5f5, #fbfbfb);
+      border-top: 1px solid hsl(var(--color-border-light) / 0.3);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+    }
+    .bottom-bar__clear {
+      font-size: 14px;
+      font-weight: 500;
+      color: hsl(var(--color-text-primary));
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+    .bottom-bar__search {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-2);
+      height: 48px;
+      padding: 0 var(--sp-4);
+      border-radius: var(--radius-xl);
+      background: hsl(var(--color-primary));
+      color: white;
+      font-family: var(--font-inter-tight);
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(88,157,150,0.25);
+      transition: background 0.15s;
+    }
+    .bottom-bar__search:hover { background: hsl(var(--color-primary-dark)); }
+
+    /* ─── Result Cards (after search) ─── */
+    .results-section {
+      padding: var(--sp-4);
+    }
+    .results-section__title {
+      font-family: var(--font-inter-tight);
+      font-size: 14px;
+      font-weight: 600;
+      color: hsl(var(--color-text-muted));
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: var(--sp-3);
+    }
+    .result-card {
+      display: flex;
+      gap: var(--sp-3);
+      padding: var(--sp-3);
+      border-radius: var(--radius-xl);
+      background: hsl(var(--color-background));
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom: var(--sp-3);
+    }
+    .result-card__image {
+      width: 72px; height: 72px;
+      border-radius: var(--radius-sm);
+      background: hsl(var(--color-neutral-100));
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: hsl(var(--color-neutral-300));
+      font-size: 24px;
+    }
+    .result-card__body { flex: 1; min-width: 0; }
+    .result-card__name {
+      font-family: var(--font-inter-tight);
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .result-card__meta {
+      font-size: 13px;
+      color: hsl(var(--color-text-muted));
+      margin-bottom: 4px;
+    }
+    .result-card__distance {
+      font-size: 12px;
+      color: hsl(var(--color-text-muted));
+      font-weight: 500;
+    }
+    .result-card__distance svg { width: 12px; height: 12px; display: inline; vertical-align: -1px; margin-right: 2px; }
+    .open-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .open-status--open { color: hsl(var(--color-success)); }
+    .open-status--closed { color: hsl(var(--color-danger)); }
+    .open-status__dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .open-status--open .open-status__dot { background: hsl(var(--color-success)); }
+    .open-status--closed .open-status__dot { background: hsl(var(--color-danger)); }
+
+    /* ─── Permission Denied State ─── */
+    .permission-denied {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-2);
+      padding: var(--sp-2) var(--sp-3);
+      border-radius: var(--radius-sm);
+      background: hsl(var(--color-neutral-50));
+      margin-top: var(--sp-2);
+    }
+    .permission-denied__icon { color: hsl(var(--color-warning)); width: 16px; height: 16px; }
+    .permission-denied__text { font-size: 13px; color: hsl(var(--color-text-muted)); }
+
+    /* ─── Empty State ─── */
+    .empty-state {
+      text-align: center;
+      padding: var(--sp-8) var(--sp-4);
+    }
+    .empty-state__icon {
+      width: 64px; height: 64px;
+      margin: 0 auto var(--sp-4);
+      border-radius: 50%;
+      background: hsl(var(--color-neutral-50));
+      display: flex; align-items: center; justify-content: center;
+      color: hsl(var(--color-neutral-300));
+    }
+    .empty-state__title {
+      font-family: var(--font-inter-tight);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: var(--sp-2);
+    }
+    .empty-state__text {
+      font-size: 14px;
+      color: hsl(var(--color-text-muted));
+      margin-bottom: var(--sp-4);
+    }
+    .empty-state__action {
+      font-size: 14px;
+      font-weight: 500;
+      color: hsl(var(--color-primary));
+      text-decoration: underline;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+
+    /* ─── Desktop enhancements ─── */
+    .desktop-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: 100%;
+    }
+    .desktop-layout__sidebar {
+      border-right: 1px solid hsl(var(--color-border-light));
+      overflow-y: auto;
+    }
+    .desktop-layout__main {
+      overflow-y: auto;
+      background: hsl(var(--color-surface));
+    }
+
+    /* ─── Page title ─── */
+    h1.page-title {
+      text-align: center;
+      font-family: var(--font-inter-tight);
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: hsl(var(--color-text-primary));
+    }
+    p.page-subtitle {
+      text-align: center;
+      font-size: 14px;
+      color: hsl(var(--color-text-muted));
+      margin-bottom: 32px;
+    }
+
+    .state-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: hsl(var(--color-primary));
+      background: hsl(var(--color-background-selection));
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      display: inline-block;
+      margin-bottom: var(--sp-2);
+    }
+  </style>
+</head>
+<body>
+
+<h1 class="page-title">Plan 196 — "Near Me + Open Now"</h1>
+<p class="page-subtitle">Design prototype using existing UFlow design tokens • No new dependencies</p>
+
+<div class="prototype-container">
+
+  <!-- ═══════════════════════════════════════════
+       MOBILE — Search Page (Location Active)
+       ═══════════════════════════════════════════ -->
+  <div>
+    <div class="device-label">Mobile (375px) — Search Filters</div>
+    <div class="device-frame device-frame--mobile">
+
+      <!-- Header -->
+      <div class="header">
+        <div class="header__back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="header__title">Suchen</div>
+      </div>
+
+      <!-- Section Tabs -->
+      <div class="section-tabs">
+        <button class="section-tab section-tab--active">Food</button>
+        <button class="section-tab section-tab--inactive">Ummah</button>
+        <button class="section-tab section-tab--inactive">Stores</button>
+      </div>
+
+      <!-- Wo: Accordion (OPEN — showing near me) -->
+      <div class="expand-section">
+        <div class="expand-section__header">
+          <span class="expand-section__title">Wo: In der Nähe (2 km)</span>
+          <svg class="expand-section__chevron expand-section__chevron--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="expand-section__body">
+
+          <!-- Near Me Row (ACTIVE state) -->
+          <div class="state-label">Location granted</div>
+          <div class="near-me-row near-me-row--active">
+            <div class="near-me-row__icon near-me-row__icon--active">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              <span class="check-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+            </div>
+            <div class="near-me-row__text">
+              <div class="near-me-row__title">In meiner Nähe</div>
+              <div class="near-me-row__subtitle">Standort wird verwendet</div>
+            </div>
+          </div>
+
+          <!-- Radius Pills -->
+          <div class="radius-pills">
+            <span class="radius-pills__label">Radius:</span>
+            <button class="radius-pill radius-pill--active">2 km</button>
+            <button class="radius-pill radius-pill--inactive">5 km</button>
+            <button class="radius-pill radius-pill--inactive">10 km</button>
+          </div>
+
+          <!-- Divider -->
+          <hr class="divider" />
+          <div class="divider-label">oder Stadt wählen</div>
+
+          <!-- City Input -->
+          <div class="city-input-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Stadt suchen..." />
+          </div>
+
+          <!-- City Rows -->
+          <div style="margin-top: 12px;">
+            <div class="city-row">
+              <div class="city-row__icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              </div>
+              <div class="city-row__text">
+                <div class="city-row__title">Berlin</div>
+                <div class="city-row__subtitle">42 Anbieter</div>
+              </div>
+            </div>
+            <div class="city-row">
+              <div class="city-row__icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              </div>
+              <div class="city-row__text">
+                <div class="city-row__title">München</div>
+                <div class="city-row__subtitle">28 Anbieter</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Was: Accordion (collapsed) -->
+      <div class="expand-section">
+        <div class="expand-section__header">
+          <span class="expand-section__title">Was: Alle Restaurants</span>
+          <svg class="expand-section__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <!-- Filter: Accordion (collapsed — shows "Open Now" note) -->
+      <div class="expand-section">
+        <div class="expand-section__header">
+          <span class="expand-section__title">Filter: Jetzt geöffnet</span>
+          <svg class="expand-section__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="bottom-bar">
+        <button class="bottom-bar__clear">Alles löschen</button>
+        <button class="bottom-bar__search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          Suchen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MOBILE — Results View
+       ═══════════════════════════════════════════ -->
+  <div>
+    <div class="device-label">Mobile (375px) — Results</div>
+    <div class="device-frame device-frame--mobile">
+
+      <!-- Header -->
+      <div class="header">
+        <div class="header__back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="header__title">In der Nähe (2 km)</div>
+      </div>
+
+      <!-- Open Now filter active indicator -->
+      <div style="padding: 12px 16px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid hsl(var(--color-border-light));">
+        <span style="font-size: 13px; color: hsl(var(--color-text-muted));">Filter:</span>
+        <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; padding: 4px 10px; background: hsl(var(--color-success-soft)); color: hsl(var(--color-success)); border-radius: 9999px;">
+          <span class="open-status__dot" style="background: hsl(var(--color-success));"></span>
+          Jetzt geöffnet
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; padding: 4px 10px; background: hsl(var(--color-neutral-100)); color: hsl(var(--color-text-secondary)); border-radius: 9999px;">
+          📍 2 km
+        </span>
+      </div>
+
+      <!-- Results -->
+      <div class="results-section">
+        <div class="results-section__title">3 Ergebnisse</div>
+
+        <!-- Card 1 — Open -->
+        <div class="result-card">
+          <div class="result-card__image">🍽️</div>
+          <div class="result-card__body">
+            <div class="result-card__name">Sultan's Kitchen</div>
+            <div class="result-card__meta">Türkisch • Kreuzberg</div>
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+              <span class="open-status open-status--open">
+                <span class="open-status__dot"></span>
+                Geöffnet
+                <span style="color: hsl(var(--color-text-muted)); font-weight: 400;">• bis 23:00</span>
+              </span>
+            </div>
+            <div class="result-card__distance" style="margin-top: 4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              0,4 km entfernt
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 — Open -->
+        <div class="result-card">
+          <div class="result-card__image">🥙</div>
+          <div class="result-card__body">
+            <div class="result-card__name">Habibi Falafel</div>
+            <div class="result-card__meta">Arabisch • Neukölln</div>
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+              <span class="open-status open-status--open">
+                <span class="open-status__dot"></span>
+                Geöffnet
+                <span style="color: hsl(var(--color-text-muted)); font-weight: 400;">• bis 02:00</span>
+              </span>
+            </div>
+            <div class="result-card__distance" style="margin-top: 4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              1,2 km entfernt
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 — Open -->
+        <div class="result-card">
+          <div class="result-card__image">🍕</div>
+          <div class="result-card__body">
+            <div class="result-card__name">Memo's Pizza</div>
+            <div class="result-card__meta">Italienisch • Kreuzberg</div>
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+              <span class="open-status open-status--open">
+                <span class="open-status__dot"></span>
+                Geöffnet
+                <span style="color: hsl(var(--color-text-muted)); font-weight: 400;">• bis 00:00</span>
+              </span>
+            </div>
+            <div class="result-card__distance" style="margin-top: 4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              1,8 km entfernt
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       DESKTOP — Side-by-side Layout
+       ═══════════════════════════════════════════ -->
+  <div>
+    <div class="device-label">Desktop (720px+) — Filters + Results</div>
+    <div class="device-frame device-frame--desktop">
+      <div class="desktop-layout">
+
+        <!-- Sidebar (filters) -->
+        <div class="desktop-layout__sidebar">
+          <div class="header" style="padding-top: 16px;">
+            <div class="header__title">Suchen</div>
+          </div>
+          <div class="section-tabs">
+            <button class="section-tab section-tab--active">Food</button>
+            <button class="section-tab section-tab--inactive">Ummah</button>
+            <button class="section-tab section-tab--inactive">Stores</button>
+          </div>
+
+          <!-- Wo — Near me active -->
+          <div class="expand-section" style="margin: 12px;">
+            <div class="expand-section__header">
+              <span class="expand-section__title">Wo: In der Nähe</span>
+              <svg class="expand-section__chevron expand-section__chevron--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="expand-section__body">
+              <div class="near-me-row near-me-row--active">
+                <div class="near-me-row__icon near-me-row__icon--active">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                  <span class="check-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                </div>
+                <div class="near-me-row__text">
+                  <div class="near-me-row__title">In meiner Nähe</div>
+                  <div class="near-me-row__subtitle">Standort aktiv</div>
+                </div>
+              </div>
+              <div class="radius-pills">
+                <span class="radius-pills__label">Radius:</span>
+                <button class="radius-pill radius-pill--inactive">2 km</button>
+                <button class="radius-pill radius-pill--active">5 km</button>
+                <button class="radius-pill radius-pill--inactive">10 km</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter with Open Now -->
+          <div class="expand-section" style="margin: 12px;">
+            <div class="expand-section__header">
+              <span class="expand-section__title">Filter</span>
+              <svg class="expand-section__chevron expand-section__chevron--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="expand-section__body">
+              <div class="open-now-row">
+                <div class="open-now-row__icon open-now-row__icon--active">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span class="check-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>
+                </div>
+                <div class="open-now-row__text">
+                  <div class="open-now-row__title">Jetzt geöffnet</div>
+                  <div class="open-now-row__subtitle">Nur geöffnete anzeigen</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search button at sidebar bottom -->
+          <div style="padding: 16px; border-top: 1px solid hsl(var(--color-border-light));">
+            <button class="bottom-bar__search" style="width: 100%; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              Suchen
+            </button>
+          </div>
+        </div>
+
+        <!-- Main content (results) -->
+        <div class="desktop-layout__main">
+          <div style="padding: 16px 20px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid hsl(var(--color-border-light));">
+            <span style="font-size: 13px; color: hsl(var(--color-text-muted));">Aktive Filter:</span>
+            <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; padding: 4px 10px; background: hsl(var(--color-success-soft)); color: hsl(var(--color-success)); border-radius: 9999px;">
+              <span class="open-status__dot" style="background: hsl(var(--color-success));"></span>
+              Jetzt geöffnet
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; padding: 4px 10px; background: hsl(var(--color-neutral-100)); color: hsl(var(--color-text-secondary)); border-radius: 9999px;">
+              📍 5 km
+            </span>
+          </div>
+
+          <div class="results-section">
+            <div class="results-section__title">5 Ergebnisse — sortiert nach Entfernung</div>
+
+            <div class="result-card">
+              <div class="result-card__image">🍽️</div>
+              <div class="result-card__body">
+                <div class="result-card__name">Sultan's Kitchen</div>
+                <div class="result-card__meta">Türkisch • Kreuzberg</div>
+                <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px;">
+                  <span class="open-status open-status--open"><span class="open-status__dot"></span> Geöffnet • bis 23:00</span>
+                  <span class="result-card__distance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                    0,4 km
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="result-card">
+              <div class="result-card__image">🥙</div>
+              <div class="result-card__body">
+                <div class="result-card__name">Habibi Falafel</div>
+                <div class="result-card__meta">Arabisch • Neukölln</div>
+                <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px;">
+                  <span class="open-status open-status--open"><span class="open-status__dot"></span> Geöffnet • bis 02:00</span>
+                  <span class="result-card__distance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                    1,2 km
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="result-card">
+              <div class="result-card__image">🍕</div>
+              <div class="result-card__body">
+                <div class="result-card__name">Memo's Pizza</div>
+                <div class="result-card__meta">Italienisch • Kreuzberg</div>
+                <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px;">
+                  <span class="open-status open-status--open"><span class="open-status__dot"></span> Geöffnet • bis 00:00</span>
+                  <span class="result-card__distance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                    1,8 km
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="result-card">
+              <div class="result-card__image">🍛</div>
+              <div class="result-card__body">
+                <div class="result-card__name">Salam Curry House</div>
+                <div class="result-card__meta">Indisch • Schöneberg</div>
+                <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px;">
+                  <span class="open-status open-status--open"><span class="open-status__dot"></span> Geöffnet • bis 22:30</span>
+                  <span class="result-card__distance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                    3,1 km
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="result-card">
+              <div class="result-card__image">🥘</div>
+              <div class="result-card__body">
+                <div class="result-card__name">Al-Amir Restaurant</div>
+                <div class="result-card__meta">Libanesisch • Charlottenburg</div>
+                <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px;">
+                  <span class="open-status open-status--open"><span class="open-status__dot"></span> Geöffnet • bis 23:30</span>
+                  <span class="result-card__distance">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                    4,7 km
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MOBILE — Permission Denied + Empty States
+       ═══════════════════════════════════════════ -->
+  <div>
+    <div class="device-label">Mobile — Edge States</div>
+    <div class="device-frame device-frame--mobile">
+
+      <div class="header">
+        <div class="header__back">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+        <div class="header__title">Suchen</div>
+      </div>
+
+      <div class="section-tabs">
+        <button class="section-tab section-tab--active">Food</button>
+        <button class="section-tab section-tab--inactive">Ummah</button>
+        <button class="section-tab section-tab--inactive">Stores</button>
+      </div>
+
+      <!-- Wo: Accordion — Permission Denied State -->
+      <div class="expand-section">
+        <div class="expand-section__header">
+          <span class="expand-section__title">Wo:</span>
+          <svg class="expand-section__chevron expand-section__chevron--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="expand-section__body">
+
+          <div class="state-label" style="background: hsl(38 85% 95%); color: hsl(var(--color-warning));">Permission denied</div>
+
+          <!-- Near Me Row (DENIED state) -->
+          <div class="near-me-row">
+            <div class="near-me-row__icon" style="background: hsl(38 85% 95%); color: hsl(var(--color-warning));">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </div>
+            <div class="near-me-row__text">
+              <div class="near-me-row__title">In meiner Nähe</div>
+              <div class="near-me-row__subtitle" style="color: hsl(var(--color-warning));">Standort nicht verfügbar</div>
+            </div>
+          </div>
+
+          <div class="permission-denied">
+            <svg class="permission-denied__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span class="permission-denied__text">Bitte Standortzugriff in den Browsereinstellungen aktivieren</span>
+          </div>
+
+          <hr class="divider" />
+          <div class="divider-label">Stadt wählen stattdessen</div>
+
+          <div class="city-input-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" placeholder="Stadt suchen..." />
+          </div>
+
+          <div style="margin-top: 12px;">
+            <div class="city-row">
+              <div class="city-row__icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              </div>
+              <div class="city-row__text">
+                <div class="city-row__title">Berlin</div>
+                <div class="city-row__subtitle">42 Anbieter</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State (after search with no results) -->
+      <div style="margin-top: 24px;">
+        <div class="state-label" style="margin-left: 16px;">Empty state (no open results)</div>
+        <div class="empty-state">
+          <div class="empty-state__icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="empty-state__title">Keine geöffneten Restaurants</div>
+          <div class="empty-state__text">
+            In 2 km Umkreis ist gerade kein Restaurant geöffnet.<br/>
+            Versuche einen größeren Radius oder schau morgen wieder vorbei.
+          </div>
+          <button class="empty-state__action">Radius auf 5 km erweitern</button>
+        </div>
+      </div>
+
+      <div class="bottom-bar">
+        <button class="bottom-bar__clear">Alles löschen</button>
+        <button class="bottom-bar__search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          Suchen
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p style="text-align: center; margin-top: 32px; font-size: 12px; color: hsl(var(--color-text-muted));">
+  Plan 196 • All colors, spacing, radii, and typography from existing UFlow design tokens • No new dependencies
+</p>
+
+</body>
+</html>

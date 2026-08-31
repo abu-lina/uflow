@@ -142,7 +142,9 @@ export const ur = {
     "food": "کھانا",
     "ummah": "امت",
     "stores": "دکانیں",
-    "soon": "جلد"
+    "soon": "جلد",
+    "comingSoon": "{{section}} جلد آ رہا ہے",
+    "comingSoonDescription": "ہم اس پر کام کر رہے ہیں — جڑے رہیں۔"
   },
   "search": {
     "placeholder": "اپنی امت میں تلاش کریں",
@@ -155,6 +157,12 @@ export const ur = {
     "filter": "مقام کے لحاظ سے فلٹر کریں",
     "personSingular": "{{count}} شخص",
     "personPlural": "{{count}} لوگ",
+    "searchButton": "تلاش کریں",
+    "suggestions": {
+      "provider": "ریستوران",
+      "cuisine": "کھانے",
+      "menuItem": "مینو"
+    },
     "context": {
       "allResults": "All results",
       "edit": "Edit search",
@@ -182,6 +190,26 @@ export const ur = {
     "notifyMeCityUnavailable": "{{city}} میں ابھی کوئی فراہم کنندہ نہیں – ہم اس پر کام کر رہے ہیں۔",
     "providerCTA": "کیا آپ فراہم کنندہ ہیں؟ اپنی فہرست شامل کریں →",
     "cityNotRecognized": "{{city}} پہچانا نہیں گیا۔ براہ کرم ہجے چیک کریں۔",
+    "nearMe": {
+      "chipLabel": "میرے قریب",
+      "radiusLabel": "فاصلہ:",
+      "permissionDenied": "مقام دستیاب نہیں",
+      // TODO: Refine iOS/Android path wording with native-speaker review.
+      "permissionDeniedHintIos": "مقام بلاک ہے۔ براہ کرم ڈیوائس سیٹنگز میں لوکیشن رسائی کی اجازت دیں۔",
+      "permissionDeniedHintAndroid": "مقام بلاک ہے۔ براہ کرم ڈیوائس سیٹنگز میں لوکیشن رسائی کی اجازت دیں۔",
+      "permissionDeniedHintFallback": "مقام بلاک ہے۔ براہ کرم ڈیوائس سیٹنگز میں لوکیشن رسائی کی اجازت دیں۔",
+      "loading": "فراہم کنندگان لوڈ ہو رہے ہیں...",
+      "emptyTitle": "قریب کوئی کھلا ریسٹورانٹ نہیں",
+      "errorTitle": "تلاش دستیاب نہیں",
+      "errorLoading": "تلاش فی الحال دستیاب نہیں ہے۔ براہ کرم دوبارہ کوشش کریں۔",
+      "retry": "دوبارہ کوشش کریں"
+    },
+    "openNow": {
+      "chipLabel": "ابھی کھلا ہے"
+    },
+    "empty": {
+      "noNearby": "بڑا فاصلہ آزمائیں یا بعد میں دوبارہ چیک کریں۔"
+    },
     "was": {
       "searchPlaceholder": "آپ کیا تلاش کر رہے ہیں؟",
       "loading": "تلاش جاری ہے...",
@@ -357,6 +385,10 @@ export const ur = {
       "title": "میں ایک فراہم کنندہ جانتا ہوں",
       "description": "کسی جانے ہوئے کو تجویز کریں تاکہ دوسرے انہیں تلاش کر سکیں۔",
       "buttonText": "فراہم کنندہ تجویز کریں"
+    },
+    "chatHint": {
+      "prefix": "آپ چیٹ اسسٹنٹ کے ذریعے بھی جلدی رجسٹر کر سکتے ہیں:",
+      "link": "چیٹ اسسٹنٹ"
     },
     "recommend": {
       "title": "فراہم کنندہ تجویز کریں",
@@ -948,8 +980,10 @@ export const ur = {
       "menu": "مینیو",
       "offers": "پیشکش",
       "openingHours": "اوقاتِ کار",
+      "furtherLocations": "مزید مقامات",
       "nearby": "قریب"
     },
+    "locationFallback": "مقام",
     "days": {
       "monday": "پیر",
       "tuesday": "منگل",
@@ -1084,5 +1118,31 @@ export const ur = {
     "subtitle": "بہترین تجربے کے لیے ایپ انسٹال کریں",
     "preparing": "انسٹالیشن تیار ہو رہی ہے...",
     "continueInBrowser": "براؤزر میں جاری رکھیں"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "لاگ ان ضروری ہے",
+      "body": "چیٹ بوٹ استعمال کرنے کے لیے آپ کو لاگ ان ہونا ضروری ہے۔",
+      "action": "ابھی لاگ ان کریں"
+    },
+    "fallback": {
+      "prefix": "دستی طور پر کرنا چاہتے ہیں؟",
+      "link": "فارم استعمال کریں"
+    },
+    "openChat": "چیٹ کھولیں",
+    "closeChat": "چیٹ بند کریں",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "زوم ان",
+    "zoomOut": "زوم آؤٹ",
+    "noProviders": "کوئی فراہم کنندہ نہیں ملا",
+    "noProvidersHint": "جلد واپس آئیں۔",
+    "noOpenProviders": "ابھی کوئی کھلا فراہم کنندہ نہیں",
+    "noOpenProvidersHint": "ابھی کھلا فلٹر بند کرنے کی کوشش کریں۔",
+    "switchToList": "فہرست کا نظارہ",
+    "switchToMap": "نقشہ کا نظارہ",
+    "listViewLabel": "فہرست",
+    "mapViewLabel": "نقشہ"
   }
 } as const;

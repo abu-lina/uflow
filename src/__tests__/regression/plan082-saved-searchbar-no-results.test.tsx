@@ -26,7 +26,9 @@ vi.mock('@/providers/auth-provider', () => ({
 vi.mock('@/providers/search-provider', () => ({
   useSearch: () => ({
     searchQuery: 'zzz-no-match',
+    setSearchQuery: vi.fn(),
     selectedLocation: '',
+    selectedSection: 'food',
   }),
 }));
 
@@ -74,8 +76,8 @@ vi.mock('@/components/shared/SelectableCard', () => ({
   SelectableCard: ({ title }: { title: string }) => <div>{title}</div>,
 }));
 
-vi.mock('@/features/search/components/SearchBar', () => ({
-  SearchBar: () => <div data-testid="saved-search-bar">search-bar</div>,
+vi.mock('@/features/search/components/HomeSearchBar', () => ({
+  HomeSearchBar: () => <div data-testid="saved-search-bar">search-bar</div>,
 }));
 
 vi.mock('@/components/ui/EmptyState', () => ({
@@ -146,7 +148,6 @@ vi.mock('@/services/bookmarks', () => ({
 
 vi.mock('@/services/providers', () => ({
   getAllBookmarkedItems: vi.fn(),
-  fetchBookmarkedCities: vi.fn(),
 }));
 
 vi.mock('@/utils/imageUtils', () => ({
@@ -178,9 +179,6 @@ describe('Plan 082 - Saved page empty-state searchbar regression', () => {
         ],
         isLoading: false,
         error: null,
-      })
-      .mockReturnValueOnce({
-        data: ['Berlin'],
       });
   });
 

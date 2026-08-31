@@ -6,8 +6,8 @@ const RUNTIME_BOOKMARK_FILES = [
   'src/app/(public)/saved/page.tsx',
   'src/app/(public)/providers/ProvidersContent.tsx',
   'src/components/community-services/CommunityServiceDetailModal.tsx',
-  'src/components/providers/ProviderDetailPage.tsx',
-  'src/components/providers/ProviderDetailModal.tsx',
+  'src/features/providers/pages/ProviderDetailPage.tsx',
+  'src/features/providers/pages/ProviderDetailModal.tsx',
 ] as const;
 
 describe('Plan 114 bookmark typed FK runtime regression', () => {

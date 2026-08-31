@@ -40,7 +40,7 @@ vi.mock('@/components/layout/PageHeader', () => ({
   PageHeader: () => <div data-testid="page-header" />,
 }));
 
-vi.mock('@/components/providers/ProviderEditForm', () => ({
+vi.mock('@/features/providers/pages/ProviderEditForm', () => ({
   ProviderEditForm: () => <div data-testid="provider-edit-form" />,
 }));
 

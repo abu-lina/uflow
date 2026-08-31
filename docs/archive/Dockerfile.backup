@@ -29,11 +29,9 @@ ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Fix SSL issues for Google Fonts
-ENV NODE_TLS_REJECT_UNAUTHORIZED=0
-
 # Build the application
-RUN npm run build:raw
+# NODE_TLS_REJECT_UNAUTHORIZED=0 scoped to build only (Google Fonts fetch)
+RUN NODE_TLS_REJECT_UNAUTHORIZED=0 npm run build:raw
 
 # Stage 3: Runner (Production)
 FROM node:20-alpine AS runner

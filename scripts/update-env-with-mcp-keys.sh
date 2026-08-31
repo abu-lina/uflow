@@ -22,7 +22,7 @@ UAT_REF="rdtdtcfntopcxcigkqoq"
 
 # DEV project credentials (from MCP)
 DEV_URL="https://${DEV_REF}.supabase.co"
-DEV_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyZWtvbmZoYWVuamRuamh3ZHVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxOTM0NDQsImV4cCI6MjA3OTc2OTQ0NH0.Z5c6UhofzCEPQJwsycwMhsYyxuqAgyqBF9R-oFMi8bc"
+DEV_ANON_KEY="${DEV_SUPABASE_ANON_KEY:?Set DEV_SUPABASE_ANON_KEY env var or fetch from Supabase Dashboard > Project Settings > API}"
 
 echo -e "${CYAN}DEV Project Credentials (from MCP):${NC}"
 echo "  URL: ${DEV_URL}"

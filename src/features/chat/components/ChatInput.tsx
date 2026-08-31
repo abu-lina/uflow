@@ -46,20 +46,24 @@ export function ChatInput({ onSend, isLoading = false }: ChatInputProps) {
     >
       <textarea
         ref={textareaRef}
+        aria-label="Chat message input"
+        autoCapitalize="sentences"
+        autoCorrect="on"
+        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 h-12 text-sm py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+        disabled={isLoading}
+        enterKeyHint="send"
+        placeholder="Nachricht schreiben..."
+        rows={1}
+        spellCheck={true}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Nachricht schreiben..."
-        disabled={isLoading}
-        rows={1}
-        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 h-12 text-sm py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-white"
-        aria-label="Chat message input"
       />
       <button
-        onClick={handleSend}
-        disabled={isLoading || !value.trim()}
-        className="inline-flex items-center justify-center font-inter-tight text-base font-medium transition-all duration-150 ease-out disabled:opacity-50 active:scale-[0.98] bg-primary text-white hover:bg-primary-dark active:bg-primary-darker h-12 w-12 rounded-xl shadow-[0_8px_24px_rgba(88,157,150,0.25)]"
         aria-label="Send message"
+        className="inline-flex items-center justify-center font-inter-tight text-base font-medium transition-all duration-150 ease-out disabled:opacity-50 active:scale-[0.98] bg-primary text-white hover:bg-primary-dark active:bg-primary-darker h-12 w-12 rounded-xl shadow-[0_8px_24px_rgba(88,157,150,0.25)]"
+        disabled={isLoading || !value.trim()}
+        onClick={handleSend}
       >
         <ArrowUp size={24} strokeWidth={2.5} />
       </button>
