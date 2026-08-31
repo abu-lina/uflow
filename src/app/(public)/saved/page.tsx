@@ -16,7 +16,7 @@ import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
-import { SearchBar } from '@/features/search/components/SearchBar';
+import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { TitleAndText } from '@/components/ui/TitleAndText';
@@ -29,7 +29,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
-import { getAllBookmarkedItems, fetchBookmarkedCities } from '@/services/providers';
+import { getAllBookmarkedItems } from '@/services/providers';
 import { getFirstImageUrl, formatProviderAddress, getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE, parseCategoryImages, getCategoryCardBackgroundColor } from '@/utils/imageUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { signInWithEmailConfirmation, signInWithMagicLink } from '@/lib/auth';
@@ -40,7 +40,7 @@ export default function SavedProvidersPage() {
   const { user, isLoading: userLoading } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { searchQuery, selectedLocation } = useSearch();
+  const { searchQuery, setSearchQuery, selectedLocation, selectedSection } = useSearch();
   const { t } = useLanguage();
   const { stage } = useAppStage();
   
@@ -76,23 +76,11 @@ export default function SavedProvidersPage() {
   });
 
 
-  // Fetch cities from bookmarked items
-  const { data: bookmarkedCities = [] } = useQuery({
-    queryKey: ['bookmarked-cities', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      return await fetchBookmarkedCities(user.id);
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
   // Listen for bookmark change events to refresh the saved list
   useEffect(() => {
     const handleBookmarkChange = () => {
       if (user) {
         queryClient.invalidateQueries({ queryKey: ['saved-providers', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['bookmarked-cities', user.id] });
       }
     };
 
@@ -518,8 +506,11 @@ export default function SavedProvidersPage() {
         maxWidth="full"
       >
         {shouldShowSearchBar && (
-          <SearchBar
-            customCities={showSkeleton ? [] : bookmarkedCities}
+          <HomeSearchBar
+            activeSection={selectedSection}
+            hideFilters
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
           />
         )}
 
