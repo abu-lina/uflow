@@ -1,5 +1,5 @@
 /**
- * Backfill missing location coordinates for approved food providers.
+ * Backfill missing location coordinates for approved and pending food providers.
  *
  * Powers Plan 196 "Near me" search: search_food_near_me() can only return rows
  * whose locations have location_latitude / location_longitude. Seed/imported
@@ -112,7 +112,7 @@ async function main(): Promise<void> {
       'location_id, address_street, address_zip, address_city, address_country, providers!inner(listing_type, review_status)',
     )
     .eq('providers.listing_type', 'food')
-    .eq('providers.review_status', 'approved')
+    .in('providers.review_status', ['approved', 'pending'])
     .or('location_latitude.is.null,location_longitude.is.null');
 
   if (LIMIT) query = query.limit(LIMIT);
@@ -124,7 +124,7 @@ async function main(): Promise<void> {
   }
 
   const rows = (data ?? []) as unknown as LocationRow[];
-  console.log(`Found ${rows.length} approved food location(s) without coordinates.\n`);
+  console.log(`Found ${rows.length} approved/pending food location(s) without coordinates.\n`);
 
   let updated = 0;
   let skipped = 0;

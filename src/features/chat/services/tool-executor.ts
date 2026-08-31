@@ -526,6 +526,8 @@ export async function mapChatArgsToFormData(
     zip: (args.zip as string) || '',
     city: (args.city as string) || '',
     country: (args.country as string) || 'DE',
+    latitude: null,
+    longitude: null,
     showAddress: true,
     website: (args.website as string) || '',
     instagram: '',
