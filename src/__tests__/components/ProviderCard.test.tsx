@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { render } from '../utils/test-utils';
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { render, mockMatchMedia } from '../utils/test-utils';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { mockProviders } from '../mocks/providerData';
 import type { Provider } from '@/services/providers';
 import * as AuthProviderModule from '@/providers/auth-provider';
@@ -818,6 +818,29 @@ describe('ProviderCard Component', () => {
       fireEvent.click(approveButton);
 
       expect(mockOnApprove).not.toHaveBeenCalled();
+    });
+
+    it('should have hidden class on moderation wrapper for mobile (Plan 188)', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="moderation"
+          onApprove={mockOnApprove}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={mockOnReject}
+        />,
+      );
+
+      const approveButton = screen.getByRole('button', { name: /approve/i });
+      const wrapperDiv = approveButton.parentElement;
+
+      // Wrapper should have 'hidden' (mobile hidden) and 'sm:flex' (desktop visible)
+      expect(wrapperDiv).toHaveClass('hidden');
+      expect(wrapperDiv).toHaveClass('sm:flex');
+      // Buttons are still in the DOM even when visually hidden
+      expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
     });
   });
 });

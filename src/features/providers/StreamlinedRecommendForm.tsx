@@ -11,7 +11,7 @@ import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useAuth } from '@/providers/auth-provider';
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 import { trackEvent } from '@/lib/analytics/plausible';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';

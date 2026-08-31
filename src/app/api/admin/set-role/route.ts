@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { isAdminOrModerator } from '@/lib/auth/roles';
+import { getUserRole } from '@/lib/auth/roles';
 
 /**
  * POST /api/admin/set-role
@@ -27,8 +27,8 @@ export async function POST(request: Request) {
     }
 
     // F-049-01: Require admin/moderator role (DB-backed) for privilege escalation
-    const hasAccess = await isAdminOrModerator(user.id);
-    if (!hasAccess) {
+    const callerRole = await getUserRole(user.id);
+    if (callerRole !== 'admin' && callerRole !== 'moderator') {
       return NextResponse.json(
         { error: 'Forbidden. Only admin or moderator can set roles.' },
         { status: 403 }
@@ -69,6 +69,22 @@ export async function POST(request: Request) {
       targetUserId = userByEmail.id;
     }
 
+    // Prevent self-role-changes (after email resolution so both paths are covered)
+    if (targetUserId === user.id) {
+      return NextResponse.json(
+        { error: 'Cannot change your own role.' },
+        { status: 403 }
+      );
+    }
+
+    // Only admins can assign the admin role
+    if (role === 'admin' && callerRole !== 'admin') {
+      return NextResponse.json(
+        { error: 'Only admins can grant admin role.' },
+        { status: 403 }
+      );
+    }
+
     // Get auth user data for email
     const { data: authUserData, error: authError } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
     if (authError || !authUserData?.user) {
@@ -84,6 +100,17 @@ export async function POST(request: Request) {
       .select('user_id, email, role')
       .eq('user_id', targetUserId)
       .single();
+
+    // Moderators cannot modify admin users
+    if (callerRole !== 'admin' && existingUser?.role === 'admin') {
+      return NextResponse.json(
+        { error: 'Only admins can modify admin users.' },
+        { status: 403 }
+      );
+    }
+
+    let responseUser: unknown;
+    let successMessage = '';
 
     if (existingUser) {
       // Update existing user
@@ -101,11 +128,8 @@ export async function POST(request: Request) {
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        message: `Role updated to ${role}`,
-        user: data,
-      });
+      responseUser = data;
+      successMessage = `Role updated to ${role}`;
     } else {
       // Create new user record
       const { data, error } = await supabaseAdmin
@@ -125,12 +149,32 @@ export async function POST(request: Request) {
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        message: `User record created with role ${role}`,
-        user: data,
+      responseUser = data;
+      successMessage = `User record created with role ${role}`;
+    }
+
+    const mergedMetadata = {
+      ...(authUserData.user.user_metadata || {}),
+      role,
+    };
+
+    const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+      user_metadata: mergedMetadata,
+    });
+
+    if (metadataError) {
+      console.warn('[set-role] Role updated in DB but metadata sync failed:', {
+        targetUserId,
+        role,
+        error: metadataError.message,
       });
     }
+
+    return NextResponse.json({
+      success: true,
+      message: successMessage,
+      user: responseUser,
+    });
   } catch (error) {
     console.error('Error setting role:', error);
     return NextResponse.json(

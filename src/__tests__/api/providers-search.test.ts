@@ -35,6 +35,12 @@ vi.mock('@/lib/auth/roles', () => ({
   isAdminOrModerator: mockIsAdminOrModerator,
 }));
 
+// Mock getSupabaseAdmin for admin search (returns a tagged mock client)
+const mockAdminClient = { _tag: 'admin-client' };
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: () => mockAdminClient,
+}));
+
 // Import after mocking
 import { GET } from '@/app/api/providers/search/route';
 
@@ -74,7 +80,7 @@ describe('GET /api/providers/search', () => {
     expect(response.status).toBe(200);
     expectCorrelationIdHeader(response);
     expect(data).toEqual(mockResults);
-    expect(mockSearch).toHaveBeenCalledWith('test', null, '', 0, 12, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('test', null, '', 0, 12, undefined, undefined, undefined, undefined);
   });
 
   it('should apply Cache-Control: no-store when free-text query is present', async () => {
@@ -107,7 +113,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
   });
 
   it('should pass category and location params to search', async () => {
@@ -118,7 +124,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', 'cat-1', 'Berlin', 0, 12, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', 'cat-1', 'Berlin', 0, 12, undefined, undefined, undefined, undefined);
   });
 
   // --- Plan 044: location normalization regression tests ---
@@ -129,7 +135,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
   });
 
   // RC-2/RC-3: empty location param must preserve the LOCATION_ALL sentinel
@@ -139,7 +145,7 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search?location=');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
   });
 
   // RC-3: legacy 'Everywhere' label must normalise to empty string, not filter by city name
@@ -151,7 +157,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
   });
 
   // RC-3: legacy 'Überall' label must normalise to empty string, not filter by city name
@@ -163,7 +169,7 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
   });
 
   it('should return 500 on search failure', async () => {
@@ -231,7 +237,7 @@ describe('GET /api/providers/search', () => {
 
       expect(response.status).toBe(200);
       expect(mockSearch).toHaveBeenCalledWith(
-        '', null, '', 0, 12, { status: 'pending', isAdmin: true }, undefined, undefined
+        '', null, '', 0, 12, { status: 'pending', isAdmin: true }, undefined, undefined, mockAdminClient
       );
     });
 
@@ -253,6 +259,7 @@ describe('GET /api/providers/search', () => {
         undefined,
         undefined,
         ['muslim', 'parken'],
+        undefined,
       );
     });
 
@@ -274,6 +281,7 @@ describe('GET /api/providers/search', () => {
         undefined,
         undefined,
         ['muslim', 'parken'],
+        undefined,
       );
     });
 

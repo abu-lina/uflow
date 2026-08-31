@@ -6,8 +6,9 @@ import { afterAll, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 
 // Set up environment variables
+// Use sb_publishable_ prefix to match the new key format accepted by client validation
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://mock-supabase-url.com';
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'mock-anon-key';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'sb_publishable_mock_anon_key_for_tests';
 
 // Silence React error boundary warnings in test
 const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -39,7 +40,12 @@ vi.mock('next/router', () => ({
 
 // Mock sonner
 vi.mock('sonner', () => ({
-  toast: vi.fn(),
+  toast: Object.assign(vi.fn(), {
+    info: vi.fn(),
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+  }),
 }));
 
 // Mock zod
@@ -137,6 +143,11 @@ vi.mock('react-error-boundary', () => ({
 vi.mock('@/components/ui/form-skeleton', () => ({
   FormSkeleton: ({ children }: { children: React.ReactNode }) => children,
 }));
+
+// Mock scrollIntoView for jsdom (only when Element exists)
+if (typeof Element !== 'undefined') {
+  Element.prototype.scrollIntoView = () => {};
+}
 
 // Cleanup
 afterAll(() => {

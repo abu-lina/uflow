@@ -1,4 +1,6 @@
-import ProvidersPage from '@/app/(public)/providers/page';
+import { redirect } from 'next/navigation';
+import { renderProvidersPage } from '@/app/(public)/providers/renderProvidersPage';
+import { SECTION_META } from '@/config/sectionFilters';
 
 type RouteSearchParams = { [key: string]: string | string[] | undefined };
 
@@ -7,6 +9,8 @@ export default async function UmmahPage({
 }: {
   searchParams: Promise<RouteSearchParams>;
 }) {
-  const params = await searchParams;
-  return ProvidersPage({ searchParams: Promise.resolve({ ...params, section: 'ummah' }) });
+  if (!SECTION_META.ummah.active) {
+    redirect('/food');
+  }
+  return renderProvidersPage({ searchParams, routeSection: 'ummah' });
 }

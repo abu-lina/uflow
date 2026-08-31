@@ -1,7 +1,7 @@
 ---
 description: Quality assurance. Defines test strategy, validates implementations, enforces TDD compliance, and verifies business value delivery.
 mode: subagent
-model: anthropic/claude-haiku-4-20250514
+model: opencode-go/deepseek-v4-flash
 permission:
   read: allow
   edit:

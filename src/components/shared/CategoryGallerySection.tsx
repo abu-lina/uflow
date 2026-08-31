@@ -5,10 +5,11 @@ import { useQuery } from '@tanstack/react-query';
 
 import { fetchUsedCategories, fetchCategoriesBySection, type Category } from '@/services/categories';
 import {
-  getResultsPathForSection,
   inferSectionFromCategory,
   type Section,
 } from '@/config/sectionFilters';
+import { buildResultsUrl } from '@/lib/search-params';
+import { slugify } from '@/lib/slugify';
 import { formatAllahText } from '@/utils/textUtils';
 import {
   getLocalizedDescription,
@@ -21,9 +22,10 @@ import { getEntityTypeForCategory } from '@/utils/entityTypeUtils';
 
 interface CategoryGallerySectionProps {
   section?: Section;
+  city?: string;
 }
 
-export function CategoryGallerySection({ section }: CategoryGallerySectionProps = {}) {
+export function CategoryGallerySection({ section, city }: CategoryGallerySectionProps = {}) {
   const router = useRouter();
 
   // Use React Query to cache categories data and prevent refetching on navigation
@@ -86,16 +88,21 @@ export function CategoryGallerySection({ section }: CategoryGallerySectionProps 
     }
   };
 
-  const handleCategoryClick = (categoryId: string) => {
+  const handleCategoryClick = (categoryId: string, cat: Category) => {
     const resolvedSection = section ?? inferSectionFromCategory(categoryId);
-    const params = new URLSearchParams({ category: categoryId, section: resolvedSection });
-    router.push(`${getResultsPathForSection(resolvedSection)}?${params.toString()}`);
+    const categorySlug = cat.slug ?? slugify(cat.name_en ?? cat.name_de);
+    const url = buildResultsUrl({
+      section: resolvedSection,
+      city: city ?? null,
+      categorySlug,
+    });
+    router.push(url);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, categoryId: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, categoryId: string, cat: Category) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      handleCategoryClick(categoryId);
+      handleCategoryClick(categoryId, cat);
     }
   };
 
@@ -156,8 +163,8 @@ export function CategoryGallerySection({ section }: CategoryGallerySectionProps 
               className="flex cursor-pointer flex-col rounded-lg transition-transform hover:scale-[1.02] hover:bg-gray-50/50 active:scale-[0.98]"
               role="button"
               tabIndex={0}
-              onClick={() => handleCategoryClick(categoryId)}
-              onKeyDown={(e) => handleKeyDown(e, categoryId)}
+              onClick={() => handleCategoryClick(categoryId, category)}
+              onKeyDown={(e) => handleKeyDown(e, categoryId, category)}
             >
               <div className="flex w-full flex-row items-center pb-3 pl-3 pt-3">
                 <div className="flex min-w-0 flex-1 flex-col items-start justify-center pr-3">

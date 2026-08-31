@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { Button } from '@/components/ui/Button';
 import { usePinterestTicker } from '@/hooks/usePinterestTicker';
 import { useFilter } from '@/providers/filter-provider';

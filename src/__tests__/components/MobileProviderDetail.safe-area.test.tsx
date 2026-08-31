@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render } from '../utils/test-utils';
-import { MobileProviderDetail } from '@/components/providers/MobileProviderDetail';
+import { MobileProviderDetail } from '@/features/providers/components/MobileProviderDetail';
 import { mockProviders } from '../mocks/providerData';
 
 describe('MobileProviderDetail safe-area top gap regression', () => {

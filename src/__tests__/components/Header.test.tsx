@@ -2,7 +2,7 @@
  * Plan 153: Desktop header section tabs
  *
  * Tests that the Header renders SectionSelector tabs and clicking a tab
- * navigates to /<section>?section=<section>.
+ * navigates to /<section>.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -22,21 +22,21 @@ describe('Header Section Tabs (Plan 153)', () => {
     expect(screen.getByRole('tab', { name: /stores/i })).toBeInTheDocument();
   });
 
-  it('navigates to /ummah?section=ummah when Ummah tab is clicked', () => {
+  it('does not navigate when Ummah tab (inactive) is clicked', () => {
     render(<Header />);
     fireEvent.click(screen.getByRole('tab', { name: /ummah/i }));
-    expect(mockRouterPush).toHaveBeenCalledWith('/ummah?section=ummah');
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
-  it('navigates to /stores?section=store when Stores tab is clicked', () => {
+  it('does not navigate when Stores tab (inactive) is clicked', () => {
     render(<Header />);
     fireEvent.click(screen.getByRole('tab', { name: /stores/i }));
-    expect(mockRouterPush).toHaveBeenCalledWith('/stores?section=store');
+    expect(mockRouterPush).not.toHaveBeenCalled();
   });
 
-  it('navigates to /food?section=food when Food tab is clicked', () => {
+  it('navigates to /food when Food tab is clicked', () => {
     render(<Header />);
     fireEvent.click(screen.getByRole('tab', { name: /food/i }));
-    expect(mockRouterPush).toHaveBeenCalledWith('/food?section=food');
+    expect(mockRouterPush).toHaveBeenCalledWith('/food');
   });
 });

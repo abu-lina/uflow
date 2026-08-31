@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { MobileFooterBar } from '@/components/common/MobileFooterBar';
+import { ChatFloatingWidget } from '@/features/chat/components/ChatFloatingWidget';
 import { CityEarlyAccessNavbar } from '@/components/shared/CityEarlyAccessNavbar';
 import { DesktopFooter } from '@/components/layout/DesktopFooter';
 import { PageTransition } from '@/components/ui/PageTransition';
@@ -13,7 +14,6 @@ const FooterAction = dynamic(
   { ssr: false },
 );
 import { PushNotificationPrompt } from '@/components/ui/PushNotificationPrompt';
-import { LoadingProvider } from '@/providers/LoadingProvider';
 import { useSplash } from '@/providers/splash-provider';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -90,7 +90,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
     ? 'none'
     : forceMobileFooter
       ? 'footer'
-    : isDiscoveryHome || isProvidersDiscovery
+    : isDiscoveryHome || isProvidersDiscovery || pathname === '/saved' || pathname === '/profile' || pathname === '/login' || pathname === '/signup'
       ? 'footer'
     : showMobileFooter
       ? 'footer'
@@ -116,8 +116,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   }, [pathname, isSplashVisible, isAppLaunched, forceMobileFooter, stage, isDiscoveryHome, isProvidersDiscovery, showMobileFooter, user]);
 
   return (
-    <LoadingProvider>
-      <div className="page-background h-screen-fix relative flex flex-col">
+    <div className="page-background h-screen-fix relative flex flex-col">
         {/* Dev-only: ensure no service worker interferes with HMR/chunks (only on localhost) */}
         {process.env.NODE_ENV === 'development' &&
           typeof window !== 'undefined' &&
@@ -184,8 +183,10 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         {process.env.NODE_ENV === 'production' && (
           <PushNotificationPrompt autoShow={true} showDelay={5000} />
         )}
+
+        {/* Chat Floating Widget (Desktop) */}
+        <ChatFloatingWidget />
       </div>
-    </LoadingProvider>
   );
 }
 

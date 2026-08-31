@@ -45,7 +45,7 @@ CORS errors because it's the wrong Supabase project!
 
 1. Find `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 2. Click the **pencil icon** to edit
-3. Update to: `sb_publishable_uBW3lxrnOmqPI047jBmxtg_YFVDsr1q`
+3. Update to: (copy from your .env.local)
 4. Click **Update secret**
 
 ### Step 3: Add Missing Secrets
@@ -53,13 +53,13 @@ CORS errors because it's the wrong Supabase project!
 #### Add `RESEND_API_KEY`:
 - Click **New repository secret**
 - Name: `RESEND_API_KEY`
-- Value: `re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL`
+- Value: (copy from your .env.local)
 - Click **Add secret**
 
 #### Add `SUPABASE_SERVICE_ROLE_KEY`:
 - Click **New repository secret**
 - Name: `SUPABASE_SERVICE_ROLE_KEY`
-- Value: `sb_secret_zz-UfIBWCufSI2rJ90edlw_ZFgj6it7`
+- Value: (copy from your .env.local)
 - Click **Add secret**
 
 ---

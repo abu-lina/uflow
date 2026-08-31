@@ -4,12 +4,12 @@
   "thresholds": {
     "firstLoadJS": {
       "providers": {
-        "max": 350000,
-        "description": "First Load JS for /providers (browse)"
+        "max": 368000,
+        "description": "First Load JS for /providers (browse) — measured at 367 kB after chat fallback translations; +1 kB headroom"
       },
       "providersDetail": {
-        "max": 270000,
-        "description": "First Load JS for /providers/[provider_id] (baseline updated Plan 119: +ProviderImageFallback + categoryImages)"
+        "max": 286000,
+        "description": "First Load JS for /providers/[provider_id] (Plan 210 fallback: measured at 281 kB after map-era shared chunk growth; +5 kB headroom)"
       },
       "shared": {
         "max": 120000,

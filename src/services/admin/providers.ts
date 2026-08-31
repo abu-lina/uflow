@@ -6,22 +6,24 @@
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { sanitizeTextInput } from '@/utils/sanitizeInput';
 import type { AdminProviderWithExtensions } from '@/types/adminProvider';
+import type { Provider as CanonicalProvider } from '@/services/providers';
 
-// Provider type matching the database schema
-interface Provider {
-  provider_id: string;
-  provider_name: string;
-  provider_description?: string | null;
-  provider_images: string | null;
-  category_id: string | null;
-  address_city: string | null;
-  contact_email: string | null;
-  review_status: 'pending' | 'approved' | 'rejected' | 'needs_revision';
-  review_feedback: string | null;
-  created_at: string;
-  updated_at: string;
-  [key: string]: unknown;
-}
+// Admin-specific projection of the canonical Provider type.
+// Uses Pick to stay in sync instead of a separate interface.
+type Provider = Pick<
+  CanonicalProvider,
+  | 'provider_id'
+  | 'provider_name'
+  | 'provider_images'
+  | 'category_id'
+  | 'address_city'
+  | 'contact_email'
+  | 'review_status'
+  | 'review_feedback'
+  | 'created_at'
+  | 'updated_at'
+  | 'description'
+>;
 
 export interface PendingProvider {
   provider_id: string;
@@ -57,14 +59,16 @@ export interface PaginatedResult<T> {
  */
 export async function getPendingProviders(
   status: 'pending' | 'needs_revision',
-  pagination: PaginationParams
+  pagination: PaginationParams,
 ): Promise<PaginatedResult<PendingProvider>> {
   const supabase = getSupabaseAdmin();
 
   // Fetch providers
   const { data, error } = await supabase
     .from('providers')
-    .select('provider_id, provider_name, provider_images, category_id, address_city, contact_email, review_status, review_feedback, created_at, updated_at, user_created_id')
+    .select(
+      'provider_id, provider_name, provider_images, category_id, address_city, contact_email, review_status, review_feedback, created_at, updated_at, user_created_id',
+    )
     .eq('review_status', status)
     .order('created_at', { ascending: false })
     .range(pagination.offset, pagination.offset + pagination.limit - 1);
@@ -104,7 +108,7 @@ export async function updateProviderReview(
   providerId: string,
   reviewStatus: 'approved' | 'rejected' | 'needs_revision',
   reviewFeedback?: string | null,
-  expectedUpdatedAt?: string
+  expectedUpdatedAt?: string,
 ): Promise<Provider> {
   const supabase = getSupabaseAdmin();
 
@@ -122,10 +126,7 @@ export async function updateProviderReview(
     updateData.review_feedback = reviewFeedback ? sanitizeTextInput(reviewFeedback) : null;
   }
 
-  let query = supabase
-    .from('providers')
-    .update(updateData)
-    .eq('provider_id', providerId);
+  let query = supabase.from('providers').update(updateData).eq('provider_id', providerId);
 
   // Optimistic concurrency: only update if updated_at hasn't changed
   if (expectedUpdatedAt) {
@@ -148,7 +149,9 @@ export async function updateProviderReview(
     // 0 rows updated — either the provider doesn't exist or (when expectedUpdatedAt
     // was provided) another admin already changed it since the page was loaded.
     if (expectedUpdatedAt) {
-      throw new Error('CONFLICT: Provider was modified by another reviewer. Please refresh and try again.');
+      throw new Error(
+        'CONFLICT: Provider was modified by another reviewer. Please refresh and try again.',
+      );
     }
     throw new Error('Provider not found');
   }
@@ -157,17 +160,43 @@ export async function updateProviderReview(
 }
 
 /**
+ * Delete a provider by ID.
+ * Uses .select() after delete to detect non-existent providers.
+ * All child tables have ON DELETE CASCADE, so cleanup is automatic.
+ */
+export async function deleteProvider(providerId: string): Promise<void> {
+  const supabase = getSupabaseAdmin();
+
+  const { data: rows, error } = await supabase
+    .from('providers')
+    .delete()
+    .eq('provider_id', providerId)
+    .select();
+
+  if (error) {
+    throw new Error(`Failed to delete provider: ${error.message}`);
+  }
+
+  if (!rows || rows.length === 0) {
+    throw new Error('Provider not found');
+  }
+}
+
+/**
  * Get a single provider by ID for admin editing.
  * Uses service-role to bypass RLS (can load non-approved providers).
  * Plan 145: Left-joins extension tables (food_providers, store_providers),
  * food_menu, and provider_delivery_links for the edit form.
  */
-export async function getProviderForAdmin(providerId: string): Promise<AdminProviderWithExtensions | null> {
+export async function getProviderForAdmin(
+  providerId: string,
+): Promise<AdminProviderWithExtensions | null> {
   const supabase = getSupabaseAdmin();
 
   const { data: rows, error } = await supabase
     .from('providers')
-    .select(`
+    .select(
+      `
       *,
       category:categories(name_de, name_en, category_images),
       locations(*),
@@ -175,7 +204,8 @@ export async function getProviderForAdmin(providerId: string): Promise<AdminProv
       store_providers(*),
       food_menu(*),
       provider_delivery_links(*)
-    `)
+    `,
+    )
     .eq('provider_id', providerId);
 
   if (error) {

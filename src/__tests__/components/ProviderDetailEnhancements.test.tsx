@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 
 import { render } from '../utils/test-utils';
-import { ProviderDetailModal } from '@/components/providers/ProviderDetailModal';
-import { ProviderDetailPage } from '@/components/providers/ProviderDetailPage';
+import { ProviderDetailModal } from '@/features/providers/pages/ProviderDetailModal';
+import { ProviderDetailPage } from '@/features/providers/pages/ProviderDetailPage';
 import { mockProviders } from '../mocks/providerData';
 
 describe('Provider detail enhancements (Plan 113)', () => {

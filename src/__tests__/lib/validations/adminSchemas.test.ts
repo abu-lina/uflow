@@ -135,6 +135,28 @@ describe('providerEditUpdateSchema — Plan 145 new fields', () => {
     expect(result.success).toBe(false);
   });
 
+  it('[post-fix PASSES] showAddress passes through Zod validation', () => {
+    const result = providerEditUpdateSchema.safeParse({
+      ...base,
+      showAddress: false,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.showAddress).toBe(false);
+    }
+  });
+
+  it('[post-fix PASSES] showAddress is optional', () => {
+    const result = providerEditUpdateSchema.safeParse({
+      ...base,
+      addressCity: 'Berlin',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.showAddress).toBeUndefined();
+    }
+  });
+
   it('restricts listingType to food, store, or null', () => {
     const food = providerEditUpdateSchema.safeParse({ ...base, listingType: 'food' });
     expect(food.success).toBe(true);
@@ -145,7 +167,7 @@ describe('providerEditUpdateSchema — Plan 145 new fields', () => {
     const nullType = providerEditUpdateSchema.safeParse({ ...base, listingType: null });
     expect(nullType.success).toBe(true);
 
-    const invalid = providerEditUpdateSchema.safeParse({ ...base, listingType: 'ummah' });
+    const invalid = providerEditUpdateSchema.safeParse({ ...base, listingType: 'invalid_type' });
     expect(invalid.success).toBe(false);
   });
 });

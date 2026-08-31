@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
-import { createProviderOrService } from '@/services/providerService';
+import { createProviderOrService } from '@/features/providers/services/mutations';
 
 const mockStorageUpload = vi.fn();
 const mockStorageGetPublicUrl = vi.fn();
@@ -82,6 +82,8 @@ const baseFormData: ProviderFormData = {
   zip: '12345',
   city: 'Berlin',
   country: 'DE',
+  latitude: null,
+  longitude: null,
   showAddress: true,
   website: '',
   instagram: '',
@@ -95,6 +97,13 @@ const baseFormData: ProviderFormData = {
   socialCategory: '',
   socialTitle: '',
   socialDescription: '',
+      no_alcohol: false,
+      no_pork: false,
+      no_gambling: false,
+      verification_method: '',
+      has_certificate: false,
+      certificate_file: null,
+      certificate_url: '',
 };
 
 describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {

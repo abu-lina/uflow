@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, type ComponentType, type ReactNode, type SVGProps } from 'react';
+import { useMemo, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   CircleParking,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
-import { TrustBadgesSection } from '@/components/providers/TrustBadgesSection';
+import { TrustBadgesSection } from '@/features/providers/components/TrustBadgesSection';
 import { ExpandSection } from '@/components/ui/ExpandSection';
 import { ProofTierCard } from '@/features/providers/components/ProofTierCard';
 import { PrayerRug } from '@/components/icons/PrayerRug';
@@ -140,8 +140,8 @@ function DetailListItem({ label, icon, onClick, isSelected }: { label: string; i
   return (
     <Component
       className={className}
-      onClick={onClick}
       type={Component === 'button' ? 'button' : undefined}
+      onClick={onClick}
     >
       <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isSelected ? 'bg-primary text-white' : 'bg-[#E3F2EF] text-primary'}`}>
         {icon}
@@ -160,6 +160,7 @@ export function ProviderDetailSections({
   onLocationSelect,
 }: ProviderDetailSectionsProps) {
   const { t } = useLanguage();
+  const [openSection, setOpenSection] = useState<string | null>('halal');
   const router = useRouter();
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
   const {
@@ -210,8 +211,29 @@ export function ProviderDetailSections({
   });
 
   return (
-    <div className="flex flex-col gap-8 self-stretch">
-      <ExpandSection defaultOpen title={t('providerDetail.sections.valuesAmenities')}>
+    <div className="flex flex-col gap-4 self-stretch">
+      <ExpandSection
+        isOpen={openSection === 'halal'}
+        title={t('providerDetail.proofTier.sectionTitle')}
+        onToggle={(next) => setOpenSection(next ? 'halal' : null)}
+      >
+        <div className="space-y-3 pt-3">
+          <ProofTierCard
+            hasCertificate={provider.has_certificate}
+            listingType={provider.listing_type}
+            noAlcohol={provider.no_alcohol}
+            noGambling={provider.no_gambling}
+            noPork={provider.no_pork}
+            verificationMethod={provider.verification_method}
+          />
+        </div>
+      </ExpandSection>
+
+      <ExpandSection
+        isOpen={openSection === 'values'}
+        title={t('providerDetail.sections.valuesAmenities')}
+        onToggle={(next) => setOpenSection(next ? 'values' : null)}
+      >
         <div className="space-y-2 pt-3">
           {amenities.length === 0 ? (
             <p className="text-sm text-[#7a7a7a]">{t('providerDetail.empty.noValuesAmenities')}</p>
@@ -228,60 +250,73 @@ export function ProviderDetailSections({
       </ExpandSection>
 
       {/* Menu (food) — Offers (store) */}
-      <ExpandSection title={t(provider.listing_type === 'store' ? 'providerDetail.sections.offers' : 'providerDetail.sections.menu')}>
+      <ExpandSection
+        isOpen={openSection === 'menu-offers'}
+        title={t(provider.listing_type === 'store' ? 'providerDetail.sections.offers' : 'providerDetail.sections.menu')}
+        onToggle={(next) => setOpenSection(next ? 'menu-offers' : null)}
+      >
         <div className="space-y-2 pt-3">
-          {provider.offers?.length ? (
-            provider.offers.map((offer, index) => (
-              <DetailListItem
-                key={`${offer.name_de}-${index}`}
-                icon={provider.listing_type === 'store' ? <Tag aria-hidden="true" className="h-6 w-6" /> : <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
-                label={offer.name_de}
-              />
-            ))
-          ) : (
-            <p className="text-sm text-[#7a7a7a]">{t(provider.listing_type === 'store' ? 'providerDetail.empty.noOffers' : 'providerDetail.empty.noMenu')}</p>
-          )}
+          {(() => {
+            if (provider.listing_type === 'food' && provider.food_menu_items?.length) {
+              return provider.food_menu_items.map((item, index) => (
+                <DetailListItem
+                  key={`menu-${index}`}
+                  icon={<UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
+                  label={item.name_de}
+                />
+              ));
+            }
+            if (provider.offers?.length) {
+              return provider.offers.map((offer, index) => (
+                <DetailListItem
+                  key={`${offer.name_de}-${index}`}
+                  icon={provider.listing_type === 'store' ? <Tag aria-hidden="true" className="h-6 w-6" /> : <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
+                  label={offer.name_de}
+                />
+              ));
+            }
+            return <p className="text-sm text-[#7a7a7a]">{t(provider.listing_type === 'store' ? 'providerDetail.empty.noOffers' : 'providerDetail.empty.noMenu')}</p>;
+          })()}
         </div>
       </ExpandSection>
 
-      <ExpandSection title={t('providerDetail.sections.openingHours')}>
+      <ExpandSection
+        isOpen={openSection === 'opening-hours'}
+        title={t('providerDetail.sections.openingHours')}
+        onToggle={(next) => setOpenSection(next ? 'opening-hours' : null)}
+      >
         {renderOpeningHours(provider.opening_hours, t)}
       </ExpandSection>
 
-      <ExpandSection title={t('providerDetail.proofTier.sectionTitle')}>
-        <div className="space-y-3 pt-3">
-          <ProofTierCard
-            hasCertificate={provider.has_certificate}
-            listingType={provider.listing_type}
-            noAlcohol={provider.no_alcohol}
-            noGambling={provider.no_gambling}
-            noPork={provider.no_pork}
-            verificationMethod={provider.verification_method}
-          />
-        </div>
-      </ExpandSection>
-
-      {(locations?.length ?? 0) > 0 && (
+      {(locations?.length ?? 0) > 1 && (
         <div id="standorte-section">
-        <ExpandSection title="Weitere Standorte">
-          <div className="space-y-2 pt-3">
-            {locations!.map((loc) => (
-              <DetailListItem
-                key={loc.location_id}
-                icon={<Store aria-hidden="true" className="h-6 w-6" />}
-                label={loc.location_name || loc.address_city || 'Standort'}
-                onClick={() => onLocationSelect?.(loc.location_id)}
-                isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
-              />
-            ))}
-          </div>
+          <ExpandSection
+            isOpen={openSection === 'standorte'}
+            title={t('providerDetail.sections.furtherLocations')}
+            onToggle={(next) => setOpenSection(next ? 'standorte' : null)}
+          >
+            <div className="space-y-2 pt-3">
+              {(locations ?? []).map((loc) => (
+                <DetailListItem
+                  key={loc.location_id}
+                  icon={<Store aria-hidden="true" className="h-6 w-6" />}
+                  isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
+                  label={loc.location_name || loc.address_city || t('providerDetail.locationFallback')}
+                  onClick={() => onLocationSelect?.(loc.location_id)}
+                />
+              ))}
+            </div>
           </ExpandSection>
         </div>
       )}
 
       <TrustBadgesSection badges={badges} isLoading={isLoadingBadges} />
 
-      <ExpandSection title={t('providerDetail.sections.nearby')}>
+      <ExpandSection
+        isOpen={openSection === 'nearby'}
+        title={t('providerDetail.sections.nearby')}
+        onToggle={(next) => setOpenSection(next ? 'nearby' : null)}
+      >
         <div className="space-y-2 pt-3">
           {isLoadingNearbyProviders || isFetchingNearbyProviders ? (
             <p className="text-sm text-[#7a7a7a]">{t('providerDetail.loading.nearby')}</p>

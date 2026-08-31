@@ -16,7 +16,7 @@ import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { SelectableCard } from '@/components/shared/SelectableCard';
-import { SearchBar } from '@/features/search/components/SearchBar';
+import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { TitleAndText } from '@/components/ui/TitleAndText';
@@ -29,8 +29,8 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
-import { getAllBookmarkedItems, fetchBookmarkedCities } from '@/services/providers';
-import { getFirstImageUrl, formatProviderAddress } from '@/utils/imageUtils';
+import { getAllBookmarkedItems } from '@/services/providers';
+import { getFirstImageUrl, formatProviderAddress, getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE, parseCategoryImages, getCategoryCardBackgroundColor } from '@/utils/imageUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { signInWithEmailConfirmation, signInWithMagicLink } from '@/lib/auth';
 import { useAppStage } from '@/hooks/useAppStage';
@@ -40,7 +40,7 @@ export default function SavedProvidersPage() {
   const { user, isLoading: userLoading } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { searchQuery, selectedLocation } = useSearch();
+  const { searchQuery, setSearchQuery, selectedLocation, selectedSection } = useSearch();
   const { t } = useLanguage();
   const { stage } = useAppStage();
   
@@ -76,23 +76,11 @@ export default function SavedProvidersPage() {
   });
 
 
-  // Fetch cities from bookmarked items
-  const { data: bookmarkedCities = [] } = useQuery({
-    queryKey: ['bookmarked-cities', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      return await fetchBookmarkedCities(user.id);
-    },
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
   // Listen for bookmark change events to refresh the saved list
   useEffect(() => {
     const handleBookmarkChange = () => {
       if (user) {
         queryClient.invalidateQueries({ queryKey: ['saved-providers', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['bookmarked-cities', user.id] });
       }
     };
 
@@ -518,8 +506,11 @@ export default function SavedProvidersPage() {
         maxWidth="full"
       >
         {shouldShowSearchBar && (
-          <SearchBar
-            customCities={showSkeleton ? [] : bookmarkedCities}
+          <HomeSearchBar
+            activeSection={selectedSection}
+            hideFilters
+            query={searchQuery}
+            onQueryChange={setSearchQuery}
           />
         )}
 
@@ -555,12 +546,22 @@ export default function SavedProvidersPage() {
           >
             {filteredProviders.map((provider) => {
               const isUmmah = provider.listing_type === 'ummah';
-              const imageUrl = getFirstImageUrl(provider.images);
+              const fallbackUrls = getAllTrustedImageUrlsWithFallback(
+                provider.images,
+                provider.category?.category_images
+              );
+              const imageUrl = fallbackUrls.length > 0 ? fallbackUrls[0] : PLACEHOLDER_IMAGE;
+              const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
+              const isCategoryFallback = getFirstImageUrl(provider.images) === PLACEHOLDER_IMAGE && categoryUrls.length > 0;
+              const categoryBgColor = isCategoryFallback
+                ? getCategoryCardBackgroundColor(provider.category_id, provider.id)
+                : undefined;
               const address = formatProviderAddress(provider.address_street, provider.address_city);
               
               return (
                 <li key={provider.id}>
                   <SelectableCard
+                    backgroundColor={categoryBgColor}
                     actionType="unsave"
                     bottomText={address}
                     category={provider.category?.name_de || ''}

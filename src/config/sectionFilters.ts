@@ -13,6 +13,20 @@
 /** Canonical section type. */
 export type Section = 'food' | 'ummah' | 'store';
 
+/** Section metadata for active/inactive state and i18n label keys. */
+export interface SectionMeta {
+  active: boolean;
+  labelKey: string;
+  badgeKey?: string;
+}
+
+/** Per-section metadata registry. Single source of truth for active state. */
+export const SECTION_META: Record<Section, SectionMeta> = {
+  food: { active: true, labelKey: 'sections.food' },
+  ummah: { active: false, labelKey: 'sections.ummah', badgeKey: 'sections.soon' },
+  store: { active: false, labelKey: 'sections.stores', badgeKey: 'sections.soon' },
+};
+
 /** Boolean filter attribute keys that exist as columns on providers. */
 export type SectionFilter =
   | 'muslim_owned'
@@ -123,20 +137,22 @@ export function resolveSectionFromSearchParams(params: URLSearchParams): Section
   return 'food';
 }
 
-/** Resolves section from route context (query/category first, then canonical pathname fallback). */
+/** Resolves section from route context (query params first for backward compat, then pathname). */
 export function resolveSectionFromRoute(
   pathname: string | null | undefined,
   params: URLSearchParams,
 ): Section {
-  const fromParams = resolveSectionFromSearchParams(params);
+  // Explicit section/category params take highest priority (backward compat, deep links)
   if (params.has('section') || params.has('category')) {
-    return fromParams;
+    return resolveSectionFromSearchParams(params);
   }
 
-  const routePath = pathname || '';
-  if (routePath === '/food' || routePath.endsWith('/food')) return 'food';
-  if (routePath === '/ummah' || routePath.endsWith('/ummah')) return 'ummah';
-  if (routePath === '/stores' || routePath.endsWith('/stores')) return 'store';
+  // Path-based resolution, stripping optional locale prefix (e.g. /de/food -> /food)
+  const routePath = (pathname || '').replace(/^\/[a-z]{2}(?=\/)/, '');
+  if (routePath === '/food' || routePath.startsWith('/food/')) return 'food';
+  if (routePath === '/ummah' || routePath.startsWith('/ummah/')) return 'ummah';
+  if (routePath === '/stores' || routePath.startsWith('/stores/')) return 'store';
 
-  return fromParams;
+  // Default fallback
+  return resolveSectionFromSearchParams(params);
 }

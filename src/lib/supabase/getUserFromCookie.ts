@@ -19,6 +19,8 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
     if (user) {
       return user as unknown as SupabaseUser;
     }
+    // SSR client found no user — non-terminal; falling through to custom cookie method
+    console.warn({ event: 'auth_attempt', result: 'ssr_miss', reason: 'ssr_client_no_user' });
   } catch (error) {
     // SSR client failed, try custom cookie method
     if (process.env.NODE_ENV === 'development') {
@@ -32,6 +34,7 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
   const refreshToken = cookies.get('sb-refresh-token')?.value;
 
   if (!accessToken) {
+    console.warn({ event: 'auth_outcome', result: 'no_user', reason: 'no_access_token_cookie' });
     return null;
   }
 
@@ -40,6 +43,7 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error('[getUserFromCookie] Missing Supabase environment variables');
+    console.warn({ event: 'auth_outcome', result: 'no_user', reason: 'missing_env_vars' });
     return null;
   }
 
@@ -117,6 +121,8 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
           hasRefreshToken: !!refreshToken,
         });
       }
+      const reason = isTokenExpired && refreshToken ? 'token_expired_refresh_failed' : 'auth_api_error';
+      console.warn({ event: 'auth_outcome', result: 'no_user', reason });
       return null;
     }
 
@@ -127,6 +133,7 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
     if (process.env.NODE_ENV === 'development') {
       console.error('[getUserFromCookie] Fetch error:', error);
     }
+    console.warn({ event: 'auth_outcome', result: 'no_user', reason: 'fetch_error' });
     return null;
   }
 }

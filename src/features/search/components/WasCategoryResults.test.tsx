@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { WasCategoryResults, type WasSelection } from './WasCategoryResults';
@@ -26,6 +27,7 @@ const t = (key: string, variables?: Record<string, string | number>) => {
     'suchen.was.dishLabel': 'Gericht',
     'suchen.was.removeSelection': 'Auswahl entfernen',
     'suchen.was.showAllCuisines': 'Show all cuisines',
+    'suchen.was.allRestaurants': 'Alle Restaurants',
   };
   return map[key] ?? key;
 };
@@ -211,5 +213,126 @@ describe('WasCategoryResults (Plan 098)', () => {
     expect(screen.getByText('BELIEBT')).toBeInTheDocument();
     expect(screen.queryByText('ZULETZT GESUCHT')).not.toBeInTheDocument();
     expect(screen.getByText('Levantine')).toBeInTheDocument();
+  });
+});
+
+describe('WasCategoryResults (Plan 169 — Alle Restaurants)', () => {
+  beforeEach(() => {
+    enableSearchExpandShowAllPreview = false;
+  });
+
+  it('renders "Alle Restaurants" as first item in POPULAR section', () => {
+    render(
+      <WasCategoryResults
+        items={[
+          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
+          { category_id: 'cat-2', name_de: 'Turkish', name_en: 'Turkish', description_de: '', description_en: '', provider_count: 6, category_images: null },
+        ]}
+        recentSearches={[]}
+        selectedWas={null}
+        isLoading={false}
+        isError={false}
+        query=""
+        onSelect={vi.fn()}
+        onClearSelection={vi.fn()}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('Alle Restaurants')).toBeInTheDocument();
+    expect(screen.getByText('BELIEBT')).toBeInTheDocument();
+    expect(screen.getByText('Levantine')).toBeInTheDocument();
+    expect(screen.getByText('Turkish')).toBeInTheDocument();
+  });
+
+  it('calls onSelect with all-restaurants type when clicked', () => {
+    const onSelect = vi.fn();
+
+    render(
+      <WasCategoryResults
+        items={[
+          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
+        ]}
+        recentSearches={[]}
+        selectedWas={null}
+        isLoading={false}
+        isError={false}
+        query=""
+        onSelect={onSelect}
+        onClearSelection={vi.fn()}
+        t={t}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Alle Restaurants'));
+    expect(onSelect).toHaveBeenCalledWith({
+      label: 'Alle Restaurants',
+      type: 'all-restaurants',
+    });
+  });
+
+  it('renders "Alle Restaurants" even when recent searches exist', () => {
+    render(
+      <WasCategoryResults
+        items={[
+          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
+          { category_id: 'cat-2', name_de: 'Turkish', name_en: 'Turkish', description_de: '', description_en: '', provider_count: 6, category_images: null },
+        ]}
+        recentSearches={[
+          { label: 'Burger', type: 'dish', dishName: 'Burger' },
+        ]}
+        selectedWas={null}
+        isLoading={false}
+        isError={false}
+        query=""
+        onSelect={vi.fn()}
+        onClearSelection={vi.fn()}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('Alle Restaurants')).toBeInTheDocument();
+    expect(screen.getByText('ZULETZT GESUCHT')).toBeInTheDocument();
+  });
+
+  it('renders "Alle Restaurants" selection with LayoutGrid icon', () => {
+    const { container } = render(
+      <WasCategoryResults
+        items={[]}
+        recentSearches={[]}
+        selectedWas={{ label: 'Alle Restaurants', type: 'all-restaurants' }}
+        isLoading={false}
+        isError={false}
+        query=""
+        onSelect={vi.fn()}
+        onClearSelection={vi.fn()}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('Alle Restaurants')).toBeInTheDocument();
+    const layoutGridIcon = container.querySelector('.lucide-layout-grid');
+    expect(layoutGridIcon).toBeInTheDocument();
+  });
+
+  it('renders "Alle Restaurants" even when items list is empty', () => {
+    const { container } = render(
+      <WasCategoryResults
+        items={[]}
+        recentSearches={[]}
+        selectedWas={null}
+        isLoading={false}
+        isError={false}
+        query=""
+        onSelect={vi.fn()}
+        onClearSelection={vi.fn()}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('Alle Restaurants')).toBeInTheDocument();
+    expect(screen.queryByText('BELIEBT')).not.toBeInTheDocument();
+    const layoutGridIcon = container.querySelector('.lucide-layout-grid');
+    expect(layoutGridIcon).toBeInTheDocument();
   });
 });

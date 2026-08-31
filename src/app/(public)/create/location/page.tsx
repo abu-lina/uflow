@@ -91,6 +91,8 @@ export default function LocationPage() {
       country: address.country,
       street: address.street,
       zip: address.zip,
+      latitude: address.latitude ?? null,
+      longitude: address.longitude ?? null,
     });
     
     // Clear validation errors after auto-fill

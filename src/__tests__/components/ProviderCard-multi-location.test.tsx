@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render } from '../utils/test-utils';
-import { ProviderCard } from '@/components/providers/ProviderCard';
+import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { mockProviders } from '../mocks/providerData';
 
 describe('ProviderCard — Multi-Location (Plan 151)', () => {

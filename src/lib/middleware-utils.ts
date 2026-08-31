@@ -21,13 +21,8 @@ const APP_ROUTES = [
   '/terms',
   '/privacy-policy',
   '/create-quick',
-  '/figma-test',
-  '/test-header',
-  '/test-notifications',
-  '/test-session',
   '/manual-user',
   '/api-docs',
-  '/auth-debug',
 ];
 
 /**

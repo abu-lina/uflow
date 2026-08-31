@@ -8,12 +8,25 @@ export interface AlcoholDetectionResult {
 }
 
 export const ALCOHOL_KEYWORDS: ReadonlyArray<string> = [
-  'Bier', 'Wein', 'Schnaps', 'Vodka', 'Wodka', 'Gin', 'Rum', 'Whisky', 'Whiskey',
-  'Cocktail', 'Longdrink', 'Sekt', 'Champagner', 'Prosecco', 'Radler', 'Alsterwasser',
-  'Korn', 'Likör', 'Cognac', 'Grappa', 'Tequila', 'Jägermeister', 'Amaretto', 'Baileys',
-  'Weizen', 'Weißbier', 'Hefeweizen', 'Pils', 'Pilsner', 'Kölsch', 'Altbier', 'Helles',
-  'Dunkles', 'Export', 'Glühwein', 'Mixgetränk', 'Bowle', 'alkoholisches Getränk',
-  'alkoholische Getränke',
+  // ——— Beer & wheat beer ———
+  'Bier', 'Weizen', 'Weißbier', 'Hefeweizen', 'Pils', 'Pilsner',
+  'Kölsch', 'Altbier', 'Helles', 'Dunkles', 'Export',
+  'Radler', 'Alsterwasser',
+  // ——— Wine & sparkling ———
+  'Wein', 'Sekt', 'Champagner', 'Prosecco', 'Glühwein', 'Bowle',
+  // ——— Spirits ———
+  'Schnaps', 'Vodka', 'Wodka', 'Gin', 'Rum', 'Whisky', 'Whiskey',
+  'Korn', 'Likör', 'Cognac', 'Grappa', 'Tequila',
+  // ——— Cocktails & mixed ———
+  'Cocktail', 'Longdrink', 'Mixgetränk',
+  // ——— Brand-name spirits/liqueurs ———
+  'Jägermeister', 'Amaretto', 'Baileys',
+  // ——— Popular beer brands (Plan 193) ———
+  'Paulaner', 'Becks', 'Krombacher', 'Warsteiner', 'Erdinger',
+  // ——— Popular alcoholic drink brands (Plan 193) ———
+  'Desperados', 'Jack Daniels', 'Campari', 'Aperol',
+  // ——— Generic ———
+  'alkoholisches Getränk', 'alkoholische Getränke',
 ] as const;
 
 export const NO_ALCOHOL_KEYWORDS: ReadonlyArray<string> = [

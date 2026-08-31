@@ -141,7 +141,10 @@ export const de = {
   "sections": {
     "food": "Food",
     "ummah": "Ummah",
-    "stores": "Stores"
+    "stores": "Stores",
+    "soon": "Demnächst",
+    "comingSoon": "{{section}} kommt bald",
+    "comingSoonDescription": "Wir arbeiten daran — bleib gespannt."
   },
   "search": {
     "placeholder": "In deiner Ummah suchen",
@@ -154,6 +157,12 @@ export const de = {
     "filter": "Nach Ort filtern",
     "personSingular": "{{count}} Person",
     "personPlural": "{{count}} Personen",
+    "searchButton": "Suchen",
+    "suggestions": {
+      "provider": "Restaurant",
+      "cuisine": "Küche",
+      "menuItem": "Menü"
+    },
     "context": {
       "allResults": "Alle Ergebnisse",
       "edit": "Suche bearbeiten",
@@ -181,6 +190,25 @@ export const de = {
     "notifyMeCityUnavailable": "In {{city}} sind noch keine Anbieter – wir arbeiten daran.",
     "providerCTA": "Bist du Anbieter? Jetzt eintragen →",
     "cityNotRecognized": "{{city}} ist uns nicht bekannt. Bitte überprüfe die Schreibweise.",
+    "nearMe": {
+      "chipLabel": "In der Nähe",
+      "radiusLabel": "Radius:",
+      "permissionDenied": "Standort nicht verfügbar",
+      "permissionDeniedHintIos": "Standort gesperrt. Öffne Einstellungen → Datenschutz → Ortungsdienste.",
+      "permissionDeniedHintAndroid": "Standort gesperrt. Erlaube den Zugriff in den Browser-Einstellungen.",
+      "permissionDeniedHintFallback": "Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.",
+      "loading": "Anbieter werden geladen...",
+      "emptyTitle": "Keine geöffneten Restaurants in der Nähe",
+      "errorTitle": "Suche nicht verfügbar",
+      "errorLoading": "Suche ist aktuell nicht verfügbar. Bitte versuche es erneut.",
+      "retry": "Erneut versuchen"
+    },
+    "openNow": {
+      "chipLabel": "Jetzt geöffnet"
+    },
+    "empty": {
+      "noNearby": "Versuche einen größeren Radius oder schau später wieder vorbei."
+    },
     "was": {
       "searchPlaceholder": "Was suchst du?",
       "loading": "Suche läuft...",
@@ -199,6 +227,8 @@ export const de = {
       "removeSelection": "Auswahl entfernen",
       "showAllCuisines": "Zeige alle Küchen",
       "showAllDishes": "Zeige alle Gerichte",
+      "allRestaurants": "Alle Restaurants",
+      "everything": "Alles",
       "ummah": {
         "searchPlaceholder": "Welchen Dienst suchst du?",
         "serviceTypeLabel": "Dienst",
@@ -356,6 +386,10 @@ export const de = {
       "title": "Ich kenne einen Anbieter",
       "description": "Empfiehl jemanden, den du kennst, damit andere ihn finden können.",
       "buttonText": "Anbieter empfehlen"
+    },
+    "chatHint": {
+      "prefix": "Du kannst auch schnell registrieren per",
+      "link": "Chat-Assistent"
     },
     "recommend": {
       "title": "Anbieter empfehlen",
@@ -947,8 +981,10 @@ export const de = {
       "menu": "Menu",
       "offers": "Angebote",
       "openingHours": "Öffnungszeiten",
+      "furtherLocations": "Weitere Standorte",
       "nearby": "In der Nähe"
     },
+    "locationFallback": "Standort",
     "days": {
       "monday": "Montag",
       "tuesday": "Dienstag",
@@ -1082,5 +1118,31 @@ export const de = {
     "subtitle": "Installiere die App für die beste Erfahrung",
     "preparing": "Installation wird vorbereitet...",
     "continueInBrowser": "Im Browser fortfahren"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "Anmeldung erforderlich",
+      "body": "Um den Chatbot zu nutzen, musst du angemeldet sein.",
+      "action": "Jetzt anmelden"
+    },
+    "fallback": {
+      "prefix": "Lieber manuell?",
+      "link": "Zum Formular"
+    },
+    "openChat": "Chat öffnen",
+    "closeChat": "Chat schließen",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "noProviders": "Keine Anbieter gefunden",
+    "noProvidersHint": "Schau bald wieder rein.",
+    "noOpenProviders": "Momentan keine geöffneten Anbieter",
+    "noOpenProvidersHint": "Versuche, den Filter \"Jetzt geöffnet\" zu deaktivieren.",
+    "switchToList": "Zur Listenansicht",
+    "switchToMap": "Zur Kartenansicht",
+    "listViewLabel": "Liste",
+    "mapViewLabel": "Karte"
   }
 } as const;

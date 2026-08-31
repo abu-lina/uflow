@@ -135,7 +135,7 @@ All documentation files are in project root:
 
 1. **Environment files required**: `.env.production` and `.env.uat` must exist on Hetzner server
 2. **Deploy UAT first**: Always test on UAT before production
-3. **Credentials format**: Supabase URL must be `https://*.supabase.co`, anon key must start with `eyJ`
+3. **Credentials format**: Supabase URL must be `https://*.supabase.co`, anon key must start with `sb_publishable_` (new) or `eyJ` (legacy)
 4. **Rollback available**: See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) if issues occur
 
 ---

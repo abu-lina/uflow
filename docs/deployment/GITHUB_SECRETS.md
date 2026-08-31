@@ -13,34 +13,36 @@ GitHub Secrets are encrypted environment variables that are available during Git
 ### Supabase Secrets
 
 - [ ] **`NEXT_PUBLIC_SUPABASE_URL`**
-  - **Value:** Your Supabase project URL (e.g., `https://rdtdtcfntopcxcigkqoq.supabase.co`)
+  - **Value:** Your Supabase project URL (e.g., `https://YOUR_PROJECT_REF.supabase.co`)
   - **Used for:** Build time (Next.js public variables)
-  - **Example:** `https://your-project.supabase.co`
+  - **Example:** `https://YOUR_PROJECT_REF.supabase.co`
 
 - [ ] **`NEXT_PUBLIC_SUPABASE_ANON_KEY`**
   - **Value:** Your Supabase anonymous/public key
   - **Used for:** Build time (Next.js public variables)
-  - **Example:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+  - **Format:** `sb_publishable_...` (new) or `eyJhbGci...` (legacy JWT)
+  - **Example:** (copy from Supabase Dashboard > Settings > API)
 
 - [ ] **`SUPABASE_SERVICE_ROLE_KEY`**
   - **Value:** Your Supabase service role key (keep secret!)
   - **Used for:** Runtime (passed to container)
-  - **Example:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-  - **⚠️ Warning:** Never expose this key publicly!
+  - **Format:** `sb_secret_...` (new) or `eyJhbGci...` (legacy JWT)
+  - **Example:** (copy from Supabase Dashboard > Settings > API)
+  - **Warning:** Never expose this key publicly!
 
 ### Email Service
 
 - [ ] **`RESEND_API_KEY`**
   - **Value:** Your Resend API key (starts with `re_`)
   - **Used for:** Runtime (email sending)
-  - **Example:** `re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL`
+  - **Example:** `re_your_resend_api_key_here`
 
 ### Hetzner Deployment
 
 - [ ] **`HETZNER_HOST`**
   - **Value:** Your Hetzner server IP address
   - **Used for:** SSH connection during deployment
-  - **Example:** `91.98.207.106`
+  - **Example:** `your.server.ip.address`
 
 - [ ] **`HETZNER_SSH_KEY`**
   - **Value:** Your private SSH key for Hetzner server
@@ -52,7 +54,7 @@ GitHub Secrets are encrypted environment variables that are available during Git
 - [ ] **`NEXT_PUBLIC_TURNSTILE_SITE_KEY`**
   - **Value:** Your Cloudflare Turnstile site key (starts with `0x4AAAAAAC...`)
   - **Used for:** Build time (Next.js public variable)
-  - **Example:** `0x4AAAAAACAqOzp-Vvpm5W5a`
+  - **Example:** `0x4AAAAAAC_your_site_key_here`
 
 - [ ] **`TURNSTILE_SECRET_KEY`**
   - **Value:** Your Cloudflare Turnstile secret key
@@ -226,10 +228,10 @@ Once all secrets are configured:
 | Secret | Type | Used For | Example |
 |--------|------|----------|---------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Public | Build | `https://xxx.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public | Build | `eyJhbGci...` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secret | Runtime | `eyJhbGci...` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public | Build | `sb_publishable_...` or `eyJhbGci...` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secret | Runtime | `sb_secret_...` or `eyJhbGci...` |
 | `RESEND_API_KEY` | Secret | Runtime | `re_xxx...` |
-| `HETZNER_HOST` | Public | Deployment | `91.98.207.106` |
+| `HETZNER_HOST` | Public | Deployment | `your.server.ip` |
 | `HETZNER_SSH_KEY` | Secret | Deployment | `-----BEGIN...` |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Public | Build | `0x4AAAAAAC...` |
 | `TURNSTILE_SECRET_KEY` | Secret | Runtime | `0x4AAAAAAC...` |

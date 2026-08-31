@@ -78,6 +78,16 @@ describe('buildBasicFieldsPayload', () => {
     const result = buildBasicFieldsPayload({ openingHours: hours });
     expect(result.opening_hours).toEqual(hours);
   });
+
+  it('[post-fix PASSES] buildBasicFieldsPayload includes showAddress', () => {
+    const result = buildBasicFieldsPayload({ showAddress: false });
+    expect(result.show_address).toBe(false);
+  });
+
+  it('[post-fix PASSES] buildBasicFieldsPayload includes showAddress set to true', () => {
+    const result = buildBasicFieldsPayload({ showAddress: true });
+    expect(result.show_address).toBe(true);
+  });
 });
 
 describe('buildExtensionFieldsPayload', () => {

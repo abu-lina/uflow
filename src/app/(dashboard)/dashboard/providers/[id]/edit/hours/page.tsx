@@ -77,8 +77,8 @@ export default function EditHoursPage({ params }: { params: Promise<{ id: string
 
                 <label className="flex items-center gap-1 text-xs text-[#999999]">
                   <input
-                    type="checkbox"
                     checked={isClosed}
+                    type="checkbox"
                     onChange={(e) => {
                       if (e.target.checked) {
                         setDayHours(day, null);

@@ -67,7 +67,7 @@ supabase functions deploy send-confirmation-email --no-verify-jwt
 
 ```bash
 # Set Resend API key
-supabase secrets set RESEND_API_KEY=re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL
+supabase secrets set RESEND_API_KEY=$RESEND_API_KEY
 
 # Set your site URL
 supabase secrets set SITE_URL=https://ummahflow.com
@@ -214,7 +214,7 @@ supabase functions deploy send-confirmation-email
 ### Issue: "Secrets not found"
 ```bash
 # Re-set the secrets
-supabase secrets set RESEND_API_KEY=re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL
+supabase secrets set RESEND_API_KEY=$RESEND_API_KEY
 supabase secrets set SITE_URL=https://ummahflow.com
 ```
 

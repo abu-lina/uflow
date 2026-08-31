@@ -57,6 +57,7 @@ export interface AdminProviderEditData {
   makesDonations?: boolean;
   hasParking?: boolean;
   economicSolidarity?: boolean;
+  showAddress?: boolean;
   menuItems?: Array<{
     name_de: string;
     name_en?: string;
@@ -94,6 +95,7 @@ export function buildBasicFieldsPayload(data: Partial<AdminProviderEditData>): R
   if (data.providerImages !== undefined) payload.provider_images = data.providerImages;
   if (data.openingHours !== undefined) payload.opening_hours = data.openingHours;
   if (data.reviewStatus !== undefined) payload.review_status = data.reviewStatus;
+  if (data.showAddress !== undefined) payload.show_address = data.showAddress;
 
   return payload;
 }
@@ -114,7 +116,7 @@ export function buildExtensionFieldsPayload(
 
   const ext: Record<string, unknown> = {};
 
-  if (data.verificationMethod !== undefined) ext.verification_method = data.verificationMethod;
+  if (data.verificationMethod) ext.verification_method = data.verificationMethod;
   if (data.hasCertificate !== undefined) ext.has_certificate = data.hasCertificate;
   if (data.certificateUrl !== undefined) ext.certificate_url = data.certificateUrl;
   if (data.noAlcohol !== undefined) ext.no_alcohol = data.noAlcohol;
@@ -125,11 +127,8 @@ export function buildExtensionFieldsPayload(
     return { food_providers: ext };
   }
   if (listingType === 'store') {
-    // Store only has no_gambling of the three booleans
-    const storeExt: Record<string, unknown> = { ...ext };
-    delete storeExt.no_alcohol;
-    delete storeExt.no_pork;
-    return { store_providers: storeExt };
+    // Plan 192: no_alcohol and no_pork are now supported for stores too
+    return { store_providers: ext };
   }
 
   return {};

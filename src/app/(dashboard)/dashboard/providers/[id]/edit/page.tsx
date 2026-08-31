@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { ProviderEditForm, type ProviderEditFormData } from '@/components/providers/ProviderEditForm';
+import { ProviderEditForm, type ProviderEditFormData } from '@/features/providers/pages/ProviderEditForm';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { RejectModal } from '@/features/admin/components/RejectModal';
+import { DeleteProviderModal } from '@/features/admin/components/DeleteProviderModal';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
 import type { Provider } from '@/services/providers';
 
 interface AdminProviderEditPageProps {
@@ -25,6 +27,9 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
   const [error, setError] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState<{ isOpen: boolean; formData: ProviderEditFormData | null; isLoading: boolean }>({
     isOpen: false, formData: null, isLoading: false,
+  });
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; isLoading: boolean }>({
+    isOpen: false, isLoading: false,
   });
 
   useEffect(() => {
@@ -109,16 +114,16 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       contactPhone: formData.phone || null,
       socialWebsite: formData.website || null,
       socialInstagram: formData.instagram || null,
-      communityServiceIds: formData.selectedCommunityServiceIds,
+      communityServiceIds: formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0 ? formData.selectedCommunityServiceIds : undefined,
 
       // New fields
-      menuItems: formData.menuItems,
-      deliveryLinks: formData.deliveryLinks,
-      locations: formData.locations,
+      menuItems: formData.menuItems && formData.menuItems.length > 0 ? formData.menuItems : undefined,
+      deliveryLinks: formData.deliveryLinks && formData.deliveryLinks.length > 0 ? formData.deliveryLinks : undefined,
+      locations: formData.locations && formData.locations.length > 0 ? formData.locations : undefined,
       openingHours: formData.openingHours || null,
       verificationMethod: formData.verificationMethod,
       hasCertificate: formData.hasCertificate,
-      certificateUrl: formData.certificateUrl || null,
+      certificateUrl: formData.certificateUrl ? normalizeWebsiteUrl(formData.certificateUrl) : null,
       muslimOwned: formData.muslimOwned,
       hasPrayerSpace: formData.hasPrayerSpace,
       familyFriendly: formData.familyFriendly,
@@ -131,6 +136,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       noPork: formData.noPork,
       noGambling: formData.noGambling,
       reviewStatus: formData.reviewStatus,
+      showAddress: formData.isOnlineBusiness ? false : formData.showAddress,
     };
 
     // Only include providerImages if normalisation returned a value
@@ -149,7 +155,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       if (response.status === 409) {
         toast.error('This provider was modified by another user. Please refresh.');
       } else {
-        toast.error(errorData.error || t('editProvider.errorUpdating'));
+        toast.error(errorData.details || errorData.error || t('editProvider.errorUpdating'));
       }
       throw new Error(errorData.error || 'Failed to save');
     }
@@ -196,11 +202,16 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const errorMessage = response.status === 409
-        ? 'This provider was modified by another reviewer. Please refresh.'
-        : response.status === 429
-          ? 'Too many requests. Please wait a moment and try again.'
-          : errorData.error || `Failed to ${reviewStatus === 'approved' ? 'approve' : 'reject'} provider.`;
+      let errorMessage;
+      if (response.status === 409 && errorData.code === 'MENU_ALCOHOL_DETECTED') {
+        errorMessage = errorData.error;
+      } else if (response.status === 409) {
+        errorMessage = 'This provider was modified by another reviewer. Please refresh.';
+      } else if (response.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      } else {
+        errorMessage = errorData.error || `Failed to ${reviewStatus === 'approved' ? 'approve' : 'reject'} provider.`;
+      }
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }
@@ -243,6 +254,44 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       setRejectModal({ isOpen: false, formData: null, isLoading: false });
     }
   }, [rejectModal.isLoading]);
+
+  const handleDeleteClick = useCallback(() => {
+    setDeleteModal({ isOpen: true, isLoading: false });
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    setDeleteModal(prev => ({ ...prev, isLoading: true }));
+    try {
+      const response = await fetch(`/api/admin/providers/${providerId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to delete provider');
+        setDeleteModal(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['provider', providerId] }),
+        queryClient.invalidateQueries({ queryKey: ['providers'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-pending-providers'] }),
+      ]);
+
+      toast.success('Provider deleted successfully');
+      router.push('/providers');
+    } catch {
+      toast.error('Failed to delete provider');
+      setDeleteModal(prev => ({ ...prev, isLoading: false }));
+    }
+  }, [providerId, queryClient, router]);
+
+  const handleDeleteClose = useCallback(() => {
+    if (!deleteModal.isLoading) {
+      setDeleteModal({ isOpen: false, isLoading: false });
+    }
+  }, [deleteModal.isLoading]);
 
   const handleApproveConfirm = useCallback(async (formData: ProviderEditFormData) => {
     await finishModerationAction(formData, 'approved');
@@ -291,15 +340,11 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         variant="back-and-title"
         onBack={`/providers`}
       />
-      <main className="flex flex-1 flex-col pt-[calc(env(safe-area-inset-top)+24px+40px)] px-6 pb-4">
+      <main className="flex flex-1 flex-col pt-[calc(env(safe-area-inset-top)+24px+40px)] md:pt-[calc(env(safe-area-inset-top)+80px)] px-6 pb-4">
+        <div className="w-full md:max-w-2xl md:mx-auto">
         <ProviderEditForm
           enableLocalStorage={true}
           localStoragePrefix="admin_"
-          onSubmitForm={async (formData) => { 
-            await saveProviderEdits(formData);
-            await queryClient.invalidateQueries({ queryKey: ['provider', providerId] });
-            router.push(`/providers/${providerId}`);
-          }}
           provider={provider}
           reviewFooterActions={{
             reject: {
@@ -316,13 +361,43 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
             },
           }}
           subPageBaseUrl={`/dashboard/providers/${providerId}/edit`}
+          onSubmitForm={async (formData) => { 
+            await saveProviderEdits(formData);
+            await queryClient.invalidateQueries({ queryKey: ['provider', providerId] });
+            router.push(`/providers/${providerId}`);
+          }}
         />
+
+        {/* Delete Provider Section */}
+        <div className="mt-8 border-t border-neutral-200 pt-6 mb-[calc(5rem+env(safe-area-inset-bottom))]">
+          <button
+            aria-label="Delete provider permanently"
+            className="w-full rounded-lg bg-danger px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-danger-dark"
+            type="button"
+            onClick={handleDeleteClick}
+          >
+            Delete Provider
+          </button>
+          <p className="mt-2 text-xs text-content-muted text-center">
+            This action cannot be undone. All data associated with this provider will be permanently removed.
+          </p>
+        </div>
+
+        </div>
+
         <RejectModal
           isLoading={rejectModal.isLoading}
           isOpen={rejectModal.isOpen}
           providerName={provider.provider_name}
           onClose={handleRejectClose}
           onConfirm={handleRejectConfirm}
+        />
+        <DeleteProviderModal
+          isLoading={deleteModal.isLoading}
+          isOpen={deleteModal.isOpen}
+          providerName={provider.provider_name}
+          onClose={handleDeleteClose}
+          onConfirm={handleDeleteConfirm}
         />
       </main>
     </div>

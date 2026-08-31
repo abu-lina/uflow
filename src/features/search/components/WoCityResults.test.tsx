@@ -200,6 +200,64 @@ describe('WoCityResults (Plan 102)', () => {
     expect(screen.getByText('Empty city: Mannheim')).toBeInTheDocument();
   });
 
+  it('[regression 170] selected city outside top 3 shows correct provider count', () => {
+    render(
+      <WoCityResults
+        filteredCities={[]}
+        isCheckingCityValidity={false}
+        isError={false}
+        isLoading={false}
+        isValidNoProviderCity={null}
+        popularCities={[
+          { city: 'Berlin', provider_count: 12 },
+          { city: 'Hamburg', provider_count: 8 },
+          { city: 'Koeln', provider_count: 7 },
+          { city: 'Bonn', provider_count: 3 },
+          { city: 'Leipzig', provider_count: 5 },
+        ]}
+        query=""
+        recentSearches={[]}
+        selectedCity="Leipzig"
+        t={t}
+        userEmail={null}
+        onClearSelection={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Leipzig')).toBeInTheDocument();
+    expect(screen.getByText('5 Anbieter')).toBeInTheDocument();
+  });
+
+  it('[regression 170] recent search city outside top 3 shows correct provider count', () => {
+    render(
+      <WoCityResults
+        filteredCities={[]}
+        isCheckingCityValidity={false}
+        isError={false}
+        isLoading={false}
+        isValidNoProviderCity={null}
+        popularCities={[
+          { city: 'Berlin', provider_count: 12 },
+          { city: 'Hamburg', provider_count: 8 },
+          { city: 'Koeln', provider_count: 7 },
+          { city: 'Bonn', provider_count: 3 },
+          { city: 'Leipzig', provider_count: 5 },
+        ]}
+        query=""
+        recentSearches={[{ city: 'Leipzig' }]}
+        selectedCity={null}
+        t={t}
+        userEmail={null}
+        onClearSelection={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Leipzig')).toBeInTheDocument();
+    expect(screen.getByText('5 Anbieter')).toBeInTheDocument();
+  });
+
   it('shows only first three query cities with show-all action when more exist', () => {
     enableSearchExpandShowAllPreview = true;
 

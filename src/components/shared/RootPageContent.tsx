@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getOnboardingState, setOnboardingState } from '@/lib/utils/onboarding-state';
+import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { getOnboardingState } from '@/lib/utils/onboarding-state';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAppStage } from '@/hooks/useAppStage';
+import { useOnboardingGate } from '@/hooks/useOnboardingGate';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
-import { CategoryGallerySection } from './CategoryGallerySection';
 import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
+import { HomeListView } from '@/features/search/components/HomeListView';
 import { SectionSelector } from '@/features/search/components/SectionSelector';
+import { AdminStatusFilter, type ReviewStatusFilter } from '@/features/admin/components/AdminStatusFilter';
 import { AboutSection } from './AboutSection';
 import type { Section } from '@/config/sectionFilters';
 import { DesktopWaitlistSection } from './DesktopWaitlistSection';
@@ -16,123 +20,83 @@ import { LandingHero } from './LandingHero';
 import { MobileSplashScreen } from './MobileSplashScreen';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
+import { ViewToggleButton } from '@/features/search/components/ViewToggleButton';
+import { useNearMe } from '@/features/search/hooks/useNearMe';
+import { HomeNearMeList } from '@/features/search/components/HomeNearMeList';
+import { logApp } from '@/lib/logger';
+
+const SearchMap = dynamic(
+  () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
+  { ssr: false },
+);
 
 /**
  * RootPageContent Component
- * 
+ *
  * Client component that conditionally renders based on device type and app stage:
- * 
+ *
  * Desktop (md: and above):
  * - Always shows landing page content (LandingHero, AboutSection, ExploreSection)
  * - City stage does not affect desktop view
- * 
+ *
  * Mobile (below md:):
  * - Stage 1 (0-5 providers): CityEarlyAccessEmptyState
  * - Stage 2 (6-14 providers): Unified discovery home (search + tabs + section galleries)
  * - Stage 3 (15+ providers): Unified discovery home (search + tabs + section galleries)
  * - Onboarding: Waitlist/onboarding content (MobileSplashScreen)
- * 
+ *
  * Onboarding is complete when:
  * 1. earlyAccessUnlocked = true (user has joined waitlist)
  * 2. A city is selected (stored in localStorage/sessionStorage)
- * 
+ *
  * This ensures proper client-side state checking and conditional rendering.
  */
 export function RootPageContent() {
-  const [shouldShowCityContent, setShouldShowCityContent] = useState<boolean | null>(null);
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [isRecovering, setIsRecovering] = useState(false);
+  const { ready: shouldShowCityContent, city: selectedCity, isRecovering } = useOnboardingGate();
+  const { isAdmin } = useIsAdmin();
   const [activeSection, setActiveSection] = useState<Section>('food');
-  
-  // Get app stage to determine which content to show
-  const { stage, cityName, isLoading: stageLoading } = useAppStage();
+  const [nearMeActive, setNearMeActive] = useState(false);
+  const [adminStatus, setAdminStatus] = useState<ReviewStatusFilter>(null);
+
+  const geolocation = useGeolocation();
+
+  // Shared map/discovery state: pins, view mode, open-now, header metrics
+  const {
+    pins, pinsLoading, isOpenNow, setIsOpenNow, viewMode,
+    toggleViewMode, headerRef, headerHeight, userCoords,
+  } = useMapDiscovery(geolocation, 'map', isAdmin ? adminStatus : null);
+
+  const homeNearMe = useNearMe({
+    coords: userCoords,
+    active: nearMeActive && viewMode === 'list',
+    openNow: isOpenNow,
+    radiusKm: 25,
+    reviewStatus: isAdmin ? adminStatus : null,
+  });
 
   useEffect(() => {
-    // When app is fully launched, bypass all onboarding/city gates
-    const isAppLaunched = getFeatureFlag('isAppLaunched');
-    if (isAppLaunched) {
-      setShouldShowCityContent(true);
+    if (viewMode === 'list' && userCoords === null) {
+      logApp('info', {
+        event: 'home_list_nearme_skipped',
+        status: geolocation.status,
+      });
+    }
+  }, [viewMode, userCoords, geolocation.status]);
+
+  const handleToggleNearMe = useCallback(() => {
+    if (nearMeActive || geolocation.status === 'granted') {
+      setNearMeActive(false);
+      geolocation.reset();
       return;
     }
+    setNearMeActive(true);
+    geolocation.requestLocation();
+  }, [nearMeActive, geolocation]);
 
-    // Check if waitlist should be skipped
-    const skipWaitlist = getFeatureFlag('skipWaitlist');
-    
-    // Check onboarding state client-side
-    const onboardingState = getOnboardingState();
-    const hasEarlyAccess = skipWaitlist ? true : (onboardingState?.earlyAccessUnlocked ?? false);
-    
-    // Check if city is selected
-    const cityFromStorage = typeof window !== 'undefined'
-      ? localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity')
-      : null;
-    
-    // RECOVERY: If city is selected but onboarding state is missing
-    if (!hasEarlyAccess && cityFromStorage) {
-      if (skipWaitlist) {
-        // When waitlist is skipped, create minimal onboarding state directly
-        setOnboardingState({
-          email: '',
-          waitlistSubmitted: false,
-          earlyAccessUnlocked: true,
-          submittedAt: new Date().toISOString(),
-        });
-        setSelectedCity(cityFromStorage);
-        setShouldShowCityContent(true);
-        return;
-      }
-      
-      // When waitlist is not skipped, check API (uses HTTP-only cookie)
-      setIsRecovering(true);
-      
-      // Check API to restore onboarding state (API uses HTTP-only cookie, more reliable)
-      fetch('/api/waitlist/status')
-        .then((response) => response.json())
-        .then((data: { data?: { email?: string; selected_city?: string | null } | null; error?: { message: string } | null }) => {
-          if (data.error) {
-            console.error('[RootPageContent] Recovery: API error:', data.error);
-            setShouldShowCityContent(false);
-            return;
-          }
-          
-          if (data.data?.email) {
-            // User has valid waitlist entry (via cookie) - restore onboarding state
-            setOnboardingState({
-              email: data.data.email,
-              waitlistSubmitted: true,
-              earlyAccessUnlocked: true,
-              submittedAt: new Date().toISOString(),
-            });
-            setSelectedCity(cityFromStorage);
-            setShouldShowCityContent(true);
-          } else {
-            // No waitlist entry found - cookie expired or user bypassed waitlist
-            console.warn('[RootPageContent] Recovery: No waitlist entry found. Showing onboarding.');
-            setShouldShowCityContent(false);
-          }
-        })
-        .catch((error) => {
-          console.error('[RootPageContent] Recovery: API check failed:', error);
-          // On error, show onboarding (safe fallback)
-          setShouldShowCityContent(false);
-        })
-        .finally(() => {
-          setIsRecovering(false);
-        });
-      
-      return; // Wait for recovery to complete
-    }
-    
-    // Show city content if user has completed onboarding
-    // When skipWaitlist is true: only check for city selection (ignore earlyAccess requirement)
-    // When skipWaitlist is false: require both earlyAccess and city selection
-    const hasCompletedOnboarding = skipWaitlist 
-      ? cityFromStorage !== null 
-      : hasEarlyAccess && cityFromStorage !== null;
-    
-    setSelectedCity(cityFromStorage);
-    setShouldShowCityContent(hasCompletedOnboarding);
-  }, []);
+  // Get app stage to determine which content to show
+  const { stage, cityName, isLoading: stageLoading } = useAppStage();
 
   // Wait for client-side check or recovery to complete
   if (shouldShowCityContent === null || isRecovering || stageLoading) {
@@ -221,12 +185,14 @@ export function RootPageContent() {
               <div className="flex min-h-screen w-full flex-col bg-uflow-light">
                 {/* Fixed header: search bar only */}
                 <header
+                  ref={headerRef}
                   className="fixed left-0 right-0 top-0 z-50 sm:hidden"
                   style={{
-                    transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+                    transition:
+                      'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
                     background: 'rgba(255, 255, 255, 0.15)',
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                    backdropFilter: viewMode === 'list' ? 'blur(20px) saturate(180%)' : 'blur(1.5px)',
+                    WebkitBackdropFilter: viewMode === 'list' ? 'blur(20px) saturate(180%)' : 'blur(1.5px)',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
                     isolation: 'isolate',
                     marginLeft: '-1px',
@@ -247,26 +213,56 @@ export function RootPageContent() {
                         onSectionChange={setActiveSection}
                       />
                     </div>
-                    <HomeSearchBar activeSection={activeSection} />
+                    <HomeSearchBar
+                      activeSection={activeSection}
+                      geoStatus={geolocation.status}
+                      nearMeActive={nearMeActive}
+                      isOpenNow={isOpenNow}
+                      onToggleNearMe={handleToggleNearMe}
+                      onToggleOpenNow={() => setIsOpenNow((v) => !v)}
+                      adminSlot={
+                        isAdmin ? (
+                          <AdminStatusFilter selectedStatus={adminStatus} onStatusChange={setAdminStatus} />
+                        ) : undefined
+                      }
+                    />
                   </div>
                 </header>
 
-                {/* Scrollable body: spacer + gallery */}
                 <div
-                  className="w-full"
                   style={{
-                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 80px)',
+                    visibility: viewMode === 'map' ? 'visible' : 'hidden',
+                    position: 'absolute',
+                    inset: 0,
                   }}
                 >
-                  {/* Spacer to push content below fixed header */}
-                  <div
-                    className="sm:hidden"
-                    style={{ height: 'max(152px, calc(env(safe-area-inset-top) + 152px))' }}
+                  <SearchMap
+                    pins={pins}
+                    userCoords={userCoords}
                   />
-                  <div className="px-4">
-                    <CategoryGallerySection section={activeSection} />
-                  </div>
                 </div>
+
+                {viewMode === 'list' && (
+                  homeNearMe.isActive ? (
+                    <HomeNearMeList
+                      error={homeNearMe.error}
+                      headerOffset={headerHeight}
+                      isLoading={homeNearMe.isLoading}
+                      results={homeNearMe.results}
+                      onRetry={homeNearMe.refetch}
+                    />
+                  ) : (
+                    <HomeListView
+                      headerOffset={headerHeight}
+                      isLoading={pinsLoading}
+                      isOpenNow={isOpenNow}
+                      pins={pins}
+                    />
+                  )
+                )}
+
+                {/* Toggle button: map ↔ list, sits above navbar */}
+                <ViewToggleButton viewMode={viewMode} onToggle={toggleViewMode} />
               </div>
             )}
 
@@ -281,12 +277,15 @@ export function RootPageContent() {
             )}
 
             {/* Fallback: Show Stage 1 if stage is not determined yet */}
-            {stage !== 'stage1' && stage !== 'stage2' && stage !== 'stage3' && stage !== 'loading' && (
-              <CityEarlyAccessEmptyState
-                cityName={displayCity}
-                onReceiveUpdates={handleReceiveUpdates}
-              />
-            )}
+            {stage !== 'stage1' &&
+              stage !== 'stage2' &&
+              stage !== 'stage3' &&
+              stage !== 'loading' && (
+                <CityEarlyAccessEmptyState
+                  cityName={displayCity}
+                  onReceiveUpdates={handleReceiveUpdates}
+                />
+              )}
           </>
         ) : (
           // Mobile: Show waitlist/onboarding content if onboarding is not complete
@@ -296,4 +295,3 @@ export function RootPageContent() {
     </>
   );
 }
-

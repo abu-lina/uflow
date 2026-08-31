@@ -1,4 +1,4 @@
-import ProvidersPage from '@/app/(public)/providers/page';
+import { renderProvidersPage } from '@/app/(public)/providers/renderProvidersPage';
 
 type RouteSearchParams = { [key: string]: string | string[] | undefined };
 
@@ -7,6 +7,5 @@ export default async function FoodPage({
 }: {
   searchParams: Promise<RouteSearchParams>;
 }) {
-  const params = await searchParams;
-  return ProvidersPage({ searchParams: Promise.resolve({ ...params, section: 'food' }) });
+  return renderProvidersPage({ searchParams, routeSection: 'food' });
 }

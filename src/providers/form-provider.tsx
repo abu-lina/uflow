@@ -22,6 +22,8 @@ export interface ProviderFormData {
   zip: string;
   city: string;
   country: string;
+  latitude: number | null;
+  longitude: number | null;
   showAddress: boolean;
   
   // Contact
@@ -47,6 +49,17 @@ export interface ProviderFormData {
   socialCategory: string;
   socialTitle: string;
   socialDescription: string;
+
+  // Halal compliance attestation
+  no_alcohol: boolean;
+  no_pork: boolean;
+  no_gambling: boolean;
+
+  // Halal verification
+  verification_method: string;
+  has_certificate: boolean;
+  certificate_file: File | null;
+  certificate_url: string;
 }
 
 const initialFormData: ProviderFormData = {
@@ -60,6 +73,8 @@ const initialFormData: ProviderFormData = {
   zip: '',
   city: '',
   country: '',
+  latitude: null,
+  longitude: null,
   showAddress: true,
   website: '',
   instagram: '',
@@ -73,6 +88,13 @@ const initialFormData: ProviderFormData = {
   socialCategory: '',
   socialTitle: '',
   socialDescription: '',
+  no_alcohol: false,
+  no_pork: false,
+  no_gambling: false,
+  verification_method: '',
+  has_certificate: false,
+  certificate_file: null,
+  certificate_url: '',
 };
 
 interface FormContextType {

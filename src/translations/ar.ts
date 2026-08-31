@@ -141,7 +141,10 @@ export const ar = {
   "sections": {
     "food": "طعام",
     "ummah": "أمة",
-    "stores": "محلات"
+    "stores": "محلات",
+    "soon": "قريباً",
+    "comingSoon": "{{section}} قادم قريباً",
+    "comingSoonDescription": "نعمل على ذلك — ترقبوا."
   },
   "search": {
     "placeholder": "ابحث في أمتك",
@@ -154,6 +157,12 @@ export const ar = {
     "filter": "تصفية حسب الموقع",
     "personSingular": "{{count}} شخص",
     "personPlural": "{{count}} أشخاص",
+    "searchButton": "بحث",
+    "suggestions": {
+      "provider": "مطعم",
+      "cuisine": "مطبخ",
+      "menuItem": "قائمة"
+    },
     "context": {
       "allResults": "جميع النتائج",
       "edit": "تعديل البحث",
@@ -181,6 +190,26 @@ export const ar = {
     "notifyMeCityUnavailable": "لا يوجد مقدمو خدمات في {{city}} بعد – نحن نعمل على ذلك.",
     "providerCTA": "هل أنت مقدم خدمة؟ أضف قائمتك →",
     "cityNotRecognized": "{{city}} غير معروفة. يرجى التحقق من الإملاء.",
+    "nearMe": {
+      "chipLabel": "بالقرب مني",
+      "radiusLabel": "المسافة:",
+      "permissionDenied": "الموقع غير متاح",
+      // TODO: Refine iOS/Android path wording with native-speaker review.
+      "permissionDeniedHintIos": "تم حظر الموقع. يُرجى السماح بالوصول من إعدادات جهازك.",
+      "permissionDeniedHintAndroid": "تم حظر الموقع. يُرجى السماح بالوصول من إعدادات جهازك.",
+      "permissionDeniedHintFallback": "تم حظر الموقع. يُرجى السماح بالوصول من إعدادات جهازك.",
+      "loading": "جارٍ تحميل مقدمي الخدمة...",
+      "emptyTitle": "لا توجد مطاعم مفتوحة قريبة",
+      "errorTitle": "البحث غير متاح",
+      "errorLoading": "البحث غير متاح حاليًا. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة المحاولة"
+    },
+    "openNow": {
+      "chipLabel": "مفتوح الآن"
+    },
+    "empty": {
+      "noNearby": "جرّب نطاقًا أوسع أو تحقق لاحقًا."
+    },
     "was": {
       "searchPlaceholder": "ماذا تبحث؟",
       "loading": "جارٍ البحث...",
@@ -356,6 +385,10 @@ export const ar = {
       "title": "أعرف مزوداً",
       "description": "أوصِ بشخص تعرفه حتى يتمكن الآخرون من العثور عليه.",
       "buttonText": "التوصية بمزود"
+    },
+    "chatHint": {
+      "prefix": "يمكنك أيضا التسجيل بسرعة عبر",
+      "link": "مساعد الدردشة"
     },
     "recommend": {
       "title": "التوصية بمزود",
@@ -947,8 +980,10 @@ export const ar = {
       "menu": "القائمة",
       "offers": "العروض",
       "openingHours": "ساعات العمل",
+      "furtherLocations": "مواقع إضافية",
       "nearby": "بالقرب"
     },
+    "locationFallback": "الموقع",
     "days": {
       "monday": "الاثنين",
       "tuesday": "الثلاثاء",
@@ -1083,5 +1118,31 @@ export const ar = {
     "subtitle": "قم بتثبيت التطبيق للحصول على أفضل تجربة",
     "preparing": "جارٍ تحضير التثبيت...",
     "continueInBrowser": "المتابعة في المتصفح"
+  },
+  "chat": {
+    "authRequired": {
+      "title": "تسجيل الدخول مطلوب",
+      "body": "يجب أن تكون مسجلاً للدخول لاستخدام الدردشة.",
+      "action": "تسجيل الدخول الآن"
+    },
+    "fallback": {
+      "prefix": "تفضل يدويا؟",
+      "link": "استخدم النموذج"
+    },
+    "openChat": "فتح الدردشة",
+    "closeChat": "إغلاق الدردشة",
+    "assistantTitle": "Ummah Flow Assistant"
+  },
+  "map": {
+    "zoomIn": "تكبير",
+    "zoomOut": "تصغير",
+    "noProviders": "لم يتم العثور على مزودين",
+    "noProvidersHint": "تحقق مرة أخرى قريباً.",
+    "noOpenProviders": "لا يوجد مزودون مفتوحون الآن",
+    "noOpenProvidersHint": "جرب إيقاف تشغيل فلتر مفتوح الآن.",
+    "switchToList": "عرض القائمة",
+    "switchToMap": "عرض الخريطة",
+    "listViewLabel": "قائمة",
+    "mapViewLabel": "خريطة"
   }
 } as const;

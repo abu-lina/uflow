@@ -38,7 +38,7 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.searchButton': 'Suchen',
     'suchen.citySearchPlaceholder': 'Stadt suchen',
     'suchen.searchCityPrompt': 'Suche nach deiner Stadt',
-    'suchen.was.searchPlaceholder': 'Was suchst du?',
+    'suchen.was.searchPlaceholder': 'Angebote suchen',
     'suchen.was.ummah.searchPlaceholder': 'Welchen Dienst suchst du?',
     'suchen.was.loading': 'Suche laeuft...',
     'suchen.was.searchError': 'Suche nicht verfuegbar. Bitte versuche es erneut.',
@@ -79,7 +79,8 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.filter.ummahItems.zertifiziert.title': 'Zertifiziert',
     'suchen.filter.ummahItems.zertifiziert.subtitle': 'Anerkannte Qualifikation',
     'suchen.filter.ummahItems.geschlechtergetrennt.title': 'Geschlechtergetrennt',
-    'suchen.filter.ummahItems.geschlechtergetrennt.subtitle': 'Separate Bereiche für Männer & Frauen',
+    'suchen.filter.ummahItems.geschlechtergetrennt.subtitle':
+      'Separate Bereiche für Männer & Frauen',
     'common.loading': 'Loading',
     'location.unnamed': 'Unbenannt',
   };
@@ -118,14 +119,20 @@ vi.mock('@/features/search/components/SectionSelector', () => ({
     selectedSection,
     onSectionChange,
   }: {
-    selectedSection: 'food' | 'ummah' | 'business';
-    onSectionChange: (section: 'food' | 'ummah' | 'business') => void;
+    selectedSection: 'food' | 'ummah' | 'store';
+    onSectionChange: (section: 'food' | 'ummah' | 'store') => void;
   }) => (
     <div>
       <p>SectionSelector: {selectedSection}</p>
-      <button type="button" onClick={() => onSectionChange('food')}>Go Food</button>
-      <button type="button" onClick={() => onSectionChange('ummah')}>Go Ummah</button>
-      <button type="button" onClick={() => onSectionChange('business')}>Go Business</button>
+      <button type="button" onClick={() => onSectionChange('food')}>
+        Go Food
+      </button>
+      <button type="button" onClick={() => onSectionChange('ummah')}>
+        Go Ummah
+      </button>
+      <button type="button" onClick={() => onSectionChange('store')}>
+        Go Store
+      </button>
     </div>
   ),
 }));
@@ -149,7 +156,9 @@ vi.mock('@/components/ui/Button', () => ({
     disabled?: boolean;
     onClick?: () => void;
   }) => (
-    <button disabled={disabled} type="button" onClick={onClick}>{children}</button>
+    <button disabled={disabled} type="button" onClick={onClick}>
+      {children}
+    </button>
   ),
 }));
 
@@ -221,6 +230,7 @@ vi.mock('lucide-react', () => ({
   Globe: () => <span>globe</span>,
   Languages: () => <span>languages</span>,
   BadgeCheck: () => <span>badge-check</span>,
+  LayoutGrid: () => <span>layout-grid</span>,
   Users: () => <span>users</span>,
   BriefcaseBusiness: () => <span>briefcase-business</span>,
 }));
@@ -363,7 +373,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Select result for doe/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
-    expect(mockRouterPush).toHaveBeenCalledWith('/food?section=food&q=Doener&filters=muslim');
+    expect(mockRouterPush).toHaveBeenCalledWith('/food?q=Doener&filters=muslim');
   });
 
   it('[regression] includes location and wer params in providers URL on search submit', async () => {
@@ -384,9 +394,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Select result for doe/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
-    expect(mockRouterPush).toHaveBeenCalledWith(
-      '/food?section=food&q=Doener&location=Berlin&wer=2+Maenner%2C+1+Kind',
-    );
+    expect(mockRouterPush).toHaveBeenCalledWith('/food/berlin?q=Doener');
   });
 
   it('[regression] excludes non-food recent items from food What section', async () => {
@@ -415,7 +423,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     expect(screen.getByRole('heading', { name: 'Wo?' })).toBeInTheDocument();
   });
 
-  it('clears food WAS selection when switching from food to ummah section', async () => {
+  it('does not clear WAS selection when clicking inactive ummah section tab', async () => {
     const { rerender } = render(<SearchPage />);
 
     const input = screen.getByRole('searchbox', { name: 'Angebote suchen' });
@@ -436,20 +444,19 @@ describe('/search page meal search wiring (Plan 096)', () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.queryByText('Was: Doener')).not.toBeInTheDocument();
-    expect(screen.getByText('Was?')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Suchen' })).toBeDisabled();
-    expect(screen.getByRole('checkbox', { name: /Kostenlos/i })).toBeInTheDocument();
+    // Ummah is inactive — click is no-op, WAS selection remains
+    expect(screen.getByText('Was: Doener')).toBeInTheDocument();
+    expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it('[regression] syncs search URL section when switching to ummah and stores', () => {
+  it('[regression] does not sync URL or clear WAS when clicking inactive ummah or store', () => {
     render(<SearchPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Go Ummah' }));
-    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=ummah');
+    expect(mockRouterReplace).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Go Business' }));
-    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=business');
+    fireEvent.click(screen.getByRole('button', { name: 'Go Store' }));
+    expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
   it('[regression] does not call replace when clicking already-active section tab', () => {
@@ -460,7 +467,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     expect(mockRouterReplace).not.toHaveBeenCalled();
   });
 
-  it('[regression] syncs selected section from URL changes while mounted', async () => {
+  it('[regression] resolves inactive section URL params to food', async () => {
     const { rerender } = render(<SearchPage />);
 
     expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
@@ -471,16 +478,17 @@ describe('/search page meal search wiring (Plan 096)', () => {
       await vi.runOnlyPendingTimersAsync();
     });
 
-    expect(screen.getByText('SectionSelector: ummah')).toBeInTheDocument();
+    // Inactive sections resolve to 'food'
+    expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
   });
 
-  it('[regression] handles delayed router.replace section updates without state rollback', async () => {
+  it('[regression] does not navigate state or update URL when clicking inactive sections', async () => {
     replaceDelayMs = 100;
     const { rerender } = render(<SearchPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Go Ummah' }));
 
-    expect(mockRouterReplace).toHaveBeenCalledWith('/search?section=ummah');
+    expect(mockRouterReplace).not.toHaveBeenCalled();
     expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
 
     await act(async () => {
@@ -489,6 +497,6 @@ describe('/search page meal search wiring (Plan 096)', () => {
       rerender(<SearchPage />);
     });
 
-    expect(screen.getByText('SectionSelector: ummah')).toBeInTheDocument();
+    expect(screen.getByText('SectionSelector: food')).toBeInTheDocument();
   });
 });
