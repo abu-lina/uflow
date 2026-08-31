@@ -14,10 +14,12 @@ vi.mock('@/lib/supabase/getUserFromCookie', () => ({
   getUserFromCookie: () => mockGetUserFromCookie(),
 }));
 
-// Mock isAdminOrModerator
+// Mock auth/roles
 const mockIsAdminOrModerator = vi.fn();
+const mockGetUserRole = vi.fn();
 vi.mock('@/lib/auth/roles', () => ({
   isAdminOrModerator: (userId: string) => mockIsAdminOrModerator(userId),
+  getUserRole: (userId: string) => mockGetUserRole(userId),
 }));
 
 // Mock getSupabaseAdmin
@@ -145,7 +147,7 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
 
   it('[post-fix] rejects non-admin authenticated user with 403', async () => {
     mockGetUserFromCookie.mockResolvedValue({ id: 'user-123', email: 'user@test.com' });
-    mockIsAdminOrModerator.mockResolvedValue(false);
+    mockGetUserRole.mockResolvedValue('user');
 
     const res = await POST(makeRequest({ role: 'admin' }));
     expect(res.status).toBe(403);
@@ -155,7 +157,7 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
 
   it('[post-fix] allows admin user to set role', async () => {
     mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123', email: 'admin@test.com' });
-    mockIsAdminOrModerator.mockResolvedValue(true);
+    mockGetUserRole.mockResolvedValue('admin');
 
     // Mock the chain of Supabase calls for getUserById and from().select().eq().single()
     mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValue({
@@ -189,7 +191,7 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
 
   it('[pre-fix FAILS, post-fix PASSES] syncs DB role to auth user_metadata.role when setting role', async () => {
     mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123', email: 'admin@test.com' });
-    mockIsAdminOrModerator.mockResolvedValue(true);
+    mockGetUserRole.mockResolvedValue('admin');
 
     mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValue({
       data: { user: { id: 'target-user', email: 'target@test.com', user_metadata: { language: 'en' } } },
@@ -231,6 +233,115 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
         },
       }
     );
+  });
+});
+
+// ─── F-049-01b: set-role privilege escalation prevention ─────────────────────
+
+describe('F-049-01b: /api/admin/set-role privilege escalation prevention', () => {
+  let POST: (request: Request) => Promise<Response>;
+
+  function mockSupabaseChainForRoleUpdate(targetUser: { user_id: string; email: string; role: string }) {
+    mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValue({
+      data: { user: { id: targetUser.user_id, email: targetUser.email, user_metadata: {} } },
+      error: null,
+    });
+    mockSupabaseAdmin.from.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: targetUser,
+            error: null,
+          }),
+        }),
+      }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { ...targetUser, role: 'admin' },
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    });
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    mockSupabaseAdmin.auth.admin.updateUserById.mockResolvedValue({ error: null });
+    const mod = await import('@/app/api/admin/set-role/route');
+    POST = mod.POST;
+  });
+
+  it('rejects moderator self-promoting to admin with 403', async () => {
+    mockGetUserFromCookie.mockResolvedValue({ id: 'mod-123', email: 'mod@test.com' });
+    mockGetUserRole.mockResolvedValue('moderator');
+    mockSupabaseChainForRoleUpdate({ user_id: 'mod-123', email: 'mod@test.com', role: 'moderator' });
+
+    // No userId in body = defaults to caller's own ID
+    const res = await POST(makeRequest({ role: 'admin' }));
+    expect(res.status).toBe(403);
+  });
+
+  it('rejects moderator assigning admin to another user with 403', async () => {
+    mockGetUserFromCookie.mockResolvedValue({ id: 'mod-123', email: 'mod@test.com' });
+    mockGetUserRole.mockResolvedValue('moderator');
+    mockSupabaseChainForRoleUpdate({ user_id: 'other-456', email: 'other@test.com', role: 'user' });
+
+    const res = await POST(makeRequest({ userId: 'other-456', role: 'admin' }));
+    expect(res.status).toBe(403);
+  });
+
+  it('rejects moderator demoting an admin with 403', async () => {
+    mockGetUserFromCookie.mockResolvedValue({ id: 'mod-123', email: 'mod@test.com' });
+    mockGetUserRole.mockResolvedValue('moderator');
+    mockSupabaseChainForRoleUpdate({ user_id: 'admin-789', email: 'admin@test.com', role: 'admin' });
+
+    const res = await POST(makeRequest({ userId: 'admin-789', role: 'user' }));
+    expect(res.status).toBe(403);
+  });
+
+  it('rejects admin changing own role with 403', async () => {
+    mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123', email: 'admin@test.com' });
+    mockGetUserRole.mockResolvedValue('admin');
+    mockSupabaseChainForRoleUpdate({ user_id: 'admin-123', email: 'admin@test.com', role: 'admin' });
+
+    const res = await POST(makeRequest({ role: 'moderator' }));
+    expect(res.status).toBe(403);
+  });
+
+  it('allows admin to assign admin role to another user', async () => {
+    mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123', email: 'admin@test.com' });
+    mockGetUserRole.mockResolvedValue('admin');
+    mockSupabaseChainForRoleUpdate({ user_id: 'other-456', email: 'other@test.com', role: 'user' });
+
+    const res = await POST(makeRequest({ userId: 'other-456', role: 'admin' }));
+    expect(res.status).toBe(200);
+  });
+
+  it('allows moderator to assign moderator role to a regular user', async () => {
+    mockGetUserFromCookie.mockResolvedValue({ id: 'mod-123', email: 'mod@test.com' });
+    mockGetUserRole.mockResolvedValue('moderator');
+    mockSupabaseChainForRoleUpdate({ user_id: 'other-456', email: 'other@test.com', role: 'user' });
+
+    const res = await POST(makeRequest({ userId: 'other-456', role: 'moderator' }));
+    expect(res.status).toBe(200);
+  });
+
+  it('rejects email-based self-elevation bypass with 403', async () => {
+    mockGetUserFromCookie.mockResolvedValue({ id: 'mod-123', email: 'mod@test.com' });
+    mockGetUserRole.mockResolvedValue('moderator');
+
+    // Moderator tries to bypass self-check by providing their own email instead of userId
+    mockSupabaseAdmin.auth.admin.listUsers.mockResolvedValue({
+      data: { users: [{ id: 'mod-123', email: 'mod@test.com' }] },
+      error: null,
+    });
+
+    const res = await POST(makeRequest({ email: 'mod@test.com', role: 'admin' }));
+    expect(res.status).toBe(403);
   });
 });
 
