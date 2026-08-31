@@ -9,9 +9,9 @@ echo "NEXT_PUBLIC_SITE_URL: $(grep NEXT_PUBLIC_SITE_URL .env.local | cut -d'=' -
 echo ""
 
 echo "🔐 GitHub Secrets to verify (go to https://github.com/abu-lina/uflow/settings/secrets/actions):"
-echo "✓ NEXT_PUBLIC_SUPABASE_URL should be: https://rdtdtcfntopcxcigkqoq.supabase.co"
+echo "✓ NEXT_PUBLIC_SUPABASE_URL should match your .env.local"
 echo "✓ NEXT_PUBLIC_SUPABASE_ANON_KEY should match your .env.local"
-echo "✓ RESEND_API_KEY should be: re_4m8Qc9hr_C9b2hRuL3dYDPnRu6mxwTLyL"
+echo "✓ RESEND_API_KEY should match your .env.local"
 echo "✓ SUPABASE_SERVICE_ROLE_KEY should match your .env.local"
 echo ""
 

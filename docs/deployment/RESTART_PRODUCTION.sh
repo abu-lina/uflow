@@ -19,13 +19,15 @@ if docker images | grep -q "uflow.*latest"; then
     echo "✅ Found production image"
     
     # Start production container with all required environment variables
+    # Load secrets from environment or .env file
+    # NEVER hardcode secrets here - use: source .env.production
     docker run -d -p 3000:3000 \
-      -e NEXT_PUBLIC_SUPABASE_URL="https://rdtdtcfntopcxcigkqoq.supabase.co" \
-      -e NEXT_PUBLIC_SUPABASE_ANON_KEY="sb_publishable_uBW3lxrnOmqPI047jBmxtg_YFVDsr1q" \
-      -e SUPABASE_SERVICE_ROLE_KEY="sb_secret_zz-UfIBWCufSI2rJ90edlw_ZFgj6it7" \
+      -e NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL:?Missing NEXT_PUBLIC_SUPABASE_URL}" \
+      -e NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY:?Missing NEXT_PUBLIC_SUPABASE_ANON_KEY}" \
+      -e SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:?Missing SUPABASE_SERVICE_ROLE_KEY}" \
       -e NEXT_PUBLIC_SITE_URL="https://ummahflow.com" \
-      -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="0x4AAAAAACBE1exDIzaWMau8" \
-      -e TURNSTILE_SECRET_KEY="0x4AAAAAACBE1YbHK9pYB-pMMUdTBaPWiFM" \
+      -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${NEXT_PUBLIC_TURNSTILE_SITE_KEY}" \
+      -e TURNSTILE_SECRET_KEY="${TURNSTILE_SECRET_KEY}" \
       -e DISABLE_PWA=false \
       --name uflow-app uflow:latest
     

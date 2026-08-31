@@ -144,11 +144,11 @@ ssh root@YOUR_HETZNER_IP
 docker exec uflow-app env | grep NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 # Should show:
-# NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAAAACAqOzp-Vvpm5W5a
+# NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_turnstile_site_key_here
 ```
 
 **Compare with:**
-- Browser console: `0x4AAAAAACAqOzp-Vvpm5W5a`
+- Browser console: (check your Cloudflare Turnstile widget site key)
 - Cloudflare widget: Should match exactly
 - GitHub Secret: Should match exactly
 

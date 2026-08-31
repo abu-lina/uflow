@@ -29,11 +29,13 @@ docker rm uflow-uat 2>/dev/null || echo "No existing container to remove"
 
 # 6. Build Docker image
 echo "🔨 Building UAT Docker image (this may take 5-10 minutes)..."
+# Load secrets from environment or .env file before running
+# NEVER hardcode secrets here - use: source .env.uat
 docker build \
-    --build-arg NEXT_PUBLIC_SUPABASE_URL="https://rdtdtcfntopcxcigkqoq.supabase.co" \
-    --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="sb_publishable_uBW3lxrnOmqPI047jBmxtg_YFVDsr1q" \
+    --build-arg NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL:?Missing NEXT_PUBLIC_SUPABASE_URL}" \
+    --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY:?Missing NEXT_PUBLIC_SUPABASE_ANON_KEY}" \
     --build-arg NEXT_PUBLIC_SITE_URL="https://uat.ummahflow.com" \
-    --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="0x4AAAAAACBE1exDIzaWMau8" \
+    --build-arg NEXT_PUBLIC_TURNSTILE_SITE_KEY="${NEXT_PUBLIC_TURNSTILE_SITE_KEY}" \
     --build-arg DISABLE_PWA=false \
     -t uflow-uat:latest \
     .
@@ -45,12 +47,12 @@ mv next.config.js.bak next.config.js || sed -i 's/ignoreDuringBuilds: true/ignor
 # 8. Start new UAT container
 echo "🚀 Starting new UAT container..."
 docker run -d -p 3001:3000 \
-  -e NEXT_PUBLIC_SUPABASE_URL="https://rdtdtcfntopcxcigkqoq.supabase.co" \
-  -e NEXT_PUBLIC_SUPABASE_ANON_KEY="sb_publishable_uBW3lxrnOmqPI047jBmxtg_YFVDsr1q" \
-  -e SUPABASE_SERVICE_ROLE_KEY="sb_secret_zz-UfIBWCufSI2rJ90edlw_ZFgj6it7" \
+  -e NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}" \
+  -e NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}" \
+  -e SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY}" \
   -e NEXT_PUBLIC_SITE_URL="https://uat.ummahflow.com" \
-  -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="0x4AAAAAACBE1exDIzaWMau8" \
-  -e TURNSTILE_SECRET_KEY="0x4AAAAAACBE1YbHK9pYB-pMMUdTBaPWiFM" \
+  -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${NEXT_PUBLIC_TURNSTILE_SITE_KEY}" \
+  -e TURNSTILE_SECRET_KEY="${TURNSTILE_SECRET_KEY}" \
   -e DISABLE_PWA=false \
   --name uflow-uat uflow-uat:latest
 

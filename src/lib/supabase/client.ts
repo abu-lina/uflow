@@ -37,34 +37,21 @@ if (supabaseUrl && supabaseUrl.trim().length > 0 && !isLocalUrl) {
 }
 
 // Validate API key format (only if value is provided and non-empty)
-// Supabase anon keys can be either:
-// - JWT tokens (starts with 'eyJ') - legacy format, typically 200+ chars
-// - Publishable keys (starts with 'sb_') - new format, typically 40-60 chars
+// Accepted formats:
+// - sb_publishable_ prefix (new format, preferred)
+// - eyJ prefix (legacy JWT format, still supported)
 if (supabaseAnonKey && supabaseAnonKey.trim().length > 0) {
-  const isValidFormat = supabaseAnonKey.startsWith('eyJ') || supabaseAnonKey.startsWith('sb_');
-  // JWT tokens are much longer, publishable keys are shorter
+  const isValidFormat = supabaseAnonKey.startsWith('sb_') || supabaseAnonKey.startsWith('eyJ');
   const minLength = supabaseAnonKey.startsWith('eyJ') ? 100 : 30;
-  const isLongEnough = supabaseAnonKey.length >= minLength;
-  
-  if (!isLongEnough || !isValidFormat) {
-    const isPlaceholder = supabaseAnonKey.includes('your') || 
-                          supabaseAnonKey.includes('placeholder') ||
-                          supabaseAnonKey === 'your-anon-key-here' ||
-                          supabaseAnonKey === 'your-dev-anon-key-here';
-    
-    if (isPlaceholder) {
-      throw new Error(
-        `Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY: appears to be a placeholder value. ` +
-        'Please replace it with your actual Supabase anon key from: ' +
-        'https://supabase.com/dashboard/project/_/settings/api'
-      );
-    }
-    
+
+  if (!isValidFormat || supabaseAnonKey.length < minLength) {
     throw new Error(
-      `Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY format. ` +
-      'Expected a JWT token (starts with "eyJ") or publishable key (starts with "sb_"). ' +
-      'Please verify your .env.local file has the correct anon key from: ' +
-      'https://supabase.com/dashboard/project/_/settings/api'
+      supabaseAnonKey.includes('your') || supabaseAnonKey.includes('placeholder')
+        ? 'Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY: appears to be a placeholder value. ' +
+          'Replace it with your actual key from: https://supabase.com/dashboard/project/_/settings/api'
+        : 'Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY format. ' +
+          'Expected a publishable key (starts with "sb_publishable_") or legacy JWT (starts with "eyJ"). ' +
+          'Get your key from: https://supabase.com/dashboard/project/_/settings/api'
     );
   }
 }
@@ -86,10 +73,9 @@ if (supabaseUrl && supabaseAnonKey && supabaseAnonKey.startsWith('eyJ')) {
           `   API key belongs to project: ${keyProjectRef}\n` +
           `   This will cause "Invalid API key" errors.\n\n` +
           `   To fix:\n` +
-          `   1. For local dev (.env.local): Use DEV project (qrekonfhaenjdnjhwdum)\n` +
-          `   2. For UAT (.env.uat): Use UAT project (rdtdtcfntopcxcigkqoq)\n` +
-          `   3. Get correct keys from: https://supabase.com/dashboard/project/${keyProjectRef}/settings/api\n` +
-          `   4. Restart your dev server after updating .env.local`
+          `   1. Ensure your URL and key are from the same Supabase project\n` +
+          `   2. Get correct keys from: https://supabase.com/dashboard/project/${urlProjectRef}/settings/api\n` +
+          `   3. Restart your dev server after updating .env.local`
         );
       }
     }

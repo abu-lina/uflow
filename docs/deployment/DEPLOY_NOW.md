@@ -115,8 +115,8 @@ nano .env.production
 Add these variables (get values from Supabase Dashboard → Settings → API):
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://[your-project].supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ[your-anon-key]...
-SUPABASE_SERVICE_ROLE_KEY=eyJ[your-service-key]...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-anon-key]          # sb_publishable_... (new) or eyJ... (legacy)
+SUPABASE_SERVICE_ROLE_KEY=[your-service-role-key]       # sb_secret_... (new) or eyJ... (legacy)
 NEXT_PUBLIC_SITE_URL=https://ummahflow.com
 ```
 
@@ -140,7 +140,7 @@ chmod 600 .env.production .env.uat
 Check the error message. Common issues:
 - Missing environment variables → Create `.env.production` or `.env.uat`
 - Invalid Supabase URL format → Must be `https://*.supabase.co`
-- Invalid anon key format → Must start with `eyJ`
+- Invalid anon key format → Must start with `sb_publishable_` (new) or `eyJ` (legacy JWT)
 
 ### If Container Won't Start
 
