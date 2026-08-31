@@ -7,11 +7,13 @@ import { RowItem } from '@/components/ui/RowItem';
 import { getFeatureFlag } from '@/config/feature-flags';
 import type { FoodCategory } from '@/services/offers';
 import { safeJsonParse } from '@/utils/json';
+import { slugify } from '@/lib/slugify';
 
 export interface WasSelection {
   label: string;
   type: 'category' | 'dish' | 'service-type' | 'all-restaurants';
   categoryId?: string;
+  categorySlug?: string;
   categoryImages?: string | null;
   providerCount?: number;
   dishName?: string;
@@ -145,6 +147,7 @@ export function WasCategoryResults({
             label,
             type: 'category',
             categoryId: category.category_id,
+            categorySlug: slugify(category.name_en ?? category.name_de),
             categoryImages: category.category_images,
             providerCount: category.provider_count,
           })

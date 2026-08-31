@@ -5,6 +5,7 @@ export interface Category {
   category_id: string;
   name_de: string;
   name_en?: string;
+  slug?: string;
   description_de?: string;
   description_en?: string;
   category_images?: Record<string, unknown>; // JSONB for category images
@@ -280,4 +281,28 @@ export async function getProviderCategories(listingType?: 'food' | 'store'): Pro
 // Fetch categories for social project creation (ummah section)
 export async function getSocialProjectCategories(): Promise<Category[]> {
   return getCategoriesForSection('ummah');
+}
+
+/**
+ * Look up a category by its URL slug and optional section scope.
+ */
+export async function getCategoryBySlug(
+  slug: string,
+  section?: 'food' | 'store' | 'ummah',
+): Promise<Category | null> {
+  let query = supabase
+    .from('categories')
+    .select('*')
+    .eq('slug', slug);
+
+  if (section) {
+    query = query.in('applicable_section', [section, 'all']);
+  }
+
+  const { data, error } = await query.maybeSingle<Category>();
+  if (error) {
+    console.error('[getCategoryBySlug] Error:', error);
+    return null;
+  }
+  return data;
 }

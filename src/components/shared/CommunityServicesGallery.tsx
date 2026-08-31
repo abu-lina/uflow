@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { getCommunityServices, type CommunityService } from '@/services/communityServices';
-import { getResultsPathForSection } from '@/config/sectionFilters';
+import { buildResultsUrl } from '@/lib/search-params';
 
 import CommunityServiceGallery from './CommunityServiceGallery';
 
@@ -33,11 +33,7 @@ export function CommunityServicesGallery() {
 
   const handleCommunityServiceClick = (_communityServiceId: string) => {
     // Navigate to UMMAH results with Gemeinschaft & Spenden category filter.
-    const params = new URLSearchParams({
-      section: 'ummah',
-      category: '4470c3e0-458f-40a6-a96e-ca0fbdf145d7',
-    });
-    router.push(`${getResultsPathForSection('ummah')}?${params.toString()}`);
+    router.push(buildResultsUrl({ section: 'ummah', categorySlug: 'gemeinschaft-spenden' }));
   };
 
   if (isLoading) {

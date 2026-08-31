@@ -6,8 +6,8 @@ import { SearchContextBar } from './SearchContextBar';
 const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/providers',
-  useSearchParams: () => new URLSearchParams('section=food&location=Berlin'),
+  usePathname: () => '/food',
+  useSearchParams: () => new URLSearchParams('location=Berlin'),
   useRouter: () => ({
     push: mockPush,
   }),
@@ -37,13 +37,7 @@ describe('SearchContextBar', () => {
   });
 
   it('renders search input value and people summary without location field', () => {
-    render(
-      <SearchContextBar
-        peopleSummary="2 Adults"
-        searchTerm="Doner"
-        section="food"
-      />,
-    );
+    render(<SearchContextBar peopleSummary="2 Adults" searchTerm="Doner" section="food" />);
 
     expect(screen.getByRole('searchbox')).toHaveValue('Doner');
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
@@ -51,12 +45,7 @@ describe('SearchContextBar', () => {
   });
 
   it('hides people summary segment when no people summary is provided', () => {
-    render(
-      <SearchContextBar
-        searchTerm="Doner"
-        section="food"
-      />,
-    );
+    render(<SearchContextBar searchTerm="Doner" section="food" />);
 
     expect(screen.getByRole('searchbox')).toHaveValue('Doner');
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
@@ -64,12 +53,7 @@ describe('SearchContextBar', () => {
   });
 
   it('falls back to section label when category id exists without q', () => {
-    render(
-      <SearchContextBar
-        categoryId="8204a370-26fb-4c8d-8183-2e5550a09dcb"
-        section="food"
-      />,
-    );
+    render(<SearchContextBar categoryId="8204a370-26fb-4c8d-8183-2e5550a09dcb" section="food" />);
 
     expect(screen.getByRole('searchbox')).toHaveAttribute('placeholder', 'Food');
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
@@ -88,40 +72,25 @@ describe('SearchContextBar', () => {
   });
 
   it('updates q param on Enter when user edits search term', () => {
-    render(
-      <SearchContextBar
-        searchTerm="Doner"
-        section="food"
-      />,
-    );
+    render(<SearchContextBar searchTerm="Doner" section="food" />);
 
     const input = screen.getByRole('searchbox');
     fireEvent.change(input, { target: { value: 'Indigo' } });
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    expect(mockPush).toHaveBeenCalledWith('/providers?section=food&location=Berlin&q=Indigo');
+    expect(mockPush).toHaveBeenCalledWith('/food?location=Berlin&q=Indigo');
   });
 
   it('clears q param via x button to show all results', () => {
-    render(
-      <SearchContextBar
-        searchTerm="Indigo"
-        section="food"
-      />,
-    );
+    render(<SearchContextBar searchTerm="Indigo" section="food" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
 
-    expect(mockPush).toHaveBeenCalledWith('/providers?section=food&location=Berlin');
+    expect(mockPush).toHaveBeenCalledWith('/food?location=Berlin');
   });
 
   it('does not render any location field in the providers search context bar', () => {
-    render(
-      <SearchContextBar
-        searchTerm="Indigo"
-        section="food"
-      />,
-    );
+    render(<SearchContextBar searchTerm="Indigo" section="food" />);
 
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     expect(screen.queryByRole('option', { name: 'Everywhere' })).not.toBeInTheDocument();
@@ -129,12 +98,7 @@ describe('SearchContextBar', () => {
   });
 
   it('navigates back to /search with section when edit button is clicked', () => {
-    render(
-      <SearchContextBar
-        searchTerm="Doner"
-        section="ummah"
-      />,
-    );
+    render(<SearchContextBar searchTerm="Doner" section="ummah" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit search' }));
 
@@ -142,12 +106,7 @@ describe('SearchContextBar', () => {
   });
 
   it('navigates back to home when the left icon button is clicked', () => {
-    render(
-      <SearchContextBar
-        searchTerm="Doner"
-        section="food"
-      />,
-    );
+    render(<SearchContextBar searchTerm="Doner" section="food" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to home' }));
 
