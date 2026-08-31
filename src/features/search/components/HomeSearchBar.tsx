@@ -19,6 +19,14 @@ interface HomeSearchBarProps {
   onToggleOpenNow?: () => void;
   /** Optional admin-only content rendered inline with the filter chips. */
   adminSlot?: React.ReactNode;
+  /** When provided, called on every keystroke instead of using internal state. */
+  onQueryChange?: (query: string) => void;
+  /** When provided, called on Enter/submit instead of navigating to /providers. */
+  onSearchSubmit?: (query: string) => void;
+  /** Controlled query value — use with onQueryChange for external state. */
+  query?: string;
+  /** Hide the DiscoveryFilterBar (near-me / open-now chips). */
+  hideFilters?: boolean;
 }
 
 /**
@@ -42,12 +50,24 @@ export function HomeSearchBar({
   onToggleNearMe,
   onToggleOpenNow,
   adminSlot,
+  onQueryChange,
+  onSearchSubmit,
+  query: controlledQuery,
+  hideFilters = false,
 }: HomeSearchBarProps) {
   const router = useRouter();
   const { t } = useLanguage();
-  const [query, setQuery] = useState('');
+  const [internalQuery, setInternalQuery] = useState('');
+
+  // Support controlled and uncontrolled modes
+  const query = controlledQuery ?? internalQuery;
+  const setQuery = onQueryChange ?? setInternalQuery;
 
   const handleSubmit = () => {
+    if (onSearchSubmit) {
+      onSearchSubmit(query);
+      return;
+    }
     const trimmed = query.trim();
     if (trimmed) {
       router.push(`/providers?q=${encodeURIComponent(trimmed)}&section=${activeSection}`);
@@ -92,14 +112,16 @@ export function HomeSearchBar({
         </button>
       </div>
 
-      <DiscoveryFilterBar
-        geoStatus={geoStatus}
-        nearMeActive={nearMeActive}
-        openNowActive={isOpenNow}
-        onToggleNearMe={onToggleNearMe ?? (() => {})}
-        onToggleOpenNow={onToggleOpenNow ?? (() => {})}
-        adminSlot={adminSlot}
-      />
+      {!hideFilters && (
+        <DiscoveryFilterBar
+          geoStatus={geoStatus}
+          nearMeActive={nearMeActive}
+          openNowActive={isOpenNow}
+          onToggleNearMe={onToggleNearMe ?? (() => {})}
+          onToggleOpenNow={onToggleOpenNow ?? (() => {})}
+          adminSlot={adminSlot}
+        />
+      )}
     </div>
   );
 }
