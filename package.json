@@ -65,7 +65,8 @@
     "perf:uat:setup": "node tests/performance/setup-test-data.mjs",
     "perf:uat:cleanup": "node tests/performance/setup-test-data.mjs --cleanup",
     "perf:check-budgets": "node scripts/perf/check-budgets.js",
-    "verify:snyk-pr": "bash scripts/verify-snyk-pr.sh"
+    "verify:snyk-pr": "bash scripts/verify-snyk-pr.sh",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
