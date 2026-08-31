@@ -66,7 +66,7 @@ export function buildSearchResultsUrl(opts: {
   let query: string | null = null;
 
   if (selectedWas?.type === 'category' && selectedWas.categoryId) {
-    categorySlug = selectedWas.categorySlug ?? slugify(selectedWas.label);
+    categorySlug = selectedWas.categorySlug ?? null;
   } else if (selectedWas?.type === 'dish' || selectedWas?.type === 'service-type') {
     query = selectedWas.label;
   }
