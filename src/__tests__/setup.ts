@@ -7,7 +7,7 @@ vi.mock('server-only', () => ({}));
 
 // Set up environment variables
 // Use sb_publishable_ prefix to match the new key format accepted by client validation
-process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://mock-project.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://mock-supabase-url.com';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'sb_publishable_mock_anon_key_for_tests';
 
 // Silence React error boundary warnings in test
