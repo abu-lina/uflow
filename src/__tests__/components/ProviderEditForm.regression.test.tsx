@@ -112,7 +112,8 @@ vi.mock('@/providers/LanguageProvider', () => ({
 }));
 
 vi.mock('@/services/communityServices', () => ({
-  createProviderCommunityServiceRelationship: (...args: unknown[]) => mockCreateRelationship(...args),
+  createProviderCommunityServiceRelationship: (...args: unknown[]) =>
+    mockCreateRelationship(...args),
 }));
 
 vi.mock('@/components/ui/FooterAction', () => ({
@@ -130,7 +131,11 @@ vi.mock('@/components/ui/FooterAction', () => ({
         </button>
       ) : null}
       {secondaryButton ? (
-        <button aria-label={secondaryButton['aria-label']} type="button" onClick={secondaryButton.onClick}>
+        <button
+          aria-label={secondaryButton['aria-label']}
+          type="button"
+          onClick={secondaryButton.onClick}
+        >
           secondary
         </button>
       ) : null}
@@ -199,22 +204,21 @@ describe('ProviderEditForm regressions', () => {
     mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
 
     mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
-    mockProviderCommunityServicesSelect.mockReturnValue({ eq: mockProviderCommunityServicesSelectEq });
+    mockProviderCommunityServicesSelect.mockReturnValue({
+      eq: mockProviderCommunityServicesSelectEq,
+    });
 
     mockProviderCommunityServicesDeleteEq.mockResolvedValue({ error: null });
-    mockProviderCommunityServicesDelete.mockReturnValue({ eq: mockProviderCommunityServicesDeleteEq });
+    mockProviderCommunityServicesDelete.mockReturnValue({
+      eq: mockProviderCommunityServicesDeleteEq,
+    });
 
     mockProviderUpdateEq.mockResolvedValue({ error: null });
     mockProviderUpdate.mockReturnValue({ eq: mockProviderUpdateEq });
   });
 
   it('[post-fix PASSES] owner submit persists provider_description', async () => {
-    render(
-      <ProviderEditForm
-        enableLocalStorage={false}
-        provider={baseProvider}
-      />
-    );
+    render(<ProviderEditForm enableLocalStorage={false} provider={baseProvider} />);
 
     fireEvent.change(screen.getByPlaceholderText('Enter description'), {
       target: { value: 'Owner description from shared form' },
@@ -229,7 +233,7 @@ describe('ProviderEditForm regressions', () => {
     expect(mockProviderUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         provider_description: 'Owner description from shared form',
-      })
+      }),
     );
   });
 
@@ -243,7 +247,7 @@ describe('ProviderEditForm regressions', () => {
         onSubmitForm={onSubmitForm}
         provider={baseProvider}
         subPageBaseUrl="/dashboard/providers/123/edit"
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
@@ -258,7 +262,7 @@ describe('ProviderEditForm regressions', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('[post-fix PASSES] moderation footer shows save button instead of reject and approve actions', () => {
+  it('moderation footer shows reject, save, and approve buttons', () => {
     render(
       <ProviderEditForm
         enableLocalStorage={false}
@@ -273,12 +277,12 @@ describe('ProviderEditForm regressions', () => {
             onClick: vi.fn().mockResolvedValue(undefined),
           },
         }}
-      />
+      />,
     );
 
+    expect(screen.getByRole('button', { name: 'Reject' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Reject' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
   });
 
   it.skip('[pre-fix FAILS] moderation section selector uses translation keys for label and options', () => {
@@ -290,7 +294,7 @@ describe('ProviderEditForm regressions', () => {
           reject: { label: 'Reject', onClick: vi.fn() },
           approve: { label: 'Approve', onClick: vi.fn() },
         }}
-      />
+      />,
     );
 
     expect(screen.getByText('Section Label (i18n)')).toBeInTheDocument();
@@ -322,7 +326,7 @@ describe('ProviderEditForm regressions', () => {
             onClick: vi.fn(),
           },
         }}
-      />
+      />,
     );
 
     fireEvent.change(screen.getByPlaceholderText('Enter description'), {
@@ -335,7 +339,7 @@ describe('ProviderEditForm regressions', () => {
       expect(onSubmitForm).toHaveBeenCalledWith(
         expect.objectContaining({
           providerDescription: 'Reviewed and enriched description',
-        })
+        }),
       );
     });
   });
@@ -358,7 +362,7 @@ describe('ProviderEditForm regressions', () => {
             onClick: vi.fn().mockResolvedValue(undefined),
           },
         }}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
@@ -367,7 +371,7 @@ describe('ProviderEditForm regressions', () => {
       expect(onSubmitForm).toHaveBeenCalledWith(
         expect.objectContaining({
           website: 'https://www.example.com',
-        })
+        }),
       );
     });
   });
@@ -390,7 +394,7 @@ describe('ProviderEditForm regressions', () => {
             onClick: vi.fn().mockResolvedValue(undefined),
           },
         }}
-      />
+      />,
     );
 
     const sectionSelect = screen.getByLabelText('Section Label (i18n)');
@@ -401,7 +405,7 @@ describe('ProviderEditForm regressions', () => {
       expect(onSubmitForm).toHaveBeenCalledWith(
         expect.objectContaining({
           listingType: 'store',
-        })
+        }),
       );
     });
   });
@@ -414,11 +418,16 @@ describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
     vi.clearAllMocks();
     localStorage.clear();
 
-    mockCategoriesOrder.mockResolvedValue({ data: [{ category_id: 'cat-food', name_de: 'Essen & Trinken', name_en: 'Food & Drinks' }], error: null });
+    mockCategoriesOrder.mockResolvedValue({
+      data: [{ category_id: 'cat-food', name_de: 'Essen & Trinken', name_en: 'Food & Drinks' }],
+      error: null,
+    });
     mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
 
     mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
-    mockProviderCommunityServicesSelect.mockReturnValue({ eq: mockProviderCommunityServicesSelectEq });
+    mockProviderCommunityServicesSelect.mockReturnValue({
+      eq: mockProviderCommunityServicesSelectEq,
+    });
   });
 
   it.skip('[pre-fix FAILS] admin form with enableLocalStorage=false ignores admin category selection', () => {
@@ -430,7 +439,7 @@ describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
         enableLocalStorage={false}
         provider={baseProvider}
         subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
-      />
+      />,
     );
 
     // Pre-fix: form ignores localStorage entirely → shows placeholder
@@ -446,7 +455,7 @@ describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
         localStoragePrefix="admin_"
         provider={baseProvider}
         subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -465,7 +474,7 @@ describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
         localStoragePrefix="admin_"
         provider={baseProvider}
         subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -477,12 +486,7 @@ describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
   it('[post-fix PASSES] owner form still reads unprefixed keys (no regression)', async () => {
     localStorage.setItem(`edit_category_${pid}`, 'cat-food');
 
-    render(
-      <ProviderEditForm
-        enableLocalStorage={true}
-        provider={baseProvider}
-      />
-    );
+    render(<ProviderEditForm enableLocalStorage={true} provider={baseProvider} />);
 
     await waitFor(() => {
       expect(screen.getByText('Food & Drinks')).toBeInTheDocument();
@@ -501,20 +505,21 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
     mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
 
     mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
-    mockProviderCommunityServicesSelect.mockReturnValue({ eq: mockProviderCommunityServicesSelectEq });
+    mockProviderCommunityServicesSelect.mockReturnValue({
+      eq: mockProviderCommunityServicesSelectEq,
+    });
 
     mockProviderCommunityServicesDeleteEq.mockResolvedValue({ error: null });
-    mockProviderCommunityServicesDelete.mockReturnValue({ eq: mockProviderCommunityServicesDeleteEq });
+    mockProviderCommunityServicesDelete.mockReturnValue({
+      eq: mockProviderCommunityServicesDeleteEq,
+    });
 
     mockProviderUpdateEq.mockResolvedValue({ error: null });
     mockProviderUpdate.mockReturnValue({ eq: mockProviderUpdateEq });
   });
 
   it('stale empty string in localStorage does NOT overwrite DB value', () => {
-    localStorage.setItem(
-      `admin_edit_inline_${pid}`,
-      JSON.stringify({ instagram: '' })
-    );
+    localStorage.setItem(`admin_edit_inline_${pid}`, JSON.stringify({ instagram: '' }));
 
     render(
       <ProviderEditForm
@@ -524,7 +529,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
           ...baseProvider,
           social_instagram: '@realhandle',
         }}
-      />
+      />,
     );
 
     const input = screen.getByPlaceholderText('Instagram') as HTMLInputElement;
@@ -532,10 +537,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
   });
 
   it('non-empty localStorage value restores on mount', () => {
-    localStorage.setItem(
-      `admin_edit_inline_${pid}`,
-      JSON.stringify({ instagram: '@saved' })
-    );
+    localStorage.setItem(`admin_edit_inline_${pid}`, JSON.stringify({ instagram: '@saved' }));
 
     render(
       <ProviderEditForm
@@ -545,7 +547,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
           ...baseProvider,
           social_instagram: '@dbvalue',
         }}
-      />
+      />,
     );
 
     const input = screen.getByPlaceholderText('Instagram') as HTMLInputElement;
@@ -553,10 +555,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
   });
 
   it('null in localStorage falls through to DB value', () => {
-    localStorage.setItem(
-      `admin_edit_inline_${pid}`,
-      JSON.stringify({ instagram: null })
-    );
+    localStorage.setItem(`admin_edit_inline_${pid}`, JSON.stringify({ instagram: null }));
 
     render(
       <ProviderEditForm
@@ -566,7 +565,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
           ...baseProvider,
           social_instagram: '@dbvalue',
         }}
-      />
+      />,
     );
 
     const input = screen.getByPlaceholderText('Instagram') as HTMLInputElement;
@@ -574,10 +573,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
   });
 
   it('typing survives after sync with stale empty string', () => {
-    localStorage.setItem(
-      `admin_edit_inline_${pid}`,
-      JSON.stringify({ instagram: '' })
-    );
+    localStorage.setItem(`admin_edit_inline_${pid}`, JSON.stringify({ instagram: '' }));
 
     render(
       <ProviderEditForm
@@ -587,7 +583,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
           ...baseProvider,
           social_instagram: '@realhandle',
         }}
-      />
+      />,
     );
 
     const input = screen.getByPlaceholderText('Instagram') as HTMLInputElement;
@@ -600,10 +596,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
 
   it('[post-fix PASSES] syncFromLocalStorage recomputes isOnlineBusiness from address data', async () => {
     // Stale localStorage has isOnlineBusiness=true, provider has city=Berlin
-    localStorage.setItem(
-      `admin_edit_inline_${pid}`,
-      JSON.stringify({ isOnlineBusiness: true })
-    );
+    localStorage.setItem(`admin_edit_inline_${pid}`, JSON.stringify({ isOnlineBusiness: true }));
 
     render(
       <ProviderEditForm
@@ -614,7 +607,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
           address_city: 'Berlin',
           address_zip: '10115',
         }}
-      />
+      />,
     );
 
     // After sync, isOnlineBusiness should be false (city=Berlin present)
@@ -628,10 +621,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
   it('[post-fix PASSES] handleSubmit owner path preserves address_city when isOnlineBusiness contradicts city', async () => {
     // Setup: form has isOnlineBusiness=true (stale) but city=Berlin (from provider)
     // We render with provider data and localStorage with stale isOnlineBusiness
-    localStorage.setItem(
-      `admin_edit_inline_${pid}`,
-      JSON.stringify({ isOnlineBusiness: true })
-    );
+    localStorage.setItem(`admin_edit_inline_${pid}`, JSON.stringify({ isOnlineBusiness: true }));
 
     render(
       <ProviderEditForm
@@ -644,7 +634,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
           address_street: 'Street 1',
           address_country: 'Germany',
         }}
-      />
+      />,
     );
 
     // Wait for sync to settle and click save
@@ -668,10 +658,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
 
   it('[post-fix PASSES] handleSubmit owner path nulls address when intentional online', async () => {
     // Setup: user intentionally set online=true with no address data
-    localStorage.setItem(
-      `admin_edit_inline_${pid}`,
-      JSON.stringify({ isOnlineBusiness: true })
-    );
+    localStorage.setItem(`admin_edit_inline_${pid}`, JSON.stringify({ isOnlineBusiness: true }));
 
     render(
       <ProviderEditForm
@@ -684,7 +671,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
           address_zip: null,
           address_country: null,
         }}
-      />
+      />,
     );
 
     // After sync: no city, no zip → isOnlineBusiness=true
@@ -704,10 +691,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
   });
 
   it('empty string in localStorage does not overwrite phone field', () => {
-    localStorage.setItem(
-      `admin_edit_inline_${pid}`,
-      JSON.stringify({ phone: '' })
-    );
+    localStorage.setItem(`admin_edit_inline_${pid}`, JSON.stringify({ phone: '' }));
 
     render(
       <ProviderEditForm
@@ -717,7 +701,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
           ...baseProvider,
           contact_phone: '+49123456789',
         }}
-      />
+      />,
     );
 
     const input = screen.getByPlaceholderText('Phone') as HTMLInputElement;
