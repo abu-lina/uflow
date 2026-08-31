@@ -79,7 +79,8 @@ const mockTranslate = (key: string, variables?: Record<string, string | number>)
     'suchen.filter.ummahItems.zertifiziert.title': 'Zertifiziert',
     'suchen.filter.ummahItems.zertifiziert.subtitle': 'Anerkannte Qualifikation',
     'suchen.filter.ummahItems.geschlechtergetrennt.title': 'Geschlechtergetrennt',
-    'suchen.filter.ummahItems.geschlechtergetrennt.subtitle': 'Separate Bereiche für Männer & Frauen',
+    'suchen.filter.ummahItems.geschlechtergetrennt.subtitle':
+      'Separate Bereiche für Männer & Frauen',
     'common.loading': 'Loading',
     'location.unnamed': 'Unbenannt',
   };
@@ -123,9 +124,15 @@ vi.mock('@/features/search/components/SectionSelector', () => ({
   }) => (
     <div>
       <p>SectionSelector: {selectedSection}</p>
-      <button type="button" onClick={() => onSectionChange('food')}>Go Food</button>
-      <button type="button" onClick={() => onSectionChange('ummah')}>Go Ummah</button>
-      <button type="button" onClick={() => onSectionChange('store')}>Go Store</button>
+      <button type="button" onClick={() => onSectionChange('food')}>
+        Go Food
+      </button>
+      <button type="button" onClick={() => onSectionChange('ummah')}>
+        Go Ummah
+      </button>
+      <button type="button" onClick={() => onSectionChange('store')}>
+        Go Store
+      </button>
     </div>
   ),
 }));
@@ -149,7 +156,9 @@ vi.mock('@/components/ui/Button', () => ({
     disabled?: boolean;
     onClick?: () => void;
   }) => (
-    <button disabled={disabled} type="button" onClick={onClick}>{children}</button>
+    <button disabled={disabled} type="button" onClick={onClick}>
+      {children}
+    </button>
   ),
 }));
 
@@ -364,7 +373,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Select result for doe/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
-    expect(mockRouterPush).toHaveBeenCalledWith('/food?section=food&q=Doener&filters=muslim');
+    expect(mockRouterPush).toHaveBeenCalledWith('/food?q=Doener&filters=muslim');
   });
 
   it('[regression] includes location and wer params in providers URL on search submit', async () => {
@@ -385,9 +394,7 @@ describe('/search page meal search wiring (Plan 096)', () => {
     fireEvent.click(screen.getByRole('button', { name: /Select result for doe/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Suchen' }));
 
-    expect(mockRouterPush).toHaveBeenCalledWith(
-      '/food?section=food&q=Doener&location=Berlin&wer=2+Maenner%2C+1+Kind',
-    );
+    expect(mockRouterPush).toHaveBeenCalledWith('/food/berlin?q=Doener');
   });
 
   it('[regression] excludes non-food recent items from food What section', async () => {
