@@ -5,6 +5,16 @@ import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';
 import type { Provider } from '@/services/providers';
 
 describe('OpenStatusLine', () => {
+  beforeEach(() => {
+    // Pin to Wednesday 10:00 UTC so opening-hours resolution is deterministic
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-07-09T10:00:00.000Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   const defaultProvider: Provider = {
     provider_id: 'prov-1',
     provider_name: 'Test',
