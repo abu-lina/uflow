@@ -16,37 +16,75 @@ export interface AppStageData {
   error?: string;
 }
 
+const PROVIDER_COUNT_CACHE_KEY = 'providerCountCache';
+
+function getCachedProviderCount(cityName: string): number | null {
+  try {
+    const raw = localStorage.getItem(PROVIDER_COUNT_CACHE_KEY);
+    if (!raw) return null;
+    const cache = JSON.parse(raw);
+    if (cache.city === cityName && typeof cache.count === 'number') return cache.count;
+  } catch {
+    /* corrupt cache, ignore */
+  }
+  return null;
+}
+
+function setCachedProviderCount(cityName: string, count: number): void {
+  try {
+    localStorage.setItem(PROVIDER_COUNT_CACHE_KEY, JSON.stringify({ city: cityName, count }));
+  } catch {
+    /* storage full, ignore */
+  }
+}
+
 /**
  * Fetch provider count for a specific city
- * Uses case-insensitive matching to handle city name variations
+ * Uses case-insensitive matching to handle city name variations.
+ * Falls back to a direct query if the RPC fails, then to a localStorage
+ * cache if both network calls fail (transient network errors).
  */
 async function fetchProviderCount(cityName: string): Promise<number> {
   // Normalize city name: trim whitespace
   const normalizedCityName = cityName.trim();
-  
+
   // Use RPC function for case-insensitive exact matching
   const { data, error } = await supabase.rpc('get_provider_count_by_city', {
     city_name: normalizedCityName,
   });
 
   if (error) {
-    console.error('[useAppStage] Error fetching provider count:', error);
+    console.warn(
+      '[useAppStage] RPC get_provider_count_by_city failed, trying fallback query:',
+      error.message,
+    );
     // Fallback to direct query if RPC fails
     const { count: fallbackCount, error: fallbackError } = await supabase
       .from('providers')
       .select('*', { count: 'exact', head: true })
       .eq('review_status', 'approved')
       .eq('address_city', normalizedCityName);
-    
+
     if (fallbackError) {
+      // Both network calls failed; use cached count if available
+      const cached = getCachedProviderCount(normalizedCityName);
+      if (cached !== null) {
+        console.warn(
+          `[useAppStage] Network unavailable, using cached provider count for "${normalizedCityName}": ${cached}`,
+        );
+        return cached;
+      }
       throw fallbackError;
     }
-    
-    console.log(`[useAppStage] Provider count for "${normalizedCityName}" (fallback): ${fallbackCount ?? 0}`);
-    return fallbackCount ?? 0;
+
+    const count = fallbackCount ?? 0;
+    setCachedProviderCount(normalizedCityName, count);
+    console.log(`[useAppStage] Provider count for "${normalizedCityName}" (fallback): ${count}`);
+    return count;
   }
 
   const count = typeof data === 'number' ? data : 0;
+  setCachedProviderCount(normalizedCityName, count);
   console.log(`[useAppStage] Provider count for "${normalizedCityName}": ${count}`);
   return count;
 }
@@ -57,7 +95,7 @@ async function fetchProviderCount(cityName: string): Promise<number> {
  * - Onboarding state (earlyAccessUnlocked)
  * - Selected city (localStorage)
  * - Provider count (fetched from API)
- * 
+ *
  * Stage determination flow:
  * 1. Check isAppLaunched → Stage 3 (Full Access)
  * 2. Check earlyAccessUnlocked → Continue or show onboarding
@@ -71,7 +109,7 @@ export function useAppStage(): AppStageData {
 
   // Get onboarding state
   const onboardingState = typeof window !== 'undefined' ? getOnboardingState() : null;
-  
+
   // Get feature flags (client-side only)
   const [isAppLaunched, setIsAppLaunched] = useState(false);
   const [skipWaitlist, setSkipWaitlist] = useState(false);
@@ -88,7 +126,9 @@ export function useAppStage(): AppStageData {
   // Helper function to read city from storage
   const readCityFromStorage = () => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity') || undefined;
+      return (
+        localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity') || undefined
+      );
     }
     return undefined;
   };
@@ -121,7 +161,7 @@ export function useAppStage(): AppStageData {
 
     // Listen for storage events (works for cross-tab)
     window.addEventListener('storage', handleStorageChange);
-    
+
     // Listen for custom events (works for same-tab)
     window.addEventListener('city-selected', handleCityChange);
 
@@ -133,7 +173,11 @@ export function useAppStage(): AppStageData {
 
   // Fetch provider count if city is selected and not in Stage 3
   // When skipWaitlist is true, don't require earlyAccessUnlocked
-  const { data: providerCount, isLoading: isLoadingCount, error: countError } = useQuery({
+  const {
+    data: providerCount,
+    isLoading: isLoadingCount,
+    error: countError,
+  } = useQuery({
     queryKey: ['provider-count', cityName],
     queryFn: () => {
       if (!cityName) {
@@ -200,7 +244,15 @@ export function useAppStage(): AppStageData {
       setStage(newStage);
       setError(undefined);
     }
-  }, [isAppLaunched, earlyAccessUnlocked, cityName, providerCount, isLoadingCount, countError, skipWaitlist]);
+  }, [
+    isAppLaunched,
+    earlyAccessUnlocked,
+    cityName,
+    providerCount,
+    isLoadingCount,
+    countError,
+    skipWaitlist,
+  ]);
 
   return {
     stage,
@@ -210,4 +262,3 @@ export function useAppStage(): AppStageData {
     error,
   };
 }
-
