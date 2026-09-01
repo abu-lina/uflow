@@ -359,6 +359,25 @@ export function ProviderEditForm({
     localStorage.setItem(`${pfx}edit_inline_${pid}`, JSON.stringify(inlineData));
   }, [enableLocalStorage, localStoragePrefix, provider.provider_id, formData]);
 
+  const clearDraftLocalStorage = useCallback(() => {
+    if (!enableLocalStorage) return;
+    const pid = provider.provider_id;
+    const pfx = localStoragePrefix;
+    const keys = [
+      'edit_inline_',
+      'edit_category_',
+      'edit_social_',
+      'edit_images_',
+      'edit_menu_',
+      'edit_delivery_',
+      'edit_locations_',
+      'edit_hours_',
+      'edit_halal_',
+      'edit_values_',
+    ];
+    keys.forEach((key) => localStorage.removeItem(`${pfx}${key}${pid}`));
+  }, [enableLocalStorage, localStoragePrefix, provider.provider_id]);
+
   const saveInlineDataAndNavigate = useCallback(
     (url: string) => {
       saveInlineDataToLocalStorage();
@@ -449,6 +468,7 @@ export function ProviderEditForm({
       setIsSubmitting(true);
       try {
         await onSubmitForm(submitData);
+        clearDraftLocalStorage();
       } catch (error) {
         // External handler is responsible for its own error toast
         console.error('Error updating provider:', error);
@@ -521,6 +541,8 @@ export function ProviderEditForm({
           .delete()
           .eq('initiating_provider_id', provider.provider_id);
       }
+
+      clearDraftLocalStorage();
 
       if (onSave) {
         onSave();

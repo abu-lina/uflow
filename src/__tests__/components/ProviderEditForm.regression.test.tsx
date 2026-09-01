@@ -13,6 +13,11 @@ const {
   mockProviderCommunityServicesDeleteEq,
   mockProviderCommunityServicesSelect,
   mockProviderCommunityServicesDelete,
+  mockEngagementsSelectEq,
+  mockEngagementsSelect,
+  mockEngagementsDeleteEq,
+  mockEngagementsDelete,
+  mockEngagementsInsert,
   mockCategoriesOrder,
   mockCategoriesSelect,
 } = vi.hoisted(() => ({
@@ -27,6 +32,11 @@ const {
   mockProviderCommunityServicesDeleteEq: vi.fn(),
   mockProviderCommunityServicesSelect: vi.fn(),
   mockProviderCommunityServicesDelete: vi.fn(),
+  mockEngagementsSelectEq: vi.fn(),
+  mockEngagementsSelect: vi.fn(),
+  mockEngagementsDeleteEq: vi.fn(),
+  mockEngagementsDelete: vi.fn(),
+  mockEngagementsInsert: vi.fn(),
   mockCategoriesOrder: vi.fn(),
   mockCategoriesSelect: vi.fn(),
 }));
@@ -156,6 +166,14 @@ vi.mock('@/lib/supabase/client', () => ({
         return {
           select: mockProviderCommunityServicesSelect,
           delete: mockProviderCommunityServicesDelete,
+        };
+      }
+
+      if (table === 'provider_engagements') {
+        return {
+          select: mockEngagementsSelect,
+          delete: mockEngagementsDelete,
+          insert: mockEngagementsInsert,
         };
       }
 
@@ -706,5 +724,101 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
 
     const input = screen.getByPlaceholderText('Phone') as HTMLInputElement;
     expect(input.value).toBe('+49123456789');
+  });
+});
+
+describe('ProviderEditForm clears localStorage drafts after save', () => {
+  const pid = baseProvider.provider_id;
+
+  const draftKeys = [
+    'edit_inline_',
+    'edit_category_',
+    'edit_social_',
+    'edit_images_',
+    'edit_menu_',
+    'edit_delivery_',
+    'edit_locations_',
+    'edit_hours_',
+    'edit_halal_',
+    'edit_values_',
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+
+    mockCategoriesOrder.mockResolvedValue({ data: [], error: null });
+    mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
+
+    mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
+    mockProviderCommunityServicesSelect.mockReturnValue({
+      eq: mockProviderCommunityServicesSelectEq,
+    });
+
+    mockProviderCommunityServicesDeleteEq.mockResolvedValue({ error: null });
+    mockProviderCommunityServicesDelete.mockReturnValue({
+      eq: mockProviderCommunityServicesDeleteEq,
+    });
+
+    mockProviderUpdateEq.mockResolvedValue({ error: null });
+    mockProviderUpdate.mockReturnValue({ eq: mockProviderUpdateEq });
+  });
+
+  it('[post-fix PASSES] admin onSubmitForm clears all localStorage draft keys after success', async () => {
+    // Seed stale drafts
+    localStorage.setItem(
+      `admin_edit_inline_${pid}`,
+      JSON.stringify({ providerName: 'Stale Name' }),
+    );
+    localStorage.setItem(`admin_edit_category_${pid}`, 'stale-cat');
+    localStorage.setItem(`admin_edit_images_${pid}`, '{"urls":["stale.jpg"]}');
+
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        onSubmitForm={onSubmitForm}
+        provider={baseProvider}
+        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onSubmitForm).toHaveBeenCalled();
+    });
+
+    // All draft keys should be cleared after successful save
+    for (const key of draftKeys) {
+      expect(localStorage.getItem(`admin_${key}${pid}`)).toBeNull();
+    }
+  });
+
+  it('[post-fix PASSES] owner save clears all localStorage draft keys after success', async () => {
+    // Set up engagement mocks for owner save path
+    mockEngagementsSelectEq.mockResolvedValue({ data: [], error: null });
+    mockEngagementsSelect.mockReturnValue({ eq: mockEngagementsSelectEq });
+    mockEngagementsDeleteEq.mockResolvedValue({ error: null });
+    mockEngagementsDelete.mockReturnValue({ eq: mockEngagementsDeleteEq });
+
+    // Seed stale drafts (unprefixed for owner)
+    localStorage.setItem(`edit_inline_${pid}`, JSON.stringify({ providerName: 'Stale Name' }));
+    localStorage.setItem(`edit_category_${pid}`, 'stale-cat');
+
+    render(<ProviderEditForm enableLocalStorage={true} provider={baseProvider} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mockProviderUpdate).toHaveBeenCalled();
+    });
+
+    // All draft keys should be cleared after successful save
+    for (const key of draftKeys) {
+      expect(localStorage.getItem(`${key}${pid}`)).toBeNull();
+    }
   });
 });
