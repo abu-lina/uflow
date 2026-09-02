@@ -11,7 +11,14 @@ import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
 import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 import { HomeListView } from '@/features/search/components/HomeListView';
 import { SectionSelector } from '@/features/search/components/SectionSelector';
-import { AdminStatusFilter, type ReviewStatusFilter } from '@/features/admin/components/AdminStatusFilter';
+import {
+  AdminStatusFilter,
+  type ReviewStatusFilter,
+} from '@/features/admin/components/AdminStatusFilter';
+import {
+  DiscoveryResultsGrid,
+  type DiscoveryCardItem,
+} from '@/features/search/components/DiscoveryResultsGrid';
 import { AboutSection } from './AboutSection';
 import type { Section } from '@/config/sectionFilters';
 import { DesktopWaitlistSection } from './DesktopWaitlistSection';
@@ -25,6 +32,8 @@ import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
 import { ViewToggleButton } from '@/features/search/components/ViewToggleButton';
 import { useNearMe } from '@/features/search/hooks/useNearMe';
 import { HomeNearMeList } from '@/features/search/components/HomeNearMeList';
+import { useAdminSearch } from '@/features/search/hooks/useAdminSearch';
+import type { SearchResult } from '@/services/providers';
 import { logApp } from '@/lib/logger';
 
 const SearchMap = dynamic(
@@ -64,8 +73,16 @@ export function RootPageContent() {
 
   // Shared map/discovery state: pins, view mode, open-now, header metrics
   const {
-    pins, pinsLoading, isOpenNow, setIsOpenNow, viewMode,
-    toggleViewMode, headerRef, headerHeight, userCoords,
+    pins,
+    pinsLoading,
+    isOpenNow,
+    setIsOpenNow,
+    viewMode,
+    setViewMode,
+    toggleViewMode,
+    headerRef,
+    headerHeight,
+    userCoords,
   } = useMapDiscovery(geolocation, 'map', isAdmin ? adminStatus : null);
 
   const homeNearMe = useNearMe({
@@ -75,6 +92,24 @@ export function RootPageContent() {
     radiusKm: 25,
     reviewStatus: isAdmin ? adminStatus : null,
   });
+
+  // Admin search: fetch providers via the search API when a status filter is
+  // active. getMapLocations (used by useMapDiscovery) joins through the
+  // locations table, so providers without location records are invisible.
+  // The search API queries providers directly and includes all matches.
+  const adminSearch = useAdminSearch(isAdmin ? adminStatus : null, activeSection);
+
+  // True when the admin has picked a specific status (not "All")
+  const adminSearchActive = isAdmin && adminStatus !== null;
+
+  // Auto-switch to list view when the admin picks a status filter.
+  // The map view relies on getMapLocations (location-based inner join) which
+  // misses providers without location records. List view uses the search API.
+  useEffect(() => {
+    if (adminSearchActive) {
+      setViewMode('list');
+    }
+  }, [adminSearchActive, setViewMode]);
 
   useEffect(() => {
     if (viewMode === 'list' && userCoords === null) {
@@ -147,6 +182,26 @@ export function RootPageContent() {
     }
   };
 
+  // Adapt a SearchResult from the search API to the DiscoveryCardItem shape
+  // that DiscoveryResultsGrid expects.
+  function adaptSearchResult(result: SearchResult): DiscoveryCardItem {
+    return {
+      id: result.id,
+      provider_id: result.id,
+      provider_name: result.name,
+      provider_images: result.images,
+      category: result.category ?? null,
+      category_id: result.category_id,
+      address_city: result.address_city,
+      opening_hours: result.opening_hours ?? result.originalProvider?.opening_hours ?? null,
+      listing_type: result.listing_type,
+      location_latitude: result.location_latitude,
+      location_longitude: result.location_longitude,
+      review_status: (result.review_status as ReviewStatusFilter) ?? adminStatus,
+      review_feedback: result.review_feedback,
+    };
+  }
+
   // Render content based on app stage
   // Use cityName from useAppStage hook (more reliable than selectedCity state)
   const displayCity = cityName || selectedCity;
@@ -191,8 +246,10 @@ export function RootPageContent() {
                     transition:
                       'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
                     background: 'rgba(255, 255, 255, 0.15)',
-                    backdropFilter: viewMode === 'list' ? 'blur(20px) saturate(180%)' : 'blur(1.5px)',
-                    WebkitBackdropFilter: viewMode === 'list' ? 'blur(20px) saturate(180%)' : 'blur(1.5px)',
+                    backdropFilter:
+                      viewMode === 'list' ? 'blur(20px) saturate(180%)' : 'blur(1.5px)',
+                    WebkitBackdropFilter:
+                      viewMode === 'list' ? 'blur(20px) saturate(180%)' : 'blur(1.5px)',
                     borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
                     isolation: 'isolate',
                     marginLeft: '-1px',
@@ -215,16 +272,19 @@ export function RootPageContent() {
                     </div>
                     <HomeSearchBar
                       activeSection={activeSection}
-                      geoStatus={geolocation.status}
-                      nearMeActive={nearMeActive}
-                      isOpenNow={isOpenNow}
-                      onToggleNearMe={handleToggleNearMe}
-                      onToggleOpenNow={() => setIsOpenNow((v) => !v)}
                       adminSlot={
                         isAdmin ? (
-                          <AdminStatusFilter selectedStatus={adminStatus} onStatusChange={setAdminStatus} />
+                          <AdminStatusFilter
+                            selectedStatus={adminStatus}
+                            onStatusChange={setAdminStatus}
+                          />
                         ) : undefined
                       }
+                      geoStatus={geolocation.status}
+                      isOpenNow={isOpenNow}
+                      nearMeActive={nearMeActive}
+                      onToggleNearMe={handleToggleNearMe}
+                      onToggleOpenNow={() => setIsOpenNow((v) => !v)}
                     />
                   </div>
                 </header>
@@ -236,14 +296,20 @@ export function RootPageContent() {
                     inset: 0,
                   }}
                 >
-                  <SearchMap
-                    pins={pins}
-                    userCoords={userCoords}
-                  />
+                  <SearchMap pins={pins} userCoords={userCoords} />
                 </div>
 
-                {viewMode === 'list' && (
-                  homeNearMe.isActive ? (
+                {viewMode === 'list' &&
+                  (adminSearchActive ? (
+                    <DiscoveryResultsGrid
+                      error={adminSearch.error}
+                      headerOffset={headerHeight}
+                      isLoading={adminSearch.isLoading}
+                      items={adminSearch.results.map(adaptSearchResult)}
+                      openNow={isOpenNow}
+                      onRetry={adminSearch.refetch}
+                    />
+                  ) : homeNearMe.isActive ? (
                     <HomeNearMeList
                       error={homeNearMe.error}
                       headerOffset={headerHeight}
@@ -258,11 +324,14 @@ export function RootPageContent() {
                       isOpenNow={isOpenNow}
                       pins={pins}
                     />
-                  )
-                )}
+                  ))}
 
-                {/* Toggle button: map ↔ list, sits above navbar */}
-                <ViewToggleButton viewMode={viewMode} onToggle={toggleViewMode} />
+                {/* Toggle button: map ↔ list, sits above navbar.
+                    Hidden when admin search is active (list-only; map can't show
+                    providers without location records). */}
+                {!adminSearchActive && (
+                  <ViewToggleButton viewMode={viewMode} onToggle={toggleViewMode} />
+                )}
               </div>
             )}
 
