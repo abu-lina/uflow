@@ -471,10 +471,9 @@ async function main() {
           newProviders: 0,
           existingWithLink: 0,
         });
-        await context.close();
         continue;
       } finally {
-        await page.close();
+        await page.close().catch(() => {});
         await context.close().catch(() => {});
       }
 
@@ -588,9 +587,10 @@ async function main() {
         continue;
       }
 
-      inserted += batch.length;
+      const insertedCount = data?.length ?? 0;
+      inserted += insertedCount;
       console.log(
-        `  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
+        `  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${insertedCount} records`
       );
 
       // Create food_providers extension rows

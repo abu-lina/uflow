@@ -419,7 +419,7 @@ async function main(): Promise<void> {
         console.error(`    Batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${error.message}`);
         failedCount += batch.length;
       } else {
-        const count = data?.length ?? batch.length;
+        const count = data?.length ?? 0;
         insertedCount += count;
 
         if (data && data.length > 0) {
