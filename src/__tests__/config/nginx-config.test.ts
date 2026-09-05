@@ -19,13 +19,10 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { describe, it, expect } from 'vitest';
 
-const prodConf = readFileSync(
-  resolve(process.cwd(), 'deploy/nginx/nginx-template.conf'),
-  'utf-8'
-);
+const prodConf = readFileSync(resolve(process.cwd(), 'deploy/nginx/nginx-template.conf'), 'utf-8');
 const uatConf = readFileSync(
   resolve(process.cwd(), 'deploy/nginx/nginx-uat-template.conf'),
-  'utf-8'
+  'utf-8',
 );
 
 describe('nginx-template.conf — sw-push-handler.js cache fix (Plan 064)', () => {
@@ -65,6 +62,42 @@ describe('nginx-template.conf — sw-push-handler.js cache fix (Plan 064)', () =
   });
 });
 
+describe('nginx-template.conf — /api/chat extended timeout (Plan 223)', () => {
+  it('has a location block for /api/chat', () => {
+    expect(prodConf).toContain('location /api/chat');
+  });
+
+  it('sets proxy_read_timeout to 95s for /api/chat', () => {
+    const blockStart = prodConf.indexOf('location /api/chat');
+    expect(blockStart).toBeGreaterThan(0);
+    const blockEnd = prodConf.indexOf('}', blockStart);
+    const block = prodConf.slice(blockStart, blockEnd);
+    expect(block).toContain('proxy_read_timeout 95s');
+  });
+
+  it('proxies /api/chat to port 3000 (production)', () => {
+    const blockStart = prodConf.indexOf('location /api/chat');
+    const blockEnd = prodConf.indexOf('}', blockStart);
+    const block = prodConf.slice(blockStart, blockEnd);
+    expect(block).toContain('proxy_pass http://localhost:3000');
+  });
+
+  it('places /api/chat BEFORE the catch-all location /', () => {
+    const chatIdx = prodConf.indexOf('location /api/chat');
+    const catchAllIdx = prodConf.indexOf('\n    location / {');
+    expect(chatIdx).toBeGreaterThan(0);
+    expect(catchAllIdx).toBeGreaterThan(0);
+    expect(chatIdx).toBeLessThan(catchAllIdx);
+  });
+
+  it('places /api/chat AFTER /api/admin/', () => {
+    const adminIdx = prodConf.indexOf('location /api/admin/');
+    const chatIdx = prodConf.indexOf('location /api/chat');
+    expect(adminIdx).toBeGreaterThan(0);
+    expect(chatIdx).toBeGreaterThan(adminIdx);
+  });
+});
+
 describe('nginx-uat-template.conf — sw-push-handler.js cache fix (Plan 064)', () => {
   it('has an exact-match location block for /sw-push-handler.js', () => {
     expect(uatConf).toContain('location = /sw-push-handler.js');
@@ -86,5 +119,41 @@ describe('nginx-uat-template.conf — sw-push-handler.js cache fix (Plan 064)', 
     expect(pushHandlerIdx).toBeGreaterThan(0);
     expect(genericJsIdx).toBeGreaterThan(0);
     expect(pushHandlerIdx).toBeLessThan(genericJsIdx);
+  });
+});
+
+describe('nginx-uat-template.conf — /api/chat extended timeout (Plan 223)', () => {
+  it('has a location block for /api/chat', () => {
+    expect(uatConf).toContain('location /api/chat');
+  });
+
+  it('sets proxy_read_timeout to 95s for /api/chat', () => {
+    const blockStart = uatConf.indexOf('location /api/chat');
+    expect(blockStart).toBeGreaterThan(0);
+    const blockEnd = uatConf.indexOf('}', blockStart);
+    const block = uatConf.slice(blockStart, blockEnd);
+    expect(block).toContain('proxy_read_timeout 95s');
+  });
+
+  it('proxies /api/chat to port 3001 (UAT)', () => {
+    const blockStart = uatConf.indexOf('location /api/chat');
+    const blockEnd = uatConf.indexOf('}', blockStart);
+    const block = uatConf.slice(blockStart, blockEnd);
+    expect(block).toContain('proxy_pass http://localhost:3001');
+  });
+
+  it('places /api/chat BEFORE the catch-all location /', () => {
+    const chatIdx = uatConf.indexOf('location /api/chat');
+    const catchAllIdx = uatConf.indexOf('\n    location / {');
+    expect(chatIdx).toBeGreaterThan(0);
+    expect(catchAllIdx).toBeGreaterThan(0);
+    expect(chatIdx).toBeLessThan(catchAllIdx);
+  });
+
+  it('places /api/chat AFTER /api/admin/', () => {
+    const adminIdx = uatConf.indexOf('location /api/admin/');
+    const chatIdx = uatConf.indexOf('location /api/chat');
+    expect(adminIdx).toBeGreaterThan(0);
+    expect(chatIdx).toBeGreaterThan(adminIdx);
   });
 });
