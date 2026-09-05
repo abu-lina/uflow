@@ -3,20 +3,24 @@
  *
  * Lieferando Halal Discovery Pipeline (Plan 225)
  *
- * Sweeps German cities via the Takeaway.com REST API, identifies
- * halal-tagged restaurants, deduplicates against existing providers,
- * and imports new ones as pending.
+ * Sweeps German cities via Playwright browser automation against lieferando.de,
+ * using the `?dietary=halal` filter to get halal-tagged restaurants directly.
+ * Deduplicates against existing providers and imports new ones as pending.
  *
- * Uses the lightweight REST client (no Playwright) for fast city sweeps.
+ * Uses Playwright (the Takeaway REST API at cw-api.takeaway.com has been
+ * deprecated). The `?dietary=halal` URL parameter returns only halal-filtered
+ * results from Lieferando's SPA, avoiding unreliable name-only detection.
  *
- * ─── IMPORTANT OPERATIONAL NOTES ───────────────────────────────────────────
+ * --- IMPORTANT OPERATIONAL NOTES ------------------------------------------------
  * - Always run with --dry-run first to inspect the discovery plan before writing.
  * - The script uses SUPABASE_SERVICE_ROLE_KEY (admin/service-role access).
  *   This bypasses RLS. Handle credentials with care.
  * - Imported rows default to review_status = 'pending' and are not publicly
  *   visible until approved via the admin moderation workflow.
- * - Rate-limited: 250ms between Takeaway API calls.
- * ────────────────────────────────────────────────────────────────────────────
+ * - Requires Playwright + Chromium installed (npx playwright install chromium).
+ * - Rate-limited: 2s between page loads (browser automation per city).
+ *   Consider using --limit for initial runs.
+ * --------------------------------------------------------------------------------
  *
  * Usage:
  *   npx tsx scripts/discover-lieferando.ts --dry-run
@@ -33,10 +37,6 @@ import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { CITY_COORDS } from '../src/lib/enrichment/delivery-platform/city-coords';
-import {
-  createTakeawayRestClient,
-  type TakeawayRestaurant,
-} from '../src/lib/enrichment/delivery-platform/takeaway-rest-client';
 import { normalizeName } from '../src/lib/enrichment/delivery-platform/provider-matcher';
 
 // ─── Env setup ────────────────────────────────────────────────────────────────
@@ -54,33 +54,131 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-/**
- * Source-specific import-bot UUID for Lieferando discovery.
- * Uses plan number 225 as suffix for human traceability.
- */
 const IMPORT_BOT_UUID = '00000000-0000-0000-0000-000225000002';
 const IMPORT_BOT_EMAIL = 'import-bot-lieferando-discovery@system.internal';
-
-/** Supabase upsert batch size */
 const BATCH_SIZE = 50;
+const RATE_LIMIT_MS = 2000;
+const BASE_URL = 'https://www.lieferando.de';
+
+/**
+ * Representative postal codes for each city in CITY_COORDS.
+ * Lieferando resolves delivery areas from postal codes, not city names.
+ * URL format: /en/delivery/food/postcode-{PLZ}
+ */
+const CITY_POSTAL_CODES: Record<string, string> = {
+  // Major cities
+  'Berlin': '10115',
+  'München': '80331',
+  'Frankfurt am Main': '60311',
+  'Stuttgart': '70173',
+  'Köln': '50667',
+  'Mannheim': '68161',
+  'Augsburg': '86150',
+  'Hamburg': '20095',
+  'Dortmund': '44135',
+  'Nürnberg': '90402',
+  'Düsseldorf': '40213',
+  'Bielefeld': '33602',
+  'Kassel': '34117',
+  'Offenbach am Main': '63065',
+  'Bochum': '44787',
+  'Wiesbaden': '65183',
+  'Bremen': '28195',
+  'Hanau': '63450',
+  'Darmstadt': '64283',
+  'Paderborn': '33098',
+  'Germering': '82110',
+  'Essen': '45127',
+  'Duisburg': '47051',
+  'Böblingen': '71032',
+  // Medium cities
+  'Hannover': '30159',
+  'Ingolstadt': '85049',
+  'Leipzig': '04109',
+  'Ludwigsburg': '71638',
+  'Wuppertal': '42103',
+  'Hagen': '58095',
+  // Small cities
+  'Recklinghausen': '45657',
+  'Herford': '32049',
+  'Bad Oeynhausen': '32545',
+  'Schweinfurt': '97421',
+  'Freising': '85354',
+  'Bergisch Gladbach': '51465',
+  'Hofheim am Taunus': '65719',
+  'Norderstedt': '22846',
+  'Schorndorf': '73614',
+  'Metzingen': '72555',
+  'Sulzbach (Taunus)': '65843',
+  'Siegburg': '53721',
+  'Reutlingen': '72764',
+  'Aachen': '52062',
+  'Frechen': '50226',
+  'Erkelenz': '41812',
+  'Baesweiler': '52499',
+  'Erding': '85435',
+  'Leverkusen': '51373',
+  'Rostock': '18055',
+  'Mönchengladbach': '41061',
+  'Witten': '58452',
+  'Gelsenkirchen': '45879',
+  'Arnsberg': '59821',
+  'Münster': '48143',
+  'Dachau': '85221',
+  'Aschaffenburg': '63739',
+  'Langen': '63225',
+  'Dreieich': '63303',
+  'Uhingen': '73066',
+  'Ebersbach an der Fils': '73061',
+  'Kirchheim unter Teck': '73230',
+  'Leinfelden': '70771',
+  'Pforzheim': '75172',
+  'Gröbenzell': '82194',
+  'Herne': '44623',
+  'Datteln': '45711',
+  'Kerpen': '50169',
+  'Oberhaching': '82041',
+  'Ottobrunn': '85521',
+  'Oberschleißheim': '85764',
+  'Villingen': '78048',
+  'Ulm': '89073',
+  'Heilbronn': '74072',
+  'Bonn': '53111',
+  'Oldenburg': '26122',
+  'Osnabrück': '49074',
+  'Heidelberg': '69117',
+  'Solingen': '42651',
+  'Regensburg': '93047',
+  'Würzburg': '97070',
+  'Wolfsburg': '38440',
+  'Göttingen': '37073',
+  'Dresden': '01067',
+  'Karlsruhe': '76131',
+  'Krefeld': '47798',
+  'Mainz': '55116',
+  'Lübeck': '23552',
+  'Erfurt': '99084',
+  'Oberhausen': '46045',
+  'Halle': '06108',
+  'Magdeburg': '39104',
+  'Freiburg': '79098',
+  'Potsdam': '14467',
+  'Saarbrücken': '66111',
+  'Hamm': '59065',
+  'Ludwigshafen': '67059',
+  'Braunschweig': '38100',
+  'Kiel': '24103',
+  'Chemnitz': '09111',
+  'Altenstadt': '86972',
+  'Lauf an der Pegnitz': '91207',
+  'Starnberg': '82319',
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface ProviderInsert {
-  provider_name: string;
-  address_city: string;
-  address_country: string;
-  location_latitude: number | null;
-  location_longitude: number | null;
-  review_status: 'pending';
-  import_source: string;
-  import_source_id: string;
-  import_source_url: string;
-  listing_type: 'food';
-  user_created_id: string;
-  provider_owner_id: null;
-  show_address: boolean;
-  enrichment_eligible: boolean;
+interface ScrapedRestaurant {
+  name: string;
+  slug: string;
 }
 
 interface DeliveryLinkUpsert {
@@ -94,14 +192,13 @@ interface DeliveryLinkUpsert {
 
 interface CityResult {
   city: string;
-  totalRestaurants: number;
   halalRestaurants: number;
   newProviders: number;
   existingWithLink: number;
 }
 
 interface DiscoveredRestaurant {
-  restaurant: TakeawayRestaurant;
+  restaurant: ScrapedRestaurant;
   city: string;
   isNew: boolean;
   existingProviderId?: string;
@@ -145,10 +242,6 @@ async function ensureImportBotUser(): Promise<boolean> {
 
 // ─── Deduplication ────────────────────────────────────────────────────────────
 
-/**
- * Builds a dedup key from name + city using the same normalization as the
- * provider-matcher module.
- */
 function makeProviderKey(name: string, city: string | null): string {
   return `${normalizeName(name)}|${(city ?? '').toLowerCase().trim()}`;
 }
@@ -159,9 +252,6 @@ interface ExistingProvider {
   address_city: string | null;
 }
 
-/**
- * Loads all existing providers for dedup: name+city -> provider_id.
- */
 async function loadExistingProviders(): Promise<{
   keySet: Set<string>;
   keyToId: Map<string, string>;
@@ -197,14 +287,50 @@ async function loadExistingProviders(): Promise<{
   return { keySet, keyToId };
 }
 
-// ─── Halal detection ──────────────────────────────────────────────────────────
+// ─── Playwright scraper ───────────────────────────────────────────────────────
 
-function isHalalRestaurant(r: TakeawayRestaurant): boolean {
-  const nameHasHalal = r.name.toLowerCase().includes('halal');
-  const cuisineHasHalal = r.cuisines.some((c) =>
-    c.toLowerCase().includes('halal')
-  );
-  return nameHasHalal || cuisineHasHalal;
+/**
+ * Scrapes halal restaurants from Lieferando for a given city using
+ * the ?dietary=halal URL filter. Returns restaurant names and slugs.
+ */
+async function scrapeHalalRestaurants(
+  page: import('playwright').Page,
+  cityName: string,
+): Promise<ScrapedRestaurant[]> {
+  const postalCode = CITY_POSTAL_CODES[cityName];
+  if (!postalCode) {
+    throw new Error(`No postal code mapped for city: ${cityName}`);
+  }
+  const url = `${BASE_URL}/en/delivery/food/postcode-${postalCode}?dietary=halal`;
+
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  // Wait for restaurant cards to render
+  await page.waitForSelector('a[href*="/menu/"]', { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(3000);
+
+  const results = await page.evaluate(() => {
+    const allLinks = Array.prototype.slice.call(document.querySelectorAll('a'));
+    const restaurants: Array<{ name: string; slug: string }> = [];
+    const seen = new Set<string>();
+
+    allLinks.forEach((el: HTMLAnchorElement) => {
+      const href = el.href || '';
+      const match = href.match(/\/(?:menu|speisekarte)\/([^/?]+)/);
+      if (!match) return;
+      const slug = match[1];
+      if (seen.has(slug)) return;
+      seen.add(slug);
+
+      const name = (el.textContent || '').trim();
+      if (name.length < 3) return;
+
+      restaurants.push({ name, slug });
+    });
+
+    return restaurants;
+  });
+
+  return results;
 }
 
 // ─── Reporting ────────────────────────────────────────────────────────────────
@@ -222,36 +348,32 @@ function printReport(
   console.log('================================================================');
 
   console.log('\n  City-by-city results:');
-  console.log('  ' + '-'.repeat(62));
+  console.log('  ' + '-'.repeat(54));
   console.log(
     '  ' +
     'City'.padEnd(30) +
-    'Total'.padStart(8) +
     'Halal'.padStart(8) +
     'New'.padStart(8) +
     'Exists'.padStart(8)
   );
-  console.log('  ' + '-'.repeat(62));
+  console.log('  ' + '-'.repeat(54));
 
   for (const cr of cityResults) {
     console.log(
       '  ' +
       cr.city.padEnd(30) +
-      String(cr.totalRestaurants).padStart(8) +
       String(cr.halalRestaurants).padStart(8) +
       String(cr.newProviders).padStart(8) +
       String(cr.existingWithLink).padStart(8)
     );
   }
 
-  console.log('  ' + '-'.repeat(62));
+  console.log('  ' + '-'.repeat(54));
 
   const totalCities = cityResults.length;
   const totalHalal = cityResults.reduce((s, c) => s + c.halalRestaurants, 0);
-  const totalScanned = cityResults.reduce((s, c) => s + c.totalRestaurants, 0);
 
   console.log(`\n  Cities scanned       : ${totalCities}`);
-  console.log(`  Total restaurants    : ${totalScanned}`);
   console.log(`  Halal restaurants    : ${totalHalal}`);
   console.log(`  New providers        : ${totalNew}`);
   console.log(`  Existing (link only) : ${totalExisting}`);
@@ -270,7 +392,6 @@ function printReport(
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  // Parse CLI arguments
   const args = process.argv.slice(2);
   const isDryRun = args.includes('--dry-run') || !args.includes('--write');
   const limitFlag = args.findIndex((a) => a === '--limit');
@@ -286,9 +407,10 @@ async function main() {
   console.log('+======================================================+');
   console.log(`  Mode       : ${isDryRun ? 'DRY-RUN (no writes)' : 'WRITE'}`);
   console.log(`  Limit      : ${limit !== null ? `${limit} cities` : 'all cities'}`);
+  console.log(`  Filter     : ?dietary=halal (server-side)`);
   console.log(`  Cities     : ${Object.keys(CITY_COORDS).length} available\n`);
 
-  // Initialize Supabase (after argument validation)
+  // Initialize Supabase
   supabase = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
     auth: { persistSession: false },
   });
@@ -298,111 +420,127 @@ async function main() {
   const { keySet: existingKeys, keyToId: existingKeyToId } = await loadExistingProviders();
   console.log(`  + Loaded ${existingKeys.size} existing providers\n`);
 
-  // Prepare city list
-  const cities = Object.entries(CITY_COORDS);
-  const citiesToScan = limit !== null ? cities.slice(0, limit) : cities;
+  // Prepare city list (only cities with postal code mappings)
+  const cityNames = Object.keys(CITY_COORDS).filter((c) => c in CITY_POSTAL_CODES);
+  const citiesToScan = limit !== null ? cityNames.slice(0, limit) : cityNames;
 
-  // Initialize Takeaway REST client
-  const client = createTakeawayRestClient();
+  // Launch Playwright browser
+  const { chromium } = await import('playwright');
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--disable-blink-features=AutomationControlled', '--no-sandbox'],
+  });
 
-  // Discovery loop
   const cityResults: CityResult[] = [];
   const newProviders: DiscoveredRestaurant[] = [];
   const existingWithLinks: DiscoveredRestaurant[] = [];
   const seenSlugs = new Set<string>();
+  let lastRequestTime = 0;
 
   console.log(`> Scanning ${citiesToScan.length} cities...\n`);
 
-  for (let i = 0; i < citiesToScan.length; i++) {
-    const [cityName, coords] = citiesToScan[i];
-    const progress = `[${i + 1}/${citiesToScan.length}]`;
+  try {
+    for (let i = 0; i < citiesToScan.length; i++) {
+      const cityName = citiesToScan[i];
+      const progress = `[${i + 1}/${citiesToScan.length}]`;
 
-    let restaurants: TakeawayRestaurant[];
-    try {
-      restaurants = await client.searchRestaurants(coords.lat, coords.lon);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`  ${progress} ${cityName}: API error - ${msg}`);
+      // Rate limit between cities
+      const now = Date.now();
+      const elapsed = now - lastRequestTime;
+      if (elapsed < RATE_LIMIT_MS) {
+        await new Promise((r) => setTimeout(r, RATE_LIMIT_MS - elapsed));
+      }
+      lastRequestTime = Date.now();
+
+      // Fresh context per city to avoid cookie/state pollution
+      const context = await browser.newContext({
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        viewport: { width: 1920, height: 1080 },
+      });
+      const page = await context.newPage();
+
+      let restaurants: ScrapedRestaurant[];
+      try {
+        restaurants = await scrapeHalalRestaurants(page, cityName);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`  ${progress} ${cityName}: scrape error - ${msg}`);
+        cityResults.push({
+          city: cityName,
+          halalRestaurants: 0,
+          newProviders: 0,
+          existingWithLink: 0,
+        });
+        await context.close();
+        continue;
+      } finally {
+        await page.close();
+        await context.close().catch(() => {});
+      }
+
+      let newCount = 0;
+      let existingCount = 0;
+
+      for (const restaurant of restaurants) {
+        // Cross-city dedup
+        if (seenSlugs.has(restaurant.slug)) continue;
+        seenSlugs.add(restaurant.slug);
+
+        const key = makeProviderKey(restaurant.name, cityName);
+
+        if (existingKeys.has(key)) {
+          const providerId = existingKeyToId.get(key);
+          if (providerId) {
+            existingWithLinks.push({
+              restaurant,
+              city: cityName,
+              isNew: false,
+              existingProviderId: providerId,
+            });
+          }
+          existingCount++;
+        } else {
+          newProviders.push({
+            restaurant,
+            city: cityName,
+            isNew: true,
+          });
+          existingKeys.add(key);
+          newCount++;
+        }
+      }
+
+      console.log(
+        `  ${progress} ${cityName}: ${restaurants.length} halal (${newCount} new, ${existingCount} existing)`
+      );
+
       cityResults.push({
         city: cityName,
-        totalRestaurants: 0,
-        halalRestaurants: 0,
-        newProviders: 0,
-        existingWithLink: 0,
+        halalRestaurants: restaurants.length,
+        newProviders: newCount,
+        existingWithLink: existingCount,
       });
-      continue;
     }
-
-    // Filter for halal
-    const halalRestaurants = restaurants.filter(isHalalRestaurant);
-
-    let newCount = 0;
-    let existingCount = 0;
-
-    for (const restaurant of halalRestaurants) {
-      // Cross-city dedup: skip if same restaurant seen from a neighboring city scan
-      if (seenSlugs.has(restaurant.slug)) continue;
-      seenSlugs.add(restaurant.slug);
-
-      // Use city from API response, fall back to the city name we searched
-      const restaurantCity = restaurant.city || cityName;
-      const key = makeProviderKey(restaurant.name, restaurantCity);
-
-      if (existingKeys.has(key)) {
-        // Existing provider: plan to upsert delivery link only
-        const providerId = existingKeyToId.get(key);
-        if (providerId) {
-          existingWithLinks.push({
-            restaurant,
-            city: restaurantCity,
-            isNew: false,
-            existingProviderId: providerId,
-          });
-        }
-        existingCount++;
-      } else {
-        // New provider
-        newProviders.push({
-          restaurant,
-          city: restaurantCity,
-          isNew: true,
-        });
-        existingKeys.add(key); // prevent dupes within this run
-        newCount++;
-      }
-    }
-
-    console.log(
-      `  ${progress} ${cityName}: ${restaurants.length} total, ${halalRestaurants.length} halal (${newCount} new, ${existingCount} existing)`
-    );
-
-    cityResults.push({
-      city: cityName,
-      totalRestaurants: restaurants.length,
-      halalRestaurants: halalRestaurants.length,
-      newProviders: newCount,
-      existingWithLink: existingCount,
-    });
+  } finally {
+    await browser.close();
   }
 
   // Print sample new providers
   if (newProviders.length > 0) {
-    console.log('\n  Sample new providers (first 5):');
-    for (const item of newProviders.slice(0, 5)) {
+    console.log('\n  Sample new providers (first 10):');
+    for (const item of newProviders.slice(0, 10)) {
       const r = item.restaurant;
-      console.log(`    - ${r.name} (${item.city}) [${r.cuisines.join(', ')}]`);
-      console.log(`      slug: ${r.slug} | rating: ${r.rating ?? 'n/a'}`);
+      console.log(`    - ${r.name} (${item.city})`);
+      console.log(`      ${BASE_URL}/speisekarte/${r.slug}`);
     }
   }
 
-  // Report
   printReport(cityResults, newProviders.length, existingWithLinks.length, isDryRun);
 
   if (isDryRun) return;
 
   // ─── Write mode ─────────────────────────────────────────────────────────
 
-  // Ensure import-bot user exists
   console.log('> Ensuring import-bot user exists...');
   const botOk = await ensureImportBotUser();
   if (!botOk) {
@@ -410,20 +548,19 @@ async function main() {
     process.exit(1);
   }
 
-  // Insert new providers in batches
   if (newProviders.length > 0) {
     console.log(`\n> Inserting ${newProviders.length} new providers in batches of ${BATCH_SIZE}...`);
 
-    const providerRecords: ProviderInsert[] = newProviders.map((item) => ({
+    const providerRecords = newProviders.map((item) => ({
       provider_name: item.restaurant.name,
       address_city: item.city,
       address_country: 'DE',
-      location_latitude: item.restaurant.latitude,
-      location_longitude: item.restaurant.longitude,
+      location_latitude: null as number | null,
+      location_longitude: null as number | null,
       review_status: 'pending' as const,
       import_source: 'lieferando',
       import_source_id: item.restaurant.slug,
-      import_source_url: `https://www.lieferando.de/speisekarte/${item.restaurant.slug}`,
+      import_source_url: `${BASE_URL}/speisekarte/${item.restaurant.slug}`,
       listing_type: 'food' as const,
       user_created_id: IMPORT_BOT_UUID,
       provider_owner_id: null,
@@ -446,9 +583,7 @@ async function main() {
         .select('provider_id, import_source_id');
 
       if (error) {
-        console.error(
-          `  Batch insert failed (offset ${offset}): ${error.message}`
-        );
+        console.error(`  Batch insert failed (offset ${offset}): ${error.message}`);
         failed += batch.length;
         continue;
       }
@@ -475,12 +610,12 @@ async function main() {
         }
       }
 
-      // Create delivery links for newly inserted providers
+      // Create delivery links
       if (data && data.length > 0) {
         const links: DeliveryLinkUpsert[] = data.map((row: { provider_id: string; import_source_id: string }) => ({
           provider_id: row.provider_id,
           platform: 'lieferando' as const,
-          platform_url: `https://www.lieferando.de/speisekarte/${row.import_source_id}`,
+          platform_url: `${BASE_URL}/speisekarte/${row.import_source_id}`,
           platform_slug: row.import_source_id,
           is_active: true,
           last_verified_at: new Date().toISOString(),
@@ -506,7 +641,7 @@ async function main() {
     const links: DeliveryLinkUpsert[] = existingWithLinks.map((item) => ({
       provider_id: item.existingProviderId!,
       platform: 'lieferando' as const,
-      platform_url: `https://www.lieferando.de/speisekarte/${item.restaurant.slug}`,
+      platform_url: `${BASE_URL}/speisekarte/${item.restaurant.slug}`,
       platform_slug: item.restaurant.slug,
       is_active: true,
       last_verified_at: new Date().toISOString(),

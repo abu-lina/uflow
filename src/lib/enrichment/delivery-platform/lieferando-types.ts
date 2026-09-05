@@ -42,4 +42,5 @@ export interface LieferandoClientConfig {
 export interface LieferandoClient {
   searchRestaurants(city: string): Promise<LieferandoSearchResult[]>;
   getRestaurantPage(slug: string): Promise<LieferandoRestaurantData>;
+  close(): Promise<void>;
 }
