@@ -1,0 +1,215 @@
+# .github/workflows/discover-halal.yml
+#
+# Halal Discovery Pipeline (Plan 225)
+# Sweeps Wolt and Lieferando for halal restaurants in German cities,
+# deduplicates against existing providers, and imports new ones as pending.
+#
+# Triggers:
+#   - Weekly schedule (Monday 06:00 UTC) in dry-run mode
+#   - Manual dispatch with configurable platform, mode, limit, environment
+#
+# Usage:
+#   1. Go to Actions > "Halal Discovery Pipeline"
+#   2. Click "Run workflow"
+#   3. Choose platform, mode, limit, and environment
+#   4. Review output in the workflow logs + step summary
+#
+# Security:
+#   - Uses SUPABASE_SERVICE_ROLE_KEY from GitHub Secrets (never exposed in logs)
+#   - Dry-run is the default to prevent unintended writes
+#   - Scheduled runs are always dry-run
+
+name: Halal Discovery Pipeline
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to scan'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - wolt
+          - lieferando
+      mode:
+        description: 'Execution mode'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - write
+      limit:
+        description: 'City limit (blank = all cities)'
+        required: false
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - uat
+
+jobs:
+  discover-wolt:
+    name: "Wolt Discovery (${{ inputs.mode || 'dry-run' }})"
+    if: inputs.platform == 'wolt' || inputs.platform == 'both' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CLI arguments
+        id: args
+        run: |
+          MODE="${{ inputs.mode || 'dry-run' }}"
+          LIMIT="${{ inputs.limit || '' }}"
+
+          if [ "$MODE" = "write" ] && [ "${{ github.event_name }}" != "schedule" ]; then
+            ARGS="--write"
+          else
+            ARGS="--dry-run"
+          fi
+
+          if [ -n "$LIMIT" ]; then
+            ARGS="$ARGS --limit $LIMIT"
+          fi
+
+          echo "cli_args=$ARGS" >> "$GITHUB_OUTPUT"
+
+      - name: Run Wolt discovery (Production)
+        if: (inputs.environment || 'production') == 'production'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Running Wolt discovery against PRODUCTION"
+          echo "  Args: ${{ steps.args.outputs.cli_args }}"
+          echo ""
+          npx tsx scripts/discover-wolt.ts ${{ steps.args.outputs.cli_args }}
+
+      - name: Run Wolt discovery (UAT)
+        if: (inputs.environment || 'production') == 'uat'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Running Wolt discovery against UAT"
+          echo "  Args: ${{ steps.args.outputs.cli_args }}"
+          echo ""
+          npx tsx scripts/discover-wolt.ts ${{ steps.args.outputs.cli_args }}
+
+      - name: Step summary
+        if: always()
+        run: |
+          echo "## Wolt Discovery" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Wolt |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | ${{ inputs.mode || 'dry-run' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} (${{ github.event_name }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.mode }}" = "write" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Records inserted with \`review_status = 'pending'\`. Approve via admin moderation." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  discover-lieferando:
+    name: "Lieferando Discovery (${{ inputs.mode || 'dry-run' }})"
+    if: inputs.platform == 'lieferando' || inputs.platform == 'both' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Build CLI arguments
+        id: args
+        run: |
+          MODE="${{ inputs.mode || 'dry-run' }}"
+          LIMIT="${{ inputs.limit || '' }}"
+
+          if [ "$MODE" = "write" ] && [ "${{ github.event_name }}" != "schedule" ]; then
+            ARGS="--write"
+          else
+            ARGS="--dry-run"
+          fi
+
+          if [ -n "$LIMIT" ]; then
+            ARGS="$ARGS --limit $LIMIT"
+          fi
+
+          echo "cli_args=$ARGS" >> "$GITHUB_OUTPUT"
+
+      - name: Run Lieferando discovery (Production)
+        if: (inputs.environment || 'production') == 'production'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Running Lieferando discovery against PRODUCTION"
+          echo "  Args: ${{ steps.args.outputs.cli_args }}"
+          echo ""
+          npx tsx scripts/discover-lieferando.ts ${{ steps.args.outputs.cli_args }}
+
+      - name: Run Lieferando discovery (UAT)
+        if: (inputs.environment || 'production') == 'uat'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Running Lieferando discovery against UAT"
+          echo "  Args: ${{ steps.args.outputs.cli_args }}"
+          echo ""
+          npx tsx scripts/discover-lieferando.ts ${{ steps.args.outputs.cli_args }}
+
+      - name: Step summary
+        if: always()
+        run: |
+          echo "## Lieferando Discovery" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Lieferando |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | ${{ inputs.mode || 'dry-run' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} (${{ github.event_name }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.mode }}" = "write" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Records inserted with \`review_status = 'pending'\`. Approve via admin moderation." >> $GITHUB_STEP_SUMMARY
+          fi
