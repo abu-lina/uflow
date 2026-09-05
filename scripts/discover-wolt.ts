@@ -413,7 +413,7 @@ async function main(): Promise<void> {
           onConflict: 'import_source,import_source_id',
           ignoreDuplicates: true,
         })
-        .select('provider_id, provider_name');
+        .select('provider_id, import_source_id');
 
       if (error) {
         console.error(`    Batch ${Math.floor(i / BATCH_SIZE) + 1} failed: ${error.message}`);
@@ -422,26 +422,52 @@ async function main(): Promise<void> {
         const count = data?.length ?? batch.length;
         insertedCount += count;
 
-        // Create delivery links for newly inserted providers
         if (data && data.length > 0) {
-          const deliveryLinks = data.map((row, idx) => ({
+          // Build a slug lookup from the batch for safe index-independent mapping
+          const slugToVenue = new Map(batch.map((v) => [v.slug, v]));
+
+          // Create food_providers extension rows
+          const foodRows = data.map((row) => ({
             provider_id: row.provider_id,
-            platform: 'wolt' as const,
-            platform_url: batch[idx].woltUrl,
-            platform_slug: batch[idx].slug,
-            is_active: batch[idx].online,
-            last_verified_at: new Date().toISOString(),
+            no_alcohol: false,
+            no_pork: false,
           }));
 
-          const { error: linkError } = await supabase
-            .from('provider_delivery_links')
-            .upsert(deliveryLinks, {
-              onConflict: 'provider_id,platform',
-              ignoreDuplicates: false,
-            });
+          const { error: foodError } = await supabase
+            .from('food_providers')
+            .upsert(foodRows, { onConflict: 'provider_id' });
 
-          if (linkError) {
-            console.error(`    Delivery link batch failed: ${linkError.message}`);
+          if (foodError) {
+            console.error(`    food_providers batch failed: ${foodError.message}`);
+          }
+
+          // Create delivery links using returned import_source_id (slug)
+          const deliveryLinks = data
+            .map((row) => {
+              const venue = slugToVenue.get(row.import_source_id);
+              if (!venue) return null;
+              return {
+                provider_id: row.provider_id,
+                platform: 'wolt' as const,
+                platform_url: venue.woltUrl,
+                platform_slug: row.import_source_id,
+                is_active: venue.online,
+                last_verified_at: new Date().toISOString(),
+              };
+            })
+            .filter((link): link is NonNullable<typeof link> => link !== null);
+
+          if (deliveryLinks.length > 0) {
+            const { error: linkError } = await supabase
+              .from('provider_delivery_links')
+              .upsert(deliveryLinks, {
+                onConflict: 'provider_id,platform',
+                ignoreDuplicates: false,
+              });
+
+            if (linkError) {
+              console.error(`    Delivery link batch failed: ${linkError.message}`);
+            }
           }
         }
       }

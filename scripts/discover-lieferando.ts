@@ -309,6 +309,7 @@ async function main() {
   const cityResults: CityResult[] = [];
   const newProviders: DiscoveredRestaurant[] = [];
   const existingWithLinks: DiscoveredRestaurant[] = [];
+  const seenSlugs = new Set<string>();
 
   console.log(`> Scanning ${citiesToScan.length} cities...\n`);
 
@@ -339,6 +340,10 @@ async function main() {
     let existingCount = 0;
 
     for (const restaurant of halalRestaurants) {
+      // Cross-city dedup: skip if same restaurant seen from a neighboring city scan
+      if (seenSlugs.has(restaurant.slug)) continue;
+      seenSlugs.add(restaurant.slug);
+
       // Use city from API response, fall back to the city name we searched
       const restaurantCity = restaurant.city || cityName;
       const key = makeProviderKey(restaurant.name, restaurantCity);
@@ -434,7 +439,10 @@ async function main() {
 
       const { data, error } = await supabase
         .from('providers')
-        .insert(batch)
+        .upsert(batch, {
+          onConflict: 'import_source,import_source_id',
+          ignoreDuplicates: true,
+        })
         .select('provider_id, import_source_id');
 
       if (error) {
@@ -449,6 +457,23 @@ async function main() {
       console.log(
         `  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
       );
+
+      // Create food_providers extension rows
+      if (data && data.length > 0) {
+        const foodRows = data.map((row: { provider_id: string }) => ({
+          provider_id: row.provider_id,
+          no_alcohol: false,
+          no_pork: false,
+        }));
+
+        const { error: foodError } = await supabase
+          .from('food_providers')
+          .upsert(foodRows, { onConflict: 'provider_id' });
+
+        if (foodError) {
+          console.warn(`  food_providers upsert failed: ${foodError.message}`);
+        }
+      }
 
       // Create delivery links for newly inserted providers
       if (data && data.length > 0) {

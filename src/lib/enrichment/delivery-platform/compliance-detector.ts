@@ -37,6 +37,17 @@ function itemHasKeyword(itemName: string, keyword: string): boolean {
   return pattern.test(itemName);
 }
 
+/**
+ * Catches German compound words starting with "schwein" that aren't in the
+ * explicit keyword list (e.g. "Schweinegulasch", "Schweinelende").
+ * Any German word starting with "Schwein" refers to pork.
+ */
+const SCHWEIN_PREFIX_RE = /(?:^|\W)schwein/i;
+
+function itemHasPorkPrefix(itemName: string): boolean {
+  return SCHWEIN_PREFIX_RE.test(itemName);
+}
+
 export function detectCompliance(menuItemNames: string[]): ComplianceResult {
   const alcoholResult = detectAlcohol(menuItemNames);
 
@@ -56,6 +67,15 @@ export function detectCompliance(menuItemNames: string[]): ComplianceResult {
           seenKeywords.add(kw);
           matchedPorkKeywords.push(kw);
         }
+      }
+    }
+    // Catch unlisted Schwein* compound words (e.g. Schweinegulasch)
+    if (!itemMatched && itemHasPorkPrefix(item)) {
+      itemMatched = true;
+      hasPork = true;
+      if (!seenKeywords.has('Schwein*')) {
+        seenKeywords.add('Schwein*');
+        matchedPorkKeywords.push('Schwein*');
       }
     }
     if (itemMatched) {

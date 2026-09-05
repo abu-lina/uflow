@@ -64,6 +64,19 @@ describe('detectCompliance', () => {
     expect(result.matchedPorkKeywords).toHaveLength(0);
   });
 
+  it('detects unlisted Schwein* compound words via prefix match', () => {
+    const result = detectCompliance(['Schweinegulasch', 'Schweinelende']);
+    expect(result.porkSignal).toBe('definite_pork');
+    expect(result.matchedPorkKeywords).toContain('Schwein*');
+    expect(result.matchedPorkItems).toContain('Schweinegulasch');
+    expect(result.matchedPorkItems).toContain('Schweinelende');
+  });
+
+  it('does not false-positive on "Schweizer Käse" (Swiss, not pork)', () => {
+    const result = detectCompliance(['Schweizer Käse']);
+    expect(result.porkSignal).toBe('no_signal');
+  });
+
   it('detects "alkoholfrei" as definite_no_alcohol and "Kassler" as definite_pork', () => {
     const result = detectCompliance(['alkoholfrei Bier', 'Kassler']);
     expect(result.alcoholSignal).toBe('definite_no_alcohol');
