@@ -47,7 +47,7 @@ function extractJsonLd($: CheerioDoc): Record<string, unknown> | null {
 }
 
 function extractSlugFromUrl(url: string): string {
-  const match = url.match(/\/speisekarte\/([^/]+)/);
+  const match = url.match(/\/(?:menu|speisekarte)\/([^/?]+)/);
   return match ? match[1] : '';
 }
 
@@ -171,22 +171,34 @@ class LieferandoPlaywrightClient implements LieferandoClient {
   async searchRestaurants(city: string): Promise<LieferandoSearchResult[]> {
     await this.rateLimit();
     const citySlug = city.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zäöüß-]/g, '');
-    const url = `${BASE_URL}/speisekarte/${encodeURIComponent(citySlug)}`;
+    // The EN delivery listing page renders restaurant cards with /en/menu/{slug} links.
+    // The old /speisekarte/{city} URL was a menu page, not a search page.
+    const url = `${BASE_URL}/en/delivery/food/${encodeURIComponent(citySlug)}`;
 
     const page = await this.createPage();
     try {
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 20000 });
-      await page.waitForSelector('a[href*="/speisekarte/"]', { timeout: 15000 }).catch(() => {});
+      // domcontentloaded + explicit wait: networkidle times out on this SPA
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await page.waitForSelector('a[href*="/menu/"]', { timeout: 15000 }).catch(() => {});
+      // Allow remaining JS to render restaurant cards
+      await page.waitForTimeout(3000);
 
       const results = await page.evaluate((cityName) => {
-        const cardNodes = document.querySelectorAll('a[href*="/speisekarte/"]');
-        const cards = Array.prototype.slice.call(cardNodes);
+        // Restaurant links use /en/menu/{slug} or /speisekarte/{slug}
+        const allLinks = Array.prototype.slice.call(document.querySelectorAll('a'));
+        const restaurantLinks = allLinks.filter((el: HTMLAnchorElement) => {
+          const href = el.href || '';
+          return (href.includes('/menu/') || href.includes('/speisekarte/')) &&
+            el.textContent && el.textContent.trim().length > 3;
+        });
+
         const results: Array<{name: string; slug: string; city: string; rating: number | null; isActive: boolean}> = [];
         const seen = new Set<string>();
 
-        cards.forEach((el) => {
-          const href = (el as HTMLAnchorElement).href || '';
-          const match = href.match(/\/speisekarte\/([^/]+)/);
+        restaurantLinks.forEach((el: HTMLAnchorElement) => {
+          const href = el.href || '';
+          // Extract slug from /en/menu/{slug} or /speisekarte/{slug}
+          const match = href.match(/\/(?:menu|speisekarte)\/([^/?]+)/);
           const slug = match ? match[1] : '';
           if (!slug || seen.has(slug)) return;
           seen.add(slug);
