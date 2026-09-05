@@ -10,12 +10,15 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 
 import { SectionSelector } from '@/features/search/components/SectionSelector';
 import { DiscoveryFilterBar } from '@/features/search/components/DiscoveryFilterBar';
-import { DiscoveryResultsGrid, type DiscoveryCardItem } from '@/features/search/components/DiscoveryResultsGrid';
+import {
+  DiscoveryResultsGrid,
+  type DiscoveryCardItem,
+} from '@/features/search/components/DiscoveryResultsGrid';
 import { DiscoveryHeader } from '@/features/search/components/DiscoveryHeader';
 import { useNearMe } from '@/features/search/hooks/useNearMe';
 import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
 import { ViewToggleButton } from '@/features/search/components/ViewToggleButton';
-import { HomeSearchInput } from '@/features/search/components/HomeSearchInput';
+import { SearchContextBar } from '@/features/search/components/SearchContextBar';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { filterOpenNow } from '@/utils/filterOpenNow';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -27,7 +30,10 @@ import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { supabase } from '@/lib/supabase/client';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
-import { AdminStatusFilter, type ReviewStatusFilter } from '@/features/admin/components/AdminStatusFilter';
+import {
+  AdminStatusFilter,
+  type ReviewStatusFilter,
+} from '@/features/admin/components/AdminStatusFilter';
 import { toast } from 'sonner';
 import { useProviderReview } from '@/features/admin/hooks/useProviderReview';
 import { RejectModal } from '@/features/admin/components/RejectModal';
@@ -37,7 +43,10 @@ import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';
 import type { SearchResult, NearMeFoodResult } from '@/services/providers';
-import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
+import {
+  SEARCH_FILTER_KEY_SET,
+  type SearchFilterKey,
+} from '@/features/search/constants/filterKeys';
 
 const SearchMap = dynamic(
   () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
@@ -107,7 +116,12 @@ export function ProvidersContent({
   const [showLegalModal, setShowLegalModal] = useState(false);
 
   // Plan 058: Provider review hook and modal state for admin moderation
-  const { approveProvider, rejectProvider, isLoading: isReviewLoading, reviewingProviderId } = useProviderReview();
+  const {
+    approveProvider,
+    rejectProvider,
+    isLoading: isReviewLoading,
+    reviewingProviderId,
+  } = useProviderReview();
   const [rejectModalState, setRejectModalState] = useState<{
     isOpen: boolean;
     providerId: string | null;
@@ -176,8 +190,14 @@ export function ProvidersContent({
 
   // Shared map/discovery state: pins, view mode, open-now, header metrics
   const {
-    pins, isOpenNow, setIsOpenNow, viewMode,
-    toggleViewMode, headerRef, headerHeight, userCoords,
+    pins,
+    isOpenNow,
+    setIsOpenNow,
+    viewMode,
+    toggleViewMode,
+    headerRef,
+    headerHeight,
+    userCoords,
   } = useMapDiscovery(geolocation, 'list', isAdmin ? status : null);
 
   const nearMe = useNearMe({
@@ -205,19 +225,38 @@ export function ProvidersContent({
   // Plan 058 + 089: Include status and section in query key for proper cache management
   const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } =
     useInfiniteQuery({
-      queryKey: ['providers', query, category, location, status, section, normalizedFilters?.join(',') ?? ''],
+      queryKey: [
+        'providers',
+        query,
+        category,
+        location,
+        status,
+        section,
+        normalizedFilters?.join(',') ?? '',
+      ],
       queryFn: ({ pageParam = 0 }) =>
-        fetchProvidersFromAPI(query, category, location, pageParam, PAGE_SIZE, status, section, normalizedFilters),
+        fetchProvidersFromAPI(
+          query,
+          category,
+          location,
+          pageParam,
+          PAGE_SIZE,
+          status,
+          section,
+          normalizedFilters,
+        ),
       getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
       initialPageParam: 0,
       // Use server-rendered initial data when available (Plan 010 P1a)
       // Note: initialData only applies when no status filter is active
-      ...(!status && initialData && hasMatchingInitialFilters && {
-        initialData: {
-          pages: [initialData],
-          pageParams: [0],
-        },
-      }),
+      ...(!status &&
+        initialData &&
+        hasMatchingInitialFilters && {
+          initialData: {
+            pages: [initialData],
+            pageParams: [0],
+          },
+        }),
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // Keep unused data for 10 min
       refetchOnWindowFocus: false, // Don't refetch on tab switch
@@ -314,7 +353,8 @@ export function ProvidersContent({
       try {
         await approveProvider(providerId);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to approve provider. Please try again.';
+        const message =
+          err instanceof Error ? err.message : 'Failed to approve provider. Please try again.';
         console.error('[handleApprove] Failed to approve provider:', message);
         toast.error(message);
       }
@@ -402,7 +442,11 @@ export function ProvidersContent({
       provider_name: result.provider_name,
       provider_images: result.provider_images,
       category: result.category_name_de
-        ? { name_de: result.category_name_de, name_en: result.category_name_en ?? undefined, category_images: result.category_images ?? undefined }
+        ? {
+            name_de: result.category_name_de,
+            name_en: result.category_name_en ?? undefined,
+            category_images: result.category_images ?? undefined,
+          }
         : null,
       category_id: result.category_id,
       address_city: result.address_city,
@@ -457,13 +501,13 @@ export function ProvidersContent({
     if (nearMe.isActive) {
       return (
         <DiscoveryResultsGrid
-          items={nearMe.results.map(adaptNearMeResult)}
-          isLoading={nearMe.isLoading}
+          enableBookmarks
+          enableDistance
           error={nearMe.error}
           headerOffset={headerHeight}
+          isLoading={nearMe.isLoading}
+          items={nearMe.results.map(adaptNearMeResult)}
           openNow={isOpenNow}
-          enableDistance
-          enableBookmarks
           onRetry={nearMe.refetch}
         />
       );
@@ -491,22 +535,22 @@ export function ProvidersContent({
 
     return (
       <DiscoveryResultsGrid
-        items={searchResults.map(adaptSearchResultToDiscoveryItem)}
-        isLoading={false}
-        error={error}
-        headerOffset={headerHeight}
-        openNow={isOpenNow}
         enableBookmarks
-        bookmarkedIds={bookmarkedProviderIds}
-        onBookmarkChange={handleBookmarkChange}
-        enableModeration={enableModeration}
-        onApprove={handleApprove}
-        onReject={handleRejectClick}
-        reviewingProviderId={reviewingProviderId}
         enableInfiniteScroll
+        bookmarkedIds={bookmarkedProviderIds}
+        enableModeration={enableModeration}
+        error={error}
         hasNextPage={hasNextPage ?? false}
+        headerOffset={headerHeight}
         isFetchingNextPage={isFetchingNextPage}
+        isLoading={false}
+        items={searchResults.map(adaptSearchResultToDiscoveryItem)}
+        openNow={isOpenNow}
+        reviewingProviderId={reviewingProviderId}
+        onApprove={handleApprove}
+        onBookmarkChange={handleBookmarkChange}
         onLoadMore={fetchNextPage}
+        onReject={handleRejectClick}
         onRetry={() => refetch()}
       />
     );
@@ -593,10 +637,7 @@ export function ProvidersContent({
             }}
           >
             <div className="pb-3">
-              <SectionSelector
-                selectedSection={section}
-                onSectionChange={handleSectionChange}
-              />
+              <SectionSelector selectedSection={section} onSectionChange={handleSectionChange} />
             </div>
             <div className="mx-auto max-w-72">
               <MobileGreetingHeader cityName={defaultLocation} />
@@ -606,35 +647,36 @@ export function ProvidersContent({
       ) : (
         <DiscoveryHeader
           ref={headerRef}
-          section={section}
-          selectedSection={section}
-          viewMode={viewMode}
-          onSectionChange={handleSectionChange}
-          searchSlot={<HomeSearchInput activeSection={section} />}
           filterBarSlot={
             section === 'food' ? (
               <DiscoveryFilterBar
+                adminSlot={
+                  isAdmin ? (
+                    <AdminStatusFilter
+                      selectedStatus={status}
+                      onStatusChange={handleStatusChange}
+                    />
+                  ) : undefined
+                }
                 geoStatus={geolocation.status}
                 nearMeActive={nearMeActive}
                 openNowActive={isOpenNow}
                 onToggleNearMe={handleToggleNearMe}
                 onToggleOpenNow={() => setIsOpenNow((v) => !v)}
-                adminSlot={
-                  isAdmin ? (
-                    <AdminStatusFilter selectedStatus={status} onStatusChange={handleStatusChange} />
-                  ) : undefined
-                }
               />
             ) : undefined
           }
+          searchSlot={<SearchContextBar searchTerm={query} section={section} />}
+          section={section}
+          selectedSection={section}
+          viewMode={viewMode}
+          onSectionChange={handleSectionChange}
         />
       )}
 
       <main
         className={`mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden ${
-          showGreeting
-            ? 'pt-0 sm:pt-0 md:pt-[153px]'
-            : 'pt-0 sm:pt-0 md:pt-[153px]'
+          showGreeting ? 'pt-0 sm:pt-0 md:pt-[153px]' : 'pt-0 sm:pt-0 md:pt-[153px]'
         }`}
       >
         {!showGreeting && section === 'food' && (
@@ -645,10 +687,7 @@ export function ProvidersContent({
               inset: 0,
             }}
           >
-            <SearchMap
-              pins={pins}
-              userCoords={userCoords}
-            />
+            <SearchMap pins={pins} userCoords={userCoords} />
           </div>
         )}
 
