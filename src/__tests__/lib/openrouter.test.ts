@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type {
-  OpenRouterRequest,
-  OpenRouterResponse,
-  ChatMessage,
-  ToolDefinition,
-} from '@/features/chat/types';
+import type { OpenRouterResponse, ToolDefinition } from '@/features/chat/types';
 
 const { mockFetch } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
@@ -39,10 +34,14 @@ describe('sendChatRequest', () => {
     });
 
     it('uses Mistral base URL and model', async () => {
-      mockFetch.mockResolvedValue(makeMockResponse({
-        id: 'chat-1',
-        choices: [{ index: 0, message: { role: 'assistant', content: 'Hi' }, finish_reason: 'stop' }],
-      }));
+      mockFetch.mockResolvedValue(
+        makeMockResponse({
+          id: 'chat-1',
+          choices: [
+            { index: 0, message: { role: 'assistant', content: 'Hi' }, finish_reason: 'stop' },
+          ],
+        }),
+      );
 
       await sendChatRequest([{ role: 'user', content: 'test' }]);
 
@@ -56,25 +55,43 @@ describe('sendChatRequest', () => {
 
     it('uses custom MISTRAL_MODEL when set', async () => {
       process.env.MISTRAL_MODEL = 'mistral-large-latest';
-      mockFetch.mockResolvedValue(makeMockResponse({
-        id: 'chat-2',
-        choices: [{ index: 0, message: { role: 'assistant', content: 'Hi' }, finish_reason: 'stop' }],
-      }));
+      mockFetch.mockResolvedValue(
+        makeMockResponse({
+          id: 'chat-2',
+          choices: [
+            { index: 0, message: { role: 'assistant', content: 'Hi' }, finish_reason: 'stop' },
+          ],
+        }),
+      );
 
       await sendChatRequest([{ role: 'user', content: 'test' }]);
       expect(JSON.parse(mockFetch.mock.calls[0][1].body).model).toBe('mistral-large-latest');
     });
 
     it('includes tool definitions', async () => {
-      const tools: ToolDefinition[] = [{
-        type: 'function',
-        function: { name: 'search', description: 'Search', parameters: { type: 'object', properties: {} } },
-      }];
+      const tools: ToolDefinition[] = [
+        {
+          type: 'function',
+          function: {
+            name: 'search',
+            description: 'Search',
+            parameters: { type: 'object', properties: {} },
+          },
+        },
+      ];
 
-      mockFetch.mockResolvedValue(makeMockResponse({
-        id: 'chat-3',
-        choices: [{ index: 0, message: { role: 'assistant', content: null, tool_calls: [] }, finish_reason: 'tool_calls' }],
-      }));
+      mockFetch.mockResolvedValue(
+        makeMockResponse({
+          id: 'chat-3',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: null, tool_calls: [] },
+              finish_reason: 'tool_calls',
+            },
+          ],
+        }),
+      );
 
       await sendChatRequest([{ role: 'user', content: 'test' }], { tools });
       expect(JSON.parse(mockFetch.mock.calls[0][1].body).tools).toEqual(tools);
@@ -87,9 +104,9 @@ describe('sendChatRequest', () => {
         text: () => Promise.resolve('{"error":"Unauthorized"}'),
       } as Response);
 
-      await expect(
-        sendChatRequest([{ role: 'user', content: 'test' }]),
-      ).rejects.toThrow('Mistral AI API error 401');
+      await expect(sendChatRequest([{ role: 'user', content: 'test' }])).rejects.toThrow(
+        'Mistral AI API error 401',
+      );
     });
   });
 
@@ -100,24 +117,83 @@ describe('sendChatRequest', () => {
     });
 
     it('uses OpenRouter when Mistral key is missing', async () => {
-      mockFetch.mockResolvedValue(makeMockResponse({
-        id: 'chat-4',
-        choices: [{ index: 0, message: { role: 'assistant', content: 'Hi' }, finish_reason: 'stop' }],
-      }));
+      mockFetch.mockResolvedValue(
+        makeMockResponse({
+          id: 'chat-4',
+          choices: [
+            { index: 0, message: { role: 'assistant', content: 'Hi' }, finish_reason: 'stop' },
+          ],
+        }),
+      );
 
       await sendChatRequest([{ role: 'user', content: 'test' }]);
 
       const [url] = mockFetch.mock.calls[0];
       expect(url).toBe('https://openrouter.ai/api/v1/chat/completions');
-      expect(JSON.parse(mockFetch.mock.calls[0][1].body).model).toBe('meta-llama/llama-3.3-70b-instruct');
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body).model).toBe(
+        'meta-llama/llama-3.3-70b-instruct',
+      );
     });
   });
 
   describe('no provider configured', () => {
     it('throws when no API key is set', async () => {
-      await expect(
-        sendChatRequest([{ role: 'user', content: 'test' }]),
-      ).rejects.toThrow('No AI provider configured');
+      await expect(sendChatRequest([{ role: 'user', content: 'test' }])).rejects.toThrow(
+        'No AI provider configured',
+      );
+    });
+  });
+
+  describe('retry budget (Plan 223)', () => {
+    beforeEach(() => {
+      process.env.MISTRAL_API_KEY = 'key';
+    });
+
+    it('stops retrying after maxRetries (2) and throws on final 429', async () => {
+      // Return 429 with Retry-After: 0 so backoff is instant
+      const make429 = () =>
+        ({
+          ok: false,
+          status: 429,
+          text: () => Promise.resolve('rate limited'),
+          headers: new Headers({ 'retry-after': '0' }),
+        }) as Response;
+
+      mockFetch
+        .mockResolvedValueOnce(make429()) // attempt 0 → 429, retry
+        .mockResolvedValueOnce(make429()) // attempt 1 → 429, retry
+        .mockResolvedValueOnce(make429()); // attempt 2 → 429, no more retries → throw
+
+      await expect(sendChatRequest([{ role: 'user', content: 'test' }])).rejects.toThrow('429');
+
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it('succeeds on second attempt after 429', async () => {
+      const make429 = () =>
+        ({
+          ok: false,
+          status: 429,
+          text: () => Promise.resolve('rate limited'),
+          headers: new Headers({ 'retry-after': '0' }),
+        }) as Response;
+
+      mockFetch.mockResolvedValueOnce(make429()).mockResolvedValueOnce(
+        makeMockResponse({
+          id: 'chat-retry-ok',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: 'recovered' },
+              finish_reason: 'stop',
+            },
+          ],
+        }),
+      );
+
+      const result = await sendChatRequest([{ role: 'user', content: 'test' }]);
+      expect(result.message.content).toBe('recovered');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -127,27 +203,45 @@ describe('sendChatRequest', () => {
     });
 
     it('extracts content from assistant message', async () => {
-      mockFetch.mockResolvedValue(makeMockResponse({
-        id: 'chat-5',
-        choices: [{ index: 0, message: { role: 'assistant', content: 'Here are results.' }, finish_reason: 'stop' }],
-        usage: { prompt_tokens: 50, completion_tokens: 20, total_tokens: 70 },
-      }));
+      mockFetch.mockResolvedValue(
+        makeMockResponse({
+          id: 'chat-5',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: 'Here are results.' },
+              finish_reason: 'stop',
+            },
+          ],
+          usage: { prompt_tokens: 50, completion_tokens: 20, total_tokens: 70 },
+        }),
+      );
 
       const result = await sendChatRequest([{ role: 'user', content: 'test' }]);
       expect(result.message.content).toBe('Here are results.');
     });
 
     it('extracts tool calls from response', async () => {
-      const toolCalls = [{
-        id: 'call_1',
-        type: 'function' as const,
-        function: { name: 'search_providers', arguments: '{"query":"Döner"}' },
-      }];
+      const toolCalls = [
+        {
+          id: 'call_1',
+          type: 'function' as const,
+          function: { name: 'search_providers', arguments: '{"query":"Döner"}' },
+        },
+      ];
 
-      mockFetch.mockResolvedValue(makeMockResponse({
-        id: 'chat-6',
-        choices: [{ index: 0, message: { role: 'assistant', content: null, tool_calls: toolCalls }, finish_reason: 'tool_calls' }],
-      }));
+      mockFetch.mockResolvedValue(
+        makeMockResponse({
+          id: 'chat-6',
+          choices: [
+            {
+              index: 0,
+              message: { role: 'assistant', content: null, tool_calls: toolCalls },
+              finish_reason: 'tool_calls',
+            },
+          ],
+        }),
+      );
 
       const result = await sendChatRequest([{ role: 'user', content: 'Find Döner' }]);
       expect(result.message.tool_calls).toEqual(toolCalls);

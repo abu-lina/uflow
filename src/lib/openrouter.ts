@@ -87,38 +87,64 @@ export async function sendChatRequest(
   }
 
   let lastError: Error | null = null;
-  const maxRetries = 5;
+  const maxRetries = 2;
+  const perRequestTimeout = options?.timeout ?? 30000; // 30s per attempt
+  const totalDeadlineMs = 85000; // 85s total — fits inside 95s nginx / 100s Cloudflare
+  const startTime = Date.now();
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const elapsed = Date.now() - startTime;
+    const remaining = totalDeadlineMs - elapsed;
+
+    // Not enough time for another attempt — bail out
+    if (remaining < perRequestTimeout) {
+      throw (
+        lastError ||
+        new Error(
+          `${config.provider} request aborted: only ${remaining}ms left of ${totalDeadlineMs}ms deadline`,
+        )
+      );
+    }
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), options?.timeout ?? 60000);
+    const timeout = setTimeout(() => controller.abort(), Math.min(perRequestTimeout, remaining));
     try {
       const response = await fetch(`${config.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${config.apiKey}`,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${config.apiKey}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
 
       if (response.status === 429 && attempt < maxRetries) {
         // Rate limited — use Retry-After header or exponential backoff
         const retryAfter = response.headers.get('retry-after');
-        const delay = retryAfter 
-          ? parseInt(retryAfter, 10) * 1000 
-          : Math.pow(2, attempt + 1) * 1000;  // 2s, 4s, 8s
-        // User sees loading spinner — retry is transparent to them
-        console.log(`[Mistral] 429 — retrying in ${delay}ms (try ${attempt + 1}/${maxRetries + 1})`);
-        await new Promise(resolve => setTimeout(resolve, delay));
+        const delay = retryAfter
+          ? parseInt(retryAfter, 10) * 1000
+          : Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s
+
+        // Check if waiting + another attempt would exceed the deadline
+        const elapsedAfterResponse = Date.now() - startTime;
+        if (elapsedAfterResponse + delay + perRequestTimeout > totalDeadlineMs) {
+          throw new Error(
+            `${config.provider} rate limited but no time to retry (${totalDeadlineMs - elapsedAfterResponse}ms left)`,
+          );
+        }
+
+        console.log(`[LLM] 429 — retrying in ${delay}ms (try ${attempt + 1}/${maxRetries + 1})`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
         lastError = new Error(`${config.provider} rate limited, retrying...`);
         continue;
       }
 
       if (!response.ok) {
         const errorBody = await response.text().catch(() => '');
-        throw new Error(`${config.provider} API error ${response.status}: ${errorBody.slice(0, 200)}`);
+        throw new Error(
+          `${config.provider} API error ${response.status}: ${errorBody.slice(0, 200)}`,
+        );
       }
 
       const data: OpenRouterResponse = await response.json();
@@ -137,7 +163,9 @@ export async function sendChatRequest(
     }
   }
 
-  throw lastError || new Error(`${config.provider} request failed after ${maxRetries + 1} attempts`);
+  throw (
+    lastError || new Error(`${config.provider} request failed after ${maxRetries + 1} attempts`)
+  );
 }
 
 export async function streamChatCompletion(
