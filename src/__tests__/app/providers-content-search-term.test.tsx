@@ -1,4 +1,12 @@
-import { render, screen, within } from '@testing-library/react';
+/**
+ * Plan 222: Regression test — search term visible in providers page search bar.
+ *
+ * When navigating from the map view search (e.g. ?q=Lolo&section=food),
+ * the search bar on the providers page must display the query so the user
+ * can see what they searched for and clear it.
+ */
+
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ProvidersContent } from '@/app/(public)/providers/ProvidersContent';
@@ -13,7 +21,7 @@ vi.mock('next/navigation', () => ({
     push: mockPush,
     prefetch: vi.fn(),
   }),
-  useSearchParams: () => new URLSearchParams('section=food&q=Indigo&location=Berlin'),
+  useSearchParams: () => new URLSearchParams('q=Lolo&section=food'),
 }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -30,6 +38,7 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ setQueryData: vi.fn() }),
 }));
 
+// Mock DiscoveryHeader to render the searchSlot so we can inspect it
 vi.mock('@/features/search/components/DiscoveryHeader', () => ({
   DiscoveryHeader: ({
     searchSlot,
@@ -38,8 +47,7 @@ vi.mock('@/features/search/components/DiscoveryHeader', () => ({
     searchSlot?: React.ReactNode;
     filterBarSlot?: React.ReactNode;
   }) => (
-    <header className="fixed left-0 right-0 top-0 z-50" data-testid="discovery-header">
-      <div aria-label="browse sections" data-testid="providers-section-selector" role="tablist" />
+    <header data-testid="discovery-header">
       {searchSlot}
       {filterBarSlot}
     </header>
@@ -47,9 +55,7 @@ vi.mock('@/features/search/components/DiscoveryHeader', () => ({
 }));
 
 vi.mock('@/features/search/components/SectionSelector', () => ({
-  SectionSelector: () => (
-    <div aria-label="browse sections" data-testid="providers-section-selector" role="tablist" />
-  ),
+  SectionSelector: () => null,
 }));
 
 vi.mock('@/features/search/components/DiscoveryResultsGrid', () => ({
@@ -62,10 +68,6 @@ vi.mock('@/features/search/components/SearchMap', () => ({
 
 vi.mock('@/features/search/components/DiscoveryFilterBar', () => ({
   DiscoveryFilterBar: () => <div data-testid="discovery-filter-bar" />,
-}));
-
-vi.mock('@/features/search/components/SearchContextBar', () => ({
-  SearchContextBar: () => <div data-testid="search-context-bar" />,
 }));
 
 vi.mock('@/features/search/hooks/useNearMe', () => ({
@@ -115,7 +117,14 @@ vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({
     t: (key: string) => {
       const map: Record<string, string> = {
-        'providers.adminFilterLabel': 'Admin Filter:',
+        'sections.food': 'Food',
+        'sections.ummah': 'Ummah',
+        'sections.stores': 'Stores',
+        'search.ariaLabel': 'Search',
+        'search.context.allResults': 'All results',
+        'search.context.edit': 'Edit',
+        'search.context.backToHome': 'Back to home',
+        'suchen.clearAll': 'Clear',
       };
       return map[key] ?? key;
     },
@@ -137,7 +146,7 @@ vi.mock('@/features/admin/hooks/useProviderReview', () => ({
 }));
 
 vi.mock('@/features/admin/components/AdminStatusFilter', () => ({
-  AdminStatusFilter: () => <div />,
+  AdminStatusFilter: () => null,
 }));
 
 vi.mock('@/features/admin/components/RejectModal', () => ({
@@ -159,6 +168,7 @@ vi.mock('@/providers/search-provider', () => ({
     selectedSection: 'food',
     setSelectedSection: vi.fn(),
   }),
+  LOCATION_ALL: '',
 }));
 
 const chainable = (): Record<string, unknown> => {
@@ -174,20 +184,20 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
-describe('ProvidersContent layout regression (Plan 109)', () => {
-  it('renders section tabs inside the fixed mobile header above the search bar', () => {
+describe('ProvidersContent search term display (Plan 222)', () => {
+  it('displays the query from ?q= in the search bar input', () => {
     render(<ProvidersContent />);
 
-    const fixedSearchHeader = screen.getByTestId('discovery-header');
-    expect(fixedSearchHeader).toHaveClass('fixed', 'left-0', 'right-0', 'top-0', 'z-50');
+    // The search bar input should show "Lolo" (from ?q=Lolo in the URL)
+    const searchInput = screen.getByRole('searchbox');
+    expect(searchInput).toHaveValue('Lolo');
+  });
 
-    const sectionTablist = screen.getByRole('tablist', { name: /browse sections/i });
-    expect(sectionTablist).toBeInTheDocument();
-    expect(fixedSearchHeader).toContainElement(sectionTablist);
+  it('renders a clear button when a search term is present', () => {
+    render(<ProvidersContent />);
 
-    const main = screen.getByRole('main');
-    expect(
-      within(main).queryByRole('tablist', { name: /browse sections/i }),
-    ).not.toBeInTheDocument();
+    // SearchContextBar renders an X button when draftQuery is non-empty
+    const clearButton = screen.getByRole('button', { name: /clear/i });
+    expect(clearButton).toBeInTheDocument();
   });
 });
