@@ -122,7 +122,7 @@ async function ensureImportBotUser(): Promise<boolean> {
 // ─── Deduplication ────────────────────────────────────────────────────────────
 
 function makeProviderKey(name: string, city: string | null): string {
-  return `${normalizeName(name)}|${normalizeName(city ?? '')}`;
+  return `${normalizeName(name)}|${(city ?? '').toLowerCase().trim()}`;
 }
 
 interface ExistingProvider {
