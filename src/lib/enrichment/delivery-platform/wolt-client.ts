@@ -9,6 +9,12 @@ export interface WoltClientConfig {
 export interface WoltVenue {
   name: string;
   slug: string;
+  tags?: string[];
+  short_description?: string;
+  address?: string;
+  city?: string;
+  location?: { coordinates?: [number, number] };
+  online?: boolean;
   [key: string]: unknown;
 }
 
