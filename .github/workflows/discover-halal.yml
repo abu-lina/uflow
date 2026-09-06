@@ -61,7 +61,7 @@ jobs:
     name: "Wolt Discovery (${{ inputs.mode || 'dry-run' }})"
     if: inputs.platform == 'wolt' || inputs.platform == 'both' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout

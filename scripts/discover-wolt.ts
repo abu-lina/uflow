@@ -237,9 +237,11 @@ async function main(): Promise<void> {
   console.log(`  ${dedupSet.size} existing provider keys loaded\n`);
 
   // 3. Init Wolt client
+  // 2s between requests + 5 retries with exponential backoff (up to ~31s)
+  // to handle Wolt's rate limiting across 103 cities
   const geocoder = new StaticCityGeocoder();
   const woltClient = createWoltClient(
-    { requestDelayMs: 800, maxRetries: 3 },
+    { requestDelayMs: 2000, maxRetries: 5 },
     geocoder
   );
 

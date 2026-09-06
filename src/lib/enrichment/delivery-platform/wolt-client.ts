@@ -143,7 +143,9 @@ class WoltHttpClient implements WoltClient {
 
     if (response.status === 429 || response.status >= 500) {
       if (attempt < this.config.maxRetries) {
-        const backoff = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+        // 429 gets a longer base backoff (10s) to let the rate limit window reset
+        const base = response.status === 429 ? 10000 : 1000;
+        const backoff = Math.pow(2, attempt) * base + Math.random() * 1000;
         await new Promise((resolve) => setTimeout(resolve, backoff));
         return this.fetchWithRetry(url, attempt + 1);
       }
