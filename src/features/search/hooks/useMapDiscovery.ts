@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getMapLocations } from '@/services/providers';
 import type { RawLocationRow } from '@/services/providers';
 import { filterOpenNow } from '@/utils/filterOpenNow';
@@ -13,6 +13,19 @@ export type { RawCategoryRow, RawProviderRow, RawLocationRow } from '@/services/
 // ---- View mode ----
 
 export type ViewMode = 'map' | 'list';
+
+// ---- URL sync ----
+
+/**
+ * Optional URL-sync configuration. When provided, the hook reads the initial
+ * view mode from `searchParams.get('view')` and writes back on toggle/set
+ * via `replace()`. All existing query params are preserved.
+ */
+export interface UrlSyncConfig {
+  searchParams: URLSearchParams | { get(key: string): string | null; toString(): string };
+  pathname: string;
+  replace: (url: string, options?: { scroll?: boolean }) => void;
+}
 
 // ---- Pin adapter ----
 
@@ -67,19 +80,32 @@ export interface UseMapDiscoveryResult {
  *
  * @param reviewStatus - Optional review status filter for admin users.
  *   Defaults to 'approved' when null/undefined.
+ * @param urlSync - Optional URL-sync config. When provided the hook
+ *   reads `?view=` on mount and writes it back on toggle/set.
  */
 export function useMapDiscovery(
   geolocation: { status: string; coords: GeolocationCoords | null },
   defaultViewMode: ViewMode = 'list',
   reviewStatus?: string | null,
+  urlSync?: UrlSyncConfig,
 ): UseMapDiscoveryResult {
   const [isOpenNow, setIsOpenNow] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
+
+  // Resolve initial view: URL param > defaultViewMode
+  const urlView = urlSync?.searchParams.get('view');
+  const initialView: ViewMode =
+    urlView === 'map' ? 'map' : urlView === 'list' ? 'list' : defaultViewMode;
+
+  const [viewMode, _setViewMode] = useState<ViewMode>(initialView);
   const [allRows, setAllRows] = useState<RawLocationRow[]>([]);
   const [pinsLoading, setPinsLoading] = useState(true);
   const [pinsError, setPinsError] = useState<Error | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(120);
+
+  // Stable ref to latest urlSync to avoid re-creating callbacks on every render
+  const urlSyncRef = useRef(urlSync);
+  urlSyncRef.current = urlSync;
 
   // Keep headerHeight in sync with the actual element size so content
   // is never hidden behind the fixed header (fixes /food overlap).
@@ -101,12 +127,39 @@ export function useMapDiscovery(
     [geolocation.status, geolocation.coords],
   );
 
-  const toggleViewMode = () => {
+  // Build a URL with the updated ?view= param, preserving all other params.
+  const buildViewUrl = useCallback(
+    (nextView: ViewMode) => {
+      const sync = urlSyncRef.current;
+      if (!sync) return null;
+      const params = new URLSearchParams(sync.searchParams.toString());
+      params.set('view', nextView);
+      return `${sync.pathname}?${params.toString()}`;
+    },
+    [], // urlSyncRef is a ref — stable
+  );
+
+  // Wrapped setViewMode that also syncs URL when urlSync is provided.
+  const setViewMode: React.Dispatch<React.SetStateAction<ViewMode>> = useCallback(
+    (action) => {
+      _setViewMode((prev) => {
+        const next = typeof action === 'function' ? action(prev) : action;
+        if (next !== prev) {
+          const url = buildViewUrl(next);
+          if (url) urlSyncRef.current?.replace(url, { scroll: false });
+        }
+        return next;
+      });
+    },
+    [buildViewUrl],
+  );
+
+  const toggleViewMode = useCallback(() => {
     if (viewMode === 'map') {
       setHeaderHeight(headerRef.current?.offsetHeight ?? 120);
     }
     setViewMode((v) => (v === 'map' ? 'list' : 'map'));
-  };
+  }, [viewMode, setViewMode]);
 
   // Load map pins on mount and when reviewStatus changes
   useEffect(() => {
