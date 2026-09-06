@@ -134,64 +134,73 @@ jobs:
             echo "Records inserted with \`review_status = 'pending'\`. Approve via admin moderation." >> $GITHUB_STEP_SUMMARY
           fi
 
-  discover-lieferando:
-    name: "Lieferando Discovery (${{ inputs.mode || 'dry-run' }})"
+  import-lieferando:
+    name: "Lieferando Import (${{ inputs.mode || 'dry-run' }})"
     if: inputs.platform == 'lieferando' || inputs.platform == 'both' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check for scrape data
+        id: check
+        run: |
+          if [ -f data/lieferando-halal.json ]; then
+            echo "has_data=true" >> "$GITHUB_OUTPUT"
+            echo "Found data/lieferando-halal.json"
+            cat data/lieferando-halal.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'  Scraped: {d[\"scraped_at\"]}'); print(f'  Restaurants: {d[\"total_restaurants\"]}')"
+          else
+            echo "has_data=false" >> "$GITHUB_OUTPUT"
+            echo "No data/lieferando-halal.json found."
+            echo "Run locally first: npx tsx scripts/discover-lieferando.ts --scrape"
+            echo "Then commit the file and push."
+          fi
+
       - name: Setup Node.js
+        if: steps.check.outputs.has_data == 'true'
         uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.check.outputs.has_data == 'true'
         run: npm ci
 
-      - name: Install Playwright Chromium
-        run: npx playwright install chromium --with-deps
-
       - name: Build CLI arguments
+        if: steps.check.outputs.has_data == 'true'
         id: args
         run: |
           MODE="${{ inputs.mode || 'dry-run' }}"
-          LIMIT="${{ inputs.limit || '' }}"
 
           if [ "$MODE" = "write" ] && [ "${{ github.event_name }}" != "schedule" ]; then
-            ARGS="--write"
+            ARGS="--import data/lieferando-halal.json --write"
           else
-            ARGS="--dry-run"
-          fi
-
-          if [ -n "$LIMIT" ]; then
-            ARGS="$ARGS --limit $LIMIT"
+            ARGS="--import data/lieferando-halal.json"
           fi
 
           echo "cli_args=$ARGS" >> "$GITHUB_OUTPUT"
 
-      - name: Run Lieferando discovery (Production)
-        if: (inputs.environment || 'production') == 'production'
+      - name: Run Lieferando import (Production)
+        if: steps.check.outputs.has_data == 'true' && (inputs.environment || 'production') == 'production'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "Running Lieferando discovery against PRODUCTION"
+          echo "Importing Lieferando data into PRODUCTION"
           echo "  Args: ${{ steps.args.outputs.cli_args }}"
           echo ""
           npx tsx scripts/discover-lieferando.ts ${{ steps.args.outputs.cli_args }}
 
-      - name: Run Lieferando discovery (UAT)
-        if: (inputs.environment || 'production') == 'uat'
+      - name: Run Lieferando import (UAT)
+        if: steps.check.outputs.has_data == 'true' && (inputs.environment || 'production') == 'uat'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "Running Lieferando discovery against UAT"
+          echo "Importing Lieferando data into UAT"
           echo "  Args: ${{ steps.args.outputs.cli_args }}"
           echo ""
           npx tsx scripts/discover-lieferando.ts ${{ steps.args.outputs.cli_args }}
@@ -199,17 +208,24 @@ jobs:
       - name: Step summary
         if: always()
         run: |
-          echo "## Lieferando Discovery" >> $GITHUB_STEP_SUMMARY
+          echo "## Lieferando Import" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Lieferando |" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | ${{ inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Mode | ${{ inputs.mode || 'dry-run' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Triggered by | ${{ github.actor }} (${{ github.event_name }}) |" >> $GITHUB_STEP_SUMMARY
-          echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ inputs.mode }}" = "write" ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Records inserted with \`review_status = 'pending'\`. Approve via admin moderation." >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check.outputs.has_data }}" != "true" ]; then
+            echo "No scrape data found. Run locally:" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "npx tsx scripts/discover-lieferando.ts --scrape" >> $GITHUB_STEP_SUMMARY
+            echo "git add data/lieferando-halal.json && git commit -m 'data: lieferando scrape' && git push" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Platform | Lieferando (from JSON) |" >> $GITHUB_STEP_SUMMARY
+            echo "| Environment | ${{ inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Mode | ${{ inputs.mode || 'dry-run' }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Triggered by | ${{ github.actor }} (${{ github.event_name }}) |" >> $GITHUB_STEP_SUMMARY
+            echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ inputs.mode }}" = "write" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "Records inserted with \`review_status = 'pending'\`. Approve via admin moderation." >> $GITHUB_STEP_SUMMARY
+            fi
           fi

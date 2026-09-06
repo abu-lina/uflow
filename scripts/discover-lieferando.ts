@@ -3,38 +3,35 @@
  *
  * Lieferando Halal Discovery Pipeline (Plan 225)
  *
- * Sweeps German cities via Playwright browser automation against lieferando.de,
- * using the `?dietary=halal` filter to get halal-tagged restaurants directly.
- * Deduplicates against existing providers and imports new ones as pending.
+ * Two-step workflow for CI compatibility (Cloudflare blocks headless
+ * Chromium from datacenter IPs):
  *
- * Uses Playwright (the Takeaway REST API at cw-api.takeaway.com has been
- * deprecated). The `?dietary=halal` URL parameter returns only halal-filtered
- * results from Lieferando's SPA, avoiding unreliable name-only detection.
+ *   Step 1 (local):  --scrape   → scrapes Lieferando, writes JSON to data/
+ *   Step 2 (CI-ok):  --import   → reads JSON, deduplicates, upserts to Supabase
  *
- * --- IMPORTANT OPERATIONAL NOTES ------------------------------------------------
- * - Always run with --dry-run first to inspect the discovery plan before writing.
- * - The script uses SUPABASE_SERVICE_ROLE_KEY (admin/service-role access).
- *   This bypasses RLS. Handle credentials with care.
- * - Imported rows default to review_status = 'pending' and are not publicly
- *   visible until approved via the admin moderation workflow.
- * - Requires Playwright + Chromium installed (npx playwright install chromium).
- * - Rate-limited: 2s between page loads (browser automation per city).
- *   Consider using --limit for initial runs.
- * --------------------------------------------------------------------------------
+ * The original --dry-run / --write modes still work for local end-to-end runs.
  *
  * Usage:
+ *   # Step 1: scrape locally (needs Playwright + residential IP)
+ *   npx tsx scripts/discover-lieferando.ts --scrape
+ *   npx tsx scripts/discover-lieferando.ts --scrape --limit 5
+ *
+ *   # Step 2: import from JSON (no Playwright needed, CI-safe)
+ *   npx tsx scripts/discover-lieferando.ts --import data/lieferando-halal.json --dry-run
+ *   npx tsx scripts/discover-lieferando.ts --import data/lieferando-halal.json --write
+ *
+ *   # End-to-end (local only, original behavior)
  *   npx tsx scripts/discover-lieferando.ts --dry-run
- *   npx tsx scripts/discover-lieferando.ts --dry-run --limit 5
- *   npx tsx scripts/discover-lieferando.ts --write
  *   npx tsx scripts/discover-lieferando.ts --write --limit 5
  *
  * Environment variables (from .env.local):
- *   NEXT_PUBLIC_SUPABASE_URL       (required)
- *   SUPABASE_SERVICE_ROLE_KEY      (required)
+ *   NEXT_PUBLIC_SUPABASE_URL       (required for --import/--write/--dry-run)
+ *   SUPABASE_SERVICE_ROLE_KEY      (required for --import/--write/--dry-run)
  */
 
 import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
 import * as path from 'path';
 import { CITY_COORDS } from '../src/lib/enrichment/delivery-platform/city-coords';
 import { normalizeName } from '../src/lib/enrichment/delivery-platform/provider-matcher';
@@ -43,15 +40,6 @@ import { normalizeName } from '../src/lib/enrichment/delivery-platform/provider-
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error('Missing required environment variables.');
-  console.error('   NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local');
-  process.exit(1);
-}
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const IMPORT_BOT_UUID = '00000000-0000-0000-0000-000225000002';
@@ -59,6 +47,7 @@ const IMPORT_BOT_EMAIL = 'import-bot-lieferando-discovery@system.internal';
 const BATCH_SIZE = 50;
 const RATE_LIMIT_MS = 2000;
 const BASE_URL = 'https://www.lieferando.de';
+const DEFAULT_OUTPUT_PATH = path.resolve(process.cwd(), 'data/lieferando-halal.json');
 
 /**
  * Representative postal codes for each city in CITY_COORDS.
@@ -66,7 +55,6 @@ const BASE_URL = 'https://www.lieferando.de';
  * URL format: /en/delivery/food/postcode-{PLZ}
  */
 const CITY_POSTAL_CODES: Record<string, string> = {
-  // Major cities
   'Berlin': '10115',
   'München': '80331',
   'Frankfurt am Main': '60311',
@@ -91,14 +79,12 @@ const CITY_POSTAL_CODES: Record<string, string> = {
   'Essen': '45127',
   'Duisburg': '47051',
   'Böblingen': '71032',
-  // Medium cities
   'Hannover': '30159',
   'Ingolstadt': '85049',
   'Leipzig': '04109',
   'Ludwigsburg': '71638',
   'Wuppertal': '42103',
   'Hagen': '58095',
-  // Small cities
   'Recklinghausen': '45657',
   'Herford': '32049',
   'Bad Oeynhausen': '32545',
@@ -179,6 +165,15 @@ const CITY_POSTAL_CODES: Record<string, string> = {
 interface ScrapedRestaurant {
   name: string;
   slug: string;
+  city: string;
+}
+
+/** Shape of the JSON file written by --scrape and read by --import */
+interface ScrapeOutput {
+  scraped_at: string;
+  cities_scanned: number;
+  total_restaurants: number;
+  restaurants: ScrapedRestaurant[];
 }
 
 interface DeliveryLinkUpsert {
@@ -204,13 +199,60 @@ interface DiscoveredRestaurant {
   existingProviderId?: string;
 }
 
-// ─── Supabase client ──────────────────────────────────────────────────────────
+// ─── Supabase helpers ─────────────────────────────────────────────────────────
 
-let supabase: ReturnType<typeof createClient>;
+function createSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) {
+    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in env.');
+    process.exit(1);
+  }
+  return createClient(url, key, { auth: { persistSession: false } });
+}
 
-// ─── Import bot user setup ────────────────────────────────────────────────────
+function makeProviderKey(name: string, city: string | null): string {
+  return `${normalizeName(name)}|${(city ?? '').toLowerCase().trim()}`;
+}
 
-async function ensureImportBotUser(): Promise<boolean> {
+interface ExistingProvider {
+  provider_id: string;
+  provider_name: string;
+  address_city: string | null;
+}
+
+async function loadExistingProviders(supabase: ReturnType<typeof createClient>) {
+  const keySet = new Set<string>();
+  const keyToId = new Map<string, string>();
+  let offset = 0;
+  const pageSize = 1000;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('providers')
+      .select('provider_id, provider_name, address_city')
+      .range(offset, offset + pageSize - 1);
+
+    if (error) {
+      console.warn(`  Could not load existing providers: ${error.message}`);
+      break;
+    }
+    if (!data || data.length === 0) break;
+
+    for (const row of data as ExistingProvider[]) {
+      const key = makeProviderKey(row.provider_name ?? '', row.address_city);
+      keySet.add(key);
+      keyToId.set(key, row.provider_id);
+    }
+
+    if (data.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return { keySet, keyToId };
+}
+
+async function ensureImportBotUser(supabase: ReturnType<typeof createClient>): Promise<boolean> {
   try {
     const { data: existing } = await supabase.auth.admin.getUserById(IMPORT_BOT_UUID);
     if (existing?.user) {
@@ -240,60 +282,9 @@ async function ensureImportBotUser(): Promise<boolean> {
   return true;
 }
 
-// ─── Deduplication ────────────────────────────────────────────────────────────
-
-function makeProviderKey(name: string, city: string | null): string {
-  return `${normalizeName(name)}|${(city ?? '').toLowerCase().trim()}`;
-}
-
-interface ExistingProvider {
-  provider_id: string;
-  provider_name: string;
-  address_city: string | null;
-}
-
-async function loadExistingProviders(): Promise<{
-  keySet: Set<string>;
-  keyToId: Map<string, string>;
-}> {
-  const keySet = new Set<string>();
-  const keyToId = new Map<string, string>();
-  let offset = 0;
-  const pageSize = 1000;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from('providers')
-      .select('provider_id, provider_name, address_city')
-      .range(offset, offset + pageSize - 1);
-
-    if (error) {
-      console.warn(`  Could not load existing providers: ${error.message}`);
-      break;
-    }
-
-    if (!data || data.length === 0) break;
-
-    for (const row of data as ExistingProvider[]) {
-      const key = makeProviderKey(row.provider_name ?? '', row.address_city);
-      keySet.add(key);
-      keyToId.set(key, row.provider_id);
-    }
-
-    if (data.length < pageSize) break;
-    offset += pageSize;
-  }
-
-  return { keySet, keyToId };
-}
-
 // ─── Playwright scraper ───────────────────────────────────────────────────────
 
-/**
- * Scrapes halal restaurants from Lieferando for a given city using
- * the ?dietary=halal URL filter. Returns restaurant names and slugs.
- */
-async function scrapeHalalRestaurants(
+async function scrapeCity(
   page: import('playwright').Page,
   cityName: string,
 ): Promise<ScrapedRestaurant[]> {
@@ -304,7 +295,6 @@ async function scrapeHalalRestaurants(
   const url = `${BASE_URL}/en/delivery/food/postcode-${postalCode}?dietary=halal`;
 
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  // Wait for restaurant cards to render
   await page.waitForSelector('a[href*="/menu/"]', { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(3000);
 
@@ -330,78 +320,154 @@ async function scrapeHalalRestaurants(
     return restaurants;
   });
 
-  return results;
+  return results.map((r) => ({ ...r, city: cityName }));
 }
 
-// ─── Reporting ────────────────────────────────────────────────────────────────
+// ─── Mode: --scrape ───────────────────────────────────────────────────────────
 
-function printReport(
-  cityResults: CityResult[],
-  totalNew: number,
-  totalExisting: number,
-  isDryRun: boolean
-) {
-  console.log('\n================================================================');
-  console.log(isDryRun
-    ? '  DRY-RUN REPORT -- no data was written'
-    : '  WRITE REPORT');
-  console.log('================================================================');
+async function runScrape(limit: number | null, outputPath: string) {
+  console.log('\n+======================================================+');
+  console.log('|  Lieferando Scrape (local, Playwright)                |');
+  console.log('+======================================================+');
 
-  console.log('\n  City-by-city results:');
-  console.log('  ' + '-'.repeat(54));
-  console.log(
-    '  ' +
-    'City'.padEnd(30) +
-    'Halal'.padStart(8) +
-    'New'.padStart(8) +
-    'Exists'.padStart(8)
-  );
-  console.log('  ' + '-'.repeat(54));
+  const cityNames = Object.keys(CITY_COORDS).filter((c) => c in CITY_POSTAL_CODES);
+  const citiesToScan = limit !== null ? cityNames.slice(0, limit) : cityNames;
+  console.log(`  Cities     : ${citiesToScan.length}`);
+  console.log(`  Output     : ${outputPath}\n`);
 
-  for (const cr of cityResults) {
-    console.log(
-      '  ' +
-      cr.city.padEnd(30) +
-      String(cr.halalRestaurants).padStart(8) +
-      String(cr.newProviders).padStart(8) +
-      String(cr.existingWithLink).padStart(8)
-    );
+  const { chromium } = await import('playwright');
+  const browser = await chromium.launch({
+    headless: true,
+    args: ['--disable-blink-features=AutomationControlled', '--no-sandbox'],
+  });
+
+  const allRestaurants: ScrapedRestaurant[] = [];
+  const seenSlugs = new Set<string>();
+  let lastRequestTime = 0;
+
+  try {
+    for (let i = 0; i < citiesToScan.length; i++) {
+      const cityName = citiesToScan[i];
+      const progress = `[${i + 1}/${citiesToScan.length}]`;
+
+      const now = Date.now();
+      const elapsed = now - lastRequestTime;
+      if (elapsed < RATE_LIMIT_MS) {
+        await new Promise((r) => setTimeout(r, RATE_LIMIT_MS - elapsed));
+      }
+      lastRequestTime = Date.now();
+
+      const context = await browser.newContext({
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        viewport: { width: 1920, height: 1080 },
+      });
+      const page = await context.newPage();
+
+      try {
+        const results = await scrapeCity(page, cityName);
+        let added = 0;
+        for (const r of results) {
+          if (!seenSlugs.has(r.slug)) {
+            seenSlugs.add(r.slug);
+            allRestaurants.push(r);
+            added++;
+          }
+        }
+        console.log(`  ${progress} ${cityName}: ${results.length} found, ${added} new`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`  ${progress} ${cityName}: scrape error - ${msg}`);
+      } finally {
+        await page.close().catch(() => {});
+        await context.close().catch(() => {});
+      }
+    }
+  } finally {
+    await browser.close();
   }
 
-  console.log('  ' + '-'.repeat(54));
+  const output: ScrapeOutput = {
+    scraped_at: new Date().toISOString(),
+    cities_scanned: citiesToScan.length,
+    total_restaurants: allRestaurants.length,
+    restaurants: allRestaurants,
+  };
 
-  const totalCities = cityResults.length;
-  const totalHalal = cityResults.reduce((s, c) => s + c.halalRestaurants, 0);
-
-  console.log(`\n  Cities scanned       : ${totalCities}`);
-  console.log(`  Halal restaurants    : ${totalHalal}`);
-  console.log(`  New providers        : ${totalNew}`);
-  console.log(`  Existing (link only) : ${totalExisting}`);
-
-  if (isDryRun) {
-    console.log('\n  To execute the import, run:');
-    console.log('    npx tsx scripts/discover-lieferando.ts --write [--limit N]');
-  } else {
-    console.log('\n  To query imported records:');
-    console.log(`    SELECT * FROM providers WHERE import_source = 'lieferando';`);
-    console.log(`    SELECT * FROM provider_delivery_links WHERE platform = 'lieferando';`);
+  // Ensure output directory exists
+  const dir = path.dirname(outputPath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
-  console.log('================================================================\n');
+
+  fs.writeFileSync(outputPath, JSON.stringify(output, null, 2));
+  console.log(`\n  Wrote ${allRestaurants.length} restaurants to ${outputPath}`);
+  console.log('  Next step: commit the file and run --import to load into Supabase.');
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+// ─── Mode: --import ───────────────────────────────────────────────────────────
 
-async function main() {
-  const args = process.argv.slice(2);
-  const isDryRun = args.includes('--dry-run') || !args.includes('--write');
-  const limitFlag = args.findIndex((a) => a === '--limit');
-  const limitRaw = limitFlag >= 0 ? parseInt(args[limitFlag + 1], 10) : null;
-  if (limitRaw !== null && (!Number.isInteger(limitRaw) || limitRaw <= 0)) {
-    console.error(`--limit requires a positive integer (got: ${args[limitFlag + 1]})`);
+async function runImport(inputPath: string, isDryRun: boolean) {
+  console.log('\n+======================================================+');
+  console.log('|  Lieferando Import from JSON                          |');
+  console.log('+======================================================+');
+  console.log(`  Mode       : ${isDryRun ? 'DRY-RUN (no writes)' : 'WRITE'}`);
+  console.log(`  Input      : ${inputPath}\n`);
+
+  if (!fs.existsSync(inputPath)) {
+    console.error(`  File not found: ${inputPath}`);
+    console.error('  Run --scrape first to generate the JSON file.');
     process.exit(1);
   }
-  const limit = limitRaw;
 
+  const raw = JSON.parse(fs.readFileSync(inputPath, 'utf-8')) as ScrapeOutput;
+  console.log(`  Scraped at : ${raw.scraped_at}`);
+  console.log(`  Cities     : ${raw.cities_scanned}`);
+  console.log(`  Restaurants: ${raw.total_restaurants}\n`);
+
+  const supabase = createSupabaseClient();
+
+  console.log('> Loading existing providers for deduplication...');
+  const { keySet: existingKeys, keyToId: existingKeyToId } = await loadExistingProviders(supabase);
+  console.log(`  + Loaded ${existingKeys.size} existing providers\n`);
+
+  const newProviders: DiscoveredRestaurant[] = [];
+  const existingWithLinks: DiscoveredRestaurant[] = [];
+  const cityResultMap = new Map<string, CityResult>();
+
+  for (const restaurant of raw.restaurants) {
+    const city = restaurant.city;
+    if (!cityResultMap.has(city)) {
+      cityResultMap.set(city, { city, halalRestaurants: 0, newProviders: 0, existingWithLink: 0 });
+    }
+    const cr = cityResultMap.get(city)!;
+    cr.halalRestaurants++;
+
+    const key = makeProviderKey(restaurant.name, city);
+
+    if (existingKeys.has(key)) {
+      const providerId = existingKeyToId.get(key);
+      if (providerId) {
+        existingWithLinks.push({ restaurant, city, isNew: false, existingProviderId: providerId });
+      }
+      cr.existingWithLink++;
+    } else {
+      newProviders.push({ restaurant, city, isNew: true });
+      existingKeys.add(key);
+      cr.newProviders++;
+    }
+  }
+
+  const cityResults = Array.from(cityResultMap.values());
+  printReport(cityResults, newProviders.length, existingWithLinks.length, isDryRun);
+
+  if (isDryRun) return;
+
+  await writeToSupabase(supabase, newProviders, existingWithLinks);
+}
+
+// ─── Mode: --dry-run / --write (end-to-end) ───────────────────────────────────
+
+async function runEndToEnd(isDryRun: boolean, limit: number | null) {
   console.log('\n+======================================================+');
   console.log('|  UFlow -- Lieferando Halal Discovery (Plan 225)       |');
   console.log('+======================================================+');
@@ -410,21 +476,15 @@ async function main() {
   console.log(`  Filter     : ?dietary=halal (server-side)`);
   console.log(`  Cities     : ${Object.keys(CITY_COORDS).length} available\n`);
 
-  // Initialize Supabase
-  supabase = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
-    auth: { persistSession: false },
-  });
+  const supabase = createSupabaseClient();
 
-  // Load existing providers for dedup
   console.log('> Loading existing providers for deduplication...');
-  const { keySet: existingKeys, keyToId: existingKeyToId } = await loadExistingProviders();
+  const { keySet: existingKeys, keyToId: existingKeyToId } = await loadExistingProviders(supabase);
   console.log(`  + Loaded ${existingKeys.size} existing providers\n`);
 
-  // Prepare city list (only cities with postal code mappings)
   const cityNames = Object.keys(CITY_COORDS).filter((c) => c in CITY_POSTAL_CODES);
   const citiesToScan = limit !== null ? cityNames.slice(0, limit) : cityNames;
 
-  // Launch Playwright browser
   const { chromium } = await import('playwright');
   const browser = await chromium.launch({
     headless: true,
@@ -444,7 +504,6 @@ async function main() {
       const cityName = citiesToScan[i];
       const progress = `[${i + 1}/${citiesToScan.length}]`;
 
-      // Rate limit between cities
       const now = Date.now();
       const elapsed = now - lastRequestTime;
       if (elapsed < RATE_LIMIT_MS) {
@@ -452,7 +511,6 @@ async function main() {
       }
       lastRequestTime = Date.now();
 
-      // Fresh context per city to avoid cookie/state pollution
       const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         viewport: { width: 1920, height: 1080 },
@@ -461,16 +519,11 @@ async function main() {
 
       let restaurants: ScrapedRestaurant[];
       try {
-        restaurants = await scrapeHalalRestaurants(page, cityName);
+        restaurants = await scrapeCity(page, cityName);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`  ${progress} ${cityName}: scrape error - ${msg}`);
-        cityResults.push({
-          city: cityName,
-          halalRestaurants: 0,
-          newProviders: 0,
-          existingWithLink: 0,
-        });
+        cityResults.push({ city: cityName, halalRestaurants: 0, newProviders: 0, existingWithLink: 0 });
         continue;
       } finally {
         await page.close().catch(() => {});
@@ -481,7 +534,6 @@ async function main() {
       let existingCount = 0;
 
       for (const restaurant of restaurants) {
-        // Cross-city dedup
         if (seenSlugs.has(restaurant.slug)) continue;
         seenSlugs.add(restaurant.slug);
 
@@ -490,47 +542,28 @@ async function main() {
         if (existingKeys.has(key)) {
           const providerId = existingKeyToId.get(key);
           if (providerId) {
-            existingWithLinks.push({
-              restaurant,
-              city: cityName,
-              isNew: false,
-              existingProviderId: providerId,
-            });
+            existingWithLinks.push({ restaurant, city: cityName, isNew: false, existingProviderId: providerId });
           }
           existingCount++;
         } else {
-          newProviders.push({
-            restaurant,
-            city: cityName,
-            isNew: true,
-          });
+          newProviders.push({ restaurant, city: cityName, isNew: true });
           existingKeys.add(key);
           newCount++;
         }
       }
 
-      console.log(
-        `  ${progress} ${cityName}: ${restaurants.length} halal (${newCount} new, ${existingCount} existing)`
-      );
-
-      cityResults.push({
-        city: cityName,
-        halalRestaurants: restaurants.length,
-        newProviders: newCount,
-        existingWithLink: existingCount,
-      });
+      console.log(`  ${progress} ${cityName}: ${restaurants.length} halal (${newCount} new, ${existingCount} existing)`);
+      cityResults.push({ city: cityName, halalRestaurants: restaurants.length, newProviders: newCount, existingWithLink: existingCount });
     }
   } finally {
     await browser.close();
   }
 
-  // Print sample new providers
   if (newProviders.length > 0) {
     console.log('\n  Sample new providers (first 10):');
     for (const item of newProviders.slice(0, 10)) {
-      const r = item.restaurant;
-      console.log(`    - ${r.name} (${item.city})`);
-      console.log(`      ${BASE_URL}/speisekarte/${r.slug}`);
+      console.log(`    - ${item.restaurant.name} (${item.city})`);
+      console.log(`      ${BASE_URL}/speisekarte/${item.restaurant.slug}`);
     }
   }
 
@@ -538,10 +571,18 @@ async function main() {
 
   if (isDryRun) return;
 
-  // ─── Write mode ─────────────────────────────────────────────────────────
+  await writeToSupabase(supabase, newProviders, existingWithLinks);
+}
 
+// ─── Shared: Supabase write logic ─────────────────────────────────────────────
+
+async function writeToSupabase(
+  supabase: ReturnType<typeof createClient>,
+  newProviders: DiscoveredRestaurant[],
+  existingWithLinks: DiscoveredRestaurant[],
+) {
   console.log('> Ensuring import-bot user exists...');
-  const botOk = await ensureImportBotUser();
+  const botOk = await ensureImportBotUser(supabase);
   if (!botOk) {
     console.error('  Cannot proceed without import-bot user. Aborting.');
     process.exit(1);
@@ -589,9 +630,7 @@ async function main() {
 
       const insertedCount = data?.length ?? 0;
       inserted += insertedCount;
-      console.log(
-        `  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${insertedCount} records`
-      );
+      console.log(`  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${insertedCount} records`);
 
       // Create food_providers extension rows
       if (data && data.length > 0) {
@@ -657,14 +696,103 @@ async function main() {
       if (error) {
         console.warn(`  Delivery link batch failed (offset ${offset}): ${error.message}`);
       } else {
-        console.log(
-          `  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: upserted ${batch.length} delivery links`
-        );
+        console.log(`  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: upserted ${batch.length} delivery links`);
       }
     }
   }
 
   console.log('\nDone.');
+}
+
+// ─── Reporting ────────────────────────────────────────────────────────────────
+
+function printReport(
+  cityResults: CityResult[],
+  totalNew: number,
+  totalExisting: number,
+  isDryRun: boolean,
+) {
+  console.log('\n================================================================');
+  console.log(isDryRun ? '  DRY-RUN REPORT -- no data was written' : '  WRITE REPORT');
+  console.log('================================================================');
+
+  console.log('\n  City-by-city results:');
+  console.log('  ' + '-'.repeat(54));
+  console.log(
+    '  ' +
+    'City'.padEnd(30) +
+    'Halal'.padStart(8) +
+    'New'.padStart(8) +
+    'Exists'.padStart(8),
+  );
+  console.log('  ' + '-'.repeat(54));
+
+  for (const cr of cityResults) {
+    console.log(
+      '  ' +
+      cr.city.padEnd(30) +
+      String(cr.halalRestaurants).padStart(8) +
+      String(cr.newProviders).padStart(8) +
+      String(cr.existingWithLink).padStart(8),
+    );
+  }
+
+  console.log('  ' + '-'.repeat(54));
+
+  const totalHalal = cityResults.reduce((s, c) => s + c.halalRestaurants, 0);
+
+  console.log(`\n  Cities scanned       : ${cityResults.length}`);
+  console.log(`  Halal restaurants    : ${totalHalal}`);
+  console.log(`  New providers        : ${totalNew}`);
+  console.log(`  Existing (link only) : ${totalExisting}`);
+
+  if (isDryRun) {
+    console.log('\n  To execute the import, re-run with --write');
+  } else {
+    console.log('\n  To query imported records:');
+    console.log(`    SELECT * FROM providers WHERE import_source = 'lieferando';`);
+    console.log(`    SELECT * FROM provider_delivery_links WHERE platform = 'lieferando';`);
+  }
+  console.log('================================================================\n');
+}
+
+// ─── CLI entry point ──────────────────────────────────────────────────────────
+
+async function main() {
+  const args = process.argv.slice(2);
+
+  // Parse --limit
+  const limitIdx = args.findIndex((a) => a === '--limit');
+  const limitRaw = limitIdx >= 0 ? parseInt(args[limitIdx + 1], 10) : null;
+  if (limitRaw !== null && (!Number.isInteger(limitRaw) || limitRaw <= 0)) {
+    console.error(`--limit requires a positive integer (got: ${args[limitIdx + 1]})`);
+    process.exit(1);
+  }
+
+  // Parse --output (for --scrape)
+  const outputIdx = args.findIndex((a) => a === '--output');
+  const outputPath = outputIdx >= 0 ? args[outputIdx + 1] : DEFAULT_OUTPUT_PATH;
+
+  if (args.includes('--scrape')) {
+    await runScrape(limitRaw, outputPath);
+    return;
+  }
+
+  if (args.includes('--import')) {
+    const importIdx = args.indexOf('--import');
+    const inputPath = args[importIdx + 1];
+    if (!inputPath || inputPath.startsWith('--')) {
+      console.error('--import requires a file path (e.g. --import data/lieferando-halal.json)');
+      process.exit(1);
+    }
+    const isDryRun = !args.includes('--write');
+    await runImport(inputPath, isDryRun);
+    return;
+  }
+
+  // Original end-to-end mode
+  const isDryRun = args.includes('--dry-run') || !args.includes('--write');
+  await runEndToEnd(isDryRun, limitRaw);
 }
 
 main().catch((err) => {
