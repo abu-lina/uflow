@@ -88,7 +88,7 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
     expect(mockReplace.mock.calls[0][1]).toEqual({ scroll: false });
   });
 
-  it('toggleViewMode updates URL with ?view=map when switching from list', () => {
+  it('toggleViewMode strips ?view= when switching back to default (map)', () => {
     const params = new URLSearchParams('view=list');
     const { result } = renderHook(() =>
       useMapDiscovery(geo, 'map', null, makeUrlSync(params)),
@@ -99,7 +99,8 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
     expect(result.current.viewMode).toBe('map');
     expect(mockReplace).toHaveBeenCalledTimes(1);
     const url = mockReplace.mock.calls[0][0] as string;
-    expect(url).toContain('view=map');
+    expect(url).not.toContain('view=');
+    expect(url).toBe('/');
   });
 
   // ── Preserves existing query params ─────────────────────────────────────────
@@ -149,5 +150,65 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
 
     expect(result.current.viewMode).toBe('list');
     // No router call since no urlSync
+  });
+
+  // ── Default-view stripping ─────────────────────────────────────────────────
+
+  it('strips ?view= when toggling back to the default view', () => {
+    const params = new URLSearchParams();
+    const { result } = renderHook(() =>
+      useMapDiscovery(geo, 'map', null, makeUrlSync(params)),
+    );
+
+    // Toggle away from default (map → list): should add ?view=list
+    act(() => result.current.toggleViewMode());
+    expect(result.current.viewMode).toBe('list');
+    expect(mockReplace).toHaveBeenCalledTimes(1);
+    expect(mockReplace.mock.calls[0][0]).toContain('view=list');
+
+    // Toggle back to default (list → map): should strip ?view=
+    act(() => result.current.toggleViewMode());
+    expect(result.current.viewMode).toBe('map');
+    expect(mockReplace).toHaveBeenCalledTimes(2);
+    const url = mockReplace.mock.calls[1][0] as string;
+    expect(url).not.toContain('view=');
+    expect(url).toBe('/');
+  });
+
+  it('results page (default=list) strips ?view= when toggling back to list', () => {
+    const params = new URLSearchParams();
+    const { result } = renderHook(() =>
+      useMapDiscovery(geo, 'list', null, makeUrlSync(params, '/food')),
+    );
+
+    // Toggle away from default (list → map): should add ?view=map
+    act(() => result.current.toggleViewMode());
+    expect(result.current.viewMode).toBe('map');
+    expect(mockReplace).toHaveBeenCalledTimes(1);
+    expect(mockReplace.mock.calls[0][0]).toContain('view=map');
+
+    // Toggle back to default (map → list): should strip ?view=
+    act(() => result.current.toggleViewMode());
+    expect(result.current.viewMode).toBe('list');
+    expect(mockReplace).toHaveBeenCalledTimes(2);
+    const url = mockReplace.mock.calls[1][0] as string;
+    expect(url).not.toContain('view=');
+    expect(url).toBe('/food');
+  });
+
+  it('preserves other params when stripping ?view= on default toggle', () => {
+    const params = new URLSearchParams('q=shawarma&view=map');
+    const { result } = renderHook(() =>
+      useMapDiscovery(geo, 'list', null, makeUrlSync(params, '/food')),
+    );
+
+    // Currently viewing map (non-default). Toggle back to list (default).
+    act(() => result.current.toggleViewMode());
+    expect(result.current.viewMode).toBe('list');
+    expect(mockReplace).toHaveBeenCalledTimes(1);
+    const url = mockReplace.mock.calls[0][0] as string;
+    expect(url).toContain('q=shawarma');
+    expect(url).not.toContain('view=');
+    expect(url).toBe('/food?q=shawarma');
   });
 });

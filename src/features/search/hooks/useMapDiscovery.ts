@@ -107,6 +107,10 @@ export function useMapDiscovery(
   const urlSyncRef = useRef(urlSync);
   urlSyncRef.current = urlSync;
 
+  // Stable ref for defaultViewMode so buildViewUrl stays referentially stable
+  const defaultViewRef = useRef(defaultViewMode);
+  defaultViewRef.current = defaultViewMode;
+
   // Keep headerHeight in sync with the actual element size so content
   // is never hidden behind the fixed header (fixes /food overlap).
   useEffect(() => {
@@ -128,15 +132,21 @@ export function useMapDiscovery(
   );
 
   // Build a URL with the updated ?view= param, preserving all other params.
+  // When nextView matches the default, strip ?view= for cleaner URLs.
   const buildViewUrl = useCallback(
     (nextView: ViewMode) => {
       const sync = urlSyncRef.current;
       if (!sync) return null;
       const params = new URLSearchParams(sync.searchParams.toString());
-      params.set('view', nextView);
-      return `${sync.pathname}?${params.toString()}`;
+      if (nextView === defaultViewRef.current) {
+        params.delete('view');
+      } else {
+        params.set('view', nextView);
+      }
+      const qs = params.toString();
+      return qs ? `${sync.pathname}?${qs}` : sync.pathname;
     },
-    [], // urlSyncRef is a ref — stable
+    [], // urlSyncRef and defaultViewRef are refs — stable
   );
 
   // Wrapped setViewMode that also syncs URL when urlSync is provided.
