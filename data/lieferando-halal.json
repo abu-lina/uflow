@@ -1,0 +1,447 @@
+{
+  "scraped_at": "2026-09-06T07:35:40.332Z",
+  "cities_scanned": 5,
+  "total_restaurants": 88,
+  "restaurants": [
+    {
+      "name": "30% off at SubwayYour favourite Subs for lessOrder now",
+      "slug": "subway-berlin-behrenstrasse",
+      "city": "Berlin"
+    },
+    {
+      "name": "19grams Chaussee",
+      "slug": "19grams-chaussee",
+      "city": "Berlin"
+    },
+    {
+      "name": "Daisies Berlin Floristik",
+      "slug": "daisies-berlin-floristik",
+      "city": "Berlin"
+    },
+    {
+      "name": "Black Coffee",
+      "slug": "black-coffee-neu",
+      "city": "Berlin"
+    },
+    {
+      "name": "Back Baron Bernauer Straße",
+      "slug": "back-baron-bernauer-strasse",
+      "city": "Berlin"
+    },
+    {
+      "name": "Café Anka",
+      "slug": "cafe-anka-berlin",
+      "city": "Berlin"
+    },
+    {
+      "name": "La Floraison",
+      "slug": "la-floraison",
+      "city": "Berlin"
+    },
+    {
+      "name": "The Sanctuary - Italian Vegan Bakery",
+      "slug": "the-sanctuary-italian-vegan-bakery-mitte-1",
+      "city": "Berlin"
+    },
+    {
+      "name": "Super 2",
+      "slug": "super-2-fruhstuck",
+      "city": "Berlin"
+    },
+    {
+      "name": "Curry 36 - HBF",
+      "slug": "curry-36-hbf",
+      "city": "Berlin"
+    },
+    {
+      "name": "Berfin Grill",
+      "slug": "berfin-grill-berlin",
+      "city": "Berlin"
+    },
+    {
+      "name": "HeimWerk Hackescher Markt",
+      "slug": "heimwerk-hackescher-markt",
+      "city": "Berlin"
+    },
+    {
+      "name": "Backshop am Mauerpark",
+      "slug": "backshop-am-mauerpark",
+      "city": "Berlin"
+    },
+    {
+      "name": "LEHRTER SHOP",
+      "slug": "lehrter-shop",
+      "city": "Berlin"
+    },
+    {
+      "name": "Backinsel Bäckerei",
+      "slug": "backinsel-backerei",
+      "city": "Berlin"
+    },
+    {
+      "name": "BREGGS",
+      "slug": "breggs",
+      "city": "Berlin"
+    },
+    {
+      "name": "Dunkin'",
+      "slug": "dunkin-berlin-friedrichstrasse",
+      "city": "Berlin"
+    },
+    {
+      "name": "Bäckerei DAG Frühstückshaus",
+      "slug": "cafe-dag",
+      "city": "Berlin"
+    },
+    {
+      "name": "Croissant Couture",
+      "slug": "croissant-couture",
+      "city": "Berlin"
+    },
+    {
+      "name": "Nie zu Späti Danziger Straße",
+      "slug": "nie-zu-spati-danziger-strasse",
+      "city": "Berlin"
+    },
+    {
+      "name": "BANKOs Brunch",
+      "slug": "bankos-brunch",
+      "city": "Berlin"
+    },
+    {
+      "name": "Döner Inn",
+      "slug": "dner-inn",
+      "city": "Berlin"
+    },
+    {
+      "name": "City Kiosk Souvenirs & Market Friedrichstraße",
+      "slug": "city-kiosk-souvenirs-market-friedrichstrasse",
+      "city": "Berlin"
+    },
+    {
+      "name": "KFC",
+      "slug": "kfc-berlin-tauentzienstrasse",
+      "city": "Berlin"
+    },
+    {
+      "name": "BURGER KING ®",
+      "slug": "burger-king-berlin-europaplatz",
+      "city": "Berlin"
+    },
+    {
+      "name": "Dunkin'",
+      "slug": "dunkin-donuts-berlin-europaplatz",
+      "city": "Berlin"
+    },
+    {
+      "name": "Brammibal's Donuts",
+      "slug": "brammibals-donuts-berlin-europaplatz",
+      "city": "Berlin"
+    },
+    {
+      "name": "McDonald's®",
+      "slug": "mcdonalds-berlin-ostbahnhof-1",
+      "city": "Berlin"
+    },
+    {
+      "name": "BackWerk",
+      "slug": "backwerk-berlin-friedrichstrasse",
+      "city": "Berlin"
+    },
+    {
+      "name": "Starbucks",
+      "slug": "starbucks-berlin-friedrichstrasse-61",
+      "city": "Berlin"
+    },
+    {
+      "name": "McDonald's® München Tal",
+      "slug": "mcdonalds-muenchen-tal",
+      "city": "München"
+    },
+    {
+      "name": "Pancake am Tor",
+      "slug": "pancake-am-tor",
+      "city": "München"
+    },
+    {
+      "name": "dean&david",
+      "slug": "dean-david-stachus",
+      "city": "München"
+    },
+    {
+      "name": "LeboQ",
+      "slug": "leboq-munchen",
+      "city": "München"
+    },
+    {
+      "name": "Starbucks",
+      "slug": "starbucks-sendlinger-strasse-munchen",
+      "city": "München"
+    },
+    {
+      "name": "Haferkater Sendlinger Tor",
+      "slug": "haferkater-sendlinger-tor",
+      "city": "München"
+    },
+    {
+      "name": "BackWerk",
+      "slug": "backwerk-munchen-karlsplatz",
+      "city": "München"
+    },
+    {
+      "name": "Café Lisa",
+      "slug": "lisa-cafe",
+      "city": "München"
+    },
+    {
+      "name": "Boogie Bagels",
+      "slug": "boogie-bagels",
+      "city": "München"
+    },
+    {
+      "name": "Hoh Saan Deli & Boutique",
+      "slug": "hoh-saan-deli-boutique",
+      "city": "München"
+    },
+    {
+      "name": "Boogie Donuts",
+      "slug": "boogie-donuts-volkartstr",
+      "city": "München"
+    },
+    {
+      "name": "ChocoLab",
+      "slug": "chocolab",
+      "city": "München"
+    },
+    {
+      "name": "Rischart's",
+      "slug": "rischarts-mnchen",
+      "city": "München"
+    },
+    {
+      "name": "Dunkin",
+      "slug": "dunkin-munchen-stachus-ii",
+      "city": "München"
+    },
+    {
+      "name": "Café Buur München",
+      "slug": "cafe-buur-munchen",
+      "city": "München"
+    },
+    {
+      "name": "Pommes Freunde München Hbf Kiosk",
+      "slug": "pommes-freunde-munchen-hbf-kiosk",
+      "city": "München"
+    },
+    {
+      "name": "Starbucks",
+      "slug": "starbucks-munchen-s-bahnhof-marienplatz",
+      "city": "München"
+    },
+    {
+      "name": "Al YAQUT",
+      "slug": "al-yaqut-munchen-zentrum",
+      "city": "München"
+    },
+    {
+      "name": "McDonald's®",
+      "slug": "mcdonalds-frankfurt-am-main-grosse-friedberger-strasse",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Amala Cáfe & Bar",
+      "slug": "amala-cafe",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Le Petit Café am Zoo",
+      "slug": "le-petit-cafe-am-zoo",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Hans & Franz",
+      "slug": "hans-franz-60311",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Hana Restaurant",
+      "slug": "hana-munchener-strasse",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Starbucks",
+      "slug": "starbucks-frankfurt-konstablerwache",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "BURGER KING ®",
+      "slug": "burger-king-frankfurt-am-main-im-hauptbahnhof",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Mr. Clou Frankfurt Hbf",
+      "slug": "mr-clou-frankfurt-hbf",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Zoe's Café Bar",
+      "slug": "zoes-cafe-bar-60325",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Mildan Döner & Pizza",
+      "slug": "mildan-doner-pizza-frankfurt-am-main-karlsruher-strasse",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Bagel Your Life",
+      "slug": "bagel-your-life",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Coffeeshop - Sueño",
+      "slug": "coffeeshop-sueo",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Milando Food",
+      "slug": "milando-food-restaurant",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Online Kiosk 069",
+      "slug": "online-kiosk-069",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Dein Getränke Express",
+      "slug": "dein-getranke-express-willi-bauer-strasse",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Starbucks",
+      "slug": "starbucks-frankfurt-am-main-brsenplatz",
+      "city": "Frankfurt am Main"
+    },
+    {
+      "name": "Simitçi cafe & mehr. UG",
+      "slug": "simitci-cafe-mehr-ug",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "O'Tacos",
+      "slug": "otacos-klett-passage",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "Nova Social House",
+      "slug": "nova-social-house",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "L'Osteria Stuttgart Bolzstraße",
+      "slug": "losteria-stuttgart-bolzstrasse",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "BURGER KING ®",
+      "slug": "burger-king-stuttgart-koenigstrasse",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "Royal Street Food",
+      "slug": "royal-street-food-1",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "Minmin",
+      "slug": "minmin",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "Cookie Couture",
+      "slug": "cookie-couture-stuttgart",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "Pizza + Pasta",
+      "slug": "pizza-pasta-stuttgart-rosensteinstrasse",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "Giulia Pizza & [A]MORE",
+      "slug": "giulia-pizza-amore",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "NORDSEE",
+      "slug": "nordsee-stuttgart-arnulf-klett-platz",
+      "city": "Stuttgart"
+    },
+    {
+      "name": "McDonald's®",
+      "slug": "mcdonalds-koeln-trankgasse",
+      "city": "Köln"
+    },
+    {
+      "name": "Café Kor",
+      "slug": "cafe-kor",
+      "city": "Köln"
+    },
+    {
+      "name": "The Fast Food Service",
+      "slug": "the-fast-food-service-dusseldorf-new",
+      "city": "Köln"
+    },
+    {
+      "name": "Sattgrün Köln",
+      "slug": "sattgruen-koeln",
+      "city": "Köln"
+    },
+    {
+      "name": "Han Tengri Uyghur",
+      "slug": "han-tengri-uyghur-restaurant",
+      "city": "Köln"
+    },
+    {
+      "name": "SUSHI FIT",
+      "slug": "sushi-fit-1",
+      "city": "Köln"
+    },
+    {
+      "name": "Drachen City",
+      "slug": "drachen-city",
+      "city": "Köln"
+    },
+    {
+      "name": "Belle Tehran",
+      "slug": "belle-tehran-persian-cross-over-cuisine",
+      "city": "Köln"
+    },
+    {
+      "name": "Rangoli",
+      "slug": "rangoli",
+      "city": "Köln"
+    },
+    {
+      "name": "Orient Hof",
+      "slug": "orient-hof",
+      "city": "Köln"
+    },
+    {
+      "name": "CINNAMOOD",
+      "slug": "cinnamood-koln-ehrenstrasse",
+      "city": "Köln"
+    },
+    {
+      "name": "mama trattoria Köln",
+      "slug": "mama-trattoria-koeln",
+      "city": "Köln"
+    },
+    {
+      "name": "Greatwall Cologne",
+      "slug": "greatwall-cologne",
+      "city": "Köln"
+    }
+  ]
+}
