@@ -198,7 +198,11 @@ export function ProvidersContent({
     headerRef,
     headerHeight,
     userCoords,
-  } = useMapDiscovery(geolocation, 'list', isAdmin ? status : null);
+  } = useMapDiscovery(geolocation, 'list', isAdmin ? status : null, {
+    searchParams,
+    pathname,
+    replace: router.replace,
+  });
 
   const nearMe = useNearMe({
     coords: userCoords,

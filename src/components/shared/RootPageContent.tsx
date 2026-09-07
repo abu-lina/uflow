@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getOnboardingState } from '@/lib/utils/onboarding-state';
 import { getFeatureFlag } from '@/config/feature-flags';
@@ -69,6 +70,9 @@ export function RootPageContent() {
   const [nearMeActive, setNearMeActive] = useState(false);
   const [adminStatus, setAdminStatus] = useState<ReviewStatusFilter>(null);
 
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const geolocation = useGeolocation();
 
   // Shared map/discovery state: pins, view mode, open-now, header metrics
@@ -83,7 +87,11 @@ export function RootPageContent() {
     headerRef,
     headerHeight,
     userCoords,
-  } = useMapDiscovery(geolocation, 'map', isAdmin ? adminStatus : null);
+  } = useMapDiscovery(geolocation, 'map', isAdmin ? adminStatus : null, {
+    searchParams,
+    pathname,
+    replace: router.replace,
+  });
 
   const homeNearMe = useNearMe({
     coords: userCoords,

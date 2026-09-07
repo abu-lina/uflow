@@ -143,6 +143,7 @@ describe('WoltClient', () => {
     });
 
     it('retries on 429 with backoff', async () => {
+      vi.useFakeTimers();
       const clientWithRetry = createWoltClient(
         { requestDelayMs: 0, maxRetries: 2 },
         mockGeocoder
@@ -152,22 +153,31 @@ describe('WoltClient', () => {
         .mockResolvedValueOnce(new Response('Too Many Requests', { status: 429 }))
         .mockResolvedValueOnce(new Response(JSON.stringify({ sections: [] }), { status: 200 }));
 
-      const result = await clientWithRetry.searchVenuesByLocation(52.52, 13.405);
+      const promise = clientWithRetry.searchVenuesByLocation(52.52, 13.405);
+      await vi.advanceTimersByTimeAsync(60_000);
+      const result = await promise;
       expect(result.venues).toHaveLength(0);
       expect(fetchMock).toHaveBeenCalledTimes(3);
+      vi.useRealTimers();
     });
 
     it('throws after exhausting retries on 429', async () => {
+      vi.useFakeTimers();
       const clientWithRetry = createWoltClient(
         { requestDelayMs: 0, maxRetries: 1 },
         mockGeocoder
       );
       fetchMock.mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
 
-      await expect(clientWithRetry.searchVenuesByLocation(52.52, 13.405)).rejects.toThrow(
-        'Wolt API error: HTTP 429 after 1 retries'
-      );
+      const promise = clientWithRetry.searchVenuesByLocation(52.52, 13.405);
+      // Catch immediately to prevent unhandled-rejection before advancing timers
+      const caught = promise.catch((e: unknown) => e);
+      await vi.advanceTimersByTimeAsync(60_000);
+      const err = await caught;
+      expect(err).toBeInstanceOf(Error);
+      expect((err as Error).message).toBe('Wolt API error: HTTP 429 after 1 retries');
       expect(fetchMock).toHaveBeenCalledTimes(2);
+      vi.useRealTimers();
     });
 
     it('handles network errors', async () => {
