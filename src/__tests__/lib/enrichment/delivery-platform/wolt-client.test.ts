@@ -171,11 +171,11 @@ describe('WoltClient', () => {
 
       const promise = clientWithRetry.searchVenuesByLocation(52.52, 13.405);
       // Catch immediately to prevent unhandled-rejection before advancing timers
-      const caught = promise.catch((e: Error) => e);
+      const caught = promise.catch((e: unknown) => e);
       await vi.advanceTimersByTimeAsync(60_000);
       const err = await caught;
       expect(err).toBeInstanceOf(Error);
-      expect(err.message).toBe('Wolt API error: HTTP 429 after 1 retries');
+      expect((err as Error).message).toBe('Wolt API error: HTTP 429 after 1 retries');
       expect(fetchMock).toHaveBeenCalledTimes(2);
       vi.useRealTimers();
     });
