@@ -21,7 +21,6 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { toast } from 'sonner';
 import {
   getResultsPathForSection,
-  inferSectionFromCategory,
   resolveSectionFromRoute,
   SECTION_META,
 } from '@/config/sectionFilters';
@@ -44,6 +43,7 @@ export function Header() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const { user, signOut, isLoading: loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -127,125 +127,146 @@ export function Header() {
     // If not on home page, let the default Link behavior handle navigation
   };
 
+  // Publish the header's measured height as a CSS custom property so
+  // downstream pages (e.g. ProvidersContent) can size their top-padding
+  // dynamically instead of relying on a hardcoded px value.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (entry) {
+        document.documentElement.style.setProperty(
+          '--desktop-header-height',
+          `${entry.contentRect.height}px`,
+        );
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
     <>
       <header
+        ref={headerRef}
         className={`header-gradient fixed left-0 right-0 top-0 z-50 w-full pt-[calc(env(safe-area-inset-top)+16px)] shadow-sm transition-all duration-300 ${
           isVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
         <nav className="flex w-full flex-col items-center gap-4 py-2">
-            {/* Top row: Logo + About + SectionSelector + Auth */}
-            <div className="grid w-full grid-cols-[1fr_800px_1fr] items-center px-12">
-              {/* Left: Logo + About */}
-              <div className="h-14 flex justify-start items-center gap-8">
+          {/* Top row: Logo + About + SectionSelector + Auth */}
+          <div className="grid w-full grid-cols-[1fr_800px_1fr] items-center px-12">
+            {/* Left: Logo + About */}
+            <div className="flex h-14 items-center justify-start gap-8">
+              <Link
+                aria-label="Zur Startseite"
+                className="relative flex flex-shrink-0 items-center justify-center"
+                href="/"
+              >
+                <div className="flex items-center gap-1">
+                  <Logo className="size-8 flex-shrink-0 text-white" height={32} width={32} />
+                  <span className="font-inter-tight text-lg font-semibold text-primary">
+                    UMMAH FLOW
+                  </span>
+                </div>
+              </Link>
+              {!user && (
                 <Link
-                  aria-label="Zur Startseite"
-                  className="relative flex flex-shrink-0 items-center justify-center"
-                  href="/"
+                  className="flex h-12 items-center justify-start rounded-xl px-5 text-base font-medium text-content-heading hover:bg-neutral-light hover:text-content"
+                  href="/about"
+                  onClick={handleAboutClick}
                 >
-                  <div className="flex items-center gap-1">
-                    <Logo className="size-8 flex-shrink-0 text-white" height={32} width={32} />
-                    <span className="font-inter-tight font-semibold text-lg text-primary">UMMAH FLOW</span>
-                  </div>
+                  {t('navigation.about')}
                 </Link>
-                {!user && (
-                  <Link
-                    className="h-12 px-5 rounded-xl flex justify-start items-center text-base font-medium text-content-heading hover:bg-neutral-light hover:text-content"
-                    href="/about"
-                    onClick={handleAboutClick}
-                  >
-                    {t('navigation.about')}
-                  </Link>
-                )}
-              </div>
-
-              {/* Center: SectionSelector */}
-              <div className="w-[800px]">
-                <SectionSelector
-                  selectedSection={selectedSection}
-                  onSectionChange={handleSectionChange}
-                />
-              </div>
-
-              {/* Right: Auth */}
-              <div className="h-12 flex justify-end items-center gap-4">
-                {loading ? (
-                  <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-neutral-100" />
-                ) : user ? (
-                  <>
-                    <Button
-                      className="hidden h-10 w-[89px] rounded-xl border border-border px-[14px] md:flex"
-                      variant="primary"
-                      onClick={() => router.push('/create')}
-                    >
-                      {t('navigation.create')}
-                    </Button>
-                    <div ref={dropdownRef} className="relative">
-                      <button
-                        aria-label="Profil Dropdown öffnen"
-                        className="flex items-center gap-0 rounded-full focus:outline-none"
-                        onClick={() => setDropdownOpen((open) => !open)}
-                      >
-                        <ProfileIcon className="shrink-0" isActive={dropdownOpen} />
-                        <ChevronDown
-                          aria-hidden="true"
-                          className={`-ml-2 size-6 text-content transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                      {dropdownOpen && (
-                        <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
-                          <button
-                            className="block w-full px-4 py-2 text-left text-base hover:bg-neutral-50"
-                            onClick={() => {
-                              setDropdownOpen(false);
-                              router.push('/profile');
-                            }}
-                          >
-                            {t('profile.accountSettings')}
-                          </button>
-                          <button
-                            className="block w-full px-4 py-2 text-left text-base text-danger hover:bg-neutral-50"
-                            onClick={async () => {
-                              setDropdownOpen(false);
-                              await signOut();
-                              router.push('/');
-                            }}
-                          >
-                            {t('auth.logout')}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      className="self-stretch px-5 rounded-xl border border-neutral text-base font-medium text-content flex items-center"
-                      onClick={() => setShowLoginModal(true)}
-                    >
-                      {t('navigation.login')}
-                    </button>
-                    <button
-                      className="self-stretch px-5 bg-primary rounded-xl text-base font-medium text-white hover:bg-primary/90 flex items-center"
-                      onClick={() => setShowSignupModal(true)}
-                    >
-                      {t('navigation.register')}
-                    </button>
-                  </>
-                )}
-              </div>
+              )}
             </div>
 
-            {/* Bottom row: SearchBar centered */}
-            <div className="flex w-full justify-center px-12">
-              <SearchBar
-                className="!w-[800px] !shadow-none"
-                onClearSearch={handleClearSearch}
-                onLocationChange={handleLocationChange}
-                onSearchSubmit={handleSearchSubmit}
+            {/* Center: SectionSelector */}
+            <div className="w-[800px]">
+              <SectionSelector
+                selectedSection={selectedSection}
+                onSectionChange={handleSectionChange}
               />
             </div>
+
+            {/* Right: Auth */}
+            <div className="flex h-12 items-center justify-end gap-4">
+              {loading ? (
+                <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-neutral-100" />
+              ) : user ? (
+                <>
+                  <Button
+                    className="hidden h-10 w-[89px] rounded-xl border border-border px-[14px] md:flex"
+                    variant="primary"
+                    onClick={() => router.push('/create')}
+                  >
+                    {t('navigation.create')}
+                  </Button>
+                  <div ref={dropdownRef} className="relative">
+                    <button
+                      aria-label="Profil Dropdown öffnen"
+                      className="flex items-center gap-0 rounded-full focus:outline-none"
+                      onClick={() => setDropdownOpen((open) => !open)}
+                    >
+                      <ProfileIcon className="shrink-0" isActive={dropdownOpen} />
+                      <ChevronDown
+                        aria-hidden="true"
+                        className={`-ml-2 size-6 text-content transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    {dropdownOpen && (
+                      <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
+                        <button
+                          className="block w-full px-4 py-2 text-left text-base hover:bg-neutral-50"
+                          onClick={() => {
+                            setDropdownOpen(false);
+                            router.push('/profile');
+                          }}
+                        >
+                          {t('profile.accountSettings')}
+                        </button>
+                        <button
+                          className="block w-full px-4 py-2 text-left text-base text-danger hover:bg-neutral-50"
+                          onClick={async () => {
+                            setDropdownOpen(false);
+                            await signOut();
+                            router.push('/');
+                          }}
+                        >
+                          {t('auth.logout')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="flex items-center self-stretch rounded-xl border border-neutral px-5 text-base font-medium text-content"
+                    onClick={() => setShowLoginModal(true)}
+                  >
+                    {t('navigation.login')}
+                  </button>
+                  <button
+                    className="flex items-center self-stretch rounded-xl bg-primary px-5 text-base font-medium text-white hover:bg-primary/90"
+                    onClick={() => setShowSignupModal(true)}
+                  >
+                    {t('navigation.register')}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom row: SearchBar centered */}
+          <div className="flex w-full justify-center px-12">
+            <SearchBar
+              className="!w-[800px] !shadow-none"
+              onClearSearch={handleClearSearch}
+              onLocationChange={handleLocationChange}
+              onSearchSubmit={handleSearchSubmit}
+            />
+          </div>
         </nav>
       </header>
 

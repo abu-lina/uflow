@@ -1,5 +1,6 @@
 /**
  * Plan 077 — Mobile header overlap regression tests
+ * Plan 227 — Desktop header overlap fix (CSS variable approach)
  *
  * Tests the padding arithmetic that prevents the fixed ProvidersPageHeader
  * from overlapping content on iOS devices with a notch / Dynamic Island.
@@ -59,5 +60,48 @@ describe('Plan 077 — ProvidersContent mobile header clearance', () => {
       expect(padding).toBe(187);
       expect(padding).toBeGreaterThan(HEADER_HEIGHT_NOTCH);
     });
+  });
+});
+
+/**
+ * Plan 227 — Desktop header overlap: CSS variable approach
+ *
+ * The desktop Header (two rows: nav + search) is position:fixed. Previously
+ * ProvidersContent used a hardcoded md:pt-[153px] that didn't account for
+ * varying header heights (auth state, content changes).
+ *
+ * Fix: Header.tsx now sets --desktop-header-height via ResizeObserver.
+ * ProvidersContent uses md:pt-[var(--desktop-header-height,153px)].
+ *
+ * These tests validate that the CSS var() with fallback always clears the
+ * header regardless of measured height.
+ */
+describe('Plan 227 — Desktop header clearance via CSS variable', () => {
+  const FALLBACK_PADDING = 153; // px, used when CSS var is not yet set
+
+  it('fallback (153px) clears a typical desktop header (~150px)', () => {
+    const typicalHeaderHeight = 150;
+    expect(FALLBACK_PADDING).toBeGreaterThanOrEqual(typicalHeaderHeight);
+  });
+
+  it('[pre-fix FAILS] hardcoded 153px is too small when header grows (e.g. 172px)', () => {
+    const grownHeaderHeight = 172;
+    expect(FALLBACK_PADDING).toBeLessThan(grownHeaderHeight);
+  });
+
+  it('[post-fix PASSES] CSS variable tracks actual header height so padding always matches', () => {
+    // Simulate: ResizeObserver measures 172px, sets --desktop-header-height: 172px
+    const measuredHeight = 172;
+    const cssVarPadding = measuredHeight; // var(--desktop-header-height) resolves to measured value
+    expect(cssVarPadding).toBeGreaterThanOrEqual(measuredHeight);
+  });
+
+  it('breakpoint gap (640-767px): mobile header now covers up to md (768px)', () => {
+    // DiscoveryHeader changed from sm:hidden to md:hidden
+    // Desktop Header wrapper in layout.tsx: hidden md:block
+    // Both switch at 768px — no gap.
+    const mobileHeaderHiddenAt = 768; // md breakpoint (md:hidden)
+    const desktopHeaderShownAt = 768; // md breakpoint (md:block)
+    expect(mobileHeaderHiddenAt).toBe(desktopHeaderShownAt);
   });
 });

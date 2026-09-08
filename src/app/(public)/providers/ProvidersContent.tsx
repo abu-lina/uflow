@@ -567,7 +567,7 @@ export function ProvidersContent({
     showGreeting && isMounted && typeof document !== 'undefined' && document.body
       ? createPortal(
           <div
-            className="fixed right-2 top-10 z-[9998] sm:hidden"
+            className="fixed right-2 top-10 z-[9998] md:hidden"
             style={{
               paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
               paddingRight: 'max(env(safe-area-inset-right), 0.25rem)',
@@ -591,7 +591,7 @@ export function ProvidersContent({
     showGreeting && isMounted && typeof document !== 'undefined' && document.body
       ? createPortal(
           <div
-            className="fixed right-2 top-2 z-[9999] sm:hidden"
+            className="fixed right-2 top-2 z-[9999] md:hidden"
             style={{
               paddingTop: 'max(env(safe-area-inset-top), 0.25rem)',
               paddingRight: 'max(env(safe-area-inset-right), 0.25rem)',
@@ -619,7 +619,7 @@ export function ProvidersContent({
       {showGreeting ? (
         // Fixed greeting header for Stage 2 (matches DiscoveryHeader style)
         <header
-          className="fixed left-0 right-0 top-0 z-50 sm:hidden"
+          className="fixed left-0 right-0 top-0 z-50 md:hidden"
           style={{
             transition:
               'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
@@ -678,11 +678,7 @@ export function ProvidersContent({
         />
       )}
 
-      <main
-        className={`mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden ${
-          showGreeting ? 'pt-0 sm:pt-0 md:pt-[153px]' : 'pt-0 sm:pt-0 md:pt-[153px]'
-        }`}
-      >
+      <main className="mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden pt-0 sm:pt-0 md:pt-[var(--desktop-header-height,153px)]">
         {!showGreeting && section === 'food' && (
           <div
             style={{
