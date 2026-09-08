@@ -12,6 +12,7 @@ import { fetchSearchSuggestions } from '@/services/providers';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
+import { getResultsPathForSection } from '@/config/sectionFilters';
 
 import { logSupabaseError } from '@/utils/errorUtils';
 
@@ -58,11 +59,10 @@ function SearchBarContent({
     return p.get('filters')?.split(',').filter(Boolean) ?? [];
   });
   const [hasMounted, setHasMounted] = useState(false);
-  // Initialize near-me and open-now from URL params (same pattern as useNearMeToggle)
-  const [nearMeActive, setNearMeActive] = useState(() => {
-    const p = new URLSearchParams(searchParams.toString());
-    return p.has('near_lat') && p.has('near_lon');
-  });
+  // Initialize near-me and open-now from URL params
+  const [nearMeActive, setNearMeActive] = useState(
+    () => new URLSearchParams(searchParams.toString()).get('near_me') === '1',
+  );
   const [openNowActive, setOpenNowActive] = useState(
     () => new URLSearchParams(searchParams.toString()).get('open_now') === '1',
   );
@@ -206,23 +206,23 @@ function SearchBarContent({
     };
   }, [searchQuery]);
 
-  // ── URL sync helper (mirrors useNearMeToggle.syncUrl) ───────────────
+  // ── URL sync helper for open-now / near-me params ────────────────
+  // Near-me navigates to the section root (e.g. /food) since having a city
+  // in the path conflicts with geolocation-based results.
   const syncUrl = useCallback(
-    (overrides: { active?: boolean; openNow?: boolean; lat?: number; lon?: number }) => {
-      const params = new URLSearchParams(searchParams.toString());
+    (overrides: { active?: boolean; openNow?: boolean }) => {
       const active = overrides.active ?? nearMeActive;
       const openNow = overrides.openNow ?? openNowActive;
-      const lat = overrides.lat ?? geolocation.coords?.latitude;
-      const lon = overrides.lon ?? geolocation.coords?.longitude;
 
-      if (active && lat != null && lon != null) {
-        params.set('near_lat', String(lat));
-        params.set('near_lon', String(lon));
-        params.set('near_radius', '5');
+      // When near-me is active, navigate to section root (strip city from path)
+      const basePath = active ? getResultsPathForSection(selectedSection) : pathname;
+
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (active) {
+        params.set('near_me', '1');
       } else {
-        params.delete('near_lat');
-        params.delete('near_lon');
-        params.delete('near_radius');
+        params.delete('near_me');
       }
 
       if (openNow) {
@@ -231,34 +231,25 @@ function SearchBarContent({
         params.delete('open_now');
       }
 
-      router.push(`${pathname}?${params.toString()}`);
+      // Clean up stale near params
+      params.delete('near_lat');
+      params.delete('near_lon');
+      params.delete('near_radius');
+
+      router.push(`${basePath}?${params.toString()}`);
     },
-    [searchParams, nearMeActive, openNowActive, geolocation.coords, router, pathname],
+    [searchParams, nearMeActive, openNowActive, router, pathname, selectedSection],
   );
 
-  // When geolocation transitions to granted while near-me is active, sync coords to URL.
-  useEffect(() => {
-    if (nearMeActive && geolocation.status === 'granted' && geolocation.coords) {
-      syncUrl({
-        active: true,
-        lat: geolocation.coords.latitude,
-        lon: geolocation.coords.longitude,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nearMeActive, geolocation.status, geolocation.coords]);
-
   // ── Near Me handler (selected from location dropdown) ──────────────
+  // Navigates to /food?near_me=1 — ProvidersContent reads the param and
+  // triggers its own geolocation request + near-me results.
   const handleSelectNearMe = useCallback(() => {
     setNearMeActive(true);
     setSelectedLocation(LOCATION_ALL);
     setIsLocationOpen(false);
-    if (geolocation.status === 'idle') {
-      geolocation.requestLocation();
-    } else if (geolocation.status === 'granted' && geolocation.coords) {
-      syncUrl({ active: true });
-    }
-  }, [geolocation, syncUrl, setSelectedLocation]);
+    syncUrl({ active: true });
+  }, [syncUrl, setSelectedLocation]);
 
   // Deactivate near-me when a city or "Everywhere" is picked.
   // Only resets local state + geolocation; does NOT navigate.
