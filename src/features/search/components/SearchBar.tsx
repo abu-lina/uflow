@@ -131,8 +131,8 @@ function SearchBarContent({
           const filteredCities = await fetchFilteredCities('', searchQuery);
           if (!cancelled) setLocations(filteredCities);
         } else {
-          // Otherwise, fetch all cities
-          const allCities = await fetchProviderCities();
+          // Fetch cities scoped to the active section (e.g. only food cities on /food)
+          const allCities = await fetchProviderCities(selectedSection);
           if (!cancelled) setLocations(allCities);
         }
       } catch (error) {
@@ -157,7 +157,7 @@ function SearchBarContent({
     return () => {
       cancelled = true;
     };
-  }, [searchQuery, customCities, t]);
+  }, [searchQuery, customCities, selectedSection, t]);
 
   // Sync state with URL params only on initial mount or when the page changes
   useEffect(() => {
