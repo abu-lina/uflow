@@ -2,106 +2,55 @@
  * Plan 077 — Mobile header overlap regression tests
  * Plan 227 — Desktop header overlap fix (CSS variable approach)
  *
- * Tests the padding arithmetic that prevents the fixed ProvidersPageHeader
- * from overlapping content on iOS devices with a notch / Dynamic Island.
- *
- * Uses PI-045 client-state precedence regression pattern:
- * - [pre-fix FAILS] makes the bug visible
- * - [post-fix PASSES] validates the fix expression
+ * Validates the source files contain the correct CSS patterns so that the
+ * fixed header never overlaps page content at any breakpoint.
  */
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 
-/**
- * Header height breakdown (from Analysis 077 F1):
- *   max(24px, env(safe-area-inset-top) + 24px)  — top padding
- * + 40px                                         — SearchBar (h-10)
- * + 12px                                         — pb-3 gap
- * + ~32px                                        — CategoryFilter
- * + 6px                                          — pb-1.5 outer wrapper
- *
- * Non-notch (safe-area = 0):  24 + 40 + 12 + 32 + 6 = 114 px
- * Notch     (safe-area ≈ 59): 83 + 40 + 12 + 32 + 6 = 173 px
- */
-const HEADER_HEIGHT_NON_NOTCH = 114;
-const HEADER_HEIGHT_NOTCH = 173;
-const SAFE_AREA_INSET_NOTCH = 59;
-
-/** Pre-fix value: static pt-32 = 128 px */
-const PRE_FIX_PADDING = 128;
-
-/** Post-fix expression: max(128, env(safe-area-inset-top) + 128) */
-function postFixPadding(safeAreaInsetTop: number): number {
-  return Math.max(128, safeAreaInsetTop + 128);
+function readSrc(relPath: string): string {
+  return readFileSync(resolve(__dirname, '../../', relPath), 'utf-8');
 }
 
-describe('Plan 077 — ProvidersContent mobile header clearance', () => {
-  describe('non-notch device (safe-area-inset-top = 0)', () => {
-    it('pre-fix pt-32 (128px) clears header (114px) on non-notch device', () => {
-      // Even before the fix, non-notch devices had sufficient clearance
-      expect(PRE_FIX_PADDING).toBeGreaterThan(HEADER_HEIGHT_NON_NOTCH);
-    });
+describe('Plan 227 — Desktop header overlap: source-level guards', () => {
+  const headerSrc = readSrc('components/layout/Header.tsx');
+  const providersSrc = readSrc('app/(public)/providers/ProvidersContent.tsx');
+  const discoveryHeaderSrc = readSrc('features/search/components/DiscoveryHeader.tsx');
+  const rootPageSrc = readSrc('components/shared/RootPageContent.tsx');
 
-    it('[post-fix PASSES] max(128px, 0 + 128px) preserves identical padding on non-notch device', () => {
-      const padding = postFixPadding(0);
-      expect(padding).toBe(128); // No change for non-notch
-      expect(padding).toBeGreaterThan(HEADER_HEIGHT_NON_NOTCH);
-    });
+  it('Header.tsx uses borderBoxSize (not contentRect.height) for --desktop-header-height', () => {
+    expect(headerSrc).toContain('borderBoxSize');
+    expect(headerSrc).not.toContain('contentRect.height');
   });
 
-  describe('notch device (safe-area-inset-top ≈ 59px)', () => {
-    it('[pre-fix FAILS] pt-32 (128px) is less than header height on notch device (173px)', () => {
-      // This test documents the bug: static 128px < 173px header on notch phones
-      expect(PRE_FIX_PADDING).toBeLessThan(HEADER_HEIGHT_NOTCH);
-    });
-
-    it('[post-fix PASSES] max(128px, safe-area + 128px) clears the header on notch device', () => {
-      const padding = postFixPadding(SAFE_AREA_INSET_NOTCH);
-      // max(128, 59 + 128) = 187 > 173
-      expect(padding).toBe(187);
-      expect(padding).toBeGreaterThan(HEADER_HEIGHT_NOTCH);
-    });
-  });
-});
-
-/**
- * Plan 227 — Desktop header overlap: CSS variable approach
- *
- * The desktop Header (two rows: nav + search) is position:fixed. Previously
- * ProvidersContent used a hardcoded md:pt-[153px] that didn't account for
- * varying header heights (auth state, content changes).
- *
- * Fix: Header.tsx now sets --desktop-header-height via ResizeObserver.
- * ProvidersContent uses md:pt-[var(--desktop-header-height,153px)].
- *
- * These tests validate that the CSS var() with fallback always clears the
- * header regardless of measured height.
- */
-describe('Plan 227 — Desktop header clearance via CSS variable', () => {
-  const FALLBACK_PADDING = 153; // px, used when CSS var is not yet set
-
-  it('fallback (153px) clears a typical desktop header (~150px)', () => {
-    const typicalHeaderHeight = 150;
-    expect(FALLBACK_PADDING).toBeGreaterThanOrEqual(typicalHeaderHeight);
+  it('Header.tsx observes with border-box option', () => {
+    expect(headerSrc).toContain("box: 'border-box'");
   });
 
-  it('[pre-fix FAILS] hardcoded 153px is too small when header grows (e.g. 172px)', () => {
-    const grownHeaderHeight = 172;
-    expect(FALLBACK_PADDING).toBeLessThan(grownHeaderHeight);
+  it('ProvidersContent uses var(--desktop-header-height) for desktop padding', () => {
+    expect(providersSrc).toMatch(/md:pt-\[var\(--desktop-header-height/);
   });
 
-  it('[post-fix PASSES] CSS variable tracks actual header height so padding always matches', () => {
-    // Simulate: ResizeObserver measures 172px, sets --desktop-header-height: 172px
-    const measuredHeight = 172;
-    const cssVarPadding = measuredHeight; // var(--desktop-header-height) resolves to measured value
-    expect(cssVarPadding).toBeGreaterThanOrEqual(measuredHeight);
+  it('DiscoveryHeader uses md:hidden (not sm:hidden) to close the breakpoint gap', () => {
+    expect(discoveryHeaderSrc).toContain('md:hidden');
+    expect(discoveryHeaderSrc).not.toContain('sm:hidden');
   });
 
-  it('breakpoint gap (640-767px): mobile header now covers up to md (768px)', () => {
-    // DiscoveryHeader changed from sm:hidden to md:hidden
-    // Desktop Header wrapper in layout.tsx: hidden md:block
-    // Both switch at 768px — no gap.
-    const mobileHeaderHiddenAt = 768; // md breakpoint (md:hidden)
-    const desktopHeaderShownAt = 768; // md breakpoint (md:block)
-    expect(mobileHeaderHiddenAt).toBe(desktopHeaderShownAt);
+  it('RootPageContent landing header uses md:hidden (not sm:hidden)', () => {
+    // The landing page fixed header should hide at md, matching desktop Header visibility
+    expect(rootPageSrc).toMatch(/className="[^"]*md:hidden/);
+    expect(rootPageSrc).not.toMatch(/className="[^"]*sm:hidden/);
+  });
+
+  it('DiscoveryHeader does not declare an unused section prop', () => {
+    // The interface should not contain a standalone `section: Section` prop
+    // (selectedSection is fine)
+    const interfaceMatch = discoveryHeaderSrc.match(/interface DiscoveryHeaderProps\s*\{([^}]+)\}/);
+    expect(interfaceMatch).toBeTruthy();
+    const interfaceBody = interfaceMatch?.[1] ?? '';
+    // Should have selectedSection but not a bare `section:` line
+    expect(interfaceBody).toContain('selectedSection');
+    expect(interfaceBody).not.toMatch(/^\s*section\s*:/m);
   });
 });

@@ -135,13 +135,11 @@ export function Header() {
     if (!el || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(([entry]) => {
       if (entry) {
-        document.documentElement.style.setProperty(
-          '--desktop-header-height',
-          `${entry.contentRect.height}px`,
-        );
+        const height = entry.borderBoxSize?.[0]?.blockSize ?? el.offsetHeight;
+        document.documentElement.style.setProperty('--desktop-header-height', `${height}px`);
       }
     });
-    ro.observe(el);
+    ro.observe(el, { box: 'border-box' });
     return () => ro.disconnect();
   }, []);
 

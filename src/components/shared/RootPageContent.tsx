@@ -249,7 +249,7 @@ export function RootPageContent() {
                 {/* Fixed header: search bar only */}
                 <header
                   ref={headerRef}
-                  className="fixed left-0 right-0 top-0 z-50 sm:hidden"
+                  className="fixed left-0 right-0 top-0 z-50 md:hidden"
                   style={{
                     transition:
                       'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',

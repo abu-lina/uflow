@@ -5,8 +5,6 @@ import { SectionSelector } from '@/features/search/components/SectionSelector';
 import type { Section } from '@/providers/search-provider';
 
 interface DiscoveryHeaderProps {
-  /** Canonical section value used for section change routing context. */
-  section: Section;
   /** Currently selected section passed to SectionSelector. */
   selectedSection: Section;
   /** Called when the user selects a different section. */
@@ -31,7 +29,6 @@ interface DiscoveryHeaderProps {
 export const DiscoveryHeader = forwardRef<HTMLElement, DiscoveryHeaderProps>(
   function DiscoveryHeader(
     {
-      section: _section,
       selectedSection,
       onSectionChange,
       searchSlot,

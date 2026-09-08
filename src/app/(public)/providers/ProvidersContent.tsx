@@ -671,7 +671,6 @@ export function ProvidersContent({
             ) : undefined
           }
           searchSlot={<SearchContextBar searchTerm={query} section={section} />}
-          section={section}
           selectedSection={section}
           viewMode={viewMode}
           onSectionChange={handleSectionChange}
