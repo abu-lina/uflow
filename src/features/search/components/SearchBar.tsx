@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams, usePathname } from 'next/navigation';
 
 // Third-party imports
-import { ChevronDown, Search, X, Loader2 } from 'lucide-react';
+import { ChevronDown, Search, X, Loader2, MapPin, Clock } from 'lucide-react';
 // Local imports
 import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import { fetchSearchSuggestions } from '@/services/providers';
@@ -51,6 +51,8 @@ function SearchBarContent({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [hasMounted, setHasMounted] = useState(false);
+  const [nearMeActive, setNearMeActive] = useState(false);
+  const [openNowActive, setOpenNowActive] = useState(false);
 
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [suggestions, setSuggestions] = useState<
@@ -211,164 +213,194 @@ function SearchBarContent({
       className={`flex flex-col gap-2 ${className}`}
       role="search"
     >
-      {/* Primary bar: Location + Search + Submit button */}
-      <div className="relative flex h-12 w-full flex-row items-center gap-3 rounded-2xl border border-border-light bg-white px-3">
-        <div suppressHydrationWarning className="flex w-full flex-row items-center gap-3">
-          {/* Location — Where first */}
-          <div className="relative flex flex-row items-center">
+      {/* Primary bar: Input + Clear + Search icon button */}
+      <div className="relative flex h-12 w-full items-center gap-0 rounded-xl border border-gray-200 bg-white px-4 shadow-sm transition-all hover:border-gray-300 hover:shadow-md">
+        <div suppressHydrationWarning className="relative flex w-full items-center gap-1">
+          <input
+            ref={inputRef}
+            className={`min-w-0 flex-1 appearance-none border-0 bg-transparent text-sm font-normal shadow-none outline-none ring-0 placeholder:text-gray-400 focus:border-0 focus:outline-none focus:ring-0 ${isTyping ? 'text-gray-800' : 'text-gray-400'}`}
+            placeholder={t('search.placeholder')}
+            type="text"
+            value={searchQuery}
+            onBlur={() => setIsTyping(false)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setIsTyping(true);
+            }}
+            onFocus={() => setIsTyping(true)}
+            onKeyDown={handleKeyPress}
+          />
+          {hasMounted && searchQuery && (
             <button
-              aria-expanded={isLocationOpen}
-              aria-haspopup="listbox"
-              className="flex items-center gap-1 transition-opacity hover:opacity-80"
+              aria-label={t('common.delete')}
+              className="shrink-0 rounded p-1 hover:bg-gray-100 focus:outline-none"
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsLocationOpen(!isLocationOpen);
+              onClick={() => {
+                setSearchQuery('');
+                inputRef.current?.focus();
+                onClearSearch?.();
               }}
             >
-              <span className="max-w-[120px] truncate text-sm font-medium text-neutral-600 sm:max-w-none">
-                {t('suchen.wo.selectedWhere', {
-                  city:
-                    selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation,
-                })}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className={`size-5 text-neutral-500 transition-transform duration-200 ${
-                  isLocationOpen ? 'rotate-180' : ''
-                }`}
-              />
+              <X className="text-gray-400" size={16} />
             </button>
-            {isLocationOpen && (
-              <div
-                ref={locationDropdownRef}
-                className="dropdown-container absolute right-0 top-full z-50 mt-1 max-h-64 w-48 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-              >
-                {/* "Everywhere" option using canonical sentinel */}
-                <button
-                  key="__everywhere__"
-                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                    selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
-                  }`}
-                  onClick={() => {
-                    setSelectedLocation(LOCATION_ALL);
-                    setIsLocationOpen(false);
-                    onLocationChange?.(LOCATION_ALL);
-                  }}
-                >
-                  {t('search.everywhere')}
-                </button>
-                {/* City options */}
-                {locations.map((location) => (
-                  <button
-                    key={location}
-                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                      location === selectedLocation ? 'bg-gray-50' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedLocation(location);
-                      setIsLocationOpen(false);
-                      onLocationChange?.(location);
-                    }}
-                  >
-                    {location}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Search Section — What second */}
-          <div className="relative flex flex-1 flex-row items-center gap-1">
-            <Search className="shrink-0 text-neutral-500" size={20} />
-            <input
-              ref={inputRef}
-              className={`w-full appearance-none truncate border-none bg-transparent px-1 text-base font-normal leading-[19px] outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0 ${isTyping ? 'text-content' : 'text-gray-400'}`}
-              placeholder={t('search.placeholder')}
-              type="text"
-              value={searchQuery}
-              onBlur={() => setIsTyping(false)}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setIsTyping(true);
-              }}
-              onFocus={() => setIsTyping(true)}
-              onKeyDown={handleKeyPress}
-            />
-            {hasMounted && searchQuery && (
-              <button
-                aria-label={t('common.delete')}
-                className="shrink-0 rounded p-1 hover:bg-gray-100 focus:outline-none"
-                type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  inputRef.current?.focus();
-                  // Call parent callback to handle clear
-                  onClearSearch?.();
-                }}
-              >
-                <X className="text-gray-400" size={16} />
-              </button>
-            )}
-            {/* Loading indicator for suggestions */}
-            {isLoadingSuggestions && searchQuery.trim().length >= 2 && (
-              <div className="absolute left-0 top-full z-50 mt-1 w-full">
-                <div className="flex items-center justify-center rounded-lg bg-white py-3 shadow-lg ring-1 ring-black/5">
-                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                </div>
-              </div>
-            )}
-            {/* Suggestions dropdown */}
-            {searchQuery.trim().length >= 2 && suggestions.length > 0 && (
-              <div
-                ref={suggestionsRef}
-                className="absolute left-0 top-full z-50 mt-1 max-h-80 w-full overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-              >
-                {suggestions.map((item, idx) => (
-                  <button
-                    key={`${item.type}-${item.label}-${idx}`}
-                    className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-gray-50"
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setSearchQuery(item.label);
-                      setSuggestions([]);
-                      onSearchSubmit?.(item.label, selectedLocation);
-                    }}
-                  >
-                    <span className="w-14 shrink-0 text-xs font-medium uppercase text-gray-400">
-                      {item.type === 'provider'
-                        ? t('search.suggestions.provider')
-                        : item.type === 'cuisine'
-                          ? t('search.suggestions.cuisine')
-                          : t('search.suggestions.menuItem')}
-                    </span>
-                    <span className="text-gray-800">{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Submit Button — CTA */}
+          )}
+          {/* Submit — Search icon button */}
           <button
-            className="shrink-0 rounded-lg bg-primary px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            aria-label={t('search.submit')}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-gray-500 transition-opacity hover:opacity-70 active:opacity-50"
             type="button"
             onClick={() => onSearchSubmit?.(searchQuery, selectedLocation)}
           >
-            {t('search.searchButton')}
+            <Search aria-hidden="true" className="h-5 w-5" />
           </button>
+          {/* Loading indicator for suggestions */}
+          {isLoadingSuggestions && searchQuery.trim().length >= 2 && (
+            <div className="absolute left-0 top-full z-50 mt-1 w-full">
+              <div className="flex items-center justify-center rounded-lg bg-white py-3 shadow-lg ring-1 ring-black/5">
+                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+              </div>
+            </div>
+          )}
+          {/* Suggestions dropdown */}
+          {searchQuery.trim().length >= 2 && suggestions.length > 0 && (
+            <div
+              ref={suggestionsRef}
+              className="absolute left-0 top-full z-50 mt-1 max-h-80 w-full overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+            >
+              {suggestions.map((item, idx) => (
+                <button
+                  key={`${item.type}-${item.label}-${idx}`}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm hover:bg-gray-50"
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setSearchQuery(item.label);
+                    setSuggestions([]);
+                    onSearchSubmit?.(item.label, selectedLocation);
+                  }}
+                >
+                  <span className="w-14 shrink-0 text-xs font-medium uppercase text-gray-400">
+                    {item.type === 'provider'
+                      ? t('search.suggestions.provider')
+                      : item.type === 'cuisine'
+                        ? t('search.suggestions.cuisine')
+                        : t('search.suggestions.menuItem')}
+                  </span>
+                  <span className="text-gray-800">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Secondary filter pills — desktop only */}
-      <div className="hidden flex-row items-center gap-2 md:flex">
-        {/* Wer pill */}
-        <div className="relative flex flex-row items-center">
+      {/* Secondary filter chips — desktop only */}
+      <div className="hidden flex-nowrap items-center gap-2 md:flex">
+        {/* City / Location chip */}
+        <div className="relative flex items-center">
+          <button
+            aria-expanded={isLocationOpen}
+            aria-haspopup="listbox"
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+              selectedLocation !== LOCATION_ALL
+                ? 'bg-primary text-white'
+                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+            }`}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsLocationOpen(!isLocationOpen);
+            }}
+          >
+            <span>
+              {selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation}
+            </span>
+            <ChevronDown
+              aria-hidden="true"
+              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                isLocationOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+          {isLocationOpen && (
+            <div
+              ref={locationDropdownRef}
+              className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-64 w-48 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+            >
+              {/* "Everywhere" option using canonical sentinel */}
+              <button
+                key="__everywhere__"
+                className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                  selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
+                }`}
+                onClick={() => {
+                  setSelectedLocation(LOCATION_ALL);
+                  setIsLocationOpen(false);
+                  onLocationChange?.(LOCATION_ALL);
+                }}
+              >
+                {t('search.everywhere')}
+              </button>
+              {/* City options */}
+              {locations.map((location) => (
+                <button
+                  key={location}
+                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                    location === selectedLocation ? 'bg-gray-50' : ''
+                  }`}
+                  onClick={() => {
+                    setSelectedLocation(location);
+                    setIsLocationOpen(false);
+                    onLocationChange?.(location);
+                  }}
+                >
+                  {location}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Near Me chip (visual, no-op handler for now) */}
+        <button
+          aria-pressed={nearMeActive}
+          className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+            nearMeActive
+              ? 'bg-primary text-white'
+              : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+          }`}
+          type="button"
+          onClick={() => setNearMeActive((prev) => !prev)}
+        >
+          <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+          <span>{t('suchen.nearMe.chipLabel')}</span>
+        </button>
+
+        {/* Open Now chip (visual, no-op handler for now) */}
+        <button
+          aria-pressed={openNowActive}
+          className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+            openNowActive
+              ? 'bg-primary text-white'
+              : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+          }`}
+          type="button"
+          onClick={() => setOpenNowActive((prev) => !prev)}
+        >
+          <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+          <span>{t('suchen.openNow.chipLabel')}</span>
+        </button>
+
+        {/* Wer chip */}
+        <div className="relative flex items-center">
           <button
             aria-expanded={isWerOpen}
             aria-haspopup="listbox"
-            className="flex items-center gap-1 rounded-full border border-border-light bg-white px-3 py-1.5 transition-colors hover:bg-gray-50"
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+              selectedWer > 1
+                ? 'bg-primary text-white'
+                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+            }`}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -378,7 +410,7 @@ function SearchBarContent({
               }
             }}
           >
-            <span className="text-sm font-medium text-neutral-600">
+            <span>
               {t('suchen.accordions.wer')}:{' '}
               {selectedWer === 1
                 ? t('search.personSingular', { count: 1 })
@@ -386,7 +418,7 @@ function SearchBarContent({
             </span>
             <ChevronDown
               aria-hidden="true"
-              className={`size-4 text-neutral-500 transition-transform duration-200 ${
+              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
                 isWerOpen ? 'rotate-180' : ''
               }`}
             />
@@ -417,12 +449,16 @@ function SearchBarContent({
           )}
         </div>
 
-        {/* Filter pill */}
-        <div className="relative flex flex-row items-center">
+        {/* Filter chip */}
+        <div className="relative flex items-center">
           <button
             aria-expanded={isFilterOpen}
             aria-haspopup="listbox"
-            className="flex items-center gap-1 rounded-full border border-border-light bg-white px-3 py-1.5 transition-colors hover:bg-gray-50"
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+              selectedFilters.length > 0
+                ? 'bg-primary text-white'
+                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+            }`}
             type="button"
             onClick={(e) => {
               e.stopPropagation();
@@ -433,14 +469,14 @@ function SearchBarContent({
               }
             }}
           >
-            <span className="text-sm font-medium text-neutral-600">
+            <span>
               {selectedFilters.length > 0
                 ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
                 : t('suchen.accordions.filter')}
             </span>
             <ChevronDown
               aria-hidden="true"
-              className={`size-4 text-neutral-500 transition-transform duration-200 ${
+              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
                 isFilterOpen ? 'rotate-180' : ''
               }`}
             />
@@ -529,19 +565,15 @@ export function SearchBar(props: SearchBarProps) {
     <Suspense
       fallback={
         <div
-          className={`flex h-12 w-full flex-row items-center gap-4 rounded-2xl border border-border-light bg-white px-2 ${props.className} `}
+          className={`flex h-12 w-full items-center gap-0 rounded-xl border border-gray-200 bg-white px-4 shadow-sm ${props.className} `}
         >
-          <div className="flex w-full flex-row items-center justify-between">
-            <div className="relative flex flex-1 flex-row items-center gap-0">
-              <Search className="text-neutral-500" size={24} />
-              <input
-                disabled
-                className="w-full appearance-none border-none bg-transparent text-base font-normal leading-[19px] text-gray-400 outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-                placeholder="Search in your Ummah"
-                type="text"
-              />
-            </div>
-          </div>
+          <input
+            disabled
+            className="min-w-0 flex-1 appearance-none border-0 bg-transparent text-sm font-normal text-gray-400 shadow-none outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+            placeholder="Search in your Ummah"
+            type="text"
+          />
+          <Search className="h-5 w-5 shrink-0 text-gray-500" />
         </div>
       }
     >
