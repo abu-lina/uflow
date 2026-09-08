@@ -6,6 +6,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 
 ```markdown
 ### YYYY-MM-DD — [short context]
+
 - **Context**: [1 sentence]
 - **Learning**: [what we learned]
 - **Change to prevent repeat**: [1–3 bullets: rule/command/acceptance criteria]
@@ -17,6 +18,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 (Add new entries below.)
 
 ### 2026-06-13 — Search Location Filter Persistence (Plan 172)
+
 - **Context**: Client-state precedence over URL params caused stale location filter to persist even after user explicitly cleared it.
 - **Learning**: Two-tier bugs (primary: fallback chain falls through to context; secondary: storage re-hydration on remount) need both fixed together — fixing only one leaves the bug partially live. The session guard pattern (`uflow:wo-cleared-this-session` flag) is reusable for any per-session "user has made a choice" gate.
 - **Change to prevent repeat**: Add a checklist item for "does the fix need both a URL-origin fix AND a storage/context guard?" when the bug involves state persistence across navigation.
@@ -29,6 +31,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Why**: Users should navigate to nearby provider pages by tapping list items. Non-clickable items must remain `<div>` for accessibility correctness.
 
 **How**:
+
 - `vi.mock` factories are cached per-module — a test file's `vi.mock('next/navigation', ...)` does NOT override a setup file's mock for already-cached modules
 - To verify `router.push` calls in tests, import `next/navigation` dynamically and replace `useRouter` on the module namespace object (Vitest preserves live bindings in mocked module namespaces, so the replacement propagates to the component)
 - Structure: use `beforeAll` with dynamic `import()` for the component under test, so it's loaded AFTER any module namespace modifications
@@ -41,13 +44,15 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Why**: The dead link caused 404s (trust-eroding). The banner was below sections on mobile (inconsistent with modal and ADR). Users couldn't see verification depth without expanding the section. Trust badges mixed with halal verification confused information architecture.
 
 **How**: Used Python for multi-line text replacements in TypeScript files (more reliable than sed for JSX). Key insights:
+
 - `ExpandSection` takes `title: string`, so tier badge must be concatenated into a string — can't use ReactNode fragments without changing the component API
 - `TrustBadgesSection` handles its own empty state — no wrapper condition needed when moving it outside ExpandSection
 - Testing Library `getByRole('button', { name: '...' })` does exact match on accessible name — use regex when title is computed dynamically
 - TypeScript `tsc` doesn't support the `/u` regex flag when targeting below ES6 — use plain regex instead
 - The `/halal` route is referred to in translations and components but doesn't exist and isn't planned — consistent dead link audit needed across all locales
 
-**Files changed**: 
+**Files changed**:
+
 - `src/components/providers/ProviderDetailPage.tsx` — banner position fix
 - `src/features/providers/components/HalalTrustBanner.tsx` — dead link removal
 - `src/features/providers/components/ProviderDetailSections.tsx` — tier badge + TrustBadgesSection move
@@ -61,13 +66,15 @@ Short log of learnings from plan → build → review → test loops. Append one
 
 **Why**: The old design had all items using the same `Check` icon inside a bordered frame, making it visually flat and indistinguishable from similar lists elsewhere. The new design uses distinct icons per verification type (menu, alcohol, pork, halal) matching the `DetailListItem` pattern already used in `ProviderDetailSections.tsx`.
 
-**How**: 
+**How**:
+
 - `hugeicons-react` has a `HalalIcon` component — but the same file already defined a local `function HalalIcon()` for the `GoldAttestationSection`. Import with alias (`import { HalalIcon as HugeHalalIcon } from 'hugeicons-react'`) to avoid naming conflicts with local definitions.
 - Per-item icons require individual JSX per item — can't use a template/map loop when each item needs a different lucide icon. Each icon becomes an explicit `<div>` per item.
 - When appending a colon outside `t()`, test assertions using `getByText` exact match break. Use `getByText(v => v.startsWith(...))` matcher instead.
 - `tsc` passes with zero errors even when mixing icons from two different packages (lucide-react + hugeicons-react).
 
 **Files changed**:
+
 - `src/features/providers/components/ProofTierCard.tsx` — complete checklist rewrite
 - `src/features/providers/components/__tests__/ProofTierCard.test.tsx` — test fix for colon
 - `src/__tests__/features/providers/ProofTierCardQA.test.tsx` — test fix for colon
@@ -81,14 +88,14 @@ Short log of learnings from plan → build → review → test loops. Append one
 
 **Why**: The Nearby section was visually inconsistent with Menu and Amenities sections, which already used `DetailListItem` — a simple `<p>` list felt like an unfinished section.
 
-**How**: 
+**How**:
+
 - The analysis correctly identified `MapPin` as the best icon (universal location pin, neutral across provider types)
 - The change was purely presentational: same file, same component, same props pattern — zero new dependencies or data flow changes
 - All 8 existing tests mocked `data: []` for the nearby query, so no existing test exercised the data-rendering branch being changed — no regression risk, but also no coverage for the new markup
 - The `DetailListItem` component is a local function in the same file — reusing it is DRY, and its interface (label + icon) fits the nearby data shape perfectly
 
 **Task/PR**: Plan 140, commit `1b45f8be`, tag `v0.12.18`
-
 
 ## 2026-06-04 — Nearby Food-Only Section with Haversine Proximity (Plan 141)
 
@@ -97,6 +104,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Why**: The old section showed providers of all types (cleaning, tutoring, car photos) mixed with restaurants in the same city — irrelevant for a user viewing a restaurant. City-name exact match missed the nuance of "nearby" (a provider 30km away in the same "Berlin" bucket). The Haversine RPC gives real distance sorting without needing PostGIS.
 
 **How**:
+
 - Haversine in a `LANGUAGE sql SECURITY INVOKER` RPC works immediately on Supabase — no PostGIS extension needed, aligns with the project's "Start with Postgres" philosophy
 - CTE deduplicates the distance computation (avoids repeating the Haversine expression in SELECT and WHERE)
 - `GREATEST(-1, LEAST(1, ...))` clamp on acos argument prevents NaN from floating-point edge cases — a trivial fix that prevents silent query failures
@@ -106,6 +114,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 - The `useQuery` mocking pattern in tests means queryFn branching (RPC vs fallback vs error) is never exercised — deferred to future service-layer extraction
 
 **Files changed**:
+
 - `supabase/migrations/093_plan_141_nearby_food_haversine.sql` — new migration (RPC + partial index)
 - `src/features/providers/components/ProviderDetailSections.tsx` — RPC-first query with fallback
 - `src/__tests__/features/providers/ProviderDetailSections.test.tsx` — 2 new tests
@@ -135,6 +144,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Key learning**: Migration files in the repo are not the source of truth — the live database can differ significantly. We initially planned based on migration files (which showed `proof_tier`, `halal_level`, `offers_ids`/`needs_ids` columns), but querying Supabase directly revealed these columns were already dropped/renamed. This changed the halal check data model from 3-tier to 2-tier + certificate, and simplified the offers/needs removal (columns already gone). Always query the live database schema early in the analysis phase.
 
 **What worked well**:
+
 - Breaking the implementation into Foundation (DB + API) and UI (sub-pages + form) chunks kept delegation sizes manageable
 - Architect review caught transaction safety and storage security issues before they reached production
 - Using a Supabase RPC for atomic multi-table writes instead of individual JS-level writes
@@ -146,6 +156,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Version**: 0.13.0 (unreleased)
 
 ### 2026-06-05 — Plan 147: Add store category via migration
+
 - **Context**: Added "Lebensmittel" (Groceries) category under Store section via idempotent SQL migration.
 - **Learning**: When subagents of type planner, implementer, and code-reviewer fail with `ProviderModelNotFoundError`, the `general` subagent type works as a fallback for writing files and documents. This suggests a configuration gap for domain-specific subagents vs the general-purpose agent.
 - **What to do differently**: File an issue to investigate the subagent model provider config, or update the pipeline to route through `general` as a default fallback.
@@ -157,6 +168,7 @@ Short log of learnings from plan → build → review → test loops. Append one
   - `agent-output/qa/147-qa-store-category.md`
 
 ### 2026-06-05 — Plan 148: NOT NULL violation in RPC on NULLIF(null, '')
+
 - **Context**: Debugged a 500 error in PATCH /api/admin/edit-provider caused by a NULLIF expression in a PL/pgSQL RPC function.
 - **Learning**: `NULLIF(column->>'key', '')` does NOT protect against absent JSONB keys. When `->>` returns NULL, `NULLIF(NULL, '')` returns NULL (PostgreSQL: NULL ≠ '' is unknown, not true, so NULLIF returns the first argument). If the target column is NOT NULL, the INSERT fails. Use `COALESCE(NULLIF(column->>'key', ''), default_value)` instead.
 - **What to do differently**: Review all RPC INSERT blocks for `NULLIF` usage on NOT NULL columns — they should all be wrapped in `COALESCE` with an explicit default.
@@ -219,6 +231,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Task**: Plan 160
 
 ### 2026-06-12 — Test expectations as regression sensors for schema changes
+
 - **Context**: Plan 165 — added `'ummah'` to Zod schema listingType enum (P0 fix), causing existing test `"restricts listingType to food, store, or null"` to fail.
 - **Learning**: Tests that assert schema value restriction (e.g., `'ummah'` is rejected) are dual-purpose: they validate current behavior AND serve as regression sensors when values are intentionally expanded. The expected test failure is a feature, not a bug — it confirms the schema change took effect. Document expected failures explicitly in the plan to avoid false alarm during verification.
 - **Change to prevent repeat**:
@@ -227,6 +240,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Task/PR**: Plan 165
 
 ## 2026-06-10 — Direct-URL enrichment vs search-based (Plan 160)
+
 - **Context**: Analysis 164 reported 11 stale + 36 new = 47 categories needing work, with a naive final pool of 9 + 11 + 36 = 56 entries. Italian, Indian, and Thai appeared in both stale-fix AND new-cuisine tables.
 - **Learning**: When upstream docs partition data into groups (stale vs new), always cross-reference by UUID to detect overlapping entries. The true unique count was 53 (= 9 valid + 8 non-overlapping stale fixes + 36 new).
 - **Change to prevent repeat**:
@@ -235,6 +249,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Task/PR**: Plan 164
 
 ### 2026-06-13 — Plan 169: "Alle Restaurants" sentinel type in search filter
+
 - **Context**: Adding a static "Alle Restaurants" entry before dynamically loaded POPULAR categories with a dedicated `'all-restaurants'` sentinel type.
 - **Learning**: When the plan says "if inline, extract it" for a utility function used by tests, extract it unconditionally — avoids import-path guesswork and keeps the regression test importing from the same source of truth as production code. The early-return guard needs to reference `shouldShowAllRestaurants` but `shouldShowRecent` is defined later in the original code — reordering the variable definitions fixed it cleanly.
 - **Change to prevent repeat**: Introduce `shouldShowRecent` before the early return when adding a visibility condition that depends on it. Pre-extract utility functions early when tests need them, rather than leaving conditional extraction to implementation time.
@@ -246,6 +261,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Learning**: Tailwind config spacing tokens cascade to all consumers automatically — fixing `header-spacing` in `tailwind.config.ts` also fixed `HeaderSpacer.tsx` without a code change. But `PageContent.tsx` used inline `pt-[calc(...)]` instead of the token (`pt-header-spacing`), so it needed a manual fix. The root cause was a Tailwind config flatten (all breakpoints set to the same value), which masked the breakpoint mismatch until deployment.
 - **Change to prevent repeat**: When reviewing Tailwind config changes, check that per-breakpoint tokens (sm/md) actually differ from the base value. When hand-authoring calc expressions in components, prefer using the token name instead to stay DRY and auto-fix from config changes.
 - **Task/PR**: Plan 167
+
 ## 2026-06-13 — Filter reorder: Where before What
 
 - **Context**: User requested filter order change so Where (location) appears before What (search) in both search page accordion and SearchBar.
@@ -266,6 +282,7 @@ Short log of learnings from plan → build → review → test loops. Append one
 **Context**: Added an "Alle Restaurants" entry to the search filter's "Was?" accordion. The render was initially tied to `shouldShowPopular`, which depends on `items.length > 0` (API-driven). The Architect caught this: on a fresh database with no providers, the entry would be invisible.
 
 **Pattern**: When adding a static entry to a dynamic list:
+
 1. Give it its own visibility condition (`shouldShowAllRestaurants`) independent of the API-driven condition.
 2. The early return guard must account for it: don't `return null` when the static entry is the only thing to render.
 3. Same applies to any future "Alle" entries in other sections (ummah, store).
@@ -273,31 +290,79 @@ Short log of learnings from plan → build → review → test loops. Append one
 **File affected**: `src/features/search/components/WasCategoryResults.tsx` — early return guard (line ~115), `shouldShowAllRestaurants` variable (line ~113), RowItem render before POPULAR block (lines ~208-229).
 
 ### 2026-06-13 — Branch-first workflow: create branch before any code changes
+
 - **Context**: CI Pipeline #411/#412 failed on pre-existing test issues because Plan 172 changes were made directly on the working tree, then committed to a branch at deploy time. If the branch had been created upfront, the CI feedback loop would have been faster.
 - **Learning**: The orchestrator should create a dedicated feature branch at the start of Phase 3 (Implementer) — before any code is written — not at Phase 6 (DevOps). This gives CI visibility during implementation and avoids deployment-time surprises from pre-existing failures.
 - **Change to prevent repeat**: Insert a branch-creation step between Planner → Implementer handoff. The orchestrator creates `fix/<ID>-<slug>` (or `feature/<ID>-<slug>`) from main, pushes it, and passes the branch name to the implementer. All subsequent commits (implementer, code-reviewer fixes, QA fixes) go onto that branch. The DevOps phase then only needs to push/PR.
 - **Task/PR**: Plan 172, PR #249
 
 ### 2026-06-13 — Check actual database schema from Supabase, not local files
+
 - **Context**: The `adminSchemas.test.ts` fix revealed a mismatch between the local test file and the actual database state. The test expected `listingType` to reject `'ummah'`, but the schema at `adminSchemas.ts:70` already accepted it (`z.enum(['food', 'store', 'ummah'])`). The DB migration and local validation were out of sync. Relying on local files (types, migrations) for schema truth is fragile — they can diverge from the actual database.
 - **Learning**: When investigating bugs or planning changes that depend on database schema (enum values, column types, constraints), verify against the actual Supabase database — not local type definitions or migration files. Use `supabase db dump --schema public`, `supabase db diff`, or direct SQL queries (`SELECT * FROM information_schema.columns`, enum introspection) to get ground truth.
 - **Change to prevent repeat**: Add a "verify DB schema from Supabase" step to the Analyst phase when the bug involves data validation, database enums, or column constraints. The analysis doc should cite actual DB state, not just local files.
 - **Task/PR**: Plan 172, PR #249
 
 ### 2026-06-18 — Modal close navigation (Plan 185)
+
 - **Context**: Provider detail modal close always navigated to hardcoded `/providers` instead of returning to the previous page.
 - **Learning**: When a modal is rendered on a detail page and the expected behavior is "go back to wherever the user came from", use `router.back()` instead of `router.push('/static-path')`. This preserves the full URL (including query params) from the referrer. The `handleBack` function in the mobile component already had the correct fallback pattern (`if (backPath) push else back()`) — just needed the hardcoded prop removed.
 - **Change to prevent repeat**: When reviewing navigation-on-close patterns for modals/modalsheets, check: is the back target dynamic (use `router.back()`) or static (use `router.push`)? Static targets lose referrer context.
 - **Task/PR**: Plan 185, PR #263
 
 ### 2026-06-18 — Subagent model/perm root cause (Plan 186)
+
 - **Context**: "The [subagent] encountered an error" appeared in almost every session. The analyst, code-reviewer, and planner all failed intermittently.
 - **Learning**: Two root causes: (1) All subagents were configured with `anthropic/` and `openai/` model prefixes that don't exist in opencode Go — only `opencode-go/` models are available. (2) Analyst and code-reviewer had `edit: deny` globally with no path-specific overrides, so they couldn't create documents in their `agent-output/` directories. Always verify subagent model availability (`opencode models`) and edit permission path overrides when agents fail to initialize.
 - **Change to prevent repeat**: When adding or modifying subagent configurations, verify the model ID exists in `opencode models` output and that document-creating agents have path-specific `edit` overrides matching the QA/Planner pattern.
 - **Task/PR**: Plan 186, PR #264
 
 ### 2026-08-31 — External tool interference with file writes (SEO URLs)
+
 - **Context**: While building path-based SEO-friendly URLs (`/food/[city]/[category]`), file writes via the Devin edit/write tools were silently reverted by an external process (`opencode serve` running in the background). New file creation and edits to existing files would appear to succeed but would revert within seconds, causing repeated build failures.
 - **Learning**: When file changes are silently lost, check for competing AI coding tools or IDE processes that may be watching and reverting files. Use `ps aux | grep opencode` (or similar) to identify conflicts. Shell-based file writes (`cat > file << 'EOF'`) followed by immediate `git add && git commit` proved reliable because git locks the changes before the external process can revert them. Python scripts for batch edits also worked well.
 - **Change to prevent repeat**: Before starting a multi-file refactor, check for running processes that might interfere with file writes (`opencode`, `cursor`, `windsurf`). Commit frequently (after each logical batch of changes) to lock in progress. Prefer shell-based writes when the edit tool shows unreliable behavior.
 - **Task/PR**: SEO-friendly URLs feature branch
+
+### 2026-09-05 — Search bar component mismatch after slot-based header refactor (Plan 222)
+
+- **Context**: After refactoring the providers page header to use `DiscoveryHeader` with a `searchSlot` prop, `HomeSearchInput` was used in the slot. `HomeSearchInput` uses local `useState('')` and never reads URL params, so navigating to `/providers?q=Lolo` showed results but an empty search bar.
+- **Learning**: When a header component uses a slot pattern (`searchSlot`), the slotted component must match the page's data flow. `HomeSearchInput` was designed for the home page (no URL query state). `SearchContextBar` was already built for results pages (reads `searchTerm` prop, syncs via `useEffect`, has clear button). The fix was a 1-line swap. Before using a component in a new context, check whether it reads the data source that context provides (URL params vs. local state vs. context).
+- **Change to prevent repeat**: When wiring up slot-based headers, verify the slotted search component reads the same source of truth as the page. `HomeSearchInput` = local state only (home page). `SearchContextBar` = prop-driven with URL sync (results pages).
+- **Task/PR**: Plan 222, PR #356
+
+### 2026-09-05 — Nginx default timeout too low for LLM-backed API routes (Plan 223)
+
+- **Context**: POST `/api/chat` returned 504 Gateway Timeout on UAT. The chat API calls Mistral AI (up to 60s per request + 30s streaming), but nginx's default `proxy_read_timeout` is 60s. The retry loop (5 retries with exponential backoff) could extend the total to 362s.
+- **Learning**: Any API route that calls an external LLM needs a dedicated nginx `location` block with an extended `proxy_read_timeout`. The timeout budget must be layered: app deadline < nginx timeout < Cloudflare ceiling. For this project: 85s app < 95s nginx < ~100s Cloudflare. The admin routes already had 95s for import operations; the chat route was missing this because it was added later (Plan 176) without updating the nginx config.
+- **Change to prevent repeat**: When adding a new API route that calls external services with latency > 10s, add a matching nginx `location` block with explicit `proxy_read_timeout`. Check the timeout chain: app-level deadline, nginx proxy timeout, CDN timeout. Document the budget in the nginx config comment.
+- **Task/PR**: Plan 223, fix/223-chat-504-timeout
+
+### 2026-09-06 — Shared hooks that manage UI state should sync to URL params (Plan 226)
+
+- **Context**: The `useMapDiscovery` hook managed map/list view toggle as pure React state. Three surfaces (homepage, results pages, search) all used it, but none reflected the view in the URL. Users couldn't share, deep-link, or use back/forward to preserve view state.
+- **Learning**: When a shared hook manages UI state that's meaningful to the user (view mode, tab selection, filter state), make URL sync an opt-in capability on the hook itself, not a per-consumer concern. The pattern: add an optional `urlSync` config with `searchParams`, `pathname`, and `replace`. Read the param on mount, write on change. Strip the param when the value matches the default to keep URLs clean. This avoids duplicating URL logic in every consumer and keeps the hook backward-compatible (no urlSync = pure state).
+- **Change to prevent repeat**: When adding a new shared hook that manages a user-visible toggle/filter, include an optional `urlSync` param from the start. Check: can a user reasonably want to share this state via URL? If yes, sync it.
+- **Task/PR**: Plan 226, cr/226-mobile-url-routing
+
+### 2026-09-07 — Orchestrator must fetch main before worktree creation
+
+- **Context**: The orchestrator created worktrees from local `main` without fetching from origin first. When local `main` was stale, worktrees started from outdated commits, causing avoidable merge conflicts.
+- **Learning**: Two issues in the orchestrator skill: (1) No `git fetch origin main` before `git worktree add`, so branches could start days behind remote. (2) The bug/hotfix flows had the orchestrator doing read-only investigation (grep, read files, build hypotheses) itself instead of dispatching a subagent, blurring the orchestrator/worker boundary.
+- **Change to prevent repeat**:
+  - Added `git fetch origin main && git branch -f main origin/main` as a required step before every worktree creation (Phase 0, session isolation, multi-ticket)
+  - Added Rule 2 "Fetch before branching" to the Rules section
+  - Moved bug diagnosis and hotfix reproduction into subagent dispatches
+  - Added explicit "What the orchestrator DOES do directly" section to clarify the boundary
+- **Task/PR**: Orchestrator skill refinement
+
+### 2026-09-07 — Orchestrator is pure router: skill docs define the work, not the orchestrator
+
+- **Context**: The orchestrator SKILL.md had grown to 438 lines, re-describing what each skill does internally (grilling rounds, diagnosis phases 1-6, TDD loops, code-review axes). This duplicated the skill definitions, created maintenance burden, and confused the orchestrator's actual role.
+- **Learning**: The orchestrator's job is three things: setup (ID, fetch main, worktree, tracking file), classify (feature/bug/refactor/CR/hotfix/exploration), and dispatch (which subagent, which skills, in what order). Each flow is a table: phase, subagent type, skills, one-line description. The skills themselves define what happens inside each phase. When the orchestrator re-describes skill internals, it creates drift and bloat.
+- **Change to prevent repeat**:
+  - Rewrote the orchestrator from 438 lines to ~240 lines
+  - Each flow is a pipeline diagram + dispatch table, not a prose description of skill phases
+  - Orchestrator never invokes skills directly, never does investigation, never runs grilling
+  - Skills define their own internals; the orchestrator just names them
+- **Task/PR**: Orchestrator skill refinement
