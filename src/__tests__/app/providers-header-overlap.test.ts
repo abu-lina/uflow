@@ -1,6 +1,7 @@
 /**
  * Plan 077 — Mobile header overlap regression tests
  * Plan 227 — Desktop header overlap fix (CSS variable approach)
+ * Plan 228 — DiscoveryResultsGrid fixed overlay removed on desktop
  *
  * Validates the source files contain the correct CSS patterns so that the
  * fixed header never overlaps page content at any breakpoint.
@@ -18,6 +19,7 @@ describe('Plan 227 — Desktop header overlap: source-level guards', () => {
   const providersSrc = readSrc('app/(public)/providers/ProvidersContent.tsx');
   const discoveryHeaderSrc = readSrc('features/search/components/DiscoveryHeader.tsx');
   const rootPageSrc = readSrc('components/shared/RootPageContent.tsx');
+  const gridSrc = readSrc('features/search/components/DiscoveryResultsGrid.tsx');
 
   it('Header.tsx uses borderBoxSize (not contentRect.height) for --desktop-header-height', () => {
     expect(headerSrc).toContain('borderBoxSize');
@@ -52,5 +54,23 @@ describe('Plan 227 — Desktop header overlap: source-level guards', () => {
     // Should have selectedSection but not a bare `section:` line
     expect(interfaceBody).toContain('selectedSection');
     expect(interfaceBody).not.toMatch(/^\s*section\s*:/m);
+  });
+
+  // Plan 228: DiscoveryResultsGrid must not be a fixed overlay on desktop
+  it('DiscoveryResultsGrid uses md:static to drop fixed positioning on desktop', () => {
+    expect(gridSrc).toContain('md:static');
+  });
+
+  it('DiscoveryResultsGrid uses md:inset-auto on desktop', () => {
+    expect(gridSrc).toContain('md:inset-auto');
+  });
+
+  it('DiscoveryResultsGrid removes z-[21] on desktop with md:z-auto', () => {
+    expect(gridSrc).toContain('md:z-auto');
+  });
+
+  it('DiscoveryResultsGrid keeps fixed inset-0 for mobile', () => {
+    expect(gridSrc).toContain('fixed');
+    expect(gridSrc).toContain('inset-0');
   });
 });
