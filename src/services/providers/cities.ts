@@ -66,6 +66,7 @@ export async function fetchProviderCities(client?: SupabaseClient): Promise<stri
     const { data, error } = await supabase
       .from('providers')
       .select('address_city')
+      .eq('review_status', 'approved')
       .returns<{ address_city: string | null }[]>();
 
     if (error) {
