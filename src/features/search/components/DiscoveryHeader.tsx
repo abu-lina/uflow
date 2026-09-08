@@ -5,8 +5,6 @@ import { SectionSelector } from '@/features/search/components/SectionSelector';
 import type { Section } from '@/providers/search-provider';
 
 interface DiscoveryHeaderProps {
-  /** Canonical section value used for section change routing context. */
-  section: Section;
   /** Currently selected section passed to SectionSelector. */
   selectedSection: Section;
   /** Called when the user selects a different section. */
@@ -30,13 +28,20 @@ interface DiscoveryHeaderProps {
  */
 export const DiscoveryHeader = forwardRef<HTMLElement, DiscoveryHeaderProps>(
   function DiscoveryHeader(
-    { section, selectedSection, onSectionChange, searchSlot, filterBarSlot, viewMode = 'list', className = '' },
+    {
+      selectedSection,
+      onSectionChange,
+      searchSlot,
+      filterBarSlot,
+      viewMode = 'list',
+      className = '',
+    },
     ref,
   ) {
     return (
       <header
         ref={ref}
-        className={`fixed left-0 right-0 top-0 z-50 sm:hidden ${className}`}
+        className={`fixed left-0 right-0 top-0 z-50 md:hidden ${className}`}
         data-testid="discovery-header"
         data-view-mode={viewMode}
         style={{
@@ -60,10 +65,7 @@ export const DiscoveryHeader = forwardRef<HTMLElement, DiscoveryHeaderProps>(
           }}
         >
           <div className="pb-3">
-            <SectionSelector
-              selectedSection={selectedSection}
-              onSectionChange={onSectionChange}
-            />
+            <SectionSelector selectedSection={selectedSection} onSectionChange={onSectionChange} />
           </div>
           {searchSlot}
           {filterBarSlot ? <div className="pt-2">{filterBarSlot}</div> : null}

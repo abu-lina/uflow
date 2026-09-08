@@ -107,7 +107,7 @@ export default async function CityPage({ params }: CityPageProps) {
       {stage === 'stage3' && (
         <div className="flex min-h-screen w-full flex-col bg-uflow-light">
           <header
-            className="fixed left-0 right-0 top-0 z-50 sm:hidden"
+            className="fixed left-0 right-0 top-0 z-50 md:hidden"
             style={{
               transition:
                 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
