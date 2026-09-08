@@ -89,7 +89,13 @@ export function useMapDiscovery(
   reviewStatus?: string | null,
   urlSync?: UrlSyncConfig,
 ): UseMapDiscoveryResult {
-  const [isOpenNow, setIsOpenNow] = useState(false);
+  const [isOpenNow, setIsOpenNow] = useState(() => urlSync?.searchParams.get('open_now') === '1');
+
+  // Sync isOpenNow when the URL param changes (e.g. desktop header chip toggle)
+  const urlOpenNow = urlSync?.searchParams.get('open_now') === '1';
+  useEffect(() => {
+    setIsOpenNow(urlOpenNow);
+  }, [urlOpenNow]);
 
   // Resolve initial view: URL param > defaultViewMode
   const urlView = urlSync?.searchParams.get('view');

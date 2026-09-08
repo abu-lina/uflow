@@ -231,9 +231,9 @@ function SearchBarContent({
         params.delete('open_now');
       }
 
-      router.push(`/providers?${params.toString()}`);
+      router.push(`${pathname}?${params.toString()}`);
     },
-    [searchParams, nearMeActive, openNowActive, geolocation.coords, router],
+    [searchParams, nearMeActive, openNowActive, geolocation.coords, router, pathname],
   );
 
   // When geolocation transitions to granted while near-me is active, sync coords to URL.
