@@ -279,23 +279,23 @@ export const en = {
       showAllFilters: 'Show all filters',
       items: {
         muslim: {
-          title: 'Inhaber ist Muslim',
-          subtitle: 'Muslimischer Inhaber',
+          title: 'Muslim Owned',
+          subtitle: 'Muslim owner',
         },
         spenden: {
-          title: 'Spendet fuer Gute Zwecke',
-          subtitle: 'Spendet fuer Gute Zwecke',
+          title: 'Accepts Donations',
+          subtitle: 'Donates to good causes',
         },
         solidaritaet: {
-          title: 'Unterstuetzt Muslime',
-          subtitle: 'Solidaritaet mit der Ummah',
+          title: 'Solidarity Pricing',
+          subtitle: 'Supports the Ummah',
         },
         parken: {
-          title: 'Bietet Parkmoeglichkeiten',
-          subtitle: 'Parkplaetze vorhanden',
+          title: 'Parking Available',
+          subtitle: 'Parking spaces available',
         },
         gebet: {
-          title: 'Offers Prayer Space',
+          title: 'Prayer Space',
           subtitle: 'Prayer room available',
         },
         familien: {
