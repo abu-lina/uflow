@@ -6,8 +6,8 @@ import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
-import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ProviderBadgeWithType } from '@/types/badges';
 import type { OpeningHours } from '@/types/openingHours';
 import type { Location } from '@/types/location';
@@ -121,7 +121,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   error = null,
   headerOffset,
   openNow,
-  enableDistance = true,
+  enableDistance: _enableDistance = true,
   enableBookmarks = false,
   bookmarkedIds = [],
   onBookmarkChange,
@@ -139,6 +139,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
 }: DiscoveryResultsGridProps) {
   const router = useRouter();
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const debouncedLoadMore = useCallback(() => {
@@ -182,8 +183,8 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   if (isLoading) {
     return (
       <div
-        className="fixed inset-0 z-[21] overflow-y-auto bg-uflow-light"
-        style={{ paddingTop: headerOffset }}
+        className="fixed inset-0 z-[21] overflow-y-auto bg-uflow-light md:static md:inset-auto md:z-auto md:h-auto md:min-h-full"
+        style={{ paddingTop: isMobile ? headerOffset : undefined }}
       >
         <div className="px-4 pt-3">
           <SkeletonGrid count={SKELETON_COUNT} />
@@ -195,8 +196,8 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   if (error) {
     return (
       <div
-        className="fixed inset-0 z-[21] flex flex-col items-center justify-center bg-uflow-light px-6 text-center"
-        style={{ paddingTop: headerOffset }}
+        className="fixed inset-0 z-[21] flex flex-col items-center justify-center bg-uflow-light px-6 text-center md:static md:inset-auto md:z-auto md:h-auto md:min-h-full"
+        style={{ paddingTop: isMobile ? headerOffset : undefined }}
       >
         <EmptyState
           description={t('suchen.nearMe.errorLoading')}
@@ -218,11 +219,13 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   if (items.length === 0) {
     return (
       <div
-        className="fixed inset-0 z-[21] flex flex-col items-center justify-center bg-uflow-light px-6 text-center"
-        style={{ paddingTop: headerOffset }}
+        className="fixed inset-0 z-[21] flex flex-col items-center justify-center bg-uflow-light px-6 text-center md:static md:inset-auto md:z-auto md:h-auto md:min-h-full"
+        style={{ paddingTop: isMobile ? headerOffset : undefined }}
       >
         <EmptyState
-          description={emptyDescription ?? (openNow ? t('map.noOpenProvidersHint') : t('map.noProvidersHint'))}
+          description={
+            emptyDescription ?? (openNow ? t('map.noOpenProvidersHint') : t('map.noProvidersHint'))
+          }
           title={emptyTitle ?? (openNow ? t('map.noOpenProviders') : t('map.noProviders'))}
         />
       </div>
@@ -231,14 +234,16 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
 
   return (
     <div
-      className="fixed inset-0 z-[21] overflow-y-auto bg-uflow-light"
+      className="fixed inset-0 z-[21] overflow-y-auto bg-uflow-light md:static md:inset-auto md:z-auto md:h-auto md:min-h-full"
       style={{
-        paddingTop: headerOffset,
-        paddingBottom: 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))',
+        paddingTop: isMobile ? headerOffset : undefined,
+        paddingBottom: isMobile
+          ? 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))'
+          : undefined,
       }}
     >
       <div className="grid grid-cols-2 gap-3 px-4 pt-3 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
-        {items.map((item, index) => (
+        {items.map((item) => (
           <div
             key={item.id}
             className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
@@ -255,20 +260,18 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
             <ProviderCard
               {...itemToProviderCardProps(item)}
               isBookmarked={enableBookmarks ? bookmarkedIds.includes(item.provider_id) : undefined}
+              isReviewing={reviewingProviderId === item.provider_id}
               mode={enableModeration ? 'moderation' : 'bookmark'}
               reviewStatus={enableModeration ? item.review_status : undefined}
-              isReviewing={reviewingProviderId === item.provider_id}
+              onApprove={
+                enableModeration && onApprove ? () => onApprove(item.provider_id) : undefined
+              }
               onBookmarkChange={
                 enableBookmarks && onBookmarkChange
                   ? (isBookmarked) => onBookmarkChange(item.provider_id, isBookmarked)
                   : undefined
               }
-              onApprove={
-                enableModeration && onApprove ? () => onApprove(item.provider_id) : undefined
-              }
-              onReject={
-                enableModeration && onReject ? () => onReject(item.provider_id) : undefined
-              }
+              onReject={enableModeration && onReject ? () => onReject(item.provider_id) : undefined}
             />
           </div>
         ))}
