@@ -249,7 +249,10 @@ function SearchBarContent({
             aria-label={t('search.submit')}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-gray-500 transition-opacity hover:opacity-70 active:opacity-50"
             type="button"
-            onClick={() => onSearchSubmit?.(searchQuery, selectedLocation)}
+            onClick={() => {
+              handleSearch();
+              setSuggestions([]);
+            }}
           >
             <Search aria-hidden="true" className="h-5 w-5" />
           </button>
@@ -388,7 +391,7 @@ function SearchBarContent({
           onClick={() => setOpenNowActive((prev) => !prev)}
         >
           <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-          <span>{t('suchen.openNow.chipLabel')}</span>
+          {t('suchen.openNow.chipLabel')}
         </button>
 
         {/* Wer chip */}
