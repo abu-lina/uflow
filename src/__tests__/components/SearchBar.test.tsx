@@ -54,9 +54,9 @@ describe('SearchBar Component', () => {
       expect(locationButtons.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('[post-review fix] uses gap-1 in search icon/input row', () => {
+    it('[post-review fix] uses gap-1 in search input row', () => {
       const { container } = renderSearchBar();
-      const searchRow = container.querySelector('div.relative.flex.flex-1.flex-row.items-center.gap-1');
+      const searchRow = container.querySelector('div.relative.flex.w-full.items-center.gap-1');
       expect(searchRow).toBeTruthy();
       expect(searchRow?.className).not.toContain('sm:gap-4');
     });
