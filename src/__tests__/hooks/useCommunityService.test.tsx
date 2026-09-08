@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * TDD tests for useCommunityService hook (Plan 082)
  * 

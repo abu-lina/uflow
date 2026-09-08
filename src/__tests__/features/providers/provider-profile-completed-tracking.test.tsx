@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 036 — M2b: provider_profile_completed tracking
  *

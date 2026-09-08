@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 090 M2 / Plan 091 M3: HomeSearchBar component tests
  *

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { useNearMeToggle } from '@/features/search/hooks/useNearMeToggle';

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render } from '@/__tests__/utils/test-utils';

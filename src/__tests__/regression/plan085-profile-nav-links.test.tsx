@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Regression tests for Plan 085: Fix Profile Navigation Links
  *

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 222: Regression test — search term visible in providers page search bar.
  *

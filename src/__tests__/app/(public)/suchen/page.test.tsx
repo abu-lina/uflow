@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 091 M2: /suchen redirect contract tests
  *

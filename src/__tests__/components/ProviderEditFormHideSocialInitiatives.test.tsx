@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * TDD tests for hideSocialInitiatives prop on ProviderEditForm
  * Plan 083 — D9

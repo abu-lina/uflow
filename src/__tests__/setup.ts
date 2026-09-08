@@ -1,6 +1,11 @@
-import '@testing-library/jest-dom';
 import React from 'react';
 import { afterAll, vi } from 'vitest';
+
+// Load jest-dom matchers only in jsdom (avoids overhead in node env tests)
+if (typeof document !== 'undefined') {
+  // @ts-expect-error -- top-level await works in vitest (Vite ESM), tsc rejects it due to target: es5
+  await import('@testing-library/jest-dom');
+}
 
 // Mock server-only module to allow importing server components in tests
 vi.mock('server-only', () => ({}));

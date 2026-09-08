@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 062 — Profile Menu Fix — Navigation Selection Regression Tests
  *

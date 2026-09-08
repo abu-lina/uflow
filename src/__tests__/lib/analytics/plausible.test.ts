@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plausible Analytics Utility Tests (Plan 035 — M1)
  *

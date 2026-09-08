@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render } from '@/__tests__/utils/test-utils';
 import { OpenStatusLine } from '@/features/providers/components/OpenStatusLine';

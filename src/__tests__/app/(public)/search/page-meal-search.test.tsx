@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, act } from '@testing-library/react';
 import SearchPage from '@/app/(public)/search/page';
