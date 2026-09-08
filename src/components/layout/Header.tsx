@@ -64,18 +64,23 @@ export function Header() {
   };
 
   // Handle search submission - navigate to providers page
-  const handleSearchSubmit = (query: string, location: string) => {
+  const handleSearchSubmit = (query: string, location: string, filters?: string[]) => {
     const section = resolveSectionFromRoute(pathname, new URLSearchParams());
-    const current = new URLSearchParams(window.location.search);
-    const filters = current.get('filters')?.split(',').filter(Boolean);
+    // Use filters passed from SearchBar if provided; otherwise fall back to URL params
+    const resolvedFilters = filters ?? current_filters_from_url();
     const url = buildResultsUrl({
       section,
       city: location || null,
       query: query || null,
-      filters,
+      filters: resolvedFilters,
     });
     router.push(url);
   };
+
+  function current_filters_from_url(): string[] | undefined {
+    const current = new URLSearchParams(window.location.search);
+    return current.get('filters')?.split(',').filter(Boolean);
+  }
 
   // Handle clear search - navigate to providers without query
   const handleClearSearch = () => {

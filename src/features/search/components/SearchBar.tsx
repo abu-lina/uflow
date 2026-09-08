@@ -20,7 +20,7 @@ interface SearchBarProps {
   // Custom cities to use instead of fetching from database
   customCities?: string[];
   // Callbacks for parent to handle behavior
-  onSearchSubmit?: (query: string, location: string) => void;
+  onSearchSubmit?: (query: string, location: string, filters?: string[]) => void;
   onClearSearch?: () => void;
   onLocationChange?: (location: string) => void;
 }
@@ -53,7 +53,10 @@ function SearchBarContent({
   const [selectedWer, setSelectedWer] = useState(1);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(() => {
+    const p = new URLSearchParams(searchParams.toString());
+    return p.get('filters')?.split(',').filter(Boolean) ?? [];
+  });
   const [hasMounted, setHasMounted] = useState(false);
   // Initialize near-me and open-now from URL params (same pattern as useNearMeToggle)
   const [nearMeActive, setNearMeActive] = useState(() => {
@@ -257,19 +260,16 @@ function SearchBarContent({
     }
   }, [geolocation, syncUrl, setSelectedLocation]);
 
-  // Deactivate near-me when a city or "Everywhere" is picked
+  // Deactivate near-me when a city or "Everywhere" is picked.
+  // Only resets local state + geolocation; does NOT navigate.
+  // The caller (onLocationChange / onSearchSubmit) handles navigation
+  // so we avoid two competing router.push calls.
   const deactivateNearMe = useCallback(() => {
     if (nearMeActive) {
       setNearMeActive(false);
       geolocation.reset();
-      // Remove near params from URL if present
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete('near_lat');
-      params.delete('near_lon');
-      params.delete('near_radius');
-      router.push(`${pathname}?${params.toString()}`);
     }
-  }, [nearMeActive, geolocation, searchParams, router, pathname]);
+  }, [nearMeActive, geolocation]);
 
   // ── Open Now handler ───────────────────────────────────────────────
   const handleToggleOpenNow = useCallback(() => {
@@ -288,9 +288,10 @@ function SearchBarContent({
   const nearMeChipActive = nearMeActive && (geoStatus === 'granted' || geoStatus === 'idle');
 
   // Handle search submission
-  const handleSearch = () => {
+  const handleSearch = (overrideFilters?: string[]) => {
+    const filters = overrideFilters ?? selectedFilters;
     // Call parent callback to handle the search
-    onSearchSubmit?.(searchQuery, selectedLocation);
+    onSearchSubmit?.(searchQuery, selectedLocation, filters.length > 0 ? filters : undefined);
   };
 
   // Handle key press for search
@@ -441,6 +442,7 @@ function SearchBarContent({
                   className={`flex w-full items-center gap-2 px-4 py-2 text-left text-base hover:bg-gray-50 ${
                     nearMeActive ? 'bg-gray-50 font-medium' : ''
                   }`}
+                  type="button"
                   onClick={handleSelectNearMe}
                 >
                   <MapPin aria-hidden="true" className="h-4 w-4 shrink-0" />
@@ -452,6 +454,7 @@ function SearchBarContent({
                   className={`flex w-full items-center gap-2 px-4 py-2 text-left text-base hover:bg-gray-50 ${
                     !nearMeActive && selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
                   }`}
+                  type="button"
                   onClick={() => {
                     deactivateNearMe();
                     setSelectedLocation(LOCATION_ALL);
@@ -469,6 +472,7 @@ function SearchBarContent({
                     className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
                       !nearMeActive && location === selectedLocation ? 'bg-gray-50' : ''
                     }`}
+                    type="button"
                     onClick={() => {
                       deactivateNearMe();
                       setSelectedLocation(location);
@@ -541,6 +545,7 @@ function SearchBarContent({
                     className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
                       selectedWer === count ? 'bg-gray-50' : ''
                     }`}
+                    type="button"
                     onClick={() => {
                       setSelectedWer(count);
                       setIsWerOpen(false);
@@ -631,11 +636,12 @@ function SearchBarContent({
                       }`}
                       type="button"
                       onClick={() => {
-                        setSelectedFilters((prev) =>
-                          prev.includes(item.key)
-                            ? prev.filter((f) => f !== item.key)
-                            : [...prev, item.key],
-                        );
+                        const next = selectedFilters.includes(item.key)
+                          ? selectedFilters.filter((f) => f !== item.key)
+                          : [...selectedFilters, item.key];
+                        setSelectedFilters(next);
+                        // Propagate filter change to URL immediately
+                        handleSearch(next);
                       }}
                     >
                       <span
