@@ -44,7 +44,7 @@ describe('Header Section Tabs (Plan 153)', () => {
 });
 
 describe('Header desktop height CSS variable (Plan 227)', () => {
-  let observeCallback: (entries: { contentRect: { height: number } }[]) => void;
+  let observeCallback: (entries: { borderBoxSize: { blockSize: number }[] }[]) => void;
   const originalResizeObserver = global.ResizeObserver;
 
   beforeEach(() => {
@@ -65,7 +65,7 @@ describe('Header desktop height CSS variable (Plan 227)', () => {
     render(<Header />);
 
     // Simulate a resize observation with a realistic header height
-    observeCallback([{ contentRect: { height: 172 } }]);
+    observeCallback([{ borderBoxSize: [{ blockSize: 172 }] }]);
 
     expect(document.documentElement.style.getPropertyValue('--desktop-header-height')).toBe(
       '172px',
@@ -75,13 +75,13 @@ describe('Header desktop height CSS variable (Plan 227)', () => {
   it('updates --desktop-header-height when header resizes', () => {
     render(<Header />);
 
-    observeCallback([{ contentRect: { height: 150 } }]);
+    observeCallback([{ borderBoxSize: [{ blockSize: 150 }] }]);
     expect(document.documentElement.style.getPropertyValue('--desktop-header-height')).toBe(
       '150px',
     );
 
     // Simulate a height change (e.g. user logged in, extra row)
-    observeCallback([{ contentRect: { height: 180 } }]);
+    observeCallback([{ borderBoxSize: [{ blockSize: 180 }] }]);
     expect(document.documentElement.style.getPropertyValue('--desktop-header-height')).toBe(
       '180px',
     );
