@@ -49,10 +49,9 @@ function SearchBarContent({
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
-  const werDropdownRef = useRef<HTMLDivElement>(null);
-  const [isWerOpen, setIsWerOpen] = useState(false);
-  const [selectedWer, setSelectedWer] = useState(1);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+  // Available filter keys fetched from DB (only filters with actual data)
+  const [availableFilters, setAvailableFilters] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>(() => {
     const p = new URLSearchParams(searchParams.toString());
@@ -90,9 +89,6 @@ function SearchBarContent({
       ) {
         setIsLocationOpen(false);
       }
-      if (werDropdownRef.current && !werDropdownRef.current.contains(event.target as Node)) {
-        setIsWerOpen(false);
-      }
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
         setIsFilterOpen(false);
       }
@@ -102,57 +98,53 @@ function SearchBarContent({
     }
 
     // Add event listener if any dropdown is open
-    if (isLocationOpen || isWerOpen || isFilterOpen || suggestions.length > 0) {
+    if (isLocationOpen || isFilterOpen || suggestions.length > 0) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isLocationOpen, isWerOpen, isFilterOpen, suggestions.length]);
+  }, [isLocationOpen, isFilterOpen, suggestions.length]);
 
   // Fetch cities based on current filters
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchCities() {
+    async function fetchData() {
       try {
         // If custom cities are provided, use them instead of fetching from database
         if (customCities) {
           if (!cancelled) setLocations(customCities);
-          return;
-        }
-
-        // Use dynamic import to avoid module initialization issues
-        const { fetchProviderCities, fetchFilteredCities } = await import('@/services/providers');
-
-        // If we have search query filters, use filtered cities
-        if (searchQuery.trim()) {
-          const filteredCities = await fetchFilteredCities('', searchQuery);
-          if (!cancelled) setLocations(filteredCities);
         } else {
-          // Fetch cities scoped to the active section (e.g. only food cities on /food)
-          const allCities = await fetchProviderCities(selectedSection);
-          if (!cancelled) setLocations(allCities);
-        }
-      } catch (error) {
-        logSupabaseError('SearchBar.fetchCities', error);
-        // Set fallback to empty array, so the UI still works (just "Everywhere" option)
-        if (!cancelled) setLocations([]);
+          // Use dynamic import to avoid module initialization issues
+          const { fetchProviderCities, fetchFilteredCities } = await import('@/services/providers');
 
-        // Don't re-throw - we've handled it gracefully
-        // The error is already logged by logSupabaseError
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(
-            'Failed to fetch cities. Using fallback. ' +
-              'This is usually a network or configuration issue. ' +
-              'Check your .env.local and restart the dev server.',
-          );
+          // If we have search query filters, use filtered cities
+          if (searchQuery.trim()) {
+            const filteredCities = await fetchFilteredCities('', searchQuery);
+            if (!cancelled) setLocations(filteredCities);
+          } else {
+            // Fetch cities scoped to the active section (e.g. only food cities on /food)
+            const allCities = await fetchProviderCities(selectedSection);
+            if (!cancelled) setLocations(allCities);
+          }
+        }
+
+        // Fetch which filters have actual data for the current section
+        const { fetchAvailableFilters } = await import('@/services/providers');
+        const filters = await fetchAvailableFilters(selectedSection);
+        if (!cancelled) setAvailableFilters(filters);
+      } catch (error) {
+        logSupabaseError('SearchBar.fetchData', error);
+        if (!cancelled) {
+          setLocations([]);
+          setAvailableFilters([]);
         }
       }
     }
 
-    void fetchCities();
+    void fetchData();
 
     return () => {
       cancelled = true;
@@ -493,172 +485,85 @@ function SearchBarContent({
             {t('suchen.openNow.chipLabel')}
           </button>
 
-          {/* Wer chip */}
-          <div className="relative flex items-center">
-            <button
-              aria-expanded={isWerOpen}
-              aria-haspopup="listbox"
-              className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-                selectedWer > 1
-                  ? 'bg-primary text-white'
-                  : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-              }`}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsWerOpen(!isWerOpen);
-                if (!isWerOpen) {
-                  setIsLocationOpen(false);
-                }
-              }}
-            >
-              <span>
-                {t('suchen.accordions.wer')}:{' '}
-                {selectedWer === 1
-                  ? t('search.personSingular', { count: 1 })
-                  : t('search.personPlural', { count: selectedWer })}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-                  isWerOpen ? 'rotate-180' : ''
+          {/* Filter chip (only shown when at least one filter has data) */}
+          {availableFilters.length > 0 && (
+            <div className="relative flex items-center">
+              <button
+                aria-expanded={isFilterOpen}
+                aria-haspopup="listbox"
+                className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+                  selectedFilters.length > 0
+                    ? 'bg-primary text-white'
+                    : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
                 }`}
-              />
-            </button>
-            {isWerOpen && (
-              <div
-                ref={werDropdownRef}
-                className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-64 w-48 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFilterOpen(!isFilterOpen);
+                  if (!isFilterOpen) {
+                    setIsLocationOpen(false);
+                  }
+                }}
               >
-                {[1, 2, 3, 4, 5].map((count) => (
-                  <button
-                    key={count}
-                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                      selectedWer === count ? 'bg-gray-50' : ''
-                    }`}
-                    type="button"
-                    onClick={() => {
-                      setSelectedWer(count);
-                      setIsWerOpen(false);
-                      setIsLocationOpen(false);
-                    }}
-                  >
-                    {count === 1
-                      ? t('search.personSingular', { count: 1 })
-                      : t('search.personPlural', { count })}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Filter chip */}
-          <div className="relative flex items-center">
-            <button
-              aria-expanded={isFilterOpen}
-              aria-haspopup="listbox"
-              className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-                selectedFilters.length > 0
-                  ? 'bg-primary text-white'
-                  : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-              }`}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsFilterOpen(!isFilterOpen);
-                if (!isFilterOpen) {
-                  setIsLocationOpen(false);
-                  setIsWerOpen(false);
-                }
-              }}
-            >
-              <span>
-                {selectedFilters.length > 0
-                  ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
-                  : t('suchen.accordions.filter')}
-              </span>
-              <ChevronDown
-                aria-hidden="true"
-                className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-                  isFilterOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {isFilterOpen && (
-              <div
-                ref={filterDropdownRef}
-                className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-80 w-56 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-              >
-                {(selectedSection === 'ummah'
-                  ? [
-                      { key: 'kostenlos', labelKey: 'suchen.filter.ummahItems.kostenlos.title' },
-                      { key: 'online', labelKey: 'suchen.filter.ummahItems.online.title' },
-                      { key: 'sprache', labelKey: 'suchen.filter.ummahItems.sprache.title' },
-                      {
-                        key: 'zertifiziert',
-                        labelKey: 'suchen.filter.ummahItems.zertifiziert.title',
-                      },
-                      {
-                        key: 'geschlechtergetrennt',
-                        labelKey: 'suchen.filter.ummahItems.geschlechtergetrennt.title',
-                      },
-                    ]
-                  : selectedSection === 'store'
-                    ? [
-                        { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
-                        { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
-                        { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
-                        { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
-                      ]
-                    : [
-                        { key: 'muslim', labelKey: 'suchen.filter.items.muslim.title' },
-                        { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
-                        { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
-                        { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
-                        { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
-                      ]
-                ).map((item) => {
-                  const isSelected = selectedFilters.includes(item.key);
-                  return (
-                    <button
-                      key={item.key}
-                      className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${
-                        isSelected ? 'bg-gray-50 font-medium' : ''
-                      }`}
-                      type="button"
-                      onClick={() => {
-                        const next = selectedFilters.includes(item.key)
-                          ? selectedFilters.filter((f) => f !== item.key)
-                          : [...selectedFilters, item.key];
-                        setSelectedFilters(next);
-                        // Propagate filter change to URL immediately
-                        handleSearch(next);
-                      }}
-                    >
-                      <span
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                          isSelected ? 'border-primary bg-primary' : 'border-gray-300'
+                <span>
+                  {selectedFilters.length > 0
+                    ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
+                    : t('suchen.accordions.filter')}
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                    isFilterOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {isFilterOpen && (
+                <div
+                  ref={filterDropdownRef}
+                  className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-80 w-56 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                >
+                  {availableFilters.map((key) => {
+                    const isSelected = selectedFilters.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${
+                          isSelected ? 'bg-gray-50 font-medium' : ''
                         }`}
+                        type="button"
+                        onClick={() => {
+                          const next = selectedFilters.includes(key)
+                            ? selectedFilters.filter((f) => f !== key)
+                            : [...selectedFilters, key];
+                          setSelectedFilters(next);
+                          handleSearch(next);
+                        }}
                       >
-                        {isSelected && (
-                          <svg fill="none" height="10" viewBox="0 0 10 10" width="10">
-                            <path
-                              d="M2 5L4 7L8 3"
-                              stroke="white"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="1.5"
-                            />
-                          </svg>
-                        )}
-                      </span>
-                      {t(item.labelKey)}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                            isSelected ? 'border-primary bg-primary' : 'border-gray-300'
+                          }`}
+                        >
+                          {isSelected && (
+                            <svg fill="none" height="10" viewBox="0 0 10 10" width="10">
+                              <path
+                                d="M2 5L4 7L8 3"
+                                stroke="white"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="1.5"
+                              />
+                            </svg>
+                          )}
+                        </span>
+                        {t(`suchen.filter.items.${key}.title`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Geo permission status / hint (below chips row) */}

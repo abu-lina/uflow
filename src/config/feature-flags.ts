@@ -8,7 +8,7 @@ export interface FeatureFlags {
   splashScreenDebug: boolean;
   pwaPromptDebug: boolean;
   forceMobileFooter: boolean;
-  
+
   // UI features
   enablePWAInstallPrompt: boolean;
   enableAddressVisibilityToggle: boolean;
@@ -16,10 +16,13 @@ export interface FeatureFlags {
   enableProviderSelectionModal: boolean;
   enableOSMImport: boolean;
   enableSearchExpandShowAllPreview: boolean;
-  
+
+  // Search features
+  enableWerFilter: boolean; // Wer (audience) filter on search page; disabled until backend supports it
+
   // Development features
   enableDebugMode: boolean;
-  
+
   // Launch control
   isAppLaunched: boolean; // Controls app launch status - when false, app routes redirect to /waitlist
   skipWaitlist: boolean; // When true, skip waitlist in onboarding flow
@@ -34,7 +37,7 @@ export const defaultFeatureFlags: FeatureFlags = {
   splashScreenDebug: true,
   pwaPromptDebug: false,
   forceMobileFooter: false,
-  
+
   // UI features - enabled by default
   enablePWAInstallPrompt: true,
   enableAddressVisibilityToggle: false, // Disabled by default
@@ -42,10 +45,13 @@ export const defaultFeatureFlags: FeatureFlags = {
   enableProviderSelectionModal: false, // Disabled by default - Skip provider question
   enableOSMImport: true, // Enabled for testing - Beta feature
   enableSearchExpandShowAllPreview: false, // Disabled by default - staged rollout for search expand previews
-  
+
+  // Search features
+  enableWerFilter: false, // Disabled: no backend query support yet
+
   // Development features - disabled by default
   enableDebugMode: false,
-  
+
   // Launch control - early access mode (onboarding without waitlist)
   isAppLaunched: false, // Enable early access UI stages (Stage 1/2/3 based on provider count)
   skipWaitlist: true, // Skip waitlist in onboarding flow (show splash → about → city selection)
@@ -56,21 +62,21 @@ export const defaultFeatureFlags: FeatureFlags = {
  */
 export function getFeatureFlag<K extends keyof FeatureFlags>(
   key: K,
-  overrides?: Partial<FeatureFlags>
+  overrides?: Partial<FeatureFlags>,
 ): FeatureFlags[K] {
   // Check for environment variable override first
   const envKey = `NEXT_PUBLIC_FEATURE_${key.toUpperCase()}`;
   const envValue = process.env[envKey];
-  
+
   if (envValue !== undefined) {
     return envValue === 'true';
   }
-  
+
   // Check for runtime overrides
   if (overrides && key in overrides && overrides[key] !== undefined) {
     return overrides[key] as FeatureFlags[K];
   }
-  
+
   // Return default value
   return defaultFeatureFlags[key];
 }
@@ -89,9 +95,9 @@ export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFl
     enableProviderSelectionModal: getFeatureFlag('enableProviderSelectionModal', overrides),
     enableOSMImport: getFeatureFlag('enableOSMImport', overrides),
     enableSearchExpandShowAllPreview: getFeatureFlag('enableSearchExpandShowAllPreview', overrides),
+    enableWerFilter: getFeatureFlag('enableWerFilter', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),
     isAppLaunched: getFeatureFlag('isAppLaunched', overrides),
     skipWaitlist: getFeatureFlag('skipWaitlist', overrides),
   };
 }
-

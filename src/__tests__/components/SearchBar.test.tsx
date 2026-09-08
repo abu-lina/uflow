@@ -16,10 +16,11 @@ vi.mock('@/services/categories', () => ({
   fetchUsedCategories: vi.fn(() => Promise.resolve([])),
 }));
 
-// Mock the providers service (cities fetch) to avoid hitting Supabase in tests
+// Mock the providers service (cities + filters fetch) to avoid hitting Supabase in tests
 vi.mock('@/services/providers', () => ({
   fetchProviderCities: vi.fn(() => Promise.resolve([])),
   fetchFilteredCities: vi.fn(() => Promise.resolve([])),
+  fetchAvailableFilters: vi.fn(() => Promise.resolve([])),
 }));
 
 const renderSearchBar = (props: ComponentProps<typeof SearchBar> = {}) =>
@@ -127,10 +128,10 @@ describe('SearchBar Component', () => {
     it('should have location dropdown button', () => {
       renderSearchBar();
 
-      // Location, Wer, and Filter buttons exist with aria-haspopup
+      // Location button exists with aria-haspopup (Wer removed; Filter hidden when no data)
       const buttons = screen.getAllByRole('button');
       const dropdownButtons = buttons.filter((b) => b.getAttribute('aria-haspopup') === 'listbox');
-      expect(dropdownButtons.length).toBe(3);
+      expect(dropdownButtons.length).toBeGreaterThanOrEqual(1);
     });
   });
 

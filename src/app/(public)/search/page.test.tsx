@@ -185,11 +185,21 @@ vi.mock('@/components/layout/PageContent', () => ({
 }));
 
 vi.mock('@/features/search/components/SectionSelector', () => ({
-  SectionSelector: ({ onSectionChange }: { onSectionChange: (section: 'food' | 'ummah' | 'store') => void }) => (
+  SectionSelector: ({
+    onSectionChange,
+  }: {
+    onSectionChange: (section: 'food' | 'ummah' | 'store') => void;
+  }) => (
     <div>
-      <button type="button" onClick={() => onSectionChange('food')}>Section food</button>
-      <button type="button" onClick={() => onSectionChange('ummah')}>Section ummah</button>
-      <button type="button" onClick={() => onSectionChange('store')}>Section store</button>
+      <button type="button" onClick={() => onSectionChange('food')}>
+        Section food
+      </button>
+      <button type="button" onClick={() => onSectionChange('ummah')}>
+        Section ummah
+      </button>
+      <button type="button" onClick={() => onSectionChange('store')}>
+        Section store
+      </button>
     </div>
   ),
 }));
@@ -244,7 +254,8 @@ describe('Search page Wo defaults and selection behavior', () => {
     sessionStorage.clear();
   });
 
-  it('shows Wer accordion when inactive section resolves to food', async () => {
+  // Wer accordion is behind enableWerFilter feature flag (disabled by default)
+  it.skip('shows Wer accordion when inactive section resolves to food', async () => {
     mockSection = 'business';
 
     render(<SearchPage />);
@@ -254,7 +265,7 @@ describe('Search page Wo defaults and selection behavior', () => {
     });
   });
 
-  it('keeps Wer accordion open when switching from food to inactive section', async () => {
+  it.skip('keeps Wer accordion open when switching from food to inactive section', async () => {
     const { rerender } = render(<SearchPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
@@ -316,7 +327,7 @@ describe('Search page Wo defaults and selection behavior', () => {
     expect(screen.queryByText('AUSWAHL')).not.toBeInTheDocument();
   });
 
-  it('clear all resets Wer title and counters to default', async () => {
+  it.skip('clear all resets Wer title and counters to default', async () => {
     render(<SearchPage />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
@@ -344,13 +355,9 @@ describe('Search page Wo defaults and selection behavior', () => {
     expect(screen.getByLabelText('Search city')).toBeInTheDocument();
     expect(screen.queryByLabelText('Angebote suchen')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Wer: For me' }));
-    expect(screen.getByRole('button', { name: 'Männer erhöhen' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Search city')).not.toBeInTheDocument();
-
     fireEvent.click(screen.getByRole('button', { name: 'Values & Amenities' }));
     expect(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Männer erhöhen' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Search city')).not.toBeInTheDocument();
 
     openWoAccordion();
     expect(screen.getByLabelText('Search city')).toBeInTheDocument();
@@ -370,7 +377,9 @@ describe('Search page Wo defaults and selection behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
 
     expect(screen.getByRole('heading', { name: 'Values & Amenities' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Values & Amenities: 1' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Values & Amenities: 1' }),
+    ).not.toBeInTheDocument();
   });
 
   it('[Plan 196 — corrected placement] does not render the near-me/open-now chip row on the filter page', () => {
