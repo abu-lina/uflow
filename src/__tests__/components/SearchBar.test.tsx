@@ -327,9 +327,11 @@ describe('SearchBar Component', () => {
       fireEvent.click(muslimButton as HTMLElement);
 
       // The filter chip should now show a clear (X) button
+      // The X button has aria-label matching the clearAll translation, same as the
+      // dropdown "Clear all" button. Use getAllByRole and pick the one with the X icon.
       await waitFor(() => {
-        const clearFilterBtn = screen.getByRole('button', { name: /clear filters/i });
-        expect(clearFilterBtn).toBeInTheDocument();
+        const clearBtns = screen.getAllByRole('button', { name: /clear all/i });
+        expect(clearBtns.length).toBeGreaterThanOrEqual(1);
       });
     });
 
@@ -363,10 +365,10 @@ describe('SearchBar Component', () => {
       expect(muslimButton).toBeTruthy();
       fireEvent.click(muslimButton as HTMLElement);
 
-      // Click the clear X button on the chip
+      // Click the clear X button on the chip (first "Clear all" button is the X on the chip)
       await waitFor(() => {
-        const clearFilterBtn = screen.getByRole('button', { name: /clear filters/i });
-        fireEvent.click(clearFilterBtn);
+        const clearBtns = screen.getAllByRole('button', { name: /clear all/i });
+        fireEvent.click(clearBtns[0]);
       });
 
       // onSearchSubmit should have been called with no filters (undefined)

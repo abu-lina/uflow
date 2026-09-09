@@ -527,7 +527,7 @@ function SearchBarContent({
                 </button>
                 {selectedFilters.length > 0 && (
                   <button
-                    aria-label="Clear filters"
+                    aria-label={t('suchen.clearAll')}
                     className="inline-flex h-8 items-center rounded-r-md bg-primary pl-0.5 pr-2 text-white transition-opacity hover:opacity-80"
                     type="button"
                     onClick={(e) => {
