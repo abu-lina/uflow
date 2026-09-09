@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -18,6 +18,11 @@ import { useSearch } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import {
+  AdminStatusFilter,
+  type ReviewStatusFilter,
+} from '@/features/admin/components/AdminStatusFilter';
 import { toast } from 'sonner';
 import {
   getResultsPathForSection,
@@ -50,6 +55,35 @@ export function Header() {
   const { selectedSection, setSelectedSection } = useSearch();
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();
+  const { isAdmin } = useIsAdmin();
+
+  // Plan 235: Admin status filter — mirrors mobile pattern from ProvidersContent.
+  // Read from window.location.search instead of useSearchParams to avoid adding a
+  // Suspense boundary requirement to the layout-level Header component.
+  const [adminStatus, setAdminStatus] = useState<ReviewStatusFilter>(null);
+
+  // Sync admin status from URL on mount and when pathname changes
+  useEffect(() => {
+    if (!isAdmin) return;
+    const params = new URLSearchParams(window.location.search);
+    setAdminStatus((params.get('status') as ReviewStatusFilter) ?? null);
+  }, [isAdmin, pathname]);
+
+  const handleStatusChange = useCallback(
+    (newStatus: ReviewStatusFilter) => {
+      setAdminStatus(newStatus);
+      const params = new URLSearchParams(window.location.search);
+      if (newStatus) {
+        params.set('status', newStatus);
+      } else {
+        params.delete('status');
+      }
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router],
+  );
+
   const handleSectionChange = (section: Section) => {
     if (!SECTION_META[section].active) {
       const label = t(SECTION_META[section].labelKey);
@@ -67,17 +101,22 @@ export function Header() {
   const handleSearchSubmit = (query: string, location: string, filters?: string[]) => {
     const section = resolveSectionFromRoute(pathname, new URLSearchParams());
     // Use filters passed from SearchBar if provided; otherwise fall back to URL params
-    const resolvedFilters = filters !== undefined ? filters : current_filters_from_url();
-    const url = buildResultsUrl({
+    const resolvedFilters = filters !== undefined ? filters : currentFiltersFromUrl();
+    let url = buildResultsUrl({
       section,
       city: location || null,
       query: query || null,
       filters: resolvedFilters,
     });
+    // Preserve admin status filter across search submissions
+    if (adminStatus) {
+      const sep = url.includes('?') ? '&' : '?';
+      url = `${url}${sep}status=${adminStatus}`;
+    }
     router.push(url);
   };
 
-  function current_filters_from_url(): string[] | undefined {
+  function currentFiltersFromUrl(): string[] | undefined {
     const current = new URLSearchParams(window.location.search);
     return current.get('filters')?.split(',').filter(Boolean);
   }
@@ -85,7 +124,12 @@ export function Header() {
   // Handle clear search - navigate to providers without query
   const handleClearSearch = () => {
     const section = resolveSectionFromRoute(pathname, new URLSearchParams());
-    router.push(getResultsPathForSection(section));
+    let url: string = getResultsPathForSection(section);
+    // Preserve admin status filter when clearing search
+    if (adminStatus) {
+      url = `${url}?status=${adminStatus}`;
+    }
+    router.push(url);
   };
 
   // Handle location change - navigate to providers with new location
@@ -94,12 +138,17 @@ export function Header() {
     const current = new URLSearchParams(window.location.search);
     const q = current.get('q');
     const filters = current.get('filters')?.split(',').filter(Boolean);
-    const url = buildResultsUrl({
+    let url = buildResultsUrl({
       section,
       city: location || null,
       query: q || null,
       filters,
     });
+    // Preserve admin status filter across location changes
+    if (adminStatus) {
+      const sep = url.includes('?') ? '&' : '?';
+      url = `${url}${sep}status=${adminStatus}`;
+    }
     router.push(url);
   };
 
@@ -264,6 +313,14 @@ export function Header() {
           {/* Bottom row: SearchBar centered */}
           <div className="flex w-full justify-center px-12">
             <SearchBar
+              adminSlot={
+                isAdmin ? (
+                  <AdminStatusFilter
+                    selectedStatus={adminStatus}
+                    onStatusChange={handleStatusChange}
+                  />
+                ) : undefined
+              }
               className="!w-[800px] !shadow-none"
               onClearSearch={handleClearSearch}
               onLocationChange={handleLocationChange}
