@@ -9,7 +9,6 @@ type ChainRecorder = {
   from: ReturnType<typeof vi.fn>;
   select: ReturnType<typeof vi.fn>;
   eq: ReturnType<typeof vi.fn>;
-  ilike: ReturnType<typeof vi.fn>;
   _resolve: (data: Record<string, unknown>[] | null, error?: unknown) => void;
 };
 
@@ -27,7 +26,6 @@ function createChainableClient(): { client: SupabaseClient; chain: ChainRecorder
     from: vi.fn(),
     select: vi.fn(),
     eq: vi.fn(),
-    ilike: vi.fn(),
     _resolve(data, error = null) {
       resolveData = data;
       resolveError = error;
@@ -199,22 +197,25 @@ describe('fetchAvailableFilters', () => {
   });
 
   // ------------------------------------------------------------------
-  // 4. City scoping: adds ilike filter when city is provided
+  // 4. City scoping: adds eq filter when city is provided
   // ------------------------------------------------------------------
-  it('adds ilike filter on address_city when city is provided', async () => {
+  it('adds eq filter on address_city when city is provided', async () => {
     chain._resolve([]);
 
     await fetchAvailableFilters(undefined, 'Berlin', client);
 
-    expect(chain.ilike).toHaveBeenCalledWith('address_city', 'Berlin');
+    expect(chain.eq).toHaveBeenCalledWith('address_city', 'Berlin');
   });
 
-  it('does NOT add ilike filter when city is undefined', async () => {
+  it('does NOT add city filter when city is undefined', async () => {
     chain._resolve([]);
 
     await fetchAvailableFilters(undefined, undefined, client);
 
-    expect(chain.ilike).not.toHaveBeenCalled();
+    // eq is called once for review_status, but NOT for address_city
+    const eqCalls = chain.eq.mock.calls as unknown[][];
+    const cityCalls = eqCalls.filter((args) => args[0] === 'address_city');
+    expect(cityCalls).toHaveLength(0);
   });
 
   // ------------------------------------------------------------------
@@ -237,7 +238,7 @@ describe('fetchAvailableFilters', () => {
     await fetchAvailableFilters('food', 'Berlin', client);
 
     expect(chain.eq).toHaveBeenCalledWith('listing_type', 'food');
-    expect(chain.ilike).toHaveBeenCalledWith('address_city', 'Berlin');
+    expect(chain.eq).toHaveBeenCalledWith('address_city', 'Berlin');
   });
 
   // ------------------------------------------------------------------

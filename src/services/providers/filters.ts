@@ -53,7 +53,7 @@ export async function fetchAvailableFilters(
     }
 
     if (city) {
-      query = query.ilike('address_city', city);
+      query = query.eq('address_city', city);
     }
 
     const { data, error } = await query;

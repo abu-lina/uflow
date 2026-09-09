@@ -134,7 +134,14 @@ function SearchBarContent({
         // Fetch which filters have actual data for the current section + city
         const cityParam = selectedLocation || undefined;
         const filters = await fetchAvailableFilters(selectedSection, cityParam);
-        if (!cancelled) setAvailableFilters(filters);
+        if (!cancelled) {
+          setAvailableFilters(filters);
+          // Prune selected filters that now have 0 matches in the new city.
+          // Only cleans local state; the URL is already updated by the city
+          // change handler, so no navigation call is needed here.
+          const activeKeys = new Set<string>(filters.filter((f) => f.count > 0).map((f) => f.key));
+          setSelectedFilters((prev) => prev.filter((k) => activeKeys.has(k)));
+        }
       } catch (error) {
         logSupabaseError('SearchBar.fetchData', error);
         if (!cancelled) {
@@ -534,7 +541,6 @@ function SearchBarContent({
                         disabled={isDisabled}
                         type="button"
                         onClick={() => {
-                          if (isDisabled) return;
                           const next = selectedFilters.includes(filter.key)
                             ? selectedFilters.filter((f) => f !== filter.key)
                             : [...selectedFilters, filter.key];
