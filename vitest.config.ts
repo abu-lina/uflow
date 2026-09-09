@@ -9,6 +9,14 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        // CI runners (ubuntu-latest) have 7 GB RAM. Each jsdom-env fork can use ~2 GB.
+        // Cap at 2 forks in CI to stay within memory; local dev uses all cores.
+        maxForks: process.env.CI ? 2 : undefined,
+      },
+    },
     setupFiles: ['src/__tests__/setup.ts'],
     include: [
       './src/**/*.{test,spec}.{js,jsx,ts,tsx}',
