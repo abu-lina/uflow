@@ -58,15 +58,23 @@ export async function checkCityExists(cityName: string, client?: SupabaseClient)
 }
 
 /**
- * Fetch cities that currently have providers (includes all listing_types: food, store, ummah).
+ * Fetch cities that currently have approved providers.
+ * Optionally filter by section (listing_type) so only cities with
+ * providers in the active section are returned.
  */
-export async function fetchProviderCities(client?: SupabaseClient): Promise<string[]> {
+export async function fetchProviderCities(
+  section?: Section,
+  client?: SupabaseClient,
+): Promise<string[]> {
   try {
     const supabase = getSupabaseClient(client);
-    const { data, error } = await supabase
-      .from('providers')
-      .select('address_city')
-      .returns<{ address_city: string | null }[]>();
+    let query = supabase.from('providers').select('address_city').eq('review_status', 'approved');
+
+    if (section) {
+      query = query.eq('listing_type', section);
+    }
+
+    const { data, error } = await query.returns<{ address_city: string | null }[]>();
 
     if (error) {
       throw error;

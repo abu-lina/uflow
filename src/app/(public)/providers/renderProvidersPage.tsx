@@ -4,7 +4,10 @@ import { searchProvidersAndCommunityServices } from '@/services/providers';
 import type { SearchResult } from '@/services/providers';
 import { inferSectionFromCategory, SECTION_META } from '@/config/sectionFilters';
 import type { Section } from '@/providers/search-provider';
-import { SEARCH_FILTER_KEY_SET, type SearchFilterKey } from '@/features/search/constants/filterKeys';
+import {
+  SEARCH_FILTER_KEY_SET,
+  type SearchFilterKey,
+} from '@/features/search/constants/filterKeys';
 
 import { ProvidersContent } from './ProvidersContent';
 
@@ -26,17 +29,24 @@ export async function renderProvidersPage(opts: {
   const isLegacyEverywhere = locationParam === 'Everywhere' || locationParam === 'Überall';
   const location = isLegacyEverywhere ? '' : locationParam;
 
-  const resolvedSection = routeSection ?? (() => {
-    const sectionParam = typeof params.section === 'string' ? params.section : null;
-    const categoryParam = typeof params.category === 'string' ? params.category : null;
-    const rawSection: Section =
-      sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'store' || sectionParam === 'business'
-        ? (sectionParam === 'business' ? 'store' : sectionParam)
-        : categoryParam
-          ? inferSectionFromCategory(categoryParam)
-          : 'food';
-    return rawSection;
-  })();
+  const resolvedSection =
+    routeSection ??
+    (() => {
+      const sectionParam = typeof params.section === 'string' ? params.section : null;
+      const categoryParam = typeof params.category === 'string' ? params.category : null;
+      const rawSection: Section =
+        sectionParam === 'food' ||
+        sectionParam === 'ummah' ||
+        sectionParam === 'store' ||
+        sectionParam === 'business'
+          ? sectionParam === 'business'
+            ? 'store'
+            : sectionParam
+          : categoryParam
+            ? inferSectionFromCategory(categoryParam)
+            : 'food';
+      return rawSection;
+    })();
   const section: Section = SECTION_META[resolvedSection].active ? resolvedSection : 'food';
 
   const rawFilters = typeof params.filters === 'string' ? params.filters : '';
@@ -50,7 +60,16 @@ export async function renderProvidersPage(opts: {
   let initialHasMore = false;
 
   try {
-    const data = await searchProvidersAndCommunityServices(query, category, location, 0, PAGE_SIZE, undefined, section, filters);
+    const data = await searchProvidersAndCommunityServices(
+      query,
+      category,
+      location,
+      0,
+      PAGE_SIZE,
+      undefined,
+      section,
+      filters,
+    );
     initialResults = data.results;
     initialHasMore = data.hasMore;
   } catch (error) {
@@ -60,6 +79,7 @@ export async function renderProvidersPage(opts: {
   return (
     <Suspense fallback={null}>
       <ProvidersContent
+        defaultLocation={location || undefined}
         initialData={{
           results: initialResults,
           hasMore: initialHasMore,

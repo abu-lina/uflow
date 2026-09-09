@@ -1,15 +1,18 @@
 'use client';
 // React imports
-import { Suspense, useEffect, useState, useRef } from 'react';
+import { Suspense, useCallback, useEffect, useState, useRef } from 'react';
 
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 // Third-party imports
-import { ChevronDown, Search, X, Loader2, MapPin, Clock } from 'lucide-react';
+import { ChevronDown, Search, X, Loader2, MapPin, Clock, Globe } from 'lucide-react';
 // Local imports
 import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import { fetchSearchSuggestions } from '@/services/providers';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
+import { getResultsPathForSection } from '@/config/sectionFilters';
 
 import { logSupabaseError } from '@/utils/errorUtils';
 
@@ -18,7 +21,7 @@ interface SearchBarProps {
   // Custom cities to use instead of fetching from database
   customCities?: string[];
   // Callbacks for parent to handle behavior
-  onSearchSubmit?: (query: string, location: string) => void;
+  onSearchSubmit?: (query: string, location: string, filters?: string[]) => void;
   onClearSearch?: () => void;
   onLocationChange?: (location: string) => void;
 }
@@ -32,7 +35,9 @@ function SearchBarContent({
 }: SearchBarProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
   const { t } = useLanguage();
+  const geolocation = useGeolocation();
   // State for input and dropdowns
   const [isTyping, setIsTyping] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
@@ -44,15 +49,22 @@ function SearchBarContent({
   const hasSyncedFromUrl = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
-  const werDropdownRef = useRef<HTMLDivElement>(null);
-  const [isWerOpen, setIsWerOpen] = useState(false);
-  const [selectedWer, setSelectedWer] = useState(1);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+  // Available filter keys fetched from DB (only filters with actual data)
+  const [availableFilters, setAvailableFilters] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(() => {
+    const p = new URLSearchParams(searchParams.toString());
+    return p.get('filters')?.split(',').filter(Boolean) ?? [];
+  });
   const [hasMounted, setHasMounted] = useState(false);
-  const [nearMeActive, setNearMeActive] = useState(false);
-  const [openNowActive, setOpenNowActive] = useState(false);
+  // Initialize near-me and open-now from URL params
+  const [nearMeActive, setNearMeActive] = useState(
+    () => new URLSearchParams(searchParams.toString()).get('near_me') === '1',
+  );
+  const [openNowActive, setOpenNowActive] = useState(
+    () => new URLSearchParams(searchParams.toString()).get('open_now') === '1',
+  );
 
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [suggestions, setSuggestions] = useState<
@@ -77,9 +89,6 @@ function SearchBarContent({
       ) {
         setIsLocationOpen(false);
       }
-      if (werDropdownRef.current && !werDropdownRef.current.contains(event.target as Node)) {
-        setIsWerOpen(false);
-      }
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
         setIsFilterOpen(false);
       }
@@ -89,62 +98,58 @@ function SearchBarContent({
     }
 
     // Add event listener if any dropdown is open
-    if (isLocationOpen || isWerOpen || isFilterOpen || suggestions.length > 0) {
+    if (isLocationOpen || isFilterOpen || suggestions.length > 0) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isLocationOpen, isWerOpen, isFilterOpen, suggestions.length]);
+  }, [isLocationOpen, isFilterOpen, suggestions.length]);
 
   // Fetch cities based on current filters
   useEffect(() => {
     let cancelled = false;
 
-    async function fetchCities() {
+    async function fetchData() {
       try {
         // If custom cities are provided, use them instead of fetching from database
         if (customCities) {
           if (!cancelled) setLocations(customCities);
-          return;
-        }
-
-        // Use dynamic import to avoid module initialization issues
-        const { fetchProviderCities, fetchFilteredCities } = await import('@/services/providers');
-
-        // If we have search query filters, use filtered cities
-        if (searchQuery.trim()) {
-          const filteredCities = await fetchFilteredCities('', searchQuery);
-          if (!cancelled) setLocations(filteredCities);
         } else {
-          // Otherwise, fetch all cities
-          const allCities = await fetchProviderCities();
-          if (!cancelled) setLocations(allCities);
-        }
-      } catch (error) {
-        logSupabaseError('SearchBar.fetchCities', error);
-        // Set fallback to empty array, so the UI still works (just "Everywhere" option)
-        if (!cancelled) setLocations([]);
+          // Use dynamic import to avoid module initialization issues
+          const { fetchProviderCities, fetchFilteredCities } = await import('@/services/providers');
 
-        // Don't re-throw - we've handled it gracefully
-        // The error is already logged by logSupabaseError
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(
-            'Failed to fetch cities. Using fallback. ' +
-              'This is usually a network or configuration issue. ' +
-              'Check your .env.local and restart the dev server.',
-          );
+          // If we have search query filters, use filtered cities
+          if (searchQuery.trim()) {
+            const filteredCities = await fetchFilteredCities('', searchQuery);
+            if (!cancelled) setLocations(filteredCities);
+          } else {
+            // Fetch cities scoped to the active section (e.g. only food cities on /food)
+            const allCities = await fetchProviderCities(selectedSection);
+            if (!cancelled) setLocations(allCities);
+          }
+        }
+
+        // Fetch which filters have actual data for the current section
+        const { fetchAvailableFilters } = await import('@/services/providers');
+        const filters = await fetchAvailableFilters(selectedSection);
+        if (!cancelled) setAvailableFilters(filters);
+      } catch (error) {
+        logSupabaseError('SearchBar.fetchData', error);
+        if (!cancelled) {
+          setLocations([]);
+          setAvailableFilters([]);
         }
       }
     }
 
-    void fetchCities();
+    void fetchData();
 
     return () => {
       cancelled = true;
     };
-  }, [searchQuery, customCities, t]);
+  }, [searchQuery, customCities, selectedSection, t]);
 
   // Sync state with URL params only on initial mount or when the page changes
   useEffect(() => {
@@ -193,10 +198,83 @@ function SearchBarContent({
     };
   }, [searchQuery]);
 
+  // ── URL sync helper for open-now / near-me params ────────────────
+  // Near-me navigates to the section root (e.g. /food) since having a city
+  // in the path conflicts with geolocation-based results.
+  const syncUrl = useCallback(
+    (overrides: { active?: boolean; openNow?: boolean }) => {
+      const active = overrides.active ?? nearMeActive;
+      const openNow = overrides.openNow ?? openNowActive;
+
+      // When near-me is active, navigate to section root (strip city from path)
+      const basePath = active ? getResultsPathForSection(selectedSection) : pathname;
+
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (active) {
+        params.set('near_me', '1');
+      } else {
+        params.delete('near_me');
+      }
+
+      if (openNow) {
+        params.set('open_now', '1');
+      } else {
+        params.delete('open_now');
+      }
+
+      // Clean up stale near params
+      params.delete('near_lat');
+      params.delete('near_lon');
+      params.delete('near_radius');
+
+      router.push(`${basePath}?${params.toString()}`);
+    },
+    [searchParams, nearMeActive, openNowActive, router, pathname, selectedSection],
+  );
+
+  // ── Near Me handler (selected from location dropdown) ──────────────
+  // Navigates to /food?near_me=1 — ProvidersContent reads the param and
+  // triggers its own geolocation request + near-me results.
+  const handleSelectNearMe = useCallback(() => {
+    setNearMeActive(true);
+    setSelectedLocation(LOCATION_ALL);
+    setIsLocationOpen(false);
+    syncUrl({ active: true });
+  }, [syncUrl, setSelectedLocation]);
+
+  // Deactivate near-me when a city or "Everywhere" is picked.
+  // Only resets local state + geolocation; does NOT navigate.
+  // The caller (onLocationChange / onSearchSubmit) handles navigation
+  // so we avoid two competing router.push calls.
+  const deactivateNearMe = useCallback(() => {
+    if (nearMeActive) {
+      setNearMeActive(false);
+      geolocation.reset();
+    }
+  }, [nearMeActive, geolocation]);
+
+  // ── Open Now handler ───────────────────────────────────────────────
+  const handleToggleOpenNow = useCallback(() => {
+    const next = !openNowActive;
+    setOpenNowActive(next);
+    syncUrl({ openNow: next });
+  }, [openNowActive, syncUrl]);
+
+  // Geo status helpers for hint display
+  const geoStatus = geolocation.status;
+  const showPermissionDenied =
+    nearMeActive &&
+    (geoStatus === 'denied' || geoStatus === 'unavailable' || geoStatus === 'timeout');
+  const showPermissionDeniedHint = nearMeActive && geoStatus === 'denied';
+  // Chip is "active" when location is granted, or when near-me is on while geo is still idle
+  const nearMeChipActive = nearMeActive && (geoStatus === 'granted' || geoStatus === 'idle');
+
   // Handle search submission
-  const handleSearch = () => {
+  const handleSearch = (overrideFilters?: string[]) => {
+    const filters = overrideFilters ?? selectedFilters;
     // Call parent callback to handle the search
-    onSearchSubmit?.(searchQuery, selectedLocation);
+    onSearchSubmit?.(searchQuery, selectedLocation, filters.length > 0 ? filters : undefined);
   };
 
   // Handle key press for search
@@ -298,266 +376,205 @@ function SearchBarContent({
       </div>
 
       {/* Secondary filter chips — desktop only */}
-      <div className="hidden flex-nowrap items-center gap-2 md:flex">
-        {/* City / Location chip */}
-        <div className="relative flex items-center">
-          <button
-            aria-expanded={isLocationOpen}
-            aria-haspopup="listbox"
-            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-              selectedLocation !== LOCATION_ALL
-                ? 'bg-primary text-white'
-                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-            }`}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsLocationOpen(!isLocationOpen);
-            }}
-          >
-            <span>
-              {selectedLocation === LOCATION_ALL ? t('search.everywhere') : selectedLocation}
-            </span>
-            <ChevronDown
-              aria-hidden="true"
-              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-                isLocationOpen ? 'rotate-180' : ''
+      <div className="hidden flex-col gap-2 md:flex">
+        <div className="flex flex-nowrap items-center gap-2">
+          {/* City / Location + Near Me merged chip */}
+          <div className="relative flex items-center">
+            <button
+              aria-expanded={isLocationOpen}
+              aria-haspopup="listbox"
+              className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+                nearMeChipActive || selectedLocation !== LOCATION_ALL
+                  ? 'bg-primary text-white'
+                  : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
               }`}
-            />
-          </button>
-          {isLocationOpen && (
-            <div
-              ref={locationDropdownRef}
-              className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-64 w-48 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsLocationOpen(!isLocationOpen);
+              }}
             >
-              {/* "Everywhere" option using canonical sentinel */}
-              <button
-                key="__everywhere__"
-                className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                  selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
+              {nearMeActive && (
+                <MapPin
+                  aria-hidden="true"
+                  className={`h-3.5 w-3.5 shrink-0 ${geoStatus === 'prompting' ? 'animate-pulse' : ''}`}
+                />
+              )}
+              <span className={geoStatus === 'prompting' && nearMeActive ? 'animate-pulse' : ''}>
+                {nearMeActive
+                  ? t('suchen.nearMe.chipLabel')
+                  : selectedLocation === LOCATION_ALL
+                    ? t('search.everywhere')
+                    : selectedLocation}
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                  isLocationOpen ? 'rotate-180' : ''
                 }`}
-                onClick={() => {
-                  setSelectedLocation(LOCATION_ALL);
-                  setIsLocationOpen(false);
-                  onLocationChange?.(LOCATION_ALL);
-                }}
+              />
+            </button>
+            {isLocationOpen && (
+              <div
+                ref={locationDropdownRef}
+                className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-64 w-48 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
               >
-                {t('search.everywhere')}
-              </button>
-              {/* City options */}
-              {locations.map((location) => (
+                {/* "Near Me" option — top of dropdown */}
                 <button
-                  key={location}
-                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                    location === selectedLocation ? 'bg-gray-50' : ''
+                  key="__near_me__"
+                  className={`flex w-full items-center gap-2 px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                    nearMeActive ? 'bg-gray-50 font-medium' : ''
                   }`}
+                  type="button"
+                  onClick={handleSelectNearMe}
+                >
+                  <MapPin aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  {t('suchen.nearMe.chipLabel')}
+                </button>
+                {/* "Everywhere" option using canonical sentinel */}
+                <button
+                  key="__everywhere__"
+                  className={`flex w-full items-center gap-2 px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                    !nearMeActive && selectedLocation === LOCATION_ALL ? 'bg-gray-50' : ''
+                  }`}
+                  type="button"
                   onClick={() => {
-                    setSelectedLocation(location);
+                    deactivateNearMe();
+                    setSelectedLocation(LOCATION_ALL);
                     setIsLocationOpen(false);
-                    onLocationChange?.(location);
+                    onLocationChange?.(LOCATION_ALL);
                   }}
                 >
-                  {location}
+                  <Globe aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  {t('search.everywhere')}
                 </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Near Me chip (visual, no-op handler for now) */}
-        <button
-          aria-pressed={nearMeActive}
-          className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-            nearMeActive
-              ? 'bg-primary text-white'
-              : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-          }`}
-          type="button"
-          onClick={() => setNearMeActive((prev) => !prev)}
-        >
-          <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-          <span>{t('suchen.nearMe.chipLabel')}</span>
-        </button>
-
-        {/* Open Now chip (visual, no-op handler for now) */}
-        <button
-          aria-pressed={openNowActive}
-          className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-            openNowActive
-              ? 'bg-primary text-white'
-              : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-          }`}
-          type="button"
-          onClick={() => setOpenNowActive((prev) => !prev)}
-        >
-          <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-          {t('suchen.openNow.chipLabel')}
-        </button>
-
-        {/* Wer chip */}
-        <div className="relative flex items-center">
-          <button
-            aria-expanded={isWerOpen}
-            aria-haspopup="listbox"
-            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-              selectedWer > 1
-                ? 'bg-primary text-white'
-                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-            }`}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsWerOpen(!isWerOpen);
-              if (!isWerOpen) {
-                setIsLocationOpen(false);
-              }
-            }}
-          >
-            <span>
-              {t('suchen.accordions.wer')}:{' '}
-              {selectedWer === 1
-                ? t('search.personSingular', { count: 1 })
-                : t('search.personPlural', { count: selectedWer })}
-            </span>
-            <ChevronDown
-              aria-hidden="true"
-              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-                isWerOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-          {isWerOpen && (
-            <div
-              ref={werDropdownRef}
-              className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-64 w-48 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-            >
-              {[1, 2, 3, 4, 5].map((count) => (
-                <button
-                  key={count}
-                  className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
-                    selectedWer === count ? 'bg-gray-50' : ''
-                  }`}
-                  onClick={() => {
-                    setSelectedWer(count);
-                    setIsWerOpen(false);
-                    setIsLocationOpen(false);
-                  }}
-                >
-                  {count === 1
-                    ? t('search.personSingular', { count: 1 })
-                    : t('search.personPlural', { count })}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Filter chip */}
-        <div className="relative flex items-center">
-          <button
-            aria-expanded={isFilterOpen}
-            aria-haspopup="listbox"
-            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-              selectedFilters.length > 0
-                ? 'bg-primary text-white'
-                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-            }`}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsFilterOpen(!isFilterOpen);
-              if (!isFilterOpen) {
-                setIsLocationOpen(false);
-                setIsWerOpen(false);
-              }
-            }}
-          >
-            <span>
-              {selectedFilters.length > 0
-                ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
-                : t('suchen.accordions.filter')}
-            </span>
-            <ChevronDown
-              aria-hidden="true"
-              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-                isFilterOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-          {isFilterOpen && (
-            <div
-              ref={filterDropdownRef}
-              className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-80 w-56 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
-            >
-              {(selectedSection === 'ummah'
-                ? [
-                    { key: 'kostenlos', labelKey: 'suchen.filter.ummahItems.kostenlos.title' },
-                    { key: 'online', labelKey: 'suchen.filter.ummahItems.online.title' },
-                    { key: 'sprache', labelKey: 'suchen.filter.ummahItems.sprache.title' },
-                    {
-                      key: 'zertifiziert',
-                      labelKey: 'suchen.filter.ummahItems.zertifiziert.title',
-                    },
-                    {
-                      key: 'geschlechtergetrennt',
-                      labelKey: 'suchen.filter.ummahItems.geschlechtergetrennt.title',
-                    },
-                  ]
-                : selectedSection === 'store'
-                  ? [
-                      { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
-                      { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
-                      { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
-                      { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
-                    ]
-                  : [
-                      { key: 'muslim', labelKey: 'suchen.filter.items.muslim.title' },
-                      { key: 'spenden', labelKey: 'suchen.filter.items.spenden.title' },
-                      { key: 'solidaritaet', labelKey: 'suchen.filter.items.solidaritaet.title' },
-                      { key: 'parken', labelKey: 'suchen.filter.items.parken.title' },
-                      { key: 'gebet', labelKey: 'suchen.filter.items.gebet.title' },
-                    ]
-              ).map((item) => {
-                const isSelected = selectedFilters.includes(item.key);
-                return (
+                {/* City options */}
+                {locations.map((location) => (
                   <button
-                    key={item.key}
-                    className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${
-                      isSelected ? 'bg-gray-50 font-medium' : ''
+                    key={location}
+                    className={`block w-full px-4 py-2 text-left text-base hover:bg-gray-50 ${
+                      !nearMeActive && location === selectedLocation ? 'bg-gray-50' : ''
                     }`}
                     type="button"
                     onClick={() => {
-                      setSelectedFilters((prev) =>
-                        prev.includes(item.key)
-                          ? prev.filter((f) => f !== item.key)
-                          : [...prev, item.key],
-                      );
+                      deactivateNearMe();
+                      setSelectedLocation(location);
+                      setIsLocationOpen(false);
+                      onLocationChange?.(location);
                     }}
                   >
-                    <span
-                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                        isSelected ? 'border-primary bg-primary' : 'border-gray-300'
-                      }`}
-                    >
-                      {isSelected && (
-                        <svg fill="none" height="10" viewBox="0 0 10 10" width="10">
-                          <path
-                            d="M2 5L4 7L8 3"
-                            stroke="white"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="1.5"
-                          />
-                        </svg>
-                      )}
-                    </span>
-                    {t(item.labelKey)}
+                    {location}
                   </button>
-                );
-              })}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Open Now chip — syncs open_now param to URL */}
+          <button
+            aria-pressed={openNowActive}
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+              openNowActive
+                ? 'bg-primary text-white'
+                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+            }`}
+            type="button"
+            onClick={handleToggleOpenNow}
+          >
+            <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+            {t('suchen.openNow.chipLabel')}
+          </button>
+
+          {/* Filter chip (only shown when at least one filter has data) */}
+          {availableFilters.length > 0 && (
+            <div className="relative flex items-center">
+              <button
+                aria-expanded={isFilterOpen}
+                aria-haspopup="listbox"
+                className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+                  selectedFilters.length > 0
+                    ? 'bg-primary text-white'
+                    : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+                }`}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsFilterOpen(!isFilterOpen);
+                  if (!isFilterOpen) {
+                    setIsLocationOpen(false);
+                  }
+                }}
+              >
+                <span>
+                  {selectedFilters.length > 0
+                    ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
+                    : t('suchen.accordions.filter')}
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                    isFilterOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {isFilterOpen && (
+                <div
+                  ref={filterDropdownRef}
+                  className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-80 w-56 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
+                >
+                  {availableFilters.map((key) => {
+                    const isSelected = selectedFilters.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${
+                          isSelected ? 'bg-gray-50 font-medium' : ''
+                        }`}
+                        type="button"
+                        onClick={() => {
+                          const next = selectedFilters.includes(key)
+                            ? selectedFilters.filter((f) => f !== key)
+                            : [...selectedFilters, key];
+                          setSelectedFilters(next);
+                          handleSearch(next);
+                        }}
+                      >
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                            isSelected ? 'border-primary bg-primary' : 'border-gray-300'
+                          }`}
+                        >
+                          {isSelected && (
+                            <svg fill="none" height="10" viewBox="0 0 10 10" width="10">
+                              <path
+                                d="M2 5L4 7L8 3"
+                                stroke="white"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="1.5"
+                              />
+                            </svg>
+                          )}
+                        </span>
+                        {t(`suchen.filter.items.${key}.title`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Geo permission status / hint (below chips row) */}
+        {showPermissionDenied ? (
+          <p aria-live="polite" className="px-0.5 text-sm text-text-muted" role="status">
+            <span className="block">{t('suchen.nearMe.permissionDenied')}</span>
+            {showPermissionDeniedHint ? (
+              <span className="block text-xs">{t(getNearMePermissionHintKey())}</span>
+            ) : null}
+          </p>
+        ) : null}
       </div>
     </div>
   );

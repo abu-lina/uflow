@@ -4,6 +4,9 @@ export const SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN = {
   solidaritaet: 'economic_solidarity',
   parken: 'has_parking',
   gebet: 'has_prayer_space',
+  familien: 'family_friendly',
+  frauen: 'women_friendly',
+  kinder: 'children_friendly',
 } as const;
 
 export type SearchFilterKey = keyof typeof SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN;

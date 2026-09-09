@@ -53,3 +53,7 @@ export type { SearchSuggestion } from './suggestions';
 // Map pins
 export { getMapLocations } from './map-pins';
 export type { RawLocationRow, RawProviderRow, RawCategoryRow } from './map-pins';
+
+// Filters
+export { fetchAvailableFilters } from './filters';
+export type { FilterKey } from './filters';
