@@ -180,7 +180,7 @@ export async function fetchFilteredCities(
       const normalizedCategory =
         selectedCategory && selectedCategory !== 'Alle' ? selectedCategory : '';
 
-      const providers = await searchProviders(
+      const { providers } = await searchProviders(
         trimmedQuery,
         normalizedCategory,
         '',

@@ -77,7 +77,12 @@ function setupChain() {
   mockReturns.mockResolvedValue({ data: [], error: null });
 }
 
-import { fetchFilteredCities, fetchPopularCities, fetchProviderCities, searchProviders } from '@/services/providers';
+import {
+  fetchFilteredCities,
+  fetchPopularCities,
+  fetchProviderCities,
+  searchProviders,
+} from '@/services/providers';
 
 describe('providers service', () => {
   beforeEach(() => {
@@ -100,7 +105,7 @@ describe('providers service', () => {
         data: [
           { address_city: 'Berlin' },
           { address_city: 'München' },
-          { address_city: 'Berlin' },  // Duplicate
+          { address_city: 'Berlin' }, // Duplicate
           { address_city: 'Hamburg' },
         ],
         error: null,
@@ -111,7 +116,7 @@ describe('providers service', () => {
       expect(result).toContain('München');
       expect(result).toContain('Hamburg');
       // Duplicates removed
-      expect(result.filter(c => c === 'Berlin')).toHaveLength(1);
+      expect(result.filter((c) => c === 'Berlin')).toHaveLength(1);
     });
 
     it('applies category filter when specified', async () => {
@@ -195,6 +200,7 @@ describe('providers service', () => {
 
       expect(mockSelect).toHaveBeenCalledWith(
         expect.stringContaining('category:categories(name_de, name_en, category_images)'),
+        { count: 'exact' },
       );
     });
   });

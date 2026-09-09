@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import type { ProviderBadgeWithType } from '@/types/badges';
 import type { OpeningHours } from '@/types/openingHours';
 import type { Location } from '@/types/location';
+import type { Section } from '@/providers/search-provider';
 import type { ReviewStatusFilter } from '@/services/providers';
 
 export interface DiscoveryCardItem {
@@ -78,6 +79,10 @@ interface DiscoveryResultsGridProps {
   /** Optional custom empty title/description; defaults to map.noProviders. */
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Plan 229: Current section for count label. */
+  section?: Section;
+  /** Plan 229: Total count of matching providers (from Supabase exact count). */
+  totalCount?: number;
 }
 
 const SKELETON_COUNT = 8;
@@ -136,6 +141,8 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   onRetry,
   emptyTitle,
   emptyDescription,
+  section,
+  totalCount,
 }: DiscoveryResultsGridProps) {
   const router = useRouter();
   const { t } = useLanguage();
@@ -232,6 +239,12 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
     );
   }
 
+  // Plan 229: Build section-aware count label
+  const showCount = totalCount != null && totalCount > 0 && items.length > 0;
+  const countTranslationKey = section
+    ? `discovery.resultsCount.${section}`
+    : 'discovery.resultsCount.food';
+
   return (
     <div
       className="fixed inset-0 z-[21] overflow-y-auto bg-uflow-light md:static md:inset-auto md:z-auto md:h-auto md:min-h-full"
@@ -242,6 +255,15 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
           : undefined,
       }}
     >
+      {showCount && (
+        <p
+          aria-live="polite"
+          className="px-4 pb-1 pt-3 font-inter text-sm text-text-muted"
+          role="status"
+        >
+          {t(countTranslationKey, { count: totalCount })}
+        </p>
+      )}
       <div className="grid grid-cols-2 gap-3 px-4 pt-3 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => (
           <div
