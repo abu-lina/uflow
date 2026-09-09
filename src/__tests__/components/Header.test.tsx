@@ -2,6 +2,7 @@
 /**
  * Plan 153: Desktop header section tabs
  * Plan 227: Desktop header height CSS variable
+ * Plan 231: Clearing filters must not re-add stale ?filters= from the URL
  *
  * Tests that the Header renders SectionSelector tabs and clicking a tab
  * navigates to /<section>. Also verifies the ResizeObserver publishes
@@ -86,5 +87,51 @@ describe('Header desktop height CSS variable (Plan 227)', () => {
     expect(document.documentElement.style.getPropertyValue('--desktop-header-height')).toBe(
       '180px',
     );
+  });
+});
+
+describe('Header filter clearing regression (Plan 231)', () => {
+  let originalLocation: Location;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    originalLocation = window.location;
+    // Simulate a stale URL with ?filters=muslim (the bug scenario)
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: { ...originalLocation, search: '?filters=muslim' },
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: originalLocation,
+    });
+  });
+
+  it('does not re-add stale filters when handleSearchSubmit receives empty array', () => {
+    // Render Header to get its internal handleSearchSubmit wired up
+    render(<Header />);
+
+    // Simulate what SearchBar does when clearing filters:
+    // It calls onSearchSubmit(query, location, [])
+    // Header passes handleSearchSubmit as onSearchSubmit to SearchBar.
+    // We find the SearchBar's onSearchSubmit prop by triggering a search with empty filters.
+
+    // The SearchBar's search input + Enter triggers handleSearch() which calls
+    // onSearchSubmit(query, location, filters). With our fix, clearing sends [].
+    // But we can test the Header's handleSearchSubmit more directly by
+    // finding the search input in the rendered Header and triggering Enter.
+    const searchInput = screen.getByPlaceholderText(/search in your ummah/i);
+    fireEvent.change(searchInput, { target: { value: 'pizza' } });
+    fireEvent.keyDown(searchInput, { key: 'Enter', code: 'Enter' });
+
+    // With the default empty selectedFilters ([]), handleSearch passes [] to
+    // onSearchSubmit. Header's handleSearchSubmit should NOT fall back to
+    // window.location.search (which has ?filters=muslim).
+    expect(mockRouterPush).toHaveBeenCalled();
+    const pushedUrl = mockRouterPush.mock.calls[mockRouterPush.mock.calls.length - 1][0];
+    expect(pushedUrl).not.toContain('filters=');
   });
 });

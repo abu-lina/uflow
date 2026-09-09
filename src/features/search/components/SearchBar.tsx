@@ -281,7 +281,7 @@ function SearchBarContent({
   const handleSearch = (overrideFilters?: string[]) => {
     const filters = overrideFilters ?? selectedFilters;
     // Call parent callback to handle the search
-    onSearchSubmit?.(searchQuery, selectedLocation, filters.length > 0 ? filters : undefined);
+    onSearchSubmit?.(searchQuery, selectedLocation, filters);
   };
 
   // Handle key press for search

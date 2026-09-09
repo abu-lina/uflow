@@ -67,7 +67,7 @@ export function Header() {
   const handleSearchSubmit = (query: string, location: string, filters?: string[]) => {
     const section = resolveSectionFromRoute(pathname, new URLSearchParams());
     // Use filters passed from SearchBar if provided; otherwise fall back to URL params
-    const resolvedFilters = filters ?? current_filters_from_url();
+    const resolvedFilters = filters !== undefined ? filters : current_filters_from_url();
     const url = buildResultsUrl({
       section,
       city: location || null,
