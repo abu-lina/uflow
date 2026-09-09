@@ -8,6 +8,7 @@ const mockSearchFoodCategories = vi.fn();
 const mockSearchFoodMenuItems = vi.fn();
 const mockFetchProviderCities = vi.fn();
 const mockCheckCityExists = vi.fn();
+const mockFetchAvailableFilters = vi.fn();
 const mockRouterPush = vi.fn();
 let mockSearchParams = new URLSearchParams('section=food');
 let replaceDelayMs = 0;
@@ -249,6 +250,7 @@ vi.mock('@/lib/supabase/client', () => ({
 vi.mock('@/services/providers', () => ({
   fetchProviderCities: (...args: unknown[]) => mockFetchProviderCities(...args),
   checkCityExists: (...args: unknown[]) => mockCheckCityExists(...args),
+  fetchAvailableFilters: (...args: unknown[]) => mockFetchAvailableFilters(...args),
 }));
 
 vi.mock('@/services/offers', () => ({
@@ -270,6 +272,11 @@ describe('/search page meal search wiring (Plan 096)', () => {
     mockRouterReplace.mockReset();
     mockFetchProviderCities.mockResolvedValue([]);
     mockCheckCityExists.mockResolvedValue(false);
+    mockFetchAvailableFilters.mockResolvedValue([
+      { key: 'muslim', count: 5 },
+      { key: 'spenden', count: 3 },
+      { key: 'solidaritaet', count: 2 },
+    ]);
     lastWasMealProps = null;
     mockSearchFoodCategories.mockResolvedValue([]);
     mockSearchFoodMenuItems.mockResolvedValue([]);
@@ -360,6 +367,11 @@ describe('/search page meal search wiring (Plan 096)', () => {
 
   it('[regression] includes selected filters in providers URL on search submit', async () => {
     render(<SearchPage />);
+
+    // Wait for fetchAvailableFilters to resolve so filter items render
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i }));
 

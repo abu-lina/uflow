@@ -162,6 +162,11 @@ vi.mock('@/services/providers', () => ({
     { city: 'Stuttgart', provider_count: 4 },
   ]),
   checkCityExists: vi.fn(async () => true),
+  fetchAvailableFilters: vi.fn(async () => [
+    { key: 'muslim', count: 5 },
+    { key: 'spenden', count: 3 },
+    { key: 'solidaritaet', count: 2 },
+  ]),
 }));
 
 vi.mock('@/lib/supabase/client', () => ({
@@ -345,11 +350,14 @@ describe('Search page Wo defaults and selection behavior', () => {
     expect(screen.getAllByText('0')).toHaveLength(2);
   });
 
-  it('keeps only one accordion open at a time', () => {
+  it('keeps only one accordion open at a time', async () => {
     localStorage.removeItem('selectedCity');
     render(<SearchPage />);
 
-    expect(screen.getByLabelText('Angebote suchen')).toBeInTheDocument();
+    // Wait for async fetchAvailableFilters to resolve
+    await waitFor(() => {
+      expect(screen.getByLabelText('Angebote suchen')).toBeInTheDocument();
+    });
 
     openWoAccordion();
     expect(screen.getByLabelText('Search city')).toBeInTheDocument();
@@ -367,7 +375,11 @@ describe('Search page Wo defaults and selection behavior', () => {
   it('shows filter count in title and clears it with clear all', async () => {
     render(<SearchPage />);
 
-    expect(screen.getByRole('heading', { name: 'Values & Amenities' })).toBeInTheDocument();
+    // Wait for async fetchAvailableFilters to resolve
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Values & Amenities' })).toBeInTheDocument();
+    });
+
     fireEvent.click(screen.getByRole('button', { name: 'Values & Amenities' }));
 
     fireEvent.click(screen.getByRole('checkbox', { name: /Inhaber ist Muslim/i }));
