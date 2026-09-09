@@ -273,4 +273,21 @@ describe('Plan 232 - Mobile filter blank page', () => {
     // A bare EmptyState should NOT appear directly in ProvidersContent
     expect(screen.queryByTestId('bare-empty-state')).not.toBeInTheDocument();
   });
+
+  it('passes correct error-state messages to DiscoveryResultsGrid', () => {
+    mockInfiniteQueryReturn = {
+      ...mockInfiniteQueryReturn,
+      error: new Error('Network error'),
+    };
+
+    render(<ProvidersContent />);
+
+    expect(mockDiscoveryResultsGrid).toHaveBeenCalled();
+    const calls = mockDiscoveryResultsGrid.mock.calls;
+    const lastCallArgs = calls[calls.length - 1] as unknown as [Record<string, unknown>];
+    const lastProps = lastCallArgs[0];
+
+    expect(lastProps.errorTitle).toBe('providers.errorTitle');
+    expect(lastProps.errorDescription).toBe('providers.errorLoading');
+  });
 });

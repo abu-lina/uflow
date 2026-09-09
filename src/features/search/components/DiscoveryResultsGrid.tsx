@@ -79,6 +79,9 @@ interface DiscoveryResultsGridProps {
   /** Optional custom empty title/description; defaults to map.noProviders. */
   emptyTitle?: string;
   emptyDescription?: string;
+  /** Optional custom error title/description; defaults to suchen.nearMe.errorTitle. */
+  errorTitle?: string;
+  errorDescription?: string;
   /** Plan 229: Current section for count label. */
   section?: Section;
   /** Plan 229: Total count of matching providers (from Supabase exact count). */
@@ -141,6 +144,8 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   onRetry,
   emptyTitle,
   emptyDescription,
+  errorTitle,
+  errorDescription,
   section,
   totalCount,
 }: DiscoveryResultsGridProps) {
@@ -207,8 +212,8 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
         style={{ paddingTop: isMobile ? headerOffset : undefined }}
       >
         <EmptyState
-          description={t('suchen.nearMe.errorLoading')}
-          title={t('suchen.nearMe.errorTitle')}
+          description={errorDescription ?? t('suchen.nearMe.errorLoading')}
+          title={errorTitle ?? t('suchen.nearMe.errorTitle')}
         />
         {onRetry && (
           <button

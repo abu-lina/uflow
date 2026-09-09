@@ -546,6 +546,8 @@ export function ProvidersContent({
         emptyTitle={t('providers.noResultsFound')}
         enableModeration={enableModeration}
         error={error}
+        errorDescription={t('providers.errorLoading')}
+        errorTitle={t('providers.errorTitle')}
         hasNextPage={hasNextPage ?? false}
         headerOffset={headerHeight}
         isFetchingNextPage={isFetchingNextPage}
