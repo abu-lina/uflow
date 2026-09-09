@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 063 — Fresh-user mobile auth entry regression tests
  *

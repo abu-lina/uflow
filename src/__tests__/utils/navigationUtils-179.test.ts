@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 179 — Mobile navbar overflowing chat input — regression tests
  *

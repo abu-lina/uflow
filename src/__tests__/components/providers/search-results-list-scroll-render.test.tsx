@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 053 — M4: Provider scroll render bug regression tests
  *

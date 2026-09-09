@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 062 — CityEarlyAccessNavbar Component Tests
  *

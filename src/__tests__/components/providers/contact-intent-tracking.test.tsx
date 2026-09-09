@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 036 — M2: contact_intent_triggered tracking
  *

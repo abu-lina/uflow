@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * QA integration test: ProofTierCard verification model.
  *

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 226: View toggle URL sync regression tests
  *

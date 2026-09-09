@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tests for Owner Decision Landing Page
  * Plan 038: Provider Owner Outreach & Claim System

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Tests for ImportDryRunPageContent - the operator preview UI component.
  * Written FIRST (TDD Red → Green → Refactor).

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 153: Desktop header section tabs
  * Plan 227: Desktop header height CSS variable

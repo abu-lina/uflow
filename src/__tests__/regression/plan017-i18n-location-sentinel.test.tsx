@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Regression tests for Plan 017: i18n Header Translation Bugfix
  *

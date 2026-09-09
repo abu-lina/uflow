@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Plan 089 M6: SectionSelector component tests
  *
