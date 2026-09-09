@@ -12,6 +12,7 @@ export type {
   NearMeFoodResult,
   Provider,
   SearchResult,
+  ProviderSearchResponse,
   ReviewStatusFilter,
   AdminSearchOptions,
   PopularCity,

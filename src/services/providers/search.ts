@@ -10,7 +10,7 @@ import {
   SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN,
   type SearchFilterKey,
 } from '@/features/search/constants/filterKeys';
-import type { Provider, SearchResult, AdminSearchOptions } from './types';
+import type { Provider, SearchResult, AdminSearchOptions, ProviderSearchResponse } from './types';
 import { transformProviderToSearchResult } from './types';
 
 async function loadProviderRelationIds(
@@ -109,7 +109,7 @@ export async function searchProvidersAndCommunityServices(
   section?: Section,
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
-): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+): Promise<ProviderSearchResponse> {
   try {
     const normalizedCategory = category || '';
 
@@ -181,7 +181,7 @@ export async function searchProvidersAndCommunityServices(
     // Log error for debugging
     console.error('[searchProvidersAndCommunityServices] Error:', error);
     // Return empty results instead of throwing to prevent UI crashes
-    return { results: [], hasMore: false };
+    return { results: [], hasMore: false, totalCount: 0 };
   }
 }
 
@@ -196,7 +196,7 @@ async function searchCommunityServicesOnly(
   page: number = 0,
   pageSize: number = 5,
   client?: SupabaseClient,
-): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+): Promise<ProviderSearchResponse> {
   return searchProvidersOnly(
     query,
     category,
@@ -224,11 +224,11 @@ async function searchProvidersOnly(
   listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
-): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+): Promise<ProviderSearchResponse> {
   const offset = page * pageSize;
   const limit = pageSize + 1; // Fetch one extra to check if there are more
 
-  const providers = await searchProviders(
+  const { providers, totalCount } = await searchProviders(
     query,
     category,
     location,
@@ -243,7 +243,7 @@ async function searchProvidersOnly(
   const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
   const sortedResults = sortByCreationDate(results);
 
-  return { results: sortedResults, hasMore };
+  return { results: sortedResults, hasMore, totalCount };
 }
 
 /**
@@ -263,7 +263,7 @@ export async function searchProviders(
   listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
-): Promise<Provider[]> {
+): Promise<{ providers: Provider[]; totalCount: number }> {
   // Plan 058: Include review fields when admin
   const selectFields = adminOptions?.isAdmin
     ? '*, category:categories(name_de, name_en, category_images), review_status, review_feedback'
@@ -274,7 +274,8 @@ export async function searchProviders(
   // after verifying isAdminOrModerator().
   const supabase = getSupabaseClient(client);
 
-  let req = supabase.from('providers').select(selectFields);
+  // Plan 229: Use count: 'exact' to get the total matching count alongside data.
+  let req = supabase.from('providers').select(selectFields, { count: 'exact' });
 
   // Plan 058: Apply review_status filter when admin options provided
   if (adminOptions?.status) {
@@ -362,7 +363,7 @@ export async function searchProviders(
       req = req.or(searchConditions.join(','));
     } else {
       // No matches found for any search vector — return empty
-      return [];
+      return { providers: [], totalCount: 0 };
     }
   }
 
@@ -373,11 +374,14 @@ export async function searchProviders(
     req = req.eq('address_city', location);
   }
 
-  const { data, error } = await req.returns<Provider[]>();
+  const { data, error, count } = await req.returns<Provider[]>();
   if (error) throw error;
 
+  // Plan 229: Extract totalCount from Supabase count header
+  const totalCount = count ?? 0;
+
   if (!Array.isArray(data) || data.length === 0) {
-    return [];
+    return { providers: [], totalCount };
   }
 
   const providerIds = data.map((provider) => provider.provider_id);
@@ -434,5 +438,5 @@ export async function searchProviders(
     badges: badgesMap.get(provider.provider_id) || [],
   }));
 
-  return providersWithBadges;
+  return { providers: providersWithBadges, totalCount };
 }

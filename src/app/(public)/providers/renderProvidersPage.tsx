@@ -58,6 +58,7 @@ export async function renderProvidersPage(opts: {
 
   let initialResults: SearchResult[] = [];
   let initialHasMore = false;
+  let initialTotalCount = 0;
 
   try {
     const data = await searchProvidersAndCommunityServices(
@@ -72,6 +73,7 @@ export async function renderProvidersPage(opts: {
     );
     initialResults = data.results;
     initialHasMore = data.hasMore;
+    initialTotalCount = data.totalCount;
   } catch (error) {
     console.error('[ProvidersPage] Server-side initial fetch failed:', error);
   }
@@ -83,6 +85,7 @@ export async function renderProvidersPage(opts: {
         initialData={{
           results: initialResults,
           hasMore: initialHasMore,
+          totalCount: initialTotalCount,
         }}
         initialFilters={filters}
       />

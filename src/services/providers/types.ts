@@ -202,6 +202,13 @@ export interface AdminSearchOptions {
   isAdmin: true;
 }
 
+/** Plan 229: Response shape for paginated provider search with total count. */
+export interface ProviderSearchResponse {
+  results: SearchResult[];
+  hasMore: boolean;
+  totalCount: number;
+}
+
 export interface PopularCity {
   city: string;
   provider_count: number;

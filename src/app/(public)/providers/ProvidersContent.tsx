@@ -71,7 +71,7 @@ async function fetchProvidersFromAPI(
   status?: ReviewStatusFilter,
   section?: Section,
   filters?: SearchFilterKey[],
-): Promise<{ results: SearchResult[]; hasMore: boolean }> {
+): Promise<{ results: SearchResult[]; hasMore: boolean; totalCount: number }> {
   const params = new URLSearchParams();
   if (query) params.set('q', query);
   if (category) params.set('category', category);
@@ -95,7 +95,7 @@ interface ProvidersContentProps {
   defaultLocation?: string; // For Stage 2: render on root with city filter
   showGreeting?: boolean; // Show greeting header instead of search bar and category filter
   /** Server-rendered initial data for the first page of results (Plan 010 P1a) */
-  initialData?: { results: SearchResult[]; hasMore: boolean };
+  initialData?: { results: SearchResult[]; hasMore: boolean; totalCount?: number };
   initialFilters?: SearchFilterKey[];
 }
 
@@ -292,6 +292,9 @@ export function ProvidersContent({
     () => filterOpenNow(data?.pages.flatMap((page) => page.results) ?? [], isOpenNow),
     [data, isOpenNow],
   );
+
+  // Plan 229: Extract totalCount from the first page of results (count is consistent across pages).
+  const totalCount = data?.pages[0]?.totalCount;
 
   // Use React Query for bookmarks - includes both providers and community services
   const { data: bookmarkedProviderIds = [] } = useQuery({
@@ -524,6 +527,8 @@ export function ProvidersContent({
           isLoading={nearMe.isLoading}
           items={nearMe.results.map(adaptNearMeResult)}
           openNow={isOpenNow}
+          section={section}
+          totalCount={nearMe.results.length}
           onRetry={nearMe.refetch}
         />
       );
@@ -563,6 +568,8 @@ export function ProvidersContent({
         items={searchResults.map(adaptSearchResultToDiscoveryItem)}
         openNow={isOpenNow}
         reviewingProviderId={reviewingProviderId}
+        section={section}
+        totalCount={isOpenNow ? undefined : totalCount}
         onApprove={handleApprove}
         onBookmarkChange={handleBookmarkChange}
         onLoadMore={fetchNextPage}

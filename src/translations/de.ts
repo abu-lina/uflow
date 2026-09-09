@@ -152,6 +152,13 @@ export const de = {
     comingSoon: '{{section}} kommt bald',
     comingSoonDescription: 'Wir arbeiten daran — bleib gespannt.',
   },
+  discovery: {
+    resultsCount: {
+      food: '{{count}} Restaurants',
+      store: '{{count}} Geschäfte',
+      ummah: '{{count}} Gemeindedienste',
+    },
+  },
   search: {
     placeholder: 'In deiner Ummah suchen',
     ariaLabel: 'Suche in der Ummah',
