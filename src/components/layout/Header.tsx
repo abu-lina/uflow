@@ -79,7 +79,7 @@ export function Header() {
         params.delete('status');
       }
       const qs = params.toString();
-      router.push(qs ? `${pathname}?${qs}` : pathname);
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
     [pathname, router],
   );
@@ -101,17 +101,22 @@ export function Header() {
   const handleSearchSubmit = (query: string, location: string, filters?: string[]) => {
     const section = resolveSectionFromRoute(pathname, new URLSearchParams());
     // Use filters passed from SearchBar if provided; otherwise fall back to URL params
-    const resolvedFilters = filters !== undefined ? filters : current_filters_from_url();
-    const url = buildResultsUrl({
+    const resolvedFilters = filters !== undefined ? filters : currentFiltersFromUrl();
+    let url = buildResultsUrl({
       section,
       city: location || null,
       query: query || null,
       filters: resolvedFilters,
     });
+    // Preserve admin status filter across search submissions
+    if (adminStatus) {
+      const sep = url.includes('?') ? '&' : '?';
+      url = `${url}${sep}status=${adminStatus}`;
+    }
     router.push(url);
   };
 
-  function current_filters_from_url(): string[] | undefined {
+  function currentFiltersFromUrl(): string[] | undefined {
     const current = new URLSearchParams(window.location.search);
     return current.get('filters')?.split(',').filter(Boolean);
   }
@@ -119,7 +124,12 @@ export function Header() {
   // Handle clear search - navigate to providers without query
   const handleClearSearch = () => {
     const section = resolveSectionFromRoute(pathname, new URLSearchParams());
-    router.push(getResultsPathForSection(section));
+    let url: string = getResultsPathForSection(section);
+    // Preserve admin status filter when clearing search
+    if (adminStatus) {
+      url = `${url}?status=${adminStatus}`;
+    }
+    router.push(url);
   };
 
   // Handle location change - navigate to providers with new location
@@ -128,12 +138,17 @@ export function Header() {
     const current = new URLSearchParams(window.location.search);
     const q = current.get('q');
     const filters = current.get('filters')?.split(',').filter(Boolean);
-    const url = buildResultsUrl({
+    let url = buildResultsUrl({
       section,
       city: location || null,
       query: q || null,
       filters,
     });
+    // Preserve admin status filter across location changes
+    if (adminStatus) {
+      const sep = url.includes('?') ? '&' : '?';
+      url = `${url}${sep}status=${adminStatus}`;
+    }
     router.push(url);
   };
 
