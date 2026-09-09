@@ -371,11 +371,11 @@ describe('SearchBar Component', () => {
         fireEvent.click(clearBtns[0]);
       });
 
-      // onSearchSubmit should have been called with no filters (undefined)
+      // onSearchSubmit should have been called with empty array (explicit clear signal)
       await waitFor(() => {
         const lastCall = mockOnSearchSubmit.mock.calls[mockOnSearchSubmit.mock.calls.length - 1];
-        // Third arg should be undefined (no filters)
-        expect(lastCall[2]).toBeUndefined();
+        // Third arg should be [] (explicitly cleared), not undefined
+        expect(lastCall[2]).toEqual([]);
       });
     });
 
@@ -487,9 +487,9 @@ describe('SearchBar Component', () => {
         expect(dropdown).toBeFalsy();
       });
 
-      // onSearchSubmit called with no filters
+      // onSearchSubmit called with empty array (explicit clear signal)
       const lastCall = mockOnSearchSubmit.mock.calls[mockOnSearchSubmit.mock.calls.length - 1];
-      expect(lastCall[2]).toBeUndefined();
+      expect(lastCall[2]).toEqual([]);
     });
   });
 });
