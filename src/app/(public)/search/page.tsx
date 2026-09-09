@@ -44,6 +44,7 @@ import {
   fetchPopularCities,
   fetchProviderCities,
   checkCityExists,
+  fetchAvailableFilters,
 } from '@/services/providers';
 
 // Leaflet accesses browser globals on import — load only on client side
@@ -155,6 +156,7 @@ function SearchPageContent() {
   const [werSelection, setWerSelection] = useState<WerAudienceSelectionChange | null>(null);
   const [werResetSignal, setWerResetSignal] = useState(0);
   const [mapPins, setMapPins] = useState<ProviderMapPin[]>([]);
+  const [availableFilters, setAvailableFilters] = useState<{ key: string; count: number }[]>([]);
 
   // Fetch user session for authenticated notify-me flow
   useEffect(() => {
@@ -223,6 +225,31 @@ function SearchPageContent() {
 
     void loadPopularCities();
   }, [selectedSection]);
+
+  // Fetch which filters have matching providers for the current section + city.
+  // Mirrors the desktop SearchBar pattern (PR #372/#373).
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAvailableFilters() {
+      try {
+        const cityParam = selectedWoCity || undefined;
+        const filters = await fetchAvailableFilters(selectedSection, cityParam);
+        if (cancelled) return;
+        setAvailableFilters(filters);
+        // Prune selected filters that now have 0 matches
+        const activeKeys = new Set<string>(filters.filter((f) => f.count > 0).map((f) => f.key));
+        setSelectedFilters((prev) => prev.filter((k) => activeKeys.has(k)));
+      } catch {
+        if (!cancelled) setAvailableFilters([]);
+      }
+    }
+
+    void loadAvailableFilters();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSection, selectedWoCity]);
 
   // Debounced meal search in the "Was?" accordion.
   useEffect(() => {
@@ -790,6 +817,7 @@ function SearchPageContent() {
           />
         ) : (
           <FilterSection
+            availableFilters={availableFilters}
             selectedFilters={selectedFilters}
             selectedSection={selectedSection}
             t={t}
