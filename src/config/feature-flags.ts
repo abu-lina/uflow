@@ -17,6 +17,9 @@ export interface FeatureFlags {
   enableOSMImport: boolean;
   enableSearchExpandShowAllPreview: boolean;
 
+  // Chat features
+  enableChatbot: boolean; // Chatbot UI + API; disabled until mature enough for production
+
   // Search features
   enableWerFilter: boolean; // Wer (audience) filter on search page; disabled until backend supports it
 
@@ -45,6 +48,9 @@ export const defaultFeatureFlags: FeatureFlags = {
   enableProviderSelectionModal: false, // Disabled by default - Skip provider question
   enableOSMImport: true, // Enabled for testing - Beta feature
   enableSearchExpandShowAllPreview: false, // Disabled by default - staged rollout for search expand previews
+
+  // Chat features
+  enableChatbot: false, // Disabled: not mature enough for production
 
   // Search features
   enableWerFilter: false, // Disabled: no backend query support yet
@@ -95,6 +101,7 @@ export function getAllFeatureFlags(overrides?: Partial<FeatureFlags>): FeatureFl
     enableProviderSelectionModal: getFeatureFlag('enableProviderSelectionModal', overrides),
     enableOSMImport: getFeatureFlag('enableOSMImport', overrides),
     enableSearchExpandShowAllPreview: getFeatureFlag('enableSearchExpandShowAllPreview', overrides),
+    enableChatbot: getFeatureFlag('enableChatbot', overrides),
     enableWerFilter: getFeatureFlag('enableWerFilter', overrides),
     enableDebugMode: getFeatureFlag('enableDebugMode', overrides),
     isAppLaunched: getFeatureFlag('isAppLaunched', overrides),

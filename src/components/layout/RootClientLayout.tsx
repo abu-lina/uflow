@@ -47,11 +47,13 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   // Check feature flag on client-side only (use state to avoid webpack evaluation issues)
   const [isAppLaunched, setIsAppLaunched] = useState(false);
   const [forceMobileFooter, setForceMobileFooter] = useState(false);
+  const [enableChatbot, setEnableChatbot] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsAppLaunched(getFeatureFlag('isAppLaunched'));
       setForceMobileFooter(getFeatureFlag('forceMobileFooter'));
+      setEnableChatbot(getFeatureFlag('enableChatbot'));
     }
   }, []);
 
@@ -184,8 +186,8 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
           <PushNotificationPrompt autoShow={true} showDelay={5000} />
         )}
 
-        {/* Chat Floating Widget (Desktop) */}
-        <ChatFloatingWidget />
+        {/* Chat Floating Widget (Desktop) — gated by enableChatbot feature flag */}
+        {enableChatbot && <ChatFloatingWidget />}
       </div>
   );
 }

@@ -6,11 +6,16 @@ import {
 } from '@/lib/telemetry/perf-telemetry';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getFeatureFlag } from '@/config/feature-flags';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
+  if (!getFeatureFlag('enableChatbot')) {
+    return NextResponse.json({ error: 'Chat is not available' }, { status: 404 });
+  }
+
   const ctx = createRequestContext('/api/chat/conversations/[id]');
 
   try {
@@ -80,6 +85,10 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
+  if (!getFeatureFlag('enableChatbot')) {
+    return NextResponse.json({ error: 'Chat is not available' }, { status: 404 });
+  }
+
   const ctx = createRequestContext('/api/chat/conversations/[id]');
 
   try {
