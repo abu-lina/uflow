@@ -21,8 +21,7 @@ import { ViewToggleButton } from '@/features/search/components/ViewToggleButton'
 import { SearchContextBar } from '@/features/search/components/SearchContextBar';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { filterOpenNow } from '@/utils/filterOpenNow';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
+
 import { MobileGreetingHeader } from '@/components/shared/MobileGreetingHeader';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { Icon } from '@/components/ui/Icon';
@@ -534,24 +533,8 @@ export function ProvidersContent({
       );
     }
 
-    if (isLoading) {
-      return <SkeletonGrid count={12} />;
-    }
-
     if (error) {
       console.error('[ProvidersContent] Search error:', error);
-      return (
-        <EmptyState description={t('providers.errorLoading')} title={t('providers.errorTitle')} />
-      );
-    }
-
-    if (searchResults.length === 0) {
-      return (
-        <EmptyState
-          description={t('providers.noResultsDescription')}
-          title={t('providers.noResultsFound')}
-        />
-      );
     }
 
     return (
@@ -559,12 +542,14 @@ export function ProvidersContent({
         enableBookmarks
         enableInfiniteScroll
         bookmarkedIds={bookmarkedProviderIds}
+        emptyDescription={t('providers.noResultsDescription')}
+        emptyTitle={t('providers.noResultsFound')}
         enableModeration={enableModeration}
         error={error}
         hasNextPage={hasNextPage ?? false}
         headerOffset={headerHeight}
         isFetchingNextPage={isFetchingNextPage}
-        isLoading={false}
+        isLoading={isLoading}
         items={searchResults.map(adaptSearchResultToDiscoveryItem)}
         openNow={isOpenNow}
         reviewingProviderId={reviewingProviderId}
