@@ -211,8 +211,7 @@ describe('SearchBar Component', () => {
       { key: 'parken', count: 0 },
     ];
 
-    it('shows count next to each filter label in the dropdown', async () => {
-      // Use spyOn to override the mock with a persistent implementation
+    it('only shows filters with count > 0 in the dropdown', async () => {
       vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
         () =>
           Promise.resolve(mockFilters) as ReturnType<typeof providersModule.fetchAvailableFilters>,
@@ -220,54 +219,275 @@ describe('SearchBar Component', () => {
 
       const { container } = renderSearchBar();
 
-      // Wait for the filter chip to appear after useEffect settles
+      // Wait for the filter chip to appear
       await waitFor(() => {
         const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
         expect(haspopupButtons.length).toBe(2);
       });
 
-      // The second haspopup button is the filter chip
+      // Open the filter dropdown
       const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
-      const filterChip = haspopupButtons[1];
-      fireEvent.click(filterChip);
+      fireEvent.click(haspopupButtons[1]);
 
-      // The dropdown should show counts next to labels
+      // The dropdown shows the count-5 item but NOT the count-0 item
       await waitFor(() => {
-        const text5 = screen.getByText(/\(5\)/);
-        expect(text5).toBeInTheDocument();
-        const text0 = screen.getByText(/\(0\)/);
-        expect(text0).toBeInTheDocument();
+        expect(screen.getByText(/\(5\)/)).toBeInTheDocument();
+        expect(screen.queryByText(/\(0\)/)).not.toBeInTheDocument();
       });
     });
 
-    it('disables filter items where count is 0', async () => {
+    it('hides the filter chip entirely when all filters have count 0', async () => {
       vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
         () =>
           Promise.resolve([
-            { key: 'muslim', count: 3 },
+            { key: 'muslim', count: 0 },
             { key: 'parken', count: 0 },
           ]) as ReturnType<typeof providersModule.fetchAvailableFilters>,
       );
 
       const { container } = renderSearchBar();
 
-      // Wait for filter chip to appear
+      // Wait for filters to load, then verify only the location chip exists
+      await waitFor(() => {
+        const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+        // Only the location dropdown; no filter chip
+        expect(haspopupButtons.length).toBe(1);
+      });
+    });
+
+    it('shows no disabled items in the dropdown (all visible items are clickable)', async () => {
+      vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
+        () =>
+          Promise.resolve([
+            { key: 'muslim', count: 3 },
+            { key: 'parken', count: 0 },
+            { key: 'gebet', count: 2 },
+          ]) as ReturnType<typeof providersModule.fetchAvailableFilters>,
+      );
+
+      const { container } = renderSearchBar();
+
       await waitFor(() => {
         const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
         expect(haspopupButtons.length).toBe(2);
       });
 
-      // Click the filter chip (second haspopup button)
       const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
       fireEvent.click(haspopupButtons[1]);
 
       await waitFor(() => {
-        // The 0-count item should be disabled
-        const allButtons = screen.getAllByRole('button');
-        const parkenButton = allButtons.find((b) => b.textContent?.includes('(0)'));
-        expect(parkenButton).toBeTruthy();
-        expect(parkenButton).toBeDisabled();
+        // Get dropdown buttons (inside the dropdown container)
+        const dropdown = container.querySelector('.dropdown-container') as HTMLElement;
+        expect(dropdown).toBeTruthy();
+        const dropdownButtons = dropdown.querySelectorAll('button');
+        // All dropdown items should be enabled (none disabled)
+        dropdownButtons.forEach((btn) => {
+          expect(btn).not.toBeDisabled();
+        });
+        // Should have exactly 2 items (muslim + gebet), not 3
+        expect(dropdownButtons.length).toBe(2);
       });
+    });
+  });
+
+  describe('Clear Filters', () => {
+    const filtersWithData = [
+      { key: 'muslim', count: 5 },
+      { key: 'gebet', count: 3 },
+    ];
+
+    it('shows an X button on the filter chip when filters are selected', async () => {
+      vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
+        () =>
+          Promise.resolve(filtersWithData) as ReturnType<
+            typeof providersModule.fetchAvailableFilters
+          >,
+      );
+
+      const { container } = renderSearchBar();
+
+      // Wait for the filter chip
+      await waitFor(() => {
+        const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+        expect(haspopupButtons.length).toBe(2);
+      });
+
+      // Open dropdown and select a filter
+      const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+      fireEvent.click(haspopupButtons[1]);
+
+      await waitFor(() => {
+        expect(screen.getByText(/\(5\)/)).toBeInTheDocument();
+      });
+
+      // Click the muslim filter item
+      const allButtons = screen.getAllByRole('button');
+      const muslimButton = allButtons.find((b) => b.textContent?.includes('(5)'));
+      expect(muslimButton).toBeTruthy();
+      fireEvent.click(muslimButton as HTMLElement);
+
+      // The filter chip should now show a clear (X) button
+      await waitFor(() => {
+        const clearFilterBtn = screen.getByRole('button', { name: /clear filters/i });
+        expect(clearFilterBtn).toBeInTheDocument();
+      });
+    });
+
+    it('clears all filters when the X button on the chip is clicked', async () => {
+      const mockOnSearchSubmit = vi.fn();
+      vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
+        () =>
+          Promise.resolve(filtersWithData) as ReturnType<
+            typeof providersModule.fetchAvailableFilters
+          >,
+      );
+
+      const { container } = renderSearchBar({ onSearchSubmit: mockOnSearchSubmit });
+
+      // Wait for filter chip
+      await waitFor(() => {
+        const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+        expect(haspopupButtons.length).toBe(2);
+      });
+
+      // Open dropdown and select a filter
+      const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+      fireEvent.click(haspopupButtons[1]);
+
+      await waitFor(() => {
+        expect(screen.getByText(/\(5\)/)).toBeInTheDocument();
+      });
+
+      const allButtons = screen.getAllByRole('button');
+      const muslimButton = allButtons.find((b) => b.textContent?.includes('(5)'));
+      expect(muslimButton).toBeTruthy();
+      fireEvent.click(muslimButton as HTMLElement);
+
+      // Click the clear X button on the chip
+      await waitFor(() => {
+        const clearFilterBtn = screen.getByRole('button', { name: /clear filters/i });
+        fireEvent.click(clearFilterBtn);
+      });
+
+      // onSearchSubmit should have been called with no filters (undefined)
+      await waitFor(() => {
+        const lastCall = mockOnSearchSubmit.mock.calls[mockOnSearchSubmit.mock.calls.length - 1];
+        // Third arg should be undefined (no filters)
+        expect(lastCall[2]).toBeUndefined();
+      });
+    });
+
+    it('shows "Clear all" button in dropdown when filters are selected', async () => {
+      vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
+        () =>
+          Promise.resolve(filtersWithData) as ReturnType<
+            typeof providersModule.fetchAvailableFilters
+          >,
+      );
+
+      const { container } = renderSearchBar();
+
+      // Wait for the filter chip
+      await waitFor(() => {
+        const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+        expect(haspopupButtons.length).toBe(2);
+      });
+
+      // Open dropdown and select a filter
+      const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+      fireEvent.click(haspopupButtons[1]);
+
+      await waitFor(() => {
+        expect(screen.getByText(/\(5\)/)).toBeInTheDocument();
+      });
+
+      // Select a filter (dropdown stays open after selection)
+      const allButtons = screen.getAllByRole('button');
+      const muslimButton = allButtons.find((b) => b.textContent?.includes('(5)'));
+      expect(muslimButton).toBeTruthy();
+      fireEvent.click(muslimButton as HTMLElement);
+
+      // "Clear all" button should appear in the dropdown (which is still open)
+      await waitFor(() => {
+        expect(screen.getByText(/clear all/i)).toBeInTheDocument();
+      });
+    });
+
+    it('does not show "Clear all" when no filters are selected', async () => {
+      vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
+        () =>
+          Promise.resolve(filtersWithData) as ReturnType<
+            typeof providersModule.fetchAvailableFilters
+          >,
+      );
+
+      const { container } = renderSearchBar();
+
+      // Wait for the filter chip
+      await waitFor(() => {
+        const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+        expect(haspopupButtons.length).toBe(2);
+      });
+
+      // Open dropdown without selecting any filter
+      const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+      fireEvent.click(haspopupButtons[1]);
+
+      await waitFor(() => {
+        expect(screen.getByText(/\(5\)/)).toBeInTheDocument();
+      });
+
+      // "Clear all" should NOT be shown
+      expect(screen.queryByText(/clear all/i)).not.toBeInTheDocument();
+    });
+
+    it('clears all filters and closes dropdown when "Clear all" is clicked', async () => {
+      const mockOnSearchSubmit = vi.fn();
+      vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
+        () =>
+          Promise.resolve(filtersWithData) as ReturnType<
+            typeof providersModule.fetchAvailableFilters
+          >,
+      );
+
+      const { container } = renderSearchBar({ onSearchSubmit: mockOnSearchSubmit });
+
+      // Wait for filter chip
+      await waitFor(() => {
+        const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+        expect(haspopupButtons.length).toBe(2);
+      });
+
+      // Open dropdown and select a filter
+      const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+      fireEvent.click(haspopupButtons[1]);
+
+      await waitFor(() => {
+        expect(screen.getByText(/\(5\)/)).toBeInTheDocument();
+      });
+
+      const allButtons = screen.getAllByRole('button');
+      const muslimButton = allButtons.find((b) => b.textContent?.includes('(5)'));
+      expect(muslimButton).toBeTruthy();
+      fireEvent.click(muslimButton as HTMLElement);
+
+      // Click "Clear all" (dropdown is still open after selecting a filter)
+      await waitFor(() => {
+        const clearAllBtn = screen.getByText(/clear all/i);
+        fireEvent.click(clearAllBtn);
+      });
+
+      // Dropdown should be closed (no dropdown-container visible)
+      await waitFor(() => {
+        const dropdown = container.querySelector('.dropdown-container');
+        // The filter dropdown should be gone (closed)
+        // Note: the location dropdown may exist but is not open by default
+        expect(dropdown).toBeFalsy();
+      });
+
+      // onSearchSubmit called with no filters
+      const lastCall = mockOnSearchSubmit.mock.calls[mockOnSearchSubmit.mock.calls.length - 1];
+      expect(lastCall[2]).toBeUndefined();
     });
   });
 });

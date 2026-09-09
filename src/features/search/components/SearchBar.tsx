@@ -492,83 +492,110 @@ function SearchBarContent({
             {t('suchen.openNow.chipLabel')}
           </button>
 
-          {/* Filter chip (only shown when at least one filter has data) */}
-          {availableFilters.length > 0 && (
+          {/* Filter chip (only shown when at least one filter has count > 0) */}
+          {availableFilters.some((f) => f.count > 0) && (
             <div className="relative flex items-center">
-              <button
-                aria-expanded={isFilterOpen}
-                aria-haspopup="listbox"
-                className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-                  selectedFilters.length > 0
-                    ? 'bg-primary text-white'
-                    : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-                }`}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsFilterOpen(!isFilterOpen);
-                  if (!isFilterOpen) {
-                    setIsLocationOpen(false);
-                  }
-                }}
-              >
-                <span>
-                  {selectedFilters.length > 0
-                    ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
-                    : t('suchen.accordions.filter')}
-                </span>
-                <ChevronDown
-                  aria-hidden="true"
-                  className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
-                    isFilterOpen ? 'rotate-180' : ''
+              <div className="inline-flex items-center">
+                <button
+                  aria-expanded={isFilterOpen}
+                  aria-haspopup="listbox"
+                  className={`inline-flex h-8 shrink-0 items-center gap-1.5 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+                    selectedFilters.length > 0
+                      ? 'rounded-l-md bg-primary pl-3 pr-1.5 text-white'
+                      : 'rounded-md border border-gray-200 bg-white px-3 text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
                   }`}
-                />
-              </button>
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsFilterOpen(!isFilterOpen);
+                    if (!isFilterOpen) {
+                      setIsLocationOpen(false);
+                    }
+                  }}
+                >
+                  <span>
+                    {selectedFilters.length > 0
+                      ? `${t('suchen.accordions.filter')}: ${selectedFilters.length}`
+                      : t('suchen.accordions.filter')}
+                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                      isFilterOpen ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+                {selectedFilters.length > 0 && (
+                  <button
+                    aria-label="Clear filters"
+                    className="inline-flex h-8 items-center rounded-r-md bg-primary pl-0.5 pr-2 text-white transition-opacity hover:opacity-80"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFilters([]);
+                      handleSearch([]);
+                    }}
+                  >
+                    <X aria-hidden="true" className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
               {isFilterOpen && (
                 <div
                   ref={filterDropdownRef}
                   className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-80 w-56 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
                 >
-                  {availableFilters.map((filter) => {
-                    const isSelected = selectedFilters.includes(filter.key);
-                    const isDisabled = filter.count === 0;
-                    return (
-                      <button
-                        key={filter.key}
-                        className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base ${
-                          isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50'
-                        } ${isSelected ? 'bg-gray-50 font-medium' : ''}`}
-                        disabled={isDisabled}
-                        type="button"
-                        onClick={() => {
-                          const next = selectedFilters.includes(filter.key)
-                            ? selectedFilters.filter((f) => f !== filter.key)
-                            : [...selectedFilters, filter.key];
-                          setSelectedFilters(next);
-                          handleSearch(next);
-                        }}
-                      >
-                        <span
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                            isSelected ? 'border-primary bg-primary' : 'border-gray-300'
-                          }`}
+                  {availableFilters
+                    .filter((f) => f.count > 0)
+                    .map((filter) => {
+                      const isSelected = selectedFilters.includes(filter.key);
+                      return (
+                        <button
+                          key={filter.key}
+                          className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${isSelected ? 'bg-gray-50 font-medium' : ''}`}
+                          type="button"
+                          onClick={() => {
+                            const next = selectedFilters.includes(filter.key)
+                              ? selectedFilters.filter((f) => f !== filter.key)
+                              : [...selectedFilters, filter.key];
+                            setSelectedFilters(next);
+                            handleSearch(next);
+                          }}
                         >
-                          {isSelected && (
-                            <svg fill="none" height="10" viewBox="0 0 10 10" width="10">
-                              <path
-                                d="M2 5L4 7L8 3"
-                                stroke="white"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="1.5"
-                              />
-                            </svg>
-                          )}
-                        </span>
-                        {t(`suchen.filter.items.${filter.key}.title`)} ({filter.count})
-                      </button>
-                    );
-                  })}
+                          <span
+                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                              isSelected ? 'border-primary bg-primary' : 'border-gray-300'
+                            }`}
+                          >
+                            {isSelected && (
+                              <svg fill="none" height="10" viewBox="0 0 10 10" width="10">
+                                <path
+                                  d="M2 5L4 7L8 3"
+                                  stroke="white"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="1.5"
+                                />
+                              </svg>
+                            )}
+                          </span>
+                          {t(`suchen.filter.items.${filter.key}.title`)} ({filter.count})
+                        </button>
+                      );
+                    })}
+                  {selectedFilters.length > 0 && (
+                    <button
+                      className="flex w-full items-center justify-center border-t border-gray-100 px-4 py-2.5 text-sm font-medium text-primary hover:bg-gray-50"
+                      type="button"
+                      onClick={() => {
+                        setSelectedFilters([]);
+                        handleSearch([]);
+                        setIsFilterOpen(false);
+                      }}
+                    >
+                      {t('suchen.clearAll')}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
