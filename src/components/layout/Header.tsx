@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -18,6 +18,11 @@ import { useSearch } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
+import {
+  AdminStatusFilter,
+  type ReviewStatusFilter,
+} from '@/features/admin/components/AdminStatusFilter';
 import { toast } from 'sonner';
 import {
   getResultsPathForSection,
@@ -50,6 +55,35 @@ export function Header() {
   const { selectedSection, setSelectedSection } = useSearch();
   const { isVisible } = useScrollDirection();
   const { t } = useLanguage();
+  const { isAdmin } = useIsAdmin();
+
+  // Plan 235: Admin status filter — mirrors mobile pattern from ProvidersContent.
+  // Read from window.location.search instead of useSearchParams to avoid adding a
+  // Suspense boundary requirement to the layout-level Header component.
+  const [adminStatus, setAdminStatus] = useState<ReviewStatusFilter>(null);
+
+  // Sync admin status from URL on mount and when pathname changes
+  useEffect(() => {
+    if (!isAdmin) return;
+    const params = new URLSearchParams(window.location.search);
+    setAdminStatus((params.get('status') as ReviewStatusFilter) ?? null);
+  }, [isAdmin, pathname]);
+
+  const handleStatusChange = useCallback(
+    (newStatus: ReviewStatusFilter) => {
+      setAdminStatus(newStatus);
+      const params = new URLSearchParams(window.location.search);
+      if (newStatus) {
+        params.set('status', newStatus);
+      } else {
+        params.delete('status');
+      }
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [pathname, router],
+  );
+
   const handleSectionChange = (section: Section) => {
     if (!SECTION_META[section].active) {
       const label = t(SECTION_META[section].labelKey);
@@ -264,6 +298,14 @@ export function Header() {
           {/* Bottom row: SearchBar centered */}
           <div className="flex w-full justify-center px-12">
             <SearchBar
+              adminSlot={
+                isAdmin ? (
+                  <AdminStatusFilter
+                    selectedStatus={adminStatus}
+                    onStatusChange={handleStatusChange}
+                  />
+                ) : undefined
+              }
               className="!w-[800px] !shadow-none"
               onClearSearch={handleClearSearch}
               onLocationChange={handleLocationChange}

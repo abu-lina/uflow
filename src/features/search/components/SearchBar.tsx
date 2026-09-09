@@ -24,6 +24,8 @@ interface SearchBarProps {
   onSearchSubmit?: (query: string, location: string, filters?: string[]) => void;
   onClearSearch?: () => void;
   onLocationChange?: (location: string) => void;
+  /** Optional admin-only content rendered inline with the desktop filter chips. */
+  adminSlot?: React.ReactNode;
 }
 
 function SearchBarContent({
@@ -32,6 +34,7 @@ function SearchBarContent({
   onSearchSubmit,
   onClearSearch,
   onLocationChange,
+  adminSlot,
 }: SearchBarProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -600,6 +603,8 @@ function SearchBarContent({
               )}
             </div>
           )}
+
+          {adminSlot}
         </div>
 
         {/* Geo permission status / hint (below chips row) */}
