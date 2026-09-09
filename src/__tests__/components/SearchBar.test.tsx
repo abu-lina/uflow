@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../utils/test-utils';
 import { SearchBar } from '@/features/search/components/SearchBar';
+import * as providersModule from '@/services/providers';
 import type { ComponentProps } from 'react';
 
 // Mock the search service
@@ -16,12 +17,7 @@ vi.mock('@/services/categories', () => ({
   fetchUsedCategories: vi.fn(() => Promise.resolve([])),
 }));
 
-// Mock the providers service (cities + filters fetch) to avoid hitting Supabase in tests
-vi.mock('@/services/providers', () => ({
-  fetchProviderCities: vi.fn(() => Promise.resolve([])),
-  fetchFilteredCities: vi.fn(() => Promise.resolve([])),
-  fetchAvailableFilters: vi.fn(() => Promise.resolve([])),
-}));
+// @/services/providers is mocked in test-utils.tsx (including fetchAvailableFilters).
 
 const renderSearchBar = (props: ComponentProps<typeof SearchBar> = {}) =>
   render(<SearchBar customCities={['Berlin']} {...props} />);
@@ -206,6 +202,72 @@ describe('SearchBar Component', () => {
 
       // Input should accept special characters
       expect(searchInput).toHaveValue(searchTerm);
+    });
+  });
+
+  describe('Filter Dropdown with Counts', () => {
+    const mockFilters = [
+      { key: 'muslim', count: 5 },
+      { key: 'parken', count: 0 },
+    ];
+
+    it('shows count next to each filter label in the dropdown', async () => {
+      // Use spyOn to override the mock with a persistent implementation
+      vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
+        () =>
+          Promise.resolve(mockFilters) as ReturnType<typeof providersModule.fetchAvailableFilters>,
+      );
+
+      const { container } = renderSearchBar();
+
+      // Wait for the filter chip to appear after useEffect settles
+      await waitFor(() => {
+        const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+        expect(haspopupButtons.length).toBe(2);
+      });
+
+      // The second haspopup button is the filter chip
+      const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+      const filterChip = haspopupButtons[1];
+      fireEvent.click(filterChip);
+
+      // The dropdown should show counts next to labels
+      await waitFor(() => {
+        const text5 = screen.getByText(/\(5\)/);
+        expect(text5).toBeInTheDocument();
+        const text0 = screen.getByText(/\(0\)/);
+        expect(text0).toBeInTheDocument();
+      });
+    });
+
+    it('disables filter items where count is 0', async () => {
+      vi.spyOn(providersModule, 'fetchAvailableFilters').mockImplementation(
+        () =>
+          Promise.resolve([
+            { key: 'muslim', count: 3 },
+            { key: 'parken', count: 0 },
+          ]) as ReturnType<typeof providersModule.fetchAvailableFilters>,
+      );
+
+      const { container } = renderSearchBar();
+
+      // Wait for filter chip to appear
+      await waitFor(() => {
+        const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+        expect(haspopupButtons.length).toBe(2);
+      });
+
+      // Click the filter chip (second haspopup button)
+      const haspopupButtons = container.querySelectorAll('button[aria-haspopup="listbox"]');
+      fireEvent.click(haspopupButtons[1]);
+
+      await waitFor(() => {
+        // The 0-count item should be disabled
+        const allButtons = screen.getAllByRole('button');
+        const parkenButton = allButtons.find((b) => b.textContent?.includes('(0)'));
+        expect(parkenButton).toBeTruthy();
+        expect(parkenButton).toBeDisabled();
+      });
     });
   });
 });

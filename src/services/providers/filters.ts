@@ -23,21 +23,24 @@ export type FilterKey = keyof typeof FILTER_KEY_TO_COLUMN;
 export const ALL_FILTER_KEYS = Object.keys(FILTER_KEY_TO_COLUMN) as FilterKey[];
 
 /**
- * Fetch which boolean filter attributes actually have at least one approved
- * provider with that attribute set to true, scoped to the given section.
+ * Fetch boolean filter attributes for approved providers, optionally scoped to
+ * a section and/or city.
  *
- * Returns only the filter keys that have data, so the UI can hide empty ones.
+ * Returns every known filter key together with a count of how many providers
+ * match (i.e. have that boolean column set to `true`). The UI uses the count
+ * to display badges and to gray-out filters with zero matches.
  */
 export async function fetchAvailableFilters(
   section?: Section,
+  city?: string,
   client?: SupabaseClient,
-): Promise<FilterKey[]> {
+): Promise<{ key: FilterKey; count: number }[]> {
   try {
     const supabase = getSupabaseClient(client);
 
     // Build a single query that selects all boolean columns we care about,
-    // filtered to approved providers in the section. Then check which columns
-    // have at least one true value.
+    // filtered to approved providers in the section/city. Then count which
+    // columns have true values.
     let query = supabase
       .from('providers')
       .select(
@@ -49,6 +52,10 @@ export async function fetchAvailableFilters(
       query = query.eq('listing_type', section);
     }
 
+    if (city) {
+      query = query.ilike('address_city', city);
+    }
+
     const { data, error } = await query;
 
     if (error) {
@@ -58,16 +65,14 @@ export async function fetchAvailableFilters(
 
     if (!data || data.length === 0) return [];
 
-    // For each filter key, check if any row has that column set to true
-    const available: FilterKey[] = [];
+    // For each filter key, count the number of rows where that column is true
+    const result: { key: FilterKey; count: number }[] = [];
     for (const [key, column] of Object.entries(FILTER_KEY_TO_COLUMN)) {
-      const hasTrue = data.some((row: Record<string, unknown>) => row[column] === true);
-      if (hasTrue) {
-        available.push(key as FilterKey);
-      }
+      const count = data.filter((row: Record<string, unknown>) => row[column] === true).length;
+      result.push({ key: key as FilterKey, count });
     }
 
-    return available;
+    return result;
   } catch (error) {
     console.error('Error fetching available filters:', error);
     return [];

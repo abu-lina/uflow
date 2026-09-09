@@ -8,7 +8,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ChevronDown, Search, X, Loader2, MapPin, Clock, Globe } from 'lucide-react';
 // Local imports
 import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
-import { fetchSearchSuggestions } from '@/services/providers';
+import { fetchSearchSuggestions, fetchAvailableFilters } from '@/services/providers';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
@@ -50,8 +50,8 @@ function SearchBarContent({
   const inputRef = useRef<HTMLInputElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
-  // Available filter keys fetched from DB (only filters with actual data)
-  const [availableFilters, setAvailableFilters] = useState<string[]>([]);
+  // Available filter keys fetched from DB, with counts per city/section
+  const [availableFilters, setAvailableFilters] = useState<{ key: string; count: number }[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>(() => {
     const p = new URLSearchParams(searchParams.toString());
@@ -131,9 +131,9 @@ function SearchBarContent({
           }
         }
 
-        // Fetch which filters have actual data for the current section
-        const { fetchAvailableFilters } = await import('@/services/providers');
-        const filters = await fetchAvailableFilters(selectedSection);
+        // Fetch which filters have actual data for the current section + city
+        const cityParam = selectedLocation || undefined;
+        const filters = await fetchAvailableFilters(selectedSection, cityParam);
         if (!cancelled) setAvailableFilters(filters);
       } catch (error) {
         logSupabaseError('SearchBar.fetchData', error);
@@ -149,7 +149,7 @@ function SearchBarContent({
     return () => {
       cancelled = true;
     };
-  }, [searchQuery, customCities, selectedSection, t]);
+  }, [searchQuery, customCities, selectedSection, selectedLocation, t]);
 
   // Sync state with URL params only on initial mount or when the page changes
   useEffect(() => {
@@ -522,19 +522,22 @@ function SearchBarContent({
                   ref={filterDropdownRef}
                   className="dropdown-container absolute left-0 top-full z-50 mt-1 max-h-80 w-56 overflow-y-auto rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5"
                 >
-                  {availableFilters.map((key) => {
-                    const isSelected = selectedFilters.includes(key);
+                  {availableFilters.map((filter) => {
+                    const isSelected = selectedFilters.includes(filter.key);
+                    const isDisabled = filter.count === 0;
                     return (
                       <button
-                        key={key}
-                        className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base hover:bg-gray-50 ${
-                          isSelected ? 'bg-gray-50 font-medium' : ''
-                        }`}
+                        key={filter.key}
+                        className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-base ${
+                          isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50'
+                        } ${isSelected ? 'bg-gray-50 font-medium' : ''}`}
+                        disabled={isDisabled}
                         type="button"
                         onClick={() => {
-                          const next = selectedFilters.includes(key)
-                            ? selectedFilters.filter((f) => f !== key)
-                            : [...selectedFilters, key];
+                          if (isDisabled) return;
+                          const next = selectedFilters.includes(filter.key)
+                            ? selectedFilters.filter((f) => f !== filter.key)
+                            : [...selectedFilters, filter.key];
                           setSelectedFilters(next);
                           handleSearch(next);
                         }}
@@ -556,7 +559,7 @@ function SearchBarContent({
                             </svg>
                           )}
                         </span>
-                        {t(`suchen.filter.items.${key}.title`)}
+                        {t(`suchen.filter.items.${filter.key}.title`)} ({filter.count})
                       </button>
                     );
                   })}

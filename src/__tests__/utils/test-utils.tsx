@@ -66,8 +66,9 @@ vi.mock('next/image', () => ({
         (onLoad as () => void)();
       }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
-     
+
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={String(src || '')}
         alt={String(alt || '')}
@@ -157,6 +158,10 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('@/services/providers', () => ({
   searchProvidersAndCommunityServices: vi.fn(() => Promise.resolve([])),
   getBookmarkedProviders: vi.fn(() => Promise.resolve([])),
+  fetchProviderCities: vi.fn(() => Promise.resolve([])),
+  fetchFilteredCities: vi.fn(() => Promise.resolve([])),
+  fetchAvailableFilters: vi.fn(() => Promise.resolve([])),
+  fetchSearchSuggestions: vi.fn(() => Promise.resolve([])),
 }));
 
 vi.mock('@/services/communityServices', () => ({
