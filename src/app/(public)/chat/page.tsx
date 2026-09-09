@@ -1,13 +1,27 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { ChatWidget } from '@/features/chat/components/ChatWidget';
 import { useAuth } from '@/providers/auth-provider';
+import { getFeatureFlag } from '@/config/feature-flags';
 
 export default function ChatPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const enableChatbot = getFeatureFlag('enableChatbot');
+
+  useEffect(() => {
+    if (!enableChatbot) {
+      router.replace('/');
+    }
+  }, [enableChatbot, router]);
+
+  if (!enableChatbot) {
+    return null;
+  }
+
   const userName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0];
 
   return (

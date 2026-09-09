@@ -30,6 +30,10 @@ vi.mock('@/components/ui/PushNotificationPrompt', () => ({
   PushNotificationPrompt: () => null,
 }));
 
+vi.mock('@/features/chat/components/ChatFloatingWidget', () => ({
+  ChatFloatingWidget: () => <div data-testid="chat-floating-widget">ChatFloatingWidget</div>,
+}));
+
 vi.mock('@/providers/splash-provider', () => ({
   useSplash: () => ({ isSplashVisible: false }),
 }));
@@ -293,5 +297,25 @@ describe('RootClientLayout — isDiscoveryHome navbar regression (session hotfix
             : 'none';
 
     expect(mobileUiMode).toBe('footer');
+  });
+});
+
+// ─── enableChatbot feature flag gates ChatFloatingWidget (Plan 230) ──────────
+describe('RootClientLayout — enableChatbot feature flag', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockHasCompletedOnboarding.mockReturnValue(false);
+    mockUseAppStage.mockReturnValue({ stage: 'loading', isLoading: true });
+  });
+
+  it('does not render ChatFloatingWidget when enableChatbot is false', () => {
+    // The mock for getFeatureFlag returns false for all keys (including enableChatbot)
+    render(
+      <RootClientLayout>
+        <div>Content</div>
+      </RootClientLayout>,
+    );
+
+    expect(screen.queryByTestId('chat-floating-widget')).not.toBeInTheDocument();
   });
 });

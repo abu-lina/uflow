@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
+
+// Feature flag mock — default: chatbot enabled so existing tests pass unchanged
+const { mockGetFeatureFlag } = vi.hoisted(() => ({
+  mockGetFeatureFlag: vi.fn((key: string) => {
+    if (key === 'enableChatbot') return true;
+    return false;
+  }),
+}));
+vi.mock('@/config/feature-flags', () => ({
+  getFeatureFlag: mockGetFeatureFlag,
+}));
 
 // Mocks for dependencies
 const { mockGetUser } = vi.hoisted(() => ({
@@ -212,6 +222,21 @@ describe('POST /api/chat', () => {
 
       expect(response.status).toBe(200);
       expect(data.guardrail).toBe('block');
+    });
+  });
+
+  describe('enableChatbot feature flag', () => {
+    it('returns 404 when enableChatbot is false', async () => {
+      mockGetFeatureFlag.mockImplementation((key: string) => {
+        if (key === 'enableChatbot') return false;
+        return false;
+      });
+
+      const response = await POST(createRequest({ message: 'Hallo' }));
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toBe('Chat is not available');
     });
   });
 });

@@ -17,6 +17,7 @@ import { buildSystemPrompt } from '@/features/chat/prompts/system-prompt';
 import { MAX_MESSAGE_LENGTH } from '@/features/chat/types';
 import type { ChatMessage, ToolCall } from '@/features/chat/types';
 import type { ProviderCardData } from '@/features/chat/types';
+import { getFeatureFlag } from '@/config/feature-flags';
 
 const CHAT_HISTORY_LIMIT = parseInt(
   process.env.CHAT_HISTORY_LIMIT || '30',
@@ -131,6 +132,10 @@ async function saveStreamToDb(
 }
 
 export async function POST(request: Request): Promise<NextResponse | Response> {
+  if (!getFeatureFlag('enableChatbot')) {
+    return NextResponse.json({ error: 'Chat is not available' }, { status: 404 });
+  }
+
   const ctx = createRequestContext('/api/chat');
 
   try {
