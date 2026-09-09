@@ -10,10 +10,10 @@ import type { User } from '@supabase/supabase-js';
  */
 export const openNavigation = (address: string): void => {
   if (!address.trim()) return;
-  
+
   // Encode the address for URL
   const encodedAddress = encodeURIComponent(address);
-  
+
   // Try different navigation schemes based on device capabilities
   const navigationUrls = [
     // Universal Google Maps URL (works on all platforms)
@@ -23,19 +23,19 @@ export const openNavigation = (address: string): void => {
     // Android Maps intent
     `geo:0,0?q=${encodedAddress}`,
   ];
-  
+
   // For mobile devices, try to detect and use the appropriate scheme
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isAndroid = /Android/.test(navigator.userAgent);
-  
+
   let targetUrl = navigationUrls[0]; // Default to Google Maps
-  
+
   if (isIOS) {
     targetUrl = navigationUrls[1]; // Apple Maps for iOS
   } else if (isAndroid) {
     targetUrl = navigationUrls[2]; // Android geo intent
   }
-  
+
   // Open the navigation app
   window.open(targetUrl, '_blank');
 };
@@ -49,7 +49,7 @@ export const openNavigation = (address: string): void => {
  */
 export const formatAddress = (street?: string, zip?: string, city?: string): string => {
   const parts = [];
-  
+
   if (street) parts.push(street);
   if (zip && city) {
     parts.push(`${zip} ${city}`);
@@ -58,7 +58,7 @@ export const formatAddress = (street?: string, zip?: string, city?: string): str
   } else if (zip) {
     parts.push(zip);
   }
-  
+
   return parts.join(', ');
 };
 
@@ -80,9 +80,9 @@ export const isAddressNavigable = (street?: string, zip?: string, city?: string)
  */
 export const normalizeInstagramUrl = (instagram: string | null | undefined): string | null => {
   if (!instagram || !instagram.trim()) return null;
-  
+
   const trimmed = instagram.trim();
-  
+
   // If it's already a full URL
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     // Ensure it's an instagram.com URL
@@ -92,18 +92,18 @@ export const normalizeInstagramUrl = (instagram: string | null | undefined): str
     // If it's a URL but not Instagram, return null
     return null;
   }
-  
+
   // Remove @ symbol if present
   const username = trimmed.replace(/^@/, '');
-  
+
   // Remove any trailing or leading slashes
   const cleanUsername = username.replace(/^\/+|\/+$/g, '');
-  
+
   // Validate username format (alphanumeric, dots, underscores only)
   if (!/^[a-zA-Z0-9._]+$/.test(cleanUsername)) {
     return null;
   }
-  
+
   // Return properly formatted Instagram URL
   return `https://www.instagram.com/${cleanUsername}`;
 };
@@ -115,14 +115,14 @@ export const normalizeInstagramUrl = (instagram: string | null | undefined): str
  */
 export const normalizeWebsiteUrl = (website: string | null | undefined): string | null => {
   if (!website || !website.trim()) return null;
-  
+
   const trimmed = website.trim();
-  
+
   // If it already has a protocol, return as is
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
-  
+
   // Add https:// if no protocol is present
   return `https://${trimmed}`;
 };
@@ -134,9 +134,9 @@ export const normalizeWebsiteUrl = (website: string | null | undefined): string 
 /**
  * Check if user has completed onboarding (earlyAccessUnlocked + city selected)
  * This is the single source of truth for onboarding completion status.
- * 
+ *
  * IMPORTANT: Returns false if onboarding is not complete (safe default)
- * 
+ *
  * @returns True if user has completed onboarding (earlyAccessUnlocked + city selected)
  */
 export function hasCompletedOnboarding(): boolean {
@@ -152,14 +152,15 @@ export function hasCompletedOnboarding(): boolean {
     }
 
     const onboardingState = JSON.parse(onboardingStateStr);
-    
+
     // Must have earlyAccessUnlocked flag
     if (!onboardingState?.earlyAccessUnlocked) {
       return false;
     }
 
     // Must have a selected city (in either localStorage or sessionStorage)
-    const selectedCity = localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
+    const selectedCity =
+      localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity');
     if (!selectedCity) {
       return false;
     }
@@ -187,7 +188,7 @@ export const shouldShowMobileFooter = (
   isSplashVisible: boolean,
   user: User | null,
   isAppLaunched: boolean = false,
-  stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading'
+  stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading',
 ): boolean => {
   // City selection is an onboarding step; never show bottom navigation here.
   if (pathname.endsWith('/city-selection')) {
@@ -200,9 +201,9 @@ export const shouldShowMobileFooter = (
   if (isStage3) {
     // For Stage 3, only check excluded pages (splash should not block footer in Stage 3)
     // Note: Splash screen check removed for Stage 3 since it's full access
-    
+
     // Check excluded pages (pages that never show footer)
-    const footerExcludedPages = ['/signup/check-email', '/waitlist', '/chat'];
+    const footerExcludedPages = ['/signup/check-email', '/waitlist', '/chat', '/search'];
     if (footerExcludedPages.includes(pathname)) {
       return false;
     }
@@ -217,7 +218,7 @@ export const shouldShowMobileFooter = (
       '/profile/edit',
       '/profile/delete',
     ];
-    if (footerExcludedPatterns.some(pattern => pathname.includes(pattern))) {
+    if (footerExcludedPatterns.some((pattern) => pathname.includes(pattern))) {
       return false;
     }
 
@@ -233,7 +234,7 @@ export const shouldShowMobileFooter = (
   // 2. For Stages 1 & 2: Check onboarding completion
   // This ensures footer NEVER shows during onboarding for early access stages
   const onboardingComplete = hasCompletedOnboarding();
-  
+
   if (!onboardingComplete) {
     // Hide footer if onboarding is not complete for early access stages
     return false;
@@ -245,7 +246,7 @@ export const shouldShowMobileFooter = (
   }
 
   // 4. Check excluded pages (pages that never show footer)
-  const footerExcludedPages = ['/signup/check-email', '/waitlist', '/chat'];
+  const footerExcludedPages = ['/signup/check-email', '/waitlist', '/chat', '/search'];
   if (footerExcludedPages.includes(pathname)) {
     return false;
   }
@@ -260,7 +261,7 @@ export const shouldShowMobileFooter = (
     '/profile/edit',
     '/profile/delete',
   ];
-  if (footerExcludedPatterns.some(pattern => pathname.includes(pattern))) {
+  if (footerExcludedPatterns.some((pattern) => pathname.includes(pattern))) {
     return false;
   }
 
@@ -286,7 +287,11 @@ export const shouldShowMobileFooter = (
  */
 export const shouldShowSubpageAction = (pathname: string): boolean => {
   // Signup subpages (except main signup and check-email)
-  if (pathname.includes('/signup/') && pathname !== '/signup' && pathname !== '/signup/check-email') {
+  if (
+    pathname.includes('/signup/') &&
+    pathname !== '/signup' &&
+    pathname !== '/signup/check-email'
+  ) {
     return true;
   }
 
@@ -296,12 +301,15 @@ export const shouldShowSubpageAction = (pathname: string): boolean => {
   }
 
   // Profile subpages (except main profile, edit, delete, provider detail pages, and edit pages that have custom buttons)
-  if (pathname.includes('/profile/') && 
-      pathname !== '/profile' && 
-      !pathname.includes('/profile/edit') && 
-      !pathname.includes('/profile/delete') &&
-      !pathname.match(/^\/profile\/providers\/[^/]+$/) && // Exclude provider detail pages (they have custom FooterAction)
-      !pathname.match(/^\/profile\/providers\/[^/]+\/edit$/)) { // Exclude provider edit pages (they have custom FooterAction)
+  if (
+    pathname.includes('/profile/') &&
+    pathname !== '/profile' &&
+    !pathname.includes('/profile/edit') &&
+    !pathname.includes('/profile/delete') &&
+    !pathname.match(/^\/profile\/providers\/[^/]+$/) && // Exclude provider detail pages (they have custom FooterAction)
+    !pathname.match(/^\/profile\/providers\/[^/]+\/edit$/)
+  ) {
+    // Exclude provider edit pages (they have custom FooterAction)
     return true;
   }
 
@@ -319,8 +327,10 @@ export const shouldShowSubpageAction = (pathname: string): boolean => {
  * @returns True if it's a provider detail page
  */
 export const isProviderDetailPage = (pathname: string): boolean => {
-  return (pathname.startsWith('/providers/') && pathname !== '/providers') || 
-         pathname.startsWith('/profile/providers/');
+  return (
+    (pathname.startsWith('/providers/') && pathname !== '/providers') ||
+    pathname.startsWith('/profile/providers/')
+  );
 };
 
 /**
@@ -337,7 +347,7 @@ export const shouldShowCityEarlyAccessNavbar = (
   isSplashVisible: boolean,
   isAppLaunched: boolean,
   _user: User | null,
-  stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading'
+  stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading',
 ): boolean => {
   // City selection is an onboarding step; never show this navbar here.
   // Use suffix check so locale-prefixed routes (e.g. /de/city-selection) are also excluded.
@@ -382,6 +392,7 @@ export const shouldShowCityEarlyAccessNavbar = (
     '/waitlist',
     '/welcome',
     '/chat',
+    '/search',
   ];
 
   const excludedPatterns = [
@@ -399,7 +410,7 @@ export const shouldShowCityEarlyAccessNavbar = (
     return false;
   }
 
-  if (excludedPatterns.some(pattern => pathname.includes(pattern))) {
+  if (excludedPatterns.some((pattern) => pathname.includes(pattern))) {
     return false;
   }
 
