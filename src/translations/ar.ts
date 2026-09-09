@@ -289,6 +289,18 @@ export const ar = {
         "gebet": {
           "title": "Bietet Gebetsmoeglichkeiten",
           "subtitle": "Gebetsraum vorhanden"
+        },
+        "familien": {
+          "title": "Family Friendly",
+          "subtitle": "Suitable for families"
+        },
+        "frauen": {
+          "title": "Women Friendly",
+          "subtitle": "Women-friendly environment"
+        },
+        "kinder": {
+          "title": "Child Friendly",
+          "subtitle": "Suitable for children"
         }
       },
       "ummahItems": {

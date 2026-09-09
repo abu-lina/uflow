@@ -184,9 +184,21 @@ export function ProvidersContent({
     (initialFilters ?? []).join(',') === (normalizedFilters ?? []).join(',');
 
   // Plan 220: Near-me state — geolocation-based (matches home page pattern)
-  const [nearMeActive, setNearMeActive] = useState(false);
+  // Initialize from ?near_me=1 URL param (set by desktop header chip)
+  const nearMeFromUrl = searchParams.get('near_me') === '1';
+  const [nearMeActive, setNearMeActive] = useState(nearMeFromUrl);
 
   const geolocation = useGeolocation();
+
+  // Auto-trigger geolocation when near_me=1 arrives via URL
+  useEffect(() => {
+    if (nearMeFromUrl && !nearMeActive) {
+      setNearMeActive(true);
+    }
+    if (nearMeFromUrl && geolocation.status === 'idle') {
+      geolocation.requestLocation();
+    }
+  }, [nearMeFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Shared map/discovery state: pins, view mode, open-now, header metrics
   const {
