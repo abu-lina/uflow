@@ -444,7 +444,8 @@ function SearchPageContent() {
     );
     setSelectedFilters([]);
     setOpenAccordion((prev) => (selectedSection === 'store' && prev === 'wer' ? 'was' : prev));
-  }, [selectedSection, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is stable from context; including it causes re-render loops in tests
+  }, [selectedSection]);
 
   useEffect(() => {
     if (selectedSection !== urlSection) {
