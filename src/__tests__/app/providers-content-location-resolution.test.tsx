@@ -38,7 +38,9 @@ vi.mock('@/providers/search-provider', () => ({
     setSelectedCategory: vi.fn(),
     searchQuery: '',
     setSearchQuery: vi.fn(),
-    get selectedLocation() { return mockSelectedLocationRef.current; },
+    get selectedLocation() {
+      return mockSelectedLocationRef.current;
+    },
     setSelectedLocation: vi.fn(),
     selectedSection: 'food',
     setSelectedSection: vi.fn(),
@@ -56,6 +58,49 @@ vi.mock('@/features/search/components/SectionSelector', () => ({
 
 vi.mock('@/features/providers/components/SearchResultsList', () => ({
   SearchResultsList: () => null,
+}));
+
+vi.mock('@/features/search/components/DiscoveryResultsGrid', () => ({
+  DiscoveryResultsGrid: () => null,
+}));
+
+vi.mock('@/features/search/components/DiscoveryHeader', () => ({
+  DiscoveryHeader: () => null,
+}));
+
+vi.mock('@/features/search/components/DiscoveryFilterBar', () => ({
+  DiscoveryFilterBar: () => null,
+}));
+
+vi.mock('@/features/search/components/SearchContextBar', () => ({
+  SearchContextBar: () => null,
+}));
+
+vi.mock('@/features/search/components/SearchMap', () => ({
+  SearchMap: () => null,
+}));
+
+vi.mock('@/features/search/components/ViewToggleButton', () => ({
+  ViewToggleButton: () => null,
+}));
+
+vi.mock('@/features/search/hooks/useNearMe', () => ({
+  useNearMe: () => ({
+    isActive: false,
+    results: [],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
+
+vi.mock('@/hooks/useGeolocation', () => ({
+  useGeolocation: () => ({
+    status: 'idle',
+    coords: null,
+    requestLocation: vi.fn(),
+    reset: vi.fn(),
+  }),
 }));
 
 vi.mock('@/components/ui/EmptyState', () => ({
@@ -123,7 +168,8 @@ vi.mock('@/lib/supabase/client', () => {
   const chainable: Record<string, unknown> = {
     data: [],
     error: null,
-    then: (resolve: (v: { data: never[]; error: null }) => void) => resolve({ data: [], error: null }),
+    then: (resolve: (v: { data: never[]; error: null }) => void) =>
+      resolve({ data: [], error: null }),
   };
   chainable.eq = () => chainable;
   chainable.not = () => chainable;
