@@ -2,6 +2,21 @@ import { detectConflict, type EnrichmentCandidate } from './joinhalal-enricher';
 
 const FOOD_PROVIDER_FIELDS = new Set(['no_alcohol', 'no_pork', 'no_gambling']);
 
+/**
+ * Fields that map to the locations table. When any of these are applied,
+ * a locations array is built in the RPC payload so the data reaches the
+ * locations table (which the UI reads for display).
+ */
+const LOCATION_FIELDS = new Set([
+  'address_street',
+  'address_zip',
+  'address_city',
+  'address_country',
+  'location_latitude',
+  'location_longitude',
+  'opening_hours',
+]);
+
 export interface DeliveryLinkInput {
   platform: string;
   platform_url: string;
@@ -56,6 +71,20 @@ export function buildAutoApplyPayload(input: AutoApplyInput): AutoApplyOutput {
   }
   if (Object.keys(foodProvidersPayload).length > 0) {
     rpcPayload.food_providers = foodProvidersPayload;
+  }
+
+  // Build locations sub-object when any location-related fields are applied.
+  // This writes to the locations table via admin_update_provider RPC,
+  // which is where the UI reads address/coordinate data from.
+  const locationData: Record<string, unknown> = {};
+  for (const field of appliedFields) {
+    if (LOCATION_FIELDS.has(field) && field in providersPayload) {
+      locationData[field] = providersPayload[field];
+    }
+  }
+  if (Object.keys(locationData).length > 0) {
+    locationData.is_primary = true;
+    rpcPayload.locations = [locationData];
   }
 
   return { rpcPayload, deliveryLinks, menuItems, appliedFields };
