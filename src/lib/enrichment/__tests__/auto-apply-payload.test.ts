@@ -247,9 +247,10 @@ describe('buildAutoApplyPayload', () => {
 
   // --- Location fields (Root Cause 2 fix) ---
 
-  it('maps address and coordinate fields to locations sub-object', () => {
+  it('maps address and coordinate fields to locations sub-object with location_id', () => {
     const input: AutoApplyInput = {
       providerId: 'prov-123',
+      primaryLocationId: 'loc-existing-uuid',
       current: {
         address_street: null,
         address_zip: null,
@@ -280,6 +281,7 @@ describe('buildAutoApplyPayload', () => {
     const locations = output.rpcPayload.locations as Record<string, unknown>[];
     expect(locations).toHaveLength(1);
     expect(locations[0]).toMatchObject({
+      location_id: 'loc-existing-uuid',
       address_street: 'Hauptstr. 1',
       address_zip: '10115',
       address_city: 'Berlin',
@@ -290,10 +292,56 @@ describe('buildAutoApplyPayload', () => {
     });
   });
 
+  it('includes location_id in locations payload to prevent RPC data loss (C-1)', () => {
+    const input: AutoApplyInput = {
+      providerId: 'prov-123',
+      primaryLocationId: 'loc-primary-id',
+      current: { address_city: null },
+      proposed: [makeCandidate('address_city', null, 'Berlin')],
+    };
+
+    const output = buildAutoApplyPayload(input);
+
+    const locations = output.rpcPayload.locations as Record<string, unknown>[];
+    expect(locations).toHaveLength(1);
+    expect(locations[0].location_id).toBe('loc-primary-id');
+  });
+
+  it('omits location_id from locations when primaryLocationId is not provided', () => {
+    const input: AutoApplyInput = {
+      providerId: 'prov-123',
+      current: { address_city: null },
+      proposed: [makeCandidate('address_city', null, 'Berlin')],
+    };
+
+    const output = buildAutoApplyPayload(input);
+
+    const locations = output.rpcPayload.locations as Record<string, unknown>[];
+    expect(locations).toHaveLength(1);
+    expect(locations[0].location_id).toBeUndefined();
+    expect(locations[0].is_primary).toBe(true);
+  });
+
+  it('omits location_id from locations when primaryLocationId is null', () => {
+    const input: AutoApplyInput = {
+      providerId: 'prov-123',
+      primaryLocationId: null,
+      current: { address_city: null },
+      proposed: [makeCandidate('address_city', null, 'Berlin')],
+    };
+
+    const output = buildAutoApplyPayload(input);
+
+    const locations = output.rpcPayload.locations as Record<string, unknown>[];
+    expect(locations).toHaveLength(1);
+    expect(locations[0].location_id).toBeUndefined();
+  });
+
   it('includes opening_hours in locations sub-object when present', () => {
     const hours = { monday: { open: '09:00', close: '18:00' } };
     const input: AutoApplyInput = {
       providerId: 'prov-123',
+      primaryLocationId: 'loc-456',
       current: { opening_hours: null, address_city: null },
       proposed: [
         makeCandidate('opening_hours', null, hours),
@@ -306,6 +354,7 @@ describe('buildAutoApplyPayload', () => {
     const locations = output.rpcPayload.locations as Record<string, unknown>[];
     expect(locations).toBeDefined();
     expect(locations[0]).toMatchObject({
+      location_id: 'loc-456',
       opening_hours: hours,
       address_city: 'Munich',
       is_primary: true,

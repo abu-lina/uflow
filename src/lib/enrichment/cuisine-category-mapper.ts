@@ -52,14 +52,39 @@ function stripGermanAdjectiveEnding(word: string): string {
   if (word.endsWith('sche')) {
     return word.slice(0, -1); // "Türkische" -> "Türkisch" (remove trailing 'e')
   }
-  if (word.endsWith('che')) {
-    return word.slice(0, -1); // handle edge cases
-  }
   return word;
 }
 
 function normalizeForMatch(text: string): string {
   return text.toLowerCase().trim();
+}
+
+interface NormalizedCategory {
+  id: string;
+  nameDe: string;
+  nameEn: string;
+  nameParts: string[];
+}
+
+/** Cache the normalized category index per array reference to avoid
+ *  rebuilding it on every mapCuisineToCategory call. */
+const categoryIndexCache = new WeakMap<CategoryRow[], NormalizedCategory[]>();
+
+function buildCategoryIndex(categories: CategoryRow[]): NormalizedCategory[] {
+  const cached = categoryIndexCache.get(categories);
+  if (cached) return cached;
+
+  const index = categories.map((cat) => ({
+    id: cat.category_id,
+    nameDe: cat.name_de ? normalizeForMatch(cat.name_de) : '',
+    nameEn: cat.name_en ? normalizeForMatch(cat.name_en) : '',
+    nameParts: [
+      ...(cat.name_de ? cat.name_de.split(/\s*\/\s*/).map(normalizeForMatch) : []),
+      ...(cat.name_en ? cat.name_en.split(/\s*\/\s*/).map(normalizeForMatch) : []),
+    ],
+  }));
+  categoryIndexCache.set(categories, index);
+  return index;
 }
 
 /**
@@ -82,17 +107,7 @@ export function mapCuisineToCategory(
     .map((t) => t.trim())
     .filter(Boolean);
 
-  // Build normalized lookup for categories
-  const categoryIndex = categories.map((cat) => ({
-    id: cat.category_id,
-    nameDe: cat.name_de ? normalizeForMatch(cat.name_de) : '',
-    nameEn: cat.name_en ? normalizeForMatch(cat.name_en) : '',
-    // Split compound names like "Kebab / Döner" into parts
-    nameParts: [
-      ...(cat.name_de ? cat.name_de.split(/\s*\/\s*/).map(normalizeForMatch) : []),
-      ...(cat.name_en ? cat.name_en.split(/\s*\/\s*/).map(normalizeForMatch) : []),
-    ],
-  }));
+  const categoryIndex = buildCategoryIndex(categories);
 
   for (const rawToken of tokens) {
     const token = normalizeForMatch(rawToken);
@@ -131,8 +146,9 @@ export function mapCuisineToCategory(
 
     // 4. Partial match: token is contained in category name or vice versa
     // Useful for "Chicken" matching "Fried Chicken"
+    // Minimum length of 5 avoids false positives from short tokens like "Thai" matching unrelated categories
     for (const cat of categoryIndex) {
-      if (token.length >= 4 && (cat.nameDe.includes(token) || cat.nameEn.includes(token))) {
+      if (token.length >= 5 && (cat.nameDe.includes(token) || cat.nameEn.includes(token))) {
         return cat.id;
       }
     }

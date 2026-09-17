@@ -101,7 +101,7 @@ describe('mapCuisineToCategory', () => {
     expect(mapCuisineToCategory('Halal', CATEGORIES)).toBeNull();
   });
 
-  it('matches "Chicken" to Fried Chicken', () => {
+  it('partial-matches "Chicken" to "Fried Chicken" category via substring containment', () => {
     expect(mapCuisineToCategory('Chicken', CATEGORIES)).toBe('cat-fried-chicken');
   });
 });

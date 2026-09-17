@@ -53,6 +53,7 @@ import { createUberEatsClient } from '../src/lib/enrichment/delivery-platform/ub
 import { enrichFromUberEats } from '../src/lib/enrichment/delivery-platform/ubereats-enricher';
 import {
   buildAutoApplyPayload,
+  LOCATION_FIELDS,
   type AutoApplyInput,
 } from '../src/lib/enrichment/auto-apply-payload';
 import { enrichFromLieferando } from '../src/lib/enrichment/delivery-platform/lieferando-enricher';
@@ -1517,7 +1518,6 @@ async function autoApplyDeliveryFields(
     const msg = err instanceof Error ? err.message : String(err);
     console.log(`❌ auto-apply failed ${msg}`);
     stats.failureCount++;
-    return 0;
   }
 }
 
@@ -1617,7 +1617,6 @@ async function autoApplyLieferandoFields(
     const msg = err instanceof Error ? err.message : String(err);
     console.log(`❌ auto-apply failed ${msg}`);
     stats.failureCount++;
-    return 0;
   }
 }
 
@@ -1634,12 +1633,28 @@ async function autoApplyJoinHalalFields(
     current[c.field_name] = c.current_value;
   }
 
+  // Fetch existing primary location_id to avoid the RPC's destructive
+  // DELETE of all locations when location_id is missing from the payload.
+  let primaryLocationId: string | null = null;
+  const hasLocationFields = candidates.some((c) => LOCATION_FIELDS.has(c.field_name));
+  if (hasLocationFields) {
+    const { data: locData } = await supabase
+      .from('locations')
+      .select('location_id')
+      .eq('provider_id', provider.provider_id)
+      .eq('is_primary', true)
+      .limit(1)
+      .single();
+    primaryLocationId = locData?.location_id ?? null;
+  }
+
   // Delegate to shared payload builder (handles providers, food_providers,
   // locations sub-objects, delivery_links, menu_items)
   const { rpcPayload, appliedFields } = buildAutoApplyPayload({
     providerId: provider.provider_id,
     current,
     proposed: candidates,
+    primaryLocationId,
   });
 
   if (appliedFields.length === 0) {
@@ -1950,11 +1965,26 @@ async function processPendingEnrichments(stats: RunStats): Promise<Set<string>> 
               provider.import_source_url,
             );
             if (jhCandidates.length > 0) {
-              await autoApplyJoinHalalFields(
-                provider as unknown as ProviderRow,
-                jhCandidates,
-                stats,
-              );
+              const providerRow: ProviderRow = {
+                provider_id: provider.provider_id,
+                provider_name: provider.provider_name,
+                import_source: provider.import_source,
+                import_source_url: provider.import_source_url,
+                contact_phone: provider.contact_phone,
+                social_website: provider.social_website,
+                social_instagram: provider.social_instagram,
+                address_street: provider.address_street,
+                address_zip: provider.address_zip,
+                address_city: provider.address_city,
+                address_country: provider.address_country,
+                enrichment_eligible: provider.enrichment_eligible,
+                provider_description: provider.provider_description,
+                opening_hours: provider.opening_hours,
+                location_latitude: provider.location_latitude,
+                location_longitude: provider.location_longitude,
+                category_id: provider.category_id,
+              };
+              await autoApplyJoinHalalFields(providerRow, jhCandidates, stats);
             }
           }
         } catch (jhErr) {
