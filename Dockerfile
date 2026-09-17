@@ -1,7 +1,7 @@
 # Simple Dockerfile for Next.js 15 App Router on Hetzner
 # Optimized for layer caching and BuildX cache mounts
 
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Accept build arguments early (before COPY to maximize cache hits)
@@ -62,7 +62,7 @@ RUN echo "Verifying build outputs..." && \
     ls -la .next/standalone/ || echo "Warning: standalone directory missing"
 
 # Production stage
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
