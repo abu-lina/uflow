@@ -2,7 +2,7 @@ module.exports = {
   // TypeScript files — type-check, lint, format
   '*.{ts,tsx}': [
     () => 'tsc --noEmit',
-    'eslint --fix --max-warnings=0',
+    'eslint --fix --max-warnings=0 --no-warn-ignored',
     'prettier --write',
     (files) => {
       const testFiles = files.filter(

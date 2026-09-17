@@ -30,6 +30,7 @@ export interface ProviderSnapshot {
   opening_hours?: unknown;
   location_latitude?: number | null;
   location_longitude?: number | null;
+  category_id?: string | null;
 }
 
 export interface MenuItem {
@@ -57,6 +58,7 @@ export type ParsedEnrichmentData = Partial<
     | 'opening_hours'
     | 'location_latitude'
     | 'location_longitude'
+    | 'category_id'
   >
 > & {
   menu_items?: MenuItem[];
@@ -105,10 +107,7 @@ function valuesEqual(a: unknown, b: unknown): boolean {
  * - 'additive': current is empty, proposed has value (safe to auto-apply)
  * - 'conflict': both have different non-empty values (requires admin review)
  */
-export function detectConflict(
-  currentValue: unknown,
-  proposedValue: unknown
-): ConflictType {
+export function detectConflict(currentValue: unknown, proposedValue: unknown): ConflictType {
   const currentEmpty = isEmptyValue(currentValue);
   const proposedEmpty = isEmptyValue(proposedValue);
 
@@ -129,7 +128,7 @@ export function buildEnrichmentCandidates(
   provider: ProviderSnapshot,
   parsed: ParsedEnrichmentData,
   source: string,
-  sourceUrl: string
+  sourceUrl: string,
 ): EnrichmentCandidate[] {
   const candidates: EnrichmentCandidate[] = [];
 
@@ -170,7 +169,7 @@ export function buildEnrichmentCandidates(
  */
 export function shouldDedup(
   existing: EnrichmentCandidate & { status: string },
-  incoming: EnrichmentCandidate
+  incoming: EnrichmentCandidate,
 ): boolean {
   if (existing.status !== 'pending') return false;
   return (

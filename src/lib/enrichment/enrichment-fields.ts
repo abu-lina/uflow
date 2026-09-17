@@ -40,6 +40,7 @@ export const SOURCE_ENRICHABLE_FIELDS: ReadonlyArray<string> = [
   'provider_description',
   'location_latitude',
   'location_longitude',
+  'category_id',
 ] as const;
 
 const adminFieldSet = new Set(ADMIN_CONTROLLED_FIELDS);

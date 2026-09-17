@@ -35,10 +35,7 @@ import {
   extractDeliveryLinks,
   type DeliveryLink,
 } from '../src/utils/joinhalal-parser';
-import {
-  resolveOfferIds,
-  type Offer,
-} from '../src/lib/import/joinhalal';
+import { resolveOfferIds, type Offer } from '../src/lib/import/joinhalal';
 import {
   buildEnrichmentCandidates,
   type ProviderSnapshot,
@@ -56,10 +53,15 @@ import { createUberEatsClient } from '../src/lib/enrichment/delivery-platform/ub
 import { enrichFromUberEats } from '../src/lib/enrichment/delivery-platform/ubereats-enricher';
 import {
   buildAutoApplyPayload,
+  LOCATION_FIELDS,
   type AutoApplyInput,
 } from '../src/lib/enrichment/auto-apply-payload';
 import { enrichFromLieferando } from '../src/lib/enrichment/delivery-platform/lieferando-enricher';
 import { createLieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-client';
+import {
+  mapCuisineToCategory,
+  type CategoryRow,
+} from '../src/lib/enrichment/cuisine-category-mapper';
 
 // ─── Env setup ────────────────────────────────────────────────────────────────
 
@@ -70,7 +72,9 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('❌ Missing required environment variables.');
-  console.error('   NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local');
+  console.error(
+    '   NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local',
+  );
   process.exit(1);
 }
 
@@ -140,6 +144,7 @@ interface ProviderRow {
   opening_hours: unknown;
   location_latitude: number | null;
   location_longitude: number | null;
+  category_id: string | null;
 }
 
 interface RunStats {
@@ -156,20 +161,28 @@ interface RunStats {
   finishedAt?: string;
   autoAppliedCount: number;
   autoAppliedFields: string[];
-  sourceStats?: Record<string, {
-    providersSelected: number;
-    providersProcessed: number;
-    candidatesCreated: number;
-    unchangedCount: number;
-    failureCount: number;
-    autoAppliedCount: number;
-  }>;
+  sourceStats?: Record<
+    string,
+    {
+      providersSelected: number;
+      providersProcessed: number;
+      candidatesCreated: number;
+      unchangedCount: number;
+      failureCount: number;
+      autoAppliedCount: number;
+    }
+  >;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
-  const modeLabel = mode === 'auto-apply' ? 'AUTO-APPLY (direct write)' : mode === 'write' ? 'WRITE (staging candidates)' : 'DRY-RUN (preview only)';
+  const modeLabel =
+    mode === 'auto-apply'
+      ? 'AUTO-APPLY (direct write)'
+      : mode === 'write'
+        ? 'WRITE (staging candidates)'
+        : 'DRY-RUN (preview only)';
   console.log(`\n🔄 Provider Enrichment Pipeline`);
   console.log(`   Mode: ${modeLabel}`);
   console.log(`   Source: ${source}`);
@@ -177,7 +190,8 @@ async function main(): Promise<void> {
 
   const stats: RunStats = {
     source,
-    triggeredBy: mode === 'auto-apply' ? 'cli_auto_apply' : mode === 'write' ? 'cli_write' : 'cli_dry_run',
+    triggeredBy:
+      mode === 'auto-apply' ? 'cli_auto_apply' : mode === 'write' ? 'cli_write' : 'cli_dry_run',
     providersSelected: 0,
     providersProcessed: 0,
     candidatesCreated: 0,
@@ -212,12 +226,16 @@ async function main(): Promise<void> {
   }
 
   if (isAutoApply && !['wolt', 'ubereats', 'joinhalal', 'lieferando'].includes(source)) {
-    console.error(`❌ Auto-apply mode is only supported for 'wolt', 'ubereats', 'joinhalal', and 'lieferando' sources.`);
+    console.error(
+      `❌ Auto-apply mode is only supported for 'wolt', 'ubereats', 'joinhalal', and 'lieferando' sources.`,
+    );
     process.exit(1);
   }
 
   if (source !== 'joinhalal' && source !== 'ubereats') {
-    console.error(`❌ Unsupported source: ${source}. Only 'joinhalal', 'wolt', and 'ubereats' are supported.`);
+    console.error(
+      `❌ Unsupported source: ${source}. Only 'joinhalal', 'wolt', and 'ubereats' are supported.`,
+    );
     process.exit(1);
   }
 
@@ -227,7 +245,9 @@ async function main(): Promise<void> {
   }
 
   if (source !== 'joinhalal') {
-    console.error(`❌ Unsupported source: ${source}. Only 'joinhalal', 'wolt', and 'lieferando' are supported.`);
+    console.error(
+      `❌ Unsupported source: ${source}. Only 'joinhalal', 'wolt', and 'lieferando' are supported.`,
+    );
     process.exit(1);
   }
 
@@ -242,11 +262,22 @@ async function main(): Promise<void> {
   const offers: Offer[] = offersData ?? [];
   console.log(`  📚 Loaded ${offers.length} offers from catalog`);
 
+  // 1b. Load categories catalog for cuisine → category_id mapping
+  const { data: categoriesData, error: categoriesError } = await supabase
+    .from('categories')
+    .select('category_id, name_de, name_en');
+  if (categoriesError) {
+    console.error('❌ Failed to load categories catalog:', categoriesError.message);
+    process.exit(1);
+  }
+  const categories: CategoryRow[] = categoriesData ?? [];
+  console.log(`  📚 Loaded ${categories.length} categories from catalog`);
+
   // 2. Fetch eligible providers
   let query = supabase
     .from('providers')
     .select(
-      'provider_id, provider_name, import_source, import_source_url, contact_phone, social_website, social_instagram, address_street, address_zip, address_city, address_country, enrichment_eligible, provider_description, opening_hours, location_latitude, location_longitude'
+      'provider_id, provider_name, import_source, import_source_url, contact_phone, social_website, social_instagram, address_street, address_zip, address_city, address_country, enrichment_eligible, provider_description, opening_hours, location_latitude, location_longitude, category_id',
     )
     .eq('import_source', source)
     .eq('enrichment_eligible', true)
@@ -281,7 +312,9 @@ async function main(): Promise<void> {
     if (stats.providersProcessed > 0) {
       const failRate = stats.failureCount / stats.providersProcessed;
       if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 10) {
-        console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
+        console.error(
+          `\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`,
+        );
         stats.circuitBreakerTriggered = true;
         break;
       }
@@ -294,7 +327,7 @@ async function main(): Promise<void> {
       const html = await fetchWithDelay(url);
       stats.providersProcessed++;
 
-      const parsed = parseEnrichmentData(html, offers);
+      const parsed = parseEnrichmentData(html, offers, categories);
       if (!parsed) {
         console.log('⚠️  no parseable data');
         stats.failureCount++;
@@ -315,6 +348,7 @@ async function main(): Promise<void> {
         opening_hours: provider.opening_hours,
         location_latitude: provider.location_latitude,
         location_longitude: provider.location_longitude,
+        category_id: provider.category_id,
       };
 
       const candidates = buildEnrichmentCandidates(snapshot, parsed, source, url);
@@ -351,7 +385,9 @@ async function main(): Promise<void> {
           await autoApplyMenuItems(provider, parsed.menu_items, stats);
           statusParts.push(`${parsed.menu_items.length} menu item(s) auto-applied`);
         } else {
-          statusParts.push(`${parsed.menu_items.length} menu item(s) found (use --mode auto-apply to write)`);
+          statusParts.push(
+            `${parsed.menu_items.length} menu item(s) found (use --mode auto-apply to write)`,
+          );
         }
       }
 
@@ -360,7 +396,9 @@ async function main(): Promise<void> {
           await autoApplyDeliveryLinks(provider, deliveryLinks, stats);
           statusParts.push(`${deliveryLinks.length} delivery link(s) auto-applied`);
         } else {
-          statusParts.push(`${deliveryLinks.length} delivery link(s) found (use --mode auto-apply to write)`);
+          statusParts.push(
+            `${deliveryLinks.length} delivery link(s) found (use --mode auto-apply to write)`,
+          );
         }
       }
 
@@ -407,7 +445,9 @@ async function main(): Promise<void> {
   if (!isAutoApply && allCandidates.length > 0) {
     console.log(`\n  📋 Candidate Preview (first 10):`);
     for (const c of allCandidates.slice(0, 10)) {
-      console.log(`     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`);
+      console.log(
+        `     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`,
+      );
     }
     if (allCandidates.length > 10) {
       console.log(`     ... and ${allCandidates.length - 10} more`);
@@ -420,31 +460,31 @@ async function main(): Promise<void> {
     let written = 0;
 
     for (const candidate of allCandidates) {
-      const { error } = await supabase
-        .from('enrichment_candidates')
-        .upsert(
-          {
-            provider_id: candidate.provider_id,
-            source: candidate.source,
-            source_url: candidate.source_url,
-            field_name: candidate.field_name,
-            proposed_value: candidate.proposed_value,
-            current_value: candidate.current_value,
-            status: 'pending',
-            enriched_at: new Date().toISOString(),
-          },
-          {
-            // ignoreDuplicates: true → ON CONFLICT DO NOTHING
-            // Required for partial unique indexes (idx_enrichment_candidates_dedup
-            // has a WHERE status = 'pending' clause that ON CONFLICT (cols) without
-            // the WHERE clause cannot match for DO UPDATE semantics).
-            onConflict: 'provider_id,field_name,source',
-            ignoreDuplicates: true,
-          }
-        );
+      const { error } = await supabase.from('enrichment_candidates').upsert(
+        {
+          provider_id: candidate.provider_id,
+          source: candidate.source,
+          source_url: candidate.source_url,
+          field_name: candidate.field_name,
+          proposed_value: candidate.proposed_value,
+          current_value: candidate.current_value,
+          status: 'pending',
+          enriched_at: new Date().toISOString(),
+        },
+        {
+          // ignoreDuplicates: true → ON CONFLICT DO NOTHING
+          // Required for partial unique indexes (idx_enrichment_candidates_dedup
+          // has a WHERE status = 'pending' clause that ON CONFLICT (cols) without
+          // the WHERE clause cannot match for DO UPDATE semantics).
+          onConflict: 'provider_id,field_name,source',
+          ignoreDuplicates: true,
+        },
+      );
 
       if (error) {
-        console.error(`     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`);
+        console.error(
+          `     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`,
+        );
       } else {
         written++;
       }
@@ -463,7 +503,9 @@ async function main(): Promise<void> {
   } else if (isAutoApply) {
     console.log(`\n  ✅ Auto-apply complete.`);
   } else if (isDryRun) {
-    console.log(`\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply directly.`);
+    console.log(
+      `\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply directly.`,
+    );
   }
 
   // 6. Write run log
@@ -472,7 +514,11 @@ async function main(): Promise<void> {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function parseEnrichmentData(html: string, offers: Offer[]): ParsedEnrichmentData | null {
+function parseEnrichmentData(
+  html: string,
+  offers: Offer[],
+  categories: CategoryRow[] = [],
+): ParsedEnrichmentData | null {
   const schema = extractSchemaOrgFromHtml(html);
   if (!schema) return null;
 
@@ -506,6 +552,13 @@ function parseEnrichmentData(html: string, offers: Offer[]): ParsedEnrichmentDat
     parsed.location_longitude = enrichmentData.longitude;
   }
 
+  // Map servesCuisine to category_id
+  if (enrichmentData.servesCuisine && categories.length > 0) {
+    const categoryId = mapCuisineToCategory(enrichmentData.servesCuisine, categories);
+    if (categoryId) {
+      parsed.category_id = categoryId;
+    }
+  }
 
   // Extract menu items from Speisen
   if (speisen.length > 0) {
@@ -515,7 +568,6 @@ function parseEnrichmentData(html: string, offers: Offer[]): ParsedEnrichmentDat
       sort_order: i,
     }));
   }
-
 
   return Object.keys(parsed).length > 0 ? parsed : null;
 }
@@ -549,22 +601,20 @@ async function writeRunLog(stats: RunStats): Promise<void> {
     };
   }
 
-  const { error } = await supabase
-    .from('enrichment_run_logs')
-    .insert({
-      source: stats.source,
-      triggered_by: stats.triggeredBy,
-      started_at: stats.startedAt,
-      finished_at: stats.finishedAt,
-      providers_selected: stats.providersSelected,
-      providers_processed: stats.providersProcessed,
-      candidates_created: stats.candidatesCreated,
-      unchanged_count: stats.unchangedCount,
-      failure_count: stats.failureCount,
-      circuit_breaker_triggered: stats.circuitBreakerTriggered,
-      auto_applied_fields: stats.autoAppliedFields.length > 0 ? stats.autoAppliedFields : null,
-      source_stats: stats.sourceStats,
-    });
+  const { error } = await supabase.from('enrichment_run_logs').insert({
+    source: stats.source,
+    triggered_by: stats.triggeredBy,
+    started_at: stats.startedAt,
+    finished_at: stats.finishedAt,
+    providers_selected: stats.providersSelected,
+    providers_processed: stats.providersProcessed,
+    candidates_created: stats.candidatesCreated,
+    unchanged_count: stats.unchangedCount,
+    failure_count: stats.failureCount,
+    circuit_breaker_triggered: stats.circuitBreakerTriggered,
+    auto_applied_fields: stats.autoAppliedFields.length > 0 ? stats.autoAppliedFields : null,
+    source_stats: stats.sourceStats,
+  });
 
   if (error) {
     console.error(`  ⚠️  Failed to write run log: ${error.message}`);
@@ -588,7 +638,7 @@ async function runWoltEnrichment(
   let query = supabase
     .from('providers')
     .select(
-      'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible'
+      'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible',
     )
     .eq('listing_type', 'food')
     .eq('enrichment_eligible', true);
@@ -604,7 +654,7 @@ async function runWoltEnrichment(
   }
 
   // Fetch no_alcohol from food_providers (extension table)
-  const providerIds = (providers ?? []).map(p => p.provider_id);
+  const providerIds = (providers ?? []).map((p) => p.provider_id);
   let noAlcoholMap: Record<string, boolean | null> = {};
   if (providerIds.length > 0) {
     const { data: foodProviders, error: fpError } = await supabase
@@ -640,7 +690,9 @@ async function runWoltEnrichment(
     if (stats.providersProcessed > 0) {
       const failRate = stats.failureCount / stats.providersProcessed;
       if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 10) {
-        console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
+        console.error(
+          `\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`,
+        );
         stats.circuitBreakerTriggered = true;
         break;
       }
@@ -649,7 +701,9 @@ async function runWoltEnrichment(
     process.stdout.write(`  🔍 ${provider.provider_name} ... `);
 
     if (!provider.address_city || !(await geocoder.geocode(provider.address_city))) {
-      console.log(`  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`);
+      console.log(
+        `  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`,
+      );
       stats.skippedCount = (stats.skippedCount || 0) + 1;
       continue;
     }
@@ -678,7 +732,7 @@ async function runWoltEnrichment(
           'has no city set',
           'venue matched',
         ];
-        const isNonEssential = nonEssentialErrors.some(e => result.error!.includes(e));
+        const isNonEssential = nonEssentialErrors.some((e) => result.error!.includes(e));
         if (isNonEssential) {
           console.log(`⚠️  ${result.error}`);
           continue;
@@ -736,7 +790,9 @@ async function runWoltEnrichment(
   if (!isAutoApply && allCandidates.length > 0) {
     console.log(`\n  📋 Candidate Preview (first 10):`);
     for (const c of allCandidates.slice(0, 10)) {
-      console.log(`     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`);
+      console.log(
+        `     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`,
+      );
     }
     if (allCandidates.length > 10) {
       console.log(`     ... and ${allCandidates.length - 10} more`);
@@ -749,27 +805,27 @@ async function runWoltEnrichment(
     let written = 0;
 
     for (const candidate of allCandidates) {
-      const { error } = await supabase
-        .from('enrichment_candidates')
-        .upsert(
-          {
-            provider_id: candidate.provider_id,
-            source: candidate.source,
-            source_url: candidate.source_url,
-            field_name: candidate.field_name,
-            proposed_value: candidate.proposed_value,
-            current_value: candidate.current_value,
-            status: 'pending',
-            enriched_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,field_name,source',
-            ignoreDuplicates: true,
-          }
-        );
+      const { error } = await supabase.from('enrichment_candidates').upsert(
+        {
+          provider_id: candidate.provider_id,
+          source: candidate.source,
+          source_url: candidate.source_url,
+          field_name: candidate.field_name,
+          proposed_value: candidate.proposed_value,
+          current_value: candidate.current_value,
+          status: 'pending',
+          enriched_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,field_name,source',
+          ignoreDuplicates: true,
+        },
+      );
 
       if (error) {
-        console.error(`     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`);
+        console.error(
+          `     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`,
+        );
       } else {
         written++;
       }
@@ -792,25 +848,25 @@ async function runWoltEnrichment(
         const slugMatch = sourceUrl.match(/venue\/([^/]+)$/);
         const slug = slugMatch ? slugMatch[1] : null;
 
-        const { error: linkError } = await supabase
-          .from('provider_delivery_links')
-          .upsert(
-            {
-              provider_id: pid,
-              platform: 'wolt',
-              platform_url: sourceUrl,
-              platform_slug: slug,
-              is_active: true,
-              last_verified_at: new Date().toISOString(),
-            },
-            {
-              onConflict: 'provider_id,platform',
-              ignoreDuplicates: false,
-            }
-          );
+        const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+          {
+            provider_id: pid,
+            platform: 'wolt',
+            platform_url: sourceUrl,
+            platform_slug: slug,
+            is_active: true,
+            last_verified_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'provider_id,platform',
+            ignoreDuplicates: false,
+          },
+        );
 
         if (linkError) {
-          console.error(`     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`);
+          console.error(
+            `     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`,
+          );
         } else {
           linksWritten++;
         }
@@ -823,7 +879,9 @@ async function runWoltEnrichment(
     }
     console.log(`  ✅ ${linksWritten}/${processedIds.length} delivery links written`);
   } else if (isDryRun) {
-    console.log(`\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`);
+    console.log(
+      `\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`,
+    );
   } else if (isAutoApply) {
     console.log(`  Auto-apply complete.`);
   }
@@ -846,7 +904,7 @@ async function runLieferandoEnrichment(
   let query = supabase
     .from('providers')
     .select(
-      'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible'
+      'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible',
     )
     .eq('listing_type', 'food')
     .eq('enrichment_eligible', true);
@@ -861,7 +919,7 @@ async function runLieferandoEnrichment(
     process.exit(1);
   }
 
-  const providerIds = (providers ?? []).map(p => p.provider_id);
+  const providerIds = (providers ?? []).map((p) => p.provider_id);
   let noAlcoholMap: Record<string, boolean | null> = {};
   if (providerIds.length > 0) {
     const { data: foodProviders, error: fpError } = await supabase
@@ -894,7 +952,9 @@ async function runLieferandoEnrichment(
     if (stats.providersProcessed > 0) {
       const failRate = stats.failureCount / stats.providersProcessed;
       if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 10) {
-        console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
+        console.error(
+          `\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`,
+        );
         stats.circuitBreakerTriggered = true;
         break;
       }
@@ -903,7 +963,9 @@ async function runLieferandoEnrichment(
     process.stdout.write(`  🔍 ${provider.provider_name} ... `);
 
     if (!provider.address_city || !(await geocoder.geocode(provider.address_city))) {
-      console.log(`  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`);
+      console.log(
+        `  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`,
+      );
       stats.skippedCount = (stats.skippedCount || 0) + 1;
       continue;
     }
@@ -932,7 +994,7 @@ async function runLieferandoEnrichment(
           'has no city set',
           'venue matched',
         ];
-        const isNonEssential = nonEssentialErrors.some(e => result.error!.includes(e));
+        const isNonEssential = nonEssentialErrors.some((e) => result.error!.includes(e));
         if (isNonEssential) {
           console.log(`⚠️  ${result.error}`);
           continue;
@@ -989,7 +1051,9 @@ async function runLieferandoEnrichment(
   if (!isAutoApply && allCandidates.length > 0) {
     console.log(`\n  📋 Candidate Preview (first 10):`);
     for (const c of allCandidates.slice(0, 10)) {
-      console.log(`     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`);
+      console.log(
+        `     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`,
+      );
     }
     if (allCandidates.length > 10) {
       console.log(`     ... and ${allCandidates.length - 10} more`);
@@ -1001,27 +1065,27 @@ async function runLieferandoEnrichment(
     let written = 0;
 
     for (const candidate of allCandidates) {
-      const { error } = await supabase
-        .from('enrichment_candidates')
-        .upsert(
-          {
-            provider_id: candidate.provider_id,
-            source: candidate.source,
-            source_url: candidate.source_url,
-            field_name: candidate.field_name,
-            proposed_value: candidate.proposed_value,
-            current_value: candidate.current_value,
-            status: 'pending',
-            enriched_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,field_name,source',
-            ignoreDuplicates: true,
-          }
-        );
+      const { error } = await supabase.from('enrichment_candidates').upsert(
+        {
+          provider_id: candidate.provider_id,
+          source: candidate.source,
+          source_url: candidate.source_url,
+          field_name: candidate.field_name,
+          proposed_value: candidate.proposed_value,
+          current_value: candidate.current_value,
+          status: 'pending',
+          enriched_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,field_name,source',
+          ignoreDuplicates: true,
+        },
+      );
 
       if (error) {
-        console.error(`     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`);
+        console.error(
+          `     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`,
+        );
       } else {
         written++;
       }
@@ -1038,22 +1102,20 @@ async function runLieferandoEnrichment(
         const slugMatch = sourceUrl.match(/\/speisekarte\/([^/]+)$/);
         const slug = slugMatch ? slugMatch[1] : null;
 
-        const { error: linkError } = await supabase
-          .from('provider_delivery_links')
-          .upsert(
-            {
-              provider_id: pid,
-              platform: 'lieferando',
-              platform_url: sourceUrl,
-              platform_slug: slug,
-              is_active: true,
-              last_verified_at: new Date().toISOString(),
-            },
-            {
-              onConflict: 'provider_id,platform',
-              ignoreDuplicates: false,
-            }
-          );
+        const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+          {
+            provider_id: pid,
+            platform: 'lieferando',
+            platform_url: sourceUrl,
+            platform_slug: slug,
+            is_active: true,
+            last_verified_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'provider_id,platform',
+            ignoreDuplicates: false,
+          },
+        );
 
         if (linkError) {
           console.error(`     ❌ Failed to write delivery link: ${linkError.message}`);
@@ -1070,7 +1132,9 @@ async function runLieferandoEnrichment(
     console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
     console.log(`  ✅ ${linksWritten}/${processedIds.length} delivery links written`);
   } else if (isDryRun) {
-    console.log(`\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`);
+    console.log(
+      `\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`,
+    );
   } else if (isAutoApply) {
     console.log(`  Auto-apply complete.`);
   }
@@ -1096,7 +1160,7 @@ async function runUberEatsEnrichment(
     let query = supabase
       .from('providers')
       .select(
-        'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible'
+        'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible',
       )
       .eq('listing_type', 'food')
       .eq('enrichment_eligible', true);
@@ -1113,7 +1177,7 @@ async function runUberEatsEnrichment(
     }
 
     // Fetch no_alcohol from food_providers (extension table)
-    const providerIds = (providers ?? []).map(p => p.provider_id);
+    const providerIds = (providers ?? []).map((p) => p.provider_id);
     const noAlcoholMap: Record<string, boolean | null> = {};
     if (providerIds.length > 0) {
       const { data: foodProviders, error: fpError } = await supabase
@@ -1150,7 +1214,9 @@ async function runUberEatsEnrichment(
       if (stats.providersProcessed > 0) {
         const failRate = stats.failureCount / stats.providersProcessed;
         if (failRate > CIRCUIT_BREAKER_THRESHOLD && stats.providersProcessed >= 10) {
-          console.error(`\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`);
+          console.error(
+            `\n  ⚡ CIRCUIT BREAKER: ${(failRate * 100).toFixed(0)}% failure rate after ${stats.providersProcessed} providers. Aborting.`,
+          );
           stats.circuitBreakerTriggered = true;
           break;
         }
@@ -1159,7 +1225,9 @@ async function runUberEatsEnrichment(
       process.stdout.write(`  🔍 ${provider.provider_name} ... `);
 
       if (!provider.address_city || !(await geocoder.geocode(provider.address_city))) {
-        console.log(`  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`);
+        console.log(
+          `  ⚠️  ${provider.provider_name} — skipping (not in coverage area: ${provider.address_city || 'no city'})`,
+        );
         stats.skippedCount = (stats.skippedCount || 0) + 1;
         continue;
       }
@@ -1188,7 +1256,7 @@ async function runUberEatsEnrichment(
             'has no city set',
             'venue matched',
           ];
-          const isNonEssential = nonEssentialErrors.some(e => result.error!.includes(e));
+          const isNonEssential = nonEssentialErrors.some((e) => result.error!.includes(e));
           if (isNonEssential) {
             console.log(`⚠️  ${result.error}`);
             continue;
@@ -1249,7 +1317,9 @@ async function runUberEatsEnrichment(
     if (!isAutoApply && allCandidates.length > 0) {
       console.log(`\n  📋 Candidate Preview (first 10):`);
       for (const c of allCandidates.slice(0, 10)) {
-        console.log(`     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`);
+        console.log(
+          `     ${c.providerName} → ${c.field_name}: ${JSON.stringify(c.current_value)} → ${JSON.stringify(c.proposed_value)}`,
+        );
       }
       if (allCandidates.length > 10) {
         console.log(`     ... and ${allCandidates.length - 10} more`);
@@ -1262,27 +1332,27 @@ async function runUberEatsEnrichment(
       let written = 0;
 
       for (const candidate of allCandidates) {
-        const { error } = await supabase
-          .from('enrichment_candidates')
-          .upsert(
-            {
-              provider_id: candidate.provider_id,
-              source: candidate.source,
-              source_url: candidate.source_url,
-              field_name: candidate.field_name,
-              proposed_value: candidate.proposed_value,
-              current_value: candidate.current_value,
-              status: 'pending',
-              enriched_at: new Date().toISOString(),
-            },
-            {
-              onConflict: 'provider_id,field_name,source',
-              ignoreDuplicates: true,
-            }
-          );
+        const { error } = await supabase.from('enrichment_candidates').upsert(
+          {
+            provider_id: candidate.provider_id,
+            source: candidate.source,
+            source_url: candidate.source_url,
+            field_name: candidate.field_name,
+            proposed_value: candidate.proposed_value,
+            current_value: candidate.current_value,
+            status: 'pending',
+            enriched_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'provider_id,field_name,source',
+            ignoreDuplicates: true,
+          },
+        );
 
         if (error) {
-          console.error(`     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`);
+          console.error(
+            `     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`,
+          );
         } else {
           written++;
         }
@@ -1299,25 +1369,25 @@ async function runUberEatsEnrichment(
         const providerName = allCandidates.find((c) => c.provider_id === pid)?.providerName ?? '';
 
         if (sourceUrl) {
-          const { error: linkError } = await supabase
-            .from('provider_delivery_links')
-            .upsert(
-              {
-                provider_id: pid,
-                platform: 'ubereats',
-                platform_url: sourceUrl,
-                platform_slug: null,
-                is_active: true,
-                last_verified_at: new Date().toISOString(),
-              },
-              {
-                onConflict: 'provider_id,platform',
-                ignoreDuplicates: false,
-              }
-            );
+          const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+            {
+              provider_id: pid,
+              platform: 'ubereats',
+              platform_url: sourceUrl,
+              platform_slug: null,
+              is_active: true,
+              last_verified_at: new Date().toISOString(),
+            },
+            {
+              onConflict: 'provider_id,platform',
+              ignoreDuplicates: false,
+            },
+          );
 
           if (linkError) {
-            console.error(`     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`);
+            console.error(
+              `     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`,
+            );
           } else {
             linksWritten++;
           }
@@ -1330,7 +1400,9 @@ async function runUberEatsEnrichment(
       }
       console.log(`  ✅ ${linksWritten}/${processedIds.length} delivery links written`);
     } else if (isDryRun) {
-      console.log(`\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`);
+      console.log(
+        `\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`,
+      );
     } else if (isAutoApply) {
       console.log(`  Auto-apply complete.`);
     }
@@ -1374,11 +1446,10 @@ async function autoApplyDeliveryFields(
   try {
     // 1. Write scalar fields via admin_update_provider RPC
     if (Object.keys(rpcPayload).length > 0) {
-      const { error: rpcError } = await supabase
-        .rpc('admin_update_provider', {
-          p_provider_id: provider.provider_id,
-          p_data: rpcPayload,
-        });
+      const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+        p_provider_id: provider.provider_id,
+        p_data: rpcPayload,
+      });
 
       if (rpcError) {
         console.log(`❌ RPC failed: ${rpcError.message}`);
@@ -1390,25 +1461,21 @@ async function autoApplyDeliveryFields(
     // 2. Write delivery link directly (not via RPC — RPC does destructive DELETE+INSERT)
     const sourceUrl = result.candidates[0]?.source_url ?? '';
     if (sourceUrl) {
-      const slugMatch = platform === 'wolt'
-        ? sourceUrl.match(/venue\/([^/]+)$/)
-        : null;
-      const { error: linkError } = await supabase
-        .from('provider_delivery_links')
-        .upsert(
-          {
-            provider_id: provider.provider_id,
-            platform,
-            platform_url: sourceUrl,
-            platform_slug: slugMatch?.[1] ?? null,
-            is_active: true,
-            last_verified_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,platform',
-            ignoreDuplicates: true,
-          },
-        );
+      const slugMatch = platform === 'wolt' ? sourceUrl.match(/venue\/([^/]+)$/) : null;
+      const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+        {
+          provider_id: provider.provider_id,
+          platform,
+          platform_url: sourceUrl,
+          platform_slug: slugMatch?.[1] ?? null,
+          is_active: true,
+          last_verified_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,platform',
+          ignoreDuplicates: true,
+        },
+      );
 
       if (linkError) {
         console.error(`     ⚠️  Delivery link write failed: ${linkError.message}`);
@@ -1425,24 +1492,22 @@ async function autoApplyDeliveryFields(
     for (const c of result.candidates) {
       if (!appliedFields.includes(c.field_name)) continue;
 
-      await supabase
-        .from('enrichment_candidates')
-        .upsert(
-          {
-            provider_id: c.provider_id,
-            source: c.source,
-            source_url: c.source_url,
-            field_name: c.field_name,
-            proposed_value: c.proposed_value,
-            current_value: c.current_value,
-            status: 'auto_applied',
-            enriched_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,field_name,source',
-            ignoreDuplicates: true,
-          },
-        );
+      await supabase.from('enrichment_candidates').upsert(
+        {
+          provider_id: c.provider_id,
+          source: c.source,
+          source_url: c.source_url,
+          field_name: c.field_name,
+          proposed_value: c.proposed_value,
+          current_value: c.current_value,
+          status: 'auto_applied',
+          enriched_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,field_name,source',
+          ignoreDuplicates: true,
+        },
+      );
     }
 
     console.log(`✅ auto-applied ${appliedFields.length} field(s): ${appliedFields.join(', ')}`);
@@ -1453,7 +1518,6 @@ async function autoApplyDeliveryFields(
     const msg = err instanceof Error ? err.message : String(err);
     console.log(`❌ auto-apply failed ${msg}`);
     stats.failureCount++;
-    return 0;
   }
 }
 
@@ -1484,11 +1548,10 @@ async function autoApplyLieferandoFields(
 
   try {
     if (Object.keys(rpcPayload).length > 0) {
-      const { error: rpcError } = await supabase
-        .rpc('admin_update_provider', {
-          p_provider_id: provider.provider_id,
-          p_data: rpcPayload,
-        });
+      const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+        p_provider_id: provider.provider_id,
+        p_data: rpcPayload,
+      });
 
       if (rpcError) {
         console.log(`❌ RPC failed: ${rpcError.message}`);
@@ -1500,22 +1563,20 @@ async function autoApplyLieferandoFields(
     const sourceUrl = result.candidates[0]?.source_url ?? '';
     if (sourceUrl) {
       const slugMatch = sourceUrl.match(/\/speisekarte\/([^/]+)$/);
-      const { error: linkError } = await supabase
-        .from('provider_delivery_links')
-        .upsert(
-          {
-            provider_id: provider.provider_id,
-            platform: 'lieferando',
-            platform_url: sourceUrl,
-            platform_slug: slugMatch?.[1] ?? null,
-            is_active: true,
-            last_verified_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,platform',
-            ignoreDuplicates: true,
-          },
-        );
+      const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+        {
+          provider_id: provider.provider_id,
+          platform: 'lieferando',
+          platform_url: sourceUrl,
+          platform_slug: slugMatch?.[1] ?? null,
+          is_active: true,
+          last_verified_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,platform',
+          ignoreDuplicates: true,
+        },
+      );
 
       if (linkError) {
         console.error(`     ⚠️  Delivery link write failed: ${linkError.message}`);
@@ -1530,24 +1591,22 @@ async function autoApplyLieferandoFields(
     for (const c of result.candidates) {
       if (!appliedFields.includes(c.field_name)) continue;
 
-      await supabase
-        .from('enrichment_candidates')
-        .upsert(
-          {
-            provider_id: c.provider_id,
-            source: c.source,
-            source_url: c.source_url,
-            field_name: c.field_name,
-            proposed_value: c.proposed_value,
-            current_value: c.current_value,
-            status: 'auto_applied',
-            enriched_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,field_name,source',
-            ignoreDuplicates: true,
-          },
-        );
+      await supabase.from('enrichment_candidates').upsert(
+        {
+          provider_id: c.provider_id,
+          source: c.source,
+          source_url: c.source_url,
+          field_name: c.field_name,
+          proposed_value: c.proposed_value,
+          current_value: c.current_value,
+          status: 'auto_applied',
+          enriched_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,field_name,source',
+          ignoreDuplicates: true,
+        },
+      );
     }
 
     console.log(`✅ auto-applied ${appliedFields.length} field(s): ${appliedFields.join(', ')}`);
@@ -1558,7 +1617,6 @@ async function autoApplyLieferandoFields(
     const msg = err instanceof Error ? err.message : String(err);
     console.log(`❌ auto-apply failed ${msg}`);
     stats.failureCount++;
-    return 0;
   }
 }
 
@@ -1567,53 +1625,53 @@ async function autoApplyLieferandoFields(
 async function autoApplyJoinHalalFields(
   provider: ProviderRow,
   candidates: EnrichmentCandidate[],
-  stats: RunStats
+  stats: RunStats,
 ): Promise<number> {
-  const providersPayload: Record<string, unknown> = {};
-
+  // Build the current-value map from the provider row for conflict detection
+  const current: Record<string, unknown> = {};
   for (const c of candidates) {
-    if (c.current_value !== null && c.current_value !== undefined && c.current_value !== '' &&
-        !(Array.isArray(c.current_value) && c.current_value.length === 0)) {
-      continue;
-    }
-
-    const fieldName = c.field_name;
-    const value = c.proposed_value;
-
-    if (fieldName === 'provider_description') {
-      providersPayload.provider_description = value;
-    } else if (fieldName === 'opening_hours') {
-      providersPayload.opening_hours = value;
-    } else if (fieldName === 'contact_phone') {
-      providersPayload.contact_phone = value;
-    } else if (fieldName === 'social_website') {
-      providersPayload.social_website = value;
-    }
+    current[c.field_name] = c.current_value;
   }
 
-  const rpcPayload: Record<string, unknown> = {};
-  if (Object.keys(providersPayload).length > 0) {
-    rpcPayload.providers = providersPayload;
+  // Fetch existing primary location_id to avoid the RPC's destructive
+  // DELETE of all locations when location_id is missing from the payload.
+  let primaryLocationId: string | null = null;
+  const hasLocationFields = candidates.some((c) => LOCATION_FIELDS.has(c.field_name));
+  if (hasLocationFields) {
+    const { data: locData } = await supabase
+      .from('locations')
+      .select('location_id')
+      .eq('provider_id', provider.provider_id)
+      .eq('is_primary', true)
+      .limit(1)
+      .single();
+    primaryLocationId = locData?.location_id ?? null;
   }
 
-  const appliedViaRpc = Object.keys(providersPayload).length;
+  // Delegate to shared payload builder (handles providers, food_providers,
+  // locations sub-objects, delivery_links, menu_items)
+  const { rpcPayload, appliedFields } = buildAutoApplyPayload({
+    providerId: provider.provider_id,
+    current,
+    proposed: candidates,
+    primaryLocationId,
+  });
 
-  if (appliedViaRpc === 0) {
+  if (appliedFields.length === 0) {
     return 0;
   }
 
   try {
     if (Object.keys(rpcPayload).length > 0) {
-      const { error: rpcError } = await supabase
-        .rpc('admin_update_provider', {
-          p_provider_id: provider.provider_id,
-          p_data: rpcPayload,
-        });
+      const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+        p_provider_id: provider.provider_id,
+        p_data: rpcPayload,
+      });
 
       if (rpcError) {
         console.log(`❌ RPC failed: ${rpcError.message}`);
         stats.failureCount++;
-        return;
+        return 0;
       }
     }
 
@@ -1622,35 +1680,32 @@ async function autoApplyJoinHalalFields(
       .update({ last_enriched_at: new Date().toISOString() })
       .eq('provider_id', provider.provider_id);
 
-    const appliedFields = Object.keys(providersPayload);
-
     for (const c of candidates) {
       if (!appliedFields.includes(c.field_name)) continue;
 
-      await supabase
-        .from('enrichment_candidates')
-        .upsert(
-          {
-            provider_id: c.provider_id,
-            source: c.source,
-            source_url: c.source_url,
-            field_name: c.field_name,
-            proposed_value: c.proposed_value,
-            current_value: c.current_value,
-            status: 'auto_applied',
-            enriched_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,field_name,source',
-            ignoreDuplicates: true,
-          },
-        );
+      await supabase.from('enrichment_candidates').upsert(
+        {
+          provider_id: c.provider_id,
+          source: c.source,
+          source_url: c.source_url,
+          field_name: c.field_name,
+          proposed_value: c.proposed_value,
+          current_value: c.current_value,
+          status: 'auto_applied',
+          enriched_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,field_name,source',
+          ignoreDuplicates: true,
+        },
+      );
     }
 
     console.log(`✅ auto-applied ${appliedFields.length} field(s): ${appliedFields.join(', ')}`);
     stats.autoAppliedCount += appliedFields.length;
     stats.autoAppliedFields.push(...appliedFields);
     stats.candidatesCreated += appliedFields.length;
+    return appliedFields.length;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.log(`❌ auto-apply failed ${msg}`);
@@ -1658,7 +1713,6 @@ async function autoApplyJoinHalalFields(
     return 0;
   }
 }
-
 
 // ─── Menu Item Enrichment ───────────────────────────────────────────────────────
 
@@ -1670,7 +1724,7 @@ async function autoApplyJoinHalalFields(
 async function autoApplyMenuItems(
   provider: ProviderRow,
   menuItems: MenuItem[],
-  stats: RunStats
+  stats: RunStats,
 ): Promise<void> {
   if (!menuItems || menuItems.length === 0) return;
 
@@ -1699,13 +1753,12 @@ async function autoApplyMenuItems(
   }));
 
   try {
-    const { error: rpcError } = await supabase
-      .rpc('admin_update_provider', {
-        p_provider_id: provider.provider_id,
-        p_data: {
-          menu_items: menuPayload,
-        },
-      });
+    const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+      p_provider_id: provider.provider_id,
+      p_data: {
+        menu_items: menuPayload,
+      },
+    });
 
     if (rpcError) {
       console.log(`  ⚠️  menu RPC failed: ${rpcError.message}`);
@@ -1721,7 +1774,6 @@ async function autoApplyMenuItems(
   }
 }
 
-
 // ─── Delivery Link Enrichment ────────────────────────────────────────────
 
 /**
@@ -1735,23 +1787,22 @@ async function autoApplyMenuItems(
 async function autoApplyDeliveryLinks(
   provider: ProviderRow,
   deliveryLinks: DeliveryLink[],
-  stats: RunStats
+  stats: RunStats,
 ): Promise<void> {
   if (!deliveryLinks || deliveryLinks.length === 0) return;
 
   try {
-    const { error: rpcError } = await supabase
-      .rpc('admin_update_provider', {
-        p_provider_id: provider.provider_id,
-        p_data: {
-          delivery_links: deliveryLinks.map((dl) => ({
-            platform: dl.platform,
-            platform_url: dl.platform_url,
-            platform_slug: dl.platform_slug,
-            is_active: true,
-          })),
-        },
-      });
+    const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+      p_provider_id: provider.provider_id,
+      p_data: {
+        delivery_links: deliveryLinks.map((dl) => ({
+          platform: dl.platform,
+          platform_url: dl.platform_url,
+          platform_slug: dl.platform_slug,
+          is_active: true,
+        })),
+      },
+    });
 
     if (rpcError) {
       console.log(`  ⚠️  delivery link RPC failed: ${rpcError.message}`);
@@ -1798,7 +1849,7 @@ async function processPendingEnrichments(stats: RunStats): Promise<Set<string>> 
   const { data: providers } = await supabase
     .from('providers')
     .select(
-      'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible'
+      'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible, import_source, import_source_url, contact_phone, social_website, social_instagram, address_street, address_zip, address_country, provider_description, location_latitude, location_longitude, category_id',
     )
     .in('provider_id', providerIds);
 
@@ -1819,6 +1870,10 @@ async function processPendingEnrichments(stats: RunStats): Promise<Set<string>> 
   const geocoder = new StaticCityGeocoder();
   const woltClient = createWoltClient(undefined, geocoder);
   const lieferandoClient = createLieferandoClient();
+
+  // Load offers + categories for JoinHalal enrichment (lazy, once)
+  let pendingOffers: Offer[] | null = null;
+  let pendingCategories: CategoryRow[] | null = null;
 
   for (const item of pending) {
     const provider = providerMap.get(item.provider_id);
@@ -1861,15 +1916,81 @@ async function processPendingEnrichments(stats: RunStats): Promise<Set<string>> 
       }
 
       // Lieferando enrichment
-      const lieferandoResult = await enrichFromLieferando(
-        snapshot,
-        lieferandoClient,
-        geocoder,
-      );
+      const lieferandoResult = await enrichFromLieferando(snapshot, lieferandoClient, geocoder);
       if (lieferandoResult.error) {
         console.log(`⚠️ Lieferando: ${lieferandoResult.error}`);
       } else if (lieferandoResult.candidates.length > 0) {
         await autoApplyLieferandoFields(provider, lieferandoResult, noAlcoholMap, stats);
+      }
+
+      // JoinHalal enrichment (re-fetch source page and apply all fields)
+      if (provider.import_source === 'joinhalal' && provider.import_source_url) {
+        try {
+          // Lazy-load offers + categories on first JoinHalal provider
+          if (pendingOffers === null) {
+            const { data: od } = await supabase.from('offers').select('offer_id, name_de');
+            pendingOffers = od ?? [];
+          }
+          if (pendingCategories === null) {
+            const { data: cd } = await supabase
+              .from('categories')
+              .select('category_id, name_de, name_en');
+            pendingCategories = cd ?? [];
+          }
+
+          const html = await fetchWithDelay(provider.import_source_url);
+          const parsed = parseEnrichmentData(html, pendingOffers, pendingCategories);
+          if (parsed) {
+            const jhSnapshot: ProviderSnapshot = {
+              provider_id: provider.provider_id,
+              offers_ids: null,
+              contact_phone: provider.contact_phone,
+              social_website: provider.social_website,
+              social_instagram: provider.social_instagram,
+              address_street: provider.address_street,
+              address_zip: provider.address_zip,
+              address_city: provider.address_city,
+              address_country: provider.address_country,
+              provider_description: provider.provider_description,
+              opening_hours: provider.opening_hours,
+              location_latitude: provider.location_latitude,
+              location_longitude: provider.location_longitude,
+              category_id: provider.category_id,
+            };
+
+            const jhCandidates = buildEnrichmentCandidates(
+              jhSnapshot,
+              parsed,
+              'joinhalal',
+              provider.import_source_url,
+            );
+            if (jhCandidates.length > 0) {
+              const providerRow: ProviderRow = {
+                provider_id: provider.provider_id,
+                provider_name: provider.provider_name,
+                import_source: provider.import_source,
+                import_source_url: provider.import_source_url,
+                contact_phone: provider.contact_phone,
+                social_website: provider.social_website,
+                social_instagram: provider.social_instagram,
+                address_street: provider.address_street,
+                address_zip: provider.address_zip,
+                address_city: provider.address_city,
+                address_country: provider.address_country,
+                enrichment_eligible: provider.enrichment_eligible,
+                provider_description: provider.provider_description,
+                opening_hours: provider.opening_hours,
+                location_latitude: provider.location_latitude,
+                location_longitude: provider.location_longitude,
+                category_id: provider.category_id,
+              };
+              await autoApplyJoinHalalFields(providerRow, jhCandidates, stats);
+            }
+          }
+        } catch (jhErr) {
+          const jhMsg = jhErr instanceof Error ? jhErr.message : String(jhErr);
+          console.log(`⚠️ JoinHalal: ${jhMsg}`);
+        }
       }
 
       if (!hasError) {
@@ -1880,7 +2001,11 @@ async function processPendingEnrichments(stats: RunStats): Promise<Set<string>> 
       } else {
         await supabase
           .from('pending_enrichments')
-          .update({ status: 'failed', error_message: 'Enrichment completed with errors', completed_at: now })
+          .update({
+            status: 'failed',
+            error_message: 'Enrichment completed with errors',
+            completed_at: now,
+          })
           .eq('id', item.id);
       }
     } catch (err) {

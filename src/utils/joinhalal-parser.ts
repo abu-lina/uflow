@@ -9,6 +9,9 @@
  * each page's <head> by the Rank Math SEO plugin — no JavaScript rendering required.
  */
 
+import { normalizeOpeningHours } from '@/utils/normalize-opening-hours';
+import type { OpeningHours } from '@/types/openingHours';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -68,7 +71,7 @@ export interface ParsedAddress {
 export function extractSchemaOrgFromHtml(html: string): JoinHalalSchemaData | null {
   // Match the rank-math-schema-pro script tag (server-side rendered, no JS needed)
   const scriptMatch = html.match(
-    /<script[^>]*class="rank-math-schema-pro"[^>]*>([\s\S]*?)<\/script>/i
+    /<script[^>]*class="rank-math-schema-pro"[^>]*>([\s\S]*?)<\/script>/i,
   );
   if (!scriptMatch) return null;
 
@@ -199,13 +202,11 @@ export function parseGermanAddress(streetAddress: string): ParsedAddress {
  * Returns null if no instagram URL is found.
  */
 export function extractInstagramFromSameAs(
-  sameAs: string | string[] | null | undefined
+  sameAs: string | string[] | null | undefined,
 ): string | null {
   if (!sameAs) return null;
 
-  const urls: string[] = Array.isArray(sameAs)
-    ? sameAs
-    : sameAs.split(',').map((u) => u.trim());
+  const urls: string[] = Array.isArray(sameAs) ? sameAs : sameAs.split(',').map((u) => u.trim());
 
   const instagram = urls.find((u) => u.includes('instagram.com'));
   return instagram ?? null;
@@ -229,10 +230,7 @@ export function extractInstagramFromSameAs(
  * We strip from " in " onwards, but only the last occurrence that precedes
  * "joinhalal" to handle cases where "in" appears in the business name itself.
  */
-export function cleanProviderName(
-  schemaName: string,
-  displayName: string | null
-): string {
+export function cleanProviderName(schemaName: string, displayName: string | null): string {
   if (displayName) return displayName.trim();
 
   // Decode HTML entities first
@@ -345,7 +343,7 @@ export function extractSpeisen(schema: JoinHalalSchemaData): string[] {
 
 export interface JoinHalalEnrichmentData {
   description: string | null;
-  openingHours: Record<string, unknown> | null;
+  openingHours: OpeningHours | null;
   latitude: number | null;
   longitude: number | null;
   image: string | null;
@@ -374,9 +372,9 @@ export function extractEnrichmentData(schema: JoinHalalSchemaData): JoinHalalEnr
 
   const ohs = schema.openingHoursSpecification;
   if (ohs) {
-    result.openingHours = { source: 'joinhalal', hours: ohs } as unknown as Record<string, unknown>;
+    result.openingHours = normalizeOpeningHours(ohs);
   } else if (schema.openingHours) {
-    result.openingHours = { source: 'joinhalal', hours: schema.openingHours } as unknown as Record<string, unknown>;
+    result.openingHours = normalizeOpeningHours(schema.openingHours);
   }
 
   if (schema.geo) {
@@ -394,7 +392,7 @@ export function extractEnrichmentData(schema: JoinHalalSchemaData): JoinHalalEnr
   if (schema.image && typeof schema.image === 'string') {
     result.image = schema.image;
   } else if (schema.image && Array.isArray(schema.image)) {
-    result.image = schema.image[0] as string || null;
+    result.image = (schema.image[0] as string) || null;
   }
 
   if (schema.servesCuisine) {
@@ -462,17 +460,13 @@ function parseVxConfig(html: string): VxConfigCurrentPost | null {
  */
 export function extractHalalBadgesFromHtml(html: string): string[] {
   // Find the Halal Merkmale heading (space or hyphen variant)
-  const headingMatch = html.match(
-    /<h3[^>]*>Halal[\s-]Merkmale<\/h3>/i
-  );
+  const headingMatch = html.match(/<h3[^>]*>Halal[\s-]Merkmale<\/h3>/i);
   if (!headingMatch) return [];
 
   // Search for the next ts-advanced-list <ul> after the heading
   const headingIndex = headingMatch.index ?? 0;
   const afterHeading = html.slice(headingIndex + headingMatch[0].length);
-  const listMatch = afterHeading.match(
-    /<ul[^>]*ts-advanced-list[^>]*>([\s\S]*?)<\/ul>/i
-  );
+  const listMatch = afterHeading.match(/<ul[^>]*ts-advanced-list[^>]*>([\s\S]*?)<\/ul>/i);
   if (!listMatch) return [];
 
   const listHtml = listMatch[1];
@@ -509,10 +503,7 @@ export function extractHalalBadgesFromHtml(html: string): string[] {
  * Returns false when neither source provides a decisive signal — safe
  * default that leaves `review_status` on the existing `pending` path.
  */
-export function hasAlkoholverkauf(
-  schema: JoinHalalSchemaData,
-  html?: string
-): boolean {
+export function hasAlkoholverkauf(schema: JoinHalalSchemaData, html?: string): boolean {
   // --- Primary: structured JSON-LD ---
   const props = schema.additionalProperty;
   if (Array.isArray(props) && props.length > 0) {
@@ -612,9 +603,7 @@ export function extractDeliveryLinks(schema: JoinHalalSchemaData): DeliveryLink[
   const props = schema.additionalProperty;
   if (!props || props.length === 0) return [];
 
-  const entry = props.find(
-    (p) => p.name?.toLowerCase().replace(/[\s-]/g, '') === 'lieferservice'
-  );
+  const entry = props.find((p) => p.name?.toLowerCase().replace(/[\s-]/g, '') === 'lieferservice');
   if (!entry?.value) return [];
 
   // Split comma-separated URLs, trim whitespace
@@ -628,9 +617,7 @@ export function extractDeliveryLinks(schema: JoinHalalSchemaData): DeliveryLink[
   for (const rawUrl of rawUrls) {
     // Remove trailing punctuation that might be attached
     const url = rawUrl.replace(/[.,;!?]+$/, '');
-    const matched = DELIVERY_PLATFORM_PATTERNS.find((p) =>
-      url.toLowerCase().includes(p.domain)
-    );
+    const matched = DELIVERY_PLATFORM_PATTERNS.find((p) => url.toLowerCase().includes(p.domain));
     if (!matched) continue;
 
     const slug = matched.slugExtract(url);
