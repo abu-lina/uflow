@@ -599,7 +599,30 @@ async function writeApifyAddressFields(
     .limit(1)
     .single();
 
-  if (locError || !location) return;
+  if (locError && locError.code !== 'PGRST116') return; // unexpected error (not "no rows")
+
+  if (!location) {
+    // No primary location exists — create one if we have data
+    const newLoc: Record<string, unknown> = {
+      provider_id: providerId,
+      is_primary: true,
+      show_address: true,
+      address_country: 'DE',
+    };
+    if (result.address) newLoc.address_street = result.address;
+    if (result.postCode) newLoc.address_zip = result.postCode;
+    if (result.city) newLoc.address_city = result.city;
+
+    const { error: insertError } = await supabase.from('locations').insert(newLoc);
+    if (insertError) {
+      console.error(`     ⚠️  Location create failed for ${providerId}: ${insertError.message}`);
+    } else {
+      const fieldCount = [result.address, result.postCode, result.city].filter(Boolean).length;
+      stats.addressFieldsWritten += fieldCount;
+      console.log(`     + created primary location for ${providerId}`);
+    }
+    return;
+  }
 
   // Only write if current values are empty (additive)
   const updates: Record<string, string> = {};

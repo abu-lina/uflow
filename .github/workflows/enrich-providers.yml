@@ -31,6 +31,7 @@ on:
         options:
           - dry-run
           - write
+          - auto-apply
       source:
         description: 'Enrichment source'
         required: true
@@ -38,6 +39,7 @@ on:
         type: choice
         options:
           - joinhalal
+          - wolt-direct
       limit:
         description: 'Provider limit'
         required: true
@@ -60,7 +62,7 @@ on:
 
 jobs:
   enrich:
-    name: "enrich (${{ inputs.mode }}, ${{ inputs.source }}, limit=${{ inputs.limit }}, ${{ inputs.environment }})"
+    name: 'enrich (${{ inputs.mode }}, ${{ inputs.source }}, limit=${{ inputs.limit }}, ${{ inputs.environment }})'
     runs-on: ubuntu-latest
 
     steps:
@@ -84,6 +86,8 @@ jobs:
 
           if [ "$MODE" = "write" ]; then
             CLI_ARGS="--write --source ${{ inputs.source }}"
+          elif [ "$MODE" = "auto-apply" ]; then
+            CLI_ARGS="--mode auto-apply --source ${{ inputs.source }}"
           else
             CLI_ARGS="--dry-run --source ${{ inputs.source }}"
           fi
@@ -99,6 +103,7 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
           echo "🚀 Running Provider Enrichment against PRODUCTION"
           echo "   Source: ${{ inputs.source }}"
@@ -113,6 +118,7 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
           echo "🚀 Running Provider Enrichment against UAT"
           echo "   Source: ${{ inputs.source }}"
