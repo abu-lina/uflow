@@ -67,6 +67,9 @@ export interface ApifyWoltResult {
   description: string | null;
   website: string | null;
   phone: string | null;
+  address: string | null;
+  postCode: string | null;
+  city: string | null;
   menuItems: Array<{
     name_de: string;
     description_de: string | null;
@@ -144,10 +147,7 @@ function normalizeApifySchedule(
  * Run the Apify Wolt actor with a restaurant URL and wait for completion.
  * Returns the default dataset ID on success, or throws on failure.
  */
-async function runActor(
-  restaurantUrl: string,
-  apiToken: string,
-): Promise<string> {
+async function runActor(restaurantUrl: string, apiToken: string): Promise<string> {
   const url = `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs?token=${apiToken}&waitForFinish=60`;
 
   // Extract city from URL: https://wolt.com/{lang}/{country}/{city}/restaurant/{slug}
@@ -177,7 +177,7 @@ async function runActor(
   const datasetId = runData?.defaultDatasetId as string | undefined;
 
   if (status !== 'SUCCEEDED') {
-    const statusMessage = runData?.statusMessage as string ?? 'unknown error';
+    const statusMessage = (runData?.statusMessage as string) ?? 'unknown error';
     throw new Error(`Apify actor run ${status}: ${statusMessage}`);
   }
 
@@ -191,10 +191,7 @@ async function runActor(
 /**
  * Fetch items from an Apify dataset.
  */
-async function getDatasetItems<T>(
-  datasetId: string,
-  apiToken: string,
-): Promise<T[]> {
+async function getDatasetItems<T>(datasetId: string, apiToken: string): Promise<T[]> {
   const url = `${APIFY_BASE}/datasets/${datasetId}/items?format=json&token=${apiToken}`;
 
   const response = await fetch(url);
@@ -249,6 +246,9 @@ export async function fetchWoltRestaurant(
     description: raw.description ?? null,
     website: raw.website ?? null,
     phone: raw.phone ?? null,
+    address: raw.address ?? null,
+    postCode: raw.postCode ?? null,
+    city: raw.city ?? null,
     menuItems,
     openingHours,
   };

@@ -74,7 +74,12 @@ describe('buildEnrichmentCandidates', () => {
       contact_phone: '+49111',
       social_website: 'https://old.example.com',
     };
-    const candidates = buildEnrichmentCandidates(provider, parsed, 'joinhalal', 'https://joinhalal.com/page');
+    const candidates = buildEnrichmentCandidates(
+      provider,
+      parsed,
+      'joinhalal',
+      'https://joinhalal.com/page',
+    );
     expect(candidates).toHaveLength(0);
   });
 
@@ -83,7 +88,12 @@ describe('buildEnrichmentCandidates', () => {
       offers_ids: ['offer-a', 'offer-b'],
       contact_phone: '+49222',
     };
-    const candidates = buildEnrichmentCandidates(provider, parsed, 'joinhalal', 'https://joinhalal.com/page');
+    const candidates = buildEnrichmentCandidates(
+      provider,
+      parsed,
+      'joinhalal',
+      'https://joinhalal.com/page',
+    );
     expect(candidates.length).toBe(2);
     expect(candidates.map((c) => c.field_name).sort()).toEqual(['contact_phone', 'offers_ids']);
   });
@@ -92,7 +102,12 @@ describe('buildEnrichmentCandidates', () => {
     const parsed: ParsedEnrichmentData = {
       social_instagram: '@restaurant',
     };
-    const candidates = buildEnrichmentCandidates(provider, parsed, 'joinhalal', 'https://joinhalal.com/page');
+    const candidates = buildEnrichmentCandidates(
+      provider,
+      parsed,
+      'joinhalal',
+      'https://joinhalal.com/page',
+    );
     expect(candidates).toHaveLength(1);
     expect(candidates[0].field_name).toBe('social_instagram');
     expect(candidates[0].proposed_value).toBe('@restaurant');
@@ -105,7 +120,12 @@ describe('buildEnrichmentCandidates', () => {
       needs_ids: ['need-1'],
       offers_ids: ['offer-new'],
     } as unknown as ParsedEnrichmentData;
-    const candidates = buildEnrichmentCandidates(provider, parsed, 'joinhalal', 'https://joinhalal.com/page');
+    const candidates = buildEnrichmentCandidates(
+      provider,
+      parsed,
+      'joinhalal',
+      'https://joinhalal.com/page',
+    );
     const fieldNames = candidates.map((c) => c.field_name);
     expect(fieldNames).not.toContain('review_status');
     expect(fieldNames).not.toContain('needs_ids');
@@ -115,16 +135,58 @@ describe('buildEnrichmentCandidates', () => {
     const parsed: ParsedEnrichmentData = {
       contact_phone: '+49999',
     };
-    const candidates = buildEnrichmentCandidates(provider, parsed, 'joinhalal', 'https://joinhalal.com/page');
+    const candidates = buildEnrichmentCandidates(
+      provider,
+      parsed,
+      'joinhalal',
+      'https://joinhalal.com/page',
+    );
     expect(candidates[0].current_value).toBe('+49111');
     expect(candidates[0].proposed_value).toBe('+49999');
   });
 
   it('sets source and source_url on candidates', () => {
     const parsed: ParsedEnrichmentData = { contact_phone: '+49999' };
-    const candidates = buildEnrichmentCandidates(provider, parsed, 'joinhalal', 'https://joinhalal.com/page');
+    const candidates = buildEnrichmentCandidates(
+      provider,
+      parsed,
+      'joinhalal',
+      'https://joinhalal.com/page',
+    );
     expect(candidates[0].source).toBe('joinhalal');
     expect(candidates[0].source_url).toBe('https://joinhalal.com/page');
+  });
+
+  it('creates additive candidate for social_instagram when snapshot has null', () => {
+    const parsed: ParsedEnrichmentData = {
+      social_instagram: 'https://www.instagram.com/test_restaurant/',
+    };
+    const candidates = buildEnrichmentCandidates(
+      provider,
+      parsed,
+      'joinhalal',
+      'https://joinhalal.com/page',
+    );
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].field_name).toBe('social_instagram');
+    expect(candidates[0].proposed_value).toBe('https://www.instagram.com/test_restaurant/');
+    expect(candidates[0].current_value).toBeNull();
+  });
+
+  it('does NOT create candidates for provider_images (admin-controlled field)', () => {
+    // provider_images is in ADMIN_CONTROLLED_FIELDS, so buildEnrichmentCandidates
+    // should skip it even if present in parsed data
+    const parsed = {
+      provider_images: ['https://example.com/photo.jpg'],
+    } as unknown as ParsedEnrichmentData;
+    const candidates = buildEnrichmentCandidates(
+      provider,
+      parsed,
+      'joinhalal',
+      'https://joinhalal.com/page',
+    );
+    const fieldNames = candidates.map((c) => c.field_name);
+    expect(fieldNames).not.toContain('provider_images');
   });
 });
 

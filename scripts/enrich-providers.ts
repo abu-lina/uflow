@@ -33,6 +33,7 @@ import {
   extractSpeisen,
   extractEnrichmentData,
   extractDeliveryLinks,
+  extractInstagramFromSameAs,
   type DeliveryLink,
 } from '../src/utils/joinhalal-parser';
 import { resolveOfferIds, type Offer } from '../src/lib/import/joinhalal';
@@ -402,6 +403,24 @@ async function main(): Promise<void> {
         }
       }
 
+      // Stage provider_images as admin-review candidate (Fix 239-3).
+      // provider_images is in ADMIN_CONTROLLED_FIELDS, so buildEnrichmentCandidates
+      // skips it. We stage it manually as a pending candidate for admin review.
+      const providerImage = (parsed as Record<string, unknown>)._provider_image as
+        string | undefined;
+      if (providerImage && !isAutoApply) {
+        allCandidates.push({
+          provider_id: provider.provider_id,
+          source,
+          source_url: url,
+          field_name: 'provider_images',
+          proposed_value: [providerImage],
+          current_value: null,
+          providerName: provider.provider_name,
+        });
+        statusParts.push('1 image candidate (admin review)');
+      }
+
       if (statusParts.length === 0) {
         console.log('✅ no changes');
         stats.unchangedCount++;
@@ -537,6 +556,12 @@ function parseEnrichmentData(
     parsed.social_website = schema.url;
   }
 
+  // Extract Instagram from sameAs links (Fix 239-3)
+  const instagram = extractInstagramFromSameAs(schema.sameAs);
+  if (instagram) {
+    parsed.social_instagram = instagram;
+  }
+
   const enrichmentData = extractEnrichmentData(schema);
 
   if (enrichmentData.description) {
@@ -567,6 +592,12 @@ function parseEnrichmentData(
       is_available: true,
       sort_order: i,
     }));
+  }
+
+  // Extract image for admin-review candidate (provider_images is admin-controlled,
+  // so it goes through a separate path — not buildEnrichmentCandidates). Fix 239-3.
+  if (enrichmentData.image) {
+    (parsed as Record<string, unknown>)._provider_image = enrichmentData.image;
   }
 
   return Object.keys(parsed).length > 0 ? parsed : null;
@@ -684,6 +715,10 @@ async function runWoltEnrichment(
 
   // 3. Process each provider
   const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
+  // Track all matched providers (with sourceUrl) for delivery link writes,
+  // independent of whether they produce enrichment candidates (Fix 239-1).
+  const matchedWoltProviders: { providerId: string; providerName: string; sourceUrl: string }[] =
+    [];
 
   for (const provider of providerRows) {
     // Circuit breaker check
@@ -740,6 +775,17 @@ async function runWoltEnrichment(
         console.log(`⚠️  ${result.error}`);
         stats.failureCount++;
         continue;
+      }
+
+      // Track matched provider for delivery link write regardless of candidate count
+      if (result.venueSlug) {
+        const sourceUrl =
+          result.candidates[0]?.source_url ?? `https://wolt.com/de/deu/venue/${result.venueSlug}`;
+        matchedWoltProviders.push({
+          providerId: provider.provider_id,
+          providerName: provider.provider_name,
+          sourceUrl,
+        });
       }
 
       if (result.candidates.length === 0) {
@@ -835,49 +881,50 @@ async function runWoltEnrichment(
 
     // Update last_enriched_at for processed providers
     const processedIds = [...new Set(allCandidates.map((c) => c.provider_id))];
-
-    // Write delivery links for matched providers (those with venue slugs)
-    console.log(`  🔗 Writing delivery links...`);
-    let linksWritten = 0;
     for (const pid of processedIds) {
-      // Find the result for this provider to get the slug
-      const providerName = allCandidates.find((c) => c.provider_id === pid)?.providerName ?? '';
-      const sourceUrl = allCandidates.find((c) => c.provider_id === pid)?.source_url ?? '';
-
-      if (sourceUrl) {
-        const slugMatch = sourceUrl.match(/venue\/([^/]+)$/);
-        const slug = slugMatch ? slugMatch[1] : null;
-
-        const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
-          {
-            provider_id: pid,
-            platform: 'wolt',
-            platform_url: sourceUrl,
-            platform_slug: slug,
-            is_active: true,
-            last_verified_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,platform',
-            ignoreDuplicates: false,
-          },
-        );
-
-        if (linkError) {
-          console.error(
-            `     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`,
-          );
-        } else {
-          linksWritten++;
-        }
-      }
-
       await supabase
         .from('providers')
         .update({ last_enriched_at: new Date().toISOString() })
         .eq('provider_id', pid);
     }
-    console.log(`  ✅ ${linksWritten}/${processedIds.length} delivery links written`);
+  }
+
+  // Write delivery links for ALL matched providers, regardless of candidate count (Fix 239-1).
+  // A provider may match a Wolt venue but produce zero candidates (all "no-change"),
+  // yet we still need the link for enrich-delivery-menus.ts to pick it up.
+  if (isWriteMode && matchedWoltProviders.length > 0) {
+    console.log(
+      `  🔗 Writing delivery links for ${matchedWoltProviders.length} matched provider(s)...`,
+    );
+    let linksWritten = 0;
+    for (const { providerId, providerName, sourceUrl } of matchedWoltProviders) {
+      const slugMatch = sourceUrl.match(/venue\/([^/]+)$/);
+      const slug = slugMatch ? slugMatch[1] : null;
+
+      const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+        {
+          provider_id: providerId,
+          platform: 'wolt',
+          platform_url: sourceUrl,
+          platform_slug: slug,
+          is_active: true,
+          last_verified_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,platform',
+          ignoreDuplicates: false,
+        },
+      );
+
+      if (linkError) {
+        console.error(
+          `     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`,
+        );
+      } else {
+        linksWritten++;
+      }
+    }
+    console.log(`  ✅ ${linksWritten}/${matchedWoltProviders.length} delivery links written`);
   } else if (isDryRun) {
     console.log(
       `\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`,
@@ -947,6 +994,12 @@ async function runLieferandoEnrichment(
   const lieferandoClient = createLieferandoClient();
 
   const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
+  // Track all matched providers for delivery link writes (Fix 239-1)
+  const matchedLieferandoProviders: {
+    providerId: string;
+    providerName: string;
+    sourceUrl: string;
+  }[] = [];
 
   for (const provider of providerRows) {
     if (stats.providersProcessed > 0) {
@@ -1002,6 +1055,18 @@ async function runLieferandoEnrichment(
         console.log(`⚠️  ${result.error}`);
         stats.failureCount++;
         continue;
+      }
+
+      // Track matched provider for delivery link write regardless of candidate count
+      if (result.venueSlug) {
+        const sourceUrl =
+          result.candidates[0]?.source_url ??
+          `https://www.lieferando.de/speisekarte/${result.venueSlug}`;
+        matchedLieferandoProviders.push({
+          providerId: provider.provider_id,
+          providerName: provider.provider_name,
+          sourceUrl,
+        });
       }
 
       if (result.candidates.length === 0) {
@@ -1092,45 +1157,47 @@ async function runLieferandoEnrichment(
     }
 
     const processedIds = [...new Set(allCandidates.map((c) => c.provider_id))];
-
-    console.log(`  🔗 Writing delivery links...`);
-    let linksWritten = 0;
     for (const pid of processedIds) {
-      const sourceUrl = allCandidates.find((c) => c.provider_id === pid)?.source_url ?? '';
-
-      if (sourceUrl) {
-        const slugMatch = sourceUrl.match(/\/speisekarte\/([^/]+)$/);
-        const slug = slugMatch ? slugMatch[1] : null;
-
-        const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
-          {
-            provider_id: pid,
-            platform: 'lieferando',
-            platform_url: sourceUrl,
-            platform_slug: slug,
-            is_active: true,
-            last_verified_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,platform',
-            ignoreDuplicates: false,
-          },
-        );
-
-        if (linkError) {
-          console.error(`     ❌ Failed to write delivery link: ${linkError.message}`);
-        } else {
-          linksWritten++;
-        }
-      }
-
       await supabase
         .from('providers')
         .update({ last_enriched_at: new Date().toISOString() })
         .eq('provider_id', pid);
     }
     console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
-    console.log(`  ✅ ${linksWritten}/${processedIds.length} delivery links written`);
+  }
+
+  // Write delivery links for ALL matched providers, regardless of candidate count (Fix 239-1)
+  if (isWriteMode && matchedLieferandoProviders.length > 0) {
+    console.log(
+      `  🔗 Writing delivery links for ${matchedLieferandoProviders.length} matched provider(s)...`,
+    );
+    let linksWritten = 0;
+    for (const { providerId, sourceUrl } of matchedLieferandoProviders) {
+      const slugMatch = sourceUrl.match(/\/speisekarte\/([^/]+)$/);
+      const slug = slugMatch ? slugMatch[1] : null;
+
+      const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+        {
+          provider_id: providerId,
+          platform: 'lieferando',
+          platform_url: sourceUrl,
+          platform_slug: slug,
+          is_active: true,
+          last_verified_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,platform',
+          ignoreDuplicates: false,
+        },
+      );
+
+      if (linkError) {
+        console.error(`     ❌ Failed to write delivery link: ${linkError.message}`);
+      } else {
+        linksWritten++;
+      }
+    }
+    console.log(`  ✅ ${linksWritten}/${matchedLieferandoProviders.length} delivery links written`);
   } else if (isDryRun) {
     console.log(
       `\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`,
@@ -1205,6 +1272,12 @@ async function runUberEatsEnrichment(
     const ubereatsClient = createUberEatsClient();
 
     const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
+    // Track all matched providers for delivery link writes (Fix 239-1)
+    const matchedUberEatsProviders: {
+      providerId: string;
+      providerName: string;
+      sourceUrl: string;
+    }[] = [];
 
     // 2. Create UberEats client + geocoder
     const geocoder = new StaticCityGeocoder();
@@ -1264,6 +1337,18 @@ async function runUberEatsEnrichment(
           console.log(`⚠️  ${result.error}`);
           stats.failureCount++;
           continue;
+        }
+
+        // Track matched provider for delivery link write regardless of candidate count
+        if (result.venueSlug) {
+          const sourceUrl =
+            result.candidates[0]?.source_url ??
+            `https://www.ubereats.com/de/store/${result.venueSlug}`;
+          matchedUberEatsProviders.push({
+            providerId: provider.provider_id,
+            providerName: provider.provider_name,
+            sourceUrl,
+          });
         }
 
         if (result.candidates.length === 0) {
@@ -1326,7 +1411,7 @@ async function runUberEatsEnrichment(
       }
     }
 
-    // 5. Write candidates + delivery links if not dry-run
+    // 5. Write candidates if not dry-run
     if (isWrite && allCandidates.length > 0) {
       console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
       let written = 0;
@@ -1360,45 +1445,46 @@ async function runUberEatsEnrichment(
 
       console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
 
-      // Write delivery links for matched providers (those with venue slugs)
-      console.log(`  🔗 Writing delivery links...`);
-      let linksWritten = 0;
       const processedIds = [...new Set(allCandidates.map((c) => c.provider_id))];
       for (const pid of processedIds) {
-        const sourceUrl = allCandidates.find((c) => c.provider_id === pid)?.source_url ?? '';
-        const providerName = allCandidates.find((c) => c.provider_id === pid)?.providerName ?? '';
-
-        if (sourceUrl) {
-          const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
-            {
-              provider_id: pid,
-              platform: 'ubereats',
-              platform_url: sourceUrl,
-              platform_slug: null,
-              is_active: true,
-              last_verified_at: new Date().toISOString(),
-            },
-            {
-              onConflict: 'provider_id,platform',
-              ignoreDuplicates: false,
-            },
-          );
-
-          if (linkError) {
-            console.error(
-              `     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`,
-            );
-          } else {
-            linksWritten++;
-          }
-        }
-
         await supabase
           .from('providers')
           .update({ last_enriched_at: new Date().toISOString() })
           .eq('provider_id', pid);
       }
-      console.log(`  ✅ ${linksWritten}/${processedIds.length} delivery links written`);
+    }
+
+    // Write delivery links for ALL matched providers, regardless of candidate count (Fix 239-1)
+    if (isWrite && matchedUberEatsProviders.length > 0) {
+      console.log(
+        `  🔗 Writing delivery links for ${matchedUberEatsProviders.length} matched provider(s)...`,
+      );
+      let linksWritten = 0;
+      for (const { providerId, providerName, sourceUrl } of matchedUberEatsProviders) {
+        const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+          {
+            provider_id: providerId,
+            platform: 'ubereats',
+            platform_url: sourceUrl,
+            platform_slug: null,
+            is_active: true,
+            last_verified_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'provider_id,platform',
+            ignoreDuplicates: false,
+          },
+        );
+
+        if (linkError) {
+          console.error(
+            `     ❌ Failed to write delivery link for ${providerName}: ${linkError.message}`,
+          );
+        } else {
+          linksWritten++;
+        }
+      }
+      console.log(`  ✅ ${linksWritten}/${matchedUberEatsProviders.length} delivery links written`);
     } else if (isDryRun) {
       console.log(
         `\n  ℹ️  Dry-run complete. Use --write to stage candidates or --mode auto-apply to apply.`,
@@ -1426,6 +1512,31 @@ async function autoApplyDeliveryFields(
   stats: RunStats,
   platform: 'wolt' | 'ubereats',
 ): Promise<void> {
+  // Write delivery link BEFORE checking candidates — a matched venue should
+  // always get a link saved, even when all fields are "no-change" (Fix 239-1).
+  const sourceUrl = result.candidates[0]?.source_url ?? '';
+  if (sourceUrl) {
+    const slugMatch = platform === 'wolt' ? sourceUrl.match(/venue\/([^/]+)$/) : null;
+    const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+      {
+        provider_id: provider.provider_id,
+        platform,
+        platform_url: sourceUrl,
+        platform_slug: slugMatch?.[1] ?? null,
+        is_active: true,
+        last_verified_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'provider_id,platform',
+        ignoreDuplicates: true,
+      },
+    );
+
+    if (linkError) {
+      console.error(`     ⚠️  Delivery link write failed: ${linkError.message}`);
+    }
+  }
+
   const autoInput: AutoApplyInput = {
     providerId: provider.provider_id,
     current: {
@@ -1458,31 +1569,7 @@ async function autoApplyDeliveryFields(
       }
     }
 
-    // 2. Write delivery link directly (not via RPC — RPC does destructive DELETE+INSERT)
-    const sourceUrl = result.candidates[0]?.source_url ?? '';
-    if (sourceUrl) {
-      const slugMatch = platform === 'wolt' ? sourceUrl.match(/venue\/([^/]+)$/) : null;
-      const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
-        {
-          provider_id: provider.provider_id,
-          platform,
-          platform_url: sourceUrl,
-          platform_slug: slugMatch?.[1] ?? null,
-          is_active: true,
-          last_verified_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'provider_id,platform',
-          ignoreDuplicates: true,
-        },
-      );
-
-      if (linkError) {
-        console.error(`     ⚠️  Delivery link write failed: ${linkError.message}`);
-      }
-    }
-
-    // 3. Update last_enriched_at
+    // 2. Update last_enriched_at
     await supabase
       .from('providers')
       .update({ last_enriched_at: new Date().toISOString() })
@@ -1529,6 +1616,31 @@ async function autoApplyLieferandoFields(
   noAlcoholMap: Record<string, boolean | null>,
   stats: RunStats,
 ): Promise<void> {
+  // Write delivery link BEFORE checking candidates — a matched venue should
+  // always get a link saved, even when all fields are "no-change" (Fix 239-1).
+  const sourceUrl = result.candidates[0]?.source_url ?? '';
+  if (sourceUrl) {
+    const slugMatch = sourceUrl.match(/\/speisekarte\/([^/]+)$/);
+    const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
+      {
+        provider_id: provider.provider_id,
+        platform: 'lieferando',
+        platform_url: sourceUrl,
+        platform_slug: slugMatch?.[1] ?? null,
+        is_active: true,
+        last_verified_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'provider_id,platform',
+        ignoreDuplicates: true,
+      },
+    );
+
+    if (linkError) {
+      console.error(`     ⚠️  Delivery link write failed: ${linkError.message}`);
+    }
+  }
+
   const autoInput: AutoApplyInput = {
     providerId: provider.provider_id,
     current: {
@@ -1557,29 +1669,6 @@ async function autoApplyLieferandoFields(
         console.log(`❌ RPC failed: ${rpcError.message}`);
         stats.failureCount++;
         return;
-      }
-    }
-
-    const sourceUrl = result.candidates[0]?.source_url ?? '';
-    if (sourceUrl) {
-      const slugMatch = sourceUrl.match(/\/speisekarte\/([^/]+)$/);
-      const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
-        {
-          provider_id: provider.provider_id,
-          platform: 'lieferando',
-          platform_url: sourceUrl,
-          platform_slug: slugMatch?.[1] ?? null,
-          is_active: true,
-          last_verified_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'provider_id,platform',
-          ignoreDuplicates: true,
-        },
-      );
-
-      if (linkError) {
-        console.error(`     ⚠️  Delivery link write failed: ${linkError.message}`);
       }
     }
 
