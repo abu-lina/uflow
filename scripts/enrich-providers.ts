@@ -408,7 +408,7 @@ async function main(): Promise<void> {
       // skips it. We stage it manually as a pending candidate for admin review.
       const providerImage = (parsed as Record<string, unknown>)._provider_image as
         string | undefined;
-      if (providerImage && !isAutoApply) {
+      if (providerImage) {
         allCandidates.push({
           provider_id: provider.provider_id,
           source,
@@ -1514,7 +1514,12 @@ async function autoApplyDeliveryFields(
 ): Promise<void> {
   // Write delivery link BEFORE checking candidates — a matched venue should
   // always get a link saved, even when all fields are "no-change" (Fix 239-1).
-  const sourceUrl = result.candidates[0]?.source_url ?? '';
+  // Fall back to venueSlug when candidates is empty (Fix 239-2).
+  const sourceUrl =
+    result.candidates[0]?.source_url ??
+    (result.venueSlug && platform === 'wolt'
+      ? `https://wolt.com/de/deu/venue/${result.venueSlug}`
+      : '');
   if (sourceUrl) {
     const slugMatch = platform === 'wolt' ? sourceUrl.match(/venue\/([^/]+)$/) : null;
     const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
@@ -1618,7 +1623,10 @@ async function autoApplyLieferandoFields(
 ): Promise<void> {
   // Write delivery link BEFORE checking candidates — a matched venue should
   // always get a link saved, even when all fields are "no-change" (Fix 239-1).
-  const sourceUrl = result.candidates[0]?.source_url ?? '';
+  // Fall back to venueSlug when candidates is empty (Fix 239-2).
+  const sourceUrl =
+    result.candidates[0]?.source_url ??
+    (result.venueSlug ? `https://www.lieferando.de/speisekarte/${result.venueSlug}` : '');
   if (sourceUrl) {
     const slugMatch = sourceUrl.match(/\/speisekarte\/([^/]+)$/);
     const { error: linkError } = await supabase.from('provider_delivery_links').upsert(
@@ -1998,17 +2006,19 @@ async function processPendingEnrichments(stats: RunStats): Promise<Set<string>> 
 
       if (woltResult.error) {
         console.log(`⚠️ Wolt: ${woltResult.error}`);
-      } else if (woltResult.candidates.length > 0) {
-        await autoApplyDeliveryFields(provider, woltResult, noAlcoholMap, stats, 'wolt');
       } else {
-        stats.unchangedCount++;
+        // Call auto-apply even with zero candidates so the delivery link is
+        // written for matched venues where all fields are "no-change" (Fix 239-2).
+        await autoApplyDeliveryFields(provider, woltResult, noAlcoholMap, stats, 'wolt');
       }
 
       // Lieferando enrichment
       const lieferandoResult = await enrichFromLieferando(snapshot, lieferandoClient, geocoder);
       if (lieferandoResult.error) {
         console.log(`⚠️ Lieferando: ${lieferandoResult.error}`);
-      } else if (lieferandoResult.candidates.length > 0) {
+      } else {
+        // Call auto-apply even with zero candidates so the delivery link is
+        // written for matched venues where all fields are "no-change" (Fix 239-2).
         await autoApplyLieferandoFields(provider, lieferandoResult, noAlcoholMap, stats);
       }
 
