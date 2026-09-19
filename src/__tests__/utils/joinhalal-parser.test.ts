@@ -20,6 +20,7 @@ import {
   isJoinHalalDetailUrl,
   hasAlkoholverkauf,
   extractHalalBadgesFromHtml,
+  extractEnrichmentData,
 } from '@/utils/joinhalal-parser';
 
 // ---------------------------------------------------------------------------
@@ -46,11 +47,11 @@ const RESTAURANT_SCHEMA_JSON = JSON.stringify({
       },
       url: 'https://www.etem-augsburg.de/',
       email: 'etem@example.de',
-      sameAs:
-        'https://www.instagram.com/etem_kasapgrill/, https://www.facebook.com/EtemGrill',
+      sameAs: 'https://www.instagram.com/etem_kasapgrill/, https://www.facebook.com/EtemGrill',
       additionalProperty: [],
       mainEntityOfPage: {
-        '@id': 'https://joinhalal.com/locations/restaurant/etem-burger-steak-muenchen-24043/#webpage',
+        '@id':
+          'https://joinhalal.com/locations/restaurant/etem-burger-steak-muenchen-24043/#webpage',
       },
     },
     {
@@ -170,7 +171,7 @@ describe('parseGermanAddress', () => {
 
   it('parses address with district: "Berger Str. 222, 60385 Frankfurt am Main-Bornheim/Ostend, Deutschland"', () => {
     const result = parseGermanAddress(
-      'Berger Str. 222, 60385 Frankfurt am Main-Bornheim/Ostend, Deutschland'
+      'Berger Str. 222, 60385 Frankfurt am Main-Bornheim/Ostend, Deutschland',
     );
     expect(result.street).toBe('Berger Str. 222');
     expect(result.zip).toBe('60385');
@@ -179,7 +180,7 @@ describe('parseGermanAddress', () => {
 
   it('parses address with multi-part city suffix: "Zollernstraße 9, 86154 Augsburg, Augsburg-Oberhausen, Deutschland"', () => {
     const result = parseGermanAddress(
-      'Zollernstraße 9, 86154 Augsburg, Augsburg-Oberhausen, Deutschland'
+      'Zollernstraße 9, 86154 Augsburg, Augsburg-Oberhausen, Deutschland',
     );
     expect(result.street).toBe('Zollernstraße 9');
     expect(result.zip).toBe('86154');
@@ -208,14 +209,14 @@ describe('parseGermanAddress', () => {
 describe('extractInstagramFromSameAs', () => {
   it('extracts first instagram URL from comma-separated string', () => {
     const result = extractInstagramFromSameAs(
-      'https://www.instagram.com/etem_kasapgrill/, https://www.facebook.com/EtemGrill'
+      'https://www.instagram.com/etem_kasapgrill/, https://www.facebook.com/EtemGrill',
     );
     expect(result).toBe('https://www.instagram.com/etem_kasapgrill/');
   });
 
   it('returns null when no instagram URL is present', () => {
     const result = extractInstagramFromSameAs(
-      'https://www.facebook.com/EtemGrill, https://www.tiktok.com/@foo'
+      'https://www.facebook.com/EtemGrill, https://www.tiktok.com/@foo',
     );
     expect(result).toBeNull();
   });
@@ -241,7 +242,7 @@ describe('cleanProviderName', () => {
   it('uses display_name when available (cleanest source)', () => {
     const result = cleanProviderName(
       'Etem Burger &amp; Steak | München in München - joinhalal | Finde Halal Spots',
-      'Etem Burger & Steak | München'
+      'Etem Burger & Steak | München',
     );
     expect(result).toBe('Etem Burger & Steak | München');
   });
@@ -249,15 +250,15 @@ describe('cleanProviderName', () => {
   it('strips joinhalal suffix from schema name when display_name is null', () => {
     const result = cleanProviderName(
       'ECHTE BÄRLINER | Augsburg Oberhausen in Augsburg - joinhalal | Finde Halal Spots',
-      null
+      null,
     );
     expect(result).toBe('ECHTE BÄRLINER | Augsburg Oberhausen');
   });
 
   it('decodes HTML entities in schema name fallback', () => {
     const result = cleanProviderName(
-      "Josef&#039;s Biofleisch in Frankfurt am Main - joinhalal | Finde Halal Spots",
-      null
+      'Josef&#039;s Biofleisch in Frankfurt am Main - joinhalal | Finde Halal Spots',
+      null,
     );
     expect(result).toBe("Josef's Biofleisch");
   });
@@ -316,11 +317,17 @@ describe('extractUrlsFromSitemapXml', () => {
 
 describe('isJoinHalalDetailUrl', () => {
   it('accepts a standard detail page URL', () => {
-    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/restaurant/echte-baerliner-augsburg-oberhausen-26548/')).toBe(true);
+    expect(
+      isJoinHalalDetailUrl(
+        'https://joinhalal.com/locations/restaurant/echte-baerliner-augsburg-oberhausen-26548/',
+      ),
+    ).toBe(true);
   });
 
   it('accepts a detail page with different category', () => {
-    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/food-truck/some-name-999/')).toBe(true);
+    expect(isJoinHalalDetailUrl('https://joinhalal.com/locations/food-truck/some-name-999/')).toBe(
+      true,
+    );
   });
 
   it('[pre-fix FAILS] rejects the generic /locations/ listing page', () => {
@@ -347,15 +354,15 @@ describe('isJoinHalalDetailUrl', () => {
 
 describe('extractCategoryFromUrl', () => {
   it('extracts category slug from locations URL', () => {
-    expect(
-      extractCategoryFromUrl('https://joinhalal.com/locations/restaurant/foo-123/')
-    ).toBe('restaurant');
-    expect(
-      extractCategoryFromUrl('https://joinhalal.com/locations/food-truck/bar-456/')
-    ).toBe('food-truck');
-    expect(
-      extractCategoryFromUrl('https://joinhalal.com/locations/metzgerei/shop-789/')
-    ).toBe('metzgerei');
+    expect(extractCategoryFromUrl('https://joinhalal.com/locations/restaurant/foo-123/')).toBe(
+      'restaurant',
+    );
+    expect(extractCategoryFromUrl('https://joinhalal.com/locations/food-truck/bar-456/')).toBe(
+      'food-truck',
+    );
+    expect(extractCategoryFromUrl('https://joinhalal.com/locations/metzgerei/shop-789/')).toBe(
+      'metzgerei',
+    );
   });
 
   it('returns null for unexpected URL format', () => {
@@ -388,18 +395,14 @@ describe('extractSpeisen', () => {
 
   it('returns empty array when no Speisen entry exists in additionalProperty', () => {
     const result = extractSpeisen({
-      additionalProperty: [
-        { '@type': 'PropertyValue', name: 'Küche', value: 'Türkisch' },
-      ],
+      additionalProperty: [{ '@type': 'PropertyValue', name: 'Küche', value: 'Türkisch' }],
     });
     expect(result).toEqual([]);
   });
 
   it('returns empty array when Speisen value is empty string', () => {
     const result = extractSpeisen({
-      additionalProperty: [
-        { '@type': 'PropertyValue', name: 'Speisen', value: '' },
-      ],
+      additionalProperty: [{ '@type': 'PropertyValue', name: 'Speisen', value: '' }],
     });
     expect(result).toEqual([]);
   });
@@ -415,9 +418,7 @@ describe('extractSpeisen', () => {
 
   it('handles single Speisen value (no comma)', () => {
     const result = extractSpeisen({
-      additionalProperty: [
-        { '@type': 'PropertyValue', name: 'Speisen', value: 'Döner' },
-      ],
+      additionalProperty: [{ '@type': 'PropertyValue', name: 'Speisen', value: 'Döner' }],
     });
     expect(result).toEqual(['Döner']);
   });
@@ -433,18 +434,14 @@ describe('extractSpeisen', () => {
 
   it('filters out empty strings after splitting', () => {
     const result = extractSpeisen({
-      additionalProperty: [
-        { '@type': 'PropertyValue', name: 'Speisen', value: 'Burger,, ,Döner' },
-      ],
+      additionalProperty: [{ '@type': 'PropertyValue', name: 'Speisen', value: 'Burger,, ,Döner' }],
     });
     expect(result).toEqual(['Burger', 'Döner']);
   });
 
   it('returns empty array when Speisen value is undefined', () => {
     const result = extractSpeisen({
-      additionalProperty: [
-        { '@type': 'PropertyValue', name: 'Speisen' },
-      ],
+      additionalProperty: [{ '@type': 'PropertyValue', name: 'Speisen' }],
     });
     expect(result).toEqual([]);
   });
@@ -519,7 +516,7 @@ describe('hasAlkoholverkauf', () => {
     expect(
       hasAlkoholverkauf({
         additionalProperty: [{ name: 'Halal Merkmale', value: 'Alkoholverkauf' }],
-      })
+      }),
     ).toBe(true);
   });
 
@@ -529,17 +526,15 @@ describe('hasAlkoholverkauf', () => {
         additionalProperty: [
           { name: 'Halal Merkmale', value: 'Handgeschächtet, Alkoholverkauf, Lieferung' },
         ],
-      })
+      }),
     ).toBe(true);
   });
 
   it('returns false when Halal Merkmale does not contain Alkoholverkauf', () => {
     expect(
       hasAlkoholverkauf({
-        additionalProperty: [
-          { name: 'Halal Merkmale', value: 'Handgeschächtet, Lieferung' },
-        ],
-      })
+        additionalProperty: [{ name: 'Halal Merkmale', value: 'Handgeschächtet, Lieferung' }],
+      }),
     ).toBe(false);
   });
 
@@ -555,7 +550,7 @@ describe('hasAlkoholverkauf', () => {
     expect(
       hasAlkoholverkauf({
         additionalProperty: [{ name: 'Speisen', value: 'Burger, Pizza' }],
-      })
+      }),
     ).toBe(false);
   });
 
@@ -563,17 +558,15 @@ describe('hasAlkoholverkauf', () => {
     expect(
       hasAlkoholverkauf({
         additionalProperty: [{ name: 'Halal Merkmale', value: 'alkoholverkauf' }],
-      })
+      }),
     ).toBe(true);
   });
 
   it('handles whitespace around token values', () => {
     expect(
       hasAlkoholverkauf({
-        additionalProperty: [
-          { name: 'Halal Merkmale', value: '  Alkoholverkauf  ' },
-        ],
-      })
+        additionalProperty: [{ name: 'Halal Merkmale', value: '  Alkoholverkauf  ' }],
+      }),
     ).toBe(true);
   });
 });
@@ -647,11 +640,7 @@ const BADGE_HTML_HEADING_ONLY = `<div>
 describe('extractHalalBadgesFromHtml (Plan 057)', () => {
   it('extracts all badge texts from the Halal Merkmale section', () => {
     const badges = extractHalalBadgesFromHtml(BADGE_HTML_POSITIVE);
-    expect(badges).toEqual([
-      'Halal Fleisch',
-      'Halal Zertifikat vorhanden',
-      'Alkoholverkauf',
-    ]);
+    expect(badges).toEqual(['Halal Fleisch', 'Halal Zertifikat vorhanden', 'Alkoholverkauf']);
   });
 
   it('extracts single badge from negative-only section', () => {
@@ -697,8 +686,8 @@ describe('hasAlkoholverkauf — HTML badge fallback (Plan 057)', () => {
     expect(
       hasAlkoholverkauf(
         { additionalProperty: [{ name: 'Halal Merkmale', value: 'Alkoholverkauf' }] },
-        '<html></html>'
-      )
+        '<html></html>',
+      ),
     ).toBe(true);
   });
 
@@ -726,7 +715,50 @@ describe('hasAlkoholverkauf — HTML badge fallback (Plan 057)', () => {
     expect(
       hasAlkoholverkauf({
         additionalProperty: [{ name: 'Halal-Merkmale', value: 'Alkoholverkauf' }],
-      })
+      }),
     ).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// extractEnrichmentData (Plan 239 — Fix 3: image extraction)
+// ---------------------------------------------------------------------------
+
+describe('extractEnrichmentData', () => {
+  it('extracts image from Schema.org string field', () => {
+    const result = extractEnrichmentData({
+      image: 'https://joinhalal.com/wp-content/uploads/photo.jpg',
+    });
+    expect(result.image).toBe('https://joinhalal.com/wp-content/uploads/photo.jpg');
+  });
+
+  it('extracts first image from Schema.org array field', () => {
+    const result = extractEnrichmentData({
+      image: [
+        'https://joinhalal.com/wp-content/uploads/photo1.jpg',
+        'https://joinhalal.com/wp-content/uploads/photo2.jpg',
+      ],
+    });
+    expect(result.image).toBe('https://joinhalal.com/wp-content/uploads/photo1.jpg');
+  });
+
+  it('returns null image when no image in schema', () => {
+    const result = extractEnrichmentData({});
+    expect(result.image).toBeNull();
+  });
+
+  it('extracts description from schema', () => {
+    const result = extractEnrichmentData({
+      description: 'A great halal restaurant',
+    });
+    expect(result.description).toBe('A great halal restaurant');
+  });
+
+  it('extracts geo coordinates', () => {
+    const result = extractEnrichmentData({
+      geo: { latitude: '48.18423', longitude: '11.55425' },
+    });
+    expect(result.latitude).toBeCloseTo(48.18423);
+    expect(result.longitude).toBeCloseTo(11.55425);
   });
 });

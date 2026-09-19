@@ -3,7 +3,10 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { createLieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-client';
 import { createUberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-client';
-import { fetchWoltRestaurant } from '../src/lib/enrichment/delivery-platform/apify-wolt-client';
+import {
+  fetchWoltRestaurant,
+  type ApifyWoltResult,
+} from '../src/lib/enrichment/delivery-platform/apify-wolt-client';
 import type { LieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-types';
 import type { UberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-types';
 
@@ -15,7 +18,9 @@ const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('Missing required environment variables.');
-  console.error('  NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local');
+  console.error(
+    '  NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local',
+  );
   process.exit(1);
 }
 
@@ -67,6 +72,8 @@ interface RunStats {
   failed: number;
   menuItemsWritten: number;
   openingHoursWritten: number;
+  contactFieldsWritten: number;
+  addressFieldsWritten: number;
 }
 
 async function main(): Promise<void> {
@@ -76,9 +83,10 @@ async function main(): Promise<void> {
   console.log(`  Mode: ${modeLabel}`);
   console.log(`${'─'.repeat(50)}\n`);
 
-  const { data: rows, error: linksError } = await supabase
+  let linksQuery = supabase
     .from('provider_delivery_links')
-    .select(`
+    .select(
+      `
       provider_id,
       platform,
       platform_url,
@@ -87,25 +95,36 @@ async function main(): Promise<void> {
         provider_name,
         listing_type
       )
-    `)
+    `,
+    )
     .eq('is_active', true)
     .eq('providers.listing_type', 'food');
+
+  // Apply --provider-id filter when supplied (Fix 239-4)
+  if (providerIdFilter) {
+    linksQuery = linksQuery.eq('provider_id', providerIdFilter);
+    console.log(`  Filtering to provider: ${providerIdFilter}`);
+  }
+
+  const { data: rows, error: linksError } = await linksQuery;
 
   if (linksError) {
     console.error(`Failed to fetch delivery links: ${linksError.message}`);
     process.exit(1);
   }
 
-  const links: DeliveryLinkRow[] = (rows ?? []).map((r: Record<string, unknown>) => {
-    const prov = r.providers as Record<string, unknown>;
-    return {
-      provider_id: r.provider_id as string,
-      provider_name: prov.provider_name as string,
-      platform: r.platform as 'wolt' | 'lieferando' | 'ubereats',
-      platform_url: r.platform_url as string,
-      platform_slug: (r.platform_slug as string) ?? null,
-    };
-  }).sort((a, b) => a.provider_name.localeCompare(b.provider_name));
+  const links: DeliveryLinkRow[] = (rows ?? [])
+    .map((r: Record<string, unknown>) => {
+      const prov = r.providers as Record<string, unknown>;
+      return {
+        provider_id: r.provider_id as string,
+        provider_name: prov.provider_name as string,
+        platform: r.platform as 'wolt' | 'lieferando' | 'ubereats',
+        platform_url: r.platform_url as string,
+        platform_slug: (r.platform_slug as string) ?? null,
+      };
+    })
+    .sort((a, b) => a.provider_name.localeCompare(b.provider_name));
 
   if (!APIFY_API_TOKEN && links.some((l) => l.platform === 'wolt')) {
     console.error('APIFY_API_TOKEN is required for Wolt enrichment but not set in .env.local');
@@ -121,6 +140,8 @@ async function main(): Promise<void> {
     failed: 0,
     menuItemsWritten: 0,
     openingHoursWritten: 0,
+    contactFieldsWritten: 0,
+    addressFieldsWritten: 0,
   };
 
   console.log(`  Found ${links.length} active delivery link(s) for food providers`);
@@ -162,8 +183,11 @@ async function main(): Promise<void> {
         .select('provider_id')
         .in('provider_id', chunk);
       if (error) {
-        console.warn(`  Batch menu query failed for ${
-          chunk.length} IDs (${error.message}), falling back to sequential`);
+        console.warn(
+          `  Batch menu query failed for ${
+            chunk.length
+          } IDs (${error.message}), falling back to sequential`,
+        );
         // Fallback: query one by one
         for (const pid of chunk) {
           const { count } = await supabase
@@ -190,8 +214,11 @@ async function main(): Promise<void> {
         .select('provider_id, opening_hours')
         .in('provider_id', chunk);
       if (error) {
-        console.warn(`  Batch hours query failed for ${
-          chunk.length} IDs (${error.message}), falling back to sequential`);
+        console.warn(
+          `  Batch hours query failed for ${
+            chunk.length
+          } IDs (${error.message}), falling back to sequential`,
+        );
         for (const pid of chunk) {
           const { data: row } = await supabase
             .from('providers')
@@ -209,10 +236,7 @@ async function main(): Promise<void> {
     return map;
   }
 
-  const [menuCountMap, hasHoursMap] = await Promise.all([
-    buildMenuCountMap(),
-    buildHasHoursMap(),
-  ]);
+  const [menuCountMap, hasHoursMap] = await Promise.all([buildMenuCountMap(), buildHasHoursMap()]);
 
   // -----------------------------------------------------------------------
   // Prepare tasks: classify each link by what work is needed
@@ -220,8 +244,8 @@ async function main(): Promise<void> {
 
   interface MenuTask {
     link: DeliveryLinkRow;
-    fetchMenus: boolean;  // true if menu items need fetching
-    fetchHours: boolean;  // true if opening hours need fetching (Wolt only)
+    fetchMenus: boolean; // true if menu items need fetching
+    fetchHours: boolean; // true if opening hours need fetching (Wolt only)
   }
 
   const woltTasks: MenuTask[] = [];
@@ -243,7 +267,9 @@ async function main(): Promise<void> {
       });
     } else {
       if (hasMenus) {
-        process.stdout.write(`  ${link.provider_name} (${link.platform}) ... already has ${existingCount} menu item(s)\n`);
+        process.stdout.write(
+          `  ${link.provider_name} (${link.platform}) ... already has ${existingCount} menu item(s)\n`,
+        );
         immediateSkipped++;
         continue;
       }
@@ -257,7 +283,9 @@ async function main(): Promise<void> {
 
   stats.skipped += immediateSkipped;
 
-  console.log(`\n  Pre-check: ${batch.length} links → ${immediateSkipped} skipped, ${woltTasks.length} Wolt, ${nonWoltTasks.length} non-Wolt\n`);
+  console.log(
+    `\n  Pre-check: ${batch.length} links → ${immediateSkipped} skipped, ${woltTasks.length} Wolt, ${nonWoltTasks.length} non-Wolt\n`,
+  );
 
   // -----------------------------------------------------------------------
   // Phase 2: Process Wolt tasks concurrently (Apify calls are slow)
@@ -287,9 +315,10 @@ async function main(): Promise<void> {
           }
 
           const menusToWrite = result.menuItems; // always fresh from Apify (used if fetchMenus true)
-          const hoursToWrite = fetchHours && result.openingHours
-            ? (result.openingHours as unknown as Record<string, unknown>)
-            : null;
+          const hoursToWrite =
+            fetchHours && result.openingHours
+              ? (result.openingHours as unknown as Record<string, unknown>)
+              : null;
 
           if (!fetchMenus && !hoursToWrite) {
             // We only needed hours and they're not available
@@ -302,13 +331,13 @@ async function main(): Promise<void> {
             continue;
           }
 
-          await writeResult(
-            link,
-            fetchMenus ? menusToWrite : [],
-            hoursToWrite,
-            isDryRun,
-            stats,
-          );
+          await writeResult(link, fetchMenus ? menusToWrite : [], hoursToWrite, isDryRun, stats);
+
+          // Write phone/website/address from Apify (additive only) — Fix 239-2
+          if (!isDryRun) {
+            await writeApifyContactFields(link.provider_id, result, stats);
+            await writeApifyAddressFields(link.provider_id, result, stats);
+          }
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           console.log(`${prefix} ... Fetch failed: ${msg}`);
@@ -361,7 +390,7 @@ async function main(): Promise<void> {
             price_cents: item.priceCents || null,
             is_available: true,
             sort_order: i,
-          }))
+          })),
         );
       } else if (link.platform === 'ubereats') {
         const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
@@ -383,7 +412,7 @@ async function main(): Promise<void> {
             price_cents: item.priceCents || null,
             is_available: true,
             sort_order: i,
-          }))
+          })),
         );
       }
 
@@ -418,6 +447,12 @@ async function main(): Promise<void> {
   console.log(`     Failed:                 ${stats.failed}`);
   console.log(`     Menu items written:     ${stats.menuItemsWritten}`);
   console.log(`     Opening hours written:  ${stats.openingHoursWritten}`);
+  if (stats.contactFieldsWritten > 0) {
+    console.log(`     Contact fields written: ${stats.contactFieldsWritten}`);
+  }
+  if (stats.addressFieldsWritten > 0) {
+    console.log(`     Address fields written: ${stats.addressFieldsWritten}`);
+  }
   console.log(`${'─'.repeat(50)}`);
 
   if (isDryRun) {
@@ -430,7 +465,14 @@ async function main(): Promise<void> {
 // ---------------------------------------------------------------------------
 async function writeResult(
   link: DeliveryLinkRow,
-  menuItems: Array<{ name_de: string; description_de: string | null; category: string | null; price_cents: number | null; is_available: boolean; sort_order: number }>,
+  menuItems: Array<{
+    name_de: string;
+    description_de: string | null;
+    category: string | null;
+    price_cents: number | null;
+    is_available: boolean;
+    sort_order: number;
+  }>,
   openingHoursToWrite: Record<string, unknown> | null,
   isDryRun: boolean,
   stats: RunStats,
@@ -466,11 +508,10 @@ async function writeResult(
     return;
   }
 
-  const { error: rpcError } = await supabase
-    .rpc('admin_update_provider', {
-      p_provider_id: link.provider_id,
-      p_data,
-    });
+  const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+    p_provider_id: link.provider_id,
+    p_data,
+  });
 
   if (rpcError) {
     console.log(`RPC write failed: ${rpcError.message}`);
@@ -498,6 +539,93 @@ async function writeResult(
   if (hasMenus) stats.menuItemsWritten += menuItems.length;
   if (openingHoursToWrite) stats.openingHoursWritten++;
   stats.processed++;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: write phone/website from Apify Wolt result (additive only)
+// Uses direct table update — NOT the destructive admin_update_provider RPC.
+// ---------------------------------------------------------------------------
+async function writeApifyContactFields(
+  providerId: string,
+  result: ApifyWoltResult,
+  stats: RunStats,
+): Promise<void> {
+  // Fetch current provider values to check for additive-only writes
+  const { data: provider, error: fetchError } = await supabase
+    .from('providers')
+    .select('contact_phone, social_website')
+    .eq('provider_id', providerId)
+    .single();
+
+  if (fetchError || !provider) return;
+
+  const updates: Record<string, string> = {};
+
+  if (result.phone && !provider.contact_phone) {
+    updates.contact_phone = result.phone;
+  }
+  if (result.website && !provider.social_website) {
+    updates.social_website = result.website;
+  }
+
+  if (Object.keys(updates).length === 0) return;
+
+  const { error } = await supabase.from('providers').update(updates).eq('provider_id', providerId);
+
+  if (error) {
+    console.error(`     ⚠️  Contact field write failed for ${providerId}: ${error.message}`);
+  } else {
+    stats.contactFieldsWritten += Object.keys(updates).length;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Helper: write address fields from Apify Wolt result (additive only)
+// Uses direct locations table update — NOT the destructive admin_update_provider RPC.
+// ---------------------------------------------------------------------------
+async function writeApifyAddressFields(
+  providerId: string,
+  result: ApifyWoltResult,
+  stats: RunStats,
+): Promise<void> {
+  if (!result.address && !result.postCode && !result.city) return;
+
+  // Find the primary location for this provider
+  const { data: location, error: locError } = await supabase
+    .from('locations')
+    .select('location_id, address_street, address_zip, address_city')
+    .eq('provider_id', providerId)
+    .eq('is_primary', true)
+    .limit(1)
+    .single();
+
+  if (locError || !location) return;
+
+  // Only write if current values are empty (additive)
+  const updates: Record<string, string> = {};
+
+  if (result.address && !location.address_street) {
+    updates.address_street = result.address;
+  }
+  if (result.postCode && !location.address_zip) {
+    updates.address_zip = result.postCode;
+  }
+  if (result.city && !location.address_city) {
+    updates.address_city = result.city;
+  }
+
+  if (Object.keys(updates).length === 0) return;
+
+  const { error } = await supabase
+    .from('locations')
+    .update(updates)
+    .eq('location_id', location.location_id);
+
+  if (error) {
+    console.error(`     ⚠️  Address field write failed for ${providerId}: ${error.message}`);
+  } else {
+    stats.addressFieldsWritten += Object.keys(updates).length;
+  }
 }
 
 main().catch((err) => {
