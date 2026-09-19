@@ -603,12 +603,11 @@ async function writeApifyAddressFields(
 
   if (!location) {
     // No primary location exists — create one if we have data
-    if (!result.address && !result.postCode && !result.city) return;
-
     const newLoc: Record<string, unknown> = {
       provider_id: providerId,
       is_primary: true,
       show_address: true,
+      address_country: 'DE',
     };
     if (result.address) newLoc.address_street = result.address;
     if (result.postCode) newLoc.address_zip = result.postCode;

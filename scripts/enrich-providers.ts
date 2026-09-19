@@ -117,6 +117,7 @@ const isWriteMode = mode === 'write';
 const source = getArgValue('--source') ?? 'joinhalal';
 const limitArg = getArgValue('--limit');
 const limit = limitArg ? parseInt(limitArg, 10) : undefined;
+const providerIdFilter = getArgValue('--provider-id');
 
 function getArgValue(flag: string): string | undefined {
   const idx = args.indexOf(flag);
@@ -1541,11 +1542,18 @@ async function runWoltDirectEnrichment(
   let query = supabase
     .from('providers')
     .select(
-      'provider_id, provider_name, import_source_id, import_source_url, address_street, address_city, address_zip, address_country, location_latitude, location_longitude, contact_phone, social_website, opening_hours, category_id, enrichment_eligible, listing_type',
+      'provider_id, provider_name, import_source_id, import_source_url, address_street, address_city, address_zip, address_country, contact_phone, social_website, opening_hours, category_id, enrichment_eligible, listing_type',
     )
     .eq('import_source', 'wolt')
     .eq('enrichment_eligible', true)
     .not('import_source_id', 'is', null);
+
+  // Only process un-enriched providers unless targeting a specific one
+  if (providerIdFilter) {
+    query = query.eq('provider_id', providerIdFilter);
+  } else {
+    query = query.is('last_enriched_at', null);
+  }
 
   if (limit) query = query.limit(limit);
 
@@ -1737,6 +1745,7 @@ async function woltDirectUpsertPrimaryLocation(
       provider_id: providerId,
       is_primary: true,
       show_address: true,
+      address_country: 'DE',
       ...data,
     });
 
