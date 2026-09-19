@@ -1,0 +1,140 @@
+# .github/workflows/backfill-enrichment.yml
+#
+# Enrichment Backfill — fixes broken/incomplete enrichment data for existing
+# providers. Manual trigger only.
+#
+# Fixes:
+#   - Opening hours in non-canonical formats (JoinHalal wrapper, UberEats raw)
+#   - Missing primary location rows
+#   - NULL category_id for JoinHalal providers (re-fetches servesCuisine)
+#   - Identifies names-only menus for follow-up delivery enrichment
+#
+# Safety:
+#   - Dry-run is the default to prevent unintended writes
+#   - Uses SUPABASE_SERVICE_ROLE_KEY from GitHub Secrets
+#   - Requires manual trigger (workflow_dispatch)
+
+name: Enrichment Backfill
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Execution mode'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - write
+      source:
+        description: 'Provider source to backfill'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - joinhalal
+          - wolt
+          - lieferando
+          - ubereats
+      limit:
+        description: 'Provider limit'
+        required: true
+        default: '10'
+        type: choice
+        options:
+          - '5'
+          - '10'
+          - '50'
+          - '100'
+          - '500'
+          - 'all'
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'uat'
+        type: choice
+        options:
+          - uat
+          - production
+
+jobs:
+  backfill:
+    name: 'backfill (${{ inputs.mode }}, ${{ inputs.source }}, limit=${{ inputs.limit }}, ${{ inputs.environment }})'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CLI arguments
+        id: args
+        run: |
+          CLI_ARGS="--mode ${{ inputs.mode }} --source ${{ inputs.source }}"
+
+          LIMIT="${{ inputs.limit }}"
+          if [ "$LIMIT" != "all" ]; then
+            CLI_ARGS="$CLI_ARGS --limit $LIMIT"
+          fi
+
+          echo "cli_args=$CLI_ARGS" >> "$GITHUB_OUTPUT"
+
+      - name: Run backfill (Production)
+        if: inputs.environment == 'production'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Running Enrichment Backfill against PRODUCTION"
+          echo "   Source: ${{ inputs.source }}"
+          echo "   Mode:   ${{ inputs.mode }}"
+          echo "   Limit:  ${{ inputs.limit }}"
+          echo "   Args:   ${{ steps.args.outputs.cli_args }}"
+          echo ""
+          npx tsx scripts/backfill-enrichment.ts ${{ steps.args.outputs.cli_args }}
+
+      - name: Run backfill (UAT)
+        if: inputs.environment == 'uat'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "Running Enrichment Backfill against UAT"
+          echo "   Source: ${{ inputs.source }}"
+          echo "   Mode:   ${{ inputs.mode }}"
+          echo "   Limit:  ${{ inputs.limit }}"
+          echo "   Args:   ${{ steps.args.outputs.cli_args }}"
+          echo ""
+          npx tsx scripts/backfill-enrichment.ts ${{ steps.args.outputs.cli_args }}
+
+      - name: Summary
+        run: |
+          echo "## Enrichment Backfill Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Source | ${{ inputs.source }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | ${{ inputs.mode }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Limit | ${{ inputs.limit }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ inputs.mode }}" = "dry-run" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Dry-run mode - no data was written.** Review the logs above for proposed changes." >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ inputs.mode }}" = "write" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Write mode - data has been modified.** Check logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
