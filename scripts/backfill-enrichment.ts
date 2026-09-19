@@ -29,6 +29,13 @@
  *   npx tsx scripts/backfill-enrichment.ts --mode dry-run --source joinhalal --limit 10
  *   npx tsx scripts/backfill-enrichment.ts --mode write --source all
  *   npx tsx scripts/backfill-enrichment.ts --mode write --provider-id <uuid>
+ *
+ * Options:
+ *   --mode <dry-run|write>   Execution mode (default: dry-run)
+ *   --source <name|all>      Provider source to backfill (default: all)
+ *   --limit <number>         Max providers per source (default: no limit).
+ *                            When --source all, limit applies per source, not total.
+ *   --provider-id <uuid>     Backfill a single provider by ID
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -94,7 +101,11 @@ if (!validSources.includes(sourceArg)) {
 }
 
 const limitArg = getArgValue('--limit');
-const limit = limitArg ? parseInt(limitArg, 10) : 10;
+if (limitArg !== undefined && isNaN(parseInt(limitArg, 10))) {
+  console.error(`Invalid --limit value: "${limitArg}". Must be a positive integer.`);
+  process.exit(1);
+}
+const limit: number | undefined = limitArg !== undefined ? parseInt(limitArg, 10) : undefined;
 
 const providerIdFilter = getArgValue('--provider-id') ?? null;
 
@@ -141,7 +152,7 @@ interface BackfillStats {
   providersScanned: number;
   hoursFixed: number;
   hoursSkipped: number;
-  locationsCreated: number;
+  locationsFixed: number;
   locationsSkipped: number;
   categoriesFixed: number;
   categoriesSkipped: number;
@@ -159,7 +170,11 @@ async function main(): Promise<void> {
   console.log(`  Enrichment Backfill`);
   console.log(`  Mode:        ${modeLabel}`);
   console.log(`  Source:      ${sourceArg}`);
-  console.log(`  Limit:       ${limitArg ?? `${limit} (default)`}`);
+  const limitLabel =
+    limit !== undefined
+      ? `${limit}${sourceArg === 'all' ? ' per source' : ''}`
+      : 'none (all providers)';
+  console.log(`  Limit:       ${limitLabel}`);
   if (providerIdFilter) {
     console.log(`  Provider ID: ${providerIdFilter}`);
   }
@@ -169,7 +184,7 @@ async function main(): Promise<void> {
     providersScanned: 0,
     hoursFixed: 0,
     hoursSkipped: 0,
-    locationsCreated: 0,
+    locationsFixed: 0,
     locationsSkipped: 0,
     categoriesFixed: 0,
     categoriesSkipped: 0,
@@ -248,8 +263,8 @@ async function main(): Promise<void> {
         if (!isDryRun) {
           await createPrimaryLocation(provider);
         }
-        fixes.push('location created');
-        stats.locationsCreated++;
+        fixes.push('location created/updated');
+        stats.locationsFixed++;
       } else {
         stats.locationsSkipped++;
       }
@@ -306,7 +321,7 @@ async function main(): Promise<void> {
   console.log(`     Providers scanned:    ${stats.providersScanned}`);
   console.log(`     Hours fixed:          ${stats.hoursFixed}`);
   console.log(`     Hours skipped:        ${stats.hoursSkipped}`);
-  console.log(`     Locations created:    ${stats.locationsCreated}`);
+  console.log(`     Locations fixed:      ${stats.locationsFixed}`);
   console.log(`     Locations skipped:    ${stats.locationsSkipped}`);
   console.log(`     Categories fixed:     ${stats.categoriesFixed}`);
   console.log(`     Categories skipped:   ${stats.categoriesSkipped}`);
@@ -322,6 +337,10 @@ async function main(): Promise<void> {
     console.log(`\n  Backfill complete.`);
   }
 
+  if (stats.errors > 0) {
+    console.error(`\n  Exiting with code 1 due to ${stats.errors} error(s).`);
+  }
+
   // 7. Log names-only menu providers for easy follow-up
   const namesOnlyProviders = providers.filter((p) => {
     const items = menuMap.get(p.provider_id) ?? [];
@@ -333,6 +352,10 @@ async function main(): Promise<void> {
     for (const p of namesOnlyProviders) {
       console.log(`    - ${p.provider_name} (${p.provider_id})`);
     }
+  }
+
+  if (stats.errors > 0) {
+    process.exit(1);
   }
 }
 
@@ -416,7 +439,8 @@ async function loadMenuItems(providerIds: string[]): Promise<Map<string, MenuRow
     const { data, error } = await supabase
       .from('food_menu')
       .select('provider_id, name_de, price_cents, description_de, category')
-      .in('provider_id', chunk);
+      .in('provider_id', chunk)
+      .limit(10000);
 
     if (error) {
       console.warn(`  Warning: failed to load menu items for chunk: ${error.message}`);
@@ -488,13 +512,15 @@ async function updateOpeningHours(
 }
 
 /**
- * Creates a primary location row from provider address/coordinate data.
- * Uses direct INSERT (not the admin_update_provider RPC) to avoid the
+ * Creates or updates a primary location row from provider address/coordinate data.
+ * Uses direct INSERT/UPDATE (not the admin_update_provider RPC) to avoid the
  * destructive DELETE behavior.
+ *
+ * If a primary location already exists, updates it with the current provider data
+ * to fix stale addresses/coordinates. If none exists, inserts a new one.
  */
 async function createPrimaryLocation(provider: ProviderRow): Promise<void> {
-  const { error } = await supabase.from('locations').insert({
-    provider_id: provider.provider_id,
+  const locationData = {
     address_street: provider.address_street,
     address_zip: provider.address_zip,
     address_city: provider.address_city,
@@ -506,16 +532,41 @@ async function createPrimaryLocation(provider: ProviderRow): Promise<void> {
       : provider.opening_hours,
     show_address: provider.show_address ?? true,
     contact_phone: provider.contact_phone,
-    is_primary: true,
-  });
+  };
 
-  if (error) {
-    // If the unique constraint fires (already has primary), that's fine
-    if (error.code === '23505') {
-      // unique_violation - primary location already exists
-      return;
+  // Check if a primary location already exists
+  const { data: existing, error: selectError } = await supabase
+    .from('locations')
+    .select('location_id')
+    .eq('provider_id', provider.provider_id)
+    .eq('is_primary', true)
+    .maybeSingle();
+
+  if (selectError) {
+    throw new Error(`Failed to check existing location: ${selectError.message}`);
+  }
+
+  if (existing) {
+    // Update existing primary location with current provider data
+    const { error: updateError } = await supabase
+      .from('locations')
+      .update(locationData)
+      .eq('location_id', existing.location_id);
+
+    if (updateError) {
+      throw new Error(`Failed to update location: ${updateError.message}`);
     }
-    throw new Error(`Failed to create location: ${error.message}`);
+  } else {
+    // Insert new primary location
+    const { error: insertError } = await supabase.from('locations').insert({
+      provider_id: provider.provider_id,
+      ...locationData,
+      is_primary: true,
+    });
+
+    if (insertError) {
+      throw new Error(`Failed to create location: ${insertError.message}`);
+    }
   }
 }
 

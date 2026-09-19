@@ -42,13 +42,15 @@ describe('isOpeningHoursBroken', () => {
     expect(isOpeningHoursBroken(uberRaw)).toBe(true);
   });
 
-  it('returns true for object with daysBitArray (UberEats variant)', () => {
+  it('returns false for object with daysBitArray (UberEats variant, no normalizer yet)', () => {
+    // daysBitArray is not flagged as broken because we don't have a normalizer
+    // for it yet. See TODO in backfill-helpers.ts.
     const uberVariant = {
       daysBitArray: [1, 1, 1, 1, 1, 0, 0],
       startTime: '10:00',
       endTime: '22:00',
     };
-    expect(isOpeningHoursBroken(uberVariant)).toBe(true);
+    expect(isOpeningHoursBroken(uberVariant)).toBe(false);
   });
 
   it('returns false for valid OpeningHours format', () => {

@@ -31,7 +31,7 @@ const VALID_DAY_KEYS = new Set([
  *
  * 1. JoinHalal wrapper: `{ source: 'joinhalal', hours: <raw> }`
  * 2. Raw Schema.org spec array stored directly
- * 3. UberEats proprietary: `{ regularHours: [...] }` or `{ daysBitArray: [...] }`
+ * 3. UberEats proprietary: `{ regularHours: [...] }`
  * 4. Any object that has keys but none of them are valid day names
  *
  * Returns false for null/undefined (nothing to fix) or valid OpeningHours.
@@ -51,7 +51,10 @@ export function isOpeningHoursBroken(value: unknown): boolean {
 
   // UberEats proprietary shapes
   if ('regularHours' in obj) return true;
-  if ('daysBitArray' in obj) return true;
+  // TODO: handle daysBitArray normalization (UberEats variant with bit-per-day
+  // schedule). Skipped for now because we have no normalizer for this format.
+  // When a normalizer is added, re-enable detection here.
+  if ('daysBitArray' in obj) return false;
 
   // Check if it looks like valid OpeningHours (has at least one day key)
   const dayKeys = Object.keys(obj).filter((k) => VALID_DAY_KEYS.has(k));
