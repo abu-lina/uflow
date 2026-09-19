@@ -240,10 +240,7 @@ async function main(): Promise<void> {
   // 2s between requests + 5 retries with exponential backoff (up to ~31s)
   // to handle Wolt's rate limiting across 103 cities
   const geocoder = new StaticCityGeocoder();
-  const woltClient = createWoltClient(
-    { requestDelayMs: 2000, maxRetries: 5 },
-    geocoder
-  );
+  const woltClient = createWoltClient({ requestDelayMs: 2000, maxRetries: 5 }, geocoder);
 
   // 4. Iterate cities
   const cityEntries = Object.entries(CITY_COORDS);
@@ -264,7 +261,9 @@ async function main(): Promise<void> {
       errors: [],
     };
 
-    console.log(`  [${i + 1}/${citiesToProcess.length}] ${cityName} (${coords.lat}, ${coords.lon})`);
+    console.log(
+      `  [${i + 1}/${citiesToProcess.length}] ${cityName} (${coords.lat}, ${coords.lon})`,
+    );
 
     try {
       const searchResult = await woltClient.searchVenuesByLocation(coords.lat, coords.lon);
@@ -349,7 +348,9 @@ async function main(): Promise<void> {
   if (citiesWithHalal.length > 0) {
     console.log(`\n  Cities with halal venues (${citiesWithHalal.length}):`);
     for (const cr of citiesWithHalal.sort((a, b) => b.halalVenues - a.halalVenues)) {
-      console.log(`    ${cr.city}: ${cr.halalVenues} halal (${cr.newVenues} new, ${cr.existingVenues} existing)`);
+      console.log(
+        `    ${cr.city}: ${cr.halalVenues} halal (${cr.newVenues} new, ${cr.existingVenues} existing)`,
+      );
     }
   }
 
@@ -368,7 +369,9 @@ async function main(): Promise<void> {
     for (const v of newVenues.slice(0, 10)) {
       console.log(`    ${v.name} (${v.city}) - ${v.woltUrl}`);
       if (v.shortDescription) {
-        console.log(`      "${v.shortDescription.slice(0, 80)}${v.shortDescription.length > 80 ? '...' : ''}"`);
+        console.log(
+          `      "${v.shortDescription.slice(0, 80)}${v.shortDescription.length > 80 ? '...' : ''}"`,
+        );
       }
     }
   }
@@ -471,6 +474,39 @@ async function main(): Promise<void> {
               console.error(`    Delivery link batch failed: ${linkError.message}`);
             }
           }
+
+          // Create primary location rows for newly inserted providers
+          // (the UI reads from locations, so skeleton providers need one)
+          for (const row of data) {
+            const venue = slugToVenue.get(row.import_source_id);
+            if (!venue) continue;
+
+            // Only insert if no primary location exists yet
+            const { data: existingLoc } = await supabase
+              .from('locations')
+              .select('location_id')
+              .eq('provider_id', row.provider_id)
+              .eq('is_primary', true)
+              .limit(1)
+              .maybeSingle();
+
+            if (existingLoc) continue;
+
+            const { error: locError } = await supabase.from('locations').insert({
+              provider_id: row.provider_id,
+              address_street: venue.address || null,
+              address_city: venue.city,
+              address_country: 'DE',
+              location_latitude: venue.lat,
+              location_longitude: venue.lon,
+              is_primary: true,
+              show_address: true,
+            });
+
+            if (locError) {
+              console.error(`    Location insert failed for ${venue.name}: ${locError.message}`);
+            }
+          }
         }
       }
     }
@@ -500,12 +536,10 @@ async function main(): Promise<void> {
 
       if (links.length === 0) continue;
 
-      const { error } = await supabase
-        .from('provider_delivery_links')
-        .upsert(links, {
-          onConflict: 'provider_id,platform',
-          ignoreDuplicates: false,
-        });
+      const { error } = await supabase.from('provider_delivery_links').upsert(links, {
+        onConflict: 'provider_id,platform',
+        ignoreDuplicates: false,
+      });
 
       if (error) {
         console.error(`    Delivery link batch failed: ${error.message}`);
@@ -520,7 +554,9 @@ async function main(): Promise<void> {
 
   console.log(`\n  Write complete.`);
   console.log(`  Query imported records:`);
-  console.log(`    SELECT * FROM providers WHERE import_source = 'wolt' AND user_created_id = '${IMPORT_BOT_UUID}';`);
+  console.log(
+    `    SELECT * FROM providers WHERE import_source = 'wolt' AND user_created_id = '${IMPORT_BOT_UUID}';`,
+  );
 }
 
 main().catch((err) => {

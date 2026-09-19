@@ -48,6 +48,10 @@ import {
   enrichFromWolt,
   type DeliveryPlatformSnapshot,
 } from '../src/lib/enrichment/delivery-enricher';
+import {
+  fetchWoltRestaurant,
+  type ApifyWoltResult,
+} from '../src/lib/enrichment/delivery-platform/apify-wolt-client';
 import { createWoltClient } from '../src/lib/enrichment/delivery-platform/wolt-client';
 import { StaticCityGeocoder } from '../src/lib/enrichment/delivery-platform/geocoder';
 import { createUberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-client';
@@ -216,6 +220,11 @@ async function main(): Promise<void> {
     }
   }
 
+  if (source === 'wolt-direct') {
+    await runWoltDirectEnrichment(stats, mode, limit);
+    return;
+  }
+
   if (source === 'wolt') {
     await runWoltEnrichment(stats, mode, limit);
     return;
@@ -226,16 +235,19 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (isAutoApply && !['wolt', 'ubereats', 'joinhalal', 'lieferando'].includes(source)) {
+  if (
+    isAutoApply &&
+    !['wolt', 'ubereats', 'joinhalal', 'lieferando', 'wolt-direct'].includes(source)
+  ) {
     console.error(
-      `❌ Auto-apply mode is only supported for 'wolt', 'ubereats', 'joinhalal', and 'lieferando' sources.`,
+      `❌ Auto-apply mode is only supported for 'wolt', 'ubereats', 'joinhalal', 'lieferando', and 'wolt-direct' sources.`,
     );
     process.exit(1);
   }
 
   if (source !== 'joinhalal' && source !== 'ubereats') {
     console.error(
-      `❌ Unsupported source: ${source}. Only 'joinhalal', 'wolt', and 'ubereats' are supported.`,
+      `❌ Unsupported source: ${source}. Only 'joinhalal', 'wolt', 'ubereats', 'lieferando', and 'wolt-direct' are supported.`,
     );
     process.exit(1);
   }
@@ -1500,6 +1512,327 @@ async function runUberEatsEnrichment(
     console.error(`❌ UberEats enrichment pipeline error: ${msg}`);
     stats.failureCount = stats.providersSelected || 1;
     await writeRunLog(stats);
+  }
+}
+
+// ─── Wolt Direct-Slug Enrichment ─────────────────────────────────────────────
+
+/**
+ * Enriches Wolt-imported providers by using their known slug (import_source_id)
+ * to call the Apify Wolt scraper directly. Bypasses fuzzy name+city matching.
+ */
+async function runWoltDirectEnrichment(
+  stats: RunStats,
+  mode: RunMode,
+  limit: number | undefined,
+): Promise<void> {
+  const isWrite = mode === 'write';
+  const isAutoApply = mode === 'auto-apply';
+
+  const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
+  if (!APIFY_API_TOKEN) {
+    console.error('❌ APIFY_API_TOKEN required for wolt-direct enrichment');
+    process.exit(1);
+  }
+
+  console.log('  🌐 Wolt direct-slug enrichment (via Apify)');
+
+  // 1. Fetch Wolt-imported providers that need enrichment
+  let query = supabase
+    .from('providers')
+    .select(
+      'provider_id, provider_name, import_source_id, import_source_url, address_street, address_city, address_zip, address_country, location_latitude, location_longitude, contact_phone, social_website, opening_hours, category_id, enrichment_eligible, listing_type',
+    )
+    .eq('import_source', 'wolt')
+    .eq('enrichment_eligible', true)
+    .not('import_source_id', 'is', null);
+
+  if (limit) query = query.limit(limit);
+
+  const { data: providers, error } = await query;
+  if (error) {
+    console.error('❌ Failed to fetch providers:', error.message);
+    process.exit(1);
+  }
+
+  const providerRows = providers ?? [];
+  stats.providersSelected = providerRows.length;
+  console.log(`  📋 Found ${providerRows.length} Wolt-imported provider(s)\n`);
+
+  if (providerRows.length === 0) {
+    console.log('  ℹ️  No eligible providers found.');
+    await writeRunLog(stats);
+    return;
+  }
+
+  // 2. Process each provider
+  for (const provider of providerRows) {
+    stats.providersProcessed++;
+    process.stdout.write(`  🔍 ${provider.provider_name} ... `);
+
+    const slug = provider.import_source_id as string;
+    const woltUrl =
+      (provider.import_source_url as string) || `https://wolt.com/de/deu/venue/${slug}`;
+
+    try {
+      const result = await fetchWoltRestaurant(woltUrl, APIFY_API_TOKEN);
+
+      if (!result) {
+        console.log('not found on Wolt (Apify returned null)');
+        stats.failureCount++;
+        continue;
+      }
+
+      // Build list of fields to update (additive only)
+      const providerUpdates: Record<string, unknown> = {};
+      const locationData: Record<string, unknown> = {};
+      const fieldsUpdated: string[] = [];
+
+      if (!provider.address_street && result.address) {
+        providerUpdates.address_street = result.address;
+        locationData.address_street = result.address;
+        fieldsUpdated.push('address');
+      }
+      if (!provider.address_city && result.city) {
+        providerUpdates.address_city = result.city;
+        locationData.address_city = result.city;
+        fieldsUpdated.push('city');
+      }
+      if (!provider.address_zip && result.postCode) {
+        providerUpdates.address_zip = result.postCode;
+        locationData.address_zip = result.postCode;
+        fieldsUpdated.push('zip');
+      }
+
+      if (!provider.contact_phone && result.phone) {
+        providerUpdates.contact_phone = result.phone;
+        fieldsUpdated.push('phone');
+      }
+      if (!provider.social_website && result.website) {
+        providerUpdates.social_website = result.website;
+        fieldsUpdated.push('website');
+      }
+
+      if (!provider.opening_hours && result.openingHours) {
+        providerUpdates.opening_hours = result.openingHours;
+        locationData.opening_hours = result.openingHours;
+        fieldsUpdated.push('hours');
+      }
+
+      // Always mark as enriched
+      providerUpdates.last_enriched_at = new Date().toISOString();
+
+      if (fieldsUpdated.length === 0) {
+        console.log('✅ no new data');
+        stats.unchangedCount++;
+        if (isWrite || isAutoApply) {
+          await supabase
+            .from('providers')
+            .update({ last_enriched_at: new Date().toISOString() })
+            .eq('provider_id', provider.provider_id);
+        }
+        // Still write delivery link + menu items even when no field changes
+        if (isWrite || isAutoApply) {
+          await woltDirectUpsertDeliveryLink(provider.provider_id, woltUrl, slug);
+          if (result.menuItems && result.menuItems.length > 0) {
+            await woltDirectWriteMenuItems(provider.provider_id, result.menuItems);
+            console.log(`    + ${result.menuItems.length} menu items`);
+          }
+        }
+        continue;
+      }
+
+      if (isWrite || isAutoApply) {
+        // Update providers table
+        const { error: updateError } = await supabase
+          .from('providers')
+          .update(providerUpdates)
+          .eq('provider_id', provider.provider_id);
+
+        if (updateError) {
+          console.log(`❌ DB error: ${updateError.message}`);
+          stats.failureCount++;
+          continue;
+        }
+
+        // Update or create locations row
+        if (Object.keys(locationData).length > 0) {
+          await woltDirectUpsertPrimaryLocation(provider.provider_id, locationData);
+        }
+
+        // Write menu items
+        if (result.menuItems && result.menuItems.length > 0) {
+          await woltDirectWriteMenuItems(provider.provider_id, result.menuItems);
+        }
+
+        // Upsert delivery link
+        await woltDirectUpsertDeliveryLink(provider.provider_id, woltUrl, slug);
+
+        console.log(`✅ updated: ${fieldsUpdated.join(', ')}`);
+        if (result.menuItems?.length) {
+          console.log(`    + ${result.menuItems.length} menu items`);
+        }
+        stats.autoAppliedCount++;
+        stats.autoAppliedFields.push(...fieldsUpdated);
+      } else {
+        // Dry-run
+        console.log(`📝 would update: ${fieldsUpdated.join(', ')}`);
+        if (result.menuItems?.length) {
+          console.log(`    + ${result.menuItems.length} menu items`);
+        }
+        stats.candidatesCreated += fieldsUpdated.length;
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.log(`❌ error: ${msg}`);
+      stats.failureCount++;
+    }
+  }
+
+  stats.finishedAt = new Date().toISOString();
+
+  // Summary
+  console.log(`\n${'─'.repeat(60)}`);
+  console.log(`  📊 Wolt Direct Enrichment Summary`);
+  console.log(`     Selected:    ${stats.providersSelected}`);
+  console.log(`     Processed:   ${stats.providersProcessed}`);
+  if (isWrite || isAutoApply) {
+    console.log(`     Updated:     ${stats.autoAppliedCount}`);
+  } else {
+    console.log(`     Candidates:  ${stats.candidatesCreated}`);
+  }
+  console.log(`     Unchanged:   ${stats.unchangedCount}`);
+  console.log(`     Failed:      ${stats.failureCount}`);
+  console.log(`${'─'.repeat(60)}`);
+
+  await writeRunLog(stats);
+}
+
+// ─── Wolt Direct Helpers ─────────────────────────────────────────────────────
+
+/**
+ * Check if a primary location exists for the provider. If yes, update it
+ * additively. If no, insert a new primary location row.
+ */
+async function woltDirectUpsertPrimaryLocation(
+  providerId: string,
+  data: Record<string, unknown>,
+): Promise<void> {
+  const { data: existing, error: fetchError } = await supabase
+    .from('locations')
+    .select('location_id, address_street, address_zip, address_city, opening_hours')
+    .eq('provider_id', providerId)
+    .eq('is_primary', true)
+    .limit(1)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error(`     ⚠️  Location fetch failed: ${fetchError.message}`);
+    return;
+  }
+
+  if (!existing) {
+    // Insert new primary location
+    const { error: insertError } = await supabase.from('locations').insert({
+      provider_id: providerId,
+      is_primary: true,
+      show_address: true,
+      ...data,
+    });
+
+    if (insertError) {
+      console.error(`     ⚠️  Location create failed: ${insertError.message}`);
+    }
+    return;
+  }
+
+  // Additive update only — don't overwrite existing values
+  const updates: Record<string, unknown> = {};
+  if (data.address_street && !existing.address_street) updates.address_street = data.address_street;
+  if (data.address_zip && !existing.address_zip) updates.address_zip = data.address_zip;
+  if (data.address_city && !existing.address_city) updates.address_city = data.address_city;
+  if (data.opening_hours && !existing.opening_hours) updates.opening_hours = data.opening_hours;
+
+  if (Object.keys(updates).length === 0) return;
+
+  const { error: updateError } = await supabase
+    .from('locations')
+    .update(updates)
+    .eq('location_id', existing.location_id);
+
+  if (updateError) {
+    console.error(`     ⚠️  Location update failed: ${updateError.message}`);
+  }
+}
+
+/**
+ * Write menu items for a provider. Checks if menu items already exist;
+ * if so, skips to avoid overwriting richer data. Uses admin_update_provider
+ * RPC which does DELETE + INSERT for menu_items.
+ */
+async function woltDirectWriteMenuItems(
+  providerId: string,
+  menuItems: ApifyWoltResult['menuItems'],
+): Promise<void> {
+  if (!menuItems || menuItems.length === 0) return;
+
+  // Check for existing menu items
+  const { count, error: countError } = await supabase
+    .from('food_menu')
+    .select('*', { count: 'exact', head: true })
+    .eq('provider_id', providerId);
+
+  if (countError) {
+    console.error(`     ⚠️  Menu count check failed: ${countError.message}`);
+    return;
+  }
+
+  if (count && count > 0) return; // Already has menu items
+
+  const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+    p_provider_id: providerId,
+    p_data: {
+      menu_items: menuItems.map((item, i) => ({
+        name_de: item.name_de,
+        description_de: item.description_de,
+        category: item.category,
+        price_cents: item.price_cents,
+        is_available: item.is_available,
+        sort_order: i,
+      })),
+    },
+  });
+
+  if (rpcError) {
+    console.error(`     ⚠️  Menu write failed: ${rpcError.message}`);
+  }
+}
+
+/**
+ * Upsert a delivery link for a Wolt-imported provider.
+ */
+async function woltDirectUpsertDeliveryLink(
+  providerId: string,
+  woltUrl: string,
+  slug: string,
+): Promise<void> {
+  const { error } = await supabase.from('provider_delivery_links').upsert(
+    {
+      provider_id: providerId,
+      platform: 'wolt',
+      platform_url: woltUrl,
+      platform_slug: slug,
+      is_active: true,
+      last_verified_at: new Date().toISOString(),
+    },
+    {
+      onConflict: 'provider_id,platform',
+      ignoreDuplicates: false,
+    },
+  );
+
+  if (error) {
+    console.error(`     ⚠️  Delivery link write failed: ${error.message}`);
   }
 }
 
