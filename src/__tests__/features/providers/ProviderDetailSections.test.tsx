@@ -12,9 +12,8 @@ const useQueryMock = vi.fn();
 let ProviderDetailSections: typeof PDS_Type;
 
 beforeAll(async () => {
-  ProviderDetailSections = (await import(
-    '@/features/providers/components/ProviderDetailSections'
-  )).ProviderDetailSections;
+  ProviderDetailSections = (await import('@/features/providers/components/ProviderDetailSections'))
+    .ProviderDetailSections;
 });
 
 vi.mock('@/features/providers/components/TrustBadgesSection', () => ({
@@ -184,6 +183,7 @@ describe('ProviderDetailSections', () => {
         provider={{
           ...mockProviders[0],
           listing_type: 'ummah',
+          verification_method: 'online',
           offers: [],
           needs: [],
         }}
@@ -230,6 +230,7 @@ describe('ProviderDetailSections', () => {
         isLoadingBadges={false}
         provider={{
           ...mockProviders[0],
+          verification_method: 'online',
           offers: [],
           needs: [],
         }}
@@ -250,7 +251,13 @@ describe('ProviderDetailSections', () => {
           { id: 'badge-1', trust_level: 'community_confirmed', confirmation_count: 2 } as never,
         ]}
         isLoadingBadges={false}
-        provider={{ ...mockProviders[0], listing_type: 'ummah', offers: [], needs: [] }}
+        provider={{
+          ...mockProviders[0],
+          listing_type: 'ummah',
+          verification_method: 'online',
+          offers: [],
+          needs: [],
+        }}
       />,
     );
 
@@ -522,7 +529,7 @@ describe('ProviderDetailSections', () => {
         badges={[]}
         isLoadingBadges={false}
         locations={locations}
-        provider={{ ...mockProviders[0], offers: [], needs: [] }}
+        provider={{ ...mockProviders[0], verification_method: 'online', offers: [], needs: [] }}
       />,
     );
 

@@ -17,7 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { TrustBadgesSection } from '@/features/providers/components/TrustBadgesSection';
 import { ExpandSection } from '@/components/ui/ExpandSection';
-import { ProofTierCard } from '@/features/providers/components/ProofTierCard';
+import { ProofTierCard, computeSealTier } from '@/features/providers/components/ProofTierCard';
 import { PrayerRug } from '@/components/icons/PrayerRug';
 import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -134,7 +134,17 @@ function renderOpeningHours(
   );
 }
 
-function DetailListItem({ label, icon, onClick, isSelected }: { label: string; icon: ReactNode; onClick?: () => void; isSelected?: boolean }) {
+function DetailListItem({
+  label,
+  icon,
+  onClick,
+  isSelected,
+}: {
+  label: string;
+  icon: ReactNode;
+  onClick?: () => void;
+  isSelected?: boolean;
+}) {
   const Component = onClick ? 'button' : 'div';
   const className = `flex w-full items-center gap-3 rounded-xl p-2${onClick ? ' cursor-pointer' : ''}`;
   return (
@@ -143,7 +153,9 @@ function DetailListItem({ label, icon, onClick, isSelected }: { label: string; i
       type={Component === 'button' ? 'button' : undefined}
       onClick={onClick}
     >
-      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isSelected ? 'bg-primary text-white' : 'bg-[#E3F2EF] text-primary'}`}>
+      <span
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isSelected ? 'bg-primary text-white' : 'bg-[#E3F2EF] text-primary'}`}
+      >
         {icon}
       </span>
       <span className="text-base font-semibold text-content-heading">{label}</span>
@@ -168,7 +180,13 @@ export function ProviderDetailSections({
     isLoading: isLoadingNearbyProviders,
     isFetching: isFetchingNearbyProviders,
   } = useQuery({
-    queryKey: ['provider-nearby-food', provider.provider_id, provider.location_latitude, provider.location_longitude, provider.address_city],
+    queryKey: [
+      'provider-nearby-food',
+      provider.provider_id,
+      provider.location_latitude,
+      provider.location_longitude,
+      provider.address_city,
+    ],
     queryFn: async () => {
       type NearbyResult = { provider_id: string; provider_name: string; distance_km?: number };
 
@@ -212,22 +230,24 @@ export function ProviderDetailSections({
 
   return (
     <div className="flex flex-col gap-4 self-stretch">
-      <ExpandSection
-        isOpen={openSection === 'halal'}
-        title={t('providerDetail.proofTier.sectionTitle')}
-        onToggle={(next) => setOpenSection(next ? 'halal' : null)}
-      >
-        <div className="space-y-3 pt-3">
-          <ProofTierCard
-            hasCertificate={provider.has_certificate}
-            listingType={provider.listing_type}
-            noAlcohol={provider.no_alcohol}
-            noGambling={provider.no_gambling}
-            noPork={provider.no_pork}
-            verificationMethod={provider.verification_method}
-          />
-        </div>
-      </ExpandSection>
+      {computeSealTier(provider.verification_method, provider.has_certificate) && (
+        <ExpandSection
+          isOpen={openSection === 'halal'}
+          title={t('providerDetail.proofTier.sectionTitle')}
+          onToggle={(next) => setOpenSection(next ? 'halal' : null)}
+        >
+          <div className="space-y-3 pt-3">
+            <ProofTierCard
+              hasCertificate={provider.has_certificate}
+              listingType={provider.listing_type}
+              noAlcohol={provider.no_alcohol}
+              noGambling={provider.no_gambling}
+              noPork={provider.no_pork}
+              verificationMethod={provider.verification_method}
+            />
+          </div>
+        </ExpandSection>
+      )}
 
       <ExpandSection
         isOpen={openSection === 'values'}
@@ -252,7 +272,11 @@ export function ProviderDetailSections({
       {/* Menu (food) — Offers (store) */}
       <ExpandSection
         isOpen={openSection === 'menu-offers'}
-        title={t(provider.listing_type === 'store' ? 'providerDetail.sections.offers' : 'providerDetail.sections.menu')}
+        title={t(
+          provider.listing_type === 'store'
+            ? 'providerDetail.sections.offers'
+            : 'providerDetail.sections.menu',
+        )}
         onToggle={(next) => setOpenSection(next ? 'menu-offers' : null)}
       >
         <div className="space-y-2 pt-3">
@@ -270,12 +294,26 @@ export function ProviderDetailSections({
               return provider.offers.map((offer, index) => (
                 <DetailListItem
                   key={`${offer.name_de}-${index}`}
-                  icon={provider.listing_type === 'store' ? <Tag aria-hidden="true" className="h-6 w-6" /> : <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />}
+                  icon={
+                    provider.listing_type === 'store' ? (
+                      <Tag aria-hidden="true" className="h-6 w-6" />
+                    ) : (
+                      <UtensilsCrossed aria-hidden="true" className="h-6 w-6" />
+                    )
+                  }
                   label={offer.name_de}
                 />
               ));
             }
-            return <p className="text-sm text-[#7a7a7a]">{t(provider.listing_type === 'store' ? 'providerDetail.empty.noOffers' : 'providerDetail.empty.noMenu')}</p>;
+            return (
+              <p className="text-sm text-[#7a7a7a]">
+                {t(
+                  provider.listing_type === 'store'
+                    ? 'providerDetail.empty.noOffers'
+                    : 'providerDetail.empty.noMenu',
+                )}
+              </p>
+            );
           })()}
         </div>
       </ExpandSection>
@@ -300,8 +338,13 @@ export function ProviderDetailSections({
                 <DetailListItem
                   key={loc.location_id}
                   icon={<Store aria-hidden="true" className="h-6 w-6" />}
-                  isSelected={loc.location_id === selectedLocationId || (!selectedLocationId && loc.is_primary)}
-                  label={loc.location_name || loc.address_city || t('providerDetail.locationFallback')}
+                  isSelected={
+                    loc.location_id === selectedLocationId ||
+                    (!selectedLocationId && loc.is_primary)
+                  }
+                  label={
+                    loc.location_name || loc.address_city || t('providerDetail.locationFallback')
+                  }
                   onClick={() => onLocationSelect?.(loc.location_id)}
                 />
               ))}

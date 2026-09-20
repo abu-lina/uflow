@@ -10,6 +10,8 @@ import { getFirstImageUrl } from '@/utils/imageUtils';
 import { supabase } from '@/lib/supabase/client';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 
 export default function EditSocialPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: providerId } = use(params);
@@ -32,7 +34,7 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
         setIsLoading(false);
       }
     }
-    
+
     void fetchCommunityServices();
   }, []);
 
@@ -52,7 +54,9 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
           .eq('initiating_provider_id', providerId);
 
         if (!error && data) {
-          const serviceIds = data.map((rel: { engaged_provider_id: string }) => rel.engaged_provider_id);
+          const serviceIds = data.map(
+            (rel: { engaged_provider_id: string }) => rel.engaged_provider_id,
+          );
           setSelectedServiceIds(serviceIds);
         }
       } catch (error) {
@@ -64,15 +68,15 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
   }, [providerId]);
 
   const filteredServices = communityServices.filter((service) =>
-    service.community_service_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    service.community_service_name?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const toggleService = (serviceId: string) => {
-    setSelectedServiceIds(prev => {
+    setSelectedServiceIds((prev) => {
       const newSelection = prev.includes(serviceId)
-        ? prev.filter(id => id !== serviceId)
+        ? prev.filter((id) => id !== serviceId)
         : [...prev, serviceId];
-      
+
       localStorage.setItem(`admin_edit_social_${providerId}`, JSON.stringify(newSelection));
       return newSelection;
     });
@@ -83,26 +87,18 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
   };
 
   return (
-    <div className="flex h-screen-fix flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      <header className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)]">
-        <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">
-          <button
-            aria-label={t('editProvider.back')}
-            className="flex items-center justify-center w-8 h-8 -ml-1"
-            onClick={() => router.back()}
-          >
-            <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
-          </button>
-          <h1 className="text-xl font-semibold text-content-heading">{t('editProvider.editSocial.title')}</h1>
-        </div>
-      </header>
-
-      <div className="h-[calc(env(safe-area-inset-top)+24px+40px+24px)]" />
+    <div className="h-screen-fix flex flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+      <PageHeader
+        title={t('editProvider.editSocial.title')}
+        variant="back-and-title"
+        onBack={() => router.back()}
+      />
+      <HeaderSpacer />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-[393px] mx-auto px-4 pt-4 pb-24">
+        <div className="mx-auto w-full max-w-[393px] px-4 pb-24 pt-4">
           <div className="mb-4 px-3">
-            <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left">
+            <p className="text-left text-base font-normal leading-[19px] text-[#7A7A7A]">
               {t('editProvider.editSocial.description')}
             </p>
           </div>
@@ -131,8 +127,10 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
             ) : (
               filteredServices.map((service) => {
                 const isSelected = selectedServiceIds.includes(service.community_service_id);
-                const categoryName = service.category 
-                  ? (language === 'en' ? (service.category.name_en || service.category.name_de || '') : (service.category.name_de || service.category.name_en || ''))
+                const categoryName = service.category
+                  ? language === 'en'
+                    ? service.category.name_en || service.category.name_de || ''
+                    : service.category.name_de || service.category.name_en || ''
                   : '';
                 return (
                   <SelectableCard
@@ -153,7 +151,13 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
 
       <FooterAction
         actionButton={{
-          label: selectedServiceIds.length > 0 ? t('editProvider.editSocial.selected').replace('{{count}}', selectedServiceIds.length.toString()) : t('editProvider.editSocial.save'),
+          label:
+            selectedServiceIds.length > 0
+              ? t('editProvider.editSocial.selected').replace(
+                  '{{count}}',
+                  selectedServiceIds.length.toString(),
+                )
+              : t('editProvider.editSocial.save'),
           icon: 'lucide:check',
           onClick: handleSave,
           variant: 'primary',
