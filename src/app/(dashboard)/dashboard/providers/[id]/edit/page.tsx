@@ -10,6 +10,7 @@ import {
   type ProviderEditFormData,
 } from '@/features/providers/pages/ProviderEditForm';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { RejectModal } from '@/features/admin/components/RejectModal';
 import { DeleteProviderModal } from '@/features/admin/components/DeleteProviderModal';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -336,7 +337,8 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     return (
       <div className="h-screen-fix flex flex-col">
         <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/providers" />
-        <main className="flex flex-1 items-center justify-center pt-[calc(env(safe-area-inset-top)+24px+40px)] sm:pt-[calc(env(safe-area-inset-top)+80px)]">
+        <HeaderSpacer />
+        <main className="flex flex-1 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </main>
       </div>
@@ -347,7 +349,8 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     return (
       <div className="h-screen-fix flex flex-col">
         <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/providers" />
-        <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 pt-[calc(env(safe-area-inset-top)+24px+40px)] sm:pt-[calc(env(safe-area-inset-top)+80px)]">
+        <HeaderSpacer />
+        <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
           <p className="text-center text-gray-500">{error || 'Provider not found'}</p>
           <button
             className="rounded-lg bg-primary px-4 py-2 text-white"
@@ -363,7 +366,8 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
   return (
     <div className="h-screen-fix flex flex-col">
       <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={`/providers`} />
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-[calc(env(safe-area-inset-top)+24px+40px)] sm:pt-[calc(env(safe-area-inset-top)+80px)]">
+      <HeaderSpacer />
+      <main className="flex flex-1 flex-col px-6 pb-4">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
           <ProviderEditForm
             enableLocalStorage={true}
