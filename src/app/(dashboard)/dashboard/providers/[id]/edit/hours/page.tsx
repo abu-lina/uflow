@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { FooterAction } from '@/components/ui/FooterAction';
 import type { OpeningHours, OpeningHoursDay } from '@/types/openingHours';
 
@@ -64,8 +65,11 @@ export default function EditHoursPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="flex h-screen-fix flex-col">
-      <PageHeader title="Opening Hours" variant="back-and-title" onBack={() => router.back()} />
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-24 gap-4 overflow-y-auto">
+      <div className="md:hidden">
+        <PageHeader title="Opening Hours" variant="back-and-title" onBack={() => router.back()} />
+        <HeaderSpacer />
+      </div>
+      <main className="flex flex-1 flex-col px-6 pb-4 pt-4 gap-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
         <div className="flex flex-col gap-2">
           {DAYS.map((day, i) => {
             const dayHours = hours[day] ?? null;

@@ -185,8 +185,10 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
 
   return (
     <ScrollablePageLayout>
-      <PageHeader title="Halal Check" variant="back-and-title" onBack={() => router.back()} />
-      <PageContent hasFooter maxWidth="full" paddingX="px-0">
+      <div className="md:hidden">
+        <PageHeader title="Halal Check" variant="back-and-title" onBack={() => router.back()} />
+      </div>
+      <PageContent hasFooter className="md:!pt-[var(--desktop-header-height,153px)]" maxWidth="full" paddingX="px-0">
         <div className="pb-mobile-nav-md flex flex-col gap-6 px-6">
           {/* Section 1: Attestation Questions */}
           <div className="flex flex-col gap-4">

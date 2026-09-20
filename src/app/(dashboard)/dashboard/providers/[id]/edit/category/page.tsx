@@ -117,7 +117,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
   return (
     <div className="flex h-screen-fix flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       <header
-        className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out ${
+        className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out md:hidden ${
           isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         }`}
       >
@@ -134,7 +134,7 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-[393px] mx-auto px-4 pt-[calc(env(safe-area-inset-top)+24px+40px+24px)] pb-safe-bottom">
+        <div className="w-full max-w-[393px] mx-auto px-4 pt-[calc(env(safe-area-inset-top)+24px+40px+24px)] md:pt-[var(--desktop-header-height,153px)] pb-safe-bottom">
           <div className="mb-4">
             <div className="relative">
               <Icon

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { FooterAction } from '@/components/ui/FooterAction';
 import type { Location } from '@/types/location';
 
@@ -109,8 +110,11 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex h-screen-fix flex-col">
-      <PageHeader title="Locations" variant="back-and-title" onBack={() => router.back()} />
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-24 gap-4 overflow-y-auto">
+      <div className="md:hidden">
+        <PageHeader title="Locations" variant="back-and-title" onBack={() => router.back()} />
+        <HeaderSpacer />
+      </div>
+      <main className="flex flex-1 flex-col px-6 pb-4 pt-4 gap-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
         <div className="flex flex-col gap-3">
           {locations.map((loc, i) => (
             <div key={loc.location_id} className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm gap-2">

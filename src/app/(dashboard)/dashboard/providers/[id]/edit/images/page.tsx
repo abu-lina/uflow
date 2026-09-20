@@ -152,10 +152,12 @@ export default function EditImagesPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="flex h-screen-fix flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      <PageHeader title={t('editProvider.editImages.title')} variant="back-and-title" onBack={() => router.back()} />
-      <HeaderSpacer />
+      <div className="md:hidden">
+        <PageHeader title={t('editProvider.editImages.title')} variant="back-and-title" onBack={() => router.back()} />
+        <HeaderSpacer />
+      </div>
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
         <div className="w-full px-safe-24 pt-8 pb-24">
           <div className="flex w-full flex-col gap-4">
             <div className="relative">
