@@ -52,7 +52,7 @@ describe('computeSealTier', () => {
 describe('ProofTierCard', () => {
   it('[TDD gate] renders combined seal image', () => {
     const { container } = render(
-      <ProofTierCard verificationMethod="online" hasCertificate={false} />,
+      <ProofTierCard verificationMethod="online" hasCertificate={false} reviewStatus="approved" />,
     );
     const sealGroup = container.querySelector('[role="group"]');
     expect(sealGroup).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe('ProofTierCard', () => {
   });
 
   it('[TDD gate] active seal carries alt text with tier meaning from translation key', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={false} />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={false} reviewStatus="approved" />);
     // Bronze tier is active — alt text uses translation key for bronze
     expect(screen.getByAltText('providerDetail.proofTier.sealAltBronze')).toBeInTheDocument();
   });
@@ -76,7 +76,7 @@ describe('ProofTierCard', () => {
   });
 
   it('[TDD gate] renders silver seal as active for onsite/no-cert', () => {
-    render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} />);
+    render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} reviewStatus="approved" />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltSilver')).toBeInTheDocument();
     expect(
       screen.getByText('providerDetail.proofTier.checkMenuReviewedOnsite'),
@@ -91,24 +91,24 @@ describe('ProofTierCard', () => {
   });
 
   it('[TDD gate] renders gold seal as active for any hasCertificate=true', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={true} />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={true} reviewStatus="approved" />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
   });
 
   it('[TDD gate] renders summary sentence translation key for current tier', () => {
     const { rerender } = render(
-      <ProofTierCard verificationMethod="online" hasCertificate={false} />,
+      <ProofTierCard verificationMethod="online" hasCertificate={false} reviewStatus="approved" />,
     );
     expect(screen.getByText('providerDetail.proofTier.summaryBronze')).toBeInTheDocument();
 
-    rerender(<ProofTierCard verificationMethod="onsite" hasCertificate={false} />);
+    rerender(<ProofTierCard verificationMethod="onsite" hasCertificate={false} reviewStatus="approved" />);
     expect(screen.getByText('providerDetail.proofTier.summarySilver')).toBeInTheDocument();
 
-    rerender(<ProofTierCard verificationMethod="onsite" hasCertificate={true} />);
+    rerender(<ProofTierCard verificationMethod="onsite" hasCertificate={true} reviewStatus="approved" />);
     expect(screen.getByText('providerDetail.proofTier.summaryGoldCert')).toBeInTheDocument();
 
-    rerender(<ProofTierCard verificationMethod="online" hasCertificate={true} />);
+    rerender(<ProofTierCard verificationMethod="online" hasCertificate={true} reviewStatus="approved" />);
     expect(screen.getByText('providerDetail.proofTier.summaryGoldCertOnly')).toBeInTheDocument();
   });
 
@@ -137,6 +137,7 @@ describe('ProofTierCard', () => {
         noAlcohol={true}
         noGambling={false}
         noPork={false}
+        reviewStatus="approved"
         verificationMethod="onsite"
       />,
     );
@@ -165,6 +166,7 @@ describe('ProofTierCard', () => {
         noAlcohol={false}
         noGambling={false}
         noPork={false}
+        reviewStatus="approved"
         verificationMethod="onsite"
       />,
     );
@@ -179,6 +181,7 @@ describe('ProofTierCard', () => {
         noAlcohol={true}
         noGambling={false}
         noPork={false}
+        reviewStatus="approved"
         verificationMethod="onsite"
       />,
     );
@@ -186,7 +189,7 @@ describe('ProofTierCard', () => {
   });
 
   it('[TDD gate] retains checklist and expandable explanation', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={false} />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={false} reviewStatus="approved" />);
     expect(
       screen.getByText((v) => v.startsWith('providerDetail.proofTier.whatWeVerified')),
     ).toBeInTheDocument();

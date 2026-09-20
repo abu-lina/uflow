@@ -32,7 +32,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   // Regression: certOnFile bug
   // ---------------------------------------------------------------------------
   it('[QA] certificate checklist item renders when hasCertificate is true (regression: certOnFile)', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={true} />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={true} reviewStatus="approved" />);
     expect(
       screen.getByText('providerDetail.proofTier.checkCertificateOnFile'),
     ).toBeInTheDocument();
@@ -56,21 +56,21 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   // Progressive levels: 4 verification states
   // ---------------------------------------------------------------------------
   it('[QA] level 1 — online without certificate shows bronze seal + menu reviewed', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={false} />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={false} reviewStatus="approved" />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltBronze')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.summaryBronze')).toBeInTheDocument();
   });
 
   it('[QA] level 2 — online with certificate shows gold seal + certificate item', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={true} />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={true} reviewStatus="approved" />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.summaryGoldCertOnly')).toBeInTheDocument();
   });
 
   it('[QA] level 3 — onsite without certificate shows silver seal + onsite items', () => {
-    render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} />);
+    render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} reviewStatus="approved" />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltSilver')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewedOnsite')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkSellsProcessNoAlcohol')).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   });
 
   it('[QA] level 4 — onsite with certificate shows gold seal + all checklist items', () => {
-    render(<ProofTierCard verificationMethod="onsite" hasCertificate={true} />);
+    render(<ProofTierCard verificationMethod="onsite" hasCertificate={true} reviewStatus="approved" />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
@@ -100,6 +100,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
         noAlcohol={true}
         noPork={true}
         noGambling={true}
+        reviewStatus="approved"
         verificationMethod="onsite"
       />,
     );
@@ -117,6 +118,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
         noAlcohol={false}
         noPork={true}
         noGambling={false}
+        reviewStatus="approved"
         verificationMethod="onsite"
       />,
     );
@@ -136,6 +138,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
         noAlcohol={false}
         noPork={false}
         noGambling={true}
+        reviewStatus="approved"
         verificationMethod="onsite"
       />,
     );
@@ -156,6 +159,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
         noAlcohol={false}
         noPork={false}
         noGambling={true}
+        reviewStatus="approved"
         verificationMethod="onsite"
       />,
     );
@@ -170,6 +174,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
         noAlcohol={true}
         noPork={true}
         noGambling={true}
+        reviewStatus="approved"
         verificationMethod="onsite"
       />,
     );
@@ -177,7 +182,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   });
 
   it('[QA] whatWeVerified checklist is always present', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={false} />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={false} reviewStatus="approved" />);
     expect(screen.getByText(v => v.startsWith('providerDetail.proofTier.whatWeVerified'))).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
   });

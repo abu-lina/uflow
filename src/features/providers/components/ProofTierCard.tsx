@@ -36,6 +36,7 @@ interface ProofTierCardProps {
   noAlcohol?: Provider['no_alcohol'];
   noPork?: Provider['no_pork'];
   noGambling?: Provider['no_gambling'];
+  reviewStatus?: Provider['review_status'];
 }
 
 // ---------------------------------------------------------------------------
@@ -210,6 +211,7 @@ export function ProofTierCard({
   noAlcohol,
   noPork,
   noGambling,
+  reviewStatus,
 }: ProofTierCardProps) {
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -218,6 +220,20 @@ export function ProofTierCard({
 
   // No tier means no verification data — don't render the card at all
   if (!tier) return null;
+
+  // Don't show the seal until an admin has approved the provider
+  if (reviewStatus !== 'approved') {
+    return (
+      <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <HugeHalalIcon aria-hidden className="h-6 w-6 flex-shrink-0 text-amber-600" />
+          <p className="text-sm text-amber-700">
+            {t('providerDetail.proofTier.pendingReview')}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const onsiteVerified = (verificationMethod ?? 'online') === 'onsite';
 

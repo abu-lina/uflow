@@ -243,6 +243,7 @@ export function ProviderDetailSections({
               noAlcohol={provider.no_alcohol}
               noGambling={provider.no_gambling}
               noPork={provider.no_pork}
+              reviewStatus={provider.review_status}
               verificationMethod={provider.verification_method}
             />
           </div>

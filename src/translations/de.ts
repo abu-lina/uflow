@@ -1132,6 +1132,7 @@ export const de = {
       whatIsThis: 'Wie prüfen wir?',
       explanation:
         'Jeder Eintrag auf Ummah Flow erfüllt unsere Halal-Anforderungen. Die Vertrauensstufe zeigt, wie gründlich wir das bestätigt haben.',
+      pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
     trustBadges: {
       muslimOwned: 'Muslim',

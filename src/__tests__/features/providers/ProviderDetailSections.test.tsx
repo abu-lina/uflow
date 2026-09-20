@@ -184,6 +184,7 @@ describe('ProviderDetailSections', () => {
           ...mockProviders[0],
           listing_type: 'ummah',
           verification_method: 'online',
+          review_status: 'approved',
           offers: [],
           needs: [],
         }}
@@ -317,6 +318,7 @@ describe('ProviderDetailSections', () => {
           listing_type: 'food',
           verification_method: 'online',
           has_certificate: false,
+          review_status: 'approved',
           no_alcohol: false,
           no_pork: false,
           no_gambling: false,
