@@ -32,10 +32,10 @@ export const providerReviewUpdateSchema = z.object({
 
 const menuItemSchema = z.object({
   name_de: z.string().min(1),
-  name_en: z.string().optional(),
-  description_de: z.string().optional(),
-  price_cents: z.number().int().min(0),
-  category: z.string().optional(),
+  name_en: z.string().nullable().optional(),
+  description_de: z.string().nullable().optional(),
+  price_cents: z.number().int().min(0).nullable().optional(),
+  category: z.string().nullable().optional(),
   sort_order: z.number().int().min(0),
   is_available: z.boolean(),
 });
