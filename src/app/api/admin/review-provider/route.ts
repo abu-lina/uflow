@@ -9,13 +9,13 @@ import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
  * PATCH /api/admin/review-provider
- * 
+ *
  * Update provider review status and feedback.
  * Only admins and moderators can access this endpoint.
- * 
+ *
  * Plan 059/062: Rejection requires a non-empty feedback reason.
  * Approval and needs_revision do not require feedback.
- * 
+ *
  * Request body:
  * {
  *   providerId: string (required)
@@ -30,47 +30,43 @@ export async function PATCH(request: Request) {
 
     // Check authentication
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check authorization - only admin and moderator can review providers
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to review-provider API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to review-provider API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // Rate limiting - 20 reviews per hour, 5 per minute per user
     const identifier = getClientIdentifier(request, user.id);
-    const isRateLimited = !rateLimiters.adminReview.perHour(identifier) || 
-                          !rateLimiters.adminReview.perMinute(identifier);
+    const isRateLimited =
+      !rateLimiters.adminReview.perHour(identifier) ||
+      !rateLimiters.adminReview.perMinute(identifier);
     if (isRateLimited) {
-      logger.warn(
-        'Rate limit exceeded for review-provider API',
-        { userId: user.id, identifier, ...getRequestMetadata(request) }
-      );
+      logger.warn('Rate limit exceeded for review-provider API', {
+        userId: user.id,
+        identifier,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     // Check request size (max 1MB)
     const contentLength = request.headers.get('content-length');
     if (contentLength && parseInt(contentLength, 10) > 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'Request too large' },
-        { status: 413 }
-      );
+      return NextResponse.json({ error: 'Request too large' }, { status: 413 });
     }
 
     // Parse and validate request body
@@ -88,13 +84,29 @@ export async function PATCH(request: Request) {
             reviewStatus: typeof body?.reviewStatus === 'string' ? body.reviewStatus : '[invalid]',
             error: validationError.message,
           },
-          { ...getRequestMetadata(request), userId: user.id }
+          { ...getRequestMetadata(request), userId: user.id },
         );
       }
       return NextResponse.json(
-        { error: 'Invalid request body', details: validationError instanceof Error ? validationError.message : 'Validation failed' },
-        { status: 400 }
+        {
+          error: 'Invalid request body',
+          details: validationError instanceof Error ? validationError.message : 'Validation failed',
+        },
+        { status: 400 },
       );
+    }
+
+    // Halal attestation gate: block approval when attestations are incomplete
+    if (validatedData.reviewStatus === 'approved') {
+      const attestation = await checkHalalAttestation(validatedData.providerId);
+      if (!attestation.allAttested) {
+        return NextResponse.json(
+          {
+            error: `Cannot approve: halal attestation incomplete. Missing: ${attestation.missing.join(', ')}`,
+          },
+          { status: 422 },
+        );
+      }
     }
 
     // Update provider review using service layer
@@ -103,7 +115,7 @@ export async function PATCH(request: Request) {
       validatedData.providerId,
       validatedData.reviewStatus,
       validatedData.reviewFeedback ?? null,
-      validatedData.expectedUpdatedAt
+      validatedData.expectedUpdatedAt,
     );
 
     // Log admin action for audit
@@ -120,7 +132,7 @@ export async function PATCH(request: Request) {
       {
         ipAddress: getClientIp(request),
         userAgent: getUserAgent(request),
-      }
+      },
     );
 
     return NextResponse.json({
@@ -136,7 +148,7 @@ export async function PATCH(request: Request) {
     if (error instanceof Error && error.message.startsWith('CONFLICT:')) {
       return NextResponse.json(
         { error: 'This provider was modified by another reviewer. Please refresh and try again.' },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -154,17 +166,17 @@ export async function PATCH(request: Request) {
       'Error in review-provider API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request), userId }
+      { ...getRequestMetadata(request), userId },
     );
 
     // Sanitize error message in production
-    const errorMessage = process.env.NODE_ENV === 'production'
-      ? 'Failed to review provider'
-      : error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      process.env.NODE_ENV === 'production'
+        ? 'Failed to review provider'
+        : error instanceof Error
+          ? error.message
+          : 'Unknown error';
 
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
