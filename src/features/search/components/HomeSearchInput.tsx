@@ -28,7 +28,7 @@ export function HomeSearchInput({ activeSection, className = '' }: HomeSearchInp
   const handleSubmit = () => {
     const trimmed = query.trim();
     if (trimmed) {
-      router.push(`/providers?q=${encodeURIComponent(trimmed)}&section=${activeSection}`);
+      router.push(`/food?q=${encodeURIComponent(trimmed)}&section=${activeSection}`);
     } else {
       router.push(`/search?section=${activeSection}`);
     }
@@ -50,7 +50,7 @@ export function HomeSearchInput({ activeSection, className = '' }: HomeSearchInp
     >
       <Search aria-hidden="true" className="h-5 w-5 shrink-0 text-gray-400" />
       <input
-        className="flex-1 min-w-0 appearance-none border-0 bg-transparent text-sm text-gray-800 shadow-none outline-none ring-0 placeholder:text-gray-400 focus:border-0 focus:outline-none focus:ring-0"
+        className="min-w-0 flex-1 appearance-none border-0 bg-transparent text-sm text-gray-800 shadow-none outline-none ring-0 placeholder:text-gray-400 focus:border-0 focus:outline-none focus:ring-0"
         placeholder={t('home.searchPlaceholder')}
         type="search"
         value={query}

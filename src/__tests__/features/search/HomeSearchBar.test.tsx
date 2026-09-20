@@ -5,7 +5,7 @@
  * Tests that the HomeSearchBar:
  * - Renders an inline text input (not a fake navigation affordance)
  * - Shows a sliders button that navigates to /search?section=...
- * - Submits empty query to /search and typed query to /providers
+ * - Submits empty query to /search and typed query to /food
  * - Has correct ARIA attributes
  */
 
@@ -37,9 +37,12 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'suchen.nearMe.chipLabel': 'Near me',
         'suchen.openNow.chipLabel': 'Open now',
         'suchen.nearMe.permissionDenied': 'Standort nicht verfügbar',
-        'suchen.nearMe.permissionDeniedHintIos': 'Standort gesperrt. Öffne Einstellungen → Datenschutz → Ortungsdienste.',
-        'suchen.nearMe.permissionDeniedHintAndroid': 'Standort gesperrt. Erlaube den Zugriff in den Browser-Einstellungen.',
-        'suchen.nearMe.permissionDeniedHintFallback': 'Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.',
+        'suchen.nearMe.permissionDeniedHintIos':
+          'Standort gesperrt. Öffne Einstellungen → Datenschutz → Ortungsdienste.',
+        'suchen.nearMe.permissionDeniedHintAndroid':
+          'Standort gesperrt. Erlaube den Zugriff in den Browser-Einstellungen.',
+        'suchen.nearMe.permissionDeniedHintFallback':
+          'Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.',
       };
       return map[key] ?? key;
     },
@@ -103,20 +106,20 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     expect(mockPush).toHaveBeenCalledWith('/search?section=food');
   });
 
-  it('pressing Enter with a query navigates to /providers with q param', () => {
+  it('pressing Enter with a query navigates to /food with q param', () => {
     render(<HomeSearchBar activeSection="food" />);
     const input = screen.getByRole('searchbox');
     fireEvent.change(input, { target: { value: 'shawarma' } });
     fireEvent.keyDown(input, { key: 'Enter' });
-    expect(mockPush).toHaveBeenCalledWith('/providers?q=shawarma&section=food');
+    expect(mockPush).toHaveBeenCalledWith('/food?q=shawarma&section=food');
   });
 
-  it('encodes query values when navigating to /providers with q', () => {
+  it('encodes query values when navigating to /food with q', () => {
     render(<HomeSearchBar activeSection="food" />);
     const input = screen.getByRole('searchbox');
     fireEvent.change(input, { target: { value: 'halal burger' } });
     fireEvent.keyDown(input, { key: 'Enter' });
-    expect(mockPush).toHaveBeenCalledWith('/providers?q=halal%20burger&section=food');
+    expect(mockPush).toHaveBeenCalledWith('/food?q=halal%20burger&section=food');
   });
 
   it('does not navigate on other key presses', () => {
@@ -150,27 +153,33 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     expect(nearMeButton.className).toContain('bg-primary text-white');
 
     rerender(<HomeSearchBar activeSection="food" geoStatus="idle" />);
-    expect(screen.getByRole('button', { name: /near me/i }).className).not.toContain('bg-primary text-white');
+    expect(screen.getByRole('button', { name: /near me/i }).className).not.toContain(
+      'bg-primary text-white',
+    );
 
     rerender(<HomeSearchBar activeSection="food" geoStatus="denied" />);
-    expect(screen.getByRole('button', { name: /near me/i }).className).not.toContain('bg-primary text-white');
+    expect(screen.getByRole('button', { name: /near me/i }).className).not.toContain(
+      'bg-primary text-white',
+    );
 
     rerender(<HomeSearchBar activeSection="food" geoStatus="timeout" />);
-    expect(screen.getByRole('button', { name: /near me/i }).className).not.toContain('bg-primary text-white');
+    expect(screen.getByRole('button', { name: /near me/i }).className).not.toContain(
+      'bg-primary text-white',
+    );
   });
 
   it('[pre-fix FAILS / post-fix PASSES] near-me toggle callback fires on click', () => {
     const onToggleNearMe = vi.fn();
-    render(
-      <HomeSearchBar activeSection="food" geoStatus="idle" onToggleNearMe={onToggleNearMe} />,
-    );
+    render(<HomeSearchBar activeSection="food" geoStatus="idle" onToggleNearMe={onToggleNearMe} />);
 
     fireEvent.click(screen.getByRole('button', { name: /near me/i }));
     expect(onToggleNearMe).toHaveBeenCalledTimes(1);
   });
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows iOS-specific recovery hint', () => {
-    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
+    setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+    );
     render(<HomeSearchBar activeSection="food" geoStatus="denied" nearMeActive />);
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
@@ -180,7 +189,9 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
   });
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows Android-specific recovery hint', () => {
-    setUserAgent('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36');
+    setUserAgent(
+      'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+    );
     render(<HomeSearchBar activeSection="food" geoStatus="denied" nearMeActive />);
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
@@ -190,12 +201,16 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
   });
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows fallback recovery hint', () => {
-    setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+    setUserAgent(
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    );
     render(<HomeSearchBar activeSection="food" geoStatus="denied" nearMeActive />);
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
     expect(
-      screen.getByText('Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.'),
+      screen.getByText(
+        'Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.',
+      ),
     ).toBeInTheDocument();
   });
 

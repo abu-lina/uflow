@@ -63,7 +63,7 @@ export function ExploreSection() {
   if (loading) {
     return (
       <section className="flex min-h-[50vh] w-full items-center justify-center">
-        <div className="text-uFlowText font-inter-tight text-xl">Loading...</div>
+        <div className="font-inter-tight text-xl text-uFlowText">Loading...</div>
       </section>
     );
   }
@@ -71,7 +71,7 @@ export function ExploreSection() {
   if (error) {
     return (
       <section className="flex min-h-[50vh] w-full items-center justify-center">
-        <div className="text-uFlowText font-inter-tight text-xl text-red-500">{error}</div>
+        <div className="font-inter-tight text-xl text-red-500 text-uFlowText">{error}</div>
       </section>
     );
   }
@@ -79,13 +79,13 @@ export function ExploreSection() {
   return (
     <section
       aria-labelledby="explore-heading"
-      className="flex min-h-screen md:h-screen w-full flex-col items-center justify-center gap-12 px-4 py-8 md:pt-20 md:pb-8 sm:gap-20 sm:px-6 lg:px-8"
+      className="flex min-h-screen w-full flex-col items-center justify-center gap-12 px-4 py-8 sm:gap-20 sm:px-6 md:h-screen md:pb-8 md:pt-20 lg:px-8"
       id="explore"
     >
       <div className="flex w-full max-w-screen-xl flex-col items-center gap-6">
         <div className="flex w-full justify-center px-6 sm:px-8">
           <h2
-            className="text-uFlowText inline-block break-words text-center font-inter-tight text-2xl font-medium sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl"
+            className="inline-block break-words text-center font-inter-tight text-2xl font-medium text-uFlowText sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl"
             id="explore-heading"
           >
             Entdecke Angebote aus <span className="text-primary">deiner Ummah</span>
@@ -97,7 +97,7 @@ export function ExploreSection() {
         <Button
           className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
           variant="primary"
-          onClick={() => router.push('/providers')}
+          onClick={() => router.push('/food')}
         >
           Entdecke deine Ummah
         </Button>
@@ -117,28 +117,30 @@ export function ExploreSection() {
             width: `${(CARD_WIDTH + CARD_GAP) * filteredProviders.length * 3}px`,
           }}
         >
-          {[...filteredProviders, ...filteredProviders, ...filteredProviders].map((provider, idx) => {
-            const isVisible = idx < 6;
-            return (
-              <Link
-                key={`${provider.provider_id}-${idx}`}
-                aria-label="Zu den Providers"
-                className="mr-8 w-[288px] shrink-0"
-                href="/providers"
-                tabIndex={0}
-              >
-                <ProviderCard 
-                  {...provider} 
-                  className="w-full text-content" 
-                  hideWebsiteButton={true}
-                  isBookmarked={false}
-                  loading={isVisible ? 'eager' : 'lazy'}
-                  priority={isVisible && idx < 3}
-                  onBookmarkChange={() => {}}
-                />
-              </Link>
-            );
-          })}
+          {[...filteredProviders, ...filteredProviders, ...filteredProviders].map(
+            (provider, idx) => {
+              const isVisible = idx < 6;
+              return (
+                <Link
+                  key={`${provider.provider_id}-${idx}`}
+                  aria-label="Zu den Providers"
+                  className="mr-8 w-[288px] shrink-0"
+                  href="/food"
+                  tabIndex={0}
+                >
+                  <ProviderCard
+                    {...provider}
+                    className="w-full text-content"
+                    hideWebsiteButton={true}
+                    isBookmarked={false}
+                    loading={isVisible ? 'eager' : 'lazy'}
+                    priority={isVisible && idx < 3}
+                    onBookmarkChange={() => {}}
+                  />
+                </Link>
+              );
+            },
+          )}
         </div>
       </div>
     </section>

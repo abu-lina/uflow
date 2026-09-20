@@ -9,11 +9,7 @@
   "orientation": "portrait",
   "scope": "/",
   "prefer_related_applications": false,
-  "categories": [
-    "shopping",
-    "business",
-    "social"
-  ],
+  "categories": ["shopping", "business", "social"],
   "icons": [
     {
       "src": "/icons/icon-180x180.png",
@@ -63,7 +59,7 @@
       "name": "Anbieter durchsuchen",
       "short_name": "Durchsuchen",
       "description": "Alle Anbieter anzeigen",
-      "url": "/providers",
+      "url": "/food",
       "icons": [
         {
           "src": "/icons/icon-192x192.png",

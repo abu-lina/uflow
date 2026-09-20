@@ -405,6 +405,11 @@ const nextConfig = {
         destination: '/new-path',
         permanent: true,
       },
+      {
+        source: '/providers',
+        destination: '/food',
+        permanent: true,
+      },
     ];
   },
 

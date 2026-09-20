@@ -213,7 +213,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       ]);
 
       toast.success('Provider deleted successfully');
-      router.push('/providers');
+      router.push('/food');
     } catch {
       toast.error('Failed to delete provider');
       setDeleteModal((prev) => ({ ...prev, isLoading: false }));
@@ -230,11 +230,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     return (
       <div className="h-screen-fix flex flex-col">
         <div className="md:hidden">
-          <PageHeader
-            title={t('editProvider.title')}
-            variant="back-and-title"
-            onBack="/providers"
-          />
+          <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/food" />
           <HeaderSpacer />
         </div>
         <main className="flex flex-1 items-center justify-center md:pt-[var(--desktop-header-height,153px)]">
@@ -248,18 +244,14 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     return (
       <div className="h-screen-fix flex flex-col">
         <div className="md:hidden">
-          <PageHeader
-            title={t('editProvider.title')}
-            variant="back-and-title"
-            onBack="/providers"
-          />
+          <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/food" />
           <HeaderSpacer />
         </div>
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 md:pt-[var(--desktop-header-height,153px)]">
           <p className="text-center text-gray-500">{error || 'Provider not found'}</p>
           <button
             className="rounded-lg bg-primary px-4 py-2 text-white"
-            onClick={() => router.push('/providers')}
+            onClick={() => router.push('/food')}
           >
             {t('editProvider.back')}
           </button>
@@ -271,11 +263,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
   return (
     <div className="h-screen-fix flex flex-col">
       <div className="md:hidden">
-        <PageHeader
-          title={t('editProvider.title')}
-          variant="back-and-title"
-          onBack={`/providers`}
-        />
+        <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={`/food`} />
         <HeaderSpacer />
       </div>
       <main className="flex flex-1 flex-col overflow-y-auto px-6 pb-4 md:pt-[calc(var(--desktop-header-height,153px)+16px)]">

@@ -111,7 +111,6 @@ export function LandingHero() {
     }
   }, [showHeading, effectiveFirstVisit]);
 
-
   // For translation text with a mobile-only line break after the comma
   const translationParts = translationText.split(',');
 
@@ -120,7 +119,7 @@ export function LandingHero() {
 
   return (
     <section className="w-full px-6">
-      <div className="flex min-h-[600px] md:h-screen md:pt-20 flex-col items-stretch justify-center gap-8 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+      <div className="flex min-h-[600px] flex-col items-stretch justify-center gap-8 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)] md:h-screen md:pt-20">
         {/* 1. Top: Calligraphy + roman text */}
         <div className="mx-auto flex w-full max-w-[500px] flex-col gap-2 px-6">
           {effectiveFirstVisit ? (
@@ -183,7 +182,7 @@ export function LandingHero() {
                 initial={effectiveFirstVisit ? 'hidden' : 'visible'}
                 variants={fadeInVariants}
               >
-                <h1 
+                <h1
                   className="w-full text-center font-inter-tight text-4xl font-medium leading-tight text-content-heading sm:text-5xl sm:leading-[87px] md:text-6xl lg:text-[72px]"
                   dangerouslySetInnerHTML={{ __html: t('landing.hero.title') }}
                 />
@@ -207,7 +206,7 @@ export function LandingHero() {
                 <Button
                   className="h-10 px-4 text-base sm:h-12 sm:px-8 sm:text-lg"
                   variant="primary"
-                  onClick={() => router.push('/providers')}
+                  onClick={() => router.push('/food')}
                 >
                   {t('landing.hero.getStarted')}
                 </Button>

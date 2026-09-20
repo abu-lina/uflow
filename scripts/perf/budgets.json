@@ -38,7 +38,7 @@
     }
   },
   "routes": {
-    "/providers": {
+    "/food": {
       "budgetKey": "providers",
       "critical": true
     },
