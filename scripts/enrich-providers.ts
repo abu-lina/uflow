@@ -1580,7 +1580,7 @@ async function runWoltDirectEnrichment(
 
     const slug = provider.import_source_id as string;
     const woltUrl =
-      (provider.import_source_url as string) || `https://wolt.com/de/deu/venue/${slug}`;
+      (provider.import_source_url as string) || `https://wolt.com/de/deu/restaurant/${slug}`;
 
     try {
       const result = await fetchWoltRestaurant(woltUrl, APIFY_API_TOKEN);

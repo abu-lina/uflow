@@ -150,16 +150,20 @@ function normalizeApifySchedule(
 async function runActor(restaurantUrl: string, apiToken: string): Promise<string> {
   const url = `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs?token=${apiToken}&waitForFinish=60`;
 
+  // The Apify actor requires /restaurant/ in the URL, but Wolt uses /venue/
+  // interchangeably. Normalize to /restaurant/ to match the actor's input schema.
+  const normalizedUrl = restaurantUrl.replace(/\/venue\//, '/restaurant/');
+
   // Extract city from URL: https://wolt.com/{lang}/{country}/{city}/restaurant/{slug}
-  const cityMatch = restaurantUrl.match(/\/restaurant\/[^/]+$/);
-  const pathBeforeSlug = cityMatch ? restaurantUrl.slice(0, cityMatch.index) : '';
+  const cityMatch = normalizedUrl.match(/\/restaurant\/[^/]+$/);
+  const pathBeforeSlug = cityMatch ? normalizedUrl.slice(0, cityMatch.index) : '';
   const city = pathBeforeSlug.split('/').filter(Boolean).pop() ?? '';
 
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      restaurantUrl,
+      restaurantUrl: normalizedUrl,
       city,
       includeDetails: true,
       maxItems: 0, // 0 = unlimited

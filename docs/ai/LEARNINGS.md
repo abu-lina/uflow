@@ -366,3 +366,10 @@ Short log of learnings from plan → build → review → test loops. Append one
   - Orchestrator never invokes skills directly, never does investigation, never runs grilling
   - Skills define their own internals; the orchestrator just names them
 - **Task/PR**: Orchestrator skill refinement
+
+### 2026-09-19 — Import scripts must create child table rows, not just parent
+
+- **Context**: `discover-wolt.ts` imported providers with address/coordinate data on the `providers` table but never created a `locations` row. Post multi-location migration, the UI reads from `locations`, so Wolt-imported providers appeared completely empty (no address, no map, no hours). The Wolt enrichment pipeline couldn't fix them because it fuzzy-matches by name + city, and these providers had empty `address_city`. A backfill ran against 1265 providers and fixed 0 locations because there was no data to copy from providers to locations (the root problem was missing location rows, not missing data on the providers table).
+- **Learning**: When a migration moves data from a parent table to a child table (e.g., `providers.address_*` to `locations.address_*`), all import scripts that write to the parent must also write to the child table. The migration backfills existing rows once, but post-migration imports silently produce incomplete records. Verify all write paths, not just the read path. Also: when a provider already has a known source identifier (e.g., Wolt slug in `import_source_id`), the enrichment pipeline should use it directly instead of fuzzy-matching by name. The direct path is more reliable and avoids the city-dependency.
+- **Change to prevent repeat**: (1) After any migration that moves columns to a child table, audit all INSERT scripts for the parent table. (2) When building a backfill, verify the data actually exists where you expect it (the backfill assumed data on `providers` needed copying to `locations`, but the data didn't exist on either table). (3) For providers with known source identifiers, prefer direct API lookup over fuzzy matching.
+- **Task/PR**: PR #393 (fix/240-wolt-direct-slug-enrichment), Issue #392
