@@ -136,7 +136,7 @@ export function FooterAction({
             pointerEvents: 'auto',
           }}
         >
-          <div className={cn('flex w-full px-6 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+          <div className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
             <Button
               fullWidth
               aria-label={actionButton['aria-label'] || actionButton.label}
@@ -172,7 +172,7 @@ export function FooterAction({
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className={cn('flex w-full px-6 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <div className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           <Button
             fullWidth
             aria-label={actionButton['aria-label'] || actionButton.label}
@@ -209,7 +209,7 @@ export function FooterAction({
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className={cn('flex w-full gap-3.5 px-6 pt-4', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <div className={cn('flex w-full gap-3.5 px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           {/* Primary Action Button - Full width (flex-1), 48px height */}
           <Button
             aria-label={primaryButton['aria-label'] || primaryButton.label}

@@ -162,7 +162,7 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
         <PageHeader title="Values & Amenities" variant="back-and-title" onBack={() => router.back()} />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-28 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl flex flex-col gap-6">
         {groups.map(group => (
           <div key={group.title} className="flex flex-col gap-3">

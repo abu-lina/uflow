@@ -152,7 +152,7 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
       </main>
 
       <FooterAction
-        actionButton={{
+        primaryButton={{
           label:
             selectedServiceIds.length > 0
               ? t('editProvider.editSocial.selected').replace(
@@ -162,8 +162,12 @@ export default function EditSocialPage({ params }: { params: Promise<{ id: strin
               : t('editProvider.editSocial.save'),
           icon: 'lucide:check',
           onClick: handleSave,
-          variant: 'primary',
           'aria-label': t('editProvider.editSocial.saveAria'),
+        }}
+        secondaryButton={{
+          icon: 'material-symbols:close',
+          onClick: () => router.back(),
+          'aria-label': 'Close',
         }}
       />
     </div>

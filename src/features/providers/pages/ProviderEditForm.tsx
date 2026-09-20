@@ -1172,7 +1172,7 @@ export function ProviderEditForm({
           }}
         >
           <div
-            className="flex w-full gap-3.5 px-6 pt-4 md:mx-auto md:max-w-2xl"
+            className="flex w-full gap-3.5 px-6 pt-4 sm:mx-auto sm:max-w-2xl"
             style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
           >
             <Button

@@ -266,7 +266,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={`/providers`} />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 md:pt-[var(--desktop-header-height,153px)]">
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
           <ProviderEditForm
             cancelUrl={`/providers/${providerId}`}

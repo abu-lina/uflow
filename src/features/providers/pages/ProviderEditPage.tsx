@@ -21,17 +21,18 @@ export function ProviderEditPage({ provider }: ProviderEditPageProps) {
 
   return (
     <div className="h-screen-fix flex flex-col">
-      {/* Header */}
-      <PageHeader
-        title={t('editProvider.title')}
-        variant="back-and-title"
-        onBack={`/profile/providers/${provider.provider_id}`}
-      />
-      <HeaderSpacer />
-
-      {/* Main Content */}
-      <main className="flex flex-1 flex-col px-6 pb-4">
-        <ProviderEditForm provider={provider} onSave={handleSave} />
+      <div className="md:hidden">
+        <PageHeader
+          title={t('editProvider.title')}
+          variant="back-and-title"
+          onBack={`/profile/providers/${provider.provider_id}`}
+        />
+        <HeaderSpacer />
+      </div>
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+        <div className="w-full sm:mx-auto sm:max-w-2xl">
+          <ProviderEditForm provider={provider} onSave={handleSave} />
+        </div>
       </main>
     </div>
   );

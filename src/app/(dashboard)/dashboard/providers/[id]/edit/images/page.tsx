@@ -246,14 +246,18 @@ export default function EditImagesPage({ params }: { params: Promise<{ id: strin
       </main>
 
       <FooterAction
-        actionButton={{
+        primaryButton={{
           label: isUploading ? t('editProvider.editImages.saving') : t('editProvider.editImages.save'),
           icon: isUploading ? 'lucide:loader-2' : 'lucide:save',
           onClick: handleSave,
-          variant: 'primary',
           disabled: isUploading,
           loading: isUploading,
           'aria-label': t('editProvider.editImages.saveAria'),
+        }}
+        secondaryButton={{
+          icon: 'material-symbols:close',
+          onClick: () => router.back(),
+          'aria-label': 'Close',
         }}
       />
     </div>
