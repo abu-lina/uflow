@@ -102,7 +102,7 @@ export async function PATCH(request: Request) {
       if (!attestation.allAttested) {
         return NextResponse.json(
           {
-            error: `Cannot approve: halal attestation incomplete. Missing: ${attestation.missing.join(', ')}`,
+            error: `Cannot approve: halal attestation incomplete. Missing: ${attestation.missingLabels.join(', ')}`,
           },
           { status: 422 },
         );

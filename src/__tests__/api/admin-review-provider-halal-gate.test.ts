@@ -69,6 +69,7 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
     mockHalalCheck.mockResolvedValue({
       allAttested: true,
       missing: [],
+      missingLabels: [],
       sourceTable: null,
     });
   });
@@ -77,6 +78,7 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
     mockHalalCheck.mockResolvedValue({
       allAttested: true,
       missing: [],
+      missingLabels: [],
       sourceTable: 'food_providers',
     });
 
@@ -91,6 +93,7 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
     mockHalalCheck.mockResolvedValue({
       allAttested: false,
       missing: ['no_alcohol', 'no_pork'],
+      missingLabels: ['Kein Alkohol', 'Kein verbotenes Fleisch'],
       sourceTable: 'food_providers',
     });
 
@@ -99,8 +102,8 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
     expect(res.status).toBe(422);
     const json = await res.json();
     expect(json.error).toContain('halal attestation incomplete');
-    expect(json.error).toContain('no_alcohol');
-    expect(json.error).toContain('no_pork');
+    expect(json.error).toContain('Kein Alkohol');
+    expect(json.error).toContain('Kein verbotenes Fleisch');
     // updateProviderReview must NOT have been called
     expect(mockReview).not.toHaveBeenCalled();
   });
@@ -109,6 +112,7 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
     mockHalalCheck.mockResolvedValue({
       allAttested: true,
       missing: [],
+      missingLabels: [],
       sourceTable: null,
     });
 
@@ -167,6 +171,7 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
     mockHalalCheck.mockResolvedValue({
       allAttested: false,
       missing: ['no_alcohol', 'no_pork', 'no_gambling'],
+      missingLabels: ['Kein Alkohol', 'Kein verbotenes Fleisch', 'Kein Glücksspiel'],
       sourceTable: 'food_providers',
     });
 
@@ -174,8 +179,8 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
 
     expect(res.status).toBe(422);
     const json = await res.json();
-    expect(json.error).toContain('no_alcohol');
-    expect(json.error).toContain('no_pork');
-    expect(json.error).toContain('no_gambling');
+    expect(json.error).toContain('Kein Alkohol');
+    expect(json.error).toContain('Kein verbotenes Fleisch');
+    expect(json.error).toContain('Kein Glücksspiel');
   });
 });

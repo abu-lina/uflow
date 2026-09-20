@@ -41,12 +41,14 @@ import { isAdminOrModerator } from '@/lib/auth/roles';
 import { updateProviderFields } from '@/services/admin/providerEdit';
 import { checkHalalAttestation } from '@/services/admin/halal-gate';
 import { updateProviderReview } from '@/services/admin/providers';
+import { logAdminAction } from '@/lib/audit/adminAudit';
 
 const mockGetUser = getUserFromCookie as ReturnType<typeof vi.fn>;
 const mockIsAdmin = isAdminOrModerator as ReturnType<typeof vi.fn>;
 const mockUpdateFields = updateProviderFields as ReturnType<typeof vi.fn>;
 const mockHalalCheck = checkHalalAttestation as ReturnType<typeof vi.fn>;
 const mockReview = updateProviderReview as ReturnType<typeof vi.fn>;
+const mockAudit = logAdminAction as ReturnType<typeof vi.fn>;
 
 const adminUser = { id: 'admin-id', email: 'admin@example.com' };
 const validId = '123e4567-e89b-12d3-a456-426614174000';
@@ -59,6 +61,20 @@ function makeRequest(body: Record<string, unknown>): Request {
   });
 }
 
+const allAttested = {
+  allAttested: true,
+  missing: [],
+  missingLabels: [],
+  sourceTable: 'food_providers' as const,
+};
+
+const notAttested = {
+  allAttested: false,
+  missing: ['no_alcohol', 'no_pork'],
+  missingLabels: ['Kein Alkohol', 'Kein verbotenes Fleisch'],
+  sourceTable: 'food_providers' as const,
+};
+
 describe('PATCH /api/admin/edit-provider — halal attestation gate', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,69 +83,68 @@ describe('PATCH /api/admin/edit-provider — halal attestation gate', () => {
     mockUpdateFields.mockResolvedValue({
       provider_id: validId,
       provider_name: 'Test Provider',
-      review_status: 'pending',
+      review_status: 'approved',
       updated_at: '2025-01-01T00:00:00Z',
     });
     mockReview.mockResolvedValue({
       provider_id: validId,
       provider_name: 'Test Provider',
-      review_status: 'approved',
+      review_status: 'rejected',
       review_feedback: null,
-    });
-    // Default: all attested
-    mockHalalCheck.mockResolvedValue({
-      allAttested: true,
-      missing: [],
-      sourceTable: null,
     });
   });
 
-  it('auto-rejects when halal attestation becomes incomplete', async () => {
-    mockHalalCheck.mockResolvedValue({
-      allAttested: false,
-      missing: ['no_alcohol', 'no_pork'],
-      sourceTable: 'food_providers',
-    });
+  it('auto-rejects when attestation changes from complete to incomplete', async () => {
+    // Before: all attested. After: not attested.
+    mockHalalCheck
+      .mockResolvedValueOnce(allAttested) // before
+      .mockResolvedValueOnce(notAttested); // after
 
-    const res = await PATCH(makeRequest({ providerId: validId, noAlcohol: false, noPork: false }));
+    const res = await PATCH(makeRequest({ providerId: validId, noAlcohol: false }));
 
     expect(res.status).toBe(200);
-    expect(mockHalalCheck).toHaveBeenCalledWith(validId);
+    expect(mockHalalCheck).toHaveBeenCalledTimes(2);
     expect(mockReview).toHaveBeenCalledWith(
       validId,
       'rejected',
-      expect.stringContaining('no_alcohol'),
-    );
-    expect(mockReview).toHaveBeenCalledWith(
-      validId,
-      'rejected',
-      expect.stringContaining('no_pork'),
+      expect.stringContaining('Kein Alkohol'),
+      '2025-01-01T00:00:00Z',
     );
 
     const json = await res.json();
     expect(json.data.review_status).toBe('rejected');
   });
 
-  it('auto-approves when all halal attestations are set', async () => {
-    mockHalalCheck.mockResolvedValue({
-      allAttested: true,
-      missing: [],
-      sourceTable: 'food_providers',
-    });
+  it('does NOT auto-approve when attestation becomes complete', async () => {
+    // Before: not attested. After: all attested.
+    mockHalalCheck
+      .mockResolvedValueOnce(notAttested) // before
+      .mockResolvedValueOnce(allAttested); // after
 
     const res = await PATCH(
       makeRequest({ providerId: validId, noAlcohol: true, noPork: true, noGambling: true }),
     );
 
     expect(res.status).toBe(200);
-    expect(mockHalalCheck).toHaveBeenCalledWith(validId);
-    expect(mockReview).toHaveBeenCalledWith(validId, 'approved');
-
-    const json = await res.json();
-    expect(json.data.review_status).toBe('approved');
+    // Gate ran but should NOT call updateProviderReview
+    expect(mockHalalCheck).toHaveBeenCalledTimes(2);
+    expect(mockReview).not.toHaveBeenCalled();
   });
 
-  it('does not check halal gate when no halal fields are edited', async () => {
+  it('does nothing when attestation state does not change', async () => {
+    // Before and after: both all attested (e.g. editing a name on a fully attested provider)
+    mockHalalCheck.mockResolvedValue(allAttested);
+
+    const res = await PATCH(
+      makeRequest({ providerId: validId, noAlcohol: true, providerName: 'New Name' }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockHalalCheck).toHaveBeenCalledTimes(2);
+    expect(mockReview).not.toHaveBeenCalled();
+  });
+
+  it('does not check halal gate when no halal fields are in the edit', async () => {
     const res = await PATCH(makeRequest({ providerId: validId, providerName: 'New Name' }));
 
     expect(res.status).toBe(200);
@@ -137,55 +152,58 @@ describe('PATCH /api/admin/edit-provider — halal attestation gate', () => {
     expect(mockReview).not.toHaveBeenCalled();
   });
 
-  it('auto-approves non-food provider when halal fields are edited', async () => {
-    // checkHalalAttestation returns allAttested: true for non-food/store providers
-    mockHalalCheck.mockResolvedValue({
-      allAttested: true,
-      missing: [],
-      sourceTable: null,
-    });
+  it('logs audit entry with provider_review_rejected on auto-reject', async () => {
+    mockHalalCheck.mockResolvedValueOnce(allAttested).mockResolvedValueOnce(notAttested);
 
-    const res = await PATCH(makeRequest({ providerId: validId, noAlcohol: true }));
+    await PATCH(makeRequest({ providerId: validId, noAlcohol: false }));
 
-    expect(res.status).toBe(200);
-    expect(mockHalalCheck).toHaveBeenCalledWith(validId);
-    expect(mockReview).toHaveBeenCalledWith(validId, 'approved');
-
-    const json = await res.json();
-    expect(json.data.review_status).toBe('approved');
-  });
-
-  it('checks halal gate when only noGambling is edited', async () => {
-    mockHalalCheck.mockResolvedValue({
-      allAttested: false,
-      missing: ['no_alcohol', 'no_pork'],
-      sourceTable: 'store_providers',
-    });
-
-    const res = await PATCH(makeRequest({ providerId: validId, noGambling: true }));
-
-    expect(res.status).toBe(200);
-    expect(mockHalalCheck).toHaveBeenCalledWith(validId);
-    expect(mockReview).toHaveBeenCalledWith(
-      validId,
-      'rejected',
-      expect.stringContaining('Halal attestation incomplete'),
+    // Should have two audit calls: one for the review change, one for the edit
+    const auditCalls = mockAudit.mock.calls;
+    const reviewAudit = auditCalls.find(
+      (call: unknown[]) => call[1] === 'provider_review_rejected',
+    );
+    expect(reviewAudit).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- test assertion: reviewAudit is guaranteed by the expect above
+    const call = reviewAudit!;
+    expect(call[3]).toBe(validId);
+    expect(call[4]).toEqual(
+      expect.objectContaining({
+        reviewStatus: 'rejected',
+        trigger: 'halal_gate_auto',
+      }),
     );
   });
 
-  it('includes all missing attestations in rejection feedback', async () => {
-    mockHalalCheck.mockResolvedValue({
-      allAttested: false,
-      missing: ['no_alcohol', 'no_pork', 'no_gambling'],
-      sourceTable: 'food_providers',
-    });
+  it('passes expectedUpdatedAt to updateProviderReview for concurrency safety', async () => {
+    mockHalalCheck.mockResolvedValueOnce(allAttested).mockResolvedValueOnce(notAttested);
 
     await PATCH(makeRequest({ providerId: validId, noAlcohol: false }));
 
     expect(mockReview).toHaveBeenCalledWith(
       validId,
       'rejected',
-      'Halal attestation incomplete — missing: no_alcohol, no_pork, no_gambling',
+      expect.any(String),
+      '2025-01-01T00:00:00Z', // expectedUpdatedAt from updatedProvider
+    );
+  });
+
+  it('uses human-readable labels in rejection feedback', async () => {
+    const allMissing = {
+      allAttested: false,
+      missing: ['no_alcohol', 'no_pork', 'no_gambling'],
+      missingLabels: ['Kein Alkohol', 'Kein verbotenes Fleisch', 'Kein Glücksspiel'],
+      sourceTable: 'food_providers' as const,
+    };
+
+    mockHalalCheck.mockResolvedValueOnce(allAttested).mockResolvedValueOnce(allMissing);
+
+    await PATCH(makeRequest({ providerId: validId, noAlcohol: false }));
+
+    expect(mockReview).toHaveBeenCalledWith(
+      validId,
+      'rejected',
+      'Halal-Attestierung unvollständig: Kein Alkohol, Kein verbotenes Fleisch, Kein Glücksspiel',
+      expect.any(String),
     );
   });
 });

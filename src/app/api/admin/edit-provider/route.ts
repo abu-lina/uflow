@@ -81,31 +81,60 @@ export async function PATCH(request: Request) {
 
     const { providerId, ...editFields } = validatedData;
 
-    const updatedProvider = await updateProviderFields(providerId, editFields, user.id);
-
-    // Halal attestation gate: auto-reject/approve when halal fields change
+    // Snapshot attestation state BEFORE the edit so we can detect changes
     const halalFieldsEdited =
       editFields.noAlcohol !== undefined ||
       editFields.noPork !== undefined ||
       editFields.noGambling !== undefined;
 
+    let attestationBefore: Awaited<ReturnType<typeof checkHalalAttestation>> | null = null;
     if (halalFieldsEdited) {
-      const halalResult = await checkHalalAttestation(providerId);
+      attestationBefore = await checkHalalAttestation(providerId);
+    }
 
-      if (!halalResult.allAttested) {
-        await updateProviderReview(
-          providerId,
-          'rejected',
-          `Halal attestation incomplete — missing: ${halalResult.missing.join(', ')}`,
-        );
-        updatedProvider.review_status = 'rejected';
-      } else {
-        await updateProviderReview(providerId, 'approved');
-        updatedProvider.review_status = 'approved';
+    const updatedProvider = await updateProviderFields(providerId, editFields, user.id);
+
+    // Halal attestation gate: auto-reject when attestation becomes incomplete
+    if (halalFieldsEdited) {
+      const attestationAfter = await checkHalalAttestation(providerId);
+
+      // Only act when the attestation state actually changed
+      if (attestationBefore && attestationBefore.allAttested !== attestationAfter.allAttested) {
+        if (!attestationAfter.allAttested) {
+          // Attestation broke: auto-reject
+          const feedback = `Halal-Attestierung unvollständig: ${attestationAfter.missingLabels.join(', ')}`;
+          await updateProviderReview(
+            providerId,
+            'rejected',
+            feedback,
+            updatedProvider.updated_at as string | undefined,
+          );
+          updatedProvider.review_status = 'rejected';
+
+          // Audit the forced status change
+          await logAdminAction(
+            user.id,
+            'provider_review_rejected',
+            'provider',
+            providerId,
+            {
+              reviewStatus: 'rejected',
+              reviewFeedback: feedback,
+              providerName: updatedProvider.provider_name,
+              trigger: 'halal_gate_auto',
+            },
+            {
+              ipAddress: getClientIp(request),
+              userAgent: getUserAgent(request),
+            },
+          );
+        }
+        // Attestation completed: don't auto-approve. Admin must approve
+        // explicitly via review-provider to avoid resurrecting rejected providers.
       }
     }
 
-    // Audit log
+    // Audit log for the edit itself
     await logAdminAction(
       user.id,
       'provider_edit',

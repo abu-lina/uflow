@@ -1,5 +1,5 @@
 /**
- * Halal attestation check service — Plan 192.
+ * Halal attestation check service — Plan 228.
  *
  * Quality gate that prevents provider approval when halal attestation
  * questions are not all affirmed. The attestations (no alcohol, no
@@ -12,12 +12,26 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+/** Attestation fields checked for the halal gate. Single source of truth. */
+export const HALAL_ATTESTATION_FIELDS = ['no_alcohol', 'no_pork', 'no_gambling'] as const;
+
+/** Human-readable labels for attestation fields (used in admin-facing messages). */
+export const HALAL_FIELD_LABELS: Record<string, string> = {
+  no_alcohol: 'Kein Alkohol',
+  no_pork: 'Kein verbotenes Fleisch',
+  no_gambling: 'Kein Glücksspiel',
+};
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface HalalAttestationCheckResult {
   allAttested: boolean;
-  /** Which specific attestations are missing */
+  /** Which specific attestations are missing (column names) */
   missing: string[];
+  /** Human-readable labels for missing attestations */
+  missingLabels: string[];
   /** Which extension table was checked */
   sourceTable: 'food_providers' | 'store_providers' | null;
 }
@@ -32,7 +46,7 @@ export interface HalalAttestationCheckResult {
  * Returns which attestations are missing so the reviewer can take action.
  */
 export async function checkHalalAttestation(
-  providerId: string
+  providerId: string,
 ): Promise<HalalAttestationCheckResult> {
   const supabase = getSupabaseAdmin();
 
@@ -49,14 +63,14 @@ export async function checkHalalAttestation(
 
   // Only food and store providers have attestation data
   if (provider.listing_type !== 'food' && provider.listing_type !== 'store') {
-    return { allAttested: true, missing: [], sourceTable: null };
+    return { allAttested: true, missing: [], missingLabels: [], sourceTable: null };
   }
 
   const extTable = provider.listing_type === 'food' ? 'food_providers' : 'store_providers';
 
   const { data: extData, error: extError } = await supabase
     .from(extTable)
-    .select('no_alcohol, no_pork, no_gambling')
+    .select(HALAL_ATTESTATION_FIELDS.join(', '))
     .eq('provider_id', providerId)
     .single();
 
@@ -64,19 +78,22 @@ export async function checkHalalAttestation(
     // No extension row exists — attestations are not yet answered
     return {
       allAttested: false,
-      missing: ['no_alcohol', 'no_pork', 'no_gambling'],
+      missing: [...HALAL_ATTESTATION_FIELDS],
+      missingLabels: HALAL_ATTESTATION_FIELDS.map((f) => HALAL_FIELD_LABELS[f]),
       sourceTable: extTable,
     };
   }
 
   const missing: string[] = [];
-  if (!extData.no_alcohol) missing.push('no_alcohol');
-  if (!extData.no_pork) missing.push('no_pork');
-  if (!extData.no_gambling) missing.push('no_gambling');
+  const row = extData as unknown as Record<string, boolean | null>;
+  for (const field of HALAL_ATTESTATION_FIELDS) {
+    if (!row[field]) missing.push(field);
+  }
 
   return {
     allAttested: missing.length === 0,
     missing,
+    missingLabels: missing.map((f) => HALAL_FIELD_LABELS[f]),
     sourceTable: extTable,
   };
 }
