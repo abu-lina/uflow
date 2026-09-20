@@ -87,12 +87,24 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
-    localStorage.setItem(`admin_edit_category_${providerId}`, categoryId);
+  };
+
+  const handleSave = () => {
+    if (selectedCategoryId) {
+      localStorage.setItem(`admin_edit_category_${providerId}`, selectedCategoryId);
+    }
     router.back();
   };
 
   return (
-    <EditSubPageLayout title={t('editProvider.editCategory.title')}>
+    <EditSubPageLayout
+      primaryButton={{
+        label: 'Save',
+        icon: 'material-symbols:save-outline',
+        onClick: handleSave,
+      }}
+      title={t('editProvider.editCategory.title')}
+    >
       <div className="mb-4">
         <div className="relative">
           <Icon
