@@ -37,6 +37,27 @@ describe('computeHalalStars (Plan 089 M5)', () => {
   it('returns 4 for onsite with certificate', () => {
     expect(computeHalalStars({ verification_method: 'onsite', has_certificate: true })).toBe(4);
   });
+
+  it('returns 0 when attestation data is present but all false (not halal)', () => {
+    expect(computeHalalStars({ verification_method: 'online', has_certificate: false, no_alcohol: false, no_pork: false, no_gambling: false })).toBe(0);
+    expect(computeHalalStars({ verification_method: 'onsite', has_certificate: false, no_alcohol: false, no_pork: false, no_gambling: false })).toBe(0);
+  });
+
+  it('returns stars when attestation data is present and at least one is true', () => {
+    expect(computeHalalStars({ verification_method: 'online', has_certificate: false, no_alcohol: true, no_pork: false, no_gambling: false })).toBe(1);
+    expect(computeHalalStars({ verification_method: 'onsite', has_certificate: false, no_alcohol: true, no_pork: false, no_gambling: false })).toBe(3);
+  });
+
+  it('returns certificate stars even when all attestation is false', () => {
+    expect(computeHalalStars({ verification_method: 'online', has_certificate: true, no_alcohol: false, no_pork: false, no_gambling: false })).toBe(2);
+    expect(computeHalalStars({ verification_method: 'onsite', has_certificate: true, no_alcohol: false, no_pork: false, no_gambling: false })).toBe(4);
+  });
+
+  it('falls through to stars when attestation fields are absent (undefined)', () => {
+    // List views don't join food_providers, so attestation is undefined
+    expect(computeHalalStars({ verification_method: 'online', has_certificate: false })).toBe(1);
+    expect(computeHalalStars({ verification_method: 'onsite', has_certificate: false })).toBe(3);
+  });
 });
 
 // ─── computeBarakahBadge ─────────────────────────────────────────────────────

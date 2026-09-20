@@ -233,6 +233,7 @@ describe('ProviderDetailSections', () => {
         provider={{
           ...mockProviders[0],
           verification_method: 'online',
+          no_alcohol: true,
           offers: [],
           needs: [],
         }}
@@ -257,6 +258,7 @@ describe('ProviderDetailSections', () => {
           ...mockProviders[0],
           listing_type: 'ummah',
           verification_method: 'online',
+          no_alcohol: true,
           offers: [],
           needs: [],
         }}
@@ -532,7 +534,7 @@ describe('ProviderDetailSections', () => {
         badges={[]}
         isLoadingBadges={false}
         locations={locations}
-        provider={{ ...mockProviders[0], verification_method: 'online', offers: [], needs: [] }}
+        provider={{ ...mockProviders[0], verification_method: 'online', no_alcohol: true, offers: [], needs: [] }}
       />,
     );
 
