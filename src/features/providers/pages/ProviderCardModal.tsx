@@ -420,7 +420,7 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
 
   // Share handler
   const handleShare = () => {
-    const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
+    const shareUrl = `${window.location.origin}/p/${provider.provider_id}`;
     if (navigator.share) {
       navigator.share({
         title: provider.provider_name,

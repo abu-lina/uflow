@@ -3,13 +3,13 @@
  * Regression tests for Plan 085: Fix Profile Navigation Links
  *
  * Validates that provider cards in the profile page navigate to the public detail
- * route `/providers/:id`, NOT the owner-scoped `/profile/providers/:id`.
+ * route `/p/:id`, NOT the owner-scoped `/profile/providers/:id`.
  *
  * Bug: ProfileContent was calling router.push('/profile/providers/:id') for
  * "Deine Inhalte" and router.push('/profile/providers/:id/edit') for
  * "Recommendations" — both produce 404 or middleware redirect in early-access mode.
  *
- * Fix: All profile provider card clicks now navigate to `/providers/:id`.
+ * Fix: All profile provider card clicks now navigate to `/p/:id`.
  *
  * Test strategy: client-state precedence regression pattern
  * - `[pre-fix FAILS]` describes how the broken code would behave
@@ -276,7 +276,7 @@ describe('Plan 085 — Mobile "Deine Inhalte" provider card navigation', () => {
     mockIsSmallMobile.mockReturnValue(true);
   });
 
-  it('[post-fix PASSES] clicking provider card navigates to /providers/:id (not /profile/providers/:id)', () => {
+  it('[post-fix PASSES] clicking provider card navigates to /p/:id (not /profile/providers/:id)', () => {
     render(<ProfileContent user={fakeServerUser} />);
 
     // Both "Deine Inhalte" and "Recommendations" sections render a card with the same name.
@@ -284,7 +284,7 @@ describe('Plan 085 — Mobile "Deine Inhalte" provider card navigation', () => {
     const cards = screen.getAllByTestId(`mobile-card-${fakeProvider.provider_name}`);
     fireEvent.click(cards[0]);
 
-    expect(mockPush).toHaveBeenCalledWith(`/providers/${fakeProvider.provider_id}`);
+    expect(mockPush).toHaveBeenCalledWith(`/p/${fakeProvider.provider_id}`);
   });
 
   it('[pre-fix FAILS] clicking provider card must NOT navigate to /profile/providers/:id', () => {
@@ -304,7 +304,7 @@ describe('Plan 085 — Mobile Recommendations provider card navigation', () => {
     mockIsSmallMobile.mockReturnValue(true);
   });
 
-  it('[post-fix PASSES] clicking recommendation card navigates to /providers/:id (not /profile/providers/:id/edit)', () => {
+  it('[post-fix PASSES] clicking recommendation card navigates to /p/:id (not /profile/providers/:id/edit)', () => {
     render(<ProfileContent user={fakeServerUser} />);
 
     // The Recommendations section renders all recommendation cards;
@@ -314,7 +314,7 @@ describe('Plan 085 — Mobile Recommendations provider card navigation', () => {
     // Recommendations card is the second one (index 1)
     fireEvent.click(cards[1]);
 
-    expect(mockPush).toHaveBeenCalledWith(`/providers/${fakeProvider.provider_id}`);
+    expect(mockPush).toHaveBeenCalledWith(`/p/${fakeProvider.provider_id}`);
   });
 
   it('[pre-fix FAILS] clicking recommendation card must NOT navigate to /profile/providers/:id/edit', () => {
@@ -337,7 +337,7 @@ describe('Plan 085 — Desktop Recommendations provider card navigation', () => 
     mockIsSmallMobile.mockReturnValue(false);
   });
 
-  it('[post-fix PASSES] clicking recommendation card in desktop layout navigates to /providers/:id', () => {
+  it('[post-fix PASSES] clicking recommendation card in desktop layout navigates to /p/:id', () => {
     render(<ProfileContent user={fakeServerUser} />);
 
     // Switch to recommendations tab
@@ -346,7 +346,7 @@ describe('Plan 085 — Desktop Recommendations provider card navigation', () => 
     const card = screen.getByTestId(`selectable-card-${fakeProvider.provider_name}`);
     fireEvent.click(card);
 
-    expect(mockPush).toHaveBeenCalledWith(`/providers/${fakeProvider.provider_id}`);
+    expect(mockPush).toHaveBeenCalledWith(`/p/${fakeProvider.provider_id}`);
   });
 
   it('[pre-fix FAILS] clicking recommendation card in desktop layout must NOT navigate to /profile/providers/:id/edit', () => {
@@ -368,7 +368,7 @@ describe('Plan 085 — Desktop Created tab provider card navigation', () => {
     mockIsSmallMobile.mockReturnValue(false);
   });
 
-  it('[post-fix PASSES] clicking created provider card in desktop layout navigates to /providers/:id', () => {
+  it('[post-fix PASSES] clicking created provider card in desktop layout navigates to /p/:id', () => {
     render(<ProfileContent user={fakeServerUser} />);
 
     // Switch to created tab
@@ -377,7 +377,7 @@ describe('Plan 085 — Desktop Created tab provider card navigation', () => {
     const card = screen.getByTestId(`selectable-card-${fakeProvider.provider_name}`);
     fireEvent.click(card);
 
-    expect(mockPush).toHaveBeenCalledWith(`/providers/${fakeProvider.provider_id}`);
+    expect(mockPush).toHaveBeenCalledWith(`/p/${fakeProvider.provider_id}`);
   });
 
   it('[pre-fix FAILS] clicking created card in desktop layout must NOT have onClick pointing to /profile/providers/', () => {
@@ -390,6 +390,6 @@ describe('Plan 085 — Desktop Created tab provider card navigation', () => {
 
     // The old code had NO onClick — mockPush must be called (proves handler was added)
     // AND the path must be correct
-    expect(mockPush).toHaveBeenCalledWith(`/providers/${fakeProvider.provider_id}`);
+    expect(mockPush).toHaveBeenCalledWith(`/p/${fakeProvider.provider_id}`);
   });
 });

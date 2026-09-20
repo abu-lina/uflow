@@ -545,7 +545,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     likes={provider.bookmark_count || 0}
                     savedText={t('actions.saved')}
                     title={provider.provider_name}
-                    onClick={() => router.push(`/providers/${provider.provider_id}`)}
+                    onClick={() => router.push(`/p/${provider.provider_id}`)}
                   />
                 ))}
                 {createdCommunityServices.map((communityService) => (
@@ -557,7 +557,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
                     onClick={() =>
-                      router.push(`/providers/${communityService.community_service_id}`)
+                      router.push(`/p/${communityService.community_service_id}`)
                     }
                   />
                 ))}
@@ -590,7 +590,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     likes={provider.bookmark_count || 0}
                     savedText={t('actions.saved')}
                     title={provider.provider_name}
-                    onClick={() => router.push(`/providers/${provider.provider_id}`)}
+                    onClick={() => router.push(`/p/${provider.provider_id}`)}
                   />
                 ))}
                 {recommendedCommunityServices.map((communityService) => (
@@ -602,7 +602,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
                     onClick={() =>
-                      router.push(`/providers/${communityService.community_service_id}`)
+                      router.push(`/p/${communityService.community_service_id}`)
                     }
                   />
                 ))}
@@ -787,7 +787,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       category={getCategoryName(provider.category)}
                       imageUrl={getProviderImageUrl(provider)}
                       title={provider.provider_name}
-                      onClick={() => router.push(`/providers/${provider.provider_id}`)}
+                      onClick={() => router.push(`/p/${provider.provider_id}`)}
                     />
                   );
                 })}
@@ -807,7 +807,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
                       onClick={() =>
-                        router.push(`/providers/${communityService.community_service_id}`)
+                        router.push(`/p/${communityService.community_service_id}`)
                       }
                     />
                   );
@@ -844,8 +844,8 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     imageUrl={getFirstImageUrl(provider.images)}
                     title={provider.name}
                     onClick={() => {
-                      // M-5a: ummah providers now at /providers/[id]
-                      router.push(`/providers/${provider.id}`);
+                      // All entity types use /p/[id] (Plan 228)
+                      router.push(`/p/${provider.id}`);
                     }}
                     onRemove={() => handleRemoveFromSaved(provider.id)}
                   />
@@ -880,7 +880,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       category={getCategoryName(provider.category)}
                       imageUrl={getProviderImageUrl(provider)}
                       title={provider.provider_name}
-                      onClick={() => router.push(`/providers/${provider.provider_id}`)}
+                      onClick={() => router.push(`/p/${provider.provider_id}`)}
                     />
                   );
                 })}
@@ -900,7 +900,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
                       onClick={() =>
-                        router.push(`/providers/${communityService.community_service_id}`)
+                        router.push(`/p/${communityService.community_service_id}`)
                       }
                     />
                   );

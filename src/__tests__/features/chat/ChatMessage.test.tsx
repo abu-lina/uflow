@@ -121,7 +121,7 @@ describe('ChatMessage', () => {
 
     const link = screen.getByRole('link', { name: /Döner Haus/ });
 
-    expect(link).toHaveAttribute('href', '/providers/p1');
+    expect(link).toHaveAttribute('href', '/p/p1');
   });
 
   it('suppresses options when results are already shown', () => {

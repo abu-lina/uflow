@@ -410,6 +410,11 @@ const nextConfig = {
         destination: '/food',
         permanent: true,
       },
+      {
+        source: '/providers/:id',
+        destination: '/p/:id',
+        permanent: true,
+      },
     ];
   },
 

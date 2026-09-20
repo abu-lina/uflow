@@ -269,7 +269,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
       <main className="flex flex-1 flex-col overflow-y-auto px-6 pb-4 md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
           <ProviderEditForm
-            cancelUrl={`/providers/${providerId}`}
+            cancelUrl={`/p/${providerId}`}
             enableLocalStorage={true}
             localStoragePrefix="admin_"
             provider={provider}
@@ -277,7 +277,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
             onSubmitForm={async (formData) => {
               await saveProviderEdits(formData);
               await queryClient.invalidateQueries({ queryKey: ['provider', providerId] });
-              router.replace(`/providers/${providerId}`);
+              router.replace(`/p/${providerId}`);
             }}
           />
 

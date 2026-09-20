@@ -170,8 +170,8 @@ describe('hardcoded /providers listing links updated to /food', () => {
     // Listing-level navigation should use /food
     expect(src).toContain("router.push('/food')");
     expect(src).toContain('onBack="/food"');
-    // Detail links like /providers/${id} should remain
-    expect(src).toContain('/providers/${providerId}');
+    // Detail links should use /p/${id}
+    expect(src).toContain('/p/${providerId}');
   });
 });
 
@@ -214,8 +214,8 @@ describe('perf budgets updated', () => {
     const budgets = JSON.parse(src);
     expect(budgets.routes['/food']).toBeTruthy();
     expect(budgets.routes['/providers']).toBeUndefined();
-    // Detail route should remain
-    expect(budgets.routes['/providers/[provider_id]']).toBeTruthy();
+    // Detail route should use /p/[id]
+    expect(budgets.routes['/p/[id]']).toBeTruthy();
   });
 });
 

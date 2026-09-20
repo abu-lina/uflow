@@ -36,7 +36,7 @@ describe('ProviderCard', () => {
     render(<ProviderCard provider={mockProvider} />);
 
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/providers/prov-123');
+    expect(link).toHaveAttribute('href', '/p/prov-123');
   });
 
   it('handles missing optional fields gracefully', () => {

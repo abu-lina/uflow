@@ -12,22 +12,22 @@ import { ProviderDetailPageClient } from './ProviderDetailPageClient';
  * - Prefetching support for hover/optimistic loading
  * - Parallel data fetching for better performance
  */
-export default async function ProviderDetailPage({ params }: { params: Promise<{ provider_id: string }> }) {
-  const { provider_id } = await params;
+export default async function ProviderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   
   const serverClient = createSupabaseServerClient();
   // Fetch provider and community services in parallel for better performance
   // This eliminates the client-side waterfall and improves Time to Interactive
   const [provider, communityServices] = await Promise.all([
-    getProviderById(provider_id, serverClient),
-    getCommunityServicesForProvider(provider_id).catch(() => []), // Gracefully handle errors
+    getProviderById(id, serverClient),
+    getCommunityServicesForProvider(id).catch(() => []), // Gracefully handle errors
   ]);
 
   return (
     <ProviderDetailPageClient 
       initialCommunityServices={communityServices}
       initialData={provider} 
-      providerId={provider_id} 
+      providerId={id} 
     />
   );
 }

@@ -107,7 +107,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
   const handleShareAction = async () => {
     closeActionsMenu();
 
-    const shareUrl = `${window.location.origin}/providers/${providerId}`;
+    const shareUrl = `${window.location.origin}/p/${providerId}`;
 
     if (navigator.share) {
       try {

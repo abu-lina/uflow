@@ -391,7 +391,7 @@ export function ProviderDetailSections({
                 key={nearby.provider_id}
                 icon={<MapPin aria-hidden="true" className="h-6 w-6" />}
                 label={nearby.provider_name}
-                onClick={() => router.push(`/providers/${nearby.provider_id}`)}
+                onClick={() => router.push(`/p/${nearby.provider_id}`)}
               />
             ))
           )}

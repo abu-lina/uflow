@@ -276,11 +276,11 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
             className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
             role="button"
             tabIndex={0}
-            onClick={() => router.push(`/providers/${item.provider_id}`)}
+            onClick={() => router.push(`/p/${item.provider_id}`)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                router.push(`/providers/${item.provider_id}`);
+                router.push(`/p/${item.provider_id}`);
               }
             }}
           >

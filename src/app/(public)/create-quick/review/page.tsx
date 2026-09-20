@@ -114,7 +114,7 @@ function ReviewPageContent() {
       toast.success('Business created successfully!');
 
       // Redirect to provider page
-      router.push(`/providers/${createdProvider.provider_id}`);
+      router.push(`/p/${createdProvider.provider_id}`);
     } catch (error) {
       console.error('Error creating provider:', error);
       toast.error('Failed to create business. Please try again.');

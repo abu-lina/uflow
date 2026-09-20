@@ -348,8 +348,8 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   };
 
   const handleShareAction = () => {
-    // M-5a: ummah providers use /providers/[id] route
-    const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
+    // M-5a: ummah providers use /p/[id] route
+    const shareUrl = `${window.location.origin}/p/${provider.provider_id}`;
 
     if (navigator.share) {
       void navigator.share({
@@ -499,7 +499,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                         key={index}
                         className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
                         onClick={() =>
-                          router.push(`/providers/${service.community_service_id}`)
+                          router.push(`/p/${service.community_service_id}`)
                         }
                       >
                         <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
@@ -875,7 +875,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                           key={supportingProvider.provider_id}
                           className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
                           onClick={() =>
-                            router.push(`/providers/${supportingProvider.provider_id}`)
+                            router.push(`/p/${supportingProvider.provider_id}`)
                           }
                         >
                           <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">

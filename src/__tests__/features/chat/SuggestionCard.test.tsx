@@ -69,12 +69,12 @@ describe('SuggestionCard', () => {
         icon={<Sparkles size={24} />}
         title="Link Card"
         subtitle="Navigates to detail page"
-        href="/providers/123"
+        href="/p/123"
       />
     );
     const link = screen.getByRole('link');
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/providers/123');
+    expect(link).toHaveAttribute('href', '/p/123');
     expect(screen.getByText('Link Card')).toBeInTheDocument();
     expect(screen.getByText('Navigates to detail page')).toBeInTheDocument();
   });

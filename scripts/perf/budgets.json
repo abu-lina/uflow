@@ -9,7 +9,7 @@
       },
       "providersDetail": {
         "max": 286000,
-        "description": "First Load JS for /providers/[provider_id] (Plan 210 fallback: measured at 281 kB after map-era shared chunk growth; +5 kB headroom)"
+        "description": "First Load JS for /p/[id] (Plan 210 fallback: measured at 281 kB after map-era shared chunk growth; +5 kB headroom)"
       },
       "shared": {
         "max": 120000,
@@ -42,7 +42,7 @@
       "budgetKey": "providers",
       "critical": true
     },
-    "/providers/[provider_id]": {
+    "/p/[id]": {
       "budgetKey": "providersDetail",
       "critical": true
     }

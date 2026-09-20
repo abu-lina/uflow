@@ -284,7 +284,7 @@ describe('ProviderEditForm regressions', () => {
   it('admin footer shows cancel and save buttons', () => {
     render(
       <ProviderEditForm
-        cancelUrl="/providers/test-id"
+        cancelUrl="/p/test-id"
         enableLocalStorage={false}
         provider={baseProvider}
       />,
@@ -297,7 +297,7 @@ describe('ProviderEditForm regressions', () => {
   it.skip('[pre-fix FAILS] moderation section selector uses translation keys for label and options', () => {
     render(
       <ProviderEditForm
-        cancelUrl="/providers/test-id"
+        cancelUrl="/p/test-id"
         enableLocalStorage={false}
         provider={baseProvider}
       />,
@@ -319,7 +319,7 @@ describe('ProviderEditForm regressions', () => {
 
     render(
       <ProviderEditForm
-        cancelUrl="/providers/test-id"
+        cancelUrl="/p/test-id"
         enableLocalStorage={false}
         onSubmitForm={onSubmitForm}
         provider={baseProvider}
@@ -346,7 +346,7 @@ describe('ProviderEditForm regressions', () => {
 
     render(
       <ProviderEditForm
-        cancelUrl="/providers/test-id"
+        cancelUrl="/p/test-id"
         enableLocalStorage={false}
         onSubmitForm={onSubmitForm}
         provider={{ ...baseProvider, social_website: 'www.example.com' }}
@@ -373,7 +373,7 @@ describe('ProviderEditForm regressions', () => {
 
     render(
       <ProviderEditForm
-        cancelUrl="/providers/test-id"
+        cancelUrl="/p/test-id"
         enableLocalStorage={false}
         onSubmitForm={onSubmitForm}
         provider={{ ...baseProvider, listing_type: 'food' }}

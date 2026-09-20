@@ -129,7 +129,7 @@ export function SearchMap({ userCoords = null, pins }: SearchMapProps) {
       const marker = L.marker([pin.lat, pin.lng], { icon: createPinIcon() }).addTo(map);
       marker.bindPopup(pin.providerName);
       marker.on('click', () => {
-        router.push(`/providers/${pin.providerId}`);
+        router.push(`/p/${pin.providerId}`);
       });
       markers.push(marker);
     }

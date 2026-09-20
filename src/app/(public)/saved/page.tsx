@@ -158,11 +158,8 @@ export default function SavedProvidersPage() {
     }
   }, [user, queryClient, t]);
 
-  const handleProviderClick = useCallback((providerId: string, isUmmah: boolean) => {
-    const detailPath = isUmmah 
-      ? `/community-services/${providerId}`
-      : `/providers/${providerId}`;
-    router.push(detailPath);
+  const handleProviderClick = useCallback((providerId: string, _isUmmah: boolean) => {
+    router.push(`/p/${providerId}`);
   }, [router]);
 
   const handleResendConfirmation = useCallback(async () => {

@@ -179,6 +179,7 @@ export async function shouldRedirectToWaitlist(
     !isAppLaunched &&
     (pathname === '/providers' ||
       pathname.startsWith('/providers/') ||
+      pathname.startsWith('/p/') ||
       pathname === '/food' ||
       pathname.startsWith('/food/') ||
       pathname.startsWith('/community-services/'))

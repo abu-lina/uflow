@@ -297,9 +297,8 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       void handleBookmark();
     }
     if (action === 'share') {
-      // Use community-services path when rendering a community service entity (Plan 082: M3)
-      // M-5a: ummah providers now at /providers/[id] (community-services route still accessible for legacy URLs)
-      const shareUrl = `${window.location.origin}/providers/${provider.provider_id}`;
+      // Use /p/[id] path for all entity types (Plan 228)
+      const shareUrl = `${window.location.origin}/p/${provider.provider_id}`;
 
       if (navigator.share) {
         try {
