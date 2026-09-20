@@ -1,62 +1,55 @@
-import type { OpeningHours, OpeningHoursDay, OpeningHoursWindow } from '@/types/openingHours';
+import type { OpeningHours } from '@/types/openingHours';
 
 /**
  * Apify Wolt Restaurant & Menu Scraper integration.
  *
- * Replaces the custom Wolt HTTP client (fetchMenuData) for URL-based
- * enrichment. Provides menu items AND opening hours from the Apify
- * actor, which handles anti-bot measures and returns structured data.
+ * Uses the teodor_banea/wolt-restaurant-menu-scraper actor which talks
+ * to Wolt's JSON API directly (no browser). This is more reliable than
+ * browser-based scrapers because Wolt's anti-bot measures don't apply.
  *
- * Actor: needy_hammock/wolt-restaurant-menu-scraper
- * Cost: ~$0.0015 per detailed result (FREE tier)
- * Input: Wolt restaurant URL + includeDetails=true
- * Output: restaurant data with menuItems, openingTimesSchedule, etc.
+ * Actor: teodor_banea/wolt-restaurant-menu-scraper
+ * Cost: ~$0.001 per result (menu item) + $0.01 actor start
+ * Input: venueUrls mode with Wolt venue page URLs
+ * Output: flat menu-item rows with embedded venue metadata
  */
 
-const APIFY_ACTOR_ID = 'y0NfA98a3bpJBTodv';
+const APIFY_ACTOR_NAME = 'teodor_banea~wolt-restaurant-menu-scraper';
 const APIFY_BASE = 'https://api.apify.com/v2';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-/** Raw menu item returned by the Apify actor. */
-interface ApifyRawMenuItem {
-  id: string;
-  name: string;
-  description: string | null;
-  priceInCents: number | null;
-  originalPriceInCents: number | null;
-  category: string | null;
-  imageUrl: string | null;
-  dietaryPreferences: string[];
-}
-
-/** Raw opening-hours entry from Apify. */
-interface ApifyRawScheduleEntry {
-  day: string; // "Monday" | "Tuesday" | ... | "Sunday"
-  open: string; // "HH:MM"
-  close: string; // "HH:MM"
-}
-
-/** Raw actor response (first item in the dataset). */
-interface ApifyActorOutput {
-  id: string;
-  name: string;
-  slug: string;
+/** Menu-item row returned by the teodor_banea actor (venueUrls mode). */
+interface ApifyMenuItem {
+  venueId: string;
+  venueSlug: string;
+  venueName: string;
   url: string;
+  venueCity: string;
+  venueCountry: string;
+  venueAddress: string | null;
+  venueRating: number | null;
+  searchQuery: string | null;
+  itemId: string;
+  name: string;
   description: string | null;
-  website: string | null;
-  phone: string | null;
-  address: string | null;
-  postCode: string | null;
-  city: string | null;
-  ratingScore: number | null;
-  reviewCount: number;
-  menuItems: ApifyRawMenuItem[];
-  openingTimesSchedule: ApifyRawScheduleEntry[] | null;
-  deliveryTimesSchedule: ApifyRawScheduleEntry[] | null;
-  [key: string]: unknown;
+  categoryName: string | null;
+  price: number | null;
+  originalPrice: number | null;
+  lowestPrice: number | null;
+  isDiscounted: boolean;
+  currency: string;
+  vatPercentage: number | null;
+  unitInfo: string | null;
+  unitPrice: number | null;
+  dietaryPreferences: string[];
+  isWoltPlusOnly: boolean;
+  optionGroupCount: number;
+  language: string;
+  isAutotranslated: boolean;
+  scrapedAt: string;
+  runId: string;
 }
 
 /** Normalized result returned to the caller. */
@@ -83,90 +76,23 @@ export interface ApifyWoltResult {
 }
 
 // ---------------------------------------------------------------------------
-// Day-name normalization
-// ---------------------------------------------------------------------------
-
-const DAY_NAME_MAP: Record<string, keyof OpeningHours> = {
-  // English
-  monday: 'monday',
-  tuesday: 'tuesday',
-  wednesday: 'wednesday',
-  thursday: 'thursday',
-  friday: 'friday',
-  saturday: 'saturday',
-  sunday: 'sunday',
-  // German (Apify returns these for German Wolt pages)
-  montag: 'monday',
-  dienstag: 'tuesday',
-  mittwoch: 'wednesday',
-  donnerstag: 'thursday',
-  freitag: 'friday',
-  samstag: 'saturday',
-  sonntag: 'sunday',
-};
-
-/**
- * Normalize Apify's openingTimesSchedule (array of { day, open, close }) to
- * our internal OpeningHours type.
- */
-function normalizeApifySchedule(
-  schedule: ApifyRawScheduleEntry[] | null | undefined,
-): OpeningHours | null {
-  if (!schedule || schedule.length === 0) return null;
-
-  const result: OpeningHours = {};
-  let validCount = 0;
-
-  for (const entry of schedule) {
-    const dayKey = DAY_NAME_MAP[entry.day.toLowerCase()];
-    if (!dayKey) continue;
-
-    // Validate time format
-    const timeRe = /^(\d{1,2}):(\d{2})$/;
-    const openMatch = entry.open.match(timeRe);
-    const closeMatch = entry.close.match(timeRe);
-    if (!openMatch || !closeMatch) continue;
-
-    const openH = parseInt(openMatch[1], 10);
-    const closeH = parseInt(closeMatch[1], 10);
-    if (openH < 0 || openH > 24 || closeH < 0 || closeH > 24) continue;
-
-    const window: OpeningHoursWindow = { open: entry.open, close: entry.close };
-    result[dayKey] = window as OpeningHoursDay;
-    validCount++;
-  }
-
-  return validCount > 0 ? result : null;
-}
-
-// ---------------------------------------------------------------------------
 // Apify API calls
 // ---------------------------------------------------------------------------
 
 /**
- * Run the Apify Wolt actor with a restaurant URL and wait for completion.
+ * Run the Apify Wolt actor with a venue URL and wait for completion.
  * Returns the default dataset ID on success, or throws on failure.
  */
-async function runActor(restaurantUrl: string, apiToken: string): Promise<string> {
-  const url = `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/runs?token=${apiToken}&waitForFinish=60`;
-
-  // The Apify actor requires /restaurant/ in the URL, but Wolt uses /venue/
-  // interchangeably. Normalize to /restaurant/ to match the actor's input schema.
-  const normalizedUrl = restaurantUrl.replace(/\/venue\//, '/restaurant/');
-
-  // Extract city from URL: https://wolt.com/{lang}/{country}/{city}/restaurant/{slug}
-  const cityMatch = normalizedUrl.match(/\/restaurant\/[^/]+$/);
-  const pathBeforeSlug = cityMatch ? normalizedUrl.slice(0, cityMatch.index) : '';
-  const city = pathBeforeSlug.split('/').filter(Boolean).pop() ?? '';
+async function runActor(venueUrl: string, apiToken: string): Promise<string> {
+  const url = `${APIFY_BASE}/acts/${APIFY_ACTOR_NAME}/runs?token=${apiToken}&waitForFinish=120`;
 
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      restaurantUrl: normalizedUrl,
-      city,
-      includeDetails: true,
-      maxItems: 0, // 0 = unlimited
+      mode: 'venueUrls',
+      venueUrls: [{ url: venueUrl }],
+      language: 'de',
     }),
   });
 
@@ -213,47 +139,45 @@ async function getDatasetItems<T>(datasetId: string, apiToken: string): Promise<
 /**
  * Fetch restaurant data from Wolt via the Apify scraper.
  *
- * @param restaurantUrl - Full Wolt restaurant URL (e.g., https://wolt.com/...)
+ * @param restaurantUrl - Full Wolt venue URL (e.g., https://wolt.com/de/deu/berlin/venue/slug)
  * @param apiToken - Apify API token (APIFY_API_TOKEN)
- * @returns Normalized restaurant data, or null if the restaurant wasn't found
- *          on Wolt (empty result from Apify).
+ * @returns Normalized restaurant data, or null if the venue wasn't found.
  */
 export async function fetchWoltRestaurant(
   restaurantUrl: string,
   apiToken: string,
 ): Promise<ApifyWoltResult | null> {
   const datasetId = await runActor(restaurantUrl, apiToken);
-  const items = await getDatasetItems<ApifyActorOutput>(datasetId, apiToken);
+  const items = await getDatasetItems<ApifyMenuItem>(datasetId, apiToken);
 
-  // Empty dataset = restaurant not found
+  // Empty dataset = venue not found or no menu
   if (!items || items.length === 0) return null;
 
-  const raw = items[0];
+  // Extract venue metadata from the first menu item
+  const first = items[0];
 
-  // Normalize menu items
-  const menuItems = (raw.menuItems ?? []).map((item, i) => ({
+  // Normalize menu items: price from major units (euros) to cents
+  const menuItems = items.map((item, i) => ({
     name_de: item.name,
     description_de: item.description ?? null,
-    category: item.category ?? null,
-    price_cents: item.priceInCents ?? null,
+    category: item.categoryName ?? null,
+    price_cents: item.price != null ? Math.round(item.price * 100) : null,
     is_available: true,
     sort_order: i,
   }));
 
-  // Normalize opening hours
-  const openingHours = normalizeApifySchedule(raw.openingTimesSchedule);
-
   return {
-    name: raw.name ?? '',
-    slug: raw.slug ?? '',
-    url: raw.url ?? restaurantUrl,
-    description: raw.description ?? null,
-    website: raw.website ?? null,
-    phone: raw.phone ?? null,
-    address: raw.address ?? null,
-    postCode: raw.postCode ?? null,
-    city: raw.city ?? null,
+    name: first.venueName ?? '',
+    slug: first.venueSlug ?? '',
+    url: first.url ?? restaurantUrl,
+    description: null, // teodor_banea actor doesn't return venue description
+    website: null, // not available in menu-item rows
+    phone: null, // not available in menu-item rows
+    address: first.venueAddress ?? null,
+    postCode: null, // not a separate field; may be part of venueAddress
+    city: first.venueCity ?? null,
     menuItems,
-    openingHours,
+    // teodor_banea actor doesn't return opening hours
+    openingHours: null,
   };
 }
