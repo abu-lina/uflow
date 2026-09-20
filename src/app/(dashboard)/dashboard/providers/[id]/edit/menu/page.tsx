@@ -4,9 +4,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { FooterAction } from '@/components/ui/FooterAction';
+import { EditSubPageLayout } from '@/components/layout/EditSubPageLayout';
 import type { AdminProviderMenu } from '@/types/adminProvider';
 
 const DEFAULT_ITEM: AdminProviderMenu = {
@@ -78,13 +76,15 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
   };
 
   return (
-    <div className="h-screen-fix flex flex-col">
-      <div className="md:hidden">
-        <PageHeader title="Menu" variant="back-and-title" onBack={() => router.back()} />
-        <HeaderSpacer />
-      </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
-        <div className="w-full sm:mx-auto sm:max-w-2xl flex flex-col gap-4">
+    <EditSubPageLayout
+      primaryButton={{
+        label: 'Save',
+        icon: 'material-symbols:save-outline',
+        onClick: handleSave,
+      }}
+      title="Menu"
+    >
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           {items.map((item, i) => (
             <div key={i} className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm gap-2">
@@ -220,20 +220,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
             <span className="text-sm font-medium text-[#999999]">Add menu item</span>
           </button>
         )}
-        </div>
-      </main>
-      <FooterAction
-        primaryButton={{
-          label: 'Save',
-          icon: 'material-symbols:save-outline',
-          onClick: handleSave,
-        }}
-        secondaryButton={{
-          icon: 'material-symbols:close',
-          onClick: () => router.back(),
-          'aria-label': 'Close',
-        }}
-      />
-    </div>
+      </div>
+    </EditSubPageLayout>
   );
 }

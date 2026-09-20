@@ -4,12 +4,10 @@
 import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { toast } from 'sonner';
 
 import { supabase } from '@/lib/supabase/client';
-import { FooterAction } from '@/components/ui/FooterAction';
+import { EditSubPageLayout } from '@/components/layout/EditSubPageLayout';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function EditImagesPage({ params }: { params: Promise<{ id: string }> }) {
@@ -151,14 +149,17 @@ export default function EditImagesPage({ params }: { params: Promise<{ id: strin
   ];
 
   return (
-    <div className="h-screen-fix flex flex-col">
-      <div className="md:hidden">
-        <PageHeader title={t('editProvider.editImages.title')} variant="back-and-title" onBack={() => router.back()} />
-        <HeaderSpacer />
-      </div>
-
-      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
-        <div className="w-full sm:mx-auto sm:max-w-2xl">
+    <EditSubPageLayout
+      primaryButton={{
+        label: isUploading ? t('editProvider.editImages.saving') : t('editProvider.editImages.save'),
+        icon: isUploading ? 'lucide:loader-2' : 'lucide:save',
+        onClick: handleSave,
+        disabled: isUploading,
+        loading: isUploading,
+        'aria-label': t('editProvider.editImages.saveAria'),
+      }}
+      title={t('editProvider.editImages.title')}
+    >
           <div className="flex w-full flex-col gap-4">
             <div className="relative">
               <input
@@ -242,24 +243,6 @@ export default function EditImagesPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           )}
-        </div>
-      </main>
-
-      <FooterAction
-        primaryButton={{
-          label: isUploading ? t('editProvider.editImages.saving') : t('editProvider.editImages.save'),
-          icon: isUploading ? 'lucide:loader-2' : 'lucide:save',
-          onClick: handleSave,
-          disabled: isUploading,
-          loading: isUploading,
-          'aria-label': t('editProvider.editImages.saveAria'),
-        }}
-        secondaryButton={{
-          icon: 'material-symbols:close',
-          onClick: () => router.back(),
-          'aria-label': 'Close',
-        }}
-      />
-    </div>
+    </EditSubPageLayout>
   );
 }

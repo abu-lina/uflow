@@ -4,9 +4,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { FooterAction } from '@/components/ui/FooterAction';
+import { EditSubPageLayout } from '@/components/layout/EditSubPageLayout';
 import type { OpeningHours, OpeningHoursDay } from '@/types/openingHours';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
@@ -64,14 +62,15 @@ export default function EditHoursPage({ params }: { params: Promise<{ id: string
   };
 
   return (
-    <div className="h-screen-fix flex flex-col">
-      <div className="md:hidden">
-        <PageHeader title="Opening Hours" variant="back-and-title" onBack={() => router.back()} />
-        <HeaderSpacer />
-      </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
-        <div className="w-full sm:mx-auto sm:max-w-2xl">
-        <div className="flex flex-col gap-2">
+    <EditSubPageLayout
+      primaryButton={{
+        label: 'Save',
+        icon: 'material-symbols:save-outline',
+        onClick: handleSave,
+      }}
+      title="Opening Hours"
+    >
+      <div className="flex flex-col gap-2">
           {DAYS.map((day, i) => {
             const dayHours = hours[day] ?? null;
             const isClosed = dayHours === null;
@@ -126,21 +125,7 @@ export default function EditHoursPage({ params }: { params: Promise<{ id: string
               </div>
             );
           })}
-        </div>
-        </div>
-      </main>
-      <FooterAction
-        primaryButton={{
-          label: 'Save',
-          icon: 'material-symbols:save-outline',
-          onClick: handleSave,
-        }}
-        secondaryButton={{
-          icon: 'material-symbols:close',
-          onClick: () => router.back(),
-          'aria-label': 'Close',
-        }}
-      />
-    </div>
+      </div>
+    </EditSubPageLayout>
   );
 }

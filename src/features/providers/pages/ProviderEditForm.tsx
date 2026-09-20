@@ -11,7 +11,6 @@ import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/types/supabase';
 import type { Provider } from '@/services/providers';
 // M-5a: createProviderCommunityServiceRelationship removed (community_services table dropped)
-import { Button } from '@/components/ui/Button';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
@@ -1162,43 +1161,25 @@ export function ProviderEditForm({
       </div>
 
       {cancelUrl ? (
-        <footer
-          className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]"
-          style={{
-            background: 'linear-gradient(to bottom, #f5f5f5 0%, #fbfbfb 100%)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
+        <FooterAction
+          primaryButton={{
+            label: 'Save',
+            icon: 'material-symbols:save-outline',
+            onClick: () => {
+              if (formRef.current && !isSubmitting) {
+                formRef.current.requestSubmit();
+              }
+            },
+            disabled: isSubmitting,
+            loading: isSubmitting,
+            'aria-label': 'Save changes',
           }}
-        >
-          <div
-            className="flex w-full gap-3.5 px-6 pt-4 sm:mx-auto sm:max-w-2xl"
-            style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
-          >
-            <Button
-              fullWidth
-              aria-label="Cancel editing and go back"
-              className="!h-[48px] !max-h-[48px] !min-h-[48px]"
-              disabled={isSubmitting}
-              type="button"
-              variant="secondary"
-              onClick={() => router.push(cancelUrl)}
-            >
-              Cancel
-            </Button>
-            <Button
-              fullWidth
-              className="!h-[48px] !max-h-[48px] !min-h-[48px]"
-              disabled={isSubmitting}
-              loading={isSubmitting}
-              loadingText="Saving"
-              type="submit"
-              variant="primary"
-            >
-              Save
-            </Button>
-          </div>
-        </footer>
+          secondaryButton={{
+            icon: 'material-symbols:close',
+            onClick: () => router.push(cancelUrl),
+            'aria-label': 'Cancel editing and go back',
+          }}
+        />
       ) : (
         <FooterAction
           primaryButton={{

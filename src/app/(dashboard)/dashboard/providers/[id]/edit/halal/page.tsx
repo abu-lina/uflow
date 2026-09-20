@@ -4,9 +4,7 @@ import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { FooterAction } from '@/components/ui/FooterAction';
+import { EditSubPageLayout } from '@/components/layout/EditSubPageLayout';
 import type { DerivedReviewStatus } from '@/utils/halal-derivation';
 
 interface HalalData {
@@ -183,13 +181,17 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   }, [data, id, STORAGE_KEY, router]);
 
   return (
-    <div className="h-screen-fix flex flex-col">
-      <div className="md:hidden">
-        <PageHeader title="Halal Check" variant="back-and-title" onBack={() => router.back()} />
-        <HeaderSpacer />
-      </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
-        <div className="w-full sm:mx-auto sm:max-w-2xl flex flex-col gap-6">
+    <EditSubPageLayout
+      primaryButton={{
+        label: isUploading ? 'Wird hochgeladen...' : 'Speichern',
+        icon: isUploading ? undefined : 'material-symbols:save-outline',
+        onClick: handleSave,
+        disabled: isUploading,
+        loading: isUploading,
+      }}
+      title="Halal Check"
+    >
+      <div className="flex flex-col gap-6">
           {/* Section 1: Attestation Questions */}
           <div className="flex flex-col gap-4">
             <button
@@ -533,22 +535,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
           )}
-        </div>
-      </main>
-      <FooterAction
-        primaryButton={{
-          label: isUploading ? 'Wird hochgeladen...' : 'Speichern',
-          icon: isUploading ? undefined : 'material-symbols:save-outline',
-          onClick: handleSave,
-          disabled: isUploading,
-          loading: isUploading,
-        }}
-        secondaryButton={{
-          icon: 'material-symbols:close',
-          onClick: () => router.back(),
-          'aria-label': 'Schließen',
-        }}
-      />
-    </div>
+      </div>
+    </EditSubPageLayout>
   );
 }
