@@ -230,7 +230,11 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     return (
       <div className="h-screen-fix flex flex-col">
         <div className="md:hidden">
-          <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/providers" />
+          <PageHeader
+            title={t('editProvider.title')}
+            variant="back-and-title"
+            onBack="/providers"
+          />
           <HeaderSpacer />
         </div>
         <main className="flex flex-1 items-center justify-center md:pt-[var(--desktop-header-height,153px)]">
@@ -244,7 +248,11 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     return (
       <div className="h-screen-fix flex flex-col">
         <div className="md:hidden">
-          <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/providers" />
+          <PageHeader
+            title={t('editProvider.title')}
+            variant="back-and-title"
+            onBack="/providers"
+          />
           <HeaderSpacer />
         </div>
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 md:pt-[var(--desktop-header-height,153px)]">
@@ -263,10 +271,14 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
   return (
     <div className="h-screen-fix flex flex-col">
       <div className="md:hidden">
-        <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={`/providers`} />
+        <PageHeader
+          title={t('editProvider.title')}
+          variant="back-and-title"
+          onBack={`/providers`}
+        />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
+      <main className="flex flex-1 flex-col overflow-y-auto px-6 pb-4 md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
           <ProviderEditForm
             cancelUrl={`/providers/${providerId}`}
@@ -277,7 +289,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
             onSubmitForm={async (formData) => {
               await saveProviderEdits(formData);
               await queryClient.invalidateQueries({ queryKey: ['provider', providerId] });
-              router.push(`/providers/${providerId}`);
+              router.replace(`/providers/${providerId}`);
             }}
           />
 

@@ -16,7 +16,7 @@ export function ProviderEditPage({ provider }: ProviderEditPageProps) {
   const { t } = useLanguage();
 
   const handleSave = () => {
-    router.push(`/profile/providers/${provider.provider_id}`);
+    router.replace(`/profile/providers/${provider.provider_id}`);
   };
 
   return (
@@ -29,7 +29,7 @@ export function ProviderEditPage({ provider }: ProviderEditPageProps) {
         />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
+      <main className="flex flex-1 flex-col overflow-y-auto px-6 pb-4 md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
           <ProviderEditForm provider={provider} onSave={handleSave} />
         </div>
