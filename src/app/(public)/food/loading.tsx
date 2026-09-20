@@ -1,8 +1,8 @@
 /**
- * Loading state for providers list page
+ * Loading state for food discovery page
  * Displays skeleton UI while data is being fetched
  */
-export default function ProvidersLoading() {
+export default function FoodLoading() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header skeleton */}

@@ -58,8 +58,6 @@ export default function ContactPage() {
 
   const STEPS = isRecommendationMode ? STEPS_RECOMMENDATION : STEPS_OWNER;
 
-
-
   // Choose layout based on screen size
   const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
@@ -76,19 +74,19 @@ export default function ContactPage() {
       <Layout>
         <PageHeader title={t('create.contact.title')} variant="title-only" />
 
-        <PageContent 
+        <PageContent
           className={cn(
             'flex flex-1 flex-col items-center justify-center',
-            !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+            !isMobile && 'mx-auto max-w-2xl px-6 md:px-8 lg:max-w-4xl',
           )}
           maxWidth="full"
           paddingX={isMobile ? 'px-6' : 'px-0'}
         >
-          <span className="text-center text-lg text-content-heading mb-6">
+          <span className="mb-6 text-center text-lg text-content-heading">
             {t('create.contact.loginRequired')}
           </span>
           <button
-            className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 font-semibold text-base text-white transition-colors hover:bg-primary-dark"
+            className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-primary-dark"
             onClick={() => router.push(`/login?returnUrl=${returnUrl}`)}
           >
             {t('create.contact.goToLogin')}
@@ -104,16 +102,15 @@ export default function ContactPage() {
       try {
         setIsSubmitting(true);
 
-        await createProviderOrService(
-          formData,
-          user,
-          isRecommendationMode
-        );
+        await createProviderOrService(formData, user, isRecommendationMode);
 
         // Show success message
         const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
         if (isCommunityService) {
-          toast.success(t('create.contact.communityServiceCreated') || t('create.media.communityServiceCreated'));
+          toast.success(
+            t('create.contact.communityServiceCreated') ||
+              t('create.media.communityServiceCreated'),
+          );
         } else {
           toast.success(t('create.contact.providerCreated') || t('create.media.providerCreated'));
         }
@@ -125,8 +122,8 @@ export default function ContactPage() {
         queryClient.invalidateQueries({ queryKey: ['providers'] });
         queryClient.invalidateQueries({ queryKey: ['community-services'] });
 
-        // Redirect to providers page (waitlist is disabled)
-        router.push('/providers');
+        // Redirect to food page (waitlist is disabled)
+        router.push('/food');
       } catch (error) {
         console.error('Error creating entity:', error);
         toast.error(t('create.contact.errorCreating') || t('create.media.errorCreating'));
@@ -147,40 +144,36 @@ export default function ContactPage() {
         onBack="/create/location"
       />
 
-      <PageContent 
-        hasFooter 
+      <PageContent
+        hasFooter
         className={cn(
           'flex flex-col gap-6',
-          !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+          !isMobile && 'mx-auto max-w-2xl px-6 md:px-8 lg:max-w-4xl',
         )}
         maxWidth="full"
         paddingX={isMobile ? 'px-6' : 'px-0'}
       >
         {/* Step Indicator */}
         <div className="mb-6">
-          <StepIndicator 
-            currentStep={isRecommendationMode ? 2 : 2} 
-            steps={STEPS} 
-          />
+          <StepIndicator currentStep={isRecommendationMode ? 2 : 2} steps={STEPS} />
         </div>
 
         {/* Subtitle */}
-        <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
-          <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left mb-6">
+        <div className="flex w-full flex-col items-start space-y-3 px-3 py-0">
+          <p className="mb-6 text-left text-base font-normal leading-[19px] text-[#7A7A7A]">
             {t('create.contact.description')}
           </p>
         </div>
 
         {/* Form Fields */}
-        <div className={cn(
-          'flex w-full gap-4',
-          isMobile ? 'flex-col' : 'flex-row flex-wrap'
-        )}>
+        <div className={cn('flex w-full gap-4', isMobile ? 'flex-col' : 'flex-row flex-wrap')}>
           {/* Website */}
-          <div className={cn(
-            'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
-            !isMobile && 'md:w-[calc(50%-8px)]'
-          )}>
+          <div
+            className={cn(
+              'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+              !isMobile && 'md:w-[calc(50%-8px)]',
+            )}
+          >
             <div className="flex w-full flex-col gap-1">
               <label className="text-xs leading-[15px] text-[#999999]">
                 {t('create.contact.website')}
@@ -196,10 +189,12 @@ export default function ContactPage() {
           </div>
 
           {/* Instagram */}
-          <div className={cn(
-            'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
-            !isMobile && 'md:w-[calc(50%-8px)]'
-          )}>
+          <div
+            className={cn(
+              'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+              !isMobile && 'md:w-[calc(50%-8px)]',
+            )}
+          >
             <div className="flex w-full flex-col gap-1">
               <label className="text-xs leading-[15px] text-[#999999]">
                 {t('create.contact.instagram')}
@@ -215,10 +210,12 @@ export default function ContactPage() {
           </div>
 
           {/* Phone */}
-          <div className={cn(
-            'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
-            !isMobile && 'md:w-[calc(50%-8px)]'
-          )}>
+          <div
+            className={cn(
+              'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+              !isMobile && 'md:w-[calc(50%-8px)]',
+            )}
+          >
             <div className="flex w-full flex-col gap-1">
               <label className="text-xs leading-[15px] text-[#999999]">
                 {t('create.contact.phone')}
@@ -234,10 +231,12 @@ export default function ContactPage() {
           </div>
 
           {/* Email */}
-          <div className={cn(
-            'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
-            !isMobile && 'md:w-[calc(50%-8px)]'
-          )}>
+          <div
+            className={cn(
+              'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+              !isMobile && 'md:w-[calc(50%-8px)]',
+            )}
+          >
             <div className="flex w-full flex-col gap-1">
               <label className="text-xs leading-[15px] text-[#999999]">
                 {t('create.contact.email')}
@@ -258,10 +257,10 @@ export default function ContactPage() {
       <FooterAction
         actionButton={{
           label: isSubmitting
-            ? (t('create.contact.submitting') || t('create.media.creating'))
+            ? t('create.contact.submitting') || t('create.media.creating')
             : isRecommendationMode
-            ? (t('create.contact.submitButton') || t('common.submit'))
-            : t('common.next'),
+              ? t('create.contact.submitButton') || t('common.submit')
+              : t('common.next'),
           trailingIcon: isRecommendationMode && !isSubmitting ? undefined : 'lucide:chevron-right',
           icon: isSubmitting ? 'lucide:loader-2' : undefined,
           onClick: handleSave,

@@ -2,10 +2,10 @@ import Link from 'next/link';
 import { Icon } from '@/components/ui/Icon';
 
 /**
- * Not found page for providers section
- * Displays when a provider ID doesn't exist in the database
+ * Not found page for food section
+ * Displays when a food listing doesn't exist in the database
  */
-export default function ProviderNotFound() {
+export default function FoodNotFound() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="text-center">

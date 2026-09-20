@@ -220,11 +220,16 @@ describe('perf budgets updated', () => {
 });
 
 // ─── 10. RootClientLayout discovery check ──────────────────────────────────────
-describe('RootClientLayout isProvidersDiscovery', () => {
+describe('RootClientLayout isFoodDiscovery', () => {
   const src = readFileSync(resolve(ROOT, 'src/components/layout/RootClientLayout.tsx'), 'utf-8');
 
   it('includes /food in discovery check', () => {
     expect(src).toContain("pathname === '/food'");
+  });
+
+  it('uses isFoodDiscovery variable name', () => {
+    expect(src).toContain('isFoodDiscovery');
+    expect(src).not.toContain('isProvidersDiscovery');
   });
 });
 
@@ -238,7 +243,102 @@ describe('providers/not-found.tsx updated link', () => {
   });
 });
 
-// ─── 12. Middleware functional test: /food allowed in early access ──────────────
+// ─── 12. Review findings: remaining /providers listing references ───────────────
+describe('review findings: no remaining /providers listing references', () => {
+  it('manifest route.ts does not emit url: /providers', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/api/manifest/route.ts'), 'utf-8');
+    expect(src).not.toContain("url: '/providers'");
+    expect(src).not.toMatch(/"url"\s*:\s*"\/providers"/);
+    // Should use /food for browse shortcut
+    expect(src).toContain("url: '/food'");
+  });
+
+  it('waitlist/page.tsx does not contain /providers', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/waitlist/page.tsx'), 'utf-8');
+    expect(src).not.toContain("'/providers'");
+    expect(src).toContain("'/food'");
+  });
+
+  it('pwa-start/page.tsx does not contain /providers', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/pwa-start/page.tsx'), 'utf-8');
+    expect(src).not.toContain("'/providers'");
+    expect(src).toContain("'/food'");
+  });
+
+  it('welcome/page.tsx does not contain /providers', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/welcome/page.tsx'), 'utf-8');
+    expect(src).not.toContain("'/providers'");
+    expect(src).toContain("'/food'");
+  });
+
+  it('create/media/page.tsx does not navigate to /providers', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/(public)/create/media/page.tsx'), 'utf-8');
+    expect(src).not.toContain("router.push('/providers')");
+    expect(src).toContain("router.push('/food')");
+  });
+
+  it('create/contact/page.tsx does not navigate to /providers', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/(public)/create/contact/page.tsx'), 'utf-8');
+    expect(src).not.toContain("router.push('/providers')");
+    expect(src).toContain("router.push('/food')");
+  });
+
+  it('community-services/not-found.tsx links to /food', () => {
+    const src = readFileSync(
+      resolve(ROOT, 'src/app/(public)/community-services/not-found.tsx'),
+      'utf-8',
+    );
+    expect(src).not.toContain('href="/providers"');
+    expect(src).toContain('href="/food"');
+  });
+
+  it('dashboard layout redirects to /food', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/(dashboard)/layout.tsx'), 'utf-8');
+    expect(src).not.toContain("redirect('/providers')");
+    expect(src).toContain("redirect('/food')");
+  });
+});
+
+// ─── 13. Review findings: dead /providers checks removed ───────────────────────
+describe('review findings: dead /providers checks removed', () => {
+  it('MobileFooterBar does not check pathname === /providers', () => {
+    const src = readFileSync(resolve(ROOT, 'src/components/common/MobileFooterBar.tsx'), 'utf-8');
+    expect(src).not.toContain("pathname === '/providers'");
+    expect(src).toContain("pathname === '/food'");
+  });
+
+  it('RootClientLayout does not check pathname === /providers', () => {
+    const src = readFileSync(resolve(ROOT, 'src/components/layout/RootClientLayout.tsx'), 'utf-8');
+    expect(src).not.toContain("pathname === '/providers'");
+    expect(src).toContain("pathname === '/food'");
+  });
+
+  it('CityEarlyAccessNavbar does not check pathname === /providers', () => {
+    const src = readFileSync(
+      resolve(ROOT, 'src/components/shared/CityEarlyAccessNavbar.tsx'),
+      'utf-8',
+    );
+    expect(src).not.toContain("pathname === '/providers'");
+    expect(src).toContain("pathname === '/food'");
+  });
+});
+
+// ─── 14. Review findings: renamed exports ──────────────────────────────────────
+describe('review findings: food/ exports renamed', () => {
+  it('food/loading.tsx exports FoodLoading (not ProvidersLoading)', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/(public)/food/loading.tsx'), 'utf-8');
+    expect(src).not.toContain('ProvidersLoading');
+    expect(src).toContain('FoodLoading');
+  });
+
+  it('food/not-found.tsx exports FoodNotFound (not ProviderNotFound)', () => {
+    const src = readFileSync(resolve(ROOT, 'src/app/(public)/food/not-found.tsx'), 'utf-8');
+    expect(src).not.toContain('ProviderNotFound');
+    expect(src).toContain('FoodNotFound');
+  });
+});
+
+// ─── 15. Middleware functional test: /food allowed in early access ──────────────
 describe('middleware-utils: /food allowed in early access', () => {
   it('/food should not redirect to waitlist', async () => {
     const { shouldRedirectToWaitlist } = await import('@/lib/middleware-utils');

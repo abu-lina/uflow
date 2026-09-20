@@ -11,7 +11,7 @@ function detectLanguageFromRequest(request: NextRequest): 'de' | 'en' | 'ar' | '
 
   // Priority 2: Check Accept-Language header (device/browser language)
   const acceptLanguage = request.headers.get('accept-language');
-  
+
   if (!acceptLanguage) {
     return 'de'; // Default fallback
   }
@@ -19,7 +19,7 @@ function detectLanguageFromRequest(request: NextRequest): 'de' | 'en' | 'ar' | '
   // Parse Accept-Language header (e.g., "en-US,en;q=0.9,de;q=0.8")
   const languages = acceptLanguage
     .split(',')
-    .map(lang => {
+    .map((lang) => {
       const [code, qValue] = lang.trim().split(';q=');
       return {
         code: code.toLowerCase().split('-')[0], // Extract base language (en, de, etc.)
@@ -46,7 +46,7 @@ const shortcuts = {
       name: 'Anbieter durchsuchen',
       short_name: 'Durchsuchen',
       description: 'Alle Anbieter anzeigen',
-      url: '/providers',
+      url: '/food',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
     {
@@ -69,7 +69,7 @@ const shortcuts = {
       name: 'Browse Providers',
       short_name: 'Browse',
       description: 'View all providers',
-      url: '/providers',
+      url: '/food',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
     {
@@ -92,7 +92,7 @@ const shortcuts = {
       name: 'تصفح المزودين',
       short_name: 'تصفح',
       description: 'عرض جميع المزودين',
-      url: '/providers',
+      url: '/food',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
     {
@@ -115,7 +115,7 @@ const shortcuts = {
       name: 'Sağlayıcıları Görüntüle',
       short_name: 'Görüntüle',
       description: 'Tüm sağlayıcıları göster',
-      url: '/providers',
+      url: '/food',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
     {
@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(null, {
       status: 304,
       headers: {
-        'ETag': etag,
+        ETag: etag,
         'Cache-Control': 'public, max-age=3600, must-revalidate',
       },
     });
@@ -219,9 +219,8 @@ export async function GET(request: NextRequest) {
     headers: {
       'Content-Type': 'application/manifest+json',
       'Cache-Control': 'public, max-age=3600, must-revalidate', // Cache with revalidation
-      'ETag': etag, // Enable conditional requests
-      'Vary': 'Accept-Language', // CDN caches 4 versions (one per language) for better efficiency
+      ETag: etag, // Enable conditional requests
+      Vary: 'Accept-Language', // CDN caches 4 versions (one per language) for better efficiency
     },
   });
 }
-

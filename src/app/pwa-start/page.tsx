@@ -6,14 +6,14 @@ import { detectPWA } from '@/utils/pwaUtils';
 
 /**
  * PWA Start Page - Entry point for PWA installations
- * 
+ *
  * This page is set as the manifest's start_url and handles:
  * 1. Standalone mode detection (is app running as PWA?)
  * 2. Routing based on app launch status and PWA state
  * 3. Ensuring correct URL context for iOS PWA
- * 
+ *
  * Flow:
- * - If in PWA (standalone): Route to /waitlist or /providers based on isAppLaunched
+ * - If in PWA (standalone): Route to /food (canonical discovery route)
  * - If in browser: Redirect to / (root) for normal routing
  */
 export default function PWAStart() {
@@ -21,21 +21,21 @@ export default function PWAStart() {
 
   useEffect(() => {
     const pwaInfo = detectPWA();
-    
+
     // Detect if running in standalone mode (PWA)
     if (pwaInfo.isPWA || pwaInfo.isStandalone) {
-      // In PWA mode - always route to providers (waitlist is disabled)
-      router.replace('/providers');
+      // In PWA mode - always route to food (waitlist is disabled)
+      router.replace('/food');
     } else {
       // Not in PWA mode (browser) - redirect to root
-      // Root will handle routing to providers or welcome page
+      // Root will handle routing to food or welcome page
       router.replace('/');
     }
   }, [router]);
 
   // Loading state while detecting and routing
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#f5f5f5] to-[#fbfbfb]">
       <div className="text-center">
         <div className="mb-4 flex justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -45,7 +45,3 @@ export default function PWAStart() {
     </div>
   );
 }
-
-
-
-

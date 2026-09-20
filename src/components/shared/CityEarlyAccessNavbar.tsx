@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getFeatureFlag } from '@/config/feature-flags';
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
 import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
@@ -31,25 +29,15 @@ import { cn } from '@/lib/utils';
  */
 export function CityEarlyAccessNavbar() {
   const pathname = usePathname();
-  const [isAppLaunched, setIsAppLaunched] = useState(false);
   const { stage } = useAppStage();
   const { user } = useAuth();
-
-  // Check feature flag client-side
-  useEffect(() => {
-    setIsAppLaunched(getFeatureFlag('isAppLaunched'));
-  }, []);
 
   // Determine active states
   // Home is active when:
   // - On / (root) - the home page after onboarding (shows city content)
   // - On /city/* (Stage 1) - direct city access
-  // - On /providers (Stage 2) - when not app launched (early access)
-  const isHomeActive =
-    pathname === '/' ||
-    pathname.startsWith('/city/') ||
-    pathname === '/food' ||
-    (pathname === '/providers' && !isAppLaunched);
+  // - On /food (Stage 2) - the canonical discovery route
+  const isHomeActive = pathname === '/' || pathname.startsWith('/city/') || pathname === '/food';
 
   const isCreateActive = pathname === '/create' || pathname.startsWith('/create/recommend');
 

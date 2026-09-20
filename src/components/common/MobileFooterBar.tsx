@@ -66,7 +66,6 @@ export function MobileFooterBar() {
     pathname === '/' ||
     pathname === '/search' ||
     pathname.startsWith('/city/') ||
-    pathname === '/providers' ||
     pathname === '/food' ||
     pathname === '/stores' ||
     pathname === '/ummah';
@@ -75,7 +74,7 @@ export function MobileFooterBar() {
     <>
       <nav
         ref={navRef}
-        className="pointer-events-auto pt-footer-safe pb-safe fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center border-t border-gray-200/30 px-6 sm:px-8"
+        className="pt-footer-safe pb-safe pointer-events-auto fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center border-t border-gray-200/30 px-6 sm:px-8"
         style={{
           // Solid opaque background - matches page gradient exactly
           background: 'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
@@ -127,9 +126,9 @@ export function MobileFooterBar() {
                       ? pathname.startsWith('/profile') ||
                           pathname === '/login' ||
                           pathname === '/signup'
-                        : item.href === '/'
-                          ? isExploreActive
-                          : pathname === item.href,
+                      : item.href === '/'
+                        ? isExploreActive
+                        : pathname === item.href,
                   )}
               </Link>
             </div>
