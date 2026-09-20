@@ -16,9 +16,17 @@ import type { Provider } from '@/services/providers';
 export function computeSealTier(
   verificationMethod: 'online' | 'onsite' | null | undefined,
   hasCertificate: boolean | null | undefined,
+  attestation?: { noAlcohol?: boolean | null; noPork?: boolean | null; noGambling?: boolean | null },
 ): 'bronze' | 'silver' | 'gold' | null {
   if (hasCertificate) return 'gold';
   if (!verificationMethod && !hasCertificate) return null;
+  // Require at least one attestation answer before awarding a tier.
+  // Without this, a provider with verification_method set as a DB default
+  // (but no actual halal check done) would auto-show as bronze.
+  if (attestation) {
+    const hasAttestation = Boolean(attestation.noAlcohol) || Boolean(attestation.noPork) || Boolean(attestation.noGambling);
+    if (!hasAttestation) return null;
+  }
   if (verificationMethod === 'onsite') return 'silver';
   return 'bronze';
 }
@@ -36,6 +44,7 @@ interface ProofTierCardProps {
   noAlcohol?: Provider['no_alcohol'];
   noPork?: Provider['no_pork'];
   noGambling?: Provider['no_gambling'];
+  reviewStatus?: Provider['review_status'];
 }
 
 // ---------------------------------------------------------------------------
@@ -210,14 +219,29 @@ export function ProofTierCard({
   noAlcohol,
   noPork,
   noGambling,
+  reviewStatus,
 }: ProofTierCardProps) {
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const tier = computeSealTier(verificationMethod, hasCertificate);
+  const tier = computeSealTier(verificationMethod, hasCertificate, { noAlcohol, noPork, noGambling });
 
   // No tier means no verification data — don't render the card at all
   if (!tier) return null;
+
+  // Don't show the seal until an admin has approved the provider
+  if (reviewStatus !== 'approved') {
+    return (
+      <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <HugeHalalIcon aria-hidden className="h-6 w-6 flex-shrink-0 text-amber-600" />
+          <p className="text-sm text-amber-700">
+            {t('providerDetail.proofTier.pendingReview')}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const onsiteVerified = (verificationMethod ?? 'online') === 'onsite';
 

@@ -1113,6 +1113,7 @@ export const en = {
       whatIsThis: 'How do we check?',
       explanation:
         "Every listing on Ummah Flow meets our halal requirements. The trust level shows how thoroughly we've confirmed this.",
+      pendingReview: 'This provider\'s halal status is pending review by our team.',
     },
     trustBadges: {
       muslimOwned: 'Muslim',

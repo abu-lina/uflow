@@ -4,10 +4,7 @@ import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { PageContent } from '@/components/layout/PageContent';
-import { FooterAction } from '@/components/ui/FooterAction';
+import { EditSubPageLayout } from '@/components/layout/EditSubPageLayout';
 import type { DerivedReviewStatus } from '@/utils/halal-derivation';
 
 interface HalalData {
@@ -179,15 +176,27 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     // status explicitly via the Reject/Approve buttons on the main edit page.
     const saveData: HalalData = { ...data, certificateUrl: certUrl, certificateFile: null };
     delete saveData.reviewStatus;
+    // Mark as reviewed: set verification_method to 'online' so the edit form
+    // can distinguish "never reviewed" (null) from "reviewed, not halal" (online + no attestation).
+    if (!saveData.verificationMethod) {
+      saveData.verificationMethod = 'online';
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     router.back();
   }, [data, id, STORAGE_KEY, router]);
 
   return (
-    <ScrollablePageLayout>
-      <PageHeader title="Halal Check" variant="back-and-title" onBack={() => router.back()} />
-      <PageContent hasFooter maxWidth="full" paddingX="px-0">
-        <div className="pb-mobile-nav-md flex flex-col gap-6 px-6">
+    <EditSubPageLayout
+      primaryButton={{
+        label: isUploading ? 'Wird hochgeladen...' : 'Speichern',
+        icon: isUploading ? undefined : 'material-symbols:save-outline',
+        onClick: handleSave,
+        disabled: isUploading,
+        loading: isUploading,
+      }}
+      title="Halal Check"
+    >
+      <div className="flex flex-col gap-6">
           {/* Section 1: Attestation Questions */}
           <div className="flex flex-col gap-4">
             <button
@@ -531,22 +540,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
           )}
-        </div>
-      </PageContent>
-      <FooterAction
-        primaryButton={{
-          label: isUploading ? 'Wird hochgeladen...' : 'Speichern',
-          icon: isUploading ? undefined : 'material-symbols:save-outline',
-          onClick: handleSave,
-          disabled: isUploading,
-          loading: isUploading,
-        }}
-        secondaryButton={{
-          icon: 'material-symbols:close',
-          onClick: () => router.back(),
-          'aria-label': 'Schließen',
-        }}
-      />
-    </ScrollablePageLayout>
+      </div>
+    </EditSubPageLayout>
   );
 }

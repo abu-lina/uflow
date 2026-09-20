@@ -21,6 +21,7 @@ import { ProofTierCard, computeSealTier } from '@/features/providers/components/
 import { PrayerRug } from '@/components/icons/PrayerRug';
 import { supabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import type { Provider } from '@/services/providers';
 import type { OpeningHours } from '@/types/openingHours';
 import type { BadgeWithConfirmationStatus, ProviderBadgeWithType } from '@/types/badges';
@@ -172,6 +173,7 @@ export function ProviderDetailSections({
   onLocationSelect,
 }: ProviderDetailSectionsProps) {
   const { t } = useLanguage();
+  const { isAdmin } = useIsAdmin();
   const [openSection, setOpenSection] = useState<string | null>('halal');
   const router = useRouter();
   const amenities = useMemo(() => buildAmenityLabels(provider, t), [provider, t]);
@@ -228,9 +230,13 @@ export function ProviderDetailSections({
     staleTime: 5 * 60 * 1000,
   });
 
+  const sealTier = computeSealTier(provider.verification_method, provider.has_certificate, { noAlcohol: provider.no_alcohol, noPork: provider.no_pork, noGambling: provider.no_gambling });
+  // Admin-only: provider was reviewed (verification_method set) but didn't pass attestation
+  const showNotHalal = !sealTier && isAdmin && provider.verification_method != null;
+
   return (
     <div className="flex flex-col gap-4 self-stretch">
-      {computeSealTier(provider.verification_method, provider.has_certificate) && (
+      {sealTier ? (
         <ExpandSection
           isOpen={openSection === 'halal'}
           title={t('providerDetail.proofTier.sectionTitle')}
@@ -243,11 +249,25 @@ export function ProviderDetailSections({
               noAlcohol={provider.no_alcohol}
               noGambling={provider.no_gambling}
               noPork={provider.no_pork}
+              reviewStatus={provider.review_status}
               verificationMethod={provider.verification_method}
             />
           </div>
         </ExpandSection>
-      )}
+      ) : showNotHalal ? (
+        <ExpandSection
+          isOpen={openSection === 'halal'}
+          title={t('providerDetail.proofTier.sectionTitle')}
+          onToggle={(next) => setOpenSection(next ? 'halal' : null)}
+        >
+          <div className="space-y-3 pt-3">
+            <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+              <span className="text-sm font-medium text-red-700">Not halal</span>
+              <span className="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600">Admin only</span>
+            </div>
+          </div>
+        </ExpandSection>
+      ) : null}
 
       <ExpandSection
         isOpen={openSection === 'values'}

@@ -11,7 +11,6 @@ import { supabase } from '@/lib/supabase/client';
 import type { Category } from '@/types/supabase';
 import type { Provider } from '@/services/providers';
 // M-5a: createProviderCommunityServiceRelationship removed (community_services table dropped)
-import { Button } from '@/components/ui/Button';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
 
@@ -29,22 +28,12 @@ interface ProviderEditFormProps {
   /** Key prefix for localStorage draft state.
    *  Use 'admin_' in admin context to isolate from owner draft state. Defaults to ''. */
   localStoragePrefix?: string;
-  /** Optional custom moderation footer actions for admin review flows. */
-  reviewFooterActions?: {
-    reject: ProviderEditFooterAction;
-    approve: ProviderEditFooterAction;
-  };
+  /** URL to navigate to when Cancel is clicked (admin context). */
+  cancelUrl?: string;
   /** When true, hides the "Soziale Initiativen" button in the Media section.
    *  Used by the community service edit adapter (D9) since CS are the initiatives themselves.
    *  Defaults to false — existing provider edit flows are unaffected. */
   hideSocialInitiatives?: boolean;
-}
-
-interface ProviderEditFooterAction {
-  label: string;
-  variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'cancel';
-  onClick: (data: ProviderEditFormData) => Promise<void>;
-  'aria-label'?: string;
 }
 
 /** Exported form data shape so external save handlers can type their inputs. */
@@ -117,13 +106,12 @@ export function ProviderEditForm({
   subPageBaseUrl,
   enableLocalStorage = true,
   localStoragePrefix = '',
-  reviewFooterActions,
+  cancelUrl,
   hideSocialInitiatives = false,
 }: ProviderEditFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const websiteInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeFooterAction, setActiveFooterAction] = useState<'approve' | 'reject' | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     basics: true,
@@ -391,19 +379,27 @@ export function ProviderEditForm({
     syncFromLocalStorage();
   }, [syncFromLocalStorage]);
 
-  // Re-sync when user navigates back from sub-page (page regains visibility)
+  // Re-sync when user navigates back from sub-page (page regains visibility
+  // or SPA back-navigation via popstate/focus)
   useEffect(() => {
     if (!enableLocalStorage) return;
+    const handleSync = () => {
+      syncFromLocalStorage();
+    };
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         syncFromLocalStorage();
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('pageshow', handleVisibility);
+    window.addEventListener('pageshow', handleSync);
+    window.addEventListener('popstate', handleSync);
+    window.addEventListener('focus', handleSync);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('pageshow', handleVisibility);
+      window.removeEventListener('pageshow', handleSync);
+      window.removeEventListener('popstate', handleSync);
+      window.removeEventListener('focus', handleSync);
     };
   }, [enableLocalStorage, syncFromLocalStorage]);
 
@@ -557,22 +553,6 @@ export function ProviderEditForm({
     }
   };
 
-  const handleReviewFooterAction = async (action: 'approve' | 'reject') => {
-    if (!reviewFooterActions) return;
-    const handler =
-      action === 'approve'
-        ? reviewFooterActions.approve.onClick
-        : reviewFooterActions.reject.onClick;
-    setActiveFooterAction(action);
-    try {
-      await handler(formData);
-    } catch {
-      // External handler is responsible for its own error toast
-    } finally {
-      setActiveFooterAction(null);
-    }
-  };
-
   return (
     <form ref={formRef} className="flex flex-1 flex-col" onSubmit={handleSubmit}>
       {/* Form Fields - All on one page */}
@@ -627,8 +607,8 @@ export function ProviderEditForm({
               </div>
 
               {/* Plan 089 M8: Section (listing_type) field */}
-              {(provider.listing_type !== undefined || reviewFooterActions) &&
-                (reviewFooterActions ? (
+              {(provider.listing_type !== undefined || cancelUrl) &&
+                (cancelUrl ? (
                   <div className="flex h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
                     <div className="flex flex-1 flex-col gap-1">
                       <label
@@ -1080,10 +1060,12 @@ export function ProviderEditForm({
                   <div className="text-[15px] font-medium leading-[18px] text-[#272727]">
                     {formData.hasCertificate
                       ? 'Gold'
-                      : formData.verificationMethod === 'onsite'
-                        ? 'Silver'
-                        : formData.verificationMethod === 'online'
-                          ? 'Bronze'
+                      : (formData.noAlcohol || formData.noPork || formData.noGambling)
+                        ? formData.verificationMethod === 'onsite'
+                          ? 'Silver'
+                          : 'Bronze'
+                        : formData.verificationMethod
+                          ? 'Not halal'
                           : 'Not set'}
                   </div>
                 </div>
@@ -1166,7 +1148,7 @@ export function ProviderEditForm({
               </button>
 
               {/* Enrichment Review — only in admin context */}
-              {reviewFooterActions && (
+              {cancelUrl && (
                 <button
                   className="flex min-h-[54px] w-full rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
                   type="button"
@@ -1188,63 +1170,26 @@ export function ProviderEditForm({
         </div>
       </div>
 
-      {reviewFooterActions ? (
-        <footer
-          className="fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]"
-          style={{
-            background: 'linear-gradient(to bottom, #f5f5f5 0%, #fbfbfb 100%)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
+      {cancelUrl ? (
+        <FooterAction
+          primaryButton={{
+            label: 'Save',
+            icon: 'material-symbols:save-outline',
+            onClick: () => {
+              if (formRef.current && !isSubmitting) {
+                formRef.current.requestSubmit();
+              }
+            },
+            disabled: isSubmitting,
+            loading: isSubmitting,
+            'aria-label': 'Save changes',
           }}
-        >
-          <div
-            className="flex w-full gap-3.5 px-6 pt-4 md:mx-auto md:max-w-2xl"
-            style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
-          >
-            <Button
-              fullWidth
-              aria-label={reviewFooterActions.reject['aria-label']}
-              className="!h-[48px] !max-h-[48px] !min-h-[48px]"
-              disabled={isSubmitting || activeFooterAction !== null}
-              loading={activeFooterAction === 'reject'}
-              loadingText="Rejecting"
-              type="button"
-              variant="danger"
-              onClick={() => {
-                void handleReviewFooterAction('reject');
-              }}
-            >
-              {reviewFooterActions.reject.label}
-            </Button>
-            <Button
-              fullWidth
-              className="!h-[48px] !max-h-[48px] !min-h-[48px]"
-              disabled={isSubmitting || activeFooterAction !== null}
-              loading={isSubmitting}
-              loadingText="Saving"
-              type="submit"
-              variant="primary"
-            >
-              Save
-            </Button>
-            <Button
-              fullWidth
-              aria-label={reviewFooterActions.approve['aria-label']}
-              className="!h-[48px] !max-h-[48px] !min-h-[48px]"
-              disabled={isSubmitting || activeFooterAction !== null}
-              loading={activeFooterAction === 'approve'}
-              loadingText="Approving"
-              type="button"
-              variant="success"
-              onClick={() => {
-                void handleReviewFooterAction('approve');
-              }}
-            >
-              {reviewFooterActions.approve.label}
-            </Button>
-          </div>
-        </footer>
+          secondaryButton={{
+            icon: 'material-symbols:close',
+            onClick: () => router.push(cancelUrl),
+            'aria-label': 'Cancel editing and go back',
+          }}
+        />
       ) : (
         <FooterAction
           primaryButton={{

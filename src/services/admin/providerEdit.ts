@@ -60,10 +60,10 @@ export interface AdminProviderEditData {
   showAddress?: boolean;
   menuItems?: Array<{
     name_de: string;
-    name_en?: string;
-    description_de?: string;
-    price_cents: number;
-    category?: string;
+    name_en?: string | null;
+    description_de?: string | null;
+    price_cents?: number | null;
+    category?: string | null;
     sort_order: number;
     is_available: boolean;
   }>;

@@ -10,7 +10,7 @@ import {
   type ProviderEditFormData,
 } from '@/features/providers/pages/ProviderEditForm';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { RejectModal } from '@/features/admin/components/RejectModal';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { DeleteProviderModal } from '@/features/admin/components/DeleteProviderModal';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -28,15 +28,6 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
   const [provider, setProvider] = useState<Provider | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rejectModal, setRejectModal] = useState<{
-    isOpen: boolean;
-    formData: ProviderEditFormData | null;
-    isLoading: boolean;
-  }>({
-    isOpen: false,
-    formData: null,
-    isLoading: false,
-  });
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; isLoading: boolean }>({
     isOpen: false,
     isLoading: false,
@@ -160,8 +151,6 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         noAlcohol: formData.noAlcohol,
         noPork: formData.noPork,
         noGambling: formData.noGambling,
-        // reviewStatus is handled exclusively by finishModerationAction (Reject/Approve).
-        // Do NOT include it here to avoid a double-write that bumps updated_at → 409 loop.
         showAddress: formData.isOnlineBusiness ? false : formData.showAddress,
       };
 
@@ -192,100 +181,12 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         };
       };
 
-      // Review-status changes are handled exclusively by finishModerationAction
-      // (via the Reject/Approve buttons). Do NOT write review status here to
-      // avoid a double-write that bumps updated_at and causes 409 conflicts.
-
       return {
         updatedAt: responseData.data?.updated_at,
       };
     },
     [providerId, t],
   );
-
-  const reviewProvider = useCallback(
-    async (
-      reviewStatus: 'approved' | 'rejected',
-      expectedUpdatedAt?: string,
-      reviewFeedback?: string,
-    ) => {
-      const response = await fetch('/api/admin/review-provider', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          providerId,
-          reviewStatus,
-          expectedUpdatedAt,
-          ...(reviewFeedback ? { reviewFeedback } : {}),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        let errorMessage;
-        if (response.status === 409 && errorData.code === 'MENU_ALCOHOL_DETECTED') {
-          errorMessage = errorData.error;
-        } else if (response.status === 409) {
-          errorMessage = 'This provider was modified by another reviewer. Please refresh.';
-        } else if (response.status === 429) {
-          errorMessage = 'Too many requests. Please wait a moment and try again.';
-        } else {
-          errorMessage =
-            errorData.error ||
-            `Failed to ${reviewStatus === 'approved' ? 'approve' : 'reject'} provider.`;
-        }
-        toast.error(errorMessage);
-        throw new Error(errorMessage);
-      }
-    },
-    [providerId],
-  );
-
-  const finishModerationAction = useCallback(
-    async (
-      formData: ProviderEditFormData,
-      reviewStatus: 'approved' | 'rejected',
-      reviewFeedback?: string,
-    ) => {
-      const { updatedAt } = await saveProviderEdits(formData);
-      await reviewProvider(reviewStatus, updatedAt, reviewFeedback);
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['provider', providerId] }),
-        queryClient.invalidateQueries({ queryKey: ['providers'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-pending-providers'] }),
-      ]);
-
-      toast.success(
-        reviewStatus === 'approved' ? 'Provider approved successfully' : 'Provider rejected',
-      );
-      router.push(`/providers`);
-    },
-    [saveProviderEdits, reviewProvider, queryClient, providerId, router],
-  );
-
-  const handleRejectClick = useCallback(async (formData: ProviderEditFormData) => {
-    setRejectModal({ isOpen: true, formData, isLoading: false });
-  }, []);
-
-  const handleRejectConfirm = useCallback(
-    async (feedback: string) => {
-      if (!rejectModal.formData) return;
-      setRejectModal((prev) => ({ ...prev, isLoading: true }));
-      try {
-        await finishModerationAction(rejectModal.formData, 'rejected', feedback);
-      } catch {
-        setRejectModal((prev) => ({ ...prev, isLoading: false }));
-      }
-    },
-    [rejectModal.formData, finishModerationAction],
-  );
-
-  const handleRejectClose = useCallback(() => {
-    if (!rejectModal.isLoading) {
-      setRejectModal({ isOpen: false, formData: null, isLoading: false });
-    }
-  }, [rejectModal.isLoading]);
 
   const handleDeleteClick = useCallback(() => {
     setDeleteModal({ isOpen: true, isLoading: false });
@@ -325,18 +226,14 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     }
   }, [deleteModal.isLoading]);
 
-  const handleApproveConfirm = useCallback(
-    async (formData: ProviderEditFormData) => {
-      await finishModerationAction(formData, 'approved');
-    },
-    [finishModerationAction],
-  );
-
   if (loading) {
     return (
       <div className="h-screen-fix flex flex-col">
-        <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/providers" />
-        <main className="flex flex-1 items-center justify-center pt-[calc(env(safe-area-inset-top)+24px+40px)] sm:pt-[calc(env(safe-area-inset-top)+80px)]">
+        <div className="md:hidden">
+          <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/providers" />
+          <HeaderSpacer />
+        </div>
+        <main className="flex flex-1 items-center justify-center md:pt-[var(--desktop-header-height,153px)]">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </main>
       </div>
@@ -346,8 +243,11 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
   if (error || !provider) {
     return (
       <div className="h-screen-fix flex flex-col">
-        <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/providers" />
-        <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 pt-[calc(env(safe-area-inset-top)+24px+40px)] sm:pt-[calc(env(safe-area-inset-top)+80px)]">
+        <div className="md:hidden">
+          <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack="/providers" />
+          <HeaderSpacer />
+        </div>
+        <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 md:pt-[var(--desktop-header-height,153px)]">
           <p className="text-center text-gray-500">{error || 'Provider not found'}</p>
           <button
             className="rounded-lg bg-primary px-4 py-2 text-white"
@@ -362,27 +262,17 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
 
   return (
     <div className="h-screen-fix flex flex-col">
-      <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={`/providers`} />
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-[calc(env(safe-area-inset-top)+24px+40px)] sm:pt-[calc(env(safe-area-inset-top)+80px)]">
+      <div className="md:hidden">
+        <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={`/providers`} />
+        <HeaderSpacer />
+      </div>
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
           <ProviderEditForm
+            cancelUrl={`/providers/${providerId}`}
             enableLocalStorage={true}
             localStoragePrefix="admin_"
             provider={provider}
-            reviewFooterActions={{
-              reject: {
-                label: 'Reject',
-                variant: 'danger',
-                onClick: handleRejectClick,
-                'aria-label': 'Reject provider and save changes',
-              },
-              approve: {
-                label: 'Approve',
-                variant: 'success',
-                onClick: handleApproveConfirm,
-                'aria-label': 'Approve provider and save changes',
-              },
-            }}
             subPageBaseUrl={`/dashboard/providers/${providerId}/edit`}
             onSubmitForm={async (formData) => {
               await saveProviderEdits(formData);
@@ -408,13 +298,6 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
           </div>
         </div>
 
-        <RejectModal
-          isLoading={rejectModal.isLoading}
-          isOpen={rejectModal.isOpen}
-          providerName={provider.provider_name}
-          onClose={handleRejectClose}
-          onConfirm={handleRejectConfirm}
-        />
         <DeleteProviderModal
           isLoading={deleteModal.isLoading}
           isOpen={deleteModal.isOpen}

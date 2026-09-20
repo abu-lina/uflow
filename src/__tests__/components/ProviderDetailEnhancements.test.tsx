@@ -11,6 +11,7 @@ describe('Provider detail enhancements (Plan 113)', () => {
   const providerWithEnhancements = {
     ...mockProviders[0],
     verification_method: 'online' as const,
+    no_alcohol: true,
     offers: [{ name_de: 'Falafel Teller' }],
     needs: [{ name_de: 'Freiwillige Helfer' }],
     muslim_owned: true,

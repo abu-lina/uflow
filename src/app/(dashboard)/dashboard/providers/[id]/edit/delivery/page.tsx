@@ -4,8 +4,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
-import { PageHeader } from '@/components/layout/PageHeader';
-import { FooterAction } from '@/components/ui/FooterAction';
+import { EditSubPageLayout } from '@/components/layout/EditSubPageLayout';
 import type { AdminProviderDeliveryLink } from '@/types/adminProvider';
 
 const PLATFORMS = ['wolt', 'lieferando', 'ubereats', 'website'] as const;
@@ -98,9 +97,15 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <div className="flex h-screen-fix flex-col">
-      <PageHeader title="Delivery / Order Links" variant="back-and-title" onBack={() => router.back()} />
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-24 gap-4 overflow-y-auto">
+    <EditSubPageLayout
+      primaryButton={{
+        label: 'Save',
+        icon: 'material-symbols:save-outline',
+        onClick: handleSave,
+      }}
+      title="Delivery / Order Links"
+    >
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           {links.map((link, i) => (
             <div key={i} className="flex items-center gap-3 rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
@@ -212,19 +217,7 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
             <span className="text-sm font-medium text-[#999999]">Add link</span>
           </button>
         )}
-      </main>
-      <FooterAction
-        primaryButton={{
-          label: 'Save',
-          icon: 'material-symbols:save-outline',
-          onClick: handleSave,
-        }}
-        secondaryButton={{
-          icon: 'material-symbols:close',
-          onClick: () => router.back(),
-          'aria-label': 'Close',
-        }}
-      />
-    </div>
+      </div>
+    </EditSubPageLayout>
   );
 }

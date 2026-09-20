@@ -281,38 +281,25 @@ describe('ProviderEditForm regressions', () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it('moderation footer shows reject, save, and approve buttons', () => {
+  it('admin footer shows cancel and save buttons', () => {
     render(
       <ProviderEditForm
+        cancelUrl="/providers/test-id"
         enableLocalStorage={false}
         provider={baseProvider}
-        reviewFooterActions={{
-          reject: {
-            label: 'Reject',
-            onClick: vi.fn().mockResolvedValue(undefined),
-          },
-          approve: {
-            label: 'Approve',
-            onClick: vi.fn().mockResolvedValue(undefined),
-          },
-        }}
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Reject' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Approve' })).toBeInTheDocument();
   });
 
   it.skip('[pre-fix FAILS] moderation section selector uses translation keys for label and options', () => {
     render(
       <ProviderEditForm
+        cancelUrl="/providers/test-id"
         enableLocalStorage={false}
         provider={baseProvider}
-        reviewFooterActions={{
-          reject: { label: 'Reject', onClick: vi.fn() },
-          approve: { label: 'Approve', onClick: vi.fn() },
-        }}
       />,
     );
 
@@ -332,19 +319,10 @@ describe('ProviderEditForm regressions', () => {
 
     render(
       <ProviderEditForm
+        cancelUrl="/providers/test-id"
         enableLocalStorage={false}
         onSubmitForm={onSubmitForm}
         provider={baseProvider}
-        reviewFooterActions={{
-          reject: {
-            label: 'Reject',
-            onClick: vi.fn(),
-          },
-          approve: {
-            label: 'Approve',
-            onClick: vi.fn(),
-          },
-        }}
       />,
     );
 
@@ -368,19 +346,10 @@ describe('ProviderEditForm regressions', () => {
 
     render(
       <ProviderEditForm
+        cancelUrl="/providers/test-id"
         enableLocalStorage={false}
         onSubmitForm={onSubmitForm}
         provider={{ ...baseProvider, social_website: 'www.example.com' }}
-        reviewFooterActions={{
-          reject: {
-            label: 'Reject',
-            onClick: vi.fn().mockResolvedValue(undefined),
-          },
-          approve: {
-            label: 'Approve',
-            onClick: vi.fn().mockResolvedValue(undefined),
-          },
-        }}
       />,
     );
 
@@ -404,19 +373,10 @@ describe('ProviderEditForm regressions', () => {
 
     render(
       <ProviderEditForm
+        cancelUrl="/providers/test-id"
         enableLocalStorage={false}
         onSubmitForm={onSubmitForm}
         provider={{ ...baseProvider, listing_type: 'food' }}
-        reviewFooterActions={{
-          reject: {
-            label: 'Reject',
-            onClick: vi.fn().mockResolvedValue(undefined),
-          },
-          approve: {
-            label: 'Approve',
-            onClick: vi.fn().mockResolvedValue(undefined),
-          },
-        }}
       />,
     );
 

@@ -80,6 +80,9 @@ export const ProviderCard = React.memo(
         listing_type,
         verification_method,
         has_certificate,
+        no_alcohol,
+        no_pork,
+        no_gambling,
         opening_hours,
         offers,
       },
@@ -534,7 +537,7 @@ export const ProviderCard = React.memo(
                 {(() => {
                   const halalStars =
                     listing_type === 'food'
-                      ? computeHalalStars({ verification_method, has_certificate })
+                      ? computeHalalStars({ verification_method, has_certificate, no_alcohol, no_pork, no_gambling })
                       : 0;
                   if (!halalStars) return null;
                   return (

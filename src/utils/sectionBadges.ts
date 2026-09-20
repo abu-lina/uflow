@@ -8,6 +8,9 @@
 interface HalalStarsInput {
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
+  no_alcohol?: boolean;
+  no_pork?: boolean;
+  no_gambling?: boolean;
 }
 
 interface BarakahBadgeInput {
@@ -32,11 +35,27 @@ export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 | 4 
 
   const hasCertificate = Boolean(provider.has_certificate);
 
-  if (provider.verification_method === 'online') {
-    return hasCertificate ? 2 : 1;
+  // Certificate alone is enough (gold-tier equivalent)
+  if (hasCertificate) {
+    if (provider.verification_method === 'online') return 2;
+    return 4;
   }
 
-  return hasCertificate ? 4 : 3;
+  // When attestation data is available (explicitly true or false, not undefined),
+  // require at least one positive answer. A provider with verification_method set
+  // but all attestation false hasn't passed the halal check.
+  // When attestation data is absent (all undefined, e.g. list views that don't
+  // join food_providers), fall through to show stars based on verification_method.
+  const attestationProvided =
+    provider.no_alcohol !== undefined || provider.no_pork !== undefined || provider.no_gambling !== undefined;
+  if (attestationProvided) {
+    const hasAttestation =
+      Boolean(provider.no_alcohol) || Boolean(provider.no_pork) || Boolean(provider.no_gambling);
+    if (!hasAttestation) return 0;
+  }
+
+  if (provider.verification_method === 'online') return 1;
+  return 3;
 }
 
 /**
