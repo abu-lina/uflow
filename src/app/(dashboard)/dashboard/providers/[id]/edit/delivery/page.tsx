@@ -99,12 +99,13 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <div className="flex h-screen-fix flex-col">
+    <div className="h-screen-fix flex flex-col">
       <div className="md:hidden">
         <PageHeader title="Delivery / Order Links" variant="back-and-title" onBack={() => router.back()} />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-4 gap-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+        <div className="w-full sm:mx-auto sm:max-w-2xl flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           {links.map((link, i) => (
             <div key={i} className="flex items-center gap-3 rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
@@ -216,6 +217,7 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
             <span className="text-sm font-medium text-[#999999]">Add link</span>
           </button>
         )}
+        </div>
       </main>
       <FooterAction
         primaryButton={{

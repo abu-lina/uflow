@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { PageContent } from '@/components/layout/PageContent';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { FooterAction } from '@/components/ui/FooterAction';
 import type { DerivedReviewStatus } from '@/utils/halal-derivation';
 
@@ -184,12 +183,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   }, [data, id, STORAGE_KEY, router]);
 
   return (
-    <ScrollablePageLayout>
+    <div className="h-screen-fix flex flex-col">
       <div className="md:hidden">
         <PageHeader title="Halal Check" variant="back-and-title" onBack={() => router.back()} />
+        <HeaderSpacer />
       </div>
-      <PageContent hasFooter className="md:!pt-[var(--desktop-header-height,153px)]" maxWidth="full" paddingX="px-0">
-        <div className="pb-mobile-nav-md flex flex-col gap-6 px-6">
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+        <div className="w-full sm:mx-auto sm:max-w-2xl flex flex-col gap-6">
           {/* Section 1: Attestation Questions */}
           <div className="flex flex-col gap-4">
             <button
@@ -534,7 +534,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
             </div>
           )}
         </div>
-      </PageContent>
+      </main>
       <FooterAction
         primaryButton={{
           label: isUploading ? 'Wird hochgeladen...' : 'Speichern',
@@ -549,6 +549,6 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           'aria-label': 'Schließen',
         }}
       />
-    </ScrollablePageLayout>
+    </div>
   );
 }

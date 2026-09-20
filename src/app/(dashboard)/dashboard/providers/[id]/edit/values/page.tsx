@@ -157,12 +157,13 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
   ];
 
   return (
-    <div className="flex h-screen-fix flex-col">
+    <div className="h-screen-fix flex flex-col">
       <div className="md:hidden">
         <PageHeader title="Values & Amenities" variant="back-and-title" onBack={() => router.back()} />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-28 pt-4 gap-6 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+      <main className="flex flex-1 flex-col px-6 pb-28 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+        <div className="w-full sm:mx-auto sm:max-w-2xl flex flex-col gap-6">
         {groups.map(group => (
           <div key={group.title} className="flex flex-col gap-3">
             <h3 className="text-sm font-medium text-[#999999]">{group.title}</h3>
@@ -184,6 +185,7 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
             ))}
           </div>
         ))}
+        </div>
       </main>
       <FooterAction
         primaryButton={{

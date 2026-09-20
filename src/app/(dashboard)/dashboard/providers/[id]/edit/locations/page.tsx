@@ -109,12 +109,13 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
   };
 
   return (
-    <div className="flex h-screen-fix flex-col">
+    <div className="h-screen-fix flex flex-col">
       <div className="md:hidden">
         <PageHeader title="Locations" variant="back-and-title" onBack={() => router.back()} />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-4 gap-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+        <div className="w-full sm:mx-auto sm:max-w-2xl flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           {locations.map((loc, i) => (
             <div key={loc.location_id} className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm gap-2">
@@ -198,6 +199,7 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
           <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:add" />
           <span className="text-sm font-medium text-[#999999]">Add location</span>
         </button>
+        </div>
       </main>
       <FooterAction
         primaryButton={{

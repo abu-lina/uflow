@@ -13,13 +13,15 @@ export default function EditEnrichmentPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
 
   return (
-    <div className="flex h-screen-fix flex-col">
+    <div className="h-screen-fix flex flex-col">
       <div className="md:hidden">
         <PageHeader title="Enrichment Review" variant="back-and-title" onBack={() => router.back()} />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 pt-4 gap-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
-        <EnrichmentReviewPanel providerId={id} />
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+        <div className="w-full sm:mx-auto sm:max-w-2xl">
+          <EnrichmentReviewPanel providerId={id} />
+        </div>
       </main>
       <FooterAction
         primaryButton={{
