@@ -157,7 +157,7 @@ export default function EditImagesPage({ params }: { params: Promise<{ id: strin
         <HeaderSpacer />
       </div>
 
-      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
           <div className="flex w-full flex-col gap-4">
             <div className="relative">

@@ -69,7 +69,7 @@ export default function EditHoursPage({ params }: { params: Promise<{ id: string
         <PageHeader title="Opening Hours" variant="back-and-title" onBack={() => router.back()} />
         <HeaderSpacer />
       </div>
-      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[var(--desktop-header-height,153px)]">
+      <main className="flex flex-1 flex-col px-6 pb-4 overflow-y-auto md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
         <div className="flex flex-col gap-2">
           {DAYS.map((day, i) => {
