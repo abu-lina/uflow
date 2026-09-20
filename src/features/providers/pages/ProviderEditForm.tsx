@@ -1056,7 +1056,9 @@ export function ProviderEditForm({
                         ? formData.verificationMethod === 'onsite'
                           ? 'Silver'
                           : 'Bronze'
-                        : 'Not set'}
+                        : formData.verificationMethod
+                          ? 'Not halal'
+                          : 'Not set'}
                   </div>
                 </div>
                 <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />

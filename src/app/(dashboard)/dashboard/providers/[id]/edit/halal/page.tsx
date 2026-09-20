@@ -176,6 +176,11 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     // status explicitly via the Reject/Approve buttons on the main edit page.
     const saveData: HalalData = { ...data, certificateUrl: certUrl, certificateFile: null };
     delete saveData.reviewStatus;
+    // Mark as reviewed: set verification_method to 'online' so the edit form
+    // can distinguish "never reviewed" (null) from "reviewed, not halal" (online + no attestation).
+    if (!saveData.verificationMethod) {
+      saveData.verificationMethod = 'online';
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     router.back();
   }, [data, id, STORAGE_KEY, router]);
