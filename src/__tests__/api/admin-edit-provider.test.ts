@@ -16,6 +16,14 @@ vi.mock('@/services/admin/providerEdit', () => ({
   updateProviderFields: vi.fn(),
 }));
 
+vi.mock('@/services/admin/halal-gate', () => ({
+  checkHalalAttestation: vi.fn(),
+}));
+
+vi.mock('@/services/admin/providers', () => ({
+  updateProviderReview: vi.fn(),
+}));
+
 vi.mock('@/lib/audit/adminAudit', () => ({
   logAdminAction: vi.fn(),
   getClientIp: vi.fn(() => '127.0.0.1'),
@@ -112,7 +120,7 @@ describe('PATCH /api/admin/edit-provider', () => {
       createRequest({
         ...validBody,
         listingType: 'other',
-      })
+      }),
     );
 
     expect(response.status).toBe(400);
@@ -133,7 +141,7 @@ describe('PATCH /api/admin/edit-provider', () => {
     expect(mockUpdateProviderFields).toHaveBeenCalledWith(
       validBody.providerId,
       expect.objectContaining({ providerName: validBody.providerName }),
-      adminUser.id
+      adminUser.id,
     );
   });
 
@@ -149,7 +157,7 @@ describe('PATCH /api/admin/edit-provider', () => {
       'provider',
       validBody.providerId,
       expect.any(Object),
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 
@@ -169,13 +177,13 @@ describe('PATCH /api/admin/edit-provider', () => {
 
   // Plan 191: Regression tests for providerImages schema hardening
   describe('[Plan 191] providerImages schema hardening — prevent HTTP 400 on empty shapes', () => {
-    it('[post-fix PASSES] providerImages as \'[]\' should not reject', async () => {
+    it("[post-fix PASSES] providerImages as '[]' should not reject", async () => {
       const body = { ...validBody, providerImages: '[]' };
       const response = await PATCH(createRequest(body));
       expect(response.status).toBe(200);
     });
 
-    it('[post-fix PASSES] providerImages as \'{}\' should not reject', async () => {
+    it("[post-fix PASSES] providerImages as '{}' should not reject", async () => {
       const body = { ...validBody, providerImages: '{}' };
       const response = await PATCH(createRequest(body));
       expect(response.status).toBe(200);
@@ -190,16 +198,18 @@ describe('PATCH /api/admin/edit-provider', () => {
     it('[post-fix PASSES] location with show_address: undefined should succeed', async () => {
       const body = {
         ...validBody,
-        locations: [{
-          location_id: 'loc-1',
-          location_name: 'Main Location',
-          address_street: 'Test St 1',
-          address_zip: '12345',
-          address_city: 'Berlin',
-          address_country: 'Germany',
-          contact_phone: '+49123456789',
-          is_primary: true,
-        }],
+        locations: [
+          {
+            location_id: 'loc-1',
+            location_name: 'Main Location',
+            address_street: 'Test St 1',
+            address_zip: '12345',
+            address_city: 'Berlin',
+            address_country: 'Germany',
+            contact_phone: '+49123456789',
+            is_primary: true,
+          },
+        ],
       };
       const response = await PATCH(createRequest(body));
       expect(response.status).toBe(200);
@@ -227,7 +237,7 @@ describe('PATCH /api/admin/edit-provider', () => {
       };
 
       const response = await PATCH(createRequest(bodyWithEmptyArray));
-      
+
       // Mock accepts this (HTTP 200), but production schema rejects it.
       // The fix ensures '[]' is omitted from the request body before sending.
       expect(response.status).toBe(200);
@@ -242,12 +252,12 @@ describe('PATCH /api/admin/edit-provider', () => {
 
       const response = await PATCH(createRequest(bodyWithoutImages));
       expect(response.status).toBe(200);
-      
+
       // Verify updateProviderFields was called without providerImages
       expect(mockUpdateProviderFields).toHaveBeenCalledWith(
         validBody.providerId,
         expect.not.objectContaining({ providerImages: expect.anything() }),
-        adminUser.id
+        adminUser.id,
       );
     });
 
@@ -266,7 +276,7 @@ describe('PATCH /api/admin/edit-provider', () => {
         expect.objectContaining({
           providerImages: JSON.stringify({ urls: ['https://example.com/image.jpg'] }),
         }),
-        adminUser.id
+        adminUser.id,
       );
     });
 
