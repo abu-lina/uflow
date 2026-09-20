@@ -160,7 +160,8 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         noAlcohol: formData.noAlcohol,
         noPork: formData.noPork,
         noGambling: formData.noGambling,
-        reviewStatus: formData.reviewStatus,
+        // reviewStatus is handled exclusively by finishModerationAction (Reject/Approve).
+        // Do NOT include it here to avoid a double-write that bumps updated_at → 409 loop.
         showAddress: formData.isOnlineBusiness ? false : formData.showAddress,
       };
 

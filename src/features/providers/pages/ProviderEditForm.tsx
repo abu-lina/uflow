@@ -1225,9 +1225,6 @@ export function ProviderEditForm({
               loadingText="Saving"
               type="submit"
               variant="primary"
-              onClick={() => {
-                void handleSubmit();
-              }}
             >
               Save
             </Button>

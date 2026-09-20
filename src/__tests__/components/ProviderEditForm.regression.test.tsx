@@ -384,7 +384,11 @@ describe('ProviderEditForm regressions', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    // Use fireEvent.submit on the form; fireEvent.click on a submit button
+    // without prior interaction doesn't reliably trigger onSubmit in jsdom.
+    const form = screen.getByRole('button', { name: 'Save' }).closest('form');
+    expect(form).toBeTruthy();
+    fireEvent.submit(form as HTMLFormElement);
 
     await waitFor(() => {
       expect(onSubmitForm).toHaveBeenCalledWith(
