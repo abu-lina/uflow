@@ -379,19 +379,27 @@ export function ProviderEditForm({
     syncFromLocalStorage();
   }, [syncFromLocalStorage]);
 
-  // Re-sync when user navigates back from sub-page (page regains visibility)
+  // Re-sync when user navigates back from sub-page (page regains visibility
+  // or SPA back-navigation via popstate/focus)
   useEffect(() => {
     if (!enableLocalStorage) return;
+    const handleSync = () => {
+      syncFromLocalStorage();
+    };
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         syncFromLocalStorage();
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
-    window.addEventListener('pageshow', handleVisibility);
+    window.addEventListener('pageshow', handleSync);
+    window.addEventListener('popstate', handleSync);
+    window.addEventListener('focus', handleSync);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
-      window.removeEventListener('pageshow', handleVisibility);
+      window.removeEventListener('pageshow', handleSync);
+      window.removeEventListener('popstate', handleSync);
+      window.removeEventListener('focus', handleSync);
     };
   }, [enableLocalStorage, syncFromLocalStorage]);
 
