@@ -4,6 +4,8 @@ import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudi
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { providerEditUpdateSchema } from '@/lib/validations/adminSchemas';
 import { updateProviderFields } from '@/services/admin/providerEdit';
+import { checkHalalAttestation } from '@/services/admin/halal-gate';
+import { updateProviderReview } from '@/services/admin/providers';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
@@ -18,46 +20,42 @@ export async function PATCH(request: Request) {
     const user = await getUserFromCookie();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to edit-provider API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to edit-provider API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // Rate limiting — reuse the admin review limiter
     const identifier = getClientIdentifier(request, user.id);
-    const isRateLimited = !rateLimiters.adminReview.perHour(identifier) ||
-                          !rateLimiters.adminReview.perMinute(identifier);
+    const isRateLimited =
+      !rateLimiters.adminReview.perHour(identifier) ||
+      !rateLimiters.adminReview.perMinute(identifier);
     if (isRateLimited) {
-      logger.warn(
-        'Rate limit exceeded for edit-provider API',
-        { userId: user.id, identifier, ...getRequestMetadata(request) }
-      );
+      logger.warn('Rate limit exceeded for edit-provider API', {
+        userId: user.id,
+        identifier,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     // Guard against oversized payloads
     const contentLength = request.headers.get('content-length');
     if (contentLength && parseInt(contentLength, 10) > 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'Request too large' },
-        { status: 413 }
-      );
+      return NextResponse.json({ error: 'Request too large' }, { status: 413 });
     }
 
     const body = await request.json();
@@ -69,7 +67,7 @@ export async function PATCH(request: Request) {
         logger.warn(
           'Invalid request body for edit-provider',
           { body, error: validationError.message },
-          { ...getRequestMetadata(request), userId: user.id }
+          { ...getRequestMetadata(request), userId: user.id },
         );
       }
       return NextResponse.json(
@@ -77,19 +75,66 @@ export async function PATCH(request: Request) {
           error: 'Invalid request body',
           details: validationError instanceof Error ? validationError.message : 'Validation failed',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { providerId, ...editFields } = validatedData;
 
-    const updatedProvider = await updateProviderFields(
-      providerId,
-      editFields,
-      user.id
-    );
+    // Snapshot attestation state BEFORE the edit so we can detect changes
+    const halalFieldsEdited =
+      editFields.noAlcohol !== undefined ||
+      editFields.noPork !== undefined ||
+      editFields.noGambling !== undefined;
 
-    // Audit log
+    let attestationBefore: Awaited<ReturnType<typeof checkHalalAttestation>> | null = null;
+    if (halalFieldsEdited) {
+      attestationBefore = await checkHalalAttestation(providerId);
+    }
+
+    const updatedProvider = await updateProviderFields(providerId, editFields, user.id);
+
+    // Halal attestation gate: auto-reject when attestation becomes incomplete
+    if (halalFieldsEdited) {
+      const attestationAfter = await checkHalalAttestation(providerId);
+
+      // Only act when the attestation state actually changed
+      if (attestationBefore && attestationBefore.allAttested !== attestationAfter.allAttested) {
+        if (!attestationAfter.allAttested) {
+          // Attestation broke: auto-reject
+          const feedback = `Halal-Attestierung unvollständig: ${attestationAfter.missingLabels.join(', ')}`;
+          await updateProviderReview(
+            providerId,
+            'rejected',
+            feedback,
+            updatedProvider.updated_at as string | undefined,
+          );
+          updatedProvider.review_status = 'rejected';
+
+          // Audit the forced status change
+          await logAdminAction(
+            user.id,
+            'provider_review_rejected',
+            'provider',
+            providerId,
+            {
+              reviewStatus: 'rejected',
+              reviewFeedback: feedback,
+              providerName: updatedProvider.provider_name,
+              trigger: 'halal_gate_auto',
+            },
+            {
+              ipAddress: getClientIp(request),
+              userAgent: getUserAgent(request),
+            },
+          );
+        }
+        // Attestation completed: don't auto-approve. Admin must approve
+        // explicitly via review-provider to avoid resurrecting rejected providers.
+      }
+    }
+
+    // Audit log for the edit itself
     await logAdminAction(
       user.id,
       'provider_edit',
@@ -102,7 +147,7 @@ export async function PATCH(request: Request) {
       {
         ipAddress: getClientIp(request),
         userAgent: getUserAgent(request),
-      }
+      },
     );
 
     return NextResponse.json({
@@ -118,7 +163,7 @@ export async function PATCH(request: Request) {
     if (error instanceof Error && error.message.startsWith('CONFLICT:')) {
       return NextResponse.json(
         { error: 'This provider was modified by another reviewer. Please refresh and try again.' },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -135,16 +180,16 @@ export async function PATCH(request: Request) {
       'Error in edit-provider API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request), userId }
+      { ...getRequestMetadata(request), userId },
     );
 
-    const errorMessage = process.env.NODE_ENV === 'production'
-      ? 'Failed to update provider'
-      : error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      process.env.NODE_ENV === 'production'
+        ? 'Failed to update provider'
+        : error instanceof Error
+          ? error.message
+          : 'Unknown error';
 
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
