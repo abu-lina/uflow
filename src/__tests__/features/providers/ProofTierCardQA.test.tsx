@@ -56,7 +56,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   // Progressive levels: 4 verification states
   // ---------------------------------------------------------------------------
   it('[QA] level 1 — online without certificate shows bronze seal + menu reviewed', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={false} reviewStatus="approved" />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={false} noAlcohol={true} reviewStatus="approved" />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltBronze')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.summaryBronze')).toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   });
 
   it('[QA] level 3 — onsite without certificate shows silver seal + onsite items', () => {
-    render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} reviewStatus="approved" />);
+    render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} noAlcohol={true} reviewStatus="approved" />);
     expect(screen.getByAltText('providerDetail.proofTier.sealAltSilver')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewedOnsite')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkSellsProcessNoAlcohol')).toBeInTheDocument();
@@ -182,7 +182,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   });
 
   it('[QA] whatWeVerified checklist is always present', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={false} reviewStatus="approved" />);
+    render(<ProofTierCard verificationMethod="online" hasCertificate={false} noAlcohol={true} reviewStatus="approved" />);
     expect(screen.getByText(v => v.startsWith('providerDetail.proofTier.whatWeVerified'))).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
   });

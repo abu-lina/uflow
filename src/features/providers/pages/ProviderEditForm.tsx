@@ -1052,11 +1052,11 @@ export function ProviderEditForm({
                   <div className="text-[15px] font-medium leading-[18px] text-[#272727]">
                     {formData.hasCertificate
                       ? 'Gold'
-                      : formData.verificationMethod === 'onsite'
-                        ? 'Silver'
-                        : formData.verificationMethod === 'online'
-                          ? 'Bronze'
-                          : 'Not set'}
+                      : (formData.noAlcohol || formData.noPork || formData.noGambling)
+                        ? formData.verificationMethod === 'onsite'
+                          ? 'Silver'
+                          : 'Bronze'
+                        : 'Not set'}
                   </div>
                 </div>
                 <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />

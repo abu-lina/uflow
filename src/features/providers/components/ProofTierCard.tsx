@@ -16,9 +16,17 @@ import type { Provider } from '@/services/providers';
 export function computeSealTier(
   verificationMethod: 'online' | 'onsite' | null | undefined,
   hasCertificate: boolean | null | undefined,
+  attestation?: { noAlcohol?: boolean | null; noPork?: boolean | null; noGambling?: boolean | null },
 ): 'bronze' | 'silver' | 'gold' | null {
   if (hasCertificate) return 'gold';
   if (!verificationMethod && !hasCertificate) return null;
+  // Require at least one attestation answer before awarding a tier.
+  // Without this, a provider with verification_method set as a DB default
+  // (but no actual halal check done) would auto-show as bronze.
+  if (attestation) {
+    const hasAttestation = Boolean(attestation.noAlcohol) || Boolean(attestation.noPork) || Boolean(attestation.noGambling);
+    if (!hasAttestation) return null;
+  }
   if (verificationMethod === 'onsite') return 'silver';
   return 'bronze';
 }
@@ -216,7 +224,7 @@ export function ProofTierCard({
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const tier = computeSealTier(verificationMethod, hasCertificate);
+  const tier = computeSealTier(verificationMethod, hasCertificate, { noAlcohol, noPork, noGambling });
 
   // No tier means no verification data — don't render the card at all
   if (!tier) return null;

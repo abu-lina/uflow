@@ -230,7 +230,7 @@ export function ProviderDetailSections({
 
   return (
     <div className="flex flex-col gap-4 self-stretch">
-      {computeSealTier(provider.verification_method, provider.has_certificate) && (
+      {computeSealTier(provider.verification_method, provider.has_certificate, { noAlcohol: provider.no_alcohol, noPork: provider.no_pork, noGambling: provider.no_gambling }) && (
         <ExpandSection
           isOpen={openSection === 'halal'}
           title={t('providerDetail.proofTier.sectionTitle')}
