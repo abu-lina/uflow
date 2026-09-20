@@ -74,14 +74,16 @@ export interface AdminProviderEditData {
     is_active: boolean;
   }>;
   locations?: LocationEditData[];
-  reviewStatus?: 'pending' | 'approved' | 'rejected' | 'needs_revision';
 }
 
-export function buildBasicFieldsPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+export function buildBasicFieldsPayload(
+  data: Partial<AdminProviderEditData>,
+): Record<string, unknown> {
   const payload: Record<string, unknown> = {};
 
   if (data.providerName !== undefined) payload.provider_name = data.providerName;
-  if (data.providerDescription !== undefined) payload.provider_description = data.providerDescription;
+  if (data.providerDescription !== undefined)
+    payload.provider_description = data.providerDescription;
   if (data.categoryId !== undefined) payload.category_id = data.categoryId;
   if (data.listingType !== undefined) payload.listing_type = data.listingType;
   if (data.addressStreet !== undefined) payload.address_street = data.addressStreet;
@@ -94,7 +96,6 @@ export function buildBasicFieldsPayload(data: Partial<AdminProviderEditData>): R
   if (data.socialInstagram !== undefined) payload.social_instagram = data.socialInstagram;
   if (data.providerImages !== undefined) payload.provider_images = data.providerImages;
   if (data.openingHours !== undefined) payload.opening_hours = data.openingHours;
-  if (data.reviewStatus !== undefined) payload.review_status = data.reviewStatus;
   if (data.showAddress !== undefined) payload.show_address = data.showAddress;
 
   return payload;
@@ -102,7 +103,7 @@ export function buildBasicFieldsPayload(data: Partial<AdminProviderEditData>): R
 
 export function buildExtensionFieldsPayload(
   data: Partial<AdminProviderEditData>,
-  listingType?: 'food' | 'store' | string | null
+  listingType?: 'food' | 'store' | string | null,
 ): Record<string, unknown> {
   const hasExtensionFields =
     data.verificationMethod !== undefined ||
@@ -134,7 +135,9 @@ export function buildExtensionFieldsPayload(
   return {};
 }
 
-export function buildAmenitiesPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+export function buildAmenitiesPayload(
+  data: Partial<AdminProviderEditData>,
+): Record<string, unknown> {
   const payload: Record<string, unknown> = {};
 
   if (data.muslimOwned !== undefined) payload.muslim_owned = data.muslimOwned;
@@ -154,24 +157,30 @@ export function buildMenuPayload(data: Partial<AdminProviderEditData>): Record<s
   return { menu_items: data.menuItems };
 }
 
-export function buildDeliveryLinksPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+export function buildDeliveryLinksPayload(
+  data: Partial<AdminProviderEditData>,
+): Record<string, unknown> {
   if (data.deliveryLinks === undefined) return {};
   return { delivery_links: data.deliveryLinks };
 }
 
-export function buildCommunityServicePayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+export function buildCommunityServicePayload(
+  data: Partial<AdminProviderEditData>,
+): Record<string, unknown> {
   if (data.communityServiceIds === undefined) return {};
   return { community_service_ids: data.communityServiceIds };
 }
 
-export function buildLocationsPayload(data: Partial<AdminProviderEditData>): Record<string, unknown> {
+export function buildLocationsPayload(
+  data: Partial<AdminProviderEditData>,
+): Record<string, unknown> {
   if (data.locations === undefined) return {};
   return { locations: data.locations };
 }
 
 function buildRpcPayload(
   editData: AdminProviderEditData,
-  listingType?: 'food' | 'store' | string | null
+  listingType?: 'food' | 'store' | string | null,
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {};
 
@@ -182,7 +191,7 @@ function buildRpcPayload(
 
   const amenities = buildAmenitiesPayload(editData);
   if (Object.keys(amenities).length > 0) {
-    payload.providers = { ...(payload.providers as Record<string, unknown> || {}), ...amenities };
+    payload.providers = { ...((payload.providers as Record<string, unknown>) || {}), ...amenities };
   }
 
   const extensions = buildExtensionFieldsPayload(editData, listingType);
@@ -220,17 +229,16 @@ function buildRpcPayload(
 export async function updateProviderFields(
   providerId: string,
   editData: AdminProviderEditData,
-  _adminUserId: string
+  _adminUserId: string,
 ): Promise<Record<string, unknown>> {
   const supabase = getSupabaseAdmin();
 
   const rpcPayload = buildRpcPayload(editData, editData.listingType);
 
-  const { data, error } = await supabase
-    .rpc('admin_update_provider', {
-      p_provider_id: providerId,
-      p_data: rpcPayload,
-    });
+  const { data, error } = await supabase.rpc('admin_update_provider', {
+    p_provider_id: providerId,
+    p_data: rpcPayload,
+  });
 
   if (error) {
     throw new Error(`Failed to update provider: ${error.message}`);
