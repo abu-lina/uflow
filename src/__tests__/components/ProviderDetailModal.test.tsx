@@ -48,7 +48,9 @@ describe('ProviderDetailModal Component', () => {
       const mockCommunityService = {
         community_service_id: 'cs-001',
         community_service_name: 'Zakat Foundation',
-        community_service_images: ['https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg'],
+        community_service_images: [
+          'https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg',
+        ],
         category: { name_de: 'Soziales', name_en: 'Social' },
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
@@ -76,7 +78,9 @@ describe('ProviderDetailModal Component', () => {
       );
 
       // The Barakah Effekte section heading should NOT render when no community services
-      expect(screen.queryByText(/Our Barakah Effect|Unser Barakah Effekt/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/Our Barakah Effect|Unser Barakah Effekt/i),
+      ).not.toBeInTheDocument();
     });
 
     it('should render close buttons', () => {
@@ -542,7 +546,9 @@ describe('ProviderDetailModal Component', () => {
     const mockCommunityServiceForBadges = {
       community_service_id: 'cs-badges-001',
       community_service_name: 'Zakat Foundation',
-      community_service_images: ['https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg'],
+      community_service_images: [
+        'https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg',
+      ],
       category: { name_de: 'Soziales', name_en: 'Social' },
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
@@ -803,14 +809,18 @@ describe('ProviderDetailModal Component', () => {
         />,
       );
 
-      expect(screen.queryByText(/Our Barakah Effect|Unser Barakah Effekt/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/Our Barakah Effect|Unser Barakah Effekt/i),
+      ).not.toBeInTheDocument();
     });
 
     it('should show Barakah section when community services are present [post-fix PASSES]', () => {
       const mockCommunityService = {
         community_service_id: 'cs-001',
         community_service_name: 'Zakat Foundation',
-        community_service_images: ['https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg'],
+        community_service_images: [
+          'https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg',
+        ],
         category: { name_de: 'Soziales', name_en: 'Social' },
         created_at: '2024-01-01T00:00:00Z',
         updated_at: '2024-01-01T00:00:00Z',
@@ -866,7 +876,7 @@ describe('ProviderDetailModal Component', () => {
   });
 
   describe('076 Regression: Admin edit button placement', () => {
-    it('should render customActionButtons in the right panel header area, not bottom-center [post-fix PASSES]', () => {
+    it('should render customActionButtons in the right panel header row next to the close button [post-fix PASSES]', () => {
       const editButton = <button data-testid="admin-edit-btn">Edit Service</button>;
 
       render(
@@ -881,12 +891,19 @@ describe('ProviderDetailModal Component', () => {
       const adminBtn = screen.getByTestId('admin-edit-btn');
       expect(adminBtn).toBeInTheDocument();
 
-      // The admin button's parent container should be positioned in the top-right area (right-12 top-20)
-      // and NOT at absolute bottom-24 left-1/2
-      const container = adminBtn.parentElement;
-      expect(container?.className).toContain('right-12');
-      expect(container?.className).toContain('top-20');
-      expect(container?.className).not.toContain('bottom-24');
+      // The admin button wrapper should be inside the header row (flex row with close button),
+      // NOT absolutely positioned on its own
+      const wrapper = screen.getByTestId('admin-action-buttons');
+      expect(wrapper).toBeInTheDocument();
+
+      // The header row container (grandparent) should be a flex row positioned at right-12 top-9
+      const headerRow = wrapper.parentElement;
+      expect(headerRow?.className).toContain('flex');
+      expect(headerRow?.className).toContain('items-center');
+      expect(headerRow?.className).toContain('right-12');
+      expect(headerRow?.className).toContain('top-9');
+      expect(headerRow?.className).not.toContain('top-20');
+      expect(headerRow?.className).not.toContain('bottom-24');
     });
   });
 });

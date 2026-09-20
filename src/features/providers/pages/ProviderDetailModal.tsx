@@ -66,7 +66,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const isMobile = useIsMobile();
   const { t, language } = useLanguage();
 
-  const locations = (provider.locations as Location[] | undefined) || [];
+  const locations = useMemo(
+    () => (provider.locations as Location[] | undefined) || [],
+    [provider.locations],
+  );
 
   const selectedLocationId = searchParams.get('location') ?? null;
   const selectedLocation = useMemo(() => {
@@ -433,7 +436,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                 </div>
               </div>
               <OpenStatusLine locationId={selectedLocationId ?? undefined} provider={provider} />
-              {(selectedLocation?.address_city || provider.address_city) ? (
+              {selectedLocation?.address_city || provider.address_city ? (
                 <div className="self-stretch">
                   <button
                     className="justify-start text-left font-inter text-base font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline"
@@ -448,7 +451,13 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     title={t('providerDetail.container.addressTapToNavigate')}
                     onClick={() => {
                       const address = selectedLocation
-                        ? [selectedLocation.address_street, selectedLocation.address_zip, selectedLocation.address_city].filter(Boolean).join(', ')
+                        ? [
+                            selectedLocation.address_street,
+                            selectedLocation.address_zip,
+                            selectedLocation.address_city,
+                          ]
+                            .filter(Boolean)
+                            .join(', ')
                         : formatAddress(
                             provider.address_street ?? undefined,
                             provider.address_zip ?? undefined,
@@ -460,14 +469,19 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                     }}
                   >
                     {selectedLocation
-                      ? [selectedLocation.address_street, selectedLocation.address_zip, selectedLocation.address_city].filter(Boolean).join(', ')
+                      ? [
+                          selectedLocation.address_street,
+                          selectedLocation.address_zip,
+                          selectedLocation.address_city,
+                        ]
+                          .filter(Boolean)
+                          .join(', ')
                       : formatAddress(
                           provider.address_street ?? undefined,
                           provider.address_zip ?? undefined,
                           provider.address_city ?? undefined,
                         )}
                   </button>
-
                 </div>
               ) : (
                 <div className="justify-start self-stretch font-inter text-base font-normal text-uFlowText2">
@@ -592,19 +606,20 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
           </div>
           {/* Right Section */}
           <div className="absolute left-[704px] top-0 inline-flex h-[900px] w-[496px] flex-col items-start justify-start gap-4 overflow-y-auto rounded-r-[48px] bg-white py-36 pl-4 pr-12">
-            {/* Close Button */}
-            <button
-              aria-label={t('providerDetail.popup.closeAria')}
-              className="absolute right-12 top-9 flex size-10 items-center justify-center rounded-full text-content transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              type="button"
-              onClick={onClose}
-            >
-              <X aria-hidden className="size-5" />
-            </button>
-            {/* Admin action buttons (e.g., edit) — positioned in the right panel header zone */}
-            {customActionButtons && (
-              <div className="absolute right-12 top-20">{customActionButtons}</div>
-            )}
+            {/* Header row: admin action buttons + close button */}
+            <div className="absolute right-12 top-9 flex items-center gap-2">
+              {customActionButtons && (
+                <div data-testid="admin-action-buttons">{customActionButtons}</div>
+              )}
+              <button
+                aria-label={t('providerDetail.popup.closeAria')}
+                className="flex size-10 items-center justify-center rounded-full text-content transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                type="button"
+                onClick={onClose}
+              >
+                <X aria-hidden className="size-5" />
+              </button>
+            </div>
             <div className="flex flex-col items-start justify-start gap-8 self-stretch">
               {/* Barakah Effekt Section - with fade-in animation */}
               {communityServices.length > 0 && (

@@ -26,7 +26,12 @@ import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import { useQuery } from '@tanstack/react-query';
 import type { CommunityService } from '@/services/communityServices';
 import { getProvidersForCommunityService } from '@/services/communityServices';
-import { openNavigation, formatAddress, isAddressNavigable, normalizeWebsiteUrl } from '@/utils/navigationUtils';
+import {
+  openNavigation,
+  formatAddress,
+  isAddressNavigable,
+  normalizeWebsiteUrl,
+} from '@/utils/navigationUtils';
 import {
   getAllTrustedImageUrlsWithFallback,
   PLACEHOLDER_IMAGE,
@@ -50,7 +55,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
   const router = useRouter();
   const isMobile = useIsMobile();
   const { t, language } = useLanguage();
-  
+
   // Use optimistic bookmarking
   const { handleBookmark: handleOptimisticBookmark } = useOptimisticBookmark({
     bookmarkableId: communityService.community_service_id,
@@ -76,7 +81,10 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
 
   const allImageUrls = (() => {
     try {
-      if (!communityService.community_service_images || communityService.community_service_images.length === 0) {
+      if (
+        !communityService.community_service_images ||
+        communityService.community_service_images.length === 0
+      ) {
         return [PLACEHOLDER_IMAGE];
       }
       const trusted = communityService.community_service_images.filter(isTrustedUrl);
@@ -141,13 +149,15 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
   }, [user, bookmarkedIds, communityService.community_service_id]);
 
   // Use React Query for providers supporting this community service
-  const { data: supportingProviders = [] } = useQuery<Array<{ 
-    provider_id: string; 
-    provider_name: string; 
-    provider_images?: string | null;
-    address_city?: string;
-    category?: { name_de?: string; name_en?: string; category_images?: unknown };
-  }>>({
+  const { data: supportingProviders = [] } = useQuery<
+    Array<{
+      provider_id: string;
+      provider_name: string;
+      provider_images?: string | null;
+      address_city?: string;
+      category?: { name_de?: string; name_en?: string; category_images?: unknown };
+    }>
+  >({
     queryKey: ['providers', 'community-service', communityService.community_service_id],
     queryFn: () => getProvidersForCommunityService(communityService.community_service_id),
     enabled: !!communityService.community_service_id,
@@ -188,7 +198,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
       router.push('/saved');
       return;
     }
-    
+
     try {
       await handleOptimisticBookmark();
     } catch (error) {
@@ -204,7 +214,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
     }
     if (action === 'share') {
       const shareUrl = `${window.location.origin}/community-services/${communityService.community_service_id}`;
-      
+
       if (navigator.share) {
         try {
           await navigator.share({
@@ -231,15 +241,15 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
         toast.error('Keine Telefonnummer verfügbar');
         return;
       }
-      
+
       const phoneNumber = communityService.contact_phone.trim();
       const telUrl = `tel:${phoneNumber}`;
-      
+
       const link = document.createElement('a');
       link.href = telUrl;
       link.style.display = 'none';
       document.body.appendChild(link);
-      
+
       try {
         link.click();
         setTimeout(() => {
@@ -250,7 +260,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
           document.body.removeChild(link);
         }
         console.error('Failed to open tel link:', error);
-        
+
         try {
           await navigator.clipboard.writeText(phoneNumber);
           toast.success(`Telefonnummer kopiert: ${phoneNumber}`);
@@ -269,7 +279,9 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
   const providerForMobile = {
     provider_id: communityService.community_service_id,
     provider_name: communityService.community_service_name,
-    provider_images: communityService.community_service_images ? JSON.stringify({ urls: communityService.community_service_images }) : null,
+    provider_images: communityService.community_service_images
+      ? JSON.stringify({ urls: communityService.community_service_images })
+      : null,
     category_id: communityService.category_id || null,
     address_city: communityService.address_city || null,
     social_website: communityService.social_website || null,
@@ -287,11 +299,13 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
     needs_ids: communityService.needs_ids || [],
     offers: communityService.offers || [],
     needs: communityService.needs || [],
-    category: communityService.category ? {
-      name_de: communityService.category.name_de || communityService.category.name_en || '',
-      name_en: communityService.category.name_en,
-      category_images: communityService.category.category_images,
-    } : undefined,
+    category: communityService.category
+      ? {
+          name_de: communityService.category.name_de || communityService.category.name_en || '',
+          name_en: communityService.category.name_en,
+          category_images: communityService.category.category_images,
+        }
+      : undefined,
     community_service_id: communityService.community_service_id,
   };
 
@@ -320,26 +334,50 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
           {/* Title & Subtitle */}
           <div className="flex flex-col items-start justify-start gap-2 self-stretch">
             <div className="inline-flex items-center justify-start gap-8 self-stretch">
-              <div className="text-uFlowText justify-start font-inter-tight text-3xl font-bold">
+              <div className="justify-start font-inter-tight text-3xl font-bold text-uFlowText">
                 {communityService.community_service_name}
               </div>
             </div>
-            {formatAddress(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined) ? (
+            {formatAddress(
+              communityService.address_street ?? undefined,
+              communityService.address_zip ?? undefined,
+              communityService.address_city ?? undefined,
+            ) ? (
               <button
-                className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline text-left"
-                disabled={!isAddressNavigable(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined)}
+                className="justify-start self-stretch text-left font-inter text-base font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline"
+                disabled={
+                  !isAddressNavigable(
+                    communityService.address_street ?? undefined,
+                    communityService.address_zip ?? undefined,
+                    communityService.address_city ?? undefined,
+                  )
+                }
                 title="Adresse antippen zum Navigieren"
                 onClick={() => {
-                  const address = formatAddress(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined);
-                  if (isAddressNavigable(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined)) {
+                  const address = formatAddress(
+                    communityService.address_street ?? undefined,
+                    communityService.address_zip ?? undefined,
+                    communityService.address_city ?? undefined,
+                  );
+                  if (
+                    isAddressNavigable(
+                      communityService.address_street ?? undefined,
+                      communityService.address_zip ?? undefined,
+                      communityService.address_city ?? undefined,
+                    )
+                  ) {
                     openNavigation(address);
                   }
                 }}
               >
-                {formatAddress(communityService.address_street ?? undefined, communityService.address_zip ?? undefined, communityService.address_city ?? undefined)}
+                {formatAddress(
+                  communityService.address_street ?? undefined,
+                  communityService.address_zip ?? undefined,
+                  communityService.address_city ?? undefined,
+                )}
               </button>
             ) : (
-              <div className="text-uFlowText2 justify-start self-stretch font-inter text-base font-normal">
+              <div className="justify-start self-stretch font-inter text-base font-normal text-uFlowText2">
                 {communityService.category?.name_de || ''}
               </div>
             )}
@@ -357,10 +395,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                 onTouchStart={handleTouchStart}
               >
                 {/* Image Carousel Container */}
-                <div
-                  className="flex h-full w-full"
-                  style={getTransformStyle()}
-                >
+                <div className="flex h-full w-full" style={getTransformStyle()}>
                   {allImageUrls.map((imageUrl, index) => (
                     <div
                       key={index}
@@ -442,20 +477,21 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
         </div>
         {/* Right Section */}
         <div className="absolute left-[704px] top-0 inline-flex h-[900px] w-[496px] flex-col items-start justify-start gap-4 rounded-r-[48px] bg-white py-36 pl-4 pr-12">
-          {/* Close Button */}
-          <button
-            aria-label="Schließen"
-            className="absolute right-12 top-9 flex size-10 items-center justify-center rounded-full text-content transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            type="button"
-            onClick={onClose}
-          >
-            <X aria-hidden className="size-5" />
-          </button>
-          {customActionButtons && (
-            <div className="absolute right-24 top-10 flex gap-2">{customActionButtons}</div>
-          )}
+          {/* Header row: admin action buttons + close button */}
+          <div className="absolute right-12 top-9 flex items-center gap-2">
+            {customActionButtons && (
+              <div data-testid="admin-action-buttons">{customActionButtons}</div>
+            )}
+            <button
+              aria-label="Schließen"
+              className="flex size-10 items-center justify-center rounded-full text-content transition-colors hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              type="button"
+              onClick={onClose}
+            >
+              <X aria-hidden className="size-5" />
+            </button>
+          </div>
           <div className="flex h-[640px] flex-col items-start justify-start gap-8 self-stretch">
-
             {/* Supporting Providers Section */}
             {supportingProviders.length > 0 && (
               <div className="flex flex-col items-start justify-start gap-2.5 self-stretch overflow-hidden rounded-2xl p-4 outline outline-1 outline-offset-[-1px] outline-zinc-100">
@@ -464,13 +500,13 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                     className="flex w-full items-center justify-between"
                     onClick={() => setExpandedProviders(!expandedProviders)}
                   >
-                    <div className="text-uFlowText justify-start font-inter-tight text-2xl font-semibold">
+                    <div className="justify-start font-inter-tight text-2xl font-semibold text-uFlowText">
                       Supporters
                     </div>
-                    <ChevronDown 
+                    <ChevronDown
                       className={`h-6 w-6 text-gray-600 transition-transform ${
                         expandedProviders ? 'rotate-180' : ''
-                      }`} 
+                      }`}
                     />
                   </button>
                   {expandedProviders && (
@@ -478,14 +514,15 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                       {supportingProviders.map((provider) => {
                         const providerImageUrls = getAllTrustedImageUrlsWithFallback(
                           provider.provider_images,
-                          provider.category?.category_images as CategoryImages
+                          provider.category?.category_images as CategoryImages,
                         );
-                        const providerImage = providerImageUrls.length > 0 ? providerImageUrls[0] : PLACEHOLDER_IMAGE;
-                        
+                        const providerImage =
+                          providerImageUrls.length > 0 ? providerImageUrls[0] : PLACEHOLDER_IMAGE;
+
                         return (
                           <button
                             key={provider.provider_id}
-                            className="flex w-full items-center gap-4 rounded-lg py-2 pr-2 pl-0 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                            className="flex w-full items-center gap-4 rounded-lg py-2 pl-0 pr-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
                             onClick={() => {
                               onClose();
                               router.push(`/providers/${provider.provider_id}`);
@@ -499,7 +536,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                                 src={providerImage}
                               />
                             </div>
-                            <div className="flex-1 min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className="font-inter-tight font-semibold text-content">
                                 {provider.provider_name}
                               </p>
@@ -515,7 +552,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                 </div>
               </div>
             )}
-
           </div>
         </div>
         {/* Actions Bar */}
@@ -523,7 +559,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
           {/* Save Button */}
           <button
             aria-expanded={expandedAction === 'save'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'save' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('save')}
           >
@@ -556,7 +592,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
           {/* Share Button */}
           <button
             aria-expanded={expandedAction === 'share'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'share' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('share')}
           >
@@ -577,7 +613,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
           {/* Phone Button */}
           <button
             aria-expanded={expandedAction === 'call'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'call' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('call')}
           >
@@ -598,7 +634,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
           {/* Website Button */}
           <button
             aria-expanded={expandedAction === 'website'}
-            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-primary hover:bg-primary-dark active:bg-primary-darker px-3' : 'w-11 bg-transparent px-3'}`}
+            className={`flex h-10 items-center justify-center rounded-xl transition-all duration-200 ${expandedAction === 'website' ? 'w-auto gap-1 bg-primary px-3 hover:bg-primary-dark active:bg-primary-darker' : 'w-11 bg-transparent px-3'}`}
             type="button"
             onClick={() => handleExpand('website')}
           >
@@ -621,4 +657,3 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
     </Modal>
   );
 };
-

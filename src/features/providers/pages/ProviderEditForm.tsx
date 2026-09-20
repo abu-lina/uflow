@@ -1209,6 +1209,7 @@ export function ProviderEditForm({
               disabled={isSubmitting || activeFooterAction !== null}
               loading={activeFooterAction === 'reject'}
               loadingText="Rejecting"
+              type="button"
               variant="danger"
               onClick={() => {
                 void handleReviewFooterAction('reject');
@@ -1222,10 +1223,8 @@ export function ProviderEditForm({
               disabled={isSubmitting || activeFooterAction !== null}
               loading={isSubmitting}
               loadingText="Saving"
+              type="submit"
               variant="primary"
-              onClick={() => {
-                void handleSubmit();
-              }}
             >
               Save
             </Button>
@@ -1236,6 +1235,7 @@ export function ProviderEditForm({
               disabled={isSubmitting || activeFooterAction !== null}
               loading={activeFooterAction === 'approve'}
               loadingText="Approving"
+              type="button"
               variant="success"
               onClick={() => {
                 void handleReviewFooterAction('approve');

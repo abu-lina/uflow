@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { deriveReviewStatus } from '@/utils/halal-derivation';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
@@ -23,16 +22,32 @@ interface HalalData {
 }
 
 function getDerivedTier(data: HalalData): { label: string; color: string } | null {
-  if (data.hasCertificate) return { label: 'Gold', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' };
-  if (data.verificationMethod === 'onsite') return { label: 'Silber', color: 'bg-gray-100 text-gray-800 border-gray-400' };
-  if (data.verificationMethod === 'online') return { label: 'Bronze', color: 'bg-amber-100 text-amber-800 border-amber-400' };
+  if (data.hasCertificate)
+    return { label: 'Gold', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' };
+  if (data.verificationMethod === 'onsite')
+    return { label: 'Silber', color: 'bg-gray-100 text-gray-800 border-gray-400' };
+  if (data.verificationMethod === 'online')
+    return { label: 'Bronze', color: 'bg-amber-100 text-amber-800 border-amber-400' };
   return null;
 }
 
 const ATTESTATION_ITEMS = [
-  { key: 'noAlcohol' as const, label: 'Kein Alkohol', description: 'Wir verarbeiten, verkaufen oder bieten keinen Alkohol an' },
-  { key: 'noPork' as const, label: 'Kein verbotenes Fleisch', description: 'Wir verarbeiten, verkaufen oder bieten kein Schweinefleisch oder anderes verbotenes Fleisch an' },
-  { key: 'noGambling' as const, label: 'Kein Glücksspiel', description: 'Wir bieten keine Glücksspiele oder Wetten an' },
+  {
+    key: 'noAlcohol' as const,
+    label: 'Kein Alkohol',
+    description: 'Wir verarbeiten, verkaufen oder bieten keinen Alkohol an',
+  },
+  {
+    key: 'noPork' as const,
+    label: 'Kein verbotenes Fleisch',
+    description:
+      'Wir verarbeiten, verkaufen oder bieten kein Schweinefleisch oder anderes verbotenes Fleisch an',
+  },
+  {
+    key: 'noGambling' as const,
+    label: 'Kein Glücksspiel',
+    description: 'Wir bieten keine Glücksspiele oder Wetten an',
+  },
 ];
 
 export default function EditHalalPage({ params }: { params: Promise<{ id: string }> }) {
@@ -59,7 +74,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   });
 
   const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   useEffect(() => {
@@ -69,12 +84,14 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
         const parsed = JSON.parse(stored) as HalalData;
         setData({ ...parsed, certificateFile: null });
         return;
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     fetch(`/api/admin/providers/${id}`)
-      .then(res => res.json())
-      .then(json => {
+      .then((res) => res.json())
+      .then((json) => {
         const fp = json.data?.food_providers;
         const sp = json.data?.store_providers;
         const extData = fp || sp;
@@ -94,15 +111,15 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   }, [STORAGE_KEY, id]);
 
   const toggleAttestation = (key: 'noAlcohol' | 'noPork' | 'noGambling') => {
-    setData(prev => ({ ...prev, [key]: !prev[key] }));
+    setData((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const setVerificationMethod = (method: 'online' | 'onsite') => {
-    setData(prev => ({ ...prev, verificationMethod: method }));
+    setData((prev) => ({ ...prev, verificationMethod: method }));
   };
 
   const toggleCertificate = () => {
-    setData(prev => {
+    setData((prev) => {
       const newVal = !prev.hasCertificate;
       return {
         ...prev,
@@ -119,12 +136,12 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   const handleCertificateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setData(prev => ({ ...prev, certificateFile: file, hasCertificate: true }));
+      setData((prev) => ({ ...prev, certificateFile: file, hasCertificate: true }));
     }
   };
 
   const removeCertificate = () => {
-    setData(prev => ({ ...prev, certificateFile: null, certificateUrl: null }));
+    setData((prev) => ({ ...prev, certificateFile: null, certificateUrl: null }));
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -145,9 +162,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           .from('provider-certificates')
           .upload(filePath, data.certificateFile);
         if (!uploadError) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('provider-certificates')
-            .getPublicUrl(filePath);
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from('provider-certificates').getPublicUrl(filePath);
           certUrl = publicUrl;
         } else {
           console.error('Certificate upload error:', uploadError);
@@ -158,22 +175,23 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
       setIsUploading(false);
     }
 
-    const reviewStatus = deriveReviewStatus(data.noAlcohol, data.noPork, data.noGambling);
-    const saveData: HalalData = { ...data, certificateUrl: certUrl, certificateFile: null, reviewStatus };
+    // Do NOT store reviewStatus in localStorage — the admin chooses review
+    // status explicitly via the Reject/Approve buttons on the main edit page.
+    const saveData: HalalData = { ...data, certificateUrl: certUrl, certificateFile: null };
+    delete saveData.reviewStatus;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     router.back();
-  }, [data, id, STORAGE_KEY, router, allAttested]);
+  }, [data, id, STORAGE_KEY, router]);
 
   return (
     <ScrollablePageLayout>
       <PageHeader title="Halal Check" variant="back-and-title" onBack={() => router.back()} />
       <PageContent hasFooter maxWidth="full" paddingX="px-0">
-        <div className="flex flex-col px-6 gap-6 pb-mobile-nav-md">
-
+        <div className="pb-mobile-nav-md flex flex-col gap-6 px-6">
           {/* Section 1: Attestation Questions */}
           <div className="flex flex-col gap-4">
             <button
-              className="flex items-center justify-between w-full pl-3 pr-2"
+              className="flex w-full items-center justify-between pl-3 pr-2"
               type="button"
               onClick={() => toggleSection('attestation')}
             >
@@ -186,8 +204,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
 
             {expandedSections.attestation && (
               <div className="space-y-3">
-                <p className="text-sm text-[#7A7A7A] leading-relaxed px-3">
-                  Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder anbietest?
+                <p className="px-3 text-sm leading-relaxed text-[#7A7A7A]">
+                  Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst
+                  oder anbietest?
                 </p>
 
                 <div className="flex flex-col gap-2">
@@ -196,22 +215,28 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                     return (
                       <button
                         key={item.key}
-                        className={`flex items-start gap-4 w-full rounded-2xl border-2 px-4 py-4 text-left transition-all ${
+                        className={`flex w-full items-start gap-4 rounded-2xl border-2 px-4 py-4 text-left transition-all ${
                           isChecked ? 'border-primary bg-primary/5' : 'border-[#E5E5E5] bg-white'
                         }`}
                         type="button"
                         onClick={() => toggleAttestation(item.key)}
                       >
-                        <div className={`flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center mt-0.5 transition-colors ${
-                          isChecked ? 'bg-primary border-primary text-white' : 'border-[#999999] bg-white'
-                        }`}>
-                          {isChecked && <Icon className="w-4 h-4" icon="material-symbols:check" />}
+                        <div
+                          className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+                            isChecked
+                              ? 'border-primary bg-primary text-white'
+                              : 'border-[#999999] bg-white'
+                          }`}
+                        >
+                          {isChecked && <Icon className="h-4 w-4" icon="material-symbols:check" />}
                         </div>
                         <div className="flex flex-col gap-0.5">
-                          <span className={`text-sm font-semibold ${isChecked ? 'text-primary' : 'text-[#272727]'}`}>
+                          <span
+                            className={`text-sm font-semibold ${isChecked ? 'text-primary' : 'text-[#272727]'}`}
+                          >
                             {item.label}
                           </span>
-                          <span className="text-xs text-[#7A7A7A] leading-relaxed">
+                          <span className="text-xs leading-relaxed text-[#7A7A7A]">
                             {item.description}
                           </span>
                         </div>
@@ -223,9 +248,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                 {!allAttested && (
                   <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
                     <div className="flex items-start gap-3">
-                      <Icon className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" icon="material-symbols:warning-outline" />
-                      <p className="text-xs text-amber-700 leading-relaxed">
-                        Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.
+                      <Icon
+                        className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600"
+                        icon="material-symbols:warning-outline"
+                      />
+                      <p className="text-xs leading-relaxed text-amber-700">
+                        Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag
+                        freigegeben werden kann.
                       </p>
                     </div>
                   </div>
@@ -237,7 +266,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           {/* Section 2: Verification Method */}
           <div className="flex flex-col gap-4">
             <button
-              className="flex items-center justify-between w-full pl-3 pr-2"
+              className="flex w-full items-center justify-between pl-3 pr-2"
               type="button"
               onClick={() => toggleSection('verification')}
             >
@@ -250,34 +279,46 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
 
             {expandedSections.verification && (
               <div className="space-y-3">
-                <p className="text-sm text-[#7A7A7A] px-3">
+                <p className="px-3 text-sm text-[#7A7A7A]">
                   Wie wurde die Halal-Konformität überprüft?
                 </p>
 
                 <div className="flex gap-3">
                   {[
-                    { value: 'online' as const, label: 'Online', description: 'Online überprüft (Menü, Website, Selbstauskunft)' },
-                    { value: 'onsite' as const, label: 'Vor Ort', description: 'Vor Ort besucht und überprüft' },
+                    {
+                      value: 'online' as const,
+                      label: 'Online',
+                      description: 'Online überprüft (Menü, Website, Selbstauskunft)',
+                    },
+                    {
+                      value: 'onsite' as const,
+                      label: 'Vor Ort',
+                      description: 'Vor Ort besucht und überprüft',
+                    },
                   ].map((option) => {
                     const isSelected = data.verificationMethod === option.value;
                     return (
                       <button
                         key={option.value}
-                        className={`flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 px-4 py-5 text-center transition-all ${
+                        className={`flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 px-4 py-5 text-center transition-all ${
                           isSelected ? 'border-primary bg-primary/5' : 'border-[#E5E5E5] bg-white'
                         }`}
                         type="button"
                         onClick={() => setVerificationMethod(option.value)}
                       >
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                          isSelected ? 'border-primary' : 'border-[#999999]'
-                        }`}>
-                          {isSelected && <div className="w-3.5 h-3.5 rounded-full bg-primary" />}
+                        <div
+                          className={`flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                            isSelected ? 'border-primary' : 'border-[#999999]'
+                          }`}
+                        >
+                          {isSelected && <div className="h-3.5 w-3.5 rounded-full bg-primary" />}
                         </div>
-                        <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-[#272727]'}`}>
+                        <span
+                          className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-[#272727]'}`}
+                        >
                           {option.label}
                         </span>
-                        <span className="text-[10px] text-[#7A7A7A] leading-tight text-center">
+                        <span className="text-center text-[10px] leading-tight text-[#7A7A7A]">
                           {option.description}
                         </span>
                       </button>
@@ -291,7 +332,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           {/* Section 3: Certificate */}
           <div className="flex flex-col gap-4">
             <button
-              className="flex items-center justify-between w-full pl-3 pr-2"
+              className="flex w-full items-center justify-between pl-3 pr-2"
               type="button"
               onClick={() => toggleSection('certificate')}
             >
@@ -324,11 +365,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                 {data.hasCertificate && (
                   <div className="flex flex-col gap-3">
                     {data.certificateUrl && !data.certificateFile && (
-                      <div className="flex items-center justify-between w-full rounded-2xl border border-[#E5E5E5] bg-white px-4 py-3">
+                      <div className="flex w-full items-center justify-between rounded-2xl border border-[#E5E5E5] bg-white px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <Icon className="w-6 h-6 text-primary" icon="material-symbols:verified" />
+                          <Icon className="h-6 w-6 text-primary" icon="material-symbols:verified" />
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium text-[#272727]">Vorhandenes Zertifikat</span>
+                            <span className="text-sm font-medium text-[#272727]">
+                              Vorhandenes Zertifikat
+                            </span>
                             <a
                               className="text-xs text-primary underline"
                               href={data.certificateUrl}
@@ -340,19 +383,22 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                           </div>
                         </div>
                         <button
-                          className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100"
+                          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
                           type="button"
-                          onClick={() => setData(prev => ({ ...prev, certificateUrl: null }))}
+                          onClick={() => setData((prev) => ({ ...prev, certificateUrl: null }))}
                         >
-                          <Icon className="w-5 h-5 text-[#999999]" icon="material-symbols:close-rounded" />
+                          <Icon
+                            className="h-5 w-5 text-[#999999]"
+                            icon="material-symbols:close-rounded"
+                          />
                         </button>
                       </div>
                     )}
 
                     {data.certificateFile ? (
-                      <div className="flex items-center justify-between w-full rounded-2xl border border-[#E5E5E5] bg-white px-4 py-3">
+                      <div className="flex w-full items-center justify-between rounded-2xl border border-[#E5E5E5] bg-white px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <Icon className="w-6 h-6 text-primary" icon="mdi:file-document-outline" />
+                          <Icon className="h-6 w-6 text-primary" icon="mdi:file-document-outline" />
                           <div className="flex flex-col">
                             <span className="text-sm font-medium text-[#272727]">
                               {data.certificateFile.name}
@@ -363,11 +409,14 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                           </div>
                         </div>
                         <button
-                          className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100"
+                          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
                           type="button"
                           onClick={removeCertificate}
                         >
-                          <Icon className="w-5 h-5 text-[#999999]" icon="material-symbols:close-rounded" />
+                          <Icon
+                            className="h-5 w-5 text-[#999999]"
+                            icon="material-symbols:close-rounded"
+                          />
                         </button>
                       </div>
                     ) : (
@@ -375,15 +424,15 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                         <input
                           ref={fileInputRef}
                           accept="image/*,.pdf"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                           type="file"
                           onChange={handleCertificateUpload}
                         />
                         <button
-                          className="flex w-full h-[54px] items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-[#D4D4D4] bg-white hover:bg-gray-50 transition-colors"
+                          className="flex h-[54px] w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-[#D4D4D4] bg-white transition-colors hover:bg-gray-50"
                           type="button"
                         >
-                          <Icon className="w-6 h-6 text-[#999999]" icon="lucide:upload" />
+                          <Icon className="h-6 w-6 text-[#999999]" icon="lucide:upload" />
                           <span className="text-sm font-medium text-[#999999]">
                             Zertifikat hochladen
                           </span>
@@ -399,14 +448,19 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           {/* Derived halal level + auto-review status */}
           <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
             <div className="flex items-start gap-3">
-              <Icon className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" icon="material-symbols:info-outline" />
+              <Icon
+                className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600"
+                icon="material-symbols:info-outline"
+              />
               <div className="flex flex-col gap-1">
-                <p className="text-xs text-blue-700 leading-relaxed">
-                  Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: 
-                  Online = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.
+                <p className="text-xs leading-relaxed text-blue-700">
+                  Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online
+                  = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.
                 </p>
                 {derivedTier && (
-                  <span className={`inline-flex self-start mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${derivedTier.color}`}>
+                  <span
+                    className={`mt-1 inline-flex self-start rounded-full border px-2.5 py-0.5 text-xs font-semibold ${derivedTier.color}`}
+                  >
                     Abgeleitetes Level: {derivedTier.label}
                   </span>
                 )}
@@ -417,10 +471,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           {allAttested ? (
             <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
               <div className="flex items-start gap-3">
-                <Icon className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" icon="material-symbols:check-circle-outline" />
+                <Icon
+                  className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600"
+                  icon="material-symbols:check-circle-outline"
+                />
                 <div className="flex flex-col gap-1">
                   <p className="text-sm font-semibold text-green-800">Auto-Approved</p>
-                  <p className="text-xs text-green-700 leading-relaxed">
+                  <p className="text-xs leading-relaxed text-green-700">
                     Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.
                   </p>
                 </div>
@@ -429,29 +486,42 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           ) : (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
               <div className="flex items-start gap-3">
-                <Icon className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" icon="material-symbols:cancel-outline" />
+                <Icon
+                  className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600"
+                  icon="material-symbols:cancel-outline"
+                />
                 <div className="flex flex-col gap-2">
                   <p className="text-sm font-semibold text-red-800">Auto-Rejected</p>
-                  <p className="text-xs text-red-700 leading-relaxed">
-                    Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.
+                  <p className="text-xs leading-relaxed text-red-700">
+                    Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies
+                    auf der Bearbeitungsseite überschreiben.
                   </p>
                   {!allAttested && (
-                    <ul className="flex flex-col gap-1 mt-1">
+                    <ul className="mt-1 flex flex-col gap-1">
                       {!data.noAlcohol && (
                         <li className="flex items-center gap-1.5 text-xs text-red-700">
-                          <Icon className="w-3.5 h-3.5 text-red-500 flex-shrink-0" icon="material-symbols:close-small" />
+                          <Icon
+                            className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
+                            icon="material-symbols:close-small"
+                          />
                           Kein Alkohol
                         </li>
                       )}
                       {!data.noPork && (
                         <li className="flex items-center gap-1.5 text-xs text-red-700">
-                          <Icon className="w-3.5 h-3.5 text-red-500 flex-shrink-0" icon="material-symbols:close-small" />
+                          <Icon
+                            className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
+                            icon="material-symbols:close-small"
+                          />
                           Kein verbotenes Fleisch
                         </li>
                       )}
                       {!data.noGambling && (
                         <li className="flex items-center gap-1.5 text-xs text-red-700">
-                          <Icon className="w-3.5 h-3.5 text-red-500 flex-shrink-0" icon="material-symbols:close-small" />
+                          <Icon
+                            className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
+                            icon="material-symbols:close-small"
+                          />
                           Kein Glücksspiel
                         </li>
                       )}

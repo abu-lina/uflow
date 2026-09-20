@@ -10,6 +10,7 @@ import { mockProviders } from '../mocks/providerData';
 describe('Provider detail enhancements (Plan 113)', () => {
   const providerWithEnhancements = {
     ...mockProviders[0],
+    verification_method: 'online' as const,
     offers: [{ name_de: 'Falafel Teller' }],
     needs: [{ name_de: 'Freiwillige Helfer' }],
     muslim_owned: true,
