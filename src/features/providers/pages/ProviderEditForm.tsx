@@ -1060,7 +1060,7 @@ export function ProviderEditForm({
                   <div className="text-[15px] font-medium leading-[18px] text-[#272727]">
                     {formData.hasCertificate
                       ? 'Gold'
-                      : (formData.noAlcohol || formData.noPork || formData.noGambling)
+                      : formData.noAlcohol || formData.noPork || formData.noGambling
                         ? formData.verificationMethod === 'onsite'
                           ? 'Silver'
                           : 'Bronze'
@@ -1186,7 +1186,7 @@ export function ProviderEditForm({
           }}
           secondaryButton={{
             icon: 'material-symbols:close',
-            onClick: () => router.push(cancelUrl),
+            onClick: () => router.back(),
             'aria-label': 'Cancel editing and go back',
           }}
         />
