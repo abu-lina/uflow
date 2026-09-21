@@ -240,7 +240,7 @@ function main() {
       buildResults = {
         routes: {
           '/providers': { firstLoadJS: 307000 },
-          '/providers/[provider_id]': { firstLoadJS: 182000 },
+          '/p/[id]': { firstLoadJS: 182000 },
         },
         shared: 105000,
       };

@@ -156,7 +156,7 @@ describe('Plan 123 Navbar Auth State Regression', () => {
 
   it('[post-fix PASSES] LoginPageContent redirects to returnUrl only after auth context user is committed', async () => {
     mockGetSearchParam.mockImplementation((key: string) =>
-      key === 'returnUrl' ? encodeURIComponent('/providers/abc?tab=overview') : null,
+      key === 'returnUrl' ? encodeURIComponent('/p/abc?tab=overview') : null,
     );
 
     const { rerender, container } = render(<LoginPageContent />);
@@ -177,7 +177,7 @@ describe('Plan 123 Navbar Auth State Regression', () => {
     rerender(<LoginPageContent />);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith('/providers/abc?tab=overview');
+      expect(mockReplace).toHaveBeenCalledWith('/p/abc?tab=overview');
     });
   });
 

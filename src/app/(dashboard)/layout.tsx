@@ -13,7 +13,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const authorized = await isAdminOrModerator(user.id);
 
   if (!authorized) {
-    redirect('/providers');
+    redirect('/food');
   }
 
   return <>{children}</>;

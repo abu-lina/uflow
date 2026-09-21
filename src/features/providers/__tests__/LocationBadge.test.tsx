@@ -23,6 +23,6 @@ describe('LocationBadge', () => {
   it('links to provider detail page with locations anchor', () => {
     render(<LocationBadge count={2} providerId="prov-123" />);
     const link = screen.getByText('2 Standorte').closest('a');
-    expect(link).toHaveAttribute('href', '/providers/prov-123#locations');
+    expect(link).toHaveAttribute('href', '/p/prov-123#locations');
   });
 });

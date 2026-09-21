@@ -367,7 +367,7 @@ describe('ProviderDetailSections', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Nearby' }));
     fireEvent.click(screen.getByRole('button', { name: 'Restaurant A' }));
 
-    expect(localMockPush).toHaveBeenCalledWith('/providers/nearby-1');
+    expect(localMockPush).toHaveBeenCalledWith('/p/nearby-1');
   });
 
   it('[plan-142] non-navigable items do not trigger navigation', async () => {

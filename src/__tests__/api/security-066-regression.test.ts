@@ -387,7 +387,7 @@ describe('M-2: dashboard layout auth guard', () => {
     expect(redirectMock).toHaveBeenCalledWith('/login');
   });
 
-  it('redirects authenticated non-admin users to /providers', async () => {
+  it('redirects authenticated non-admin users to /food', async () => {
     vi.resetModules();
 
     const redirectMock = vi.fn((path: string) => {
@@ -406,8 +406,8 @@ describe('M-2: dashboard layout auth guard', () => {
 
     const mod = await import('@/app/(dashboard)/layout');
 
-    await expect(mod.default({ children: 'secret' })).rejects.toThrow('NEXT_REDIRECT:/providers');
-    expect(redirectMock).toHaveBeenCalledWith('/providers');
+    await expect(mod.default({ children: 'secret' })).rejects.toThrow('NEXT_REDIRECT:/food');
+    expect(redirectMock).toHaveBeenCalledWith('/food');
   });
 
   it('allows admin users through without redirect', async () => {

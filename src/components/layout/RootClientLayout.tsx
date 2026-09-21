@@ -83,22 +83,26 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
   // Root discovery home must always show the bottom navbar once stage is resolved.
   const isDiscoveryHome = pathname === '/' && (stage === 'stage2' || stage === 'stage3');
-  // Providers listing is the primary discovery surface and must always show bottom nav on mobile.
-  const isProvidersDiscovery =
-    pathname === '/providers' || pathname === '/food' || pathname === '/stores' || pathname === '/ummah';
+  // Discovery pages are the primary browsing surfaces and must always show bottom nav on mobile.
+  const isFoodDiscovery = pathname === '/food' || pathname === '/stores' || pathname === '/ummah';
 
   // When not yet mounted use 'none' so slot reserves space without showing wrong UI; after mount show correct one
   const mobileUiMode = !isMounted
     ? 'none'
     : forceMobileFooter
       ? 'footer'
-    : isDiscoveryHome || isProvidersDiscovery || pathname === '/saved' || pathname === '/profile' || pathname === '/login' || pathname === '/signup'
-      ? 'footer'
-    : showMobileFooter
-      ? 'footer'
-      : showCityEarlyAccessNavbar
-        ? 'navbar'
-        : 'none';
+      : isDiscoveryHome ||
+          isFoodDiscovery ||
+          pathname === '/saved' ||
+          pathname === '/profile' ||
+          pathname === '/login' ||
+          pathname === '/signup'
+        ? 'footer'
+        : showMobileFooter
+          ? 'footer'
+          : showCityEarlyAccessNavbar
+            ? 'navbar'
+            : 'none';
 
   // Debug logging for footer visibility (development only)
   useEffect(() => {
@@ -110,85 +114,96 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         forceMobileFooter,
         stage,
         isDiscoveryHome,
-        isProvidersDiscovery,
+        isFoodDiscovery,
         showMobileFooter,
         user: user ? 'authenticated' : 'not authenticated',
       });
     }
-  }, [pathname, isSplashVisible, isAppLaunched, forceMobileFooter, stage, isDiscoveryHome, isProvidersDiscovery, showMobileFooter, user]);
+  }, [
+    pathname,
+    isSplashVisible,
+    isAppLaunched,
+    forceMobileFooter,
+    stage,
+    isDiscoveryHome,
+    isFoodDiscovery,
+    showMobileFooter,
+    user,
+  ]);
 
   return (
     <div className="page-background h-screen-fix relative flex flex-col">
-        {/* Dev-only: ensure no service worker interferes with HMR/chunks (only on localhost) */}
-        {process.env.NODE_ENV === 'development' &&
-          typeof window !== 'undefined' &&
-          (window.location.hostname === 'localhost' ||
-            window.location.hostname === '127.0.0.1') && <DevServiceWorkerReset />}
-        {/* Auto-register service worker for PWA */}
-        <ServiceWorkerRegistration />
-        {/* Mobile Header - Above all content, edge-to-edge */}
-        {isLandingPage && (
-          <div className="block md:hidden">
-            {/* Header will be rendered by MobileSplashScreen or AboutPageContent */}
-          </div>
+      {/* Dev-only: ensure no service worker interferes with HMR/chunks (only on localhost) */}
+      {process.env.NODE_ENV === 'development' &&
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+          <DevServiceWorkerReset />
         )}
-
-        <main ref={mainRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-none">
-          <PageTransition key={pathname}>{children}</PageTransition>
-        </main>
-
-        {/* Desktop Footer */}
-        <div className="relative z-10 hidden flex-shrink-0 md:block">
-          <DesktopFooter />
+      {/* Auto-register service worker for PWA */}
+      <ServiceWorkerRegistration />
+      {/* Mobile Header - Above all content, edge-to-edge */}
+      {isLandingPage && (
+        <div className="block md:hidden">
+          {/* Header will be rendered by MobileSplashScreen or AboutPageContent */}
         </div>
+      )}
 
-        {/* Mobile bottom UI slot: always in DOM with reserved height to prevent layout shift; visibility controlled by CSS */}
-        <div
-          className="mobile-bottom-ui-slot block md:hidden"
-          data-mobile-ui={mobileUiMode}
-          data-testid="mobile-footer-bar"
-        >
-          <div className="mobile-footer-bar-wrapper">
-            <MobileFooterBar />
-          </div>
-          <div className="city-navbar-wrapper">
-            <CityEarlyAccessNavbar />
-          </div>
-        </div>
+      <main ref={mainRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-none">
+        <PageTransition key={pathname}>{children}</PageTransition>
+      </main>
 
-        {/* Action button for subpages */}
-        {showSubpageAction && (
-          <FooterAction
-            actionButton={{
-              label:
-                pathname === '/signup/check-email'
-                  ? t('signup.afterConfirmationLogin')
-                  : t('common.next'),
-              icon: 'material-symbols:chevron-right',
-              onClick: () => {
-                if (pathname === '/signup/check-email') {
-                  router.push('/login');
-                } else {
-                  router.back();
-                }
-              },
-              variant: 'primary',
-              'aria-label':
-                pathname === '/signup/check-email'
-                  ? t('signup.afterConfirmationLogin')
-                  : t('common.next'),
-            }}
-          />
-        )}
-
-        {/* Push Notification Prompt */}
-        {process.env.NODE_ENV === 'production' && (
-          <PushNotificationPrompt autoShow={true} showDelay={5000} />
-        )}
-
-        {/* Chat Floating Widget (Desktop) — gated by enableChatbot feature flag */}
-        {enableChatbot && <ChatFloatingWidget />}
+      {/* Desktop Footer */}
+      <div className="relative z-10 hidden flex-shrink-0 md:block">
+        <DesktopFooter />
       </div>
+
+      {/* Mobile bottom UI slot: always in DOM with reserved height to prevent layout shift; visibility controlled by CSS */}
+      <div
+        className="mobile-bottom-ui-slot block md:hidden"
+        data-mobile-ui={mobileUiMode}
+        data-testid="mobile-footer-bar"
+      >
+        <div className="mobile-footer-bar-wrapper">
+          <MobileFooterBar />
+        </div>
+        <div className="city-navbar-wrapper">
+          <CityEarlyAccessNavbar />
+        </div>
+      </div>
+
+      {/* Action button for subpages */}
+      {showSubpageAction && (
+        <FooterAction
+          actionButton={{
+            label:
+              pathname === '/signup/check-email'
+                ? t('signup.afterConfirmationLogin')
+                : t('common.next'),
+            icon: 'material-symbols:chevron-right',
+            onClick: () => {
+              if (pathname === '/signup/check-email') {
+                router.push('/login');
+              } else {
+                router.back();
+              }
+            },
+            variant: 'primary',
+            'aria-label':
+              pathname === '/signup/check-email'
+                ? t('signup.afterConfirmationLogin')
+                : t('common.next'),
+          }}
+        />
+      )}
+
+      {/* Push Notification Prompt */}
+      {process.env.NODE_ENV === 'production' && (
+        <PushNotificationPrompt autoShow={true} showDelay={5000} />
+      )}
+
+      {/* Chat Floating Widget (Desktop) — gated by enableChatbot feature flag */}
+      {enableChatbot && <ChatFloatingWidget />}
+    </div>
   );
 }
 

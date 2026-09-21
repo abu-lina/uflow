@@ -13,40 +13,78 @@ vi.mock('@/app/(public)/providers/ProvidersContent', () => ({
   ProvidersContent: mockProvidersContent,
 }));
 
-import ProvidersPage from '@/app/(public)/providers/page';
+// Plan 228: /providers/page.tsx removed; test now exercises /food/page.tsx
+// which delegates to the same renderProvidersPage with routeSection: 'food'.
+import FoodPage from '@/app/(public)/food/page';
 
-describe('ProvidersPage location normalization', () => {
+describe('FoodPage location normalization (Plan 228: migrated from ProvidersPage)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSearchProvidersAndCommunityServices.mockResolvedValue({ results: [], hasMore: false });
   });
 
   it('uses LOCATION_ALL for SSR when no location param is present', async () => {
-    await ProvidersPage({ searchParams: Promise.resolve({}) });
+    await FoodPage({ searchParams: Promise.resolve({}) });
 
-    expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith('', null, '', 0, 12, undefined, 'food', undefined);
+    expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith(
+      '',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      'food',
+      undefined,
+    );
   });
 
   it('uses LOCATION_ALL for SSR when location param is explicitly empty', async () => {
-    await ProvidersPage({ searchParams: Promise.resolve({ location: '' }) });
+    await FoodPage({ searchParams: Promise.resolve({ location: '' }) });
 
-    expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith('', null, '', 0, 12, undefined, 'food', undefined);
+    expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith(
+      '',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      'food',
+      undefined,
+    );
   });
 
   it('normalizes legacy Everywhere labels to LOCATION_ALL for SSR', async () => {
-    await ProvidersPage({ searchParams: Promise.resolve({ location: 'Everywhere' }) });
+    await FoodPage({ searchParams: Promise.resolve({ location: 'Everywhere' }) });
 
-    expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith('', null, '', 0, 12, undefined, 'food', undefined);
+    expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith(
+      '',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      'food',
+      undefined,
+    );
   });
 
   it('preserves real city filters for SSR', async () => {
-    await ProvidersPage({ searchParams: Promise.resolve({ location: 'Berlin', q: 'halal' }) });
+    await FoodPage({ searchParams: Promise.resolve({ location: 'Berlin', q: 'halal' }) });
 
-    expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith('halal', null, 'Berlin', 0, 12, undefined, 'food', undefined);
+    expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith(
+      'halal',
+      null,
+      'Berlin',
+      0,
+      12,
+      undefined,
+      'food',
+      undefined,
+    );
   });
 
   it('passes validated filters to SSR search request', async () => {
-    await ProvidersPage({ searchParams: Promise.resolve({ q: 'pizza', filters: 'muslim,parken' }) });
+    await FoodPage({ searchParams: Promise.resolve({ q: 'pizza', filters: 'muslim,parken' }) });
 
     expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith(
       'pizza',

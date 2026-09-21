@@ -16,7 +16,7 @@ export function ProviderCard({ provider }: ProviderCardProps) {
 
   return (
     <Link
-      href={`/providers/${provider.provider_id}`}
+      href={`/p/${provider.provider_id}`}
       className="block p-3 bg-white rounded-xl border border-gray-200 hover:border-primary/40 hover:shadow-sm transition-all mb-2"
     >
       <div className="flex items-start justify-between gap-2">

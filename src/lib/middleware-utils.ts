@@ -8,6 +8,7 @@ import type { User } from '@supabase/supabase-js';
  */
 const APP_ROUTES = [
   '/providers',
+  '/food',
   '/create',
   '/profile',
   '/about',
@@ -93,7 +94,9 @@ export function isExcludedRoute(pathname: string): boolean {
     pathname.startsWith('/manifest') ||
     !!pathname.match(/\.(ico|png|jpg|jpeg|svg|webp|woff|woff2|ttf|eot)$/);
 
-  return isWaitlistRoute || isPwaStart || isWelcome || isCitySelection || isApiRoute || isStaticAsset;
+  return (
+    isWaitlistRoute || isPwaStart || isWelcome || isCitySelection || isApiRoute || isStaticAsset
+  );
 }
 
 /**
@@ -105,6 +108,7 @@ const EARLY_ACCESS_ROUTES = [
   '/create',
   '/city',
   '/providers', // Allow access to provider list and detail pages in early access
+  '/food', // Allow access to food discovery page in early access
   '/community-services', // Allow access to community service detail pages in early access
 ];
 
@@ -123,7 +127,7 @@ export async function shouldRedirectToWaitlist(
   pathname: string,
   isAppLaunched: boolean,
   accessToken?: string,
-  waitlistToken?: string
+  waitlistToken?: string,
 ): Promise<boolean> {
   // Exclude root route - it shows waitlist content directly, not via redirect
   // Page component handles routing for early access users and launched app
@@ -150,7 +154,7 @@ export async function shouldRedirectToWaitlist(
   if (waitlistToken && isEarlyAccessRoute(pathname)) {
     return false; // Allow early access users to use these routes
   }
-  
+
   // Special case: Allow access to /create (overview page) and /create/* routes in early access mode even without waitlist token
   // This handles cases where the cookie might not be set/read correctly but the user is
   // legitimately in early access (coming from early access screen).
@@ -168,14 +172,18 @@ export async function shouldRedirectToWaitlist(
     return false; // Allow access, let page handle recommendation mode setup
   }
 
-  // Special case: Allow access to /providers (list page) and provider/community service detail pages
-  // This allows users to access the providers page even when app is not launched (waitlist disabled)
+  // Special case: Allow access to /providers, /food (list page) and provider/community service detail pages
+  // This allows users to access the providers/food page even when app is not launched (waitlist disabled)
   // The page components will handle any necessary authentication/authorization checks.
-  if (!isAppLaunched && (
-    pathname === '/providers' ||
-    pathname.startsWith('/providers/') || 
-    pathname.startsWith('/community-services/')
-  )) {
+  if (
+    !isAppLaunched &&
+    (pathname === '/providers' ||
+      pathname.startsWith('/providers/') ||
+      pathname.startsWith('/p/') ||
+      pathname === '/food' ||
+      pathname.startsWith('/food/') ||
+      pathname.startsWith('/community-services/'))
+  ) {
     return false; // Allow access, let page components handle auth/authorization
   }
 
@@ -202,7 +210,13 @@ export async function shouldRedirectToWaitlist(
   // Special case: Authentication routes must always be publicly accessible
   // Users need to be able to log in, sign up, and reset passwords regardless of waitlist status
   // Plan 063: /login was being redirected to /providers, blocking mobile auth entry
-  if (pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password' || pathname === '/reset-password' || pathname.startsWith('/auth/')) {
+  if (
+    pathname === '/login' ||
+    pathname === '/signup' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password' ||
+    pathname.startsWith('/auth/')
+  ) {
     return false; // Always allow access to auth routes
   }
 

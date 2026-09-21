@@ -525,7 +525,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                             className="flex w-full items-center gap-4 rounded-lg py-2 pl-0 pr-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
                             onClick={() => {
                               onClose();
-                              router.push(`/providers/${provider.provider_id}`);
+                              router.push(`/p/${provider.provider_id}`);
                             }}
                           >
                             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">

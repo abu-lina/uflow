@@ -32,7 +32,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
     city?: string;
     country?: string;
   }>({});
-  
+
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -85,26 +85,29 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
     void fetchNeeds();
   }, []);
 
-  const handleAddressSelect = useCallback((address: AddressComponents) => {
-    updateFormData({
-      city: address.city,
-      country: address.country,
-      street: address.street,
-      zip: address.zip,
-      latitude: address.latitude ?? null,
-      longitude: address.longitude ?? null,
-    });
-    setValidationErrors({});
-  }, [updateFormData]);
+  const handleAddressSelect = useCallback(
+    (address: AddressComponents) => {
+      updateFormData({
+        city: address.city,
+        country: address.country,
+        street: address.street,
+        zip: address.zip,
+        latitude: address.latitude ?? null,
+        longitude: address.longitude ?? null,
+      });
+      setValidationErrors({});
+    },
+    [updateFormData],
+  );
 
   const handleZipChange = (value: string) => {
     updateFormData({ zip: value });
     if (value && formData.country) {
       const zipError = validateZipCode(value, formData.country);
       if (zipError) {
-        setValidationErrors(prev => ({ ...prev, zip: t('create.location.invalidZipCode') }));
+        setValidationErrors((prev) => ({ ...prev, zip: t('create.location.invalidZipCode') }));
       } else {
-        setValidationErrors(prev => {
+        setValidationErrors((prev) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { zip: _unused, ...rest } = prev;
           return rest;
@@ -122,9 +125,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       isOnlineBusiness: formData.isOnlineBusiness,
     });
     if (validation.errors[field]) {
-      setValidationErrors(prev => ({ ...prev, [field]: validation.errors[field] }));
+      setValidationErrors((prev) => ({ ...prev, [field]: validation.errors[field] }));
     } else {
-      setValidationErrors(prev => {
+      setValidationErrors((prev) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [field]: _unused, ...rest } = prev;
         return rest;
@@ -135,9 +138,14 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
   const isFormValid = () => {
     // For recommendation mode with "Next" button, only validate basics (title, category, offers)
     if (formData.creationMode === 'recommendation') {
-      return !!formData.title && !!formData.category && formData.offers_ids && formData.offers_ids.length > 0;
+      return (
+        !!formData.title &&
+        !!formData.category &&
+        formData.offers_ids &&
+        formData.offers_ids.length > 0
+      );
     }
-    
+
     // For owner mode (submit), validate location if not online business
     if (formData.isOnlineBusiness) return true;
     const validation = validateAddress({
@@ -153,7 +161,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
   const handleSubmit = async () => {
     // In recommendation mode, allow anonymous users (skip auth check)
     const isRecommendationMode = formData.creationMode === 'recommendation';
-    
+
     if (!user && !isRecommendationMode) {
       toast.error(t('create.media.mustBeLoggedIn'));
       return;
@@ -179,11 +187,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       setIsSubmitting(true);
 
       // Use the shared service function
-      await createProviderOrService(
-        formData,
-        user,
-        isRecommendationMode
-      );
+      await createProviderOrService(formData, user, isRecommendationMode);
 
       // Show success message
       const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
@@ -201,7 +205,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
         onSuccess();
       } else {
         // Redirect to providers page (waitlist is disabled)
-        router.push('/providers');
+        router.push('/food');
       }
     } catch (error) {
       console.error('Error creating entity:', error);
@@ -214,16 +218,24 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
 
   return (
-    <form className="flex flex-col gap-8 pb-8" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+    <form
+      className="flex flex-col gap-8 pb-8"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit();
+      }}
+    >
       {/* Basics Section */}
       <div className="flex flex-col gap-6">
         <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.basics')}</h2>
-        
+
         <div className="flex flex-col gap-4">
           {/* Title */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">{t('create.basics.titleLabel')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.basics.titleLabel')}
+              </label>
               <input
                 className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.basics.titlePlaceholder')}
@@ -240,19 +252,22 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             type="button"
             onClick={() => router.push('/create/basics/category')}
           >
-            <div className="flex flex-1 flex-col gap-1 items-start">
-              <span className="text-xs leading-[15px] text-content-muted">{t('create.basics.categoryLabel')}</span>
-              <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left">
-                {formData.category 
+            <div className="flex flex-1 flex-col items-start gap-1">
+              <span className="text-xs leading-[15px] text-content-muted">
+                {t('create.basics.categoryLabel')}
+              </span>
+              <div className="text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
+                {formData.category
                   ? (() => {
-                      const category = categories.find(cat => cat.category_id === formData.category);
+                      const category = categories.find(
+                        (cat) => cat.category_id === formData.category,
+                      );
                       if (!category) return t('create.basics.selectCategory');
-                      return language === 'en' 
-                        ? (category.name_en || category.name_de || t('create.basics.selectCategory'))
-                        : (category.name_de || category.name_en || t('create.basics.selectCategory'));
+                      return language === 'en'
+                        ? category.name_en || category.name_de || t('create.basics.selectCategory')
+                        : category.name_de || category.name_en || t('create.basics.selectCategory');
                     })()
-                  : t('create.basics.selectCategory')
-                }
+                  : t('create.basics.selectCategory')}
               </div>
             </div>
             <Icon className="h-6 w-6 text-content-heading" icon="material-symbols:chevron-right" />
@@ -261,9 +276,11 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           {/* Description */}
           <div className="flex min-h-[120px] w-full items-start rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">{t('create.basics.descriptionLabel')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.basics.descriptionLabel')}
+              </label>
               <textarea
-                className="w-full min-h-[100px] border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0 resize-none"
+                className="min-h-[100px] w-full resize-none border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.basics.descriptionPlaceholder')}
                 value={formData.description}
                 onChange={(e) => updateFormData({ description: e.target.value })}
@@ -277,27 +294,34 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             type="button"
             onClick={() => router.push('/create/basics/offers')}
           >
-            <div className="flex flex-1 flex-col gap-1 items-start">
-              <span className="text-xs leading-[15px] text-content-muted">{t('create.basics.whatIOffer')}</span>
-              <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left break-words">
+            <div className="flex flex-1 flex-col items-start gap-1">
+              <span className="text-xs leading-[15px] text-content-muted">
+                {t('create.basics.whatIOffer')}
+              </span>
+              <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
                 {(() => {
                   const hasOffers = formData.offers_ids && formData.offers_ids.length > 0;
                   if (hasOffers) {
                     const selectedOffers = formData.offers_ids
-                      .map(id => {
-                        const offer = offers.find(offer => offer.offer_id === id);
-                        return language === 'en' 
-                          ? (offer?.name_en || offer?.name_de)
-                          : (offer?.name_de || offer?.name_en);
+                      .map((id) => {
+                        const offer = offers.find((offer) => offer.offer_id === id);
+                        return language === 'en'
+                          ? offer?.name_en || offer?.name_de
+                          : offer?.name_de || offer?.name_en;
                       })
                       .filter(Boolean);
-                    return selectedOffers.length > 0 ? selectedOffers.join(', ') : t('create.basics.selectOffers');
+                    return selectedOffers.length > 0
+                      ? selectedOffers.join(', ')
+                      : t('create.basics.selectOffers');
                   }
                   return t('create.basics.selectOffers');
                 })()}
               </div>
             </div>
-            <Icon className="h-6 w-6 text-[#232323] flex-shrink-0" icon="material-symbols:chevron-right" />
+            <Icon
+              className="h-6 w-6 flex-shrink-0 text-[#232323]"
+              icon="material-symbols:chevron-right"
+            />
           </button>
 
           {/* Needs */}
@@ -306,27 +330,34 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             type="button"
             onClick={() => router.push('/create/basics/needs')}
           >
-            <div className="flex flex-1 flex-col gap-1 items-start">
-              <span className="text-xs leading-[15px] text-content-muted">{t('create.basics.whatILookingFor')}</span>
-              <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left break-words">
+            <div className="flex flex-1 flex-col items-start gap-1">
+              <span className="text-xs leading-[15px] text-content-muted">
+                {t('create.basics.whatILookingFor')}
+              </span>
+              <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
                 {(() => {
                   const hasNeeds = formData.needs_ids && formData.needs_ids.length > 0;
                   if (hasNeeds) {
                     const selectedNeeds = formData.needs_ids
-                      .map(id => {
-                        const need = needs.find(need => need.need_id === id);
-                        return language === 'en' 
-                          ? (need?.name_en || need?.name_de)
-                          : (need?.name_de || need?.name_en);
+                      .map((id) => {
+                        const need = needs.find((need) => need.need_id === id);
+                        return language === 'en'
+                          ? need?.name_en || need?.name_de
+                          : need?.name_de || need?.name_en;
                       })
                       .filter(Boolean);
-                    return selectedNeeds.length > 0 ? selectedNeeds.join(', ') : t('create.basics.selectNeeds');
+                    return selectedNeeds.length > 0
+                      ? selectedNeeds.join(', ')
+                      : t('create.basics.selectNeeds');
                   }
                   return t('create.basics.selectNeeds');
                 })()}
               </div>
             </div>
-            <Icon className="h-6 w-6 text-[#232323] flex-shrink-0" icon="material-symbols:chevron-right" />
+            <Icon
+              className="h-6 w-6 flex-shrink-0 text-[#232323]"
+              icon="material-symbols:chevron-right"
+            />
           </button>
         </div>
       </div>
@@ -334,12 +365,16 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       {/* Location Section */}
       <div className="flex flex-col gap-6">
         <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.location')}</h2>
-        
+
         {/* Online Business Toggle */}
-        <div className="flex items-center justify-between w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3">
+        <div className="flex w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3">
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-content">{t('create.location.onlineBusiness')}</span>
-            <span className="text-xs text-content-muted">{t('create.location.noPhysicalLocation')}</span>
+            <span className="text-sm font-medium text-content">
+              {t('create.location.onlineBusiness')}
+            </span>
+            <span className="text-xs text-content-muted">
+              {t('create.location.noPhysicalLocation')}
+            </span>
           </div>
           <button
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
@@ -348,15 +383,15 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             type="button"
             onClick={() => {
               const newIsOnline = !formData.isOnlineBusiness;
-              updateFormData({ 
+              updateFormData({
                 isOnlineBusiness: newIsOnline,
                 ...(newIsOnline && {
                   street: '',
                   zip: '',
                   city: '',
                   country: '',
-                  showAddress: false
-                })
+                  showAddress: false,
+                }),
               });
             }}
           >
@@ -381,17 +416,21 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                 />
               </div>
               {validationErrors.street && (
-                <p className="text-xs text-red-500 px-3">{validationErrors.street}</p>
+                <p className="px-3 text-xs text-red-500">{validationErrors.street}</p>
               )}
               {!validationErrors.street && (
                 <div className="flex items-center justify-between px-3 py-1">
-                  <p className="text-xs text-content-muted">{t('create.location.addressAutoFill')}</p>
+                  <p className="text-xs text-content-muted">
+                    {t('create.location.addressAutoFill')}
+                  </p>
                   <button
-                    className="text-xs text-primary hover:text-primary-dark hover:underline cursor-pointer"
+                    className="cursor-pointer text-xs text-primary hover:text-primary-dark hover:underline"
                     type="button"
                     onClick={() => setShowManualFields(!showManualFields)}
                   >
-                    {showManualFields ? t('create.location.hideFields') : t('create.location.editFields')}
+                    {showManualFields
+                      ? t('create.location.hideFields')
+                      : t('create.location.editFields')}
                   </button>
                 </div>
               )}
@@ -399,11 +438,13 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
 
             {/* Manual Fields */}
             {showManualFields && (
-              <div className="flex flex-col gap-4 pt-2 border-t border-gray-100">
+              <div className="flex flex-col gap-4 border-t border-gray-100 pt-2">
                 {/* Street */}
                 <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                   <div className="flex w-full flex-col gap-1">
-                    <label className="text-xs leading-[15px] text-content-muted">{t('create.location.street')}</label>
+                    <label className="text-xs leading-[15px] text-content-muted">
+                      {t('create.location.street')}
+                    </label>
                     <input
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterStreet')}
@@ -417,13 +458,15 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                   </div>
                 </div>
                 {validationErrors.street && (
-                  <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.street}</p>
+                  <p className="-mt-3 px-3 text-xs text-red-500">{validationErrors.street}</p>
                 )}
 
                 {/* ZIP */}
                 <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                   <div className="flex w-full flex-col gap-1">
-                    <label className="text-xs leading-[15px] text-content-muted">{t('create.location.zip')}</label>
+                    <label className="text-xs leading-[15px] text-content-muted">
+                      {t('create.location.zip')}
+                    </label>
                     <input
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterZip')}
@@ -434,13 +477,15 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                   </div>
                 </div>
                 {validationErrors.zip && (
-                  <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.zip}</p>
+                  <p className="-mt-3 px-3 text-xs text-red-500">{validationErrors.zip}</p>
                 )}
 
                 {/* City */}
                 <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                   <div className="flex w-full flex-col gap-1">
-                    <label className="text-xs leading-[15px] text-content-muted">{t('create.location.city')}</label>
+                    <label className="text-xs leading-[15px] text-content-muted">
+                      {t('create.location.city')}
+                    </label>
                     <input
                       required
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
@@ -455,13 +500,15 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                   </div>
                 </div>
                 {validationErrors.city && (
-                  <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.city}</p>
+                  <p className="-mt-3 px-3 text-xs text-red-500">{validationErrors.city}</p>
                 )}
 
                 {/* Country */}
                 <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
                   <div className="flex w-full flex-col gap-1">
-                    <label className="text-xs leading-[15px] text-content-muted">{t('create.location.country')}</label>
+                    <label className="text-xs leading-[15px] text-content-muted">
+                      {t('create.location.country')}
+                    </label>
                     <input
                       required
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
@@ -479,7 +526,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                   </div>
                 </div>
                 {validationErrors.country && (
-                  <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.country}</p>
+                  <p className="-mt-3 px-3 text-xs text-red-500">{validationErrors.country}</p>
                 )}
               </div>
             )}
@@ -487,10 +534,14 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
         )}
 
         {formData.isOnlineBusiness && (
-          <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#D4D4D4] bg-white">
-            <Icon className="h-12 w-12 text-primary mb-3" icon="mdi:web" />
-            <p className="text-sm font-medium text-content text-center mb-1">{t('create.location.onlineBusiness')}</p>
-            <p className="text-xs text-content-muted text-center">{t('create.location.onlineBusinessDisplay')}</p>
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-[#D4D4D4] bg-white px-4 py-8">
+            <Icon className="mb-3 h-12 w-12 text-primary" icon="mdi:web" />
+            <p className="mb-1 text-center text-sm font-medium text-content">
+              {t('create.location.onlineBusiness')}
+            </p>
+            <p className="text-center text-xs text-content-muted">
+              {t('create.location.onlineBusinessDisplay')}
+            </p>
           </div>
         )}
       </div>
@@ -498,12 +549,14 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       {/* Contact Section */}
       <div className="flex flex-col gap-6">
         <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.contact')}</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* Website */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">{t('create.contact.website')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.contact.website')}
+              </label>
               <input
                 className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.contact.websitePlaceholder')}
@@ -517,7 +570,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           {/* Instagram */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">{t('create.contact.instagram')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.contact.instagram')}
+              </label>
               <input
                 className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.contact.instagramPlaceholder')}
@@ -531,7 +586,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           {/* Phone */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">{t('create.contact.phone')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.contact.phone')}
+              </label>
               <input
                 className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.contact.phonePlaceholder')}
@@ -545,7 +602,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           {/* Email */}
           <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
             <div className="flex w-full flex-col gap-1">
-              <label className="text-xs leading-[15px] text-content-muted">{t('create.contact.email')}</label>
+              <label className="text-xs leading-[15px] text-content-muted">
+                {t('create.contact.email')}
+              </label>
               <input
                 className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                 placeholder={t('create.contact.emailPlaceholder')}
@@ -561,39 +620,55 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       {/* Media Section */}
       <div className="flex flex-col gap-6">
         <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.media')}</h2>
-        
+
         <div className="flex flex-col gap-3">
           <button
-            className="flex w-full min-h-[54px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+            className="flex min-h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
             type="button"
             onClick={() => router.push('/create/media/images')}
           >
-            <div className="flex flex-1 flex-col gap-1 items-start">
-              <span className="text-xs font-normal text-content-muted leading-[15px]">{t('create.media.images')}</span>
-              <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left break-words">
-                {formData.images && formData.images.length > 0 
-                  ? t('create.media.imagesSelected').replace('{{count}}', formData.images.length.toString())
+            <div className="flex flex-1 flex-col items-start gap-1">
+              <span className="text-xs font-normal leading-[15px] text-content-muted">
+                {t('create.media.images')}
+              </span>
+              <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
+                {formData.images && formData.images.length > 0
+                  ? t('create.media.imagesSelected').replace(
+                      '{{count}}',
+                      formData.images.length.toString(),
+                    )
                   : t('create.media.uploadImages')}
               </div>
             </div>
-            <Icon className="h-6 w-6 text-[#232323] flex-shrink-0" icon="material-symbols:chevron-right" />
+            <Icon
+              className="h-6 w-6 flex-shrink-0 text-[#232323]"
+              icon="material-symbols:chevron-right"
+            />
           </button>
 
           {!isCommunityService && (
             <button
-              className="flex w-full min-h-[54px] items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+              className="flex min-h-[54px] w-full items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
               type="button"
               onClick={() => router.push('/create/media/social')}
             >
-              <div className="flex flex-1 flex-col gap-1 items-start">
-                <span className="text-xs font-normal text-content-muted leading-[15px]">{t('create.media.socialInitiatives')}</span>
-                <div className="text-[15px] font-medium text-content leading-[18px] tracking-[0.15px] text-left break-words">
-                  {(formData.selectedCommunityServiceIds || []).length > 0 
-                    ? t('create.media.initiativesSelected').replace('{{count}}', (formData.selectedCommunityServiceIds || []).length.toString())
+              <div className="flex flex-1 flex-col items-start gap-1">
+                <span className="text-xs font-normal leading-[15px] text-content-muted">
+                  {t('create.media.socialInitiatives')}
+                </span>
+                <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
+                  {(formData.selectedCommunityServiceIds || []).length > 0
+                    ? t('create.media.initiativesSelected').replace(
+                        '{{count}}',
+                        (formData.selectedCommunityServiceIds || []).length.toString(),
+                      )
                     : t('create.media.selectInitiatives')}
                 </div>
               </div>
-              <Icon className="h-6 w-6 text-[#232323] flex-shrink-0" icon="material-symbols:chevron-right" />
+              <Icon
+                className="h-6 w-6 flex-shrink-0 text-[#232323]"
+                icon="material-symbols:chevron-right"
+              />
             </button>
           )}
         </div>
@@ -613,7 +688,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             {t('common.next')}
           </Button>
         )}
-        
+
         {/* Submit button - show only if not in recommendation mode or if form is complete */}
         {formData.creationMode !== 'recommendation' && (
           <Button
@@ -623,9 +698,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
             type="submit"
             variant="primary"
           >
-            {isSubmitting 
+            {isSubmitting
               ? t('create.media.creating')
-              : isCommunityService 
+              : isCommunityService
                 ? t('create.media.registerCommunityService')
                 : t('create.media.registerProvider')}
           </Button>
@@ -634,4 +709,3 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
     </form>
   );
 }
-

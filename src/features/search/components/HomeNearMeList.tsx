@@ -97,11 +97,11 @@ export function HomeNearMeList({
             className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
             role="button"
             tabIndex={0}
-            onClick={() => router.push(`/providers/${result.provider_id}`)}
+            onClick={() => router.push(`/p/${result.provider_id}`)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                router.push(`/providers/${result.provider_id}`);
+                router.push(`/p/${result.provider_id}`);
               }
             }}
           >

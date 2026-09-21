@@ -62,11 +62,11 @@ export function HomeListView({ pins, isLoading, isOpenNow, headerOffset }: HomeL
             className="cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
             role="button"
             tabIndex={0}
-            onClick={() => router.push(`/providers/${pin.providerId}`)}
+            onClick={() => router.push(`/p/${pin.providerId}`)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                router.push(`/providers/${pin.providerId}`);
+                router.push(`/p/${pin.providerId}`);
               }
             }}
           >

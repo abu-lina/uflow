@@ -96,6 +96,8 @@ interface ProvidersContentProps {
   /** Server-rendered initial data for the first page of results (Plan 010 P1a) */
   initialData?: { results: SearchResult[]; hasMore: boolean; totalCount?: number };
   initialFilters?: SearchFilterKey[];
+  /** Section used for the server-rendered initial data (Plan 228: gates initialData reuse) */
+  initialSection?: Section;
 }
 
 export function ProvidersContent({
@@ -103,6 +105,7 @@ export function ProvidersContent({
   showGreeting = false,
   initialData,
   initialFilters,
+  initialSection,
 }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -264,9 +267,11 @@ export function ProvidersContent({
       initialPageParam: 0,
       // Use server-rendered initial data when available (Plan 010 P1a)
       // Note: initialData only applies when no status filter is active
+      // Plan 228: Gate on section match to prevent stale data when switching sections
       ...(!status &&
         initialData &&
-        hasMatchingInitialFilters && {
+        hasMatchingInitialFilters &&
+        section === initialSection && {
           initialData: {
             pages: [initialData],
             pageParams: [0],

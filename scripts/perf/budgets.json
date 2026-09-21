@@ -5,11 +5,11 @@
     "firstLoadJS": {
       "providers": {
         "max": 370000,
-        "description": "First Load JS for /providers (browse) — measured at 369 kB after dynamic filters service (Plan 229); +1 kB headroom"
+        "description": "First Load JS for /food (browse) — measured at 369 kB after dynamic filters service (Plan 229); +1 kB headroom"
       },
       "providersDetail": {
         "max": 286000,
-        "description": "First Load JS for /providers/[provider_id] (Plan 210 fallback: measured at 281 kB after map-era shared chunk growth; +5 kB headroom)"
+        "description": "First Load JS for /p/[id] (Plan 210 fallback: measured at 281 kB after map-era shared chunk growth; +5 kB headroom)"
       },
       "shared": {
         "max": 120000,
@@ -38,11 +38,11 @@
     }
   },
   "routes": {
-    "/providers": {
+    "/food": {
       "budgetKey": "providers",
       "critical": true
     },
-    "/providers/[provider_id]": {
+    "/p/[id]": {
       "budgetKey": "providersDetail",
       "critical": true
     }

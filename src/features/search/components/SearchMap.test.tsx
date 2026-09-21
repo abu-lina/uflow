@@ -111,7 +111,7 @@ describe('SearchMap', () => {
       throw new Error('expected capturedClickHandler to be defined');
     }
     capturedClickHandler();
-    expect(mockPush).toHaveBeenCalledWith('/providers/p1');
+    expect(mockPush).toHaveBeenCalledWith('/p/p1');
   });
 
   it('[pre-fix FAILS / post-fix PASSES] pans map when userCoords is provided', async () => {

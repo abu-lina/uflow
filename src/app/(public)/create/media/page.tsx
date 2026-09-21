@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 
 export default function MediaUploadPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const { formData, clearFormData, isLoading } = useFormData();
@@ -66,9 +66,9 @@ export default function MediaUploadPage() {
   // Show loading state while form data is being restored
   if (isLoading) {
     return (
-      <div className="flex h-screen-fix items-center justify-center">
+      <div className="h-screen-fix flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
           <p className="text-gray-600">{t('create.media.loadingFormData')}</p>
         </div>
       </div>
@@ -80,9 +80,9 @@ export default function MediaUploadPage() {
   if (isRecommendationMode) {
     router.replace('/create/contact');
     return (
-      <div className="flex h-screen-fix items-center justify-center">
+      <div className="h-screen-fix flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
           <p className="text-gray-600">{t('common.loading')}</p>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default function MediaUploadPage() {
       await createProviderOrService(
         formData,
         user,
-        false // isRecommendationMode = false (owner mode)
+        false, // isRecommendationMode = false (owner mode)
       );
 
       // Show success message
@@ -117,14 +117,13 @@ export default function MediaUploadPage() {
 
       // Clear form data and redirect
       clearFormData();
-      
+
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['providers'] });
       queryClient.invalidateQueries({ queryKey: ['community-services'] });
-      
-      // Redirect to providers page
-      router.push('/providers');
-      
+
+      // Redirect to food page
+      router.push('/food');
     } catch (error) {
       console.error('Error creating entity:', error);
       toast.error(t('create.media.errorCreating'));
@@ -135,16 +134,10 @@ export default function MediaUploadPage() {
 
   return (
     <Layout>
-      <PageHeader
-        title={t('create.media.title')}
-        variant="back-and-title"
-        onBack="/create/halal"
-      />
+      <PageHeader title={t('create.media.title')} variant="back-and-title" onBack="/create/halal" />
 
-      <PageContent 
-        className={cn(
-          !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
-        )}
+      <PageContent
+        className={cn(!isMobile && 'mx-auto max-w-2xl px-6 md:px-8 lg:max-w-4xl')}
         maxWidth="full"
         paddingX={isMobile ? 'px-6' : 'px-0'}
       >
@@ -154,47 +147,62 @@ export default function MediaUploadPage() {
             <StepIndicator currentStep={4} steps={STEPS} />
           </div>
 
-
           {/* Body */}
-          <div className="flex flex-col items-start p-0 gap-8 w-full flex-none order-1 flex-grow-0">
+          <div className="order-1 flex w-full flex-none flex-grow-0 flex-col items-start gap-8 p-0">
             {/* personalData */}
-            <div className="flex flex-col items-start p-0 gap-4 w-full flex-none order-0 self-stretch flex-grow-0">
+            <div className="order-0 flex w-full flex-none flex-grow-0 flex-col items-start gap-4 self-stretch p-0">
               {/* input */}
-              <div className="flex flex-col items-start p-0 gap-3 w-full flex-none order-1 self-stretch flex-grow-0">
+              <div className="order-1 flex w-full flex-none flex-grow-0 flex-col items-start gap-3 self-stretch p-0">
                 {/* Account - Navigate to Images */}
                 <button
-                  className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+                  className="flex min-h-[54px] w-full rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
                   onClick={() => router.push('/create/media/images')}
                 >
-                  <div className="flex flex-1 flex-col gap-1 items-start">
-                    <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.media.images')}</span>
-                    <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
-                      {formData.images && formData.images.length > 0 
-                        ? t('create.media.imagesSelected').replace('{{count}}', formData.images.length.toString())
+                  <div className="flex flex-1 flex-col items-start gap-1">
+                    <span className="text-xs font-normal leading-[15px] text-[#999999]">
+                      {t('create.media.images')}
+                    </span>
+                    <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727]">
+                      {formData.images && formData.images.length > 0
+                        ? t('create.media.imagesSelected').replace(
+                            '{{count}}',
+                            formData.images.length.toString(),
+                          )
                         : t('create.media.uploadImages')}
                     </div>
                   </div>
-                  <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
-                    <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                  <div className="ml-2 flex flex-shrink-0 items-center justify-center self-center">
+                    <Icon
+                      className="h-6 w-6 text-[#232323]"
+                      icon="material-symbols:chevron-right"
+                    />
                   </div>
                 </button>
 
                 {/* Spenden-Projekt - Navigate to Social (only for providers) */}
                 {!isCommunityService && (
                   <button
-                    className="flex w-full min-h-[54px] rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm hover:bg-gray-50 transition-colors"
+                    className="flex min-h-[54px] w-full rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm transition-colors hover:bg-gray-50"
                     onClick={() => router.push('/create/media/social')}
                   >
-                    <div className="flex flex-1 flex-col gap-1 items-start">
-                      <span className="text-xs font-normal text-[#999999] leading-[15px]">{t('create.media.socialInitiatives')}</span>
-                      <div className="text-[15px] font-medium text-[#272727] leading-[18px] tracking-[0.15px] text-left break-words">
-                        {(formData.selectedCommunityServiceIds || []).length > 0 
-                          ? t('create.media.initiativesSelected').replace('{{count}}', (formData.selectedCommunityServiceIds || []).length.toString())
+                    <div className="flex flex-1 flex-col items-start gap-1">
+                      <span className="text-xs font-normal leading-[15px] text-[#999999]">
+                        {t('create.media.socialInitiatives')}
+                      </span>
+                      <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727]">
+                        {(formData.selectedCommunityServiceIds || []).length > 0
+                          ? t('create.media.initiativesSelected').replace(
+                              '{{count}}',
+                              (formData.selectedCommunityServiceIds || []).length.toString(),
+                            )
                           : t('create.media.selectInitiatives')}
                       </div>
                     </div>
-                    <div className="flex items-center justify-center ml-2 flex-shrink-0 self-center">
-                      <Icon className="h-6 w-6 text-[#232323]" icon="material-symbols:chevron-right" />
+                    <div className="ml-2 flex flex-shrink-0 items-center justify-center self-center">
+                      <Icon
+                        className="h-6 w-6 text-[#232323]"
+                        icon="material-symbols:chevron-right"
+                      />
                     </div>
                   </button>
                 )}
@@ -206,10 +214,10 @@ export default function MediaUploadPage() {
 
       <FooterAction
         actionButton={{
-          label: isSubmitting 
-                ? t('create.media.creating')
-                : isCommunityService 
-                  ? t('create.media.registerCommunityService')
+          label: isSubmitting
+            ? t('create.media.creating')
+            : isCommunityService
+              ? t('create.media.registerCommunityService')
               : t('create.media.registerProvider'),
           icon: isSubmitting ? 'lucide:loader-2' : 'lucide:save',
           onClick: handleSave,

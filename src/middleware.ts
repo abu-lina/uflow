@@ -16,16 +16,17 @@ function getRateLimitKey(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for');
   const realIp = req.headers.get('x-real-ip');
   const cfIp = req.headers.get('cf-connecting-ip'); // Cloudflare
-  
+
   // Use the first available IP, prioritizing x-forwarded-for
-  const ip = forwarded 
-    ? forwarded.split(',')[0].trim() 
-    : realIp || cfIp || 'unknown';
-  
+  const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || cfIp || 'unknown';
+
   return ip;
 }
 
-function checkRateLimit(key: string, maxRequests: number): { allowed: boolean; remaining: number; resetTime: number } {
+function checkRateLimit(
+  key: string,
+  maxRequests: number,
+): { allowed: boolean; remaining: number; resetTime: number } {
   const now = Date.now();
   const record = rateLimitStore.get(key);
 
@@ -77,22 +78,27 @@ export async function middleware(req: NextRequest) {
   const accessToken = req.cookies.get('sb-access-token')?.value;
   const waitlistToken = req.cookies.get('waitlist_token')?.value;
 
-  // Check app launch status and redirect to providers if needed
-  // This check runs before rate limiting to ensure providers page is always accessible
+  // Check app launch status and redirect to food if needed
+  // This check runs before rate limiting to ensure food page is always accessible
   const isAppLaunched = getFeatureFlag('isAppLaunched');
-  const needsRedirect = await shouldRedirectToWaitlist(pathname, isAppLaunched, accessToken, waitlistToken);
-  
+  const needsRedirect = await shouldRedirectToWaitlist(
+    pathname,
+    isAppLaunched,
+    accessToken,
+    waitlistToken,
+  );
+
   if (needsRedirect) {
-    return NextResponse.redirect(new URL('/providers', req.url));
+    return NextResponse.redirect(new URL('/food', req.url));
   }
 
   // Rate limiting for API routes
   const isApiRoute = pathname.startsWith('/api');
-  
+
   if (isApiRoute) {
     const key = getRateLimitKey(req);
     const rateLimit = checkRateLimit(key, API_RATE_LIMIT_MAX_REQUESTS);
-    
+
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
@@ -104,7 +110,7 @@ export async function middleware(req: NextRequest) {
             'X-RateLimit-Remaining': String(rateLimit.remaining),
             'X-RateLimit-Reset': String(rateLimit.resetTime),
           },
-        }
+        },
       );
     }
 
@@ -117,7 +123,7 @@ export async function middleware(req: NextRequest) {
     // Rate limiting for regular routes (less strict)
     const key = getRateLimitKey(req);
     const rateLimit = checkRateLimit(key, RATE_LIMIT_MAX_REQUESTS);
-    
+
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
@@ -126,7 +132,7 @@ export async function middleware(req: NextRequest) {
           headers: {
             'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)),
           },
-        }
+        },
       );
     }
   }

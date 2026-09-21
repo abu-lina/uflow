@@ -210,6 +210,7 @@ export const shouldShowMobileFooter = (
 
     // Check excluded patterns (page patterns that never show footer)
     const footerExcludedPatterns = [
+      '/p/',
       '/providers/',
       '/community-services/',
       '/profile/providers/',
@@ -253,6 +254,7 @@ export const shouldShowMobileFooter = (
 
   // 5. Check excluded patterns (page patterns that never show footer)
   const footerExcludedPatterns = [
+    '/p/',
     '/providers/',
     '/community-services/',
     '/profile/providers/',
@@ -328,6 +330,7 @@ export const shouldShowSubpageAction = (pathname: string): boolean => {
  */
 export const isProviderDetailPage = (pathname: string): boolean => {
   return (
+    pathname.startsWith('/p/') ||
     (pathname.startsWith('/providers/') && pathname !== '/providers') ||
     pathname.startsWith('/profile/providers/')
   );
@@ -396,7 +399,8 @@ export const shouldShowCityEarlyAccessNavbar = (
   ];
 
   const excludedPatterns = [
-    '/providers/', // Provider detail pages
+    '/p/', // Provider/entity detail pages
+    '/providers/', // Provider detail pages (redirect compat)
     '/community-services/', // Community service detail pages
     '/profile/providers/', // Profile provider detail pages
     '/create/media/images',

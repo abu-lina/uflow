@@ -88,6 +88,7 @@ export async function renderProvidersPage(opts: {
           totalCount: initialTotalCount,
         }}
         initialFilters={filters}
+        initialSection={section}
       />
     </Suspense>
   );

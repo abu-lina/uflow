@@ -151,4 +151,3 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
     />
   );
 }
-

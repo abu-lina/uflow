@@ -1,9 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { getFeatureFlag } from '@/config/feature-flags';
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
 import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
@@ -14,11 +12,11 @@ import { cn } from '@/lib/utils';
 
 /**
  * City Early Access Navigation Bar
- * 
+ *
  * Bottom navigation bar with Home, Create, and Saved (Bookmark) items.
  * - Stage 1: Home, Create, Profile
  * - Stage 2: Home, Create, Saved (Bookmark), Profile
- * 
+ *
  * Design (matches MobileFooterBar pattern):
  * - Dynamic height with pt-footer-safe and pb-safe
  * - Solid opaque background gradient (no transparency)
@@ -31,34 +29,23 @@ import { cn } from '@/lib/utils';
  */
 export function CityEarlyAccessNavbar() {
   const pathname = usePathname();
-  const [isAppLaunched, setIsAppLaunched] = useState(false);
   const { stage } = useAppStage();
   const { user } = useAuth();
-
-  // Check feature flag client-side
-  useEffect(() => {
-    setIsAppLaunched(getFeatureFlag('isAppLaunched'));
-  }, []);
 
   // Determine active states
   // Home is active when:
   // - On / (root) - the home page after onboarding (shows city content)
   // - On /city/* (Stage 1) - direct city access
-  // - On /providers (Stage 2) - when not app launched (early access)
-  const isHomeActive = 
-    pathname === '/' || 
-    pathname.startsWith('/city/') || 
-    (pathname === '/providers' && !isAppLaunched);
-  
+  // - On /food (Stage 2) - the canonical discovery route
+  const isHomeActive = pathname === '/' || pathname.startsWith('/city/') || pathname === '/food';
+
   const isCreateActive = pathname === '/create' || pathname.startsWith('/create/recommend');
-  
+
   const isSavedActive = pathname === '/saved';
 
   // Profile is active on /profile, /login, or /signup (mirrors MobileFooterBar pattern)
   const isProfileActive =
-    pathname.startsWith('/profile') ||
-    pathname === '/login' ||
-    pathname === '/signup';
+    pathname.startsWith('/profile') || pathname === '/login' || pathname === '/signup';
 
   // Show Saved menu item only for Stage 2
   const showSaved = stage === 'stage2';
@@ -68,9 +55,9 @@ export function CityEarlyAccessNavbar() {
       className={cn(
         'pointer-events-auto fixed bottom-0 left-0 right-0 z-50',
         'flex w-full items-center justify-center',
-        'px-6 pt-footer-safe pb-safe',
+        'pt-footer-safe pb-safe px-6',
         'border-t border-gray-200/30',
-        'sm:px-8'
+        'sm:px-8',
       )}
       role="navigation"
       style={{
@@ -81,17 +68,19 @@ export function CityEarlyAccessNavbar() {
         boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
       }}
     >
-      <div className={cn(
-        'flex w-full max-w-[400px] flex-row items-center justify-between',
-        showSaved ? 'gap-4' : 'gap-8'
-      )}>
+      <div
+        className={cn(
+          'flex w-full max-w-[400px] flex-row items-center justify-between',
+          showSaved ? 'gap-4' : 'gap-8',
+        )}
+      >
         {/* Home */}
         <Link
           aria-label="Home"
           className={cn(
             'flex flex-1 flex-row items-center justify-center',
             'h-12',
-            isHomeActive && 'border-b-[2.4px] border-primary'
+            isHomeActive && 'border-b-[2.4px] border-primary',
           )}
           href="/"
           scroll={false}
@@ -105,7 +94,7 @@ export function CityEarlyAccessNavbar() {
           className={cn(
             'flex flex-1 flex-row items-center justify-center',
             'h-12',
-            isCreateActive && 'border-b-[2.4px] border-primary'
+            isCreateActive && 'border-b-[2.4px] border-primary',
           )}
           href="/create/recommend"
           scroll={false}
@@ -120,7 +109,7 @@ export function CityEarlyAccessNavbar() {
             className={cn(
               'flex flex-1 flex-row items-center justify-center',
               'h-12',
-              isSavedActive && 'border-b-[2.4px] border-primary'
+              isSavedActive && 'border-b-[2.4px] border-primary',
             )}
             href="/saved"
             scroll={false}
@@ -135,7 +124,7 @@ export function CityEarlyAccessNavbar() {
           className={cn(
             'flex flex-1 flex-row items-center justify-center',
             'h-12',
-            isProfileActive && 'border-b-[2.4px] border-primary'
+            isProfileActive && 'border-b-[2.4px] border-primary',
           )}
           href={user ? '/profile' : '/login'}
           scroll={false}
@@ -146,4 +135,3 @@ export function CityEarlyAccessNavbar() {
     </nav>
   );
 }
-
