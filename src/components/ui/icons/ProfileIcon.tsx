@@ -3,25 +3,21 @@
 interface ProfileIconProps {
   className?: string;
   isActive?: boolean;
-  height?: number;
-  width?: number;
 }
 
-export function ProfileIcon({
-  className = '',
-  isActive = false,
-  height = 24,
-  width = 20,
-}: ProfileIconProps) {
+export function ProfileIcon({ className = '', isActive = false }: ProfileIconProps) {
   if (isActive) {
-    // Active state - use the new filled design
+    // Active state - filled person
     return (
-      <div className={`flex items-center justify-center ${className}`} style={{ width: 48, height: 48 }}>
+      <div
+        className={`flex items-center justify-center ${className}`}
+        style={{ width: 48, height: 48 }}
+      >
         <svg
           fill="none"
-          height="48"
+          height={24}
           viewBox="0 0 48 48"
-          width="48"
+          width={24}
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -45,15 +41,18 @@ export function ProfileIcon({
     );
   }
 
-  // Inactive state - use the existing stroke-only design
+  // Inactive state - stroke-only person
   const color = '#7A7A7A';
   return (
-    <div className={`flex items-center justify-center ${className}`} style={{ width: 48, height: 48 }}>
+    <div
+      className={`flex items-center justify-center ${className}`}
+      style={{ width: 48, height: 48 }}
+    >
       <svg
         fill="none"
-        height={height}
+        height={24}
         viewBox="0 0 20 24"
-        width={width}
+        width={24}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
