@@ -5,6 +5,8 @@
  * crawlable URLs. Canonicals strip query strings containing utm_* parameters.
  */
 
+import { slugify } from '@/lib/slugify';
+
 const UTM_PARAM_PATTERN = /^utm_/i;
 
 /**
@@ -37,4 +39,29 @@ export function generateCityCanonicalUrl(cityName: string, siteUrl: string): str
   const base = siteUrl.replace(/\/+$/, '');
   const encoded = encodeURIComponent(cityName.trim());
   return `${base}/city/${encoded}`;
+}
+
+/**
+ * Generate a canonical URL for a food city page: `<site>/food/<city-slug>`.
+ *
+ * Unlike `generateCityCanonicalUrl`, the city segment is slugified rather than
+ * percent-encoded, so "München" becomes `/food/muenchen` instead of
+ * `/food/M%C3%BCnchen`. That matches what `findCityBySlug` resolves and keeps
+ * one crawlable URL per city. Idempotent for already-slugified input.
+ */
+export function generateFoodCityCanonicalUrl(cityName: string, siteUrl: string): string {
+  const base = siteUrl.replace(/\/+$/, '');
+  return `${base}/food/${slugify(cityName)}`;
+}
+
+/**
+ * Generate a canonical URL for a food city + category page:
+ * `<site>/food/<city-slug>/<category-slug>`. Both segments are slugified.
+ */
+export function generateFoodCategoryCanonicalUrl(
+  cityName: string,
+  categorySlug: string,
+  siteUrl: string,
+): string {
+  return `${generateFoodCityCanonicalUrl(cityName, siteUrl)}/${slugify(categorySlug)}`;
 }

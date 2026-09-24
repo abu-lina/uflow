@@ -9,7 +9,12 @@
 import { describe, it, expect } from 'vitest';
 
 // These imports will fail initially (TDD RED phase — module doesn't exist yet)
-import { stripUtmParams, generateCityCanonicalUrl } from '@/utils/canonicalUrl';
+import {
+  stripUtmParams,
+  generateCityCanonicalUrl,
+  generateFoodCityCanonicalUrl,
+  generateFoodCategoryCanonicalUrl,
+} from '@/utils/canonicalUrl';
 
 describe('stripUtmParams', () => {
   it('removes utm_source, utm_medium, utm_campaign from a URL', () => {
@@ -73,6 +78,62 @@ describe('generateCityCanonicalUrl', () => {
   it('strips trailing slash from siteUrl', () => {
     expect(generateCityCanonicalUrl('Frankfurt', 'https://ummahflow.com/')).toBe(
       'https://ummahflow.com/city/Frankfurt',
+    );
+  });
+});
+
+describe('generateFoodCityCanonicalUrl (request 244 — T1)', () => {
+  const siteUrl = 'https://ummahflow.com';
+
+  it('generates a slugified /food/<city> canonical', () => {
+    expect(generateFoodCityCanonicalUrl('Berlin', siteUrl)).toBe(
+      'https://ummahflow.com/food/berlin',
+    );
+  });
+
+  it('transliterates umlauts instead of percent-encoding them', () => {
+    expect(generateFoodCityCanonicalUrl('München', siteUrl)).toBe(
+      'https://ummahflow.com/food/muenchen',
+    );
+  });
+
+  it('collapses whitespace in multi-word city names to hyphens', () => {
+    expect(generateFoodCityCanonicalUrl('  Frankfurt am Main  ', siteUrl)).toBe(
+      'https://ummahflow.com/food/frankfurt-am-main',
+    );
+  });
+
+  it('strips trailing slashes from siteUrl', () => {
+    expect(generateFoodCityCanonicalUrl('Berlin', 'https://ummahflow.com///')).toBe(
+      'https://ummahflow.com/food/berlin',
+    );
+  });
+
+  it('accepts an already-slugified city name idempotently', () => {
+    expect(generateFoodCityCanonicalUrl('muenchen', siteUrl)).toBe(
+      'https://ummahflow.com/food/muenchen',
+    );
+  });
+});
+
+describe('generateFoodCategoryCanonicalUrl (request 244 — T1)', () => {
+  const siteUrl = 'https://ummahflow.com';
+
+  it('generates a /food/<city>/<category> canonical', () => {
+    expect(generateFoodCategoryCanonicalUrl('Berlin', 'kebab', siteUrl)).toBe(
+      'https://ummahflow.com/food/berlin/kebab',
+    );
+  });
+
+  it('slugifies both segments', () => {
+    expect(generateFoodCategoryCanonicalUrl('München', 'Döner & Kebab', siteUrl)).toBe(
+      'https://ummahflow.com/food/muenchen/doener-kebab',
+    );
+  });
+
+  it('strips trailing slashes from siteUrl', () => {
+    expect(generateFoodCategoryCanonicalUrl('Berlin', 'kebab', 'https://ummahflow.com/')).toBe(
+      'https://ummahflow.com/food/berlin/kebab',
     );
   });
 });
