@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MailCheck, XCircle, Loader2 } from 'lucide-react';
 
-export default function ConfirmEmail() {
+function ConfirmEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -14,7 +14,7 @@ export default function ConfirmEmail() {
       // Handle both 'token' (custom system) and 'token_hash' (Supabase system) parameters
       const token = searchParams.get('token') || searchParams.get('token_hash');
       const email = searchParams.get('email');
-      
+
       if (!token || !email) {
         setStatus('error');
         return;
@@ -22,20 +22,23 @@ export default function ConfirmEmail() {
 
       // Check if token looks like an email address (common issue)
       if (token.includes('@') && token.includes('.')) {
-        console.error('[CONFIRM PAGE] Token appears to be an email address instead of a proper token:', token);
+        console.error(
+          '[CONFIRM PAGE] Token appears to be an email address instead of a proper token:',
+          token,
+        );
         setStatus('error');
         return;
       }
 
       try {
-        console.log('[CONFIRM PAGE] Confirming email:', { 
-          email, 
+        console.log('[CONFIRM PAGE] Confirming email:', {
+          email,
           tokenLength: token.length,
           tokenPreview: token.substring(0, 20) + '...',
           fullToken: token,
-          urlParams: Object.fromEntries(searchParams.entries())
+          urlParams: Object.fromEntries(searchParams.entries()),
         });
-        
+
         // Call our API to confirm the email
         const response = await fetch('/api/confirm-email', {
           method: 'POST',
@@ -44,7 +47,7 @@ export default function ConfirmEmail() {
           },
           body: JSON.stringify({
             token,
-            email
+            email,
           }),
         });
 
@@ -59,7 +62,7 @@ export default function ConfirmEmail() {
             errorMessage: errorData.error,
             errorDetails: errorData.details,
             fullError: errorData,
-            responseHeaders: Object.fromEntries(response.headers.entries())
+            responseHeaders: Object.fromEntries(response.headers.entries()),
           });
           setStatus('error');
         } else {
@@ -82,9 +85,9 @@ export default function ConfirmEmail() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-icon-xl h-icon-xl text-primary animate-spin mx-auto mb-4" />
+          <Loader2 className="mx-auto mb-4 h-icon-xl w-icon-xl animate-spin text-primary" />
           <p className="text-content">Confirming your email...</p>
         </div>
       </div>
@@ -93,27 +96,27 @@ export default function ConfirmEmail() {
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <XCircle className="w-icon-3xl h-icon-3xl text-danger mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-content-heading mb-4">Error confirming email</h1>
-          <p className="text-content mb-6">
+          <XCircle className="mx-auto mb-4 h-icon-3xl w-icon-3xl text-danger" />
+          <h1 className="mb-4 text-2xl font-bold text-content-heading">Error confirming email</h1>
+          <p className="mb-6 text-content">
             The confirmation link appears to be invalid or expired. This can happen if:
           </p>
-          <ul className="text-content text-left mb-6 max-w-md mx-auto">
+          <ul className="mx-auto mb-6 max-w-md text-left text-content">
             <li>• The link has already been used</li>
             <li>• The link has expired (links expire after 24 hours)</li>
             <li>• The link was corrupted during email transmission</li>
           </ul>
           <div className="space-y-3">
-            <button 
-              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors block mx-auto"
+            <button
+              className="mx-auto block rounded-lg bg-primary px-6 py-3 text-white transition-colors hover:bg-primary/90"
               onClick={() => router.push('/login')}
             >
               Go to Login
             </button>
-            <button 
-              className="bg-gray-200 text-content px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors block mx-auto"
+            <button
+              className="mx-auto block rounded-lg bg-gray-200 px-6 py-3 text-content transition-colors hover:bg-gray-300"
               onClick={() => router.push('/auth/signup')}
             >
               Sign Up Again
@@ -125,13 +128,23 @@ export default function ConfirmEmail() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <MailCheck className="w-icon-3xl h-icon-3xl text-success mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-content-heading mb-4">Email confirmed successfully!</h1>
-        <p className="text-content mb-6">Redirecting to your dashboard...</p>
-        <Loader2 className="w-icon-lg h-icon-lg text-primary animate-spin mx-auto" />
+        <MailCheck className="mx-auto mb-4 h-icon-3xl w-icon-3xl text-success" />
+        <h1 className="mb-4 text-2xl font-bold text-content-heading">
+          Email confirmed successfully!
+        </h1>
+        <p className="mb-6 text-content">Redirecting to your dashboard...</p>
+        <Loader2 className="mx-auto h-icon-lg w-icon-lg animate-spin text-primary" />
       </div>
     </div>
+  );
+}
+
+export default function ConfirmEmail() {
+  return (
+    <Suspense fallback={null}>
+      <ConfirmEmailContent />
+    </Suspense>
   );
 }

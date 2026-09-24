@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { OwnerDecisionContent } from './OwnerDecisionContent';
 import { getWhatsAppContactUrl } from '@/services/email/outreachEmail';
 
@@ -8,5 +9,9 @@ export const metadata = {
 
 export default function OwnerDecisionPage() {
   const whatsappUrl = getWhatsAppContactUrl();
-  return <OwnerDecisionContent whatsappUrl={whatsappUrl} />;
+  return (
+    <Suspense fallback={null}>
+      <OwnerDecisionContent whatsappUrl={whatsappUrl} />
+    </Suspense>
+  );
 }
