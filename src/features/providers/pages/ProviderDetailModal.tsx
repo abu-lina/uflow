@@ -8,8 +8,6 @@ import { Icon } from '@iconify/react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 import { Modal } from '@/components/ui/Modal';
-import { MobileProviderDetail } from '@/features/providers/components/MobileProviderDetail';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/providers/auth-provider';
@@ -63,7 +61,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const isMobile = useIsMobile();
   const { t, language } = useLanguage();
 
   const locations = useMemo(
@@ -390,17 +387,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       }
     }
   };
-
-  // Render mobile version for mobile devices
-  if (isMobile) {
-    return (
-      <Modal isOpen={true} title={provider.provider_name} onClose={onClose}>
-        <div className="w-full max-w-sm">
-          <MobileProviderDetail provider={provider} />
-        </div>
-      </Modal>
-    );
-  }
 
   // Check if any content is still loading
   const isLoading = isLoadingCommunityServices || !mainImagesLoaded[selectedImageIdx];

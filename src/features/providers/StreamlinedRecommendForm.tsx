@@ -9,7 +9,6 @@ import { Icon } from '@iconify/react';
 
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useAuth } from '@/providers/auth-provider';
 import { createProviderOrService } from '@/features/providers/services/mutations';
 import { trackEvent } from '@/lib/analytics/plausible';
@@ -274,7 +273,6 @@ export function StreamlinedRecommendForm({
   const queryClient = useQueryClient();
   const { formData: contextFormData, updateFormData, setCreationMode } = useFormData();
   const { t, language } = useLanguage();
-  const isMobile = useIsSmallMobile();
   const { user } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1277,8 +1275,8 @@ export function StreamlinedRecommendForm({
     <div
       className={cn(
         'flex flex-col gap-6',
-        // Add extra bottom padding on mobile to account for fixed FooterAction
-        isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8',
+        // Extra bottom padding on mobile to account for fixed FooterAction
+        'pb-8 max-sm:pb-[calc(80px+24px+env(safe-area-inset-bottom))]',
       )}
     >
       {/* Section 1: Basics */}
@@ -1692,8 +1690,8 @@ export function StreamlinedRecommendForm({
         </div>
       </div>
 
-      {/* Footer Actions */}
-      {isMobile && (
+      {/* Footer Actions - mobile (< sm) */}
+      <div className="sm:hidden">
         <FooterAction
           actionButton={{
             disabled: !isFormValid || isSubmitting,
@@ -1704,10 +1702,10 @@ export function StreamlinedRecommendForm({
             variant: 'primary',
           }}
         />
-      )}
+      </div>
 
-      {/* Desktop Actions */}
-      {!isMobile && (
+      {/* Desktop Actions (sm+) */}
+      <div className="hidden sm:block">
         <div className="flex gap-4 pt-4">
           <Button disabled={isSubmitting} variant="secondary" onClick={handleBack}>
             {t('common.cancel')}
@@ -1722,7 +1720,7 @@ export function StreamlinedRecommendForm({
             {isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit')}
           </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
