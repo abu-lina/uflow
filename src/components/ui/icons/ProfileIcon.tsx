@@ -3,11 +3,18 @@
 interface ProfileIconProps {
   className?: string;
   isActive?: boolean;
+  height?: number;
+  width?: number;
 }
 
-export function ProfileIcon({ className = '', isActive = false }: ProfileIconProps) {
+export function ProfileIcon({
+  className = '',
+  isActive = false,
+  height = 24,
+  width = 20,
+}: ProfileIconProps) {
   if (isActive) {
-    // Active state - filled person
+    // Active state - use the new filled design
     return (
       <div
         className={`flex items-center justify-center ${className}`}
@@ -15,9 +22,9 @@ export function ProfileIcon({ className = '', isActive = false }: ProfileIconPro
       >
         <svg
           fill="none"
-          height={24}
+          height="48"
           viewBox="0 0 48 48"
-          width={24}
+          width="48"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -41,7 +48,7 @@ export function ProfileIcon({ className = '', isActive = false }: ProfileIconPro
     );
   }
 
-  // Inactive state - stroke-only person
+  // Inactive state - use the existing stroke-only design
   const color = '#7A7A7A';
   return (
     <div
@@ -50,9 +57,9 @@ export function ProfileIcon({ className = '', isActive = false }: ProfileIconPro
     >
       <svg
         fill="none"
-        height={24}
+        height={height}
         viewBox="0 0 20 24"
-        width={24}
+        width={width}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
