@@ -2,8 +2,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { renderProvidersPage } from '@/app/(public)/providers/renderProvidersPage';
 import { findCityBySlug } from '@/lib/city-slug';
-import { slugify } from '@/lib/slugify';
-import { createSupabaseStaticClient } from '@/lib/supabase/static';
 import { generateFoodCityCanonicalUrl } from '@/utils/canonicalUrl';
 
 type RouteSearchParams = { [key: string]: string | string[] | undefined };
@@ -11,19 +9,6 @@ type RouteSearchParams = { [key: string]: string | string[] | undefined };
 interface FoodCityPageProps {
   params: Promise<{ city: string }>;
   searchParams: Promise<RouteSearchParams>;
-}
-
-// ISR: regenerate every 5 minutes (ADR-005)
-export const revalidate = 300;
-
-/**
- * Pre-render every seeded city at build time.
- * Unknown city slugs are rendered on-demand and cached (dynamicParams = true by default).
- */
-export async function generateStaticParams() {
-  const supabase = createSupabaseStaticClient();
-  const { data } = await supabase.from('cities').select('city_name');
-  return (data || []).map((city) => ({ city: slugify(city.city_name) }));
 }
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
@@ -37,7 +22,7 @@ export async function generateMetadata({
   // Unknown slug: the page itself 404s, so don't advertise a canonical for it.
   if (!cityName) {
     return {
-      title: 'City not found | Ummah Flow',
+      title: { absolute: 'City not found | Ummah Flow' },
       robots: { index: false, follow: false },
     };
   }
@@ -47,7 +32,7 @@ export async function generateMetadata({
   const description = `Find halal restaurants, takeaways and food providers in ${cityName}. Ummah Flow connects Muslims with trusted local halal businesses.`;
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical },
     openGraph: {

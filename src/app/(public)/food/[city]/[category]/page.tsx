@@ -12,20 +12,6 @@ interface FoodCityCategoryPageProps {
   searchParams: Promise<RouteSearchParams>;
 }
 
-// ISR: regenerate every 5 minutes (ADR-005)
-export const revalidate = 300;
-
-/**
- * No `generateStaticParams` here on purpose.
- *
- * City x food category is a cross product: 131 rows in `cities` times 61
- * categories with applicable_section food|all is ~8,000 pages, and the vast
- * majority have zero providers. Pre-rendering them would blow up build time
- * and output size for pages nobody requests. `dynamicParams` defaults to true,
- * so each combination is rendered on first request and then cached under the
- * 300s ISR window above. The city-level pages are still fully pre-rendered.
- */
-
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
 
 export async function generateMetadata({
@@ -41,7 +27,7 @@ export async function generateMetadata({
   // Unknown city or category: the page itself 404s, so no canonical.
   if (!cityName || !category) {
     return {
-      title: 'Page not found | Ummah Flow',
+      title: { absolute: 'Page not found | Ummah Flow' },
       robots: { index: false, follow: false },
     };
   }
@@ -56,7 +42,7 @@ export async function generateMetadata({
   const description = `Discover halal ${categoryName} in ${cityName}. Browse verified halal food providers on Ummah Flow.`;
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical },
     openGraph: {
