@@ -5,10 +5,7 @@ interface ExploreIconProps {
   isActive?: boolean;
 }
 
-export function ExploreIcon({
-  className = '',
-  isActive = false,
-}: ExploreIconProps) {
+export function ExploreIcon({ className = '', isActive = false }: ExploreIconProps) {
   if (isActive) {
     // Active state - use the new filled design
     return (
@@ -35,14 +32,14 @@ export function ExploreIcon({
     );
   }
 
-  // Inactive state - use the exact icon provided
+  // Inactive state - stroke-only magnifying glass
   return (
     <svg
       className={className}
       fill="none"
-      height="48"
+      height={24}
       viewBox="0 0 49 48"
-      width="49"
+      width={24}
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
