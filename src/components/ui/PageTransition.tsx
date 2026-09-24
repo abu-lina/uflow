@@ -1,14 +1,7 @@
 'use client';
 
-import { Suspense } from 'react';
-
 interface PageTransitionProps {
   children: React.ReactNode;
-}
-
-// Loading placeholder component
-function LoadingPlaceholder() {
-  return <div className="w-full bg-white" />;
 }
 
 /**
@@ -24,7 +17,7 @@ function LoadingPlaceholder() {
 export function PageTransition({ children }: PageTransitionProps) {
   return (
     <div className="relative flex flex-1 flex-col transition-opacity duration-300 ease-out">
-      <Suspense fallback={<LoadingPlaceholder />}>{children}</Suspense>
+      {children}
     </div>
   );
 }

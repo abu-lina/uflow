@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { CityCard } from './CityCard';
 import { ProvidersContent } from '@/app/(public)/providers/ProvidersContent';
@@ -12,11 +12,11 @@ interface Stage2ContentProps {
 
 /**
  * Stage 2 Content Component (6-14 providers)
- * 
+ *
  * Displays:
  * 1. CityCard at the top (centered)
  * 2. Provider list below (filtered by city)
- * 
+ *
  * This replaces the empty state for cities with 6-14 providers.
  */
 export function Stage2Content({ cityName }: Stage2ContentProps) {
@@ -45,12 +45,14 @@ export function Stage2Content({ cityName }: Stage2ContentProps) {
         - Visual gap: 24px
         - Total padding: max(115px, calc(env(safe-area-inset-top) + 115px))
       */}
-      <div className="flex w-full items-center justify-center px-4 pt-[max(115px,calc(env(safe-area-inset-top)+115px))] pb-8 md:hidden">
+      <div className="flex w-full items-center justify-center px-4 pb-8 pt-[max(115px,calc(env(safe-area-inset-top)+115px))] md:hidden">
         <CityCard cityName={cityName} onSuggestProvider={handleSuggestProvider} />
       </div>
 
       {/* Provider List - Below card with gap-8 spacing */}
-      <ProvidersContent defaultLocation={cityName} showGreeting={true} />
+      <Suspense fallback={null}>
+        <ProvidersContent defaultLocation={cityName} showGreeting={true} />
+      </Suspense>
     </div>
   );
 }
