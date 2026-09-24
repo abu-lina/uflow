@@ -76,12 +76,12 @@ Grill -> Spec -> [Tickets] -> Implement -> Code Review -> QA -> Done
 
 | Phase           | Subagent                                     | Skills                                                 | What it does                                                                                       |
 | --------------- | -------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| **Grill**       | Foreground                                   | `grilling`, `domain-modeling`, `prototype` (if needed) | Interviews user, sharpens the idea, updates CONTEXT.md. Returns structured decisions + spec draft. |
+| **Grill**       | Foreground (expensive)                       | `grilling`, `domain-modeling`, `prototype` (if needed) | Interviews user, sharpens the idea, updates CONTEXT.md. Returns structured decisions + spec draft. |
 | **Spec**        | (orchestrator writes)                        |                                                        | Write the grilling output to tracking file `## Spec` section. **Gate: user confirms spec.**        |
 | **Tickets**     | (orchestrator writes, only if multi-session) |                                                        | Break spec into vertical slices under `.scratch/<slug>/issues/`. **Gate: user confirms tickets.**  |
-| **Implement**   | Worker (per ticket or whole spec)            | `tdd`, `codebase-design`                               | Red-green-refactor in the worktree. Commits but doesn't push.                                      |
-| **Code Review** | Foreground                                   | `code-review`                                          | Two-axis review (Standards + Spec). Pin fixed point to branch divergence from main.                |
-| **QA**          | Worker                                       |                                                        | Run full test suite, verify acceptance criteria.                                                   |
+| **Implement**   | Background worker                            | `tdd`, `codebase-design`                               | Red-green-refactor in the worktree. Commits but doesn't push.                                      |
+| **Code Review** | Foreground (expensive)                       | `code-review`                                          | Two-axis review (Standards + Spec). Pin fixed point to branch divergence from main.                |
+| **QA**          | Background worker                            |                                                        | Run full test suite, verify acceptance criteria.                                                   |
 | **Done**        | (orchestrator)                               |                                                        | Update tracking file, capture learning to `docs/ai/LEARNINGS.md`.                                  |
 
 Multi-ticket: each ticket gets its own worktree. Fetch main before each. Work the frontier (tickets whose blockers are done). Use background subagents for independent tickets.
@@ -96,9 +96,9 @@ Diagnose -> [Gate: confirm hypotheses] -> Fix -> Code Review -> Done
 
 | Phase           | Subagent                        | Skills                   | What it does                                                          |
 | --------------- | ------------------------------- | ------------------------ | --------------------------------------------------------------------- |
-| **Diagnose**    | Foreground                      | `diagnosing-bugs`        | Build feedback loop, reproduce, minimize, generate ranked hypotheses. |
-| **Fix**         | Worker (or continue foreground) | `diagnosing-bugs`, `tdd` | Instrument, fix with regression test, cleanup.                        |
-| **Code Review** | Foreground                      | `code-review`            | Two-axis review.                                                      |
+| **Diagnose**    | Foreground (expensive)          | `diagnosing-bugs`        | Build feedback loop, reproduce, minimize, generate ranked hypotheses. |
+| **Fix**         | Background worker               | `diagnosing-bugs`, `tdd` | Instrument, fix with regression test, cleanup.                        |
+| **Code Review** | Foreground (expensive)          | `code-review`            | Two-axis review.                                                      |
 | **Done**        | (orchestrator)                  |                          | Update tracking file, capture learning.                               |
 
 ---
@@ -111,9 +111,9 @@ Grill -> Implement -> Code Review -> Done
 
 | Phase           | Subagent       | Skills                        | What it does                                                          |
 | --------------- | -------------- | ----------------------------- | --------------------------------------------------------------------- |
-| **Grill**       | Foreground     | `grilling`, `codebase-design` | Clarify scope, constraints, what must NOT change.                     |
-| **Implement**   | Worker         | `tdd`                         | Characterization tests first, then refactor, verify tests still pass. |
-| **Code Review** | Foreground     | `code-review`                 | Review for behavior preservation, no scope creep.                     |
+| **Grill**       | Foreground (expensive) | `grilling`, `codebase-design` | Clarify scope, constraints, what must NOT change.                     |
+| **Implement**   | Background worker      | `tdd`                         | Characterization tests first, then refactor, verify tests still pass. |
+| **Code Review** | Foreground (expensive) | `code-review`                 | Review for behavior preservation, no scope creep.                     |
 | **Done**        | (orchestrator) |                               | Update tracking file, capture learning.                               |
 
 ---
@@ -126,9 +126,9 @@ Grill -> Implement -> Code Review -> Done
 
 | Phase           | Subagent       | Skills        | What it does                                             |
 | --------------- | -------------- | ------------- | -------------------------------------------------------- |
-| **Grill**       | Foreground     | `grilling`    | Pin down: what changes, what stays, acceptance criteria. |
-| **Implement**   | Worker         | `tdd`         | Update existing tests, write new edge-case tests.        |
-| **Code Review** | Foreground     | `code-review` | Two-axis review.                                         |
+| **Grill**       | Foreground (expensive) | `grilling`    | Pin down: what changes, what stays, acceptance criteria. |
+| **Implement**   | Background worker      | `tdd`         | Update existing tests, write new edge-case tests.        |
+| **Code Review** | Foreground (expensive) | `code-review` | Two-axis review.                                         |
 | **Done**        | (orchestrator) |               | Update tracking file, capture learning.                  |
 
 ---
@@ -141,7 +141,7 @@ Fix -> Done
 
 | Phase    | Subagent       | Skills                   | What it does                                                        |
 | -------- | -------------- | ------------------------ | ------------------------------------------------------------------- |
-| **Fix**  | Worker         | `diagnosing-bugs`, `tdd` | Reproduce, regression test first, minimal fix, run test suite.      |
+| **Fix**  | Background worker | `diagnosing-bugs`, `tdd` | Reproduce, regression test first, minimal fix, run test suite.      |
 | **Done** | (orchestrator) |                          | Update tracking file, capture learning. Push/deploy is user's call. |
 
 ---
@@ -156,7 +156,7 @@ No worktree needed.
 
 | Phase        | Subagent       | Skills     | What it does                                                             |
 | ------------ | -------------- | ---------- | ------------------------------------------------------------------------ |
-| **Research** | Background     | `research` | Investigate against primary sources, write findings to Markdown in repo. |
+| **Research** | Background worker | `research` | Investigate against primary sources, write findings to Markdown in repo. |
 | **Report**   | (orchestrator) |            | Present findings to user.                                                |
 | **Done**     | (orchestrator) |            | If actionable work surfaces, ask user to start a new request.            |
 
@@ -198,6 +198,34 @@ run_subagent(
 ```
 
 After a subagent completes: read the report, update the tracking file, proceed to the next phase.
+
+Use `is_background: true` for execution phases (Implement, Fix, QA, Research).
+Use `is_background: false` for judgment phases (Grill, Diagnose, Code Review).
+
+## Cost Tiers
+
+Dispatch subagents at the cheapest tier that matches the phase's judgment requirements.
+
+| Tier | When to use | Subagent type |
+| --- | --- | --- |
+| **Foreground** | Phases requiring reasoning, user interaction, or quality gates | `is_background: false` |
+| **Background** | Execution phases following an existing spec | `is_background: true`, then `read_subagent` when done |
+| **None** | Orchestrator-only work (spec writing, tracking, tickets) | No subagent |
+
+### Phase-to-tier mapping
+
+| Phase | Tier | Rationale |
+| --- | --- | --- |
+| Grill | Foreground | Needs user interaction, high judgment |
+| Diagnose | Foreground | Needs reasoning, hypothesis generation |
+| Code Review | Foreground | Quality gate, needs deep analysis |
+| Implement | Background | Follows spec, execution-heavy |
+| Fix | Background | Follows diagnosis, execution-heavy |
+| QA | Background | Runs test suite, verification |
+| Research | Background | Investigation, no user interaction needed |
+| Spec writing | None | Orchestrator writes directly |
+| Ticket writing | None | Orchestrator writes directly |
+| Done | None | Orchestrator updates tracking file |
 
 ## Push and PR
 
