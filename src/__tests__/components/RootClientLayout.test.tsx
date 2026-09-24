@@ -230,8 +230,8 @@ describe('RootClientLayout — isDiscoveryHome navbar regression (session hotfix
   it('[post-fix PASSES] isDiscoveryHome overrides showMobileFooter=false for stage2 unauthenticated user', () => {
     // Mirrors the mobileUiMode ternary in RootClientLayout exactly
     const forceMobileFooter = false;
-    const isDiscoveryHome = true;         // stage2 + '/' (from fix)
-    const showMobileFooter = false;       // stage2 + onboarding incomplete → shouldShowMobileFooter returns false
+    const isDiscoveryHome = true; // stage2 + '/' (from fix)
+    const showMobileFooter = false; // stage2 + onboarding incomplete → shouldShowMobileFooter returns false
     const showCityEarlyAccessNavbar = false;
 
     const mobileUiMode = forceMobileFooter
@@ -251,8 +251,8 @@ describe('RootClientLayout — isDiscoveryHome navbar regression (session hotfix
     // Documents the exact bug: shouldShowCityEarlyAccessNavbar returns true for stage2 at '/'
     // resulting in CityEarlyAccessNavbar instead of MobileFooterBar
     const forceMobileFooter = false;
-    const isDiscoveryHome = false;        // what it was BEFORE the fix
-    const showMobileFooter = false;       // stage2 + onboarding incomplete
+    const isDiscoveryHome = false; // what it was BEFORE the fix
+    const showMobileFooter = false; // stage2 + onboarding incomplete
     const showCityEarlyAccessNavbar = true; // stage2 + '/' → shouldShowCityEarlyAccessNavbar returns true
 
     const mobileUiMode = forceMobileFooter
@@ -297,6 +297,34 @@ describe('RootClientLayout — isDiscoveryHome navbar regression (session hotfix
             : 'none';
 
     expect(mobileUiMode).toBe('footer');
+  });
+});
+
+// ─── Fix #248: No key={pathname} on PageTransition, scroll reset on navigate ─
+describe('RootClientLayout — page transition flash fixes (#248)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockHasCompletedOnboarding.mockReturnValue(false);
+    mockUseAppStage.mockReturnValue({ stage: 'loading', isLoading: true });
+  });
+
+  it('does NOT key PageTransition by pathname (prevents full remount)', async () => {
+    // Source-level regression guard: key={pathname} on PageTransition causes
+    // full DOM teardown on every navigation. Verify it's absent.
+    const fs = await import('fs');
+    const source = fs.readFileSync('src/components/layout/RootClientLayout.tsx', 'utf-8');
+    expect(source).not.toMatch(/PageTransition\s+key\s*=\s*\{pathname\}/);
+  });
+
+  it('renders a <main> element with overflow-y-auto for scroll containment', () => {
+    const { container } = render(
+      <RootClientLayout>
+        <div>Content</div>
+      </RootClientLayout>,
+    );
+    const main = container.querySelector('main');
+    expect(main).toBeInTheDocument();
+    expect(main).toHaveClass('overflow-y-auto');
   });
 });
 

@@ -9,7 +9,7 @@ describe('PageTransition', () => {
     const { getByText } = render(
       <PageTransition>
         <div>Test Content</div>
-      </PageTransition>
+      </PageTransition>,
     );
     expect(getByText('Test Content')).toBeInTheDocument();
   });
@@ -22,7 +22,7 @@ describe('PageTransition', () => {
     const { container } = render(
       <PageTransition>
         <div>Content</div>
-      </PageTransition>
+      </PageTransition>,
     );
     const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper).toHaveClass('relative');
@@ -32,7 +32,7 @@ describe('PageTransition', () => {
     const { container } = render(
       <PageTransition>
         <div>Content</div>
-      </PageTransition>
+      </PageTransition>,
     );
     const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper).toHaveClass('flex');
@@ -44,8 +44,20 @@ describe('PageTransition', () => {
     const { getByText } = render(
       <PageTransition>
         <div>Visible Content</div>
-      </PageTransition>
+      </PageTransition>,
     );
     expect(getByText('Visible Content')).toBeInTheDocument();
+  });
+
+  it('does NOT have vestigial transition-opacity classes (fix #248)', () => {
+    const { container } = render(
+      <PageTransition>
+        <div>Content</div>
+      </PageTransition>,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper).not.toHaveClass('transition-opacity');
+    expect(wrapper).not.toHaveClass('duration-300');
+    expect(wrapper).not.toHaveClass('ease-out');
   });
 });

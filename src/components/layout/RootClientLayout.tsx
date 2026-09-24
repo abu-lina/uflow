@@ -44,6 +44,14 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
     setIsMounted(true);
   }, []);
 
+  // Reset scroll position on navigation. The real scroller is <main>, not window,
+  // so Next.js scroll={false} on Links has no effect. Snap instantly (no smooth).
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [pathname]);
+
   // Check feature flag on client-side only (use state to avoid webpack evaluation issues)
   const [isAppLaunched, setIsAppLaunched] = useState(false);
   const [forceMobileFooter, setForceMobileFooter] = useState(false);
@@ -149,7 +157,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
       )}
 
       <main ref={mainRef} className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-none">
-        <PageTransition key={pathname}>{children}</PageTransition>
+        <PageTransition>{children}</PageTransition>
       </main>
 
       {/* Desktop Footer */}

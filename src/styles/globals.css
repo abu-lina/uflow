@@ -120,9 +120,15 @@
     --content-gap: 24px;
 
     /* Header total height calculations for spacer */
-    --header-total-mobile: calc(var(--header-padding-mobile) + var(--header-height-mobile) + var(--content-gap));
-    --header-total-tablet: calc(var(--header-padding-desktop) + var(--header-height-tablet) + var(--content-gap));
-    --header-total-desktop: calc(var(--header-padding-desktop) + var(--header-height-desktop) + var(--content-gap));
+    --header-total-mobile: calc(
+      var(--header-padding-mobile) + var(--header-height-mobile) + var(--content-gap)
+    );
+    --header-total-tablet: calc(
+      var(--header-padding-desktop) + var(--header-height-tablet) + var(--content-gap)
+    );
+    --header-total-desktop: calc(
+      var(--header-padding-desktop) + var(--header-height-desktop) + var(--content-gap)
+    );
   }
 
   /* Dark theme (runtime theme switching) */
@@ -151,7 +157,6 @@
 
   html {
     @apply antialiased;
-    scroll-behavior: smooth;
     min-height: 100vh;
     min-height: -webkit-fill-available;
   }
@@ -494,127 +499,138 @@
   .container {
     @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
-  
+
   .header-gradient {
     /* Maximum blur and glass effect - balanced opacity for proper glassmorphism */
     /* backdrop-filter blurs the CONTENT BEHIND the header, not the header itself */
     /* Higher opacity (0.65) creates the glass effect while maximum blur (300px) blurs content behind */
     /* isolation: isolate ensures backdrop-filter works consistently regardless of parent stacking contexts */
-    background: linear-gradient(180deg, rgba(245, 245, 245, 0.65) 0%, rgba(251, 251, 251, 0.65) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(245, 245, 245, 0.65) 0%,
+      rgba(251, 251, 251, 0.65) 100%
+    );
     backdrop-filter: blur(300px) saturate(200%) brightness(1.1) contrast(1.15);
     -webkit-backdrop-filter: blur(300px) saturate(200%) brightness(1.1) contrast(1.15);
     isolation: isolate;
     /* Enhanced glass styling with subtle borders and shadows */
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 
+    box-shadow:
       0 1px 2px rgba(0, 0, 0, 0.05),
       0 4px 30px rgba(0, 0, 0, 0.08),
       inset 0 1px 0 rgba(255, 255, 255, 0.25);
     /* Smooth transitions for backdrop-filter (handled in component inline styles for better control) */
-    transition: background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out;
+    transition:
+      background 300ms ease-in-out,
+      backdrop-filter 300ms ease-in-out,
+      -webkit-backdrop-filter 300ms ease-in-out;
     /* Fallback for devices that don't support backdrop-filter */
     @supports not (backdrop-filter: blur(300px)) {
-      background: linear-gradient(180deg, rgba(245, 245, 245, 0.85) 0%, rgba(251, 251, 251, 0.85) 100%);
+      background: linear-gradient(
+        180deg,
+        rgba(245, 245, 245, 0.85) 0%,
+        rgba(251, 251, 251, 0.85) 100%
+      );
     }
   }
-  
+
   /* Responsive page container utilities - cleaner alternative to long Tailwind responsive strings */
   .page-container-xs {
-    @apply w-full mx-auto;
+    @apply mx-auto w-full;
     max-width: 320px; /* max-w-xs */
   }
-  
+
   .page-container-sm {
-    @apply w-full mx-auto;
+    @apply mx-auto w-full;
     max-width: 384px; /* max-w-sm */
   }
-  
+
   @media (min-width: 640px) {
     .page-container-sm {
       max-width: 448px; /* sm:max-w-md */
     }
   }
-  
+
   @media (min-width: 768px) {
     .page-container-sm {
       max-width: 512px; /* md:max-w-lg */
     }
   }
-  
+
   @media (min-width: 1024px) {
     .page-container-sm {
       max-width: 672px; /* lg:max-w-2xl */
     }
   }
-  
+
   @media (min-width: 1280px) {
     .page-container-sm {
       max-width: 896px; /* xl:max-w-4xl */
     }
   }
-  
+
   .page-container-md {
-    @apply w-full mx-auto;
+    @apply mx-auto w-full;
     max-width: 448px; /* max-w-md */
   }
-  
+
   @media (min-width: 768px) {
     .page-container-md {
       max-width: 512px; /* md:max-w-lg */
     }
   }
-  
+
   @media (min-width: 1024px) {
     .page-container-md {
       max-width: 672px; /* lg:max-w-2xl */
     }
   }
-  
+
   @media (min-width: 1280px) {
     .page-container-md {
       max-width: 896px; /* xl:max-w-4xl */
     }
   }
-  
+
   .page-container-lg {
-    @apply w-full mx-auto;
+    @apply mx-auto w-full;
     max-width: 512px; /* max-w-lg */
   }
-  
+
   @media (min-width: 1024px) {
     .page-container-lg {
       max-width: 672px; /* lg:max-w-2xl */
     }
   }
-  
+
   @media (min-width: 1280px) {
     .page-container-lg {
       max-width: 896px; /* xl:max-w-4xl */
     }
   }
-  
+
   .page-container-xl {
-    @apply w-full mx-auto;
+    @apply mx-auto w-full;
     max-width: 576px; /* max-w-xl */
   }
-  
+
   @media (min-width: 1280px) {
     .page-container-xl {
       max-width: 896px; /* xl:max-w-4xl */
     }
   }
-  
+
   .page-container-2xl {
-    @apply w-full mx-auto;
+    @apply mx-auto w-full;
     max-width: 672px; /* max-w-2xl */
   }
-  
+
   @media (min-width: 1280px) {
     .page-container-2xl {
       max-width: 896px; /* xl:max-w-4xl */
     }
   }
-  
+
   .page-container-full {
     @apply w-full;
   }
@@ -624,7 +640,7 @@
   .text-balance {
     text-wrap: balance;
   }
-  
+
   /**
    * Safe viewport-height utility.
    *
@@ -655,17 +671,17 @@
   .pb-mobile-nav {
     padding-bottom: var(--mobile-nav-total); /* 96px total */
   }
-  
+
   .mb-mobile-nav {
     margin-bottom: var(--mobile-nav-total); /* 96px total */
   }
-  
+
   /* Responsive mobile nav spacing - only applies on mobile */
   @media (max-width: 768px) {
     .pb-mobile-nav-md {
       padding-bottom: var(--mobile-nav-total);
     }
-    
+
     .mb-mobile-nav-md {
       margin-bottom: var(--mobile-nav-total);
     }
@@ -687,20 +703,20 @@
     /* Minimum 12px padding even on devices without safe area (like iPhone SE) */
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
-  
+
   .pt-safe-top {
     /* Minimum 12px padding for consistent top spacing */
     padding-top: max(12px, env(safe-area-inset-top));
   }
-  
+
   .pl-safe-left {
     padding-left: env(safe-area-inset-left);
   }
-  
+
   .pr-safe-right {
     padding-right: env(safe-area-inset-right);
   }
-  
+
   /* Horizontal padding with safe area support - ensures minimum padding + safe area */
   .px-safe {
     padding-left: max(16px, calc(16px + env(safe-area-inset-left)));
@@ -712,39 +728,39 @@
     padding-left: max(24px, calc(24px + env(safe-area-inset-left)));
     padding-right: max(24px, calc(24px + env(safe-area-inset-right)));
   }
-  
+
   /* Responsive horizontal padding with safe area support */
   .px-safe-responsive {
     padding-left: max(16px, calc(16px + env(safe-area-inset-left)));
     padding-right: max(16px, calc(16px + env(safe-area-inset-right)));
   }
-  
+
   @media (min-width: 640px) {
     .px-safe-responsive {
       padding-left: max(20px, calc(20px + env(safe-area-inset-left)));
       padding-right: max(20px, calc(20px + env(safe-area-inset-right)));
     }
   }
-  
+
   @media (min-width: 768px) {
     .px-safe-responsive {
       padding-left: max(24px, calc(24px + env(safe-area-inset-left)));
       padding-right: max(24px, calc(24px + env(safe-area-inset-right)));
     }
   }
-  
+
   .p-safe {
     padding-top: max(12px, env(safe-area-inset-top));
     padding-right: env(safe-area-inset-right);
     padding-bottom: max(12px, env(safe-area-inset-bottom));
     padding-left: env(safe-area-inset-left);
   }
-  
+
   .pb-safe {
     /* Minimum 12px padding even on devices without safe area (like iPhone SE) */
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
-  
+
   /* Footer top padding: 8px on devices without safe area (iPhone SE), 16px on devices with safe area (iPhone 15 Pro) */
   .pt-footer-safe {
     /* Base 8px padding, scales to 16px when safe area exists */
@@ -752,13 +768,13 @@
     /* We round to 0.14 for a cleaner value, ensuring 8px minimum and 16px maximum */
     padding-top: clamp(8px, calc(8px + env(safe-area-inset-top) * 0.14), 16px);
   }
-  
+
   /* Mobile navigation with safe area support */
   .mobile-nav-height {
     /* Ensures minimum 12px padding on all devices */
     height: calc(var(--mobile-nav-height) + max(12px, env(safe-area-inset-bottom)));
   }
-  
+
   .mobile-nav-spacing {
     /* Ensures minimum 12px padding on all devices */
     /* 96px navbar (80px + 16px pb-4) + 32px gap + safe area */
@@ -775,7 +791,7 @@
     flex-shrink: 0; /* Prevent flex shrinking */
     display: block; /* Ensure it's a block element */
   }
-  
+
   @media (min-width: 640px) {
     .header-spacer {
       /* Tablet: safe-area + header-padding + header-height + content-gap */
@@ -784,7 +800,7 @@
       min-height: var(--header-total-tablet); /* 96px fallback */
     }
   }
-  
+
   @media (min-width: 768px) {
     .header-spacer {
       /* Desktop: safe-area + header-padding + header-height + content-gap */
@@ -801,7 +817,7 @@
     justify-content: flex-end;
     height: 100%;
   }
-  
+
   .mobile-nav-icons {
     display: flex;
     flex-direction: row;
@@ -816,25 +832,27 @@
   .mobile-header-height {
     height: calc(64px + env(safe-area-inset-top));
   }
-  
+
   .mobile-header-spacing {
     padding-top: calc(64px + env(safe-area-inset-top));
   }
-  
+
   .pt-safe-top-spacing {
     padding-top: calc(1rem + env(safe-area-inset-top));
   }
-  
+
   .mt-safe-top-spacing {
     margin-top: calc(1rem + env(safe-area-inset-top));
   }
-  
+
   /* Full safe area utilities for complete coverage */
   .safe-area-height {
     /* Accounts for minimum padding on devices without safe areas */
-    height: calc(100vh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom)));
+    height: calc(
+      100vh - max(12px, env(safe-area-inset-top)) - max(12px, env(safe-area-inset-bottom))
+    );
   }
-  
+
   .safe-area-spacing {
     /* Ensures minimum 12px padding on all devices */
     padding-top: max(12px, env(safe-area-inset-top));
@@ -853,27 +871,27 @@
   }
 }
 
-  .animate-fadeIn {
-    animation: fadeIn 0.5s ease-out forwards;
-  }
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
 
-  /* Respect user's motion preferences for accessibility */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
+/* Respect user's motion preferences for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
+}
 
-  /* Action button height enforcement */
-  .action-button-height {
-    height: 40px !important;
-    min-height: 40px !important;
-  }
+/* Action button height enforcement */
+.action-button-height {
+  height: 40px !important;
+  min-height: 40px !important;
+}
 
 /* Replace the glow effect with a growth effect */
 .growth-effect {
