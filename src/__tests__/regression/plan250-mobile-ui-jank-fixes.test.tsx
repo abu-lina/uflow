@@ -58,9 +58,9 @@ describe('ProfileProviderDetailButtons removes useIsMobile', () => {
     expect(src).not.toContain("from '@/hooks/useIsMobile'");
   });
 
-  it('uses CSS md:hidden and md:block for toggling', () => {
-    expect(src).toContain('md:hidden');
-    expect(src).toContain('md:block');
+  it('uses matchMedia JS gating for mobile/desktop toggling (portals escape CSS wrappers)', () => {
+    expect(src).toContain("matchMedia('(min-width: 768px)')");
+    expect(src).toContain('isDesktop');
   });
 });
 
