@@ -3,11 +3,18 @@
 interface SavedIconProps {
   className?: string;
   isActive?: boolean;
+  height?: number;
+  width?: number;
 }
 
-export function SavedIcon({ className = '', isActive = false }: SavedIconProps) {
+export function SavedIcon({
+  className = '',
+  isActive = false,
+  height = 24,
+  width = 28,
+}: SavedIconProps) {
   if (isActive) {
-    // Active state - filled heart
+    // Active state - use the new filled design
     return (
       <div
         className={`flex items-center justify-center ${className}`}
@@ -15,9 +22,9 @@ export function SavedIcon({ className = '', isActive = false }: SavedIconProps) 
       >
         <svg
           fill="none"
-          height={24}
+          height="48"
           viewBox="0 0 49 48"
-          width={24}
+          width="49"
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
@@ -33,7 +40,7 @@ export function SavedIcon({ className = '', isActive = false }: SavedIconProps) 
     );
   }
 
-  // Inactive state - stroke-only heart
+  // Inactive state - use the existing stroke-only design
   const color = '#777777';
   return (
     <div
@@ -42,9 +49,9 @@ export function SavedIcon({ className = '', isActive = false }: SavedIconProps) 
     >
       <svg
         fill="none"
-        height={24}
+        height={height}
         viewBox="0 0 28 24"
-        width={24}
+        width={width}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path

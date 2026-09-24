@@ -32,14 +32,14 @@ export function ExploreIcon({ className = '', isActive = false }: ExploreIconPro
     );
   }
 
-  // Inactive state - stroke-only magnifying glass
+  // Inactive state - use the exact icon provided
   return (
     <svg
       className={className}
       fill="none"
-      height={24}
+      height="48"
       viewBox="0 0 49 48"
-      width={24}
+      width="49"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
