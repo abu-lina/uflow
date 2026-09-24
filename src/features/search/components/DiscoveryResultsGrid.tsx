@@ -283,6 +283,8 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
                 router.push(`/p/${item.provider_id}`);
               }
             }}
+            onMouseEnter={() => router.prefetch(`/p/${item.provider_id}`)}
+            onTouchStart={() => router.prefetch(`/p/${item.provider_id}`)}
           >
             <ProviderCard
               {...itemToProviderCardProps(item)}

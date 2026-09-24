@@ -104,6 +104,8 @@ export function HomeNearMeList({
                 router.push(`/p/${result.provider_id}`);
               }
             }}
+            onMouseEnter={() => router.prefetch(`/p/${result.provider_id}`)}
+            onTouchStart={() => router.prefetch(`/p/${result.provider_id}`)}
           >
             <ProviderCard
               hideWebsiteButton
