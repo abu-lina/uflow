@@ -3,56 +3,57 @@
 interface ProfileIconProps {
   className?: string;
   isActive?: boolean;
+  height?: number;
+  width?: number;
 }
 
-export function ProfileIcon({ className = '', isActive = false }: ProfileIconProps) {
-  if (isActive) {
-    // Active state - filled person
-    return (
-      <div
-        className={`flex items-center justify-center ${className}`}
-        style={{ width: 48, height: 48 }}
-      >
-        <svg
-          fill="none"
-          height={24}
-          viewBox="0 0 48 48"
-          width={24}
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M32.2144 34.2859V32.0001C32.2144 30.7877 31.7327 29.625 30.8754 28.7677C30.0181 27.9103 28.8553 27.4287 27.6429 27.4287H20.7858C19.5734 27.4287 18.4106 27.9103 17.5533 28.7677C16.696 29.625 16.2144 30.7877 16.2144 32.0001V34.2859H32.2144Z"
-            fill="#589D96"
-            stroke="#589D96"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2.4"
-          />
-          <path
-            d="M28.9285 18.2853C28.9285 20.81 26.8818 22.8567 24.3571 22.8567C21.8323 22.8567 19.7856 20.81 19.7856 18.2853C19.7856 15.7606 21.8323 13.7139 24.3571 13.7139C26.8818 13.7139 28.9285 15.7606 28.9285 18.2853Z"
-            fill="#589D96"
-            stroke="#589D96"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2.4"
-          />
-        </svg>
-      </div>
-    );
-  }
-
-  // Inactive state - stroke-only person
+export function ProfileIcon({
+  className = '',
+  isActive = false,
+  height = 24,
+  width = 20,
+}: ProfileIconProps) {
   const color = '#7A7A7A';
   return (
     <div
-      className={`flex items-center justify-center ${className}`}
+      className={`relative flex items-center justify-center ${className}`}
       style={{ width: 48, height: 48 }}
     >
+      {/* Active state - filled profile */}
       <svg
+        className="absolute inset-0 m-auto transition-opacity duration-150"
         fill="none"
-        height={24}
+        height="48"
+        style={{ opacity: isActive ? 1 : 0 }}
+        viewBox="0 0 48 48"
+        width="48"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M32.2144 34.2859V32.0001C32.2144 30.7877 31.7327 29.625 30.8754 28.7677C30.0181 27.9103 28.8553 27.4287 27.6429 27.4287H20.7858C19.5734 27.4287 18.4106 27.9103 17.5533 28.7677C16.696 29.625 16.2144 30.7877 16.2144 32.0001V34.2859H32.2144Z"
+          fill="#589D96"
+          stroke="#589D96"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.4"
+        />
+        <path
+          d="M28.9285 18.2853C28.9285 20.81 26.8818 22.8567 24.3571 22.8567C21.8323 22.8567 19.7856 20.81 19.7856 18.2853C19.7856 15.7606 21.8323 13.7139 24.3571 13.7139C26.8818 13.7139 28.9285 15.7606 28.9285 18.2853Z"
+          fill="#589D96"
+          stroke="#589D96"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.4"
+        />
+      </svg>
+      {/* Inactive state - stroke profile */}
+      <svg
+        className="absolute inset-0 m-auto transition-opacity duration-150"
+        fill="none"
+        height={height}
+        style={{ opacity: isActive ? 0 : 1 }}
         viewBox="0 0 20 24"
-        width={24}
+        width={width}
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
