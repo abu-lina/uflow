@@ -179,7 +179,7 @@ Example:
 run_subagent(
   title: "Worker: 221-food-404-regression",
   profile: "subagent_general",
-  is_background: false,
+  is_background: true,
   task: """
     Worktree: /absolute/path/to/uflow-wt/221-food-404-regression/
     Branch: fix/221-food-404-regression
@@ -226,6 +226,7 @@ Dispatch subagents at the cheapest tier that matches the phase's judgment requir
 | Spec writing | None | Orchestrator writes directly |
 | Ticket writing | None | Orchestrator writes directly |
 | Done | None | Orchestrator updates tracking file |
+| Report | None | Orchestrator presents findings directly |
 
 ## Push and PR
 
