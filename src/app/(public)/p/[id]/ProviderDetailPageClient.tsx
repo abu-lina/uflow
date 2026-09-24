@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
@@ -67,6 +68,20 @@ export function ProviderDetailPageClient({
     initialData, // Use SSR data if available
   });
 
+  // Only mount the desktop modal on md+ screens to avoid portal escape on mobile.
+  // The modal uses createPortal to document.body, so CSS hidden/block can't hide it.
+  // Safe to gate with JS because the modal's dynamic import already has ssr: false.
+  const [showDesktopModal, setShowDesktopModal] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    setShowDesktopModal(mql.matches);
+
+    const handler = (e: MediaQueryListEvent) => setShowDesktopModal(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
+
   // Handle modal close - navigate back to providers page
   const handleModalClose = () => {
     router.back();
@@ -126,9 +141,8 @@ export function ProviderDetailPageClient({
     return notFound();
   }
 
-  // Render both layouts; CSS toggles visibility to avoid hydration mismatch.
-  // Mobile: full page view (SSR-rendered, visible below md breakpoint)
-  // Desktop: modal view (ssr:false, visible at md+ breakpoint)
+  // Mobile: SSR-rendered full page, CSS-hidden on desktop
+  // Desktop: client-only modal, JS-gated to prevent portal escape on mobile
   return (
     <>
       <div className="md:hidden">
@@ -142,7 +156,7 @@ export function ProviderDetailPageClient({
           provider={provider}
         />
       </div>
-      <div className="hidden md:block">
+      {showDesktopModal && (
         <ProviderDetailModal
           customActionButtons={
             isAdmin ? (
@@ -153,7 +167,7 @@ export function ProviderDetailPageClient({
           provider={provider}
           onClose={handleModalClose}
         />
-      </div>
+      )}
     </>
   );
 }

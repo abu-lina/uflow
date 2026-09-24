@@ -4,10 +4,11 @@
  *
  * Root causes addressed:
  * 1. useIsMobile must stay hydration-safe (useState(false)) so server and
- *    client initial renders match. The desktop/mobile switch is handled by
- *    CSS visibility classes, not JS branching.
+ *    client initial renders match.
  * 2. ProviderDetailPageComponent uses SSR (no ssr:false) so Next.js renders
- *    real content server-side instead of a skeleton fallback.
+ *    real content server-side instead of a skeleton fallback. The desktop
+ *    modal is JS-gated via matchMedia (not CSS hidden/block) because
+ *    createPortal to document.body escapes CSS visibility wrappers.
  * 3. Card components prefetch on hover/touch to avoid cold navigations.
  *
  * These tests verify each fix.
@@ -48,9 +49,12 @@ describe('useIsMobile hydration safety', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Fix 2: ProviderDetailPageClient uses CSS visibility, not useIsMobile branching
+// Fix 2: ProviderDetailPageClient layout strategy
+// Mobile component uses CSS visibility (md:hidden). Desktop modal is JS-gated
+// via matchMedia to prevent portal escape (createPortal to document.body
+// bypasses CSS hidden/block).
 // ---------------------------------------------------------------------------
-describe('ProviderDetailPageClient CSS visibility pattern', () => {
+describe('ProviderDetailPageClient layout strategy', () => {
   const readClientSrc = () =>
     readFileSync(
       resolve(__dirname, '../../app/(public)/p/[id]/ProviderDetailPageClient.tsx'),
@@ -62,16 +66,24 @@ describe('ProviderDetailPageClient CSS visibility pattern', () => {
     expect(src).not.toContain("from '@/hooks/useIsMobile'");
   });
 
-  it('renders both mobile and desktop components with CSS visibility classes', () => {
+  it('mobile component is wrapped with CSS md:hidden', () => {
+    const src = readClientSrc();
+    expect(src).toContain('className="md:hidden"');
+    expect(src).toContain('ProviderDetailPageComponent');
+  });
+
+  it('desktop modal is JS-gated with matchMedia, not CSS hidden/block', () => {
     const src = readClientSrc();
 
-    // Mobile wrapper: visible below md, hidden at md+
-    expect(src).toContain('className="md:hidden"');
-    // Desktop wrapper: hidden below md, visible at md+
-    expect(src).toContain('className="hidden md:block"');
+    // Must use matchMedia to gate the modal mount
+    expect(src).toContain("matchMedia('(min-width: 768px)')");
+    expect(src).toContain('showDesktopModal');
 
-    // Both components are rendered (not conditionally branched)
-    expect(src).toContain('ProviderDetailPageComponent');
+    // Must NOT wrap modal in a CSS-hidden div (portal escapes it)
+    expect(src).not.toContain('className="hidden md:block"');
+
+    // Modal is conditionally rendered via JS
+    expect(src).toMatch(/\{showDesktopModal\s*&&/);
     expect(src).toContain('ProviderDetailModal');
   });
 
