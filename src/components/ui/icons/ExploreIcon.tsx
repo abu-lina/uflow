@@ -5,10 +5,7 @@ interface ExploreIconProps {
   isActive?: boolean;
 }
 
-export function ExploreIcon({
-  className = '',
-  isActive = false,
-}: ExploreIconProps) {
+export function ExploreIcon({ className = '', isActive = false }: ExploreIconProps) {
   if (isActive) {
     // Active state - use the new filled design
     return (

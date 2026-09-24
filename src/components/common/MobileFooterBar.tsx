@@ -92,8 +92,8 @@ export function MobileFooterBar() {
             >
               <Link
                 aria-label={item.label}
-                className={`flex items-center justify-center transition-opacity duration-75 ${
-                  isNavigating ? 'pointer-events-none opacity-50' : 'opacity-100'
+                className={`flex items-center justify-center ${
+                  isNavigating ? 'pointer-events-none' : ''
                 }`}
                 href={item.href === '/profile' && !user ? '/login' : item.href}
                 prefetch={true}

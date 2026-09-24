@@ -16,7 +16,10 @@ export function ProfileIcon({
   if (isActive) {
     // Active state - use the new filled design
     return (
-      <div className={`flex items-center justify-center ${className}`} style={{ width: 48, height: 48 }}>
+      <div
+        className={`flex items-center justify-center ${className}`}
+        style={{ width: 48, height: 48 }}
+      >
         <svg
           fill="none"
           height="48"
@@ -48,7 +51,10 @@ export function ProfileIcon({
   // Inactive state - use the existing stroke-only design
   const color = '#7A7A7A';
   return (
-    <div className={`flex items-center justify-center ${className}`} style={{ width: 48, height: 48 }}>
+    <div
+      className={`flex items-center justify-center ${className}`}
+      style={{ width: 48, height: 48 }}
+    >
       <svg
         fill="none"
         height={height}

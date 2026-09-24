@@ -16,7 +16,10 @@ export function SavedIcon({
   if (isActive) {
     // Active state - use the new filled design
     return (
-      <div className={`flex items-center justify-center ${className}`} style={{ width: 48, height: 48 }}>
+      <div
+        className={`flex items-center justify-center ${className}`}
+        style={{ width: 48, height: 48 }}
+      >
         <svg
           fill="none"
           height="48"
@@ -40,7 +43,10 @@ export function SavedIcon({
   // Inactive state - use the existing stroke-only design
   const color = '#777777';
   return (
-    <div className={`flex items-center justify-center ${className}`} style={{ width: 48, height: 48 }}>
+    <div
+      className={`flex items-center justify-center ${className}`}
+      style={{ width: 48, height: 48 }}
+    >
       <svg
         fill="none"
         height={height}
