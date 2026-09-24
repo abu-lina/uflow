@@ -4,7 +4,6 @@ import { notFound, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 import { useProvider } from '@/hooks/useProvider';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import type { Provider } from '@/services/providers';
 import type { CommunityService } from '@/services/communityServices';
@@ -57,7 +56,6 @@ export function ProviderDetailPageClient({
   initialCommunityServices,
 }: ProviderDetailPageClientProps) {
   const router = useRouter();
-  const isMobile = useIsMobile();
   const { isAdmin } = useIsAdmin();
   const {
     data: provider,
@@ -128,32 +126,34 @@ export function ProviderDetailPageClient({
     return notFound();
   }
 
-  // On desktop, use modal; on mobile, use full page
-  if (!isMobile) {
-    return (
-      <ProviderDetailModal
-        customActionButtons={
-          isAdmin ? (
-            <AdminProviderDetailButtons providerId={providerId} variant="desktop" />
-          ) : undefined
-        }
-        initialCommunityServices={initialCommunityServices}
-        provider={provider}
-        onClose={handleModalClose}
-      />
-    );
-  }
-
-  // Render the actual provider detail page on mobile
+  // Render both layouts; CSS toggles visibility to avoid hydration mismatch.
+  // Mobile: full page view (SSR-rendered, visible below md breakpoint)
+  // Desktop: modal view (ssr:false, visible at md+ breakpoint)
   return (
-    <ProviderDetailPageComponent
-      customActionButtons={
-        isAdmin ? (
-          <AdminProviderDetailButtons providerId={providerId} variant="mobile" />
-        ) : undefined
-      }
-      initialCommunityServices={initialCommunityServices}
-      provider={provider}
-    />
+    <>
+      <div className="md:hidden">
+        <ProviderDetailPageComponent
+          customActionButtons={
+            isAdmin ? (
+              <AdminProviderDetailButtons providerId={providerId} variant="mobile" />
+            ) : undefined
+          }
+          initialCommunityServices={initialCommunityServices}
+          provider={provider}
+        />
+      </div>
+      <div className="hidden md:block">
+        <ProviderDetailModal
+          customActionButtons={
+            isAdmin ? (
+              <AdminProviderDetailButtons providerId={providerId} variant="desktop" />
+            ) : undefined
+          }
+          initialCommunityServices={initialCommunityServices}
+          provider={provider}
+          onClose={handleModalClose}
+        />
+      </div>
+    </>
   );
 }

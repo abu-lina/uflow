@@ -7,9 +7,7 @@ import { useEffect, useState, useCallback } from 'react';
  * Uses Tailwind's md breakpoint (768px) to match responsive design
  */
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 768,
-  );
+  const [isMobile, setIsMobile] = useState(false);
 
   const checkMobile = useCallback(() => {
     if (typeof window === 'undefined') return false;
@@ -44,9 +42,7 @@ export function useIsMobile() {
  * Useful for components that need smaller mobile detection
  */
 export function useIsSmallMobile() {
-  const [isSmallMobile, setIsSmallMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 640,
-  );
+  const [isSmallMobile, setIsSmallMobile] = useState(false);
 
   const checkSmallMobile = useCallback(() => {
     if (typeof window === 'undefined') return false;
