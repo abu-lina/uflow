@@ -69,6 +69,8 @@ export function HomeListView({ pins, isLoading, isOpenNow, headerOffset }: HomeL
                 router.push(`/p/${pin.providerId}`);
               }
             }}
+            onMouseEnter={() => router.prefetch(`/p/${pin.providerId}`)}
+            onTouchStart={() => router.prefetch(`/p/${pin.providerId}`)}
           >
             <ProviderCard
               address_city={pin.address_city ?? null}

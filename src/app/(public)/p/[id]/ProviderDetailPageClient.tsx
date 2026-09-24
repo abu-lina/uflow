@@ -1,10 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 import { useProvider } from '@/hooks/useProvider';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import type { Provider } from '@/services/providers';
 import type { CommunityService } from '@/services/communityServices';
@@ -13,7 +13,10 @@ import { AdminProviderDetailButtons } from '@/features/admin/components/AdminPro
 
 // Lazy load heavy modal component - only loads when needed (desktop view)
 const ProviderDetailModal = dynamic(
-  () => import('@/features/providers/pages/ProviderDetailModal').then(mod => ({ default: mod.ProviderDetailModal })),
+  () =>
+    import('@/features/providers/pages/ProviderDetailModal').then((mod) => ({
+      default: mod.ProviderDetailModal,
+    })),
   {
     loading: () => (
       <div className="flex min-h-screen items-center justify-center">
@@ -21,25 +24,16 @@ const ProviderDetailModal = dynamic(
       </div>
     ),
     ssr: false, // Modal is client-only
-  }
+  },
 );
 
 // Lazy load provider detail page component - only loads on mobile
-const ProviderDetailPageComponent = dynamic(
-  () => import('@/features/providers/pages/ProviderDetailPage').then(mod => ({ default: mod.ProviderDetailPage })),
-  {
-    loading: () => (
-      <div className="flex min-h-screen flex-col">
-        <div className="sticky top-0 z-50 border-b border-neutral-200 bg-white px-6 py-4">
-          <Skeleton className="h-8 w-32" />
-        </div>
-        <div className="flex-1 px-6 py-8">
-          <Skeleton className="mx-auto h-96 w-full max-w-[361px] rounded-2xl" />
-        </div>
-      </div>
-    ),
-    ssr: false, // Client-only component
-  }
+// SSR is enabled so Next.js can render real content server-side instead of
+// showing a skeleton fallback that causes a visible flash on navigation.
+const ProviderDetailPageComponent = dynamic(() =>
+  import('@/features/providers/pages/ProviderDetailPage').then((mod) => ({
+    default: mod.ProviderDetailPage,
+  })),
 );
 
 interface ProviderDetailPageClientProps {
@@ -50,22 +44,43 @@ interface ProviderDetailPageClientProps {
 
 /**
  * Client component that uses React Query to cache provider data
- * 
+ *
  * Benefits:
  * - Instant navigation if data already cached
  * - Shows loading skeleton instead of full-page spinner
  * - Prefetches data for faster subsequent loads
  * - Uses modal on desktop, full page on mobile
  */
-export function ProviderDetailPageClient({ providerId, initialData, initialCommunityServices }: ProviderDetailPageClientProps) {
+export function ProviderDetailPageClient({
+  providerId,
+  initialData,
+  initialCommunityServices,
+}: ProviderDetailPageClientProps) {
   const router = useRouter();
-  const isMobile = useIsMobile();
   const { isAdmin } = useIsAdmin();
-  const { data: provider, isLoading, error } = useProvider({
+  const {
+    data: provider,
+    isLoading,
+    error,
+  } = useProvider({
     providerId,
     enabled: true,
     initialData, // Use SSR data if available
   });
+
+  // Only mount the desktop modal on md+ screens to avoid portal escape on mobile.
+  // The modal uses createPortal to document.body, so CSS hidden/block can't hide it.
+  // Safe to gate with JS because the modal's dynamic import already has ssr: false.
+  const [showDesktopModal, setShowDesktopModal] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    setShowDesktopModal(mql.matches);
+
+    const handler = (e: MediaQueryListEvent) => setShowDesktopModal(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   // Handle modal close - navigate back to providers page
   const handleModalClose = () => {
@@ -126,28 +141,33 @@ export function ProviderDetailPageClient({ providerId, initialData, initialCommu
     return notFound();
   }
 
-  // On desktop, use modal; on mobile, use full page
-  if (!isMobile) {
-    return (
-      <ProviderDetailModal
-        customActionButtons={
-          isAdmin ? <AdminProviderDetailButtons providerId={providerId} variant="desktop" /> : undefined
-        }
-        initialCommunityServices={initialCommunityServices}
-        provider={provider}
-        onClose={handleModalClose}
-      />
-    );
-  }
-
-  // Render the actual provider detail page on mobile
+  // Mobile: SSR-rendered full page, CSS-hidden on desktop
+  // Desktop: client-only modal, JS-gated to prevent portal escape on mobile
   return (
-    <ProviderDetailPageComponent
-      customActionButtons={
-        isAdmin ? <AdminProviderDetailButtons providerId={providerId} variant="mobile" /> : undefined
-      }
-      initialCommunityServices={initialCommunityServices}
-      provider={provider}
-    />
+    <>
+      <div className="md:hidden">
+        <ProviderDetailPageComponent
+          customActionButtons={
+            isAdmin ? (
+              <AdminProviderDetailButtons providerId={providerId} variant="mobile" />
+            ) : undefined
+          }
+          initialCommunityServices={initialCommunityServices}
+          provider={provider}
+        />
+      </div>
+      {showDesktopModal && (
+        <ProviderDetailModal
+          customActionButtons={
+            isAdmin ? (
+              <AdminProviderDetailButtons providerId={providerId} variant="desktop" />
+            ) : undefined
+          }
+          initialCommunityServices={initialCommunityServices}
+          provider={provider}
+          onClose={handleModalClose}
+        />
+      )}
+    </>
   );
 }
