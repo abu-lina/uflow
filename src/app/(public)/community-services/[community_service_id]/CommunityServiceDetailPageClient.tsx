@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 import { useCommunityService } from '@/hooks/useCommunityServices';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import type { CommunityService } from '@/services/communityServices';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
@@ -13,7 +12,10 @@ import { AdminCommunityServiceDetailButtons } from '@/features/admin/components/
 
 // Lazy load heavy modal component - only loads when needed (desktop view)
 const CommunityServiceDetailModal = dynamic(
-  () => import('@/components/community-services/CommunityServiceDetailModal').then(mod => ({ default: mod.CommunityServiceDetailModal })),
+  () =>
+    import('@/components/community-services/CommunityServiceDetailModal').then((mod) => ({
+      default: mod.CommunityServiceDetailModal,
+    })),
   {
     loading: () => (
       <div className="flex min-h-screen items-center justify-center">
@@ -21,25 +23,16 @@ const CommunityServiceDetailModal = dynamic(
       </div>
     ),
     ssr: false, // Modal is client-only
-  }
+  },
 );
 
 // Lazy load provider detail page component - only loads on mobile
-const ProviderDetailPageComponent = dynamic(
-  () => import('@/features/providers/pages/ProviderDetailPage').then(mod => ({ default: mod.ProviderDetailPage })),
-  {
-    loading: () => (
-      <div className="flex min-h-screen flex-col">
-        <div className="sticky top-0 z-50 border-b border-neutral-200 bg-white px-6 py-4">
-          <Skeleton className="h-8 w-32" />
-        </div>
-        <div className="flex-1 px-6 py-8">
-          <Skeleton className="mx-auto h-96 w-full max-w-[361px] rounded-2xl" />
-        </div>
-      </div>
-    ),
-    ssr: false, // Client-only component
-  }
+// SSR is enabled so Next.js can render real content server-side instead of
+// showing a skeleton fallback that causes a visible flash on navigation.
+const ProviderDetailPageComponent = dynamic(() =>
+  import('@/features/providers/pages/ProviderDetailPage').then((mod) => ({
+    default: mod.ProviderDetailPage,
+  })),
 );
 
 interface CommunityServiceDetailPageClientProps {
@@ -56,7 +49,9 @@ export function buildProviderShapeFromCommunityService(communityService: Communi
     provider_id: communityService.community_service_id,
     provider_name: communityService.community_service_name,
     description: communityService.community_service_description ?? null,
-    provider_images: communityService.community_service_images ? JSON.stringify({ urls: communityService.community_service_images }) : null,
+    provider_images: communityService.community_service_images
+      ? JSON.stringify({ urls: communityService.community_service_images })
+      : null,
     category_id: communityService.category_id || null,
     address_city: communityService.address_city || null,
     social_website: communityService.social_website || null,
@@ -74,28 +69,47 @@ export function buildProviderShapeFromCommunityService(communityService: Communi
     needs_ids: communityService.needs_ids || [],
     offers: communityService.offers || [],
     needs: communityService.needs || [],
-    category: communityService.category ? {
-      name_de: communityService.category.name_de || '',
-      name_en: communityService.category.name_en,
-      category_images: communityService.category.category_images
-    } : undefined,
+    category: communityService.category
+      ? {
+          name_de: communityService.category.name_de || '',
+          name_en: communityService.category.name_en,
+          category_images: communityService.category.category_images,
+        }
+      : undefined,
     community_service_id: communityService.community_service_id,
     badges: communityService.badges ?? [],
   };
 }
 
-export function CommunityServiceDetailPageClient({ 
+export function CommunityServiceDetailPageClient({
   communityServiceId,
-  initialData
+  initialData,
 }: CommunityServiceDetailPageClientProps) {
   const router = useRouter();
-  const isMobile = useIsMobile();
   const { isAdmin } = useIsAdmin();
-  const { data: communityService, isLoading, error } = useCommunityService({
+  const {
+    data: communityService,
+    isLoading,
+    error,
+  } = useCommunityService({
     communityServiceId,
     initialData, // Use SSR data if available
     enabled: true,
   });
+
+  // Only mount the desktop modal on md+ screens to avoid portal escape on mobile.
+  // The modal uses createPortal to document.body, so CSS hidden/block can't hide it.
+  // Safe to gate with JS because the modal's dynamic import already has ssr: false.
+  const [showDesktopModal, setShowDesktopModal] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    setShowDesktopModal(mql.matches);
+
+    const handler = (e: MediaQueryListEvent) => setShowDesktopModal(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
+  }, []);
 
   // Handle browser back button
   useEffect(() => {
@@ -168,26 +182,37 @@ export function CommunityServiceDetailPageClient({
   // Transform community service to Provider format for compatibility with ProviderDetailPage
   const providerData = buildProviderShapeFromCommunityService(communityService);
 
-  // On desktop, show modal; on mobile, show full page
-  if (!isMobile) {
-    return (
-      <CommunityServiceDetailModal
-        communityService={communityService}
-        customActionButtons={
-          isAdmin ? <AdminCommunityServiceDetailButtons communityServiceId={communityService.community_service_id} variant="desktop" /> : undefined
-        }
-        onClose={handleClose}
-      />
-    );
-  }
-
+  // Mobile: SSR-rendered full page, CSS-hidden on desktop
+  // Desktop: client-only modal, JS-gated to prevent portal escape on mobile
   return (
-    <ProviderDetailPageComponent
-      customActionButtons={
-        isAdmin ? <AdminCommunityServiceDetailButtons communityServiceId={communityService.community_service_id} variant="mobile" /> : undefined
-      }
-      provider={providerData}
-    />
+    <>
+      <div className="md:hidden">
+        <ProviderDetailPageComponent
+          customActionButtons={
+            isAdmin ? (
+              <AdminCommunityServiceDetailButtons
+                communityServiceId={communityService.community_service_id}
+                variant="mobile"
+              />
+            ) : undefined
+          }
+          provider={providerData}
+        />
+      </div>
+      {showDesktopModal && (
+        <CommunityServiceDetailModal
+          communityService={communityService}
+          customActionButtons={
+            isAdmin ? (
+              <AdminCommunityServiceDetailButtons
+                communityServiceId={communityService.community_service_id}
+                variant="desktop"
+              />
+            ) : undefined
+          }
+          onClose={handleClose}
+        />
+      )}
+    </>
   );
 }
-

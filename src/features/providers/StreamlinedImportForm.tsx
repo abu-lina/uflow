@@ -9,7 +9,6 @@ import { Icon } from '@iconify/react';
 
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useAuth } from '@/providers/auth-provider';
 import { createProviderOrService } from '@/features/providers/services/mutations';
 import { trackEvent } from '@/lib/analytics/plausible';
@@ -266,7 +265,6 @@ export function StreamlinedImportForm({
   const queryClient = useQueryClient();
   const { formData: contextFormData, updateFormData, setCreationMode } = useFormData();
   const { t, language } = useLanguage();
-  const isMobile = useIsSmallMobile();
   const { user } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1070,7 +1068,7 @@ export function StreamlinedImportForm({
       <div
         className={cn(
           'flex flex-col gap-6',
-          isMobile ? 'pb-[calc(80px+24px+env(safe-area-inset-bottom))]' : 'pb-8',
+          'pb-8 max-sm:pb-[calc(80px+24px+env(safe-area-inset-bottom))]',
         )}
       >
         {/* Section 0: City Selection (Required First) */}
@@ -1484,8 +1482,8 @@ export function StreamlinedImportForm({
           </div>
         </div>
 
-        {/* Footer Actions */}
-        {isMobile && (
+        {/* Footer Actions - mobile (< sm) */}
+        <div className="sm:hidden">
           <FooterAction
             actionButton={{
               disabled: !isFormValid || isSubmitting,
@@ -1496,10 +1494,10 @@ export function StreamlinedImportForm({
               variant: 'primary',
             }}
           />
-        )}
+        </div>
 
-        {/* Desktop Actions */}
-        {!isMobile && (
+        {/* Desktop Actions (sm+) */}
+        <div className="hidden sm:block">
           <div className="flex gap-4 pt-4">
             <Button disabled={isSubmitting} variant="secondary" onClick={handleBack}>
               {t('common.cancel')}
@@ -1514,7 +1512,7 @@ export function StreamlinedImportForm({
               {isSubmitting ? t('create.recommend.submitting') : t('create.recommend.submit')}
             </Button>
           </div>
-        )}
+        </div>
       </div>
     </>
   );

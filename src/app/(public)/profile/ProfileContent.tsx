@@ -43,7 +43,7 @@ import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationT
 import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
+
 import {
   getCreatedProviders,
   getAllBookmarkedItems,
@@ -100,9 +100,6 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [originalData, setOriginalData] = useState<FormData | null>(null);
-
-  // Responsive: detect mobile using the centralized hook
-  const isMobile = useIsSmallMobile();
 
   // Helper function to get category name based on current language
   const getCategoryName = (category: { name_de?: string; name_en?: string } | undefined) => {
@@ -556,9 +553,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     likes={0}
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
-                    onClick={() =>
-                      router.push(`/p/${communityService.community_service_id}`)
-                    }
+                    onClick={() => router.push(`/p/${communityService.community_service_id}`)}
                   />
                 ))}
               </div>
@@ -601,9 +596,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     likes={0}
                     savedText={t('actions.saved')}
                     title={communityService.community_service_name}
-                    onClick={() =>
-                      router.push(`/p/${communityService.community_service_id}`)
-                    }
+                    onClick={() => router.push(`/p/${communityService.community_service_id}`)}
                   />
                 ))}
               </div>
@@ -806,9 +799,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       category={getCategoryName(communityService.category)}
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
-                      onClick={() =>
-                        router.push(`/p/${communityService.community_service_id}`)
-                      }
+                      onClick={() => router.push(`/p/${communityService.community_service_id}`)}
                     />
                   );
                 })}
@@ -899,9 +890,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       category={getCategoryName(communityService.category)}
                       imageUrl={getCommunityServiceImageUrl(communityService)}
                       title={communityService.community_service_name}
-                      onClick={() =>
-                        router.push(`/p/${communityService.community_service_id}`)
-                      }
+                      onClick={() => router.push(`/p/${communityService.community_service_id}`)}
                     />
                   );
                 })}
@@ -1056,10 +1045,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
     </div>
   );
 
-  // Return content with modal
+  // Return content with modal - CSS-toggled mobile/desktop views
   return (
     <ErrorBoundary>
-      {isMobile ? mobileContent : desktopContent}
+      <div className="sm:hidden">{mobileContent}</div>
+      <div className="hidden sm:block">{desktopContent}</div>
       <MobileAboutModal isOpen={showAboutModal} onClose={() => setShowAboutModal(false)} />
     </ErrorBoundary>
   );

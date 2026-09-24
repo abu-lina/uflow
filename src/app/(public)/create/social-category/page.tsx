@@ -8,11 +8,9 @@ import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { supabase } from '@/lib/supabase/client';
@@ -27,10 +25,6 @@ export default function SelectSocialCategoryPage() {
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
-  const isMobile = useIsSmallMobile();
-
-  // Choose layout based on screen size
-  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   useEffect(() => {
     async function fetchCategories() {
@@ -55,11 +49,11 @@ export default function SelectSocialCategoryPage() {
     void fetchCategories();
   }, []);
 
-
   // Filter categories based on search query
-  const filteredCategories = categories.filter(category =>
-    category.name_de?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    category.name_en?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCategories = categories.filter(
+    (category) =>
+      category.name_de?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      category.name_en?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleSave = () => {
@@ -70,32 +64,19 @@ export default function SelectSocialCategoryPage() {
     router.push('/create/media');
   };
 
-  // Desktop redirect - preserve existing behavior
-  if (!isMobile) {
-    router.push('/profile');
-    return <div className="flex h-screen-fix w-full items-center justify-center">{t('create.category.redirecting')}</div>;
-  }
-
   return (
-    <Layout>
-      <PageHeader
-        title="Kategorie auswählen"
-        variant="back-and-title"
-        onBack={handleBack}
-      />
+    <ScrollablePageLayout>
+      <PageHeader title="Kategorie auswählen" variant="back-and-title" onBack={handleBack} />
 
-      <PageContent 
-        className={cn(
-          !isMobile && 'max-w-[960px] mx-auto px-6 md:px-8'
-        )}
+      <PageContent
+        className={cn('sm:mx-auto sm:max-w-[960px] sm:px-6 md:px-8')}
         maxWidth="full"
-        paddingX={isMobile ? 'px-6' : 'px-0'}
+        paddingX="px-6 sm:px-0"
       >
         <div className="flex w-full max-w-[361px] flex-1 flex-col gap-8">
-          
           {/* Search Input */}
           <div className="flex w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-            <Icon className="h-5 w-5 text-[#999999] mr-3" icon="lucide:search" />
+            <Icon className="mr-3 h-5 w-5 text-[#999999]" icon="lucide:search" />
             <input
               className="flex-1 border-none bg-transparent text-[15px] font-medium leading-[18px] text-[#272727] focus:outline-none"
               placeholder={t('create.category.searchPlaceholder')}
@@ -109,7 +90,7 @@ export default function SelectSocialCategoryPage() {
           <div className="flex w-full flex-col gap-3">
             {categoriesLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Icon className="h-8 w-8 text-gray-400 animate-spin" icon="lucide:loader-2" />
+                <Icon className="h-8 w-8 animate-spin text-gray-400" icon="lucide:loader-2" />
               </div>
             ) : filteredCategories.length > 0 ? (
               filteredCategories.map((category) => (
@@ -117,8 +98,8 @@ export default function SelectSocialCategoryPage() {
                   key={category.category_id}
                   className={`flex w-full flex-col items-start rounded-xl p-4 text-left transition-all duration-200 ${
                     formData.socialCategory === category.category_id
-                      ? 'bg-primary-light border border-primary'
-                      : 'bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      ? 'border border-primary bg-primary-light'
+                      : 'border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                   }`}
                   onClick={() => updateFormData({ socialCategory: category.category_id })}
                 >
@@ -136,16 +117,14 @@ export default function SelectSocialCategoryPage() {
               ))
             ) : (
               <div className="flex flex-col items-center justify-center py-8">
-                <Icon className="h-12 w-12 text-gray-300 mb-4" icon="lucide:search-x" />
-                <p className="text-sm text-gray-500">
-                  {t('create.category.noResults')}
-                </p>
+                <Icon className="mb-4 h-12 w-12 text-gray-300" icon="lucide:search-x" />
+                <p className="text-sm text-gray-500">{t('create.category.noResults')}</p>
               </div>
             )}
           </div>
 
           {/* Desktop Save Button */}
-          {!isMobile && (
+          <div className="hidden sm:block">
             <div className="flex flex-col gap-3 pt-4">
               <Button
                 fullWidth
@@ -157,12 +136,12 @@ export default function SelectSocialCategoryPage() {
                 {t('actions.save')}
               </Button>
             </div>
-          )}
+          </div>
         </div>
       </PageContent>
 
       {/* Mobile Footer Action */}
-      {isMobile && (
+      <div className="sm:hidden">
         <FooterAction
           actionButton={{
             label: t('actions.save'),
@@ -172,7 +151,7 @@ export default function SelectSocialCategoryPage() {
             variant: 'primary',
           }}
         />
-      )}
-    </Layout>
+      </div>
+    </ScrollablePageLayout>
   );
 }

@@ -141,17 +141,24 @@ describe('StreamlinedRecommendForm — provider_profile_completed tracking', () 
     render(<StreamlinedRecommendForm initialCity="Berlin" />);
 
     // Wait for form to reach valid state (localStorage restored async via useEffect)
-    const submitButton = await screen.findByRole('button', { name: /submit|absenden/i });
+    // Both mobile FooterAction and desktop Button render a "Submit" button;
+    // JSDOM doesn't apply CSS so both are visible. Pick the first one.
+    const submitButtons = await screen.findAllByRole('button', { name: /submit|absenden/i });
+    expect(submitButtons.length).toBeGreaterThan(0);
+    const submitButton = submitButtons[0];
 
     await act(async () => {
       fireEvent.click(submitButton);
     });
 
     await waitFor(() => {
-      expect(trackEvent).toHaveBeenCalledWith('provider_profile_completed', expect.objectContaining({
-        city: 'Berlin',
-        has_website: true,
-      }));
+      expect(trackEvent).toHaveBeenCalledWith(
+        'provider_profile_completed',
+        expect.objectContaining({
+          city: 'Berlin',
+          has_website: true,
+        }),
+      );
     });
   });
 
@@ -160,7 +167,9 @@ describe('StreamlinedRecommendForm — provider_profile_completed tracking', () 
 
     render(<StreamlinedRecommendForm initialCity="Berlin" />);
 
-    const submitButton = await screen.findByRole('button', { name: /submit|absenden/i });
+    const submitButtons = await screen.findAllByRole('button', { name: /submit|absenden/i });
+    expect(submitButtons.length).toBeGreaterThan(0);
+    const submitButton = submitButtons[0];
     await act(async () => {
       fireEvent.click(submitButton);
     });
@@ -184,16 +193,23 @@ describe('StreamlinedImportForm — provider_profile_completed tracking', () => 
   it('emits provider_profile_completed after successful form submission', async () => {
     render(<StreamlinedImportForm initialCity="Berlin" />);
 
-    const submitButton = await screen.findByRole('button', { name: /submit|absenden/i });
+    // Both mobile FooterAction and desktop Button render a "Submit" button;
+    // JSDOM doesn't apply CSS so both are visible. Pick the first one.
+    const submitButtons = await screen.findAllByRole('button', { name: /submit|absenden/i });
+    expect(submitButtons.length).toBeGreaterThan(0);
+    const submitButton = submitButtons[0];
     await act(async () => {
       fireEvent.click(submitButton);
     });
 
     await waitFor(() => {
-      expect(trackEvent).toHaveBeenCalledWith('provider_profile_completed', expect.objectContaining({
-        city: 'Berlin',
-        has_website: true,
-      }));
+      expect(trackEvent).toHaveBeenCalledWith(
+        'provider_profile_completed',
+        expect.objectContaining({
+          city: 'Berlin',
+          has_website: true,
+        }),
+      );
     });
   });
 });
