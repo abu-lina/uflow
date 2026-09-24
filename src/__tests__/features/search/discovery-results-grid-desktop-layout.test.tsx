@@ -36,14 +36,13 @@ describe('Plan 228 - DiscoveryResultsGrid desktop layout', () => {
     expect(gridSrc).toContain('inset-0');
   });
 
-  it('does not apply headerOffset paddingTop on desktop via useIsMobile', () => {
-    // The component should import useIsMobile to conditionally apply paddingTop
-    expect(gridSrc).toContain('useIsMobile');
+  it('does not import useIsMobile (replaced with CSS-only approach)', () => {
+    // Plan 250: useIsMobile removed; desktop padding reset is handled by md:!pt-0 class
+    expect(gridSrc).not.toContain('useIsMobile');
   });
 
-  it('conditionally applies paddingTop only on mobile', () => {
-    // paddingTop should be conditional, not always headerOffset
-    // Pattern: paddingTop: isMobile ? headerOffset : undefined (or similar)
-    expect(gridSrc).toMatch(/paddingTop:\s*isMobile\s*\?/);
+  it('resets paddingTop on desktop via Tailwind md:!pt-0', () => {
+    // Plan 250: instead of JS conditional, use CSS override on md+ screens
+    expect(gridSrc).toContain('md:!pt-0');
   });
 });

@@ -11,7 +11,6 @@ import { BusinessSearch, type PlaceData } from '@/components/create/BusinessSear
 import { InstagramImport, type InstagramData } from '@/components/create/InstagramImport';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { Button } from '@/components/ui/Button';
 import { IconWithTitle } from '@/components/ui/IconWithTitle';
@@ -23,12 +22,11 @@ export default function QuickCreatePage() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
   const { updateFormData } = useFormData();
-  const isMobile = useIsSmallMobile();
   const { t } = useLanguage();
 
   const handleGoogleSelect = (placeData: PlaceData) => {
     console.log('Google Place selected:', placeData);
-    
+
     // Map Google data to form data
     updateFormData({
       title: placeData.name,
@@ -49,7 +47,7 @@ export default function QuickCreatePage() {
 
   const handleInstagramImport = (instagramData: InstagramData) => {
     console.log('Instagram data imported:', instagramData);
-    
+
     // Map Instagram data to form data
     updateFormData({
       title: instagramData.name,
@@ -78,21 +76,10 @@ export default function QuickCreatePage() {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
-  // Desktop redirect
-  if (!isMobile) {
-    return (
-      <div className="flex h-screen-fix items-center justify-center">
-        <span className="text-lg text-gray-500">
-          {t('create.basics.desktopMessage')}
-        </span>
-      </div>
-    );
-  }
-
   // Authentication check
   if (!user) {
     const returnUrl = encodeURIComponent('/create-quick');
-    
+
     return (
       <PageLayout hasBackground={false} maxWidth="full">
         <PageHeader title="Quick Create" />
@@ -102,11 +89,16 @@ export default function QuickCreatePage() {
           <div className="flex w-full flex-col">
             <div className="mb-10">
               <IconWithTitle
-                icon={<Icon className="w-full h-full text-content-heading" icon="material-symbols:lock-outline" />}
+                icon={
+                  <Icon
+                    className="h-full w-full text-content-heading"
+                    icon="material-symbols:lock-outline"
+                  />
+                }
                 size="large"
                 title={t('create.basics.loginRequired')}
               >
-                <p className="text-center text-base leading-normal text-content mt-2">
+                <p className="mt-2 text-center text-base leading-normal text-content">
                   {t('create.basics.loginDescription')}
                 </p>
               </IconWithTitle>
@@ -130,11 +122,7 @@ export default function QuickCreatePage() {
 
   return (
     <PageLayout hasBackground={false} maxWidth="full">
-      <PageHeader
-        title="Quick Create"
-        variant="back-and-title"
-        onBack="/create"
-      />
+      <PageHeader title="Quick Create" variant="back-and-title" onBack="/create" />
       <HeaderSpacer />
 
       <PageContentWrapper maxWidth="full" padding="lg-safe">
@@ -160,8 +148,8 @@ export default function QuickCreatePage() {
                   <Icon className="h-8 w-8 text-[#4285F4]" icon="mdi:google" />
                 </div>
                 <div className="text-center">
-                  <p className="font-semibold text-sm text-content-heading">Google</p>
-                  <p className="text-xs text-[#7A7A7A] mt-1">Search business</p>
+                  <p className="text-sm font-semibold text-content-heading">Google</p>
+                  <p className="mt-1 text-xs text-[#7A7A7A]">Search business</p>
                 </div>
               </button>
 
@@ -173,8 +161,8 @@ export default function QuickCreatePage() {
                   <Icon className="h-8 w-8 text-[#E4405F]" icon="mdi:instagram" />
                 </div>
                 <div className="text-center">
-                  <p className="font-semibold text-sm text-content-heading">Instagram</p>
-                  <p className="text-xs text-[#7A7A7A] mt-1">Import profile</p>
+                  <p className="text-sm font-semibold text-content-heading">Instagram</p>
+                  <p className="mt-1 text-xs text-[#7A7A7A]">Import profile</p>
                 </div>
               </button>
             </div>
@@ -183,7 +171,7 @@ export default function QuickCreatePage() {
           {/* Back Button if method selected */}
           {selectedMethod && (
             <button
-              className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark transition-colors"
+              className="flex items-center gap-2 text-sm text-primary transition-colors hover:text-primary-dark"
               onClick={() => setSelectedMethod(null)}
             >
               <Icon className="h-4 w-4" icon="mdi:arrow-left" />
@@ -193,24 +181,17 @@ export default function QuickCreatePage() {
 
           {/* Google Places Search */}
           {selectedMethod === 'google' && (
-            <BusinessSearch
-              onManualCreate={handleManualCreate}
-              onSelect={handleGoogleSelect}
-            />
+            <BusinessSearch onManualCreate={handleManualCreate} onSelect={handleGoogleSelect} />
           )}
 
           {/* Instagram Import */}
-          {selectedMethod === 'instagram' && (
-            <InstagramImport onImport={handleInstagramImport} />
-          )}
+          {selectedMethod === 'instagram' && <InstagramImport onImport={handleInstagramImport} />}
 
           {/* Benefits Section */}
           {selectedMethod === null && (
             <div className="space-y-3 pt-4">
-              <h3 className="text-sm font-semibold text-content-heading">
-                Why use quick import?
-              </h3>
-              
+              <h3 className="text-sm font-semibold text-content-heading">Why use quick import?</h3>
+
               <div className="space-y-2">
                 {[
                   { icon: 'mdi:lightning-bolt', text: 'Save time - import in seconds' },
@@ -219,7 +200,7 @@ export default function QuickCreatePage() {
                   { icon: 'mdi:pencil', text: 'Review and edit before publishing' },
                 ].map((benefit, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <Icon className="h-5 w-5 text-primary flex-shrink-0" icon={benefit.icon} />
+                    <Icon className="h-5 w-5 flex-shrink-0 text-primary" icon={benefit.icon} />
                     <span className="text-sm text-content">{benefit.text}</span>
                   </div>
                 ))}
@@ -231,13 +212,13 @@ export default function QuickCreatePage() {
           {selectedMethod === null && (
             <>
               <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-[#E5E5E5]" />
+                <div className="h-px flex-1 bg-[#E5E5E5]" />
                 <span className="text-sm text-[#999999]">or</span>
-                <div className="flex-1 h-px bg-[#E5E5E5]" />
+                <div className="h-px flex-1 bg-[#E5E5E5]" />
               </div>
 
               <button
-                className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-[#D4D4D4] bg-white px-5 py-4 text-base font-medium text-content-heading transition-colors hover:border-primary hover:bg-primary/5"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#D4D4D4] bg-white px-5 py-4 text-base font-medium text-content-heading transition-colors hover:border-primary hover:bg-primary/5"
                 onClick={handleManualCreate}
               >
                 <Icon className="h-5 w-5" icon="mdi:pencil" />
@@ -250,4 +231,3 @@ export default function QuickCreatePage() {
     </PageLayout>
   );
 }
-

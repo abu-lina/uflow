@@ -10,14 +10,12 @@ import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { supabase } from '@/lib/supabase/client';
 import { useFormData } from '@/providers/form-provider';
 import { getCategories } from '@/services/categories';
 import { shouldCreateCommunityService } from '@/utils/categoryUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { cn } from '@/lib/utils';
 
 export default function SelectCategoryPage() {
@@ -27,10 +25,6 @@ export default function SelectCategoryPage() {
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t, language } = useLanguage();
-  const isMobile = useIsSmallMobile();
-
-  // Choose layout based on screen size
-  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   useEffect(() => {
     async function fetchCategories() {
@@ -68,7 +62,7 @@ export default function SelectCategoryPage() {
     }
   };
 
-  const filteredCategories = categories.filter(category => {
+  const filteredCategories = categories.filter((category) => {
     const categoryName = getCategoryName(category);
     return categoryName.toLowerCase().includes(searchQuery.toLowerCase());
   });
@@ -79,48 +73,20 @@ export default function SelectCategoryPage() {
     }
   };
 
-  const handleBack = () => {
-    router.push('/create/basics');
-  };
-
   return (
-    <Layout>
+    <ScrollablePageLayout>
       <PageHeader
-        className={cn(
-          !isMobile && 'md:top-20 md:z-[100] [&>div]:md:px-0 [&>div]:md:max-w-full'
-        )}
-        customContent={
-          !isMobile ? (
-            <div className="w-full max-w-[640px] mx-auto px-6 md:px-8 flex items-center h-header-height-mobile sm:h-header-height-tablet">
-              <button
-                aria-label="Zurück"
-                className="flex items-center justify-center w-8 h-8 -ml-1"
-                onClick={handleBack}
-              >
-                <Icon 
-                  className="w-8 h-8 text-content-heading pointer-events-none" 
-                  icon="material-symbols:chevron-left" 
-                />
-              </button>
-              <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
-                {t('create.category.selectCategory')}
-              </h1>
-            </div>
-          ) : undefined
-        }
+        className={cn('md:top-20 md:z-[100] [&>div]:md:max-w-full [&>div]:md:px-0')}
         title={t('create.category.selectCategory')}
         variant="back-and-title"
-        onBack={isMobile ? "/create/basics" : undefined}
+        onBack="/create/basics"
       />
 
-      <PageContent 
-        className={cn(
-          'flex flex-col gap-8',
-          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
-        )}
-        hasFooter={isMobile}
+      <PageContent
+        hasFooter
+        className={cn('flex flex-col gap-8', 'sm:mx-auto sm:max-w-[640px] sm:px-6 md:px-8')}
         maxWidth="full"
-        paddingX={isMobile ? 'px-6' : 'px-0'}
+        paddingX="px-6 sm:px-0"
       >
         {/* Search Bar + Subtitle */}
         <div className="flex w-full flex-col gap-2">
@@ -140,7 +106,7 @@ export default function SelectCategoryPage() {
 
           {/* Subtitle */}
           <div className="w-full">
-            <p className="text-sm font-normal text-[#7A7A7A] leading-[17px] mb-6 pl-3">
+            <p className="mb-6 pl-3 text-sm font-normal leading-[17px] text-[#7A7A7A]">
               {t('create.category.searchDescription')}
             </p>
           </div>
@@ -169,38 +135,43 @@ export default function SelectCategoryPage() {
               .map((category) => (
                 <button
                   key={category.category_id}
-                  className={`w-full rounded-xl px-4 py-2 md:h-[48px] md:py-0 md:flex md:items-center text-left transition-all duration-200 ${
+                  className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 md:flex md:h-[48px] md:items-center md:py-0 ${
                     formData.category === category.category_id
-                      ? 'bg-primary-light text-content-heading border border-primary'
-                      : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      ? 'border border-primary bg-primary-light text-content-heading'
+                      : 'border border-gray-200 bg-white text-[#232323] hover:border-gray-300 hover:bg-gray-50'
                   }`}
                   onClick={async () => {
                     const categoryId = category.category_id;
                     const isCommunityService = await shouldCreateCommunityService(categoryId);
                     console.log('Category selected:', getCategoryName(category), 'ID:', categoryId);
                     console.log('Should create community service:', isCommunityService);
-                    updateFormData({ 
+                    updateFormData({
                       category: categoryId,
-                      entityType: isCommunityService ? 'community_service' : 'provider'
+                      entityType: isCommunityService ? 'community_service' : 'provider',
                     });
-                    console.log('Updated formData entityType to:', isCommunityService ? 'community_service' : 'provider');
-                    
+                    console.log(
+                      'Updated formData entityType to:',
+                      isCommunityService ? 'community_service' : 'provider',
+                    );
+
                     // Also log the current form data to verify it's being updated
                     setTimeout(() => {
-                      console.log('Form data after update:', { category: categoryId, entityType: isCommunityService ? 'community_service' : 'provider' });
+                      console.log('Form data after update:', {
+                        category: categoryId,
+                        entityType: isCommunityService ? 'community_service' : 'provider',
+                      });
                     }, 100);
                   }}
                 >
-                  <span className="text-base font-medium">
-                    {getCategoryName(category)}
-                  </span>
+                  <span className="text-base font-medium">{getCategoryName(category)}</span>
                 </button>
               ))
           )}
         </div>
 
         {/* Desktop Save Button */}
-        {!isMobile && (
+        {/* Desktop only */}
+        <div className="hidden sm:block">
           <div className="flex flex-col gap-3 pt-4">
             <Button
               fullWidth
@@ -212,11 +183,12 @@ export default function SelectCategoryPage() {
               {t('actions.save')}
             </Button>
           </div>
-        )}
+        </div>
       </PageContent>
 
       {/* Mobile Footer Action */}
-      {isMobile && (
+      {/* Mobile only */}
+      <div className="sm:hidden">
         <FooterAction
           actionButton={{
             label: t('actions.save'),
@@ -226,7 +198,7 @@ export default function SelectCategoryPage() {
             variant: 'primary',
           }}
         />
-      )}
-    </Layout>
+      </div>
+    </ScrollablePageLayout>
   );
 }

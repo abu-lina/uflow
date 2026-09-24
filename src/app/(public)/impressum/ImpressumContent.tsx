@@ -1,24 +1,17 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { cn } from '@/lib/utils';
 
 export function ImpressumContent() {
   const router = useRouter();
   const { language } = useLanguage();
-  const isMobile = useIsSmallMobile();
-
-  // Choose layout based on screen size
-  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   const handleBack = () => {
     router.back();
@@ -80,7 +73,7 @@ export function ImpressumContent() {
     tr: {
       title: 'Yasal Bildirim',
       lastUpdated: 'Son güncelleme: Aralık 2024',
-      operator: 'TMG Bölüm 5\'e göre bilgiler',
+      operator: "TMG Bölüm 5'e göre bilgiler",
       name: 'İsim',
       nameValue: '[PLACEHOLDER_NAME]',
       address: 'Adres',
@@ -99,82 +92,71 @@ export function ImpressumContent() {
   const langContent = content[language] || content.en;
 
   return (
-    <Layout>
+    <ScrollablePageLayout>
       <PageHeader
-        className={cn(
-          !isMobile && 'md:top-20 md:z-[100] [&>div]:md:px-0 [&>div]:md:max-w-full'
-        )}
-        customContent={
-          !isMobile ? (
-            <div className="w-full max-w-[640px] mx-auto px-6 md:px-8 flex items-center h-header-height-mobile sm:h-header-height-tablet">
-              <button
-                aria-label="Zurück"
-                className="flex items-center justify-center w-8 h-8 -ml-1"
-                onClick={handleBack}
-              >
-                <Icon 
-                  className="w-8 h-8 text-content-heading pointer-events-none" 
-                  icon="material-symbols:chevron-left" 
-                />
-              </button>
-              <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
-                {langContent.title}
-              </h1>
-            </div>
-          ) : undefined
-        }
+        className={cn('md:top-20 md:z-[100] [&>div]:md:max-w-full [&>div]:md:px-0')}
         title={langContent.title}
         variant="back-and-title"
-        onBack={isMobile ? handleBack : undefined}
+        onBack={handleBack}
       />
 
-      <PageContent 
-        className={cn(
-          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
-        )}
+      <PageContent
+        className={cn('sm:mx-auto sm:max-w-[640px] sm:px-6 md:px-8')}
         maxWidth="full"
         paddingBottom="pb-12"
-        paddingX={isMobile ? 'px-6' : 'px-0'}
+        paddingX="px-6 sm:px-0"
       >
         <ContentSection>
           <div className="prose prose-sm max-w-none">
-            <p className="text-sm text-content-muted mb-6">{langContent.lastUpdated}</p>
-            
-            <h2 className="text-lg font-semibold mt-8 mb-4 text-content-heading">{langContent.operator}</h2>
-            
+            <p className="mb-6 text-sm text-content-muted">{langContent.lastUpdated}</p>
+
+            <h2 className="mb-4 mt-8 text-lg font-semibold text-content-heading">
+              {langContent.operator}
+            </h2>
+
             <div className="mb-6 space-y-4">
               <div>
-                <p className="font-semibold text-base text-content-heading mb-1">{langContent.name}</p>
-                <p className="text-base text-content leading-6">{langContent.nameValue}</p>
+                <p className="mb-1 text-base font-semibold text-content-heading">
+                  {langContent.name}
+                </p>
+                <p className="text-base leading-6 text-content">{langContent.nameValue}</p>
               </div>
-              
+
               <div>
-                <p className="font-semibold text-base text-content-heading mb-1">{langContent.address}</p>
-                <p className="text-base text-content leading-6 whitespace-pre-line">{langContent.addressValue}</p>
+                <p className="mb-1 text-base font-semibold text-content-heading">
+                  {langContent.address}
+                </p>
+                <p className="whitespace-pre-line text-base leading-6 text-content">
+                  {langContent.addressValue}
+                </p>
               </div>
-              
+
               <div>
-                <p className="font-semibold text-base text-content-heading mb-2">{langContent.contact}</p>
+                <p className="mb-2 text-base font-semibold text-content-heading">
+                  {langContent.contact}
+                </p>
                 <div className="space-y-2">
-                  <p className="text-base text-content leading-6">
+                  <p className="text-base leading-6 text-content">
                     <span className="font-medium">{langContent.email}:</span>{' '}
-                    <a 
-                      className="text-primary hover:text-primary-dark underline"
+                    <a
+                      className="text-primary underline hover:text-primary-dark"
                       href="mailto:support@ummahflow.com"
                     >
                       {langContent.emailValue}
                     </a>
                   </p>
-                  <p className="text-base text-content leading-6">
+                  <p className="text-base leading-6 text-content">
                     <span className="font-medium">{langContent.phone}:</span>{' '}
                     {langContent.phoneValue}
                   </p>
                 </div>
               </div>
-              
+
               <div>
-                <p className="font-semibold text-base text-content-heading mb-1">{langContent.responsible}</p>
-                <p className="text-base text-content leading-6">
+                <p className="mb-1 text-base font-semibold text-content-heading">
+                  {langContent.responsible}
+                </p>
+                <p className="text-base leading-6 text-content">
                   {langContent.responsibleText}{' '}
                   <span className="font-medium">{langContent.responsibleValue}</span>
                 </p>
@@ -183,6 +165,6 @@ export function ImpressumContent() {
           </div>
         </ContentSection>
       </PageContent>
-    </Layout>
+    </ScrollablePageLayout>
   );
 }

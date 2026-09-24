@@ -4,20 +4,16 @@ import { Suspense, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { StreamlinedImportForm } from '@/features/providers/StreamlinedImportForm';
 import { useFormData } from '@/providers/form-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { cn } from '@/lib/utils';
 
 function ImportOSMPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setCreationMode } = useFormData();
   const { t } = useLanguage();
-  const isMobile = useIsSmallMobile();
 
   // Check if success screen should be shown from URL
   const showSuccessScreen = searchParams.get('success') === 'true';
@@ -57,22 +53,20 @@ function ImportOSMPageContent() {
   // Memoize title to prevent re-computation
   const pageTitle = useMemo(() => t('create.importOsm.title'), [t]);
 
-  const LayoutComponent = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
-
   return (
-    <LayoutComponent>
+    <ScrollablePageLayout>
       {!showSuccessScreen && (
         <PageHeader title={pageTitle} variant="back-and-title" onBack={handleBack} />
       )}
 
       <PageContent
-        className={cn(!isMobile && 'mx-auto max-w-[640px] px-6 md:px-8')}
+        className="sm:mx-auto sm:max-w-[640px] sm:px-6 md:px-8"
         maxWidth="full"
-        paddingX={isMobile ? 'px-6' : 'px-0'}
+        paddingX="px-6 sm:px-0"
       >
         <StreamlinedImportForm initialCity={initialCity} onSuccess={handleSuccess} />
       </PageContent>
-    </LayoutComponent>
+    </ScrollablePageLayout>
   );
 }
 

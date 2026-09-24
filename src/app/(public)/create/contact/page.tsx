@@ -7,13 +7,11 @@ import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { createProviderOrService } from '@/features/providers/services/mutations';
 import { cn } from '@/lib/utils';
@@ -25,9 +23,6 @@ export default function ContactPage() {
   const { formData, updateFormData, clearFormData } = useFormData();
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Use centralized mobile detection
-  const isMobile = useIsSmallMobile();
 
   // Determine if in recommendation mode
   const isRecommendationMode = formData.creationMode === 'recommendation';
@@ -58,9 +53,6 @@ export default function ContactPage() {
 
   const STEPS = isRecommendationMode ? STEPS_RECOMMENDATION : STEPS_OWNER;
 
-  // Choose layout based on screen size
-  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
-
   // Loading state
   if (isLoading) {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
@@ -71,16 +63,16 @@ export default function ContactPage() {
   if (!user && !isRecommendationMode) {
     const returnUrl = encodeURIComponent('/create/contact');
     return (
-      <Layout>
+      <ScrollablePageLayout>
         <PageHeader title={t('create.contact.title')} variant="title-only" />
 
         <PageContent
           className={cn(
             'flex flex-1 flex-col items-center justify-center',
-            !isMobile && 'mx-auto max-w-2xl px-6 md:px-8 lg:max-w-4xl',
+            'sm:mx-auto sm:max-w-2xl sm:px-6 md:px-8 lg:max-w-4xl',
           )}
           maxWidth="full"
-          paddingX={isMobile ? 'px-6' : 'px-0'}
+          paddingX="px-6 sm:px-0"
         >
           <span className="mb-6 text-center text-lg text-content-heading">
             {t('create.contact.loginRequired')}
@@ -92,7 +84,7 @@ export default function ContactPage() {
             {t('create.contact.goToLogin')}
           </button>
         </PageContent>
-      </Layout>
+      </ScrollablePageLayout>
     );
   }
 
@@ -137,7 +129,7 @@ export default function ContactPage() {
   };
 
   return (
-    <Layout>
+    <ScrollablePageLayout>
       <PageHeader
         title={t('create.contact.title')}
         variant="back-and-title"
@@ -148,10 +140,10 @@ export default function ContactPage() {
         hasFooter
         className={cn(
           'flex flex-col gap-6',
-          !isMobile && 'mx-auto max-w-2xl px-6 md:px-8 lg:max-w-4xl',
+          'sm:mx-auto sm:max-w-2xl sm:px-6 md:px-8 lg:max-w-4xl',
         )}
         maxWidth="full"
-        paddingX={isMobile ? 'px-6' : 'px-0'}
+        paddingX="px-6 sm:px-0"
       >
         {/* Step Indicator */}
         <div className="mb-6">
@@ -166,12 +158,12 @@ export default function ContactPage() {
         </div>
 
         {/* Form Fields */}
-        <div className={cn('flex w-full gap-4', isMobile ? 'flex-col' : 'flex-row flex-wrap')}>
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap">
           {/* Website */}
           <div
             className={cn(
               'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
-              !isMobile && 'md:w-[calc(50%-8px)]',
+              'md:w-[calc(50%-8px)]',
             )}
           >
             <div className="flex w-full flex-col gap-1">
@@ -192,7 +184,7 @@ export default function ContactPage() {
           <div
             className={cn(
               'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
-              !isMobile && 'md:w-[calc(50%-8px)]',
+              'md:w-[calc(50%-8px)]',
             )}
           >
             <div className="flex w-full flex-col gap-1">
@@ -213,7 +205,7 @@ export default function ContactPage() {
           <div
             className={cn(
               'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
-              !isMobile && 'md:w-[calc(50%-8px)]',
+              'md:w-[calc(50%-8px)]',
             )}
           >
             <div className="flex w-full flex-col gap-1">
@@ -234,7 +226,7 @@ export default function ContactPage() {
           <div
             className={cn(
               'flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
-              !isMobile && 'md:w-[calc(50%-8px)]',
+              'md:w-[calc(50%-8px)]',
             )}
           >
             <div className="flex w-full flex-col gap-1">
@@ -270,6 +262,6 @@ export default function ContactPage() {
           variant: 'primary',
         }}
       />
-    </Layout>
+    </ScrollablePageLayout>
   );
 }

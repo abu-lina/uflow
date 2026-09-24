@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { AddressAutocomplete, type AddressComponents } from '@/components/ui/AddressAutocomplete';
 import { validateAddress, validateZipCode } from '@/utils/addressValidation';
@@ -15,7 +14,6 @@ import { FooterAction } from '@/components/ui/FooterAction';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData, type ProviderCreationMode } from '@/providers/form-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
 
@@ -30,10 +28,9 @@ export default function LocationPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const { formData, updateFormData, isLoading: isFormDataLoading } = useFormData();
   const { t } = useLanguage();
-  const isMobile = useIsSmallMobile();
-  
+
   const isLoading = isAuthLoading || isFormDataLoading;
-  
+
   // Show manual fields if user has already entered data manually, or if they want to edit
   // Must be initialized AFTER formData is available
   const [showManualFields, setShowManualFields] = useState(() => {
@@ -66,11 +63,6 @@ export default function LocationPage() {
     },
   ];
 
-  // Choose layout based on screen size
-  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
-
-
-
   // Store initial address value in a ref to avoid any memoization issues
   // Must be initialized AFTER formData is available
   const initialAddressValueRef = useRef({
@@ -79,26 +71,29 @@ export default function LocationPage() {
     street: formData.street || '',
     zip: formData.zip || '',
   });
-  
+
   // Note: We no longer auto-hide manual fields after autocomplete
   // User can manually toggle via the "Edit fields" button
 
   // Handle address autocomplete selection - completely stable callback
-  const handleAddressSelect = useCallback((address: AddressComponents) => {
-    // Call directly - updateFormData is stable (useCallback with empty deps)
-    updateFormData({
-      city: address.city,
-      country: address.country,
-      street: address.street,
-      zip: address.zip,
-      latitude: address.latitude ?? null,
-      longitude: address.longitude ?? null,
-    });
-    
-    // Clear validation errors after auto-fill
-    setValidationErrors({});
-    // Keep manual fields hidden after autocomplete (user can click "Edit fields" to show them)
-  }, [updateFormData]); // Only updateFormData is stable
+  const handleAddressSelect = useCallback(
+    (address: AddressComponents) => {
+      // Call directly - updateFormData is stable (useCallback with empty deps)
+      updateFormData({
+        city: address.city,
+        country: address.country,
+        street: address.street,
+        zip: address.zip,
+        latitude: address.latitude ?? null,
+        longitude: address.longitude ?? null,
+      });
+
+      // Clear validation errors after auto-fill
+      setValidationErrors({});
+      // Keep manual fields hidden after autocomplete (user can click "Edit fields" to show them)
+    },
+    [updateFormData],
+  ); // Only updateFormData is stable
 
   // Loading state - wait for both auth and formData to load
   if (isLoading) {
@@ -113,7 +108,7 @@ export default function LocationPage() {
     if (formData.creationMode === 'recommendation') {
       return 'recommendation';
     }
-    
+
     // Fallback: check localStorage directly (in case formData hasn't loaded yet)
     if (typeof window !== 'undefined') {
       try {
@@ -128,19 +123,19 @@ export default function LocationPage() {
         console.error('[LocationPage] getCreationMode: Error reading localStorage:', e);
       }
     }
-    
+
     return 'owner';
   };
-  
+
   // IMPORTANT: Only determine recommendation mode after formData has loaded
   // This prevents race conditions where we check before localStorage data is loaded
   // We check both formData.creationMode (which may still be default 'owner' if not loaded)
   // and localStorage directly as a fallback
   const isRecommendationMode = !isFormDataLoading && getCreationMode() === 'recommendation';
-  
+
   // Set STEPS based on mode
   const STEPS = isRecommendationMode ? STEPS_RECOMMENDATION : STEPS_OWNER;
-  
+
   // Authentication check - redirect to login with return URL (unless recommendation mode)
   // CRITICAL: Only check after formData has fully loaded to avoid race conditions
   // We must wait for isFormDataLoading to be false AND ensure we've checked localStorage
@@ -149,28 +144,28 @@ export default function LocationPage() {
   if (!user && !isRecommendationMode && !isFormDataLoading) {
     const returnUrl = encodeURIComponent('/create/location');
     return (
-      <Layout>
+      <ScrollablePageLayout>
         <PageHeader title={t('create.location.title')} variant="title-only" />
 
-        <PageContent 
+        <PageContent
           className={cn(
             'flex flex-1 flex-col items-center justify-center',
-            !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+            'sm:mx-auto sm:max-w-2xl sm:px-6 md:px-8 lg:max-w-4xl',
           )}
           maxWidth="full"
-          paddingX={isMobile ? 'px-6' : 'px-0'}
+          paddingX="px-6 sm:px-0"
         >
-          <span className="text-center text-lg text-content-heading mb-6">
+          <span className="mb-6 text-center text-lg text-content-heading">
             {t('create.location.loginRequired')}
           </span>
           <button
-            className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 font-semibold text-base text-white transition-colors hover:bg-primary-dark"
+            className="w-full max-w-[280px] rounded-xl bg-primary px-6 py-4 text-base font-semibold text-white transition-colors hover:bg-primary-dark"
             onClick={() => router.push(`/login?returnUrl=${returnUrl}`)}
           >
             {t('create.location.goToLogin')}
           </button>
         </PageContent>
-      </Layout>
+      </ScrollablePageLayout>
     );
   }
 
@@ -185,7 +180,7 @@ export default function LocationPage() {
     });
 
     setValidationErrors(validation.errors);
-    
+
     if (validation.isValid || formData.isOnlineBusiness) {
       router.push('/create/contact');
     }
@@ -202,9 +197,9 @@ export default function LocationPage() {
     });
 
     if (validation.errors[field]) {
-      setValidationErrors(prev => ({ ...prev, [field]: validation.errors[field] }));
+      setValidationErrors((prev) => ({ ...prev, [field]: validation.errors[field] }));
     } else {
-      setValidationErrors(prev => {
+      setValidationErrors((prev) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [field]: _unused, ...rest } = prev;
         return rest;
@@ -215,13 +210,13 @@ export default function LocationPage() {
   // Validate ZIP code based on country
   const handleZipChange = (value: string) => {
     updateFormData({ zip: value });
-    
+
     if (value && formData.country) {
       const zipError = validateZipCode(value, formData.country);
       if (zipError) {
-        setValidationErrors(prev => ({ ...prev, zip: t('create.location.invalidZipCode') }));
+        setValidationErrors((prev) => ({ ...prev, zip: t('create.location.invalidZipCode') }));
       } else {
-        setValidationErrors(prev => {
+        setValidationErrors((prev) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { zip: _unused, ...rest } = prev;
           return rest;
@@ -235,7 +230,7 @@ export default function LocationPage() {
     if (formData.isOnlineBusiness) {
       return true;
     }
-    
+
     // Validate all fields
     const validation = validateAddress({
       street: formData.street,
@@ -250,235 +245,234 @@ export default function LocationPage() {
   };
 
   return (
-    <Layout>
+    <ScrollablePageLayout>
       <PageHeader
         title={t('create.location.title')}
         variant="back-and-title"
         onBack="/create/basics"
       />
 
-      <PageContent 
-        hasFooter 
+      <PageContent
+        hasFooter
         className={cn(
           'flex flex-col gap-6',
-          !isMobile && 'max-w-2xl lg:max-w-4xl mx-auto px-6 md:px-8'
+          'sm:mx-auto sm:max-w-2xl sm:px-6 md:px-8 lg:max-w-4xl',
         )}
         maxWidth="full"
-        paddingX={isMobile ? 'px-6' : 'px-0'}
+        paddingX="px-6 sm:px-0"
       >
-          {/* Step Indicator */}
-          <div className="mb-6">
-            <StepIndicator currentStep={1} steps={STEPS} />
-          </div>
+        {/* Step Indicator */}
+        <div className="mb-6">
+          <StepIndicator currentStep={1} steps={STEPS} />
+        </div>
 
-          {/* Subtitle */}
-          <div className="flex flex-col items-start px-3 py-0 space-y-3 w-full">
-            <p className="font-normal text-base leading-[19px] text-[#7A7A7A] text-left mb-6">
-              {t('create.location.description')}
-            </p>
-          </div>
+        {/* Subtitle */}
+        <div className="flex w-full flex-col items-start space-y-3 px-3 py-0">
+          <p className="mb-6 text-left text-base font-normal leading-[19px] text-[#7A7A7A]">
+            {t('create.location.description')}
+          </p>
+        </div>
 
-          {/* Online Business Toggle */}
-          <div className="flex items-center justify-between w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 mb-3">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-[#272727]">
-                {t('create.location.onlineBusiness')}
-              </span>
-              <span className="text-xs text-[#7A7A7A]">
-                {t('create.location.noPhysicalLocation')}
-              </span>
-            </div>
-            <button
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                formData.isOnlineBusiness ? 'bg-primary' : 'bg-gray-200'
+        {/* Online Business Toggle */}
+        <div className="mb-3 flex w-full items-center justify-between rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3">
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-[#272727]">
+              {t('create.location.onlineBusiness')}
+            </span>
+            <span className="text-xs text-[#7A7A7A]">
+              {t('create.location.noPhysicalLocation')}
+            </span>
+          </div>
+          <button
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+              formData.isOnlineBusiness ? 'bg-primary' : 'bg-gray-200'
+            }`}
+            onClick={() => {
+              const newIsOnline = !formData.isOnlineBusiness;
+              updateFormData({
+                isOnlineBusiness: newIsOnline,
+                // If switching to online, clear address fields and set showAddress to false
+                ...(newIsOnline && {
+                  street: '',
+                  zip: '',
+                  city: '',
+                  country: '',
+                  showAddress: false,
+                }),
+              });
+            }}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                formData.isOnlineBusiness ? 'translate-x-6' : 'translate-x-1'
               }`}
-              onClick={() => {
-                const newIsOnline = !formData.isOnlineBusiness;
-                updateFormData({ 
-                  isOnlineBusiness: newIsOnline,
-                  // If switching to online, clear address fields and set showAddress to false
-                  ...(newIsOnline && {
-                    street: '',
-                    zip: '',
-                    city: '',
-                    country: '',
-                    showAddress: false
-                  })
-                });
-              }}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  formData.isOnlineBusiness ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
+            />
+          </button>
+        </div>
 
-          {/* Form Fields */}
-          {!formData.isOnlineBusiness ? (
-            <div className="flex flex-col gap-4 w-full">
-              {/* Address Autocomplete */}
-              <div className="flex flex-col gap-1">
-                <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-                  <AddressAutocomplete
-                    className="flex-1"
-                    initialValue={initialAddressValueRef.current}
-                    placeholder={t('create.location.enterAddress')}
-                    onAddressSelect={handleAddressSelect}
-                  />
-                </div>
-                {validationErrors.street && (
-                  <p className="text-xs text-red-500 px-3">{validationErrors.street}</p>
-                )}
-                {!validationErrors.street && (
-                  <div className="flex items-center justify-between px-3 py-1">
-                    <p className="text-xs text-[#7A7A7A]">{t('create.location.addressAutoFill')}</p>
-                    {!showManualFields ? (
-                      <button
-                        className="text-xs text-primary hover:text-primary-dark hover:underline cursor-pointer z-10 relative"
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setShowManualFields(true);
-                        }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        {t('create.location.editFields')}
-                      </button>
-                    ) : (
-                      <button
-                        className="text-xs text-[#7A7A7A] hover:underline cursor-pointer z-10 relative"
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setShowManualFields(false);
-                        }}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        {t('create.location.hideFields')}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Manual Fields - Collapsible */}
-              {showManualFields && (
-                <div className="flex flex-col gap-4 pt-2 border-t border-gray-100">
-                  {/* Street */}
+        {/* Form Fields */}
+        {!formData.isOnlineBusiness ? (
+          <div className="flex w-full flex-col gap-4">
+            {/* Address Autocomplete */}
+            <div className="flex flex-col gap-1">
               <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-                <div className="flex w-full flex-col gap-1">
-                  <label className="text-xs leading-[15px] text-[#999999]">
-                    {t('create.location.street')}
-                  </label>
-                  <input
-                    className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    placeholder={t('create.location.enterStreet')}
-                    type="text"
-                    value={formData.street}
-                    onChange={(e) => {
-                      updateFormData({ street: e.target.value });
-                      validateField('street');
-                    }}
-                  />
-                </div>
+                <AddressAutocomplete
+                  className="flex-1"
+                  initialValue={initialAddressValueRef.current}
+                  placeholder={t('create.location.enterAddress')}
+                  onAddressSelect={handleAddressSelect}
+                />
               </div>
               {validationErrors.street && (
-                <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.street}</p>
+                <p className="px-3 text-xs text-red-500">{validationErrors.street}</p>
               )}
-
-              {/* ZIP */}
-              <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-                <div className="flex w-full flex-col gap-1">
-                  <label className="text-xs leading-[15px] text-[#999999]">
-                    {t('create.location.zip')}
-                  </label>
-                  <input
-                    className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    placeholder={t('create.location.enterZip')}
-                    type="text"
-                    value={formData.zip}
-                    onChange={(e) => handleZipChange(e.target.value)}
-                  />
-                </div>
-              </div>
-              {validationErrors.zip && (
-                <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.zip}</p>
-              )}
-
-              {/* City */}
-              <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-                <div className="flex w-full flex-col gap-1">
-                  <label className="text-xs leading-[15px] text-[#999999]">
-                    {t('create.location.city')}
-                  </label>
-                  <input
-                    required
-                    className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    placeholder={t('create.location.enterCity')}
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => {
-                      updateFormData({ city: e.target.value });
-                      validateField('city');
-                    }}
-                  />
-                </div>
-              </div>
-              {validationErrors.city && (
-                <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.city}</p>
-              )}
-
-              {/* Country */}
-              <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
-                <div className="flex w-full flex-col gap-1">
-                  <label className="text-xs leading-[15px] text-[#999999]">
-                    {t('create.location.country')}
-                  </label>
-                  <input
-                    required
-                    className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
-                    placeholder={t('create.location.enterCountry')}
-                    type="text"
-                    value={formData.country}
-                    onChange={(e) => {
-                      updateFormData({ country: e.target.value });
-                      validateField('country');
-                      // Re-validate ZIP when country changes
-                      if (formData.zip) {
-                        handleZipChange(formData.zip);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-              {validationErrors.country && (
-                <p className="text-xs text-red-500 px-3 -mt-3">{validationErrors.country}</p>
-              )}
+              {!validationErrors.street && (
+                <div className="flex items-center justify-between px-3 py-1">
+                  <p className="text-xs text-[#7A7A7A]">{t('create.location.addressAutoFill')}</p>
+                  {!showManualFields ? (
+                    <button
+                      className="relative z-10 cursor-pointer text-xs text-primary hover:text-primary-dark hover:underline"
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowManualFields(true);
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                    >
+                      {t('create.location.editFields')}
+                    </button>
+                  ) : (
+                    <button
+                      className="relative z-10 cursor-pointer text-xs text-[#7A7A7A] hover:underline"
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowManualFields(false);
+                      }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                    >
+                      {t('create.location.hideFields')}
+                    </button>
+                  )}
                 </div>
               )}
-
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-2xl border border-[#D4D4D4] bg-white">
-              <Icon className="h-12 w-12 text-primary mb-3" icon="mdi:web" />
-              <p className="text-sm font-medium text-[#272727] text-center mb-1">
-                {t('create.location.onlineBusiness')}
-              </p>
-              <p className="text-xs text-[#7A7A7A] text-center">
-                {t('create.location.onlineBusinessDisplay')}
-              </p>
-            </div>
-          )}
+
+            {/* Manual Fields - Collapsible */}
+            {showManualFields && (
+              <div className="flex flex-col gap-4 border-t border-gray-100 pt-2">
+                {/* Street */}
+                <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                  <div className="flex w-full flex-col gap-1">
+                    <label className="text-xs leading-[15px] text-[#999999]">
+                      {t('create.location.street')}
+                    </label>
+                    <input
+                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                      placeholder={t('create.location.enterStreet')}
+                      type="text"
+                      value={formData.street}
+                      onChange={(e) => {
+                        updateFormData({ street: e.target.value });
+                        validateField('street');
+                      }}
+                    />
+                  </div>
+                </div>
+                {validationErrors.street && (
+                  <p className="-mt-3 px-3 text-xs text-red-500">{validationErrors.street}</p>
+                )}
+
+                {/* ZIP */}
+                <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                  <div className="flex w-full flex-col gap-1">
+                    <label className="text-xs leading-[15px] text-[#999999]">
+                      {t('create.location.zip')}
+                    </label>
+                    <input
+                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                      placeholder={t('create.location.enterZip')}
+                      type="text"
+                      value={formData.zip}
+                      onChange={(e) => handleZipChange(e.target.value)}
+                    />
+                  </div>
+                </div>
+                {validationErrors.zip && (
+                  <p className="-mt-3 px-3 text-xs text-red-500">{validationErrors.zip}</p>
+                )}
+
+                {/* City */}
+                <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                  <div className="flex w-full flex-col gap-1">
+                    <label className="text-xs leading-[15px] text-[#999999]">
+                      {t('create.location.city')}
+                    </label>
+                    <input
+                      required
+                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                      placeholder={t('create.location.enterCity')}
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => {
+                        updateFormData({ city: e.target.value });
+                        validateField('city');
+                      }}
+                    />
+                  </div>
+                </div>
+                {validationErrors.city && (
+                  <p className="-mt-3 px-3 text-xs text-red-500">{validationErrors.city}</p>
+                )}
+
+                {/* Country */}
+                <div className="flex h-[56px] w-full items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2">
+                  <div className="flex w-full flex-col gap-1">
+                    <label className="text-xs leading-[15px] text-[#999999]">
+                      {t('create.location.country')}
+                    </label>
+                    <input
+                      required
+                      className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
+                      placeholder={t('create.location.enterCountry')}
+                      type="text"
+                      value={formData.country}
+                      onChange={(e) => {
+                        updateFormData({ country: e.target.value });
+                        validateField('country');
+                        // Re-validate ZIP when country changes
+                        if (formData.zip) {
+                          handleZipChange(formData.zip);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                {validationErrors.country && (
+                  <p className="-mt-3 px-3 text-xs text-red-500">{validationErrors.country}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-[#D4D4D4] bg-white px-4 py-8">
+            <Icon className="mb-3 h-12 w-12 text-primary" icon="mdi:web" />
+            <p className="mb-1 text-center text-sm font-medium text-[#272727]">
+              {t('create.location.onlineBusiness')}
+            </p>
+            <p className="text-center text-xs text-[#7A7A7A]">
+              {t('create.location.onlineBusinessDisplay')}
+            </p>
+          </div>
+        )}
       </PageContent>
 
       <FooterAction
@@ -490,6 +484,6 @@ export default function LocationPage() {
           variant: 'primary',
         }}
       />
-    </Layout>
+    </ScrollablePageLayout>
   );
 }

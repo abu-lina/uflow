@@ -7,7 +7,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@iconify/react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { toast } from 'sonner';
 import { FooterAction } from '@/components/ui/FooterAction';
@@ -15,7 +14,6 @@ import { FooterAction } from '@/components/ui/FooterAction';
 import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
 import { useAuth } from '@/providers/auth-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { createProviderOrService } from '@/features/providers/services/mutations';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
@@ -28,10 +26,6 @@ export default function MediaUploadPage() {
   const { formData, clearFormData, isLoading } = useFormData();
   const { user } = useAuth();
   const { t } = useLanguage();
-  const isMobile = useIsSmallMobile();
-
-  // Choose layout based on screen size
-  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   // Steps with translations - only used in owner mode (recommendation mode redirects)
   const STEPS = [
@@ -133,13 +127,13 @@ export default function MediaUploadPage() {
   };
 
   return (
-    <Layout>
+    <ScrollablePageLayout>
       <PageHeader title={t('create.media.title')} variant="back-and-title" onBack="/create/halal" />
 
       <PageContent
-        className={cn(!isMobile && 'mx-auto max-w-2xl px-6 md:px-8 lg:max-w-4xl')}
+        className={cn('sm:mx-auto sm:max-w-2xl sm:px-6 md:px-8 lg:max-w-4xl')}
         maxWidth="full"
-        paddingX={isMobile ? 'px-6' : 'px-0'}
+        paddingX="px-6 sm:px-0"
       >
         <div className="flex w-full flex-1 flex-col gap-8">
           {/* Step Indicator */}
@@ -227,6 +221,6 @@ export default function MediaUploadPage() {
           variant: 'primary',
         }}
       />
-    </Layout>
+    </ScrollablePageLayout>
   );
 }

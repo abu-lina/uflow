@@ -10,7 +10,6 @@ import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { supabase } from '@/lib/supabase/client';
 
 function ReviewPageContent() {
@@ -19,7 +18,6 @@ function ReviewPageContent() {
   const source = searchParams.get('source'); // 'google' or 'instagram'
   const { user } = useAuth();
   const { formData, clearFormData } = useFormData();
-  const isMobile = useIsSmallMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Local editable state
@@ -125,250 +123,241 @@ function ReviewPageContent() {
 
   const isValid = editedData.title.trim() && editedData.city.trim();
 
-  if (!isMobile) {
-    return (
-      <div className="flex h-screen-fix items-center justify-center">
+  return (
+    <>
+      {/* Desktop: show message */}
+      <div className="h-screen-fix hidden items-center justify-center sm:flex">
         <span className="text-lg text-gray-500">
           Please use mobile view to review your business
         </span>
       </div>
-    );
-  }
 
-  return (
-    <PageLayout hasBackground={false} maxWidth="full">
-      <PageHeader
-        title="Review & Publish"
-        variant="back-and-title"
-        onBack="/create-quick"
-      />
-      <HeaderSpacer />
+      {/* Mobile: show review form */}
+      <div className="sm:hidden">
+        <PageLayout hasBackground={false} maxWidth="full">
+          <PageHeader title="Review & Publish" variant="back-and-title" onBack="/create-quick" />
+          <HeaderSpacer />
 
-      <PageContentWrapper maxWidth="full" padding="lg-safe">
-        <div className="flex flex-col gap-6 pb-32">
-          {/* Source Badge */}
-          {source && (
-            <div className="flex items-center gap-2 text-sm">
-              <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
-                <Icon 
-                  className="h-4 w-4 text-primary" 
-                  icon={source === 'google' ? 'mdi:google' : 'mdi:instagram'} 
-                />
-                <span className="text-primary font-medium">
-                  Imported from {source === 'google' ? 'Google' : 'Instagram'}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Info Message */}
-          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-            <div className="flex items-start gap-3">
-              <Icon
-                className="h-5 w-5 text-primary mt-0.5 flex-shrink-0"
-                icon="mdi:information"
-              />
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-content-heading">
-                  Review your details
-                </p>
-                <p className="text-xs text-content leading-relaxed">
-                  We&apos;ve pre-filled the information. Please review and edit as needed before publishing.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Form Fields */}
-          <div className="flex flex-col gap-4">
-            {/* Title */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-[#999999] uppercase">
-                Business Name *
-              </label>
-              <input
-                className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                placeholder="Enter business name"
-                type="text"
-                value={editedData.title}
-                onChange={(e) => setEditedData({ ...editedData, title: e.target.value })}
-              />
-            </div>
-
-            {/* Description */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-[#999999] uppercase">
-                Description
-              </label>
-              <textarea
-                className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary min-h-[100px] resize-none"
-                placeholder="Describe your business"
-                rows={4}
-                value={editedData.description}
-                onChange={(e) => setEditedData({ ...editedData, description: e.target.value })}
-              />
-            </div>
-
-            {/* Location Section */}
-            <div className="pt-4 border-t border-[#E5E5E5]">
-              <h3 className="text-sm font-semibold text-content-heading mb-3">Location</h3>
-              
-              <div className="flex flex-col gap-4">
-                {/* Street */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-medium text-[#999999] uppercase">
-                    Street
-                  </label>
-                  <input
-                    className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Street address"
-                    type="text"
-                    value={editedData.street}
-                    onChange={(e) => setEditedData({ ...editedData, street: e.target.value })}
-                  />
-                </div>
-
-                {/* City & ZIP */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-medium text-[#999999] uppercase">
-                      City *
-                    </label>
-                    <input
-                      className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder="City"
-                      type="text"
-                      value={editedData.city}
-                      onChange={(e) => setEditedData({ ...editedData, city: e.target.value })}
+          <PageContentWrapper maxWidth="full" padding="lg-safe">
+            <div className="flex flex-col gap-6 pb-32">
+              {/* Source Badge */}
+              {source && (
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+                    <Icon
+                      className="h-4 w-4 text-primary"
+                      icon={source === 'google' ? 'mdi:google' : 'mdi:instagram'}
                     />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-medium text-[#999999] uppercase">
-                      ZIP
-                    </label>
-                    <input
-                      className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                      placeholder="ZIP"
-                      type="text"
-                      value={editedData.zip}
-                      onChange={(e) => setEditedData({ ...editedData, zip: e.target.value })}
-                    />
+                    <span className="font-medium text-primary">
+                      Imported from {source === 'google' ? 'Google' : 'Instagram'}
+                    </span>
                   </div>
                 </div>
+              )}
 
-                {/* Country */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-medium text-[#999999] uppercase">
-                    Country
-                  </label>
-                  <input
-                    className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Country"
-                    type="text"
-                    value={editedData.country}
-                    onChange={(e) => setEditedData({ ...editedData, country: e.target.value })}
+              {/* Info Message */}
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+                <div className="flex items-start gap-3">
+                  <Icon
+                    className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary"
+                    icon="mdi:information"
                   />
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium text-content-heading">Review your details</p>
+                    <p className="text-xs leading-relaxed text-content">
+                      We&apos;ve pre-filled the information. Please review and edit as needed before
+                      publishing.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Contact Section */}
-            <div className="pt-4 border-t border-[#E5E5E5]">
-              <h3 className="text-sm font-semibold text-content-heading mb-3">Contact</h3>
-              
+              {/* Form Fields */}
               <div className="flex flex-col gap-4">
-                {/* Phone */}
+                {/* Title */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-medium text-[#999999] uppercase">
-                    Phone
+                  <label className="text-xs font-medium uppercase text-[#999999]">
+                    Business Name *
                   </label>
                   <input
-                    className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Phone number"
-                    type="tel"
-                    value={editedData.phone}
-                    onChange={(e) => setEditedData({ ...editedData, phone: e.target.value })}
+                    className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Enter business name"
+                    type="text"
+                    value={editedData.title}
+                    onChange={(e) => setEditedData({ ...editedData, title: e.target.value })}
                   />
                 </div>
 
-                {/* Email */}
+                {/* Description */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-medium text-[#999999] uppercase">
-                    Email
+                  <label className="text-xs font-medium uppercase text-[#999999]">
+                    Description
                   </label>
-                  <input
-                    className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Email address"
-                    type="email"
-                    value={editedData.email}
-                    onChange={(e) => setEditedData({ ...editedData, email: e.target.value })}
+                  <textarea
+                    className="min-h-[100px] w-full resize-none rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Describe your business"
+                    rows={4}
+                    value={editedData.description}
+                    onChange={(e) => setEditedData({ ...editedData, description: e.target.value })}
                   />
                 </div>
 
-                {/* Website */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-medium text-[#999999] uppercase">
-                    Website
-                  </label>
-                  <input
-                    className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="https://..."
-                    type="url"
-                    value={editedData.website}
-                    onChange={(e) => setEditedData({ ...editedData, website: e.target.value })}
-                  />
+                {/* Location Section */}
+                <div className="border-t border-[#E5E5E5] pt-4">
+                  <h3 className="mb-3 text-sm font-semibold text-content-heading">Location</h3>
+
+                  <div className="flex flex-col gap-4">
+                    {/* Street */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-medium uppercase text-[#999999]">Street</label>
+                      <input
+                        className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Street address"
+                        type="text"
+                        value={editedData.street}
+                        onChange={(e) => setEditedData({ ...editedData, street: e.target.value })}
+                      />
+                    </div>
+
+                    {/* City & ZIP */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-medium uppercase text-[#999999]">
+                          City *
+                        </label>
+                        <input
+                          className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="City"
+                          type="text"
+                          value={editedData.city}
+                          onChange={(e) => setEditedData({ ...editedData, city: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-medium uppercase text-[#999999]">ZIP</label>
+                        <input
+                          className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                          placeholder="ZIP"
+                          type="text"
+                          value={editedData.zip}
+                          onChange={(e) => setEditedData({ ...editedData, zip: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Country */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-medium uppercase text-[#999999]">
+                        Country
+                      </label>
+                      <input
+                        className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Country"
+                        type="text"
+                        value={editedData.country}
+                        onChange={(e) => setEditedData({ ...editedData, country: e.target.value })}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Instagram */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-medium text-[#999999] uppercase">
-                    Instagram
-                  </label>
-                  <input
-                    className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Instagram URL"
-                    type="url"
-                    value={editedData.instagram}
-                    onChange={(e) => setEditedData({ ...editedData, instagram: e.target.value })}
-                  />
+                {/* Contact Section */}
+                <div className="border-t border-[#E5E5E5] pt-4">
+                  <h3 className="mb-3 text-sm font-semibold text-content-heading">Contact</h3>
+
+                  <div className="flex flex-col gap-4">
+                    {/* Phone */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-medium uppercase text-[#999999]">Phone</label>
+                      <input
+                        className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Phone number"
+                        type="tel"
+                        value={editedData.phone}
+                        onChange={(e) => setEditedData({ ...editedData, phone: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Email */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-medium uppercase text-[#999999]">Email</label>
+                      <input
+                        className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Email address"
+                        type="email"
+                        value={editedData.email}
+                        onChange={(e) => setEditedData({ ...editedData, email: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Website */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-medium uppercase text-[#999999]">
+                        Website
+                      </label>
+                      <input
+                        className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="https://..."
+                        type="url"
+                        value={editedData.website}
+                        onChange={(e) => setEditedData({ ...editedData, website: e.target.value })}
+                      />
+                    </div>
+
+                    {/* Instagram */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-medium uppercase text-[#999999]">
+                        Instagram
+                      </label>
+                      <input
+                        className="w-full rounded-2xl border border-[#D4D4D4] bg-white px-4 py-3 text-[15px] font-medium text-[#272727] placeholder:text-[#999999] focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Instagram URL"
+                        type="url"
+                        value={editedData.instagram}
+                        onChange={(e) =>
+                          setEditedData({ ...editedData, instagram: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </PageContentWrapper>
+          </PageContentWrapper>
 
-      {/* Fixed Bottom Button */}
-      <div 
-        className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-[12px] bg-white/80" 
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex h-[80px] w-full items-center justify-center px-safe-24 pb-4">
-          <button
-            className={`flex h-[48px] w-full items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-all ${
-              !isValid || isSubmitting
-                ? 'bg-primary/30 cursor-not-allowed' 
-                : 'bg-primary hover:bg-primary-dark'
-            }`}
-            disabled={!isValid || isSubmitting}
-            onClick={handleSubmit}
+          {/* Fixed Bottom Button */}
+          <div
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-[12px]"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            {isSubmitting ? (
-              <>
-                <Icon className="h-5 w-5 text-white animate-spin" icon="mdi:loading" />
-                <span className="text-base font-medium text-white">Publishing...</span>
-              </>
-            ) : (
-              <>
-                <Icon className="h-5 w-5 text-white" icon="mdi:check" />
-                <span className="text-base font-medium text-white">Publish Business</span>
-              </>
-            )}
-          </button>
-        </div>
+            <div className="px-safe-24 flex h-[80px] w-full items-center justify-center pb-4">
+              <button
+                className={`flex h-[48px] w-full items-center justify-center gap-2 rounded-xl px-5 shadow-[0px_8px_24px_rgba(88,157,150,0.25)] transition-all ${
+                  !isValid || isSubmitting
+                    ? 'cursor-not-allowed bg-primary/30'
+                    : 'bg-primary hover:bg-primary-dark'
+                }`}
+                disabled={!isValid || isSubmitting}
+                onClick={handleSubmit}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Icon className="h-5 w-5 animate-spin text-white" icon="mdi:loading" />
+                    <span className="text-base font-medium text-white">Publishing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon className="h-5 w-5 text-white" icon="mdi:check" />
+                    <span className="text-base font-medium text-white">Publish Business</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </PageLayout>
       </div>
-    </PageLayout>
+    </>
   );
 }
 
@@ -379,4 +368,3 @@ export default function ReviewPage() {
     </Suspense>
   );
 }
-

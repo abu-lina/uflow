@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { DesktopCreateLayout } from '@/components/layout/DesktopCreateLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
@@ -16,7 +15,6 @@ import { IconWithTitle } from '@/components/ui/IconWithTitle';
 import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
-import { useIsSmallMobile } from '@/hooks/useIsMobile';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
 
@@ -26,9 +24,6 @@ export default function CreateBasicsPage() {
   const { formData, setCreationMode, isLoading: isFormDataLoading } = useFormData();
   const { t } = useLanguage();
 
-  // Use centralized mobile detection
-  const isMobile = useIsSmallMobile();
-  
   const isLoading = isAuthLoading || isFormDataLoading;
 
   // Set creation mode to 'owner' if not already set (recommendation mode is set by /recommend-provider route)
@@ -49,7 +44,7 @@ export default function CreateBasicsPage() {
         console.error('[CreateBasicsPage] Error reading localStorage:', e);
       }
     }
-    
+
     // Only set to 'owner' if not already 'recommendation'
     if (formData.creationMode !== 'recommendation') {
       setCreationMode('owner');
@@ -57,10 +52,6 @@ export default function CreateBasicsPage() {
     // Only run once on mount - don't include formData.creationMode in deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setCreationMode]);
-
-
-  // Choose layout based on screen size
-  const Layout = isMobile ? ScrollablePageLayout : DesktopCreateLayout;
 
   // Loading state
   if (isLoading) {
@@ -86,36 +77,39 @@ export default function CreateBasicsPage() {
     }
     return 'owner';
   };
-  
+
   const isRecommendationMode = getCreationMode() === 'recommendation';
-  
+
   // Authentication check - redirect to login with return URL (unless recommendation mode)
   // Only check after formData has had a chance to load
   if (!user && !isRecommendationMode) {
     const returnUrl = encodeURIComponent('/create/basics');
-    
-    return (
-      <Layout>
-        <PageHeader
-          title={t('create.basics.title')}
-        />
 
-        <PageContent 
+    return (
+      <ScrollablePageLayout>
+        <PageHeader title={t('create.basics.title')} />
+
+        <PageContent
           className={cn(
-            'flex items-center justify-center min-h-[60vh]',
-            !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
+            'flex min-h-[60vh] items-center justify-center',
+            'sm:mx-auto sm:max-w-[640px] sm:px-6 md:px-8',
           )}
           maxWidth="full"
-          paddingX={isMobile ? 'px-6' : 'px-0'}
+          paddingX="px-6 sm:px-0"
         >
           <div className="flex w-full flex-col">
             <TitleSection className="mb-10">
               <IconWithTitle
-                icon={<Icon className="w-full h-full text-content-heading" icon="material-symbols:lock-outline" />}
+                icon={
+                  <Icon
+                    className="h-full w-full text-content-heading"
+                    icon="material-symbols:lock-outline"
+                  />
+                }
                 size="large"
                 title={t('create.basics.loginRequired')}
               >
-                <p className="text-center text-base leading-normal text-content mt-2">
+                <p className="mt-2 text-center text-base leading-normal text-content">
                   {t('create.basics.loginDescription')}
                 </p>
               </IconWithTitle>
@@ -135,7 +129,7 @@ export default function CreateBasicsPage() {
             </ContentSection>
           </div>
         </PageContent>
-      </Layout>
+      </ScrollablePageLayout>
     );
   }
 
@@ -153,22 +147,16 @@ export default function CreateBasicsPage() {
   };
 
   return (
-    <Layout>
-      <PageHeader
-        title={t('create.basics.title')}
-        variant="back-and-title"
-        onBack={handleBack}
-      />
+    <ScrollablePageLayout>
+      <PageHeader title={t('create.basics.title')} variant="back-and-title" onBack={handleBack} />
 
-      <PageContent 
-        className={cn(
-          !isMobile && 'max-w-[640px] mx-auto px-6 md:px-8'
-        )}
+      <PageContent
+        className={cn('sm:mx-auto sm:max-w-[640px] sm:px-6 md:px-8')}
         maxWidth="full"
-        paddingX={isMobile ? 'px-6' : 'px-0'}
+        paddingX="px-6 sm:px-0"
       >
-        {isMobile ? (
-          <ProviderCreateForm 
+        <div className="sm:hidden">
+          <ProviderCreateForm
             onNextStep={() => {
               // Navigate to location page
               // Use replace in recommendation mode to avoid back button issues
@@ -189,9 +177,9 @@ export default function CreateBasicsPage() {
                 }
                 return false;
               };
-              
+
               const isRecommendationMode = checkRecommendationMode();
-              
+
               // Navigate immediately
               if (isRecommendationMode) {
                 router.replace('/create/location');
@@ -200,10 +188,11 @@ export default function CreateBasicsPage() {
               }
             }}
           />
-        ) : (
+        </div>
+        <div className="hidden sm:block">
           <UnifiedProviderCreateForm />
-        )}
+        </div>
       </PageContent>
-    </Layout>
+    </ScrollablePageLayout>
   );
 }

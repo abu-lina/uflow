@@ -7,7 +7,6 @@ import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { supabase } from '@/lib/supabase/client';
 import { FooterAction } from '@/components/ui/FooterAction';
 
@@ -17,7 +16,6 @@ interface ProfileProviderDetailButtonsProps {
 
 export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDetailButtonsProps) {
   const router = useRouter();
-  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -164,25 +162,25 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
     setShowDeleteConfirm(false);
   };
 
-  if (isMobile) {
-    return (
-      <>
-        <FooterAction
-          primaryButton={{
-            label: 'Bearbeiten',
-            icon: 'material-symbols:edit',
-            onClick: handleEditAction,
-            'aria-label': 'Provider bearbeiten',
-            variant: 'primary',
-          }}
-          secondaryButton={{
-            icon: 'material-symbols:more-horiz',
-            onClick: () => setShowActionsMenu(true),
-            'aria-label': 'Weitere Aktionen',
-          }}
-        />
+  return (
+    <>
+      <FooterAction
+        primaryButton={{
+          label: 'Bearbeiten',
+          icon: 'material-symbols:edit',
+          onClick: handleEditAction,
+          'aria-label': 'Provider bearbeiten',
+          variant: 'primary',
+        }}
+        secondaryButton={{
+          icon: 'material-symbols:more-horiz',
+          onClick: () => setShowActionsMenu(true),
+          'aria-label': 'Weitere Aktionen',
+        }}
+      />
 
-        {/* Actions Menu Modal - Rendered via Portal */}
+      {/* Mobile Actions Menu Modal - Rendered via Portal */}
+      <div className="md:hidden">
         {mounted &&
           showActionsMenu &&
           createPortal(
@@ -239,7 +237,7 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
             document.body,
           )}
 
-        {/* Delete Confirmation Modal - Rendered via Portal */}
+        {/* Mobile Delete Confirmation Modal - Rendered via Portal */}
         {mounted &&
           showDeleteConfirm &&
           createPortal(
@@ -277,29 +275,10 @@ export function ProfileProviderDetailButtons({ providerId }: ProfileProviderDeta
             </div>,
             document.body,
           )}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <FooterAction
-        primaryButton={{
-          label: 'Bearbeiten',
-          icon: 'material-symbols:edit',
-          onClick: handleEditAction,
-          'aria-label': 'Provider bearbeiten',
-          variant: 'primary',
-        }}
-        secondaryButton={{
-          icon: 'material-symbols:more-horiz',
-          onClick: () => setShowActionsMenu(true),
-          'aria-label': 'Weitere Aktionen',
-        }}
-      />
+      </div>
 
       {/* Desktop More Actions Menu Container */}
-      <div className="relative flex-1">
+      <div className="relative hidden flex-1 md:block">
         {/* Desktop Actions Menu */}
         {mounted &&
           showActionsMenu &&
