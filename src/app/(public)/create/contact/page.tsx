@@ -1,9 +1,6 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
@@ -13,16 +10,13 @@ import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { createProviderOrService } from '@/features/providers/services/mutations';
 import { cn } from '@/lib/utils';
 
 export default function ContactPage() {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { user, isLoading } = useAuth();
-  const { formData, updateFormData, clearFormData } = useFormData();
+  const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Determine if in recommendation mode
   const isRecommendationMode = formData.creationMode === 'recommendation';
@@ -58,6 +52,13 @@ export default function ContactPage() {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
+  // The recommend flow submits from /create/recommend (StreamlinedRecommendForm).
+  // This wizard page is owner-mode only; redirect stale recommendation state.
+  if (isRecommendationMode) {
+    router.replace('/create/recommend');
+    return <div className="p-8 text-center">{t('common.loading')}</div>;
+  }
+
   // In recommendation mode, allow anonymous users (skip auth check)
   // Authentication check - redirect to login with return URL (unless recommendation mode)
   if (!user && !isRecommendationMode) {
@@ -88,44 +89,9 @@ export default function ContactPage() {
     );
   }
 
-  const handleSave = async () => {
-    // In recommendation mode, submit directly (skip media step)
-    if (isRecommendationMode) {
-      try {
-        setIsSubmitting(true);
-
-        await createProviderOrService(formData, user, isRecommendationMode);
-
-        // Show success message
-        const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
-        if (isCommunityService) {
-          toast.success(
-            t('create.contact.communityServiceCreated') ||
-              t('create.media.communityServiceCreated'),
-          );
-        } else {
-          toast.success(t('create.contact.providerCreated') || t('create.media.providerCreated'));
-        }
-
-        // Clear form data
-        clearFormData();
-
-        // Invalidate relevant queries
-        queryClient.invalidateQueries({ queryKey: ['providers'] });
-        queryClient.invalidateQueries({ queryKey: ['community-services'] });
-
-        // Redirect to food page (waitlist is disabled)
-        router.push('/food');
-      } catch (error) {
-        console.error('Error creating entity:', error);
-        toast.error(t('create.contact.errorCreating') || t('create.media.errorCreating'));
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
-      // Owner mode: navigate to media step
-      router.push('/create/halal');
-    }
+  const handleSave = () => {
+    // Owner mode: navigate to the halal step
+    router.push('/create/halal');
   };
 
   return (
@@ -147,7 +113,7 @@ export default function ContactPage() {
       >
         {/* Step Indicator */}
         <div className="mb-6">
-          <StepIndicator currentStep={isRecommendationMode ? 2 : 2} steps={STEPS} />
+          <StepIndicator currentStep={2} steps={STEPS} />
         </div>
 
         {/* Subtitle */}
@@ -248,17 +214,9 @@ export default function ContactPage() {
       {/* Footer Action */}
       <FooterAction
         actionButton={{
-          label: isSubmitting
-            ? t('create.contact.submitting') || t('create.media.creating')
-            : isRecommendationMode
-              ? t('create.contact.submitButton') || t('common.submit')
-              : t('common.next'),
-          trailingIcon: isRecommendationMode && !isSubmitting ? undefined : 'lucide:chevron-right',
-          icon: isSubmitting ? 'lucide:loader-2' : undefined,
+          label: t('common.next'),
+          trailingIcon: 'lucide:chevron-right',
           onClick: handleSave,
-          disabled: isSubmitting,
-          loading: isSubmitting,
-          loadingText: t('create.contact.submitting') || t('create.media.creating'),
           variant: 'primary',
         }}
       />

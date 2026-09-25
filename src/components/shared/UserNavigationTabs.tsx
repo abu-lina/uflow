@@ -5,7 +5,7 @@ import { Icon } from '@iconify/react';
 import { LucideHeart } from '@/components/ui/icons/LucideHeart';
 
 // Types
-export type UserTab = 'saved' | 'created' | 'recommendations' | 'create' | 'profile';
+export type UserTab = 'saved' | 'created' | 'recommendations' | 'profile';
 
 export interface UserNavigationTabsProps {
   /** Currently active tab */
@@ -23,11 +23,7 @@ const BUTTON_STYLES = {
   text: 'font-inter-tight text-base font-medium',
 } as const;
 
-
-export function UserNavigationTabs({
-  activeTab,
-  onTabChange,
-}: UserNavigationTabsProps) {
+export function UserNavigationTabs({ activeTab, onTabChange }: UserNavigationTabsProps) {
   return (
     <div
       aria-label="User navigation"
@@ -119,9 +115,7 @@ export function UserNavigationTabs({
           }`}
           icon="tabler:user-edit"
         />
-        {activeTab === 'profile' && (
-          <span className={`${BUTTON_STYLES.text} ml-1.5`}>Profil</span>
-        )}
+        {activeTab === 'profile' && <span className={`${BUTTON_STYLES.text} ml-1.5`}>Profil</span>}
       </button>
     </div>
   );

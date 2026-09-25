@@ -16,23 +16,27 @@ export interface CreateProviderResult {
 
 async function createPrimaryLocation(
   providerId: string,
-  formData: ExtendedProviderFormData
+  formData: ExtendedProviderFormData,
 ): Promise<void> {
-  const { error: locationError } = await supabase
-    .from('locations')
-    .insert([{
+  const { error: locationError } = await supabase.from('locations').insert([
+    {
       provider_id: providerId,
       location_name: null,
-      address_street: formData.isOnlineBusiness ? null : (formData.street || null),
-      address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
-      address_city: formData.isOnlineBusiness ? null : (formData.city || null),
-      address_country: formData.isOnlineBusiness ? null : (formData.country || null),
+      address_street: formData.isOnlineBusiness ? null : formData.street || null,
+      address_zip: formData.isOnlineBusiness ? null : formData.zip || null,
+      address_city: formData.isOnlineBusiness ? null : formData.city || null,
+      address_country: formData.isOnlineBusiness ? null : formData.country || null,
       location_latitude: formData.isOnlineBusiness ? null : (formData.latitude ?? null),
       location_longitude: formData.isOnlineBusiness ? null : (formData.longitude ?? null),
-      show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
+      show_address: formData.isOnlineBusiness
+        ? false
+        : formData.showAddress !== undefined
+          ? formData.showAddress
+          : true,
       contact_phone: formData.phone || null,
       is_primary: true,
-    }]);
+    },
+  ]);
 
   if (locationError) {
     console.error('Error creating primary location:', locationError);
@@ -41,16 +45,14 @@ async function createPrimaryLocation(
 }
 
 async function syncEntityRelations(
-  table: 'provider_offers' | 'provider_needs' | 'community_service_offers' | 'community_service_needs',
+  table:
+    'provider_offers' | 'provider_needs' | 'community_service_offers' | 'community_service_needs',
   entityColumn: 'provider_id',
   relationColumn: 'offer_id' | 'need_id',
   entityId: string,
-  relationIds: string[]
+  relationIds: string[],
 ): Promise<void> {
-  const { error: deleteError } = await supabase
-    .from(table)
-    .delete()
-    .eq(entityColumn, entityId);
+  const { error: deleteError } = await supabase.from(table).delete().eq(entityColumn, entityId);
 
   if (deleteError) {
     throw deleteError;
@@ -82,14 +84,29 @@ async function resolveListingType(categoryId: string): Promise<'food' | 'store' 
     if (data?.applicable_section && ['food', 'store', 'ummah'].includes(data.applicable_section)) {
       return data.applicable_section as 'food' | 'store' | 'ummah';
     }
-  } catch {}
+  } catch {
+    // Category lookup failed; caller treats this as unresolvable.
+  }
   return null;
 }
 
 const TAG_SYNONYMS = {
   muslim: new Set(['muslim', 'muslim_owned', 'muslim-owned']),
-  prayer: new Set(['gebet', 'gebetsraum', 'gebetsfreundlich', 'prayer', 'prayer_space', 'prayer-friendly']),
-  donations: new Set(['spenden', 'spendenbereit', 'makes_donations', 'supports_sadaqah', 'sadaqah']),
+  prayer: new Set([
+    'gebet',
+    'gebetsraum',
+    'gebetsfreundlich',
+    'prayer',
+    'prayer_space',
+    'prayer-friendly',
+  ]),
+  donations: new Set([
+    'spenden',
+    'spendenbereit',
+    'makes_donations',
+    'supports_sadaqah',
+    'sadaqah',
+  ]),
   parking: new Set(['parken', 'parking', 'has_parking']),
   solidarity: new Set(['solidaritaet', 'solidarity', 'economic_solidarity']),
 } as const;
@@ -137,9 +154,9 @@ async function uploadEntityImages(
       throw uploadError;
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucketName)
-      .getPublicUrl(filePath);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(bucketName).getPublicUrl(filePath);
 
     uploadedUrls.push(publicUrl);
   }
@@ -150,16 +167,42 @@ async function uploadEntityImages(
 /**
  * Creates a provider or community service from form data
  * Handles image uploads, entity creation, and relationships
- * 
+ *
  * @param formData - The form data containing all provider/service information
  * @param user - The authenticated user (null for anonymous recommendations)
  * @param isRecommendationMode - Whether this is a recommendation (anonymous) or owner creation
  * @returns The created entity ID (provider_id or community_service_id)
  */
+// AC5.9: a second submission with the same identity while one is in flight
+// returns the in-flight promise instead of inserting a duplicate provider.
+const inFlightSubmissions = new Map<string, Promise<CreateProviderResult>>();
+
 export async function createProviderOrService(
   formData: ExtendedProviderFormData,
   user: User | null,
-  isRecommendationMode: boolean
+  isRecommendationMode: boolean,
+): Promise<CreateProviderResult> {
+  const dedupeKey = JSON.stringify([
+    formData.title,
+    formData.category,
+    formData.city,
+    formData.userEmail ?? null,
+    user?.id ?? null,
+    isRecommendationMode,
+  ]);
+  const existing = inFlightSubmissions.get(dedupeKey);
+  if (existing) return existing;
+  const submission = doCreateProviderOrService(formData, user, isRecommendationMode).finally(() =>
+    inFlightSubmissions.delete(dedupeKey),
+  );
+  inFlightSubmissions.set(dedupeKey, submission);
+  return submission;
+}
+
+async function doCreateProviderOrService(
+  formData: ExtendedProviderFormData,
+  user: User | null,
+  isRecommendationMode: boolean,
 ): Promise<CreateProviderResult> {
   // Explicitly check for null/undefined user in recommendation mode
   const isAnonymous = (user === null || user === undefined) && isRecommendationMode;
@@ -183,11 +226,15 @@ export async function createProviderOrService(
       listing_type: 'ummah',
       provider_name: formData.title,
       provider_description: formData.description || null,
-      address_street: formData.isOnlineBusiness ? null : (formData.street || null),
-      address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
-      address_city: formData.isOnlineBusiness ? null : (formData.city || null),
-      address_country: formData.isOnlineBusiness ? null : (formData.country || null),
-      show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
+      address_street: formData.isOnlineBusiness ? null : formData.street || null,
+      address_zip: formData.isOnlineBusiness ? null : formData.zip || null,
+      address_city: formData.isOnlineBusiness ? null : formData.city || null,
+      address_country: formData.isOnlineBusiness ? null : formData.country || null,
+      show_address: formData.isOnlineBusiness
+        ? false
+        : formData.showAddress !== undefined
+          ? formData.showAddress
+          : true,
       category_id: formData.category || null,
       contact_email: formData.email || null,
       contact_phone: formData.phone || null,
@@ -199,9 +246,7 @@ export async function createProviderOrService(
       recommender_email: isAnonymous && formData.userEmail ? formData.userEmail : null,
     };
 
-    const { error: serviceError } = await supabase
-      .from('providers')
-      .insert([insertData]);
+    const { error: serviceError } = await supabase.from('providers').insert([insertData]);
 
     if (serviceError) {
       console.error('Error creating ummah provider:', serviceError);
@@ -233,17 +278,30 @@ export async function createProviderOrService(
     // This bypasses the SELECT policy issue for pending reviews
     const generatedProviderId = crypto.randomUUID();
 
+    // providers.listing_type is NOT NULL with no default; it must be resolved
+    // before the insert, not after it.
+    const resolvedListingType = await resolveListingType(formData.category);
+    if (!resolvedListingType) {
+      throw new Error(
+        `Unable to resolve listing_type for category '${formData.category}'; provider was not created.`,
+      );
+    }
+
     const normalizedTags = new Set(
-      (formData.tags || [])
-        .map((tag) => tag.trim().toLowerCase())
-        .filter((tag) => tag.length > 0),
+      (formData.tags || []).map((tag) => tag.trim().toLowerCase()).filter((tag) => tag.length > 0),
     );
 
-    const hasMuslimOwnedTag = Array.from(TAG_SYNONYMS.muslim).some((tag) => normalizedTags.has(tag));
+    const hasMuslimOwnedTag = Array.from(TAG_SYNONYMS.muslim).some((tag) =>
+      normalizedTags.has(tag),
+    );
     const hasPrayerTag = Array.from(TAG_SYNONYMS.prayer).some((tag) => normalizedTags.has(tag));
-    const hasDonationsTag = Array.from(TAG_SYNONYMS.donations).some((tag) => normalizedTags.has(tag));
+    const hasDonationsTag = Array.from(TAG_SYNONYMS.donations).some((tag) =>
+      normalizedTags.has(tag),
+    );
     const hasParkingTag = Array.from(TAG_SYNONYMS.parking).some((tag) => normalizedTags.has(tag));
-    const hasSolidarityTag = Array.from(TAG_SYNONYMS.solidarity).some((tag) => normalizedTags.has(tag));
+    const hasSolidarityTag = Array.from(TAG_SYNONYMS.solidarity).some((tag) =>
+      normalizedTags.has(tag),
+    );
 
     const requestedBadgeKeys: string[] = [];
     if (hasMuslimOwnedTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.muslim);
@@ -251,18 +309,23 @@ export async function createProviderOrService(
     if (hasDonationsTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.donations);
     if (hasParkingTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.parking);
     if (hasSolidarityTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.solidarity);
-    
+
     // For anonymous users, explicitly set both ID fields to null to satisfy RLS policy
     // IMPORTANT: We must use explicit null (not undefined) and ensure fields are always present
     const insertData: Record<string, unknown> = {
       provider_id: generatedProviderId,
+      listing_type: resolvedListingType,
       provider_name: formData.title,
       // If online business, all address fields are null
-      address_street: formData.isOnlineBusiness ? null : (formData.street || null),
-      address_zip: formData.isOnlineBusiness ? null : (formData.zip || null),
-      address_city: formData.isOnlineBusiness ? null : (formData.city || null),
-      address_country: formData.isOnlineBusiness ? null : (formData.country || null),
-      show_address: formData.isOnlineBusiness ? false : (formData.showAddress !== undefined ? formData.showAddress : true),
+      address_street: formData.isOnlineBusiness ? null : formData.street || null,
+      address_zip: formData.isOnlineBusiness ? null : formData.zip || null,
+      address_city: formData.isOnlineBusiness ? null : formData.city || null,
+      address_country: formData.isOnlineBusiness ? null : formData.country || null,
+      show_address: formData.isOnlineBusiness
+        ? false
+        : formData.showAddress !== undefined
+          ? formData.showAddress
+          : true,
       category_id: formData.category || null,
       contact_email: formData.email || null,
       contact_phone: formData.phone || null,
@@ -287,7 +350,7 @@ export async function createProviderOrService(
       // Authenticated users
       Object.assign(insertData, {
         user_created_id: user.id,
-        provider_owner_id: (isOwner && user.id) ? user.id : null,
+        provider_owner_id: isOwner && user.id ? user.id : null,
       });
     } else {
       // Fallback: user is null but not anonymous (shouldn't happen, but be safe)
@@ -298,9 +361,7 @@ export async function createProviderOrService(
     }
 
     // Insert without SELECT to avoid SELECT policy blocking pending reviews
-    const { error: providerError } = await supabase
-      .from('providers')
-      .insert([insertData]);
+    const { error: providerError } = await supabase.from('providers').insert([insertData]);
 
     if (providerError) {
       console.error('Error creating provider:', providerError);
@@ -325,27 +386,35 @@ export async function createProviderOrService(
       createPrimaryLocation(generatedProviderId, formData),
     ]);
 
-    // Save halal attestation data to extension table
-    try {
-      const resolvedListingType = await resolveListingType(formData.category);
-      if (resolvedListingType === 'food' || resolvedListingType === 'store') {
-        const extTable = resolvedListingType === 'food' ? 'food_providers' : 'store_providers';
-        const extPayload: Record<string, unknown> = {
-          provider_id: generatedProviderId,
-          no_alcohol: formData.no_alcohol || false,
-          no_pork: formData.no_pork || false,
-          no_gambling: formData.no_gambling || false,
-          verification_method: formData.verification_method || 'online',
-          has_certificate: formData.has_certificate || false,
-          certificate_url: formData.certificate_url || null,
-        };
-        const { error: extError } = await supabase
-          .from(extTable)
-          .upsert(extPayload, { onConflict: 'provider_id' });
-        if (extError) console.error('Error saving halal data:', extError);
+    // Save halal attestation data to the extension table in the same logical
+    // operation. The 228 halal gate treats a missing extension row as
+    // all-attestations-missing, so a food/store provider without one can never
+    // be approved — failure here must not be swallowed.
+    if (resolvedListingType === 'food' || resolvedListingType === 'store') {
+      const extTable = resolvedListingType === 'food' ? 'food_providers' : 'store_providers';
+      const extPayload: Record<string, unknown> = {
+        provider_id: generatedProviderId,
+        no_alcohol: formData.no_alcohol || false,
+        no_pork: formData.no_pork || false,
+        no_gambling: formData.no_gambling || false,
+        verification_method: formData.verification_method || 'online',
+        has_certificate: formData.has_certificate || false,
+        certificate_url: formData.certificate_url || null,
+      };
+      const { error: extError } = await supabase
+        .from(extTable)
+        .upsert(extPayload, { onConflict: 'provider_id' });
+      if (extError) {
+        console.error('Error saving halal data:', extError);
+        // Best-effort compensation: remove the provider so it cannot sit
+        // pending forever without an approvable extension row.
+        try {
+          await supabase.from('providers').delete().eq('provider_id', generatedProviderId);
+        } catch (cleanupError) {
+          console.error('Failed to clean up provider after extension write failure:', cleanupError);
+        }
+        throw extError;
       }
-    } catch (e) {
-      console.error('Failed to save halal attestation:', e);
     }
 
     if (requestedBadgeKeys.length > 0) {
@@ -374,7 +443,10 @@ export async function createProviderOrService(
 
         if (providerBadgesError) {
           badgeInsertFailed = true;
-          console.error('Error creating provider badges during provider creation:', providerBadgesError);
+          console.error(
+            'Error creating provider badges during provider creation:',
+            providerBadgesError,
+          );
         }
       }
 
@@ -393,7 +465,10 @@ export async function createProviderOrService(
             .eq('provider_id', generatedProviderId);
 
           if (fallbackError) {
-            console.error('Error applying fallback provider booleans after badge insert failure:', fallbackError);
+            console.error(
+              'Error applying fallback provider booleans after badge insert failure:',
+              fallbackError,
+            );
           }
         }
       }
@@ -404,7 +479,7 @@ export async function createProviderOrService(
       for (const serviceId of formData.selectedCommunityServiceIds) {
         const { error: relationshipError } = await createProviderCommunityServiceRelationship(
           generatedProviderId,
-          serviceId
+          serviceId,
         );
 
         if (relationshipError) {
@@ -417,7 +492,3 @@ export async function createProviderOrService(
     return { provider_id: generatedProviderId };
   }
 }
-
-
-
-
