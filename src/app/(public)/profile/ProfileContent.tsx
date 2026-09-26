@@ -540,6 +540,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     imageUrl={getProviderImageUrl(provider)}
                     likes={provider.bookmark_count || 0}
                     savedText={t('actions.saved')}
+                    statusBadge={
+                      provider.review_status === 'pending'
+                        ? t('submissionStatus.pendingBadge')
+                        : undefined
+                    }
                     title={provider.provider_name}
                     onClick={() => router.push(`/p/${provider.provider_id}`)}
                   />
@@ -583,6 +588,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
                     imageUrl={getProviderImageUrl(provider)}
                     likes={provider.bookmark_count || 0}
                     savedText={t('actions.saved')}
+                    statusBadge={
+                      provider.review_status === 'pending'
+                        ? t('submissionStatus.pendingBadge')
+                        : undefined
+                    }
                     title={provider.provider_name}
                     onClick={() => router.push(`/p/${provider.provider_id}`)}
                   />
@@ -778,6 +788,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       bottomText={address}
                       category={getCategoryName(provider.category)}
                       imageUrl={getProviderImageUrl(provider)}
+                      statusBadge={
+                        provider.review_status === 'pending'
+                          ? t('submissionStatus.pendingBadge')
+                          : undefined
+                      }
                       title={provider.provider_name}
                       onClick={() => router.push(`/p/${provider.provider_id}`)}
                     />
@@ -869,6 +884,11 @@ export function ProfileContent({ user }: ProfileContentProps) {
                       bottomText={address}
                       category={getCategoryName(provider.category)}
                       imageUrl={getProviderImageUrl(provider)}
+                      statusBadge={
+                        provider.review_status === 'pending'
+                          ? t('submissionStatus.pendingBadge')
+                          : undefined
+                      }
                       title={provider.provider_name}
                       onClick={() => router.push(`/p/${provider.provider_id}`)}
                     />

@@ -1232,4 +1232,12 @@ export const en = {
   submissionValidation: {
     fieldRequired: '"{{field}}" is required.',
   },
+  // Plan 255 C5 (#415): submission status (pending review)
+  submissionStatus: {
+    awaitingReview: 'Your submission has been saved and is awaiting a manual review.',
+    provisionalSeal:
+      'Provisional seal: it only becomes public once the submission has been reviewed.',
+    pendingBadge: 'Under review',
+    submittedToast: 'Submitted! Your entry is now awaiting review.',
+  },
 } as const;

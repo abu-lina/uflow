@@ -1251,4 +1251,12 @@ export const de = {
   submissionValidation: {
     fieldRequired: '"{{field}}" ist ein Pflichtfeld.',
   },
+  // Plan 255 C5 (#415): submission status (pending review)
+  submissionStatus: {
+    awaitingReview: 'Deine Einreichung wurde gespeichert und wartet auf eine manuelle Prüfung.',
+    provisionalSeal:
+      'Vorläufiges Siegel: Es wird erst öffentlich angezeigt, wenn die Einreichung geprüft wurde.',
+    pendingBadge: 'Wird geprüft',
+    submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
+  },
 } as const;

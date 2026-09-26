@@ -13,7 +13,10 @@ import { createProviderOrService } from '@/features/providers/services/mutations
 import { trackEvent } from '@/lib/analytics/plausible';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
-import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScreen';
+import {
+  RecommendSuccessScreen,
+  type SubmittedSealInput,
+} from '@/components/shared/RecommendSuccessScreen';
 import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 import {
   recommendSubmissionSchema,
@@ -280,6 +283,7 @@ export function StreamlinedRecommendForm({
   const { user } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedSeal, setSubmittedSeal] = useState<SubmittedSealInput | null>(null);
   const searchParams = useSearchParams();
   const showSuccess = searchParams.get('success') === 'true';
   const [categories, setCategories] = useState<Category[]>([]);
@@ -1070,6 +1074,7 @@ export function StreamlinedRecommendForm({
     });
     // Clear saved form data from localStorage
     clearSavedRecommendFormData();
+    setSubmittedSeal(null);
   }, [initialCity, updateFormData, router, clearSavedRecommendFormData]);
 
   // Handle "Zurück zur Übersicht" - navigate to home
@@ -1148,6 +1153,17 @@ export function StreamlinedRecommendForm({
         city: formData.city,
         has_phone: !!formData.phone,
         has_website: !!formData.website,
+      });
+
+      // Keep the submitted verification inputs for the provisional seal on the
+      // success screen; updateFormData below resets them to undefined.
+      setSubmittedSeal({
+        verificationMethod: (contextFormData.verification_method || 'online') as
+          'online' | 'onsite',
+        hasCertificate: contextFormData.has_certificate || false,
+        noAlcohol: contextFormData.no_alcohol ?? null,
+        noPork: contextFormData.no_pork ?? null,
+        noGambling: contextFormData.no_gambling ?? null,
       });
 
       // Clear form data
@@ -1291,7 +1307,11 @@ export function StreamlinedRecommendForm({
   // Show success screen if submission was successful
   if (showSuccess) {
     return (
-      <RecommendSuccessScreen onGoBack={handleGoBack} onRecommendAnother={handleRecommendAnother} />
+      <RecommendSuccessScreen
+        seal={submittedSeal ?? undefined}
+        onGoBack={handleGoBack}
+        onRecommendAnother={handleRecommendAnother}
+      />
     );
   }
 

@@ -118,12 +118,8 @@ export default function MediaUploadPage() {
         false, // isRecommendationMode = false (owner mode)
       );
 
-      // Show success message
-      if (isCommunityService) {
-        toast.success(t('create.media.communityServiceCreated'));
-      } else {
-        toast.success(t('create.media.providerCreated'));
-      }
+      // Show success message; the submission is pending review, not live yet.
+      toast.success(t('submissionStatus.submittedToast'));
 
       // Clear form data and redirect
       clearFormData();

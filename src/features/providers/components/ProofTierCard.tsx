@@ -16,7 +16,11 @@ import type { Provider } from '@/services/providers';
 export function computeSealTier(
   verificationMethod: 'online' | 'onsite' | null | undefined,
   hasCertificate: boolean | null | undefined,
-  attestation?: { noAlcohol?: boolean | null; noPork?: boolean | null; noGambling?: boolean | null },
+  attestation?: {
+    noAlcohol?: boolean | null;
+    noPork?: boolean | null;
+    noGambling?: boolean | null;
+  },
 ): 'bronze' | 'silver' | 'gold' | null {
   if (hasCertificate) return 'gold';
   if (!verificationMethod && !hasCertificate) return null;
@@ -24,7 +28,10 @@ export function computeSealTier(
   // Without this, a provider with verification_method set as a DB default
   // (but no actual halal check done) would auto-show as bronze.
   if (attestation) {
-    const hasAttestation = Boolean(attestation.noAlcohol) || Boolean(attestation.noPork) || Boolean(attestation.noGambling);
+    const hasAttestation =
+      Boolean(attestation.noAlcohol) ||
+      Boolean(attestation.noPork) ||
+      Boolean(attestation.noGambling);
     if (!hasAttestation) return null;
   }
   if (verificationMethod === 'onsite') return 'silver';
@@ -45,6 +52,9 @@ interface ProofTierCardProps {
   noPork?: Provider['no_pork'];
   noGambling?: Provider['no_gambling'];
   reviewStatus?: Provider['review_status'];
+  // Renders the seal for a pending submission (success screen), labelled
+  // provisional since review can still change or reject it.
+  provisional?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -220,14 +230,36 @@ export function ProofTierCard({
   noPork,
   noGambling,
   reviewStatus,
+  provisional = false,
 }: ProofTierCardProps) {
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const tier = computeSealTier(verificationMethod, hasCertificate, { noAlcohol, noPork, noGambling });
+  const tier = computeSealTier(verificationMethod, hasCertificate, {
+    noAlcohol,
+    noPork,
+    noGambling,
+  });
 
   // No tier means no verification data — don't render the card at all
   if (!tier) return null;
+
+  if (provisional) {
+    return (
+      <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
+        <SealRow
+          activeTier={tier}
+          altText={t(
+            `providerDetail.proofTier.sealAlt${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
+          )}
+        />
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <HugeHalalIcon aria-hidden className="h-6 w-6 flex-shrink-0 text-amber-600" />
+          <p className="text-sm text-amber-700">{t('submissionStatus.provisionalSeal')}</p>
+        </div>
+      </section>
+    );
+  }
 
   // Don't show the seal until an admin has approved the provider
   if (reviewStatus !== 'approved') {
@@ -235,9 +267,7 @@ export function ProofTierCard({
       <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
         <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
           <HugeHalalIcon aria-hidden className="h-6 w-6 flex-shrink-0 text-amber-600" />
-          <p className="text-sm text-amber-700">
-            {t('providerDetail.proofTier.pendingReview')}
-          </p>
+          <p className="text-sm text-amber-700">{t('providerDetail.proofTier.pendingReview')}</p>
         </div>
       </section>
     );
