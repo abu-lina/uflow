@@ -394,3 +394,17 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Learning**: Hiding pixels does not defer work. To make lazy loading safe for a shared hook, add an opt-in flag (`deferPinsUntilMapOpened`) rather than changing default behaviour — `RootPageContent` needs pins in list view, `ProvidersContent` does not. For heavy repeated SVG artwork, render it once as a `<symbol>` sprite and reference it with `<use>` from a shared `L.divIcon`; substring edits on the existing markup kept the geometry pixel-identical without re-deriving paths.
 - **Change to prevent repeat**: When a page mounts a subtree that is only needed for a secondary view, gate mount on "was it ever shown" (`hasOpenedMap`) instead of toggling visibility, and scope `-webkit-overflow-scrolling` off universal selectors.
 - **Task/PR**: fix/261-food-city-scroll-block (Plan 261)
+
+### 2026-09-26 — Size a suspected cost against real row counts before calling it the root cause
+
+- **Context**: Plan 261 was explained as "one ~8 KB marker per nationwide food location saturates the main thread". Querying UAT afterwards showed only **6** approved food locations with coordinates (774 food locations exist, but 801 are pending and 110 rejected), so the marker loop was ~6 iterations there, not hundreds. The real UAT costs were the Leaflet chunk, `L.map()` init with tile requests, and the universal `-webkit-overflow-scrolling` compositing rule.
+- **Learning**: A code path that provably executes is not yet a sized cost. Reading the code tells you the loop runs; only the row count tells you whether it runs 6 times or 6000. Get the count before attributing magnitude, because the fix you prioritise depends on it.
+- **Change to prevent repeat**: In the Analyst/Diagnose phase, when a hypothesis is "this is expensive because it happens per row", query the actual count for the reported environment and cite it. State per-item cost and item count separately.
+- **Task/PR**: PR #420 (fix/261-food-city-scroll-block), Request 261
+
+### 2026-09-26 — PostgREST streams every matching row unless you pass an explicit `.limit()`
+
+- **Context**: `getMapLocations` selected every approved food location joined with providers and categories, with no limit and no ordering. Nothing in the call path bounded it; the map just rendered whatever came back.
+- **Learning**: Supabase/PostgREST query builders have no implicit page size, so an unbounded `.select()` is a latent full-table read that grows silently with the data. Pair the cap with an `.order()` so truncation is deterministic, otherwise the returned subset shuffles between loads once the cap is hit.
+- **Change to prevent repeat**: Any service function that returns a collection for rendering needs an explicit `.limit()` plus an `.order()`. Export the cap as a named constant (`MAP_LOCATIONS_LIMIT`) so tests can assert it and callers can see the ceiling.
+- **Task/PR**: PR #420 (fix/261-food-city-scroll-block), Request 261
