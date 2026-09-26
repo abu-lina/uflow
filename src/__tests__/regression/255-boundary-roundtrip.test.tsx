@@ -585,3 +585,158 @@ describe('H4: failed extension write + failed cleanup surfaces the orphan', () =
     expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
   });
 });
+
+// ── UAT-133: the full submission walk and the orphan window ─────────────────
+//
+// UAT regression: a recommendation died at the locations INSERT (RLS allowed
+// provider_owner_id only; recommendations have provider_owner_id NULL), which
+// left a pending providers row with no location and no extension row — and
+// the compensating delete could not run either. The mock cannot exercise RLS
+// itself; migration 133 carries the policy fix and is asserted textually here.
+// What these tests prove is that every write the flow performs is issued in
+// order with one shared provider id, and that any post-insert failure runs
+// the compensating delete against that same id.
+
+describe('UAT-133: a recommendation submission lands every write', () => {
+  beforeEach(() => {
+    resetSupabaseMocks();
+    localStorage.clear();
+  });
+
+  it('provider, relations, location and extension row all write with one id', async () => {
+    const user = { id: 'user-1' } as User;
+    await createProviderOrService(
+      ownerFormData({
+        creationMode: 'recommendation',
+        no_alcohol: true,
+        no_pork: null,
+        no_gambling: false,
+        offers_ids: ['offer-1'],
+        needs_ids: ['need-1'],
+      }),
+      user,
+    );
+
+    // providers row: creator identified, owner NULL, pending.
+    const providerRow = (mockProviderInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    const providerId = providerRow.provider_id as string;
+    expect(providerRow.user_created_id).toBe('user-1');
+    expect(providerRow.provider_owner_id).toBeNull();
+    expect(providerRow.review_status).toBe('pending');
+
+    // Relation rows (offers + needs) point at the same provider.
+    expect(mockRelationInsert).toHaveBeenCalledTimes(2);
+    const relRows = mockRelationInsert.mock.calls.flatMap(
+      (call) => call[0] as Array<Record<string, unknown>>,
+    );
+    expect(relRows.length).toBe(2);
+    expect(relRows.every((r) => r.provider_id === providerId)).toBe(true);
+
+    // Primary location — the write that died under the owner-only policy.
+    expect(mockLocationInsert).toHaveBeenCalledTimes(1);
+    const locationRow = (mockLocationInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    expect(locationRow.provider_id).toBe(providerId);
+    expect(locationRow.is_primary).toBe(true);
+
+    // Extension row carries the attestation (including the NULL "not sure").
+    const ext = mockFoodExtUpsert.mock.calls[0][0];
+    expect(ext.provider_id).toBe(providerId);
+    expect(ext.no_alcohol).toBe(true);
+    expect(ext.no_pork).toBeNull();
+    expect(ext.no_gambling).toBe(false);
+  });
+
+  it('a location-insert failure after the provider insert deletes the orphan', async () => {
+    mockLocationInsert.mockResolvedValue({ error: { message: 'rls violation' } });
+
+    const user = { id: 'user-1' } as User;
+    const err: unknown = await createProviderOrService(
+      ownerFormData({
+        creationMode: 'recommendation',
+        no_alcohol: true,
+        no_pork: true,
+        no_gambling: true,
+      }),
+      user,
+    ).then(
+      () => {
+        throw new Error('expected rejection');
+      },
+      (e: unknown) => e,
+    );
+
+    // The original error propagates, and the orphan row was deleted.
+    expect((err as { message: string }).message).toContain('rls violation');
+    expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
+    const providerRow = (mockProviderInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    expect(mockProviderDeleteEq.mock.calls[0][0]).toBe('provider_id');
+    expect(mockProviderDeleteEq.mock.calls[0][1]).toBe(providerRow.provider_id);
+  });
+
+  it('a relation-insert failure after the provider insert deletes the orphan', async () => {
+    mockRelationInsert.mockResolvedValue({ error: { message: 'relation write failed' } });
+
+    const user = { id: 'user-1' } as User;
+    await expect(
+      createProviderOrService(
+        ownerFormData({
+          creationMode: 'recommendation',
+          no_alcohol: true,
+          no_pork: true,
+          no_gambling: true,
+          offers_ids: ['offer-1'],
+        }),
+        user,
+      ),
+    ).rejects.toEqual(expect.objectContaining({ message: 'relation write failed' }));
+    expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
+  });
+
+  it('an ummah submission also cleans up when a post-insert write fails', async () => {
+    mockLocationInsert.mockResolvedValue({ error: { message: 'rls violation' } });
+
+    const user = { id: 'user-1' } as User;
+    await expect(
+      createProviderOrService(
+        ownerFormData({
+          creationMode: 'recommendation',
+          category: '4470c3e0-458f-40a6-a96e-ca0fbdf145d7', // ummah category
+          no_alcohol: undefined,
+          no_pork: undefined,
+          no_gambling: undefined,
+        }),
+        user,
+      ),
+    ).rejects.toEqual(expect.objectContaining({ message: 'rls violation' }));
+    expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── UAT-133: migration 133 policy text ───────────────────────────────────────
+//
+// Text-level only: the policies are not exercised against a live database in
+// this suite, so their runtime effect (a creator actually being able to
+// insert a location, and to delete their own pending provider) is unproven
+// until the migration is applied.
+
+describe('UAT-133: migration 133 file contents', () => {
+  const sql = readSrc('supabase/migrations/133_recommendation_location_and_cleanup_policies.sql');
+
+  it('migration file contains a creator branch on the locations INSERT policy', () => {
+    expect(sql).toContain('ON "public"."locations" FOR INSERT');
+    expect(sql).toContain('"p"."provider_owner_id" = ( SELECT "auth"."uid"() AS "uid")');
+    expect(sql).toContain('"p"."user_created_id" = ( SELECT "auth"."uid"() AS "uid")');
+    // EXISTS, not the NULL-producing IN-subquery that caused the outage.
+    expect(sql).toContain('EXISTS (');
+    expect(sql).not.toContain('auth.uid() IN (');
+  });
+
+  it('migration file contains a pending-creator branch on the providers DELETE policy', () => {
+    expect(sql).toContain('ON "public"."providers" FOR DELETE');
+    expect(sql).toContain('"user_created_id" = ( SELECT "auth"."uid"() AS "uid")');
+    expect(sql).toContain('"review_status" = \'pending\'');
+    // The admin/moderator branch is preserved.
+    expect(sql).toContain('\'admin\'::"public"."user_role"');
+    expect(sql).toContain('\'moderator\'::"public"."user_role"');
+  });
+});

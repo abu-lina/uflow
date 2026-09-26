@@ -258,6 +258,8 @@ describe('providerService multi-location creation', () => {
       if (table === 'providers') {
         return {
           insert: () => ({ error: null }),
+          // Post-insert failures now run a compensating delete (#415).
+          delete: () => ({ eq: async () => ({ error: null }) }),
         };
       }
       if (table === 'locations') {

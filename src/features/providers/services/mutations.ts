@@ -43,6 +43,34 @@ async function createPrimaryLocation(
   }
 }
 
+/**
+ * Best-effort compensation for a failed submission (#415): a provider row
+ * with no location — or, for food/store, no extension row — can never be
+ * approved, so it must not be left behind by any post-insert failure. The
+ * delete is RLS-gated (provider_owner_id, or user_created_id while the row
+ * is still 'pending', per migration 133); when it fails, the orphan id is
+ * surfaced for manual removal. Always throws.
+ */
+async function cleanupAfterFailedInsert(providerId: string, cause: unknown): Promise<never> {
+  const { error: cleanupError } = await supabase
+    .from('providers')
+    .delete()
+    .eq('provider_id', providerId);
+  const causeMessage =
+    cause && typeof cause === 'object' && 'message' in cause
+      ? String((cause as { message: unknown }).message)
+      : String(cause);
+  if (cleanupError) {
+    console.error('Failed to clean up orphaned provider after submission failure:', cleanupError);
+    throw new Error(
+      `Submission failed (${causeMessage}) and cleanup of orphaned provider '${providerId}' also failed (${cleanupError.message}). The provider row requires manual removal.`,
+    );
+  }
+  // Rethrow the original error object (PostgrestError is not an Error
+  // instance) so callers keep its code/details.
+  throw cause;
+}
+
 async function syncEntityRelations(
   table:
     'provider_offers' | 'provider_needs' | 'community_service_offers' | 'community_service_needs',
@@ -273,23 +301,27 @@ async function doCreateProviderOrService(
       throw serviceError;
     }
 
-    await Promise.all([
-      syncEntityRelations(
-        'provider_offers',
-        'provider_id',
-        'offer_id',
-        generatedServiceId,
-        formData.offers_ids || [],
-      ),
-      syncEntityRelations(
-        'provider_needs',
-        'provider_id',
-        'need_id',
-        generatedServiceId,
-        formData.needs_ids || [],
-      ),
-      createPrimaryLocation(generatedServiceId, formData),
-    ]);
+    try {
+      await Promise.all([
+        syncEntityRelations(
+          'provider_offers',
+          'provider_id',
+          'offer_id',
+          generatedServiceId,
+          formData.offers_ids || [],
+        ),
+        syncEntityRelations(
+          'provider_needs',
+          'provider_id',
+          'need_id',
+          generatedServiceId,
+          formData.needs_ids || [],
+        ),
+        createPrimaryLocation(generatedServiceId, formData),
+      ]);
+    } catch (error) {
+      await cleanupAfterFailedInsert(generatedServiceId, error);
+    }
 
     return { community_service_id: generatedServiceId };
   } else {
@@ -384,75 +416,65 @@ async function doCreateProviderOrService(
       throw providerError;
     }
 
-    await Promise.all([
-      syncEntityRelations(
-        'provider_offers',
-        'provider_id',
-        'offer_id',
-        generatedProviderId,
-        formData.offers_ids || [],
-      ),
-      syncEntityRelations(
-        'provider_needs',
-        'provider_id',
-        'need_id',
-        generatedProviderId,
-        formData.needs_ids || [],
-      ),
-      createPrimaryLocation(generatedProviderId, formData),
-    ]);
+    // Every write after the providers insert is compensated: a failure
+    // anywhere in here must not leave an unapprovable orphan row (#415).
+    try {
+      await Promise.all([
+        syncEntityRelations(
+          'provider_offers',
+          'provider_id',
+          'offer_id',
+          generatedProviderId,
+          formData.offers_ids || [],
+        ),
+        syncEntityRelations(
+          'provider_needs',
+          'provider_id',
+          'need_id',
+          generatedProviderId,
+          formData.needs_ids || [],
+        ),
+        createPrimaryLocation(generatedProviderId, formData),
+      ]);
 
-    // Save halal attestation data to the extension table in the same logical
-    // operation. The 228 halal gate treats a missing extension row as
-    // all-attestations-missing, so a food/store provider without one can never
-    // be approved — failure here must not be swallowed.
-    if (resolvedListingType === 'food' || resolvedListingType === 'store') {
-      const extTable = resolvedListingType === 'food' ? 'food_providers' : 'store_providers';
-      // AC6.8: upload the certificate (if any) before writing the row so
-      // certificate_url always points at a stored file.
-      const certificateUrl = formData.certificate_file
-        ? await uploadCertificate(formData.certificate_file, user?.id)
-        : formData.certificate_url || null;
-      const extPayload: Record<string, unknown> = {
-        provider_id: generatedProviderId,
-        // Tri-state (#415): true=yes, false=submitter said no, null=not sure.
-        // NULL must survive so reviewers can triage "no" vs "unknown".
-        no_alcohol: formData.no_alcohol ?? null,
-        no_pork: formData.no_pork ?? null,
-        no_gambling: formData.no_gambling ?? null,
-        // verification_method is TEXT NOT NULL DEFAULT 'online' with
-        // CHECK (... IN ('online','onsite')) — the 'online' fallback is a
-        // schema default and carries no verification claim (computeSealTier
-        // requires a truthy attestation before awarding a tier anyway).
-        verification_method: formData.verification_method || 'online',
-        // AC6.8: has_certificate is only written when a certificate URL
-        // actually exists — a bare toggle must never produce a gold tier.
-        has_certificate: certificateUrl != null,
-        certificate_url: certificateUrl,
-      };
-      const { error: extError } = await supabase
-        .from(extTable)
-        .upsert(extPayload, { onConflict: 'provider_id' });
-      if (extError) {
-        console.error('Error saving halal data:', extError);
-        // Best-effort compensation: remove the provider so it cannot sit
-        // pending forever without an approvable extension row. The delete is
-        // RLS-gated on provider_owner_id; for recommendations that is null,
-        // so it fails for exactly the case it exists for. The returned error
-        // must be surfaced (supabase returns errors, it does not throw) and
-        // the orphan id included so the row can be cleaned up manually.
-        const { error: cleanupError } = await supabase
-          .from('providers')
-          .delete()
-          .eq('provider_id', generatedProviderId);
-        if (cleanupError) {
-          console.error('Failed to clean up provider after extension write failure:', cleanupError);
-          throw new Error(
-            `Halal data save failed (${extError.message}) and cleanup of orphaned provider '${generatedProviderId}' also failed (${cleanupError.message}). The provider row requires manual removal.`,
-          );
+      // Save halal attestation data to the extension table in the same logical
+      // operation. The 228 halal gate treats a missing extension row as
+      // all-attestations-missing, so a food/store provider without one can never
+      // be approved — failure here must not be swallowed.
+      if (resolvedListingType === 'food' || resolvedListingType === 'store') {
+        const extTable = resolvedListingType === 'food' ? 'food_providers' : 'store_providers';
+        // AC6.8: upload the certificate (if any) before writing the row so
+        // certificate_url always points at a stored file.
+        const certificateUrl = formData.certificate_file
+          ? await uploadCertificate(formData.certificate_file, user?.id)
+          : formData.certificate_url || null;
+        const extPayload: Record<string, unknown> = {
+          provider_id: generatedProviderId,
+          // Tri-state (#415): true=yes, false=submitter said no, null=not sure.
+          // NULL must survive so reviewers can triage "no" vs "unknown".
+          no_alcohol: formData.no_alcohol ?? null,
+          no_pork: formData.no_pork ?? null,
+          no_gambling: formData.no_gambling ?? null,
+          // verification_method is TEXT NOT NULL DEFAULT 'online' with
+          // CHECK (... IN ('online','onsite')) — the 'online' fallback is a
+          // schema default and carries no verification claim (computeSealTier
+          // requires a truthy attestation before awarding a tier anyway).
+          verification_method: formData.verification_method || 'online',
+          // AC6.8: has_certificate is only written when a certificate URL
+          // actually exists — a bare toggle must never produce a gold tier.
+          has_certificate: certificateUrl != null,
+          certificate_url: certificateUrl,
+        };
+        const { error: extError } = await supabase
+          .from(extTable)
+          .upsert(extPayload, { onConflict: 'provider_id' });
+        if (extError) {
+          console.error('Error saving halal data:', extError);
+          throw extError;
         }
-        throw extError;
       }
+    } catch (error) {
+      await cleanupAfterFailedInsert(generatedProviderId, error);
     }
 
     if (requestedBadgeKeys.length > 0) {
