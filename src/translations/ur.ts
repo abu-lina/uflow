@@ -727,6 +727,12 @@ export const ur = {
     afterConfirmationLogin: 'تصدیق کے بعد لاگ ان',
     loading: 'Logging in...',
     submit: 'Login',
+    magicLinkSentTitle: 'میجک لنک بھیج دیا گیا!',
+    magicLinkSentDescription: 'براہ کرم اپنی ای میل چیک کریں اور لاگ ان کرنے کے لیے لنک پر کلک کریں۔',
+    magicLinkFailedToast: 'میجک لنک ناکام ہو گیا',
+    magicLinkFailedError: 'میجک لنک بھیجنے میں خرابی۔ براہ کرم دوبارہ کوشش کریں۔',
+    magicLinkDiagnostic: 'تشخیص کے لیے براہ کرم یہ URL دیکھیں: {{url}}',
+    loginSuccessToast: 'کامیابی سے لاگ ان ہو گئے',
   },
   signup: {
     afterConfirmationLogin: 'تصدیق کے بعد لاگ ان',
@@ -1198,6 +1204,7 @@ export const ur = {
     openChat: 'چیٹ کھولیں',
     closeChat: 'چیٹ بند کریں',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'چیٹ',
   },
   map: {
     zoomIn: 'زوم ان',

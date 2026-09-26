@@ -38,7 +38,7 @@ export function SuggestionCard({ icon, title, subtitle, onClick, disabled, class
 
   if (href) {
     return (
-      <Link href={href} className={containerClass}>
+      <Link className={containerClass} href={href}>
         {cardContent(icon, title, subtitle)}
       </Link>
     );

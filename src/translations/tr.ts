@@ -721,6 +721,12 @@ export const tr = {
     magicLinkLoading: 'Sihirli bağlantı gönderiliyor...',
     magicLinkDescription: 'Size e-posta ile bir Sihirli Bağlantı göndereceğiz. Şifre gerekmez.',
     afterConfirmationLogin: 'Onay sonrası giriş yap',
+    magicLinkSentTitle: 'Sihirli Bağlantı gönderildi!',
+    magicLinkSentDescription: 'Lütfen e-postanızı kontrol edin ve giriş yapmak için bağlantıya tıklayın.',
+    magicLinkFailedToast: 'Sihirli Bağlantı başarısız',
+    magicLinkFailedError: 'Sihirli Bağlantı gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
+    magicLinkDiagnostic: "Tanılama için lütfen bu URL'yi ziyaret edin: {{url}}",
+    loginSuccessToast: 'Başarıyla giriş yapıldı',
   },
   signup: {
     afterConfirmationLogin: 'Onay sonrası giriş yap',
@@ -1196,6 +1202,7 @@ export const tr = {
     openChat: 'Sohbeti aç',
     closeChat: 'Sohbeti kapat',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'Sohbet',
   },
   map: {
     zoomIn: 'Yakınlaştır',

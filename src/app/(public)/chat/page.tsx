@@ -6,10 +6,12 @@ import { X } from 'lucide-react';
 import { ChatWidget } from '@/features/chat/components/ChatWidget';
 import { useAuth } from '@/providers/auth-provider';
 import { getFeatureFlag } from '@/config/feature-flags';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function ChatPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const enableChatbot = getFeatureFlag('enableChatbot');
 
   useEffect(() => {
@@ -29,14 +31,14 @@ export default function ChatPage() {
       <header className="fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2 bg-transparent border-b border-transparent isolate -mx-px px-px">
         <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
           <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
-            Chat
+            {t('chat.pageTitle')}
           </h1>
           <button
-            onClick={() => router.back()}
-            aria-label="Schließen"
+            aria-label={t('common.close')}
             className="w-8 h-8 flex items-center justify-center -mr-1"
+            onClick={() => router.back()}
           >
-            <X size={22} className="text-content-heading" strokeWidth={2} />
+            <X className="text-content-heading" size={22} strokeWidth={2} />
           </button>
         </div>
       </header>
