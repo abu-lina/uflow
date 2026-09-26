@@ -26,6 +26,17 @@ export interface RawCategoryRow {
 }
 
 /**
+ * Hard cap on rows returned for the map. Without it PostgREST streams the
+ * entire approved-food set, which was part of the main-thread stall in
+ * Plan 261. Ordering keeps the truncation deterministic so pins do not
+ * shuffle between loads once the cap is reached.
+ *
+ * Ceiling: beyond roughly this many markers Leaflet needs clustering, which
+ * this cap does not provide — it only bounds the fetch.
+ */
+export const MAP_LOCATIONS_LIMIT = 1000;
+
+/**
  * Fetch all map pin locations for food providers.
  * Returns raw location rows with joined provider data for map rendering.
  *
@@ -46,7 +57,9 @@ export async function getMapLocations(
     .not('location_latitude', 'is', null)
     .not('location_longitude', 'is', null)
     .eq('providers.listing_type', 'food')
-    .eq('providers.review_status', reviewStatus ?? 'approved');
+    .eq('providers.review_status', reviewStatus ?? 'approved')
+    .order('provider_id', { ascending: true })
+    .limit(MAP_LOCATIONS_LIMIT);
 
   if (error) {
     throw new Error(error.message);
