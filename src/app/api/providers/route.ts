@@ -44,7 +44,6 @@ const createProviderBodySchema = z
     has_certificate: z.boolean().optional().default(false),
     certificate_url: z.string().max(2000).optional().default(''),
     imageUrls: z.array(z.string().url()).max(10).optional(),
-    userEmail: z.string().email().optional(),
   })
   .strict();
 
@@ -55,10 +54,15 @@ export async function POST(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    const userId = user?.id ?? null;
+    // All submission flows require a logged-in user (#415) — the endpoint
+    // enforces the gate too, not just the client.
+    if (!user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    const userId = user.id;
 
-    // Rate limiting: 5 submissions per hour per IP/user
-    const identifier = getClientIdentifier(request, userId ?? undefined);
+    // Rate limiting: 5 submissions per hour per user
+    const identifier = getClientIdentifier(request, userId);
     const isAllowed = checkRateLimit(identifier, 5, 60 * 60 * 1000, 'provider-create');
     if (!isAllowed) {
       return NextResponse.json(
@@ -92,7 +96,7 @@ export async function POST(request: NextRequest) {
       formData,
       actor: {
         userId,
-        isOwner: formData.creationMode === 'owner' && userId !== null,
+        isOwner: formData.creationMode === 'owner',
       },
     });
 

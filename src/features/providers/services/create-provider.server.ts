@@ -1,24 +1,20 @@
 import 'server-only';
-import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import type { ProviderFormData } from '@/providers/form-provider';
-import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { TrustLevel } from '@/types/badges';
 import type { CreateProviderResult } from './mutations';
 
 /** ProviderFormData minus File fields, plus already-uploaded public image URLs. */
 export type CreateProviderPayload = Omit<ProviderFormData, 'images' | 'certificate_file'> & {
   imageUrls?: string[];
-  /** Recommender email for anonymous submissions (#415 requires login, but the
-   * route still accepts anonymous bodies so a recommender_email can be stored). */
-  userEmail?: string;
 };
 
 export interface CreateProviderActor {
-  /** Resolved from the server-side session. null = anonymous recommendation. */
-  userId: string | null;
-  /** true only when creationMode === 'owner' AND userId !== null. */
+  /** Resolved from the server-side session; the route rejects anonymous
+   * requests, so this is always a real user id. */
+  userId: string;
+  /** true only when creationMode === 'owner'. */
   isOwner: boolean;
 }
 
@@ -139,8 +135,6 @@ const FORM_TAG_TO_BADGE_KEY = {
   solidarity: 'ECONOMIC_SOLIDARITY',
 } as const;
 
-const emailSchema = z.string().email();
-
 /**
  * Creates a provider or community service from form data. All writes go
  * through the service-role client: anon RLS policies only allow the providers
@@ -163,13 +157,6 @@ export async function createProviderOrServiceServer(
   const admin = getSupabaseAdmin();
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
   const uploadedUrls = formData.imageUrls ?? [];
-
-  // recommender_email is only stored for anonymous submissions, and only when
-  // it parses as an email — an invalid value is dropped, not fatal.
-  const recommenderEmail =
-    actor.userId === null && formData.userEmail && emailSchema.safeParse(formData.userEmail).success
-      ? formData.userEmail
-      : null;
 
   /**
    * Removes a provider row after a required child write failed. When the
@@ -216,8 +203,6 @@ export async function createProviderOrServiceServer(
       provider_images: uploadedUrls.length > 0 ? uploadedUrls : null,
       review_status: 'pending' as const,
       user_created_id: actor.userId,
-      provider_owner_id: actor.isOwner ? actor.userId : null,
-      ...(recommenderEmail ? { recommender_email: recommenderEmail } : {}),
     };
 
     const { error: serviceError } = await admin.from('providers').insert([insertData]);
@@ -332,7 +317,6 @@ export async function createProviderOrServiceServer(
   Object.assign(insertData, {
     user_created_id: actor.userId,
     provider_owner_id: actor.isOwner ? actor.userId : null,
-    ...(recommenderEmail ? { recommender_email: recommenderEmail } : {}),
   });
 
   // Insert without SELECT to avoid SELECT policy blocking pending reviews
@@ -463,14 +447,16 @@ export async function createProviderOrServiceServer(
   // Create provider-community service relationships for all selected services
   if (formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0) {
     for (const serviceId of formData.selectedCommunityServiceIds) {
-      const { error: relationshipError } = await createProviderCommunityServiceRelationship(
-        generatedProviderId,
-        serviceId,
-      );
-
+      // Insert directly with the admin client: the shared helper in
+      // communityServices.ts uses the browser client, which has no session
+      // server-side and would be RLS-blocked.
+      const { error: relationshipError } = await admin.from('provider_engagements').insert({
+        initiating_provider_id: generatedProviderId,
+        engaged_provider_id: serviceId,
+      });
       if (relationshipError) {
-        console.error('Error creating relationship:', relationshipError);
-        // Don't throw here - the provider was created successfully
+        console.error('Error creating provider engagement:', relationshipError);
+        // non-fatal: the provider was created successfully
       }
     }
   }

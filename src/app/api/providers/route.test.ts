@@ -78,9 +78,12 @@ interface AdminMocks {
   providerInsert: ReturnType<typeof vi.fn>;
   providerDeleteEq: ReturnType<typeof vi.fn>;
   locationInsert: ReturnType<typeof vi.fn>;
+  engagementInsert: ReturnType<typeof vi.fn>;
 }
 
-function makeAdminClient(over: { failLocations?: boolean; failDelete?: boolean } = {}): {
+function makeAdminClient(
+  over: { failLocations?: boolean; failDelete?: boolean; failEngagements?: boolean } = {},
+): {
   client: unknown;
   mocks: AdminMocks;
 } {
@@ -92,6 +95,11 @@ function makeAdminClient(over: { failLocations?: boolean; failDelete?: boolean }
     .fn()
     .mockResolvedValue(
       over.failLocations ? { error: { message: 'row-level security violation' } } : { error: null },
+    );
+  const engagementInsert = vi
+    .fn()
+    .mockResolvedValue(
+      over.failEngagements ? { error: { message: 'insert denied' } } : { error: null },
     );
 
   const client = {
@@ -127,14 +135,17 @@ function makeAdminClient(over: { failLocations?: boolean; failDelete?: boolean }
       if (table === 'badge_types') {
         return { select: () => ({ in: async () => ({ data: [], error: null }) }) };
       }
-      if (table === 'provider_badges' || table === 'provider_engagements') {
+      if (table === 'provider_badges') {
         return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      if (table === 'provider_engagements') {
+        return { insert: (...args: unknown[]) => engagementInsert(...args) };
       }
       return { insert: vi.fn().mockResolvedValue({ error: null }) };
     }),
   };
 
-  return { client, mocks: { providerInsert, providerDeleteEq, locationInsert } };
+  return { client, mocks: { providerInsert, providerDeleteEq, locationInsert, engagementInsert } };
 }
 
 function mockSession(userId: string | null) {
@@ -165,7 +176,7 @@ describe('/api/providers POST', () => {
     vi.restoreAllMocks();
   });
 
-  it('anonymous recommendation succeeds with null ownership fields', async () => {
+  it('returns 401 with no session and attempts no write', async () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
     const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
 
@@ -174,14 +185,11 @@ describe('/api/providers POST', () => {
     vi.mocked(getSupabaseAdmin).mockReturnValue(client as never);
 
     const response = await POST(makeRequest(validBody()));
-    const data = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(data.provider_id).toBeTruthy();
-    const payload = mocks.providerInsert.mock.calls[0][0][0];
-    expect(payload.user_created_id).toBeNull();
-    expect(payload.provider_owner_id).toBeNull();
-    expect(payload.review_status).toBe('pending');
+    expect(response.status).toBe(401);
+    expect(mocks.providerInsert).not.toHaveBeenCalled();
+    // The admin client is never even resolved for anonymous callers.
+    expect(vi.mocked(getSupabaseAdmin)).not.toHaveBeenCalled();
   });
 
   it('authenticated owner submission sets provider_owner_id to the session user', async () => {
@@ -216,6 +224,48 @@ describe('/api/providers POST', () => {
     expect(payload.provider_owner_id).toBeNull();
   });
 
+  it('links selected community services via provider_engagements through the admin client', async () => {
+    const { createSupabaseServerClient } = await import('@/lib/supabase/server');
+    const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
+
+    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
+    const { client, mocks } = makeAdminClient();
+    vi.mocked(getSupabaseAdmin).mockReturnValue(client as never);
+
+    const serviceId = '9f3a1c2e-7b4d-4e5f-9a6b-0c1d2e3f4a5b';
+    const response = await POST(
+      makeRequest(validBody({ selectedCommunityServiceIds: [serviceId] })),
+    );
+
+    expect(response.status).toBe(200);
+    const insertedId = mocks.providerInsert.mock.calls[0][0][0].provider_id;
+    expect(mocks.engagementInsert).toHaveBeenCalledWith({
+      initiating_provider_id: insertedId,
+      engaged_provider_id: serviceId,
+    });
+  });
+
+  it('does not fail the submission when a provider_engagements insert fails', async () => {
+    const { createSupabaseServerClient } = await import('@/lib/supabase/server');
+    const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
+
+    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
+    const { client, mocks } = makeAdminClient({ failEngagements: true });
+    vi.mocked(getSupabaseAdmin).mockReturnValue(client as never);
+
+    const serviceId = '9f3a1c2e-7b4d-4e5f-9a6b-0c1d2e3f4a5b';
+    const response = await POST(
+      makeRequest(validBody({ selectedCommunityServiceIds: [serviceId] })),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.provider_id).toBeTruthy();
+    // The engagement insert was attempted and failed, but the provider stays.
+    expect(mocks.engagementInsert).toHaveBeenCalled();
+    expect(mocks.providerDeleteEq).not.toHaveBeenCalled();
+  });
+
   it('rejects a body carrying server-owned columns', async () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
     vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
@@ -228,7 +278,7 @@ describe('/api/providers POST', () => {
 
   it('rejects imageUrls that do not point at our Supabase storage', async () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
-    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession(null) as never);
+    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
 
     const response = await POST(
       makeRequest(validBody({ imageUrls: ['https://evil.example.com/x.png'] })),
@@ -238,7 +288,7 @@ describe('/api/providers POST', () => {
 
   it('rejects a certificate_url that does not point at our Supabase storage', async () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
-    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession(null) as never);
+    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
 
     const response = await POST(
       makeRequest(validBody({ certificate_url: 'https://evil.example.com/cert.pdf' })),
@@ -248,7 +298,7 @@ describe('/api/providers POST', () => {
 
   it('returns 400 for a missing title', async () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
-    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession(null) as never);
+    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
 
     const body = validBody();
     delete (body as Record<string, unknown>).title;
@@ -258,7 +308,7 @@ describe('/api/providers POST', () => {
 
   it('returns 400 for a non-uuid category', async () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
-    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession(null) as never);
+    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
 
     const response = await POST(makeRequest(validBody({ category: 'not-a-uuid' })));
     expect(response.status).toBe(400);
@@ -268,7 +318,7 @@ describe('/api/providers POST', () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
     const { checkRateLimit } = await import('@/lib/rate-limit');
 
-    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession(null) as never);
+    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
     vi.mocked(checkRateLimit).mockReturnValue(false);
 
     const response = await POST(makeRequest(validBody()));
@@ -279,7 +329,7 @@ describe('/api/providers POST', () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
     const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
 
-    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession(null) as never);
+    vi.mocked(createSupabaseServerClient).mockReturnValue(mockSession('user-1') as never);
     const { client, mocks } = makeAdminClient({ failLocations: true });
     vi.mocked(getSupabaseAdmin).mockReturnValue(client as never);
 

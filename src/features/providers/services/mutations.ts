@@ -3,9 +3,6 @@ import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { validateCertificateFile } from '@/lib/validations/certificate';
 
-// Extended form data type (alias kept so callers with extra fields still typecheck)
-type ExtendedProviderFormData = ProviderFormData;
-
 export interface CreateProviderResult {
   provider_id?: string;
   community_service_id?: string;
@@ -97,7 +94,7 @@ async function uploadCertificate(file: File, userId: string | undefined): Promis
 const inFlightSubmissions = new Map<string, Promise<CreateProviderResult>>();
 
 export async function createProviderOrService(
-  formData: ExtendedProviderFormData,
+  formData: ProviderFormData,
   user: User | null,
 ): Promise<CreateProviderResult> {
   const dedupeKey = JSON.stringify([
@@ -117,7 +114,7 @@ export async function createProviderOrService(
 }
 
 async function doCreateProviderOrService(
-  formData: ExtendedProviderFormData,
+  formData: ProviderFormData,
   user: User | null,
 ): Promise<CreateProviderResult> {
   // #415: all submission flows require a logged-in user; the submitter is
