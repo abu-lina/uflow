@@ -1240,4 +1240,27 @@ export const en = {
     pendingBadge: 'Under review',
     submittedToast: 'Submitted! Your entry is now awaiting review.',
   },
+  // Plan 255 C6 (#415): /create chooser extras
+  createPage: {
+    quickImportTitle: 'Quick Import (Beta)',
+    quickImportDescription: 'Import from Google or Instagram and auto-fill everything in seconds!',
+    quickImportButton: 'Try Quick Import',
+  },
+  // Plan 255 C6 (#415): /create/halal page
+  createHalal: {
+    stepTitle: 'Halal',
+    title: 'Halal Compliance',
+    // Religious oath — literal rendering, needs native-speaker sign-off.
+    attestationIntro:
+      'Do you testify before Allah that you do NOT process, sell, or offer the following?',
+    verificationTitle: 'Verification method',
+    verificationDesc: 'How was halal compliance verified?',
+    methodOnline: 'Online',
+    methodOnlineDesc: 'Verified online (menu, website, self-declaration)',
+    methodOnsite: 'On-site',
+    methodOnsiteDesc: 'Visited and verified on site',
+    certificateTitle: 'Halal certificate',
+    certificateDesc: 'Upload a valid halal certificate (optional)',
+    certificateUpload: 'Upload certificate',
+  },
 } as const;

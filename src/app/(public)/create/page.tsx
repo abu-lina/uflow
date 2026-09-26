@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Icon } from '@iconify/react';
+import { Zap } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
@@ -57,7 +57,7 @@ export default function CreateProviderPage() {
         paddingX="px-6 sm:px-0"
       >
         <div className="flex w-full flex-col items-center gap-6 sm:gap-8">
-          <p className="mb-6 max-w-2xl text-left text-base font-normal leading-[19px] text-[#7A7A7A] md:text-lg md:leading-6">
+          <p className="mb-6 max-w-2xl text-left text-base font-normal leading-[19px] text-content-muted md:text-lg md:leading-6">
             {t('create.description')}
           </p>
         </div>
@@ -68,14 +68,14 @@ export default function CreateProviderPage() {
             <div className="w-full rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
               <div className="mb-3 flex items-start gap-3">
                 <div className="rounded-full bg-primary/20 p-2">
-                  <Icon className="h-5 w-5 text-primary" icon="mdi:lightning-bolt" />
+                  <Zap className="h-icon-sm w-icon-sm text-primary" />
                 </div>
                 <div className="flex-1">
                   <h3 className="mb-1 text-base font-semibold text-content-heading">
-                    Quick Import (Beta)
+                    {t('createPage.quickImportTitle')}
                   </h3>
                   <p className="text-sm leading-relaxed text-content">
-                    Import from Google or Instagram and auto-fill everything in seconds!
+                    {t('createPage.quickImportDescription')}
                   </p>
                 </div>
               </div>
@@ -83,7 +83,7 @@ export default function CreateProviderPage() {
                 className="w-full rounded-xl bg-primary px-5 py-3 text-base font-medium text-white transition-colors hover:bg-primary-dark"
                 onClick={handleQuickCreate}
               >
-                Try Quick Import
+                {t('createPage.quickImportButton')}
               </button>
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function CreateProviderPage() {
         </div>
 
         {/* Chat alternative hint */}
-        <p className="text-center text-sm text-[#7A7A7A]">
+        <p className="text-center text-sm text-content-muted">
           {t('create.chatHint.prefix')}{' '}
           <Link
             className="font-medium text-primary underline underline-offset-2 transition-opacity hover:opacity-70"

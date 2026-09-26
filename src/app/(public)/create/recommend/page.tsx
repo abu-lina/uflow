@@ -81,12 +81,7 @@ function RecommendPageContent() {
           <div className="flex w-full flex-col">
             <TitleSection className="mb-10">
               <IconWithTitle
-                icon={
-                  <Icon
-                    className="h-full w-full text-content-heading"
-                    icon="material-symbols:lock-outline"
-                  />
-                }
+                icon={<Icon className="h-full w-full text-content-heading" icon="lucide:lock" />}
                 size="large"
                 title={t('create.basics.loginRequired')}
               >

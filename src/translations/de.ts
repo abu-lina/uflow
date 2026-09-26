@@ -1259,4 +1259,27 @@ export const de = {
     pendingBadge: 'Wird geprüft',
     submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
   },
+  // Plan 255 C6 (#415): /create chooser extras
+  createPage: {
+    quickImportTitle: 'Quick Import (Beta)',
+    quickImportDescription:
+      'Importiere von Google oder Instagram und fülle alles in Sekunden automatisch aus!',
+    quickImportButton: 'Quick Import ausprobieren',
+  },
+  // Plan 255 C6 (#415): /create/halal page
+  createHalal: {
+    stepTitle: 'Halal',
+    title: 'Halal Compliance',
+    attestationIntro:
+      'Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder anbietest?',
+    verificationTitle: 'Verifizierungsmethode',
+    verificationDesc: 'Wie wurde die Halal-Konformität überprüft?',
+    methodOnline: 'Online',
+    methodOnlineDesc: 'Online überprüft (Menü, Website, Selbstauskunft)',
+    methodOnsite: 'Vor Ort',
+    methodOnsiteDesc: 'Vor Ort besucht und überprüft',
+    certificateTitle: 'Halal-Zertifikat',
+    certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
+    certificateUpload: 'Zertifikat hochladen',
+  },
 } as const;

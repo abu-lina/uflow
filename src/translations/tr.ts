@@ -226,6 +226,9 @@ export const tr = {
       loading: 'Aranıyor...',
       noResults: 'Henüz bir sonuç yok - ama büyüyoruz!',
       notFoundEncouragement: 'Yakında mevcut olabilir. Daha sonra tekrar bak.',
+      // INTERIM de (#415): pending human translation
+      allRestaurants: 'Alle Restaurants',
+      everything: 'Alles',
       providerCount: '{{count}} Restoran',
       searchError: 'Arama şu anda kullanılamıyor. Lütfen tekrar deneyin.',
       categoryCount: '{{count}} Restoran',
@@ -1117,6 +1120,8 @@ export const tr = {
       whatIsThis: 'Nasıl kontrol ediyoruz?',
       explanation:
         'Ummah Flow üzerindeki her kayıt helal gereksinimlerimizi karşılar. Güven seviyesi bunu ne kadar kapsamlı doğruladığımızı gösterir.',
+      // INTERIM de (#415): pending human translation
+      pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
     trustBadges: {
       muslimOwned: 'Müslüman',
@@ -1202,5 +1207,65 @@ export const tr = {
     switchToMap: 'Harita görünümü',
     listViewLabel: 'Liste',
     mapViewLabel: 'Harita',
+  },
+  // Plan 255 INTERIM (#415): German source text, NOT a translation.
+  // Pending human review — see agent-output/requests/255-i18n-human-review.md.
+  halal: {
+    attestation: {
+      sectionTitle: 'Halal Compliance',
+      recommendDescription: 'Was weißt du über diesen Anbieter?',
+      noAlcohol: {
+        label: 'Kein Alkohol',
+        desc: 'Wird kein Alkohol verarbeitet, verkauft oder angeboten?',
+      },
+      noPork: {
+        label: 'Kein verbotenes Fleisch',
+        desc: 'Wird kein Schweinefleisch oder anderes verbotenes Fleisch verarbeitet, verkauft oder angeboten?',
+      },
+      noGambling: {
+        label: 'Kein Glücksspiel',
+        desc: 'Werden keine Glücksspiele oder Wetten angeboten?',
+      },
+      answer: {
+        yes: 'Ja',
+        no: 'Nein',
+        notSure: 'Nicht sicher',
+      },
+    },
+    admin: {
+      declaredNonCompliant: 'Als nicht konform angegeben',
+      unanswered: 'Nicht beantwortet',
+    },
+  },
+  submissionValidation: {
+    fieldRequired: '"{{field}}" ist ein Pflichtfeld.',
+  },
+  submissionStatus: {
+    awaitingReview: 'Deine Einreichung wurde gespeichert und wartet auf eine manuelle Prüfung.',
+    provisionalSeal:
+      'Vorläufiges Siegel: Es wird erst öffentlich angezeigt, wenn die Einreichung geprüft wurde.',
+    pendingBadge: 'Wird geprüft',
+    submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
+  },
+  createPage: {
+    quickImportTitle: 'Quick Import (Beta)',
+    quickImportDescription:
+      'Importiere von Google oder Instagram und fülle alles in Sekunden automatisch aus!',
+    quickImportButton: 'Quick Import ausprobieren',
+  },
+  createHalal: {
+    stepTitle: 'Halal',
+    title: 'Halal Compliance',
+    attestationIntro:
+      'Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder anbietest?',
+    verificationTitle: 'Verifizierungsmethode',
+    verificationDesc: 'Wie wurde die Halal-Konformität überprüft?',
+    methodOnline: 'Online',
+    methodOnlineDesc: 'Online überprüft (Menü, Website, Selbstauskunft)',
+    methodOnsite: 'Vor Ort',
+    methodOnsiteDesc: 'Vor Ort besucht und überprüft',
+    certificateTitle: 'Halal-Zertifikat',
+    certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
+    certificateUpload: 'Zertifikat hochladen',
   },
 } as const;
