@@ -16,6 +16,11 @@ import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
 import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScreen';
 import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
+import {
+  recommendSubmissionSchema,
+  submissionFieldLabelKeys,
+  firstIssueField,
+} from '@/lib/validations/submissionSchemas';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
@@ -277,6 +282,8 @@ export function StreamlinedRecommendForm({
   const { user } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // AC5.7: explicit consent, required only when an anonymous user enters an email
+  const [emailConsent, setEmailConsent] = useState(false);
   const searchParams = useSearchParams();
   const showSuccess = searchParams.get('success') === 'true';
   const [categories, setCategories] = useState<Category[]>([]);
@@ -995,6 +1002,9 @@ export function StreamlinedRecommendForm({
   const showCityValidation = formData.city.trim().length > 0 && !isCitySelected;
 
   // Validation - memoized to prevent unnecessary re-renders
+  // AC5.2: all three halal answers are required; "not sure" (null) counts as
+  // answered, only untouched (undefined) fails. AC5.7: an anonymous user who
+  // enters an email must give explicit consent.
   const isFormValid = useMemo(() => {
     const hasBasics = !!formData.title && !!formData.category && isCitySelected;
     const hasContact =
@@ -1002,7 +1012,12 @@ export function StreamlinedRecommendForm({
       (selectedContacts.phone && formData.phone.trim().length > 0) ||
       (selectedContacts.website && formData.website.trim().length > 0) ||
       (selectedContacts.instagram && formData.instagram.trim().length > 0);
-    return hasBasics && hasContact;
+    const allAttestationsAnswered =
+      contextFormData.no_alcohol !== undefined &&
+      contextFormData.no_pork !== undefined &&
+      contextFormData.no_gambling !== undefined;
+    const consentSatisfied = !!user || formData.userEmail.trim().length === 0 || emailConsent;
+    return hasBasics && hasContact && allAttestationsAnswered && consentSatisfied;
   }, [
     formData.title,
     formData.category,
@@ -1010,11 +1025,17 @@ export function StreamlinedRecommendForm({
     formData.phone,
     formData.website,
     formData.instagram,
+    formData.userEmail,
     selectedContacts.email,
     selectedContacts.phone,
     selectedContacts.website,
     selectedContacts.instagram,
     isCitySelected,
+    contextFormData.no_alcohol,
+    contextFormData.no_pork,
+    contextFormData.no_gambling,
+    emailConsent,
+    user,
   ]);
 
   const handleBack = useCallback(() => {
@@ -1056,7 +1077,11 @@ export function StreamlinedRecommendForm({
       website: '',
       instagram: '',
       description: '',
+      no_alcohol: undefined,
+      no_pork: undefined,
+      no_gambling: undefined,
     });
+    setEmailConsent(false);
     // Clear saved form data from localStorage
     clearSavedRecommendFormData();
   }, [initialCity, updateFormData, router, clearSavedRecommendFormData]);
@@ -1068,8 +1093,28 @@ export function StreamlinedRecommendForm({
 
   // Submit handler
   const handleSubmit = useCallback(async () => {
-    if (!isFormValid) {
-      if (!formData.title) {
+    // AC5.2/5.3: validate the full required set and name the missing field.
+    const parsed = recommendSubmissionSchema.safeParse({
+      title: formData.title,
+      city: formData.city,
+      category: formData.category,
+      no_alcohol: contextFormData.no_alcohol,
+      no_pork: contextFormData.no_pork,
+      no_gambling: contextFormData.no_gambling,
+      // Consent only applies to the anonymous email input
+      userEmail: user ? '' : formData.userEmail,
+      emailConsent,
+    });
+    if (!parsed.success || !isFormValid) {
+      const issueField = parsed.success ? '' : firstIssueField(parsed.error);
+      if (issueField === 'emailConsent') {
+        toast.error(t('submissionValidation.emailConsentRequired'));
+      } else if (issueField) {
+        const labelKey = submissionFieldLabelKeys[issueField];
+        toast.error(
+          t('submissionValidation.fieldRequired', { field: labelKey ? t(labelKey) : issueField }),
+        );
+      } else if (!formData.title) {
         toast.error(t('create.recommend.titleRequired'));
       } else if (!formData.category) {
         toast.error(t('create.recommend.categoryRequired'));
@@ -1139,9 +1184,13 @@ export function StreamlinedRecommendForm({
         website: '',
         instagram: '',
         description: '',
+        no_alcohol: undefined,
+        no_pork: undefined,
+        no_gambling: undefined,
       });
-      // Also clear local userEmail state
+      // Also clear local userEmail state and consent
       setFormData((prev) => ({ ...prev, userEmail: '' }));
+      setEmailConsent(false);
       // Clear selected contacts
       setSelectedContacts({
         email: false,
@@ -1174,6 +1223,7 @@ export function StreamlinedRecommendForm({
     t,
     clearSavedRecommendFormData,
     user,
+    emailConsent,
   ]);
 
   // Navigate to category selection
@@ -1610,7 +1660,7 @@ export function StreamlinedRecommendForm({
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold text-content-heading">
-            {t('halal.attestation.sectionTitle')}
+            {t('halal.attestation.sectionTitle')} *
           </h2>
           <p className="text-base text-content-muted">
             {t('halal.attestation.recommendDescription')}
@@ -1668,19 +1718,41 @@ export function StreamlinedRecommendForm({
               </div>
             </div>
 
-            {/* Email Consent Text - Only show when email is provided */}
-            {formData.userEmail && (
-              <p className="mt-1 text-xs leading-[15px] text-content-muted">
-                {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
-                <Link className="underline hover:text-primary" href="/terms">
-                  {t('legal.termsOfService')}
-                </Link>{' '}
-                {t('legal.and')}{' '}
-                <Link className="underline hover:text-primary" href="/privacy-policy">
-                  {t('legal.privacyPolicy')}
-                </Link>
-                .
-              </p>
+            {/* AC5.7: explicit consent checkbox, required only when an email is provided */}
+            {formData.userEmail.trim().length > 0 && (
+              <div
+                aria-checked={emailConsent}
+                className="mt-2 flex w-full cursor-pointer items-center rounded-2xl border border-border bg-white px-3 py-2"
+                role="checkbox"
+                tabIndex={0}
+                onClick={() => setEmailConsent((prev) => !prev)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setEmailConsent((prev) => !prev);
+                  }
+                }}
+              >
+                <div className="flex w-full flex-row items-center gap-2">
+                  <div className="flex-shrink-0">
+                    <Icon
+                      className="h-6 w-6 text-content"
+                      icon={emailConsent ? 'lucide:square-check' : 'lucide:square'}
+                    />
+                  </div>
+                  <span className="text-xs leading-[15px] text-content-muted">
+                    {t('submissionValidation.emailConsentLabel')}{' '}
+                    <Link
+                      className="underline hover:text-primary"
+                      href="/privacy-policy"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {t('legal.privacyPolicy')}
+                    </Link>
+                    {' *'}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
         </div>

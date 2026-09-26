@@ -13,7 +13,10 @@ export type HalalAttestationField = 'no_alcohol' | 'no_pork' | 'no_gambling';
  */
 export type HalalAttestationAnswer = boolean | null;
 
-export type HalalAttestationValues = Record<HalalAttestationField, HalalAttestationAnswer>;
+export type HalalAttestationValues = Record<
+  HalalAttestationField,
+  HalalAttestationAnswer | undefined
+>;
 
 interface HalalAttestationFieldsProps {
   values: HalalAttestationValues;

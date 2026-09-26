@@ -15,6 +15,11 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { Button } from '@/components/ui/Button';
 import { useQueryClient } from '@tanstack/react-query';
 import { createProviderOrService } from '@/features/providers/services/mutations';
+import {
+  ownerSubmissionSchema,
+  submissionFieldLabelKeys,
+  firstIssueField,
+} from '@/lib/validations/submissionSchemas';
 
 interface UnifiedProviderCreateFormProps {
   onSuccess?: () => void;
@@ -146,16 +151,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       );
     }
 
-    // For owner mode (submit), validate location if not online business
-    if (formData.isOnlineBusiness) return true;
-    const validation = validateAddress({
-      street: formData.street,
-      zip: formData.zip,
-      city: formData.city,
-      country: formData.country,
-      isOnlineBusiness: formData.isOnlineBusiness,
-    });
-    return validation.isValid;
+    // For owner mode (submit), the full required set applies (#415 AC5.2):
+    // basics + full address (unless online) + at least one image.
+    return ownerSubmissionSchema.safeParse(formData).success;
   };
 
   const handleSubmit = async () => {
@@ -167,18 +165,30 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       return;
     }
 
-    // Validate location if not online business
-    if (!formData.isOnlineBusiness) {
-      const validation = validateAddress({
-        street: formData.street,
-        zip: formData.zip,
-        city: formData.city,
-        country: formData.country,
-        isOnlineBusiness: formData.isOnlineBusiness,
-      });
-      setValidationErrors(validation.errors);
-      if (!validation.isValid) {
-        toast.error(t('create.location.validationError'));
+    // AC5.2/5.3: validate the owner required set and name the missing field.
+    if (!isRecommendationMode) {
+      const parsed = ownerSubmissionSchema.safeParse(formData);
+      if (!parsed.success) {
+        const issueField = firstIssueField(parsed.error);
+        if (
+          issueField === 'street' ||
+          issueField === 'zip' ||
+          issueField === 'city' ||
+          issueField === 'country'
+        ) {
+          const validation = validateAddress({
+            street: formData.street,
+            zip: formData.zip,
+            city: formData.city,
+            country: formData.country,
+            isOnlineBusiness: formData.isOnlineBusiness,
+          });
+          setValidationErrors(validation.errors);
+        }
+        const labelKey = submissionFieldLabelKeys[issueField];
+        toast.error(
+          t('submissionValidation.fieldRequired', { field: labelKey ? t(labelKey) : issueField }),
+        );
         return;
       }
     }
@@ -446,6 +456,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                       {t('create.location.street')}
                     </label>
                     <input
+                      required
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterStreet')}
                       type="text"
@@ -468,6 +479,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                       {t('create.location.zip')}
                     </label>
                     <input
+                      required
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterZip')}
                       type="text"
@@ -629,7 +641,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           >
             <div className="flex flex-1 flex-col items-start gap-1">
               <span className="text-xs font-normal leading-[15px] text-content-muted">
-                {t('create.media.images')}
+                {t('create.media.images')} *
               </span>
               <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
                 {formData.images && formData.images.length > 0

@@ -181,7 +181,14 @@ export default function LocationPage() {
 
     setValidationErrors(validation.errors);
 
-    if (validation.isValid || formData.isOnlineBusiness) {
+    // AC5.2: owners must provide a full address (street, zip, city, country)
+    // unless the business is online-only.
+    if (
+      formData.isOnlineBusiness ||
+      (validation.isValid &&
+        (isRecommendationMode ||
+          (formData.street.trim().length > 0 && formData.zip.trim().length > 0)))
+    ) {
       router.push('/create/contact');
     }
   };
@@ -241,7 +248,12 @@ export default function LocationPage() {
     });
 
     // DON'T set validation errors here - it causes infinite loop when called during render
-    return validation.isValid;
+    // AC5.2: owners must provide street and zip as well (recommendations only need the city).
+    return (
+      validation.isValid &&
+      (isRecommendationMode ||
+        (formData.street.trim().length > 0 && formData.zip.trim().length > 0))
+    );
   };
 
   return (
@@ -376,6 +388,7 @@ export default function LocationPage() {
                       {t('create.location.street')}
                     </label>
                     <input
+                      required
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterStreet')}
                       type="text"
@@ -398,6 +411,7 @@ export default function LocationPage() {
                       {t('create.location.zip')}
                     </label>
                     <input
+                      required
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727] focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterZip')}
                       type="text"

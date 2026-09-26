@@ -50,10 +50,12 @@ export interface ProviderFormData {
   socialTitle: string;
   socialDescription: string;
 
-  // Halal compliance attestation (#415 tri-state: true=yes, false=no, null=not sure)
-  no_alcohol: boolean | null;
-  no_pork: boolean | null;
-  no_gambling: boolean | null;
+  // Halal compliance attestation (#415 tri-state: true=yes, false=no, null=not
+  // sure, undefined=never touched). undefined is dropped by JSON.stringify, so
+  // a draft round-trip keeps "untouched" distinct from "not sure" (AC5.2).
+  no_alcohol?: boolean | null;
+  no_pork?: boolean | null;
+  no_gambling?: boolean | null;
 
   // Halal verification
   verification_method: string;
@@ -88,9 +90,9 @@ const initialFormData: ProviderFormData = {
   socialCategory: '',
   socialTitle: '',
   socialDescription: '',
-  no_alcohol: null,
-  no_pork: null,
-  no_gambling: null,
+  no_alcohol: undefined,
+  no_pork: undefined,
+  no_gambling: undefined,
   verification_method: '',
   has_certificate: false,
   certificate_file: null,

@@ -18,6 +18,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// The global setup mocks zod; the forms now import the real submission schemas.
+vi.unmock('zod');
 import { screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { render } from '../../utils/test-utils';
 import React from 'react';
@@ -58,6 +61,10 @@ vi.mock('@/providers/form-provider', () => ({
       socialTitle: '',
       socialDescription: '',
       userEmail: '',
+      // AC5.2: all three halal answers must be provided for a recommend submit
+      no_alcohol: true,
+      no_pork: true,
+      no_gambling: true,
     },
     updateFormData: vi.fn(),
     clearFormData: vi.fn(),

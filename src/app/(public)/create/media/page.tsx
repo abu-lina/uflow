@@ -15,6 +15,11 @@ import { StepIndicator } from '@/components/shared/StepIndicator';
 import { useFormData } from '@/providers/form-provider';
 import { useAuth } from '@/providers/auth-provider';
 import { createProviderOrService } from '@/features/providers/services/mutations';
+import {
+  ownerSubmissionSchema,
+  submissionFieldLabelKeys,
+  firstIssueField,
+} from '@/lib/validations/submissionSchemas';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
 
@@ -92,6 +97,17 @@ export default function MediaUploadPage() {
       return;
     }
 
+    // AC5.2/5.3: validate the owner required set and name the missing field.
+    const parsed = ownerSubmissionSchema.safeParse(formData);
+    if (!parsed.success) {
+      const issueField = firstIssueField(parsed.error);
+      const labelKey = submissionFieldLabelKeys[issueField];
+      toast.error(
+        t('submissionValidation.fieldRequired', { field: labelKey ? t(labelKey) : issueField }),
+      );
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -154,7 +170,7 @@ export default function MediaUploadPage() {
                 >
                   <div className="flex flex-1 flex-col items-start gap-1">
                     <span className="text-xs font-normal leading-[15px] text-[#999999]">
-                      {t('create.media.images')}
+                      {t('create.media.images')} *
                     </span>
                     <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727]">
                       {formData.images && formData.images.length > 0
@@ -215,7 +231,9 @@ export default function MediaUploadPage() {
               : t('create.media.registerProvider'),
           icon: isSubmitting ? 'lucide:loader-2' : 'lucide:save',
           onClick: handleSave,
-          disabled: isSubmitting,
+          // AC5.2: at least one image is required; the schema names any other
+          // missing field when the button is clicked.
+          disabled: isSubmitting || !(formData.images && formData.images.length > 0),
           loading: isSubmitting,
           loadingText: t('create.media.creating'),
           variant: 'primary',
