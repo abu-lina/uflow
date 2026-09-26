@@ -46,9 +46,9 @@ export interface AdminProviderEditData {
   verificationMethod?: 'online' | 'onsite' | null;
   hasCertificate?: boolean;
   certificateUrl?: string | null;
-  noAlcohol?: boolean;
-  noPork?: boolean;
-  noGambling?: boolean;
+  noAlcohol?: boolean | null;
+  noPork?: boolean | null;
+  noGambling?: boolean | null;
   muslimOwned?: boolean;
   hasPrayerSpace?: boolean;
   familyFriendly?: boolean;

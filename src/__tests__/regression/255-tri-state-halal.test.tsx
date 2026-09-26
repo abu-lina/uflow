@@ -104,6 +104,8 @@ vi.mock('@/providers/LanguageProvider', () => ({
 
 import { createProviderOrService } from '@/features/providers/services/mutations';
 import { checkHalalAttestation } from '@/services/admin/halal-gate';
+import { buildExtensionFieldsPayload } from '@/services/admin/providerEdit';
+import { computeHalalStars } from '@/utils/sectionBadges';
 import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 
 const FOOD_CATEGORY = 'food-cat-1';
@@ -300,6 +302,69 @@ describe('C2: shared HalalAttestationFields in both flows (AC6.1)', () => {
     const src = readSrc('src/features/providers/StreamlinedRecommendForm.tsx');
     expect(src).toContain('HalalAttestationFields');
     expect(src).toContain('contextFormData.no_alcohol');
+  });
+});
+
+describe('C2 fix: NULL round-trips through the admin edit path (#415 defect 1)', () => {
+  it('buildExtensionFieldsPayload preserves NULL instead of coercing to false', () => {
+    const payload = buildExtensionFieldsPayload(
+      { noAlcohol: null, noPork: null, noGambling: null },
+      'food',
+    );
+    expect(payload.food_providers).toMatchObject({
+      no_alcohol: null,
+      no_pork: null,
+      no_gambling: null,
+    });
+  });
+
+  it('admin edit schema accepts NULL attestation values', () => {
+    const src = readSrc('src/lib/validations/adminSchemas.ts');
+    for (const f of ['noAlcohol', 'noPork', 'noGambling']) {
+      expect(src).toContain(`${f}: z.boolean().nullable().optional()`);
+    }
+  });
+
+  it('the three edit-form load sites no longer coalesce NULL to false', () => {
+    const halalPage = readSrc('src/app/(dashboard)/dashboard/providers/[id]/edit/halal/page.tsx');
+    const valuesPage = readSrc('src/app/(dashboard)/dashboard/providers/[id]/edit/values/page.tsx');
+    const editForm = readSrc('src/features/providers/pages/ProviderEditForm.tsx');
+
+    for (const [name, src] of [
+      ['halal page', halalPage],
+      ['values page', valuesPage],
+      ['ProviderEditForm', editForm],
+    ] as const) {
+      expect(src, name).not.toMatch(/no_alcohol.*\?\? false|noAlcohol.*\?\? false/);
+    }
+    // The two sub-pages render the shared tri-state component; ProviderEditForm
+    // only carries the values through to the PATCH body.
+    expect(halalPage).toContain('HalalAttestationFields');
+    expect(valuesPage).toContain('HalalAttestationFields');
+  });
+});
+
+describe('C2 fix: all-NULL means no halal data, not not-halal (#415 defect 2)', () => {
+  it('computeHalalStars treats all-NULL like absent attestation data', () => {
+    const absent = computeHalalStars({ verification_method: 'online' });
+    const allNull = computeHalalStars({
+      verification_method: 'online',
+      no_alcohol: null,
+      no_pork: null,
+      no_gambling: null,
+    });
+    expect(allNull).toBe(absent);
+  });
+
+  it('computeHalalStars still returns 0 when attestations are explicitly false', () => {
+    expect(
+      computeHalalStars({
+        verification_method: 'online',
+        no_alcohol: false,
+        no_pork: false,
+        no_gambling: false,
+      }),
+    ).toBe(0);
   });
 });
 

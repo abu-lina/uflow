@@ -41,15 +41,13 @@ export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 | 4 
     return 4;
   }
 
-  // When attestation data is available (explicitly true or false, not undefined),
-  // require at least one positive answer. A provider with verification_method set
-  // but all attestation false hasn't passed the halal check.
-  // When attestation data is absent (all undefined, e.g. list views that don't
-  // join food_providers), fall through to show stars based on verification_method.
+  // When attestation data is available (explicitly true or false), require at
+  // least one positive answer. A provider with verification_method set but all
+  // attestation false hasn't passed the halal check.
+  // NULL means "not sure" (#415): an all-NULL row has no attestation data, so
+  // like an unjoined row it falls through to stars based on verification_method.
   const attestationProvided =
-    provider.no_alcohol !== undefined ||
-    provider.no_pork !== undefined ||
-    provider.no_gambling !== undefined;
+    provider.no_alcohol != null || provider.no_pork != null || provider.no_gambling != null;
   if (attestationProvided) {
     const hasAttestation =
       Boolean(provider.no_alcohol) || Boolean(provider.no_pork) || Boolean(provider.no_gambling);

@@ -399,6 +399,10 @@ async function doCreateProviderOrService(
         no_alcohol: formData.no_alcohol ?? null,
         no_pork: formData.no_pork ?? null,
         no_gambling: formData.no_gambling ?? null,
+        // verification_method is TEXT NOT NULL DEFAULT 'online' with
+        // CHECK (... IN ('online','onsite')) — the 'online' fallback is a
+        // schema default and carries no verification claim (computeSealTier
+        // requires a truthy attestation before awarding a tier anyway).
         verification_method: formData.verification_method || 'online',
         has_certificate: formData.has_certificate || false,
         certificate_url: formData.certificate_url || null,
