@@ -8,6 +8,8 @@
 interface HalalStarsInput {
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
+  // AC6.8: the flag alone is not proof — gold/4 stars require a stored file.
+  certificate_url?: string | null;
   no_alcohol?: boolean | null;
   no_pork?: boolean | null;
   no_gambling?: boolean | null;
@@ -33,7 +35,9 @@ export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 | 4 
     return 0;
   }
 
-  const hasCertificate = Boolean(provider.has_certificate);
+  // Same contract as computeSealTier: has_certificate without a real
+  // certificate_url is a bare toggle and earns nothing certificate-based.
+  const hasCertificate = Boolean(provider.has_certificate) && Boolean(provider.certificate_url);
 
   // Certificate alone is enough (gold-tier equivalent)
   if (hasCertificate) {

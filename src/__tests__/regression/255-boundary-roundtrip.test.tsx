@@ -154,6 +154,8 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+import { toast } from 'sonner';
+
 vi.mock('@iconify/react', () => ({ Icon: () => null }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -293,6 +295,11 @@ describe('C1: desktop owner submit creates a provider (UnifiedProviderCreateForm
     expect(ext.no_alcohol).toBe(true);
     expect(ext.no_pork).toBe(true);
     expect(ext.no_gambling).toBe(true);
+
+    // E: the desktop owner toast must tell the truth — the submission is
+    // pending review, not "created".
+    expect(toast.success).toHaveBeenCalledWith('submissionStatus.submittedToast');
+    expect(toast.success).not.toHaveBeenCalledWith('create.media.providerCreated');
   });
 
   it('submit stays blocked while any attestation is untouched', () => {

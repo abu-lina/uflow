@@ -56,9 +56,12 @@ export const ownerSubmissionSchema = z
     zip: z.string().optional(),
     city: z.string().optional(),
     country: z.string().optional(),
-    no_alcohol: answeredAttestation,
-    no_pork: answeredAttestation,
-    no_gambling: answeredAttestation,
+    // Owner answers are sworn on their own business (oath variant): only
+    // yes/no are honest answers, so null is rejected here even though the
+    // column stays nullable for recommenders and imports (A3).
+    no_alcohol: z.boolean(),
+    no_pork: z.boolean(),
+    no_gambling: z.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.isOnlineBusiness) return;

@@ -21,6 +21,15 @@ export type HalalAttestationValues = Record<
 interface HalalAttestationFieldsProps {
   values: HalalAttestationValues;
   onChange: (field: HalalAttestationField, value: HalalAttestationAnswer) => void;
+  /**
+   * 'oath' — owner flow: the submitter swears on their own business, so only
+   *   yes/no are honest answers; "not sure" is not offered (owners never
+   *   write NULL).
+   * 'neutral' — recommend, import, and admin surfaces: the answerer reports
+   *   on someone else's business, so "not sure" (NULL) is a legitimate answer.
+   * Defaults to 'neutral'.
+   */
+  variant?: 'oath' | 'neutral';
 }
 
 const FIELDS: Array<{ key: HalalAttestationField; labelKey: string; descKey: string }> = [
@@ -49,11 +58,17 @@ const OPTIONS: Array<{ value: HalalAttestationAnswer; labelKey: string }> = [
 
 /**
  * Shared tri-state halal attestation questions (#415).
- * Used by the owner create wizard (create/halal) and the recommend form so
- * both flows ask and store the same answers (yes/no/not sure -> true/false/NULL).
+ * Used by the owner create wizard (create/halal, variant="oath") and the
+ * recommend/import/admin flows (variant="neutral") so both flows ask and
+ * store the same answers (yes/no/not sure -> true/false/NULL).
  */
-export function HalalAttestationFields({ values, onChange }: HalalAttestationFieldsProps) {
+export function HalalAttestationFields({
+  values,
+  onChange,
+  variant = 'neutral',
+}: HalalAttestationFieldsProps) {
   const { t } = useLanguage();
+  const options = variant === 'oath' ? OPTIONS.filter((o) => o.value !== null) : OPTIONS;
 
   return (
     <div className="flex flex-col gap-3">
@@ -67,7 +82,7 @@ export function HalalAttestationFields({ values, onChange }: HalalAttestationFie
             <span className="text-xs leading-relaxed text-[#7A7A7A]">{t(item.descKey)}</span>
           </div>
           <div className="flex gap-2" role="radiogroup">
-            {OPTIONS.map((opt) => {
+            {options.map((opt) => {
               const selected = values[item.key] === opt.value;
               return (
                 <button

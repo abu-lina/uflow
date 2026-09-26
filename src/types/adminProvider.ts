@@ -22,9 +22,10 @@ export interface FoodProviderExtension {
   verification_method: string | null;
   has_certificate: boolean;
   certificate_url: string | null;
-  no_alcohol: boolean;
-  no_pork: boolean;
-  no_gambling: boolean;
+  // Tri-state (#415): columns are nullable since migration 129 — null = "not sure"
+  no_alcohol: boolean | null;
+  no_pork: boolean | null;
+  no_gambling: boolean | null;
   proof_tier?: number;
 }
 
@@ -32,9 +33,9 @@ export interface StoreProviderExtension {
   verification_method: string | null;
   has_certificate: boolean;
   certificate_url: string | null;
-  no_alcohol: boolean;
-  no_pork: boolean;
-  no_gambling: boolean;
+  no_alcohol: boolean | null;
+  no_pork: boolean | null;
+  no_gambling: boolean | null;
   proof_tier?: number;
 }
 

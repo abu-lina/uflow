@@ -33,7 +33,24 @@ describe('computeHalalStars (Plan 089 M5)', () => {
   });
 
   it('returns 2 for online with certificate', () => {
-    expect(computeHalalStars({ verification_method: 'online', has_certificate: true })).toBe(2);
+    expect(
+      computeHalalStars({
+        verification_method: 'online',
+        has_certificate: true,
+        certificate_url: 'https://cdn.example.com/cert.pdf',
+      }),
+    ).toBe(2);
+  });
+
+  it('returns 0 for a bare has_certificate toggle with no stored file (#415 AC6.8)', () => {
+    expect(computeHalalStars({ verification_method: 'online', has_certificate: true })).toBe(0);
+    expect(
+      computeHalalStars({
+        verification_method: 'online',
+        has_certificate: true,
+        certificate_url: null,
+      }),
+    ).toBe(0);
   });
 
   it('returns 3 for onsite without certificate when attested', () => {
@@ -47,7 +64,13 @@ describe('computeHalalStars (Plan 089 M5)', () => {
   });
 
   it('returns 4 for onsite with certificate', () => {
-    expect(computeHalalStars({ verification_method: 'onsite', has_certificate: true })).toBe(4);
+    expect(
+      computeHalalStars({
+        verification_method: 'onsite',
+        has_certificate: true,
+        certificate_url: 'https://cdn.example.com/cert.pdf',
+      }),
+    ).toBe(4);
   });
 
   it('returns 0 when attestation data is present but all false (not halal)', () => {
@@ -97,6 +120,7 @@ describe('computeHalalStars (Plan 089 M5)', () => {
       computeHalalStars({
         verification_method: 'online',
         has_certificate: true,
+        certificate_url: 'https://cdn.example.com/cert.pdf',
         no_alcohol: false,
         no_pork: false,
         no_gambling: false,
@@ -106,6 +130,7 @@ describe('computeHalalStars (Plan 089 M5)', () => {
       computeHalalStars({
         verification_method: 'onsite',
         has_certificate: true,
+        certificate_url: 'https://cdn.example.com/cert.pdf',
         no_alcohol: false,
         no_pork: false,
         no_gambling: false,

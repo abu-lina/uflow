@@ -19,6 +19,10 @@ import {
 } from '@/components/shared/RecommendSuccessScreen';
 import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 import {
+  VerificationMethodField,
+  toVerificationMethod,
+} from '@/components/shared/VerificationMethodField';
+import {
   importSubmissionSchema,
   firstIssueField,
   submissionFieldLabelKeys,
@@ -971,10 +975,12 @@ export function StreamlinedImportForm({
 
       // Keep the submitted verification inputs for the provisional seal on the
       // success screen; updateFormData below resets them to undefined.
+      // B1 (#415): the seal must reflect what the user actually answered —
+      // null, not the 'online' schema default, when they skipped the question.
       setSubmittedSeal({
-        verificationMethod: (contextFormData.verification_method || 'online') as
-          'online' | 'onsite',
+        verificationMethod: toVerificationMethod(contextFormData.verification_method) ?? null,
         hasCertificate: contextFormData.has_certificate || false,
+        certificateUrl: contextFormData.certificate_url ?? null,
         noAlcohol: contextFormData.no_alcohol ?? null,
         noPork: contextFormData.no_pork ?? null,
         noGambling: contextFormData.no_gambling ?? null,
@@ -1478,7 +1484,14 @@ export function StreamlinedImportForm({
               no_pork: contextFormData.no_pork,
               no_gambling: contextFormData.no_gambling,
             }}
+            variant="neutral"
             onChange={(field, value) => updateFormData({ [field]: value })}
+          />
+          {/* AC6.1: verification method is answerable here too — optional for
+              recommenders; unanswered means no seal is earned (B1). */}
+          <VerificationMethodField
+            value={toVerificationMethod(contextFormData.verification_method)}
+            onChange={(v) => updateFormData({ verification_method: v })}
           />
         </div>
 

@@ -1234,6 +1234,10 @@ export const ps = {
     admin: {
       declaredNonCompliant: 'Als nicht konform angegeben',
       unanswered: 'Nicht beantwortet',
+      // INTERIM de (#415): pending human translation
+      declaredNotHalal: 'Nicht halal',
+      attestationIncomplete: 'Halal-Angaben unvollständig',
+      adminOnly: 'Nur Admin',
     },
   },
   submissionValidation: {
@@ -1266,5 +1270,30 @@ export const ps = {
     certificateTitle: 'Halal-Zertifikat',
     certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
     certificateUpload: 'Zertifikat hochladen',
+    // INTERIM de (#415): pending human translation
+    certificateInvalidType: 'Ungültiger Dateityp. Bitte lade ein Bild oder eine PDF-Datei hoch.',
+    certificateTooLarge: 'Datei zu groß. Das Zertifikat darf maximal 5 MB groß sein.',
+  },
+  // Plan 255 INTERIM (#415): German source text, NOT a translation.
+  adminHalalEdit: {
+    title: 'Halal Check',
+    uploading: 'Wird hochgeladen...',
+    attestationWarning:
+      'Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.',
+    existingCertificate: 'Vorhandenes Zertifikat',
+    viewCertificate: 'Zertifikat anzeigen',
+    derivedTierInfo:
+      'Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.',
+    derivedTierLabel: 'Abgeleitetes Level',
+    tier: {
+      gold: 'Gold',
+      silver: 'Silber',
+      bronze: 'Bronze',
+    },
+    autoApprovedTitle: 'Auto-Approved',
+    autoApprovedDesc: 'Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.',
+    autoRejectedTitle: 'Auto-Rejected',
+    autoRejectedDesc:
+      'Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.',
   },
 } as const;

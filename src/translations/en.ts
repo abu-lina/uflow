@@ -1226,6 +1226,9 @@ export const en = {
     admin: {
       declaredNonCompliant: 'Declared non-compliant',
       unanswered: 'Not answered',
+      declaredNotHalal: 'Not halal',
+      attestationIncomplete: 'Halal details incomplete',
+      adminOnly: 'Admin only',
     },
   },
   // Plan 255 C3 (#415): submission validation
@@ -1262,5 +1265,29 @@ export const en = {
     certificateTitle: 'Halal certificate',
     certificateDesc: 'Upload a valid halal certificate (optional)',
     certificateUpload: 'Upload certificate',
+    certificateInvalidType: 'Invalid file type. Please upload an image or a PDF file.',
+    certificateTooLarge: 'File too large. The certificate may be at most 5 MB.',
+  },
+  // Plan 255 (#415): admin halal edit sub-page
+  adminHalalEdit: {
+    title: 'Halal Check',
+    uploading: 'Uploading...',
+    attestationWarning:
+      'All three attestation questions must be confirmed before the entry can be approved.',
+    existingCertificate: 'Existing certificate',
+    viewCertificate: 'View certificate',
+    derivedTierInfo:
+      'The halal level is derived automatically from the verification method: Online = Bronze, On-site = Silver, With certificate = Gold.',
+    derivedTierLabel: 'Derived level',
+    tier: {
+      gold: 'Gold',
+      silver: 'Silver',
+      bronze: 'Bronze',
+    },
+    autoApprovedTitle: 'Auto-Approved',
+    autoApprovedDesc: 'All attestation criteria met. The entry is pre-approved.',
+    autoRejectedTitle: 'Auto-Rejected',
+    autoRejectedDesc:
+      'Not all criteria met. The entry is pre-rejected. You can override this on the edit page.',
   },
 } as const;

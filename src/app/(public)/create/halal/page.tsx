@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 import { FileBadge, Upload, X } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -13,6 +14,7 @@ import { HalalAttestationFields } from '@/components/shared/HalalAttestationFiel
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { validateCertificateFile } from '@/lib/validations/certificate';
 import { cn } from '@/lib/utils';
 
 export default function HalalPage() {
@@ -54,7 +56,20 @@ export default function HalalPage() {
   };
   const handleCertUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) updateFormData({ certificate_file: f, has_certificate: true });
+    if (!f) return;
+    const validation = validateCertificateFile(f);
+    if (validation !== 'ok') {
+      toast.error(
+        t(
+          validation === 'invalidType'
+            ? 'createHalal.certificateInvalidType'
+            : 'createHalal.certificateTooLarge',
+        ),
+      );
+      e.target.value = '';
+      return;
+    }
+    updateFormData({ certificate_file: f, has_certificate: true });
   };
   const removeCert = () => {
     updateFormData({ certificate_file: null, has_certificate: false, certificate_url: '' });
@@ -90,6 +105,7 @@ export default function HalalPage() {
                 no_pork: formData.no_pork,
                 no_gambling: formData.no_gambling,
               }}
+              variant="oath"
               onChange={(field, value) => updateFormData({ [field]: value })}
             />
           </div>

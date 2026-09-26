@@ -82,6 +82,7 @@ export interface Provider {
   // M-5 extension table columns (now in food_providers / store_providers; undefined when not joined)
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
+  certificate_url?: string | null;
   // From food_providers extension table (joined in search queries)
   // Tri-state (#415): true = attested, false = declared non-compliant, null = not sure
   no_alcohol?: boolean | null;

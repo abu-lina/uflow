@@ -230,13 +230,16 @@ export function ProviderDetailSections({
     staleTime: 5 * 60 * 1000,
   });
 
-  const sealTier = computeSealTier(provider.verification_method, provider.has_certificate, {
-    noAlcohol: provider.no_alcohol,
-    noPork: provider.no_pork,
-    noGambling: provider.no_gambling,
-  });
-  // Admin-only: provider was reviewed (verification_method set) but didn't pass attestation
-  const showNotHalal = !sealTier && isAdmin && provider.verification_method != null;
+  const sealTier = computeSealTier(
+    provider.verification_method,
+    provider.has_certificate,
+    {
+      noAlcohol: provider.no_alcohol,
+      noPork: provider.no_pork,
+      noGambling: provider.no_gambling,
+    },
+    provider.certificate_url,
+  );
 
   // #415: distinguish "submitter said no" (false) from "not sure" (null) so
   // reviewers can triage differently. Undefined means the column was not
@@ -251,6 +254,13 @@ export function ProviderDetailSections({
   const deniedAttestations = halalAttestationRows.filter((r) => r.value === false);
   const unansweredAttestations = halalAttestationRows.filter((r) => r.value === null);
 
+  // B2 (#415): verification_method is NOT NULL DEFAULT 'online' on every
+  // extension row, so keying on it would flag every food/store provider.
+  // Only surface the admin warning when something was actually declared, and
+  // distinguish "said no" (false) from "not sure" (null) in the headline.
+  const showNotHalal =
+    !sealTier && isAdmin && (deniedAttestations.length > 0 || unansweredAttestations.length > 0);
+
   return (
     <div className="flex flex-col gap-4 self-stretch">
       {sealTier ? (
@@ -261,6 +271,7 @@ export function ProviderDetailSections({
         >
           <div className="space-y-3 pt-3">
             <ProofTierCard
+              certificateUrl={provider.certificate_url}
               hasCertificate={provider.has_certificate}
               listingType={provider.listing_type}
               noAlcohol={provider.no_alcohol}
@@ -279,9 +290,13 @@ export function ProviderDetailSections({
         >
           <div className="space-y-3 pt-3">
             <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-              <span className="text-sm font-medium text-red-700">Not halal</span>
+              <span className="text-sm font-medium text-red-700">
+                {deniedAttestations.length > 0
+                  ? t('halal.admin.declaredNotHalal')
+                  : t('halal.admin.attestationIncomplete')}
+              </span>
               <span className="ml-auto rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-600">
-                Admin only
+                {t('halal.admin.adminOnly')}
               </span>
             </div>
             {(deniedAttestations.length > 0 || unansweredAttestations.length > 0) && (

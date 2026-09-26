@@ -207,7 +207,10 @@ export async function fetchFilteredCities(
     }
 
     // No search query — use direct query on providers only
-    let providersReq = supabase.from('providers').select('address_city');
+    let providersReq = supabase
+      .from('providers')
+      .select('address_city')
+      .eq('review_status', 'approved');
 
     // Apply category filter if specified
     if (selectedCategory && selectedCategory !== 'Alle') {

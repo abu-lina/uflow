@@ -224,6 +224,7 @@ export default function EditValuesPage({ params }: { params: Promise<{ id: strin
                 no_pork: values.noPork,
                 no_gambling: values.noGambling,
               }}
+              variant="neutral"
               onChange={setAttestation}
             />
           </div>

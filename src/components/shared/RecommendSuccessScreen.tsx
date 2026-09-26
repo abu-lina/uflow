@@ -15,6 +15,7 @@ import { ProofTierCard, computeSealTier } from '@/features/providers/components/
 export interface SubmittedSealInput {
   verificationMethod?: 'online' | 'onsite' | null;
   hasCertificate?: boolean | null;
+  certificateUrl?: string | null;
   noAlcohol?: boolean | null;
   noPork?: boolean | null;
   noGambling?: boolean | null;
@@ -155,11 +156,16 @@ export function RecommendSuccessScreen({
           {/* Provisional seal — only when the submitted data earns a tier.
             All-"not sure" submissions earn nothing and render no seal. */}
           {seal &&
-            computeSealTier(seal.verificationMethod, seal.hasCertificate, {
-              noAlcohol: seal.noAlcohol,
-              noPork: seal.noPork,
-              noGambling: seal.noGambling,
-            }) && (
+            computeSealTier(
+              seal.verificationMethod,
+              seal.hasCertificate,
+              {
+                noAlcohol: seal.noAlcohol,
+                noPork: seal.noPork,
+                noGambling: seal.noGambling,
+              },
+              seal.certificateUrl,
+            ) && (
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full"
@@ -172,6 +178,7 @@ export function RecommendSuccessScreen({
               >
                 <ProofTierCard
                   provisional
+                  certificateUrl={seal.certificateUrl}
                   hasCertificate={seal.hasCertificate}
                   noAlcohol={seal.noAlcohol}
                   noGambling={seal.noGambling}

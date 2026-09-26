@@ -24,6 +24,7 @@ export async function fetchSearchSuggestions(
     supabase
       .from('providers')
       .select('provider_name')
+      .eq('review_status', 'approved')
       .ilike('provider_name', `%${trimmed}%`)
       .limit(5),
     supabase.from('food_menu').select('name_de, name_en').ilike('name_de', `%${trimmed}%`).limit(5),

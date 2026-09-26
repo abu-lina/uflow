@@ -363,11 +363,14 @@ describe('C2 fix: no stars without a truthy attestation (#415)', () => {
     expect(computeHalalStars({ verification_method: 'onsite' })).toBe(0);
   });
 
-  it('the certificate short-circuit is unchanged for all-NULL attestations', () => {
+  it('the certificate short-circuit needs a stored file but skips attestation (AC6.8)', () => {
+    // A certificate on file (url stored) earns stars even with all-NULL
+    // attestations — the cert itself is the verification.
     expect(
       computeHalalStars({
         verification_method: 'online',
         has_certificate: true,
+        certificate_url: 'https://cdn.example.com/cert.pdf',
         no_alcohol: null,
         no_pork: null,
         no_gambling: null,
@@ -377,11 +380,23 @@ describe('C2 fix: no stars without a truthy attestation (#415)', () => {
       computeHalalStars({
         verification_method: 'onsite',
         has_certificate: true,
+        certificate_url: 'https://cdn.example.com/cert.pdf',
         no_alcohol: null,
         no_pork: null,
         no_gambling: null,
       }),
     ).toBe(4);
+    // The bare toggle without a file earns nothing.
+    expect(
+      computeHalalStars({
+        verification_method: 'online',
+        has_certificate: true,
+        certificate_url: null,
+        no_alcohol: null,
+        no_pork: null,
+        no_gambling: null,
+      }),
+    ).toBe(0);
   });
 
   it('computeSealTier and computeHalalStars agree that all-NULL is no halal signal', () => {

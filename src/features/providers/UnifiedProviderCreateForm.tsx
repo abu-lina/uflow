@@ -200,13 +200,9 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       // Use the shared service function
       await createProviderOrService(formData, user, isRecommendationMode);
 
-      // Show success message
-      const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
-      if (isCommunityService) {
-        toast.success(t('create.media.communityServiceCreated'));
-      } else {
-        toast.success(t('create.media.providerCreated'));
-      }
+      // Show success message; every submission is pending review, not live
+      // yet — promise no timeline and no notification (same as C5).
+      toast.success(t('submissionStatus.submittedToast'));
 
       clearFormData();
       queryClient.invalidateQueries({ queryKey: ['providers'] });
@@ -645,6 +641,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
               no_pork: formData.no_pork,
               no_gambling: formData.no_gambling,
             }}
+            variant="oath"
             onChange={(field, value) => updateFormData({ [field]: value })}
           />
         </div>

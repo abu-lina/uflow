@@ -57,10 +57,10 @@ const validOwner = {
   zip: '10115',
   city: 'Berlin',
   country: 'Deutschland',
-  // H2: the halal step is part of the owner wizard; all three answers are
-  // required (null = "not sure" is a valid deliberate answer).
+  // H2 + A3 (oath): the halal step is part of the owner wizard; all three
+  // answers are required and "not sure" does not exist for owners.
   no_alcohol: true,
-  no_pork: null,
+  no_pork: false,
   no_gambling: false,
 };
 

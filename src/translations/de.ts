@@ -1245,6 +1245,9 @@ export const de = {
     admin: {
       declaredNonCompliant: 'Als nicht konform angegeben',
       unanswered: 'Nicht beantwortet',
+      declaredNotHalal: 'Nicht halal',
+      attestationIncomplete: 'Halal-Angaben unvollständig',
+      adminOnly: 'Nur Admin',
     },
   },
   // Plan 255 C3 (#415): submission validation
@@ -1281,5 +1284,29 @@ export const de = {
     certificateTitle: 'Halal-Zertifikat',
     certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
     certificateUpload: 'Zertifikat hochladen',
+    certificateInvalidType: 'Ungültiger Dateityp. Bitte lade ein Bild oder eine PDF-Datei hoch.',
+    certificateTooLarge: 'Datei zu groß. Das Zertifikat darf maximal 5 MB groß sein.',
+  },
+  // Plan 255 (#415): admin halal edit sub-page
+  adminHalalEdit: {
+    title: 'Halal Check',
+    uploading: 'Wird hochgeladen...',
+    attestationWarning:
+      'Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.',
+    existingCertificate: 'Vorhandenes Zertifikat',
+    viewCertificate: 'Zertifikat anzeigen',
+    derivedTierInfo:
+      'Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.',
+    derivedTierLabel: 'Abgeleitetes Level',
+    tier: {
+      gold: 'Gold',
+      silver: 'Silber',
+      bronze: 'Bronze',
+    },
+    autoApprovedTitle: 'Auto-Approved',
+    autoApprovedDesc: 'Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.',
+    autoRejectedTitle: 'Auto-Rejected',
+    autoRejectedDesc:
+      'Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.',
   },
 } as const;

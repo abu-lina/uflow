@@ -80,6 +80,7 @@ export const ProviderCard = React.memo(
         listing_type,
         verification_method,
         has_certificate,
+        certificate_url,
         no_alcohol,
         no_pork,
         no_gambling,
@@ -147,13 +148,18 @@ export const ProviderCard = React.memo(
       // When fill animation is active (shouldAnimateFill), use bookmarked state to ensure animation shows
       const displayBookmarked =
         showAllahumaBarik || isLoading || shouldAnimateFill ? bookmarked : isBookmarked;
-      const primaryLocation = locations && locations.length > 0
-        ? locations.find((l: Location) => l.is_primary) || locations[0]
-        : null;
+      const primaryLocation =
+        locations && locations.length > 0
+          ? locations.find((l: Location) => l.is_primary) || locations[0]
+          : null;
 
       let address = '';
       if (primaryLocation) {
-        const { address_street: locStreet, address_zip: locZip, address_city: locCity } = primaryLocation;
+        const {
+          address_street: locStreet,
+          address_zip: locZip,
+          address_city: locCity,
+        } = primaryLocation;
         if (locStreet && locZip && locCity) {
           address = `${locStreet}, ${locZip} ${locCity}`;
         } else if (locStreet && locCity) {
@@ -207,7 +213,6 @@ export const ProviderCard = React.memo(
         ? t('providerDetail.openStatus.open')
         : t('providerDetail.openStatus.closed');
       const distanceLabel = formatDistance(distanceKm);
-
 
       const handleBookmark = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -362,8 +367,8 @@ export const ProviderCard = React.memo(
             )}
             {!showSkeleton && (
               <div className="absolute bottom-3 left-3 right-3">
-                <div className="inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px] max-w-full">
-                  <div className="justify-start text-left font-inter-tight text-sm font-medium text-content truncate whitespace-nowrap">
+                <div className="inline-flex h-6 max-w-full items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px]">
+                  <div className="justify-start truncate whitespace-nowrap text-left font-inter-tight text-sm font-medium text-content">
                     {categoryName}
                   </div>
                 </div>
@@ -448,7 +453,10 @@ export const ProviderCard = React.memo(
                     {provider_name}
                   </span>
                   {(openStatus.visible || distanceLabel) && (
-                    <div className="mt-0.5 flex items-center gap-1" data-testid="provider-open-status">
+                    <div
+                      className="mt-0.5 flex items-center gap-1"
+                      data-testid="provider-open-status"
+                    >
                       {openStatus.visible && (
                         <span
                           className={`font-inter text-sm font-medium leading-normal ${openStatus.isOpen ? 'text-success-dark' : 'text-danger-dark'}`}
@@ -463,7 +471,10 @@ export const ProviderCard = React.memo(
                         />
                       )}
                       {distanceLabel && (
-                        <span className="font-inter text-sm font-medium leading-normal text-text-muted" data-testid="provider-distance">
+                        <span
+                          className="font-inter text-sm font-medium leading-normal text-text-muted"
+                          data-testid="provider-distance"
+                        >
                           {distanceLabel}
                         </span>
                       )}
@@ -494,8 +505,8 @@ export const ProviderCard = React.memo(
                     {address}
                   </button>
                   {locations && locations.length > 1 && (
-                    <div className="mt-1 inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px] max-w-full">
-                      <span className="font-inter-tight text-sm font-medium text-content truncate whitespace-nowrap">
+                    <div className="mt-1 inline-flex h-6 max-w-full items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px]">
+                      <span className="truncate whitespace-nowrap font-inter-tight text-sm font-medium text-content">
                         {locations.length} Standorte
                       </span>
                     </div>
@@ -537,7 +548,14 @@ export const ProviderCard = React.memo(
                 {(() => {
                   const halalStars =
                     listing_type === 'food'
-                      ? computeHalalStars({ verification_method, has_certificate, no_alcohol, no_pork, no_gambling })
+                      ? computeHalalStars({
+                          verification_method,
+                          has_certificate,
+                          certificate_url,
+                          no_alcohol,
+                          no_pork,
+                          no_gambling,
+                        })
                       : 0;
                   if (!halalStars) return null;
                   return (

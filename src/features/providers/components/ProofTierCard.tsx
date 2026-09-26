@@ -21,9 +21,13 @@ export function computeSealTier(
     noPork?: boolean | null;
     noGambling?: boolean | null;
   },
+  certificateUrl?: string | null,
 ): 'bronze' | 'silver' | 'gold' | null {
-  if (hasCertificate) return 'gold';
-  if (!verificationMethod && !hasCertificate) return null;
+  // AC6.8: gold requires an actual certificate on file. A bare has_certificate
+  // toggle (upload failed, legacy row, self-declared) must not produce gold.
+  const certified = Boolean(hasCertificate) && Boolean(certificateUrl);
+  if (certified) return 'gold';
+  if (!verificationMethod) return null;
   // Require at least one attestation answer before awarding a tier.
   // Without this, a provider with verification_method set as a DB default
   // (but no actual halal check done) would auto-show as bronze.
@@ -47,6 +51,9 @@ type SealTier = 'bronze' | 'silver' | 'gold';
 interface ProofTierCardProps {
   verificationMethod: 'online' | 'onsite' | null | undefined;
   hasCertificate: boolean | null | undefined;
+  // Storage URL of the uploaded certificate; gold requires both the flag and
+  // a real file behind it (AC6.8).
+  certificateUrl?: string | null;
   listingType?: Provider['listing_type'];
   noAlcohol?: Provider['no_alcohol'];
   noPork?: Provider['no_pork'];
@@ -225,6 +232,7 @@ function GoldAttestationSection({
 export function ProofTierCard({
   verificationMethod,
   hasCertificate,
+  certificateUrl,
   listingType,
   noAlcohol,
   noPork,
@@ -235,11 +243,16 @@ export function ProofTierCard({
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const tier = computeSealTier(verificationMethod, hasCertificate, {
-    noAlcohol,
-    noPork,
-    noGambling,
-  });
+  const tier = computeSealTier(
+    verificationMethod,
+    hasCertificate,
+    {
+      noAlcohol,
+      noPork,
+      noGambling,
+    },
+    certificateUrl,
+  );
 
   // No tier means no verification data — don't render the card at all
   if (!tier) return null;

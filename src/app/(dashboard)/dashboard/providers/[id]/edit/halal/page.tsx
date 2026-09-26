@@ -3,12 +3,15 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
+import { toast } from 'sonner';
 
 import { EditSubPageLayout } from '@/components/layout/EditSubPageLayout';
 import {
   HalalAttestationFields,
   type HalalAttestationField,
 } from '@/components/shared/HalalAttestationFields';
+import { useLanguage } from '@/providers/LanguageProvider';
+import { validateCertificateFile } from '@/lib/validations/certificate';
 import type { DerivedReviewStatus } from '@/utils/halal-derivation';
 
 const FIELD_TO_CAMEL = {
@@ -30,19 +33,33 @@ interface HalalData {
   reviewStatus?: DerivedReviewStatus;
 }
 
-function getDerivedTier(data: HalalData): { label: string; color: string } | null {
-  if (data.hasCertificate)
-    return { label: 'Gold', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' };
+function getDerivedTier(data: HalalData): { labelKey: string; color: string } | null {
+  // Gold needs a real certificate — an existing stored file or one staged
+  // for upload on save; a bare toggle does not earn gold (AC6.8).
+  const hasRealCertificate =
+    data.hasCertificate && (data.certificateUrl != null || data.certificateFile != null);
+  if (hasRealCertificate)
+    return {
+      labelKey: 'adminHalalEdit.tier.gold',
+      color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    };
   if (data.verificationMethod === 'onsite')
-    return { label: 'Silber', color: 'bg-gray-100 text-gray-800 border-gray-400' };
+    return {
+      labelKey: 'adminHalalEdit.tier.silver',
+      color: 'bg-gray-100 text-gray-800 border-gray-400',
+    };
   if (data.verificationMethod === 'online')
-    return { label: 'Bronze', color: 'bg-amber-100 text-amber-800 border-amber-400' };
+    return {
+      labelKey: 'adminHalalEdit.tier.bronze',
+      color: 'bg-amber-100 text-amber-800 border-amber-400',
+    };
   return null;
 }
 
 export default function EditHalalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const STORAGE_KEY = `admin_edit_halal_${id}`;
 
@@ -125,9 +142,20 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
 
   const handleCertificateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setData((prev) => ({ ...prev, certificateFile: file, hasCertificate: true }));
+    if (!file) return;
+    const validation = validateCertificateFile(file);
+    if (validation !== 'ok') {
+      toast.error(
+        t(
+          validation === 'invalidType'
+            ? 'createHalal.certificateInvalidType'
+            : 'createHalal.certificateTooLarge',
+        ),
+      );
+      e.target.value = '';
+      return;
     }
+    setData((prev) => ({ ...prev, certificateFile: file, hasCertificate: true }));
   };
 
   const removeCertificate = () => {
@@ -181,13 +209,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   return (
     <EditSubPageLayout
       primaryButton={{
-        label: isUploading ? 'Wird hochgeladen...' : 'Speichern',
+        label: isUploading ? t('adminHalalEdit.uploading') : t('common.save'),
         icon: isUploading ? undefined : 'material-symbols:save-outline',
         onClick: handleSave,
         disabled: isUploading,
         loading: isUploading,
       }}
-      title="Halal Check"
+      title={t('adminHalalEdit.title')}
     >
       <div className="flex flex-col gap-6">
         {/* Section 1: Attestation Questions */}
@@ -197,7 +225,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
             type="button"
             onClick={() => toggleSection('attestation')}
           >
-            <h2 className="text-lg font-medium text-[#232323]">Halal Check</h2>
+            <h2 className="text-lg font-medium text-[#232323]">{t('adminHalalEdit.title')}</h2>
             <Icon
               className={`h-6 w-6 text-[#232323] transition-transform ${expandedSections.attestation ? 'rotate-180' : ''}`}
               icon="material-symbols:expand-more"
@@ -206,9 +234,11 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
 
           {expandedSections.attestation && (
             <div className="space-y-3">
+              {/* Neutral framing: an admin edits on someone's behalf and may
+                  legitimately not know, so the oath text does not belong here
+                  (A3). */}
               <p className="px-3 text-sm leading-relaxed text-[#7A7A7A]">
-                Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst
-                oder anbietest?
+                {t('halal.attestation.recommendDescription')}
               </p>
 
               <HalalAttestationFields
@@ -217,6 +247,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                   no_pork: data.noPork,
                   no_gambling: data.noGambling,
                 }}
+                variant="neutral"
                 onChange={setAttestation}
               />
 
@@ -228,8 +259,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                       icon="material-symbols:warning-outline"
                     />
                     <p className="text-xs leading-relaxed text-amber-700">
-                      Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag
-                      freigegeben werden kann.
+                      {t('adminHalalEdit.attestationWarning')}
                     </p>
                   </div>
                 </div>
@@ -245,7 +275,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
             type="button"
             onClick={() => toggleSection('verification')}
           >
-            <h2 className="text-lg font-medium text-[#232323]">Verifizierungsmethode</h2>
+            <h2 className="text-lg font-medium text-[#232323]">
+              {t('createHalal.verificationTitle')}
+            </h2>
             <Icon
               className={`h-6 w-6 text-[#232323] transition-transform ${expandedSections.verification ? 'rotate-180' : ''}`}
               icon="material-symbols:expand-more"
@@ -254,21 +286,19 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
 
           {expandedSections.verification && (
             <div className="space-y-3">
-              <p className="px-3 text-sm text-[#7A7A7A]">
-                Wie wurde die Halal-Konformität überprüft?
-              </p>
+              <p className="px-3 text-sm text-[#7A7A7A]">{t('createHalal.verificationDesc')}</p>
 
               <div className="flex gap-3">
                 {[
                   {
                     value: 'online' as const,
-                    label: 'Online',
-                    description: 'Online überprüft (Menü, Website, Selbstauskunft)',
+                    label: t('createHalal.methodOnline'),
+                    description: t('createHalal.methodOnlineDesc'),
                   },
                   {
                     value: 'onsite' as const,
-                    label: 'Vor Ort',
-                    description: 'Vor Ort besucht und überprüft',
+                    label: t('createHalal.methodOnsite'),
+                    description: t('createHalal.methodOnsiteDesc'),
                   },
                 ].map((option) => {
                   const isSelected = data.verificationMethod === option.value;
@@ -311,7 +341,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
             type="button"
             onClick={() => toggleSection('certificate')}
           >
-            <h2 className="text-lg font-medium text-[#232323]">Halal-Zertifikat</h2>
+            <h2 className="text-lg font-medium text-[#232323]">
+              {t('createHalal.certificateTitle')}
+            </h2>
             <Icon
               className={`h-6 w-6 text-[#232323] transition-transform ${expandedSections.certificate ? 'rotate-180' : ''}`}
               icon="material-symbols:expand-more"
@@ -321,7 +353,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           {expandedSections.certificate && (
             <div className="space-y-3">
               <div className="flex items-center justify-between px-3">
-                <p className="text-xs text-[#7A7A7A]">Zertifikat hochladen (optional)</p>
+                <p className="text-xs text-[#7A7A7A]">{t('createHalal.certificateDesc')}</p>
                 <button
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                     data.hasCertificate ? 'bg-primary' : 'bg-gray-200'
@@ -345,7 +377,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                         <Icon className="h-6 w-6 text-primary" icon="material-symbols:verified" />
                         <div className="flex flex-col">
                           <span className="text-sm font-medium text-[#272727]">
-                            Vorhandenes Zertifikat
+                            {t('adminHalalEdit.existingCertificate')}
                           </span>
                           <a
                             className="text-xs text-primary underline"
@@ -353,7 +385,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                             rel="noopener noreferrer"
                             target="_blank"
                           >
-                            Zertifikat anzeigen
+                            {t('adminHalalEdit.viewCertificate')}
                           </a>
                         </div>
                       </div>
@@ -409,7 +441,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                       >
                         <Icon className="h-6 w-6 text-[#999999]" icon="lucide:upload" />
                         <span className="text-sm font-medium text-[#999999]">
-                          Zertifikat hochladen
+                          {t('createHalal.certificateUpload')}
                         </span>
                       </button>
                     </div>
@@ -429,14 +461,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
             />
             <div className="flex flex-col gap-1">
               <p className="text-xs leading-relaxed text-blue-700">
-                Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online =
-                Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.
+                {t('adminHalalEdit.derivedTierInfo')}
               </p>
               {derivedTier && (
                 <span
                   className={`mt-1 inline-flex self-start rounded-full border px-2.5 py-0.5 text-xs font-semibold ${derivedTier.color}`}
                 >
-                  Abgeleitetes Level: {derivedTier.label}
+                  {t('adminHalalEdit.derivedTierLabel')}: {t(derivedTier.labelKey)}
                 </span>
               )}
             </div>
@@ -451,9 +482,11 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                 icon="material-symbols:check-circle-outline"
               />
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-semibold text-green-800">Auto-Approved</p>
+                <p className="text-sm font-semibold text-green-800">
+                  {t('adminHalalEdit.autoApprovedTitle')}
+                </p>
                 <p className="text-xs leading-relaxed text-green-700">
-                  Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.
+                  {t('adminHalalEdit.autoApprovedDesc')}
                 </p>
               </div>
             </div>
@@ -466,41 +499,74 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                 icon="material-symbols:cancel-outline"
               />
               <div className="flex flex-col gap-2">
-                <p className="text-sm font-semibold text-red-800">Auto-Rejected</p>
-                <p className="text-xs leading-relaxed text-red-700">
-                  Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf
-                  der Bearbeitungsseite überschreiben.
+                <p className="text-sm font-semibold text-red-800">
+                  {t('adminHalalEdit.autoRejectedTitle')}
                 </p>
-                {!allAttested && (
-                  <ul className="mt-1 flex flex-col gap-1">
-                    {!data.noAlcohol && (
-                      <li className="flex items-center gap-1.5 text-xs text-red-700">
-                        <Icon
-                          className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
-                          icon="material-symbols:close-small"
-                        />
-                        Kein Alkohol
-                      </li>
-                    )}
-                    {!data.noPork && (
-                      <li className="flex items-center gap-1.5 text-xs text-red-700">
-                        <Icon
-                          className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
-                          icon="material-symbols:close-small"
-                        />
-                        Kein verbotenes Fleisch
-                      </li>
-                    )}
-                    {!data.noGambling && (
-                      <li className="flex items-center gap-1.5 text-xs text-red-700">
-                        <Icon
-                          className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
-                          icon="material-symbols:close-small"
-                        />
-                        Kein Glücksspiel
-                      </li>
-                    )}
-                  </ul>
+                <p className="text-xs leading-relaxed text-red-700">
+                  {t('adminHalalEdit.autoRejectedDesc')}
+                </p>
+                {/* B2 (#415): a "not sure" (null) is not a denial — list the two
+                    groups separately so admins triage them differently. */}
+                {(
+                  [
+                    {
+                      rows: [
+                        {
+                          failed: data.noAlcohol === false,
+                          labelKey: 'halal.attestation.noAlcohol.label',
+                        },
+                        {
+                          failed: data.noPork === false,
+                          labelKey: 'halal.attestation.noPork.label',
+                        },
+                        {
+                          failed: data.noGambling === false,
+                          labelKey: 'halal.attestation.noGambling.label',
+                        },
+                      ],
+                      groupKey: 'halal.admin.declaredNonCompliant',
+                    },
+                    {
+                      rows: [
+                        {
+                          failed: data.noAlcohol === null,
+                          labelKey: 'halal.attestation.noAlcohol.label',
+                        },
+                        {
+                          failed: data.noPork === null,
+                          labelKey: 'halal.attestation.noPork.label',
+                        },
+                        {
+                          failed: data.noGambling === null,
+                          labelKey: 'halal.attestation.noGambling.label',
+                        },
+                      ],
+                      groupKey: 'halal.admin.unanswered',
+                    },
+                  ] as const
+                ).map(
+                  ({ rows, groupKey }) =>
+                    rows.some((r) => r.failed) && (
+                      <div key={groupKey} className="mt-1 flex flex-col gap-1">
+                        <span className="text-xs font-semibold text-red-700">{t(groupKey)}:</span>
+                        <ul className="flex flex-col gap-1">
+                          {rows
+                            .filter((r) => r.failed)
+                            .map((r) => (
+                              <li
+                                key={r.labelKey}
+                                className="flex items-center gap-1.5 text-xs text-red-700"
+                              >
+                                <Icon
+                                  className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
+                                  icon="material-symbols:close-small"
+                                />
+                                {t(r.labelKey)}
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    ),
                 )}
               </div>
             </div>

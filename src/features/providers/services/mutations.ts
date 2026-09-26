@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { TrustLevel } from '@/types/badges';
+import { validateCertificateFile } from '@/lib/validations/certificate';
 
 // Extended form data type (alias kept so callers with extra fields still typecheck)
 type ExtendedProviderFormData = ProviderFormData;
@@ -157,6 +158,34 @@ async function uploadEntityImages(
   }
 
   return uploadedUrls;
+}
+
+/**
+ * Uploads a halal certificate to the provider-certificates bucket (AC6.8).
+ * Same bucket/path conventions as the admin halal edit page. Type and size
+ * are re-validated at the service boundary; an upload failure throws so a
+ * submission never stores has_certificate without a file behind it.
+ */
+async function uploadCertificate(file: File, userId: string | undefined): Promise<string> {
+  const validation = validateCertificateFile(file);
+  if (validation !== 'ok') {
+    throw new Error(`Certificate file rejected: ${validation}`);
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId ?? 'unknown'}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `certificates/${fileName}`;
+
+  const { error } = await supabase.storage.from('provider-certificates').upload(filePath, file);
+  if (error) {
+    console.error('Error uploading certificate:', error);
+    throw error;
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('provider-certificates').getPublicUrl(filePath);
+  return publicUrl;
 }
 
 /**
@@ -375,6 +404,11 @@ async function doCreateProviderOrService(
     // be approved — failure here must not be swallowed.
     if (resolvedListingType === 'food' || resolvedListingType === 'store') {
       const extTable = resolvedListingType === 'food' ? 'food_providers' : 'store_providers';
+      // AC6.8: upload the certificate (if any) before writing the row so
+      // certificate_url always points at a stored file.
+      const certificateUrl = formData.certificate_file
+        ? await uploadCertificate(formData.certificate_file, user?.id)
+        : formData.certificate_url || null;
       const extPayload: Record<string, unknown> = {
         provider_id: generatedProviderId,
         // Tri-state (#415): true=yes, false=submitter said no, null=not sure.
@@ -387,8 +421,10 @@ async function doCreateProviderOrService(
         // schema default and carries no verification claim (computeSealTier
         // requires a truthy attestation before awarding a tier anyway).
         verification_method: formData.verification_method || 'online',
-        has_certificate: formData.has_certificate || false,
-        certificate_url: formData.certificate_url || null,
+        // AC6.8: has_certificate is only written when a certificate URL
+        // actually exists — a bare toggle must never produce a gold tier.
+        has_certificate: certificateUrl != null,
+        certificate_url: certificateUrl,
       };
       const { error: extError } = await supabase
         .from(extTable)

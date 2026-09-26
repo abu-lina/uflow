@@ -32,6 +32,7 @@ export default function CategoryGallery({ categoryId, category }: CategoryGaller
           .from('providers')
           .select('provider_images')
           .eq('category_id', categoryId)
+          .eq('review_status', 'approved')
           .limit(3);
 
         if (providersError) throw providersError;
@@ -56,18 +57,18 @@ export default function CategoryGallery({ categoryId, category }: CategoryGaller
 
         // Priority 2: Get category fallback images
         const categoryImages: string[] = [];
-        
+
         if (category?.category_images) {
           try {
             // Handle different possible data structures
             let parsedCategoryImages;
-            
+
             if (typeof category.category_images === 'string') {
               parsedCategoryImages = JSON.parse(category.category_images);
             } else {
               parsedCategoryImages = category.category_images;
             }
-            
+
             // Handle different possible structures
             if (Array.isArray(parsedCategoryImages)) {
               // Direct array of URLs
@@ -86,10 +87,11 @@ export default function CategoryGallery({ categoryId, category }: CategoryGaller
 
         // Combine provider images with category images
         const combinedImages = [...providerImages];
-        
+
         // Fill remaining slots with category images (repeat if necessary)
         while (combinedImages.length < 3 && categoryImages.length > 0) {
-          const categoryImageIndex = (combinedImages.length - providerImages.length) % categoryImages.length;
+          const categoryImageIndex =
+            (combinedImages.length - providerImages.length) % categoryImages.length;
           combinedImages.push(categoryImages[categoryImageIndex]);
         }
 
@@ -141,8 +143,8 @@ export default function CategoryGallery({ categoryId, category }: CategoryGaller
               imageUrl === PLACEHOLDER_IMAGE
                 ? t('providers.placeholderImage', { index: index + 1 })
                 : imageUrl.includes('provider-images') || imageUrl.includes('providers')
-                ? t('providers.providerImage', { index: index + 1 })
-                : t('providers.categoryImage', { index: index + 1 })
+                  ? t('providers.providerImage', { index: index + 1 })
+                  : t('providers.categoryImage', { index: index + 1 })
             }
             className={`border border-white object-cover ${index === 0 ? 'rounded-l-[29px]' : ''} ${index === 2 ? 'rounded-r-[29px]' : ''}`}
             loading={index === 0 ? 'eager' : 'lazy'}

@@ -162,16 +162,11 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
  * Resolves a JoinHalal URL category slug to a UFlow category_id.
  * Returns null for unmapped or missing slugs.
  */
-export function resolveCategoryId(
-  slug: string | null,
-  categories: Category[]
-): string | null {
+export function resolveCategoryId(slug: string | null, categories: Category[]): string | null {
   if (!slug) return null;
   const targetName = CATEGORY_SLUG_MAP[slug.toLowerCase()];
   if (!targetName) return null;
-  const match = categories.find(
-    (c) => c.name_de.toLowerCase() === targetName.toLowerCase()
-  );
+  const match = categories.find((c) => c.name_de.toLowerCase() === targetName.toLowerCase());
   return match?.category_id ?? null;
 }
 
@@ -190,7 +185,7 @@ export function makeProviderKey(name: string, city: string | null): string {
  */
 export function resolveOfferIds(
   speisen: string[],
-  offers: Offer[]
+  offers: Offer[],
 ): { matchedIds: string[]; unmatchedSpeisen: string[] } {
   if (speisen.length === 0) return { matchedIds: [], unmatchedSpeisen: [] };
 
@@ -229,7 +224,7 @@ export function resolveOfferIds(
  */
 export async function createMissingOffers(
   supabase: SupabaseClient,
-  unmatchedSpeisen: string[]
+  unmatchedSpeisen: string[],
 ): Promise<Offer[]> {
   if (unmatchedSpeisen.length === 0) return [];
 
@@ -259,10 +254,7 @@ export async function createMissingOffers(
   }
 
   // Re-query to get UUIDs for both newly created and pre-existing rows
-  const { data } = await supabase
-    .from('offers')
-    .select('offer_id, name_de')
-    .in('name_de', unique);
+  const { data } = await supabase.from('offers').select('offer_id, name_de').in('name_de', unique);
 
   // If case-sensitive match missed some (e.g. DB has 'döner' but we sent 'Döner'),
   // we still return what we got — resolveOfferIds handles case-insensitive matching.
@@ -311,9 +303,11 @@ interface ProviderRecord {
   provider_description?: string | null;
   // Plan 089 M4: section fields — all JoinHalal imports are food providers
   listing_type: 'food';
-  no_alcohol: boolean;
-  no_pork: boolean;
-  no_gambling: boolean;
+  // Tri-state (#415): the import carries no attestation information, so all
+  // three write NULL (unknown). true/false are human claims, not defaults.
+  no_alcohol: boolean | null;
+  no_pork: boolean | null;
+  no_gambling: boolean | null;
   verification_method: 'online' | 'onsite';
   has_certificate: boolean;
 }
@@ -334,7 +328,11 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchText(url: string, callerSignal?: AbortSignal, attempt = 1): Promise<string | null> {
+async function fetchText(
+  url: string,
+  callerSignal?: AbortSignal,
+  attempt = 1,
+): Promise<string | null> {
   try {
     const fetchSignal = callerSignal
       ? AbortSignal.any([AbortSignal.timeout(15000), callerSignal])
@@ -367,7 +365,7 @@ async function fetchText(url: string, callerSignal?: AbortSignal, attempt = 1): 
 async function collectLocationUrls(
   sitemapUrls: string[],
   limit: ImportLimit,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<string[]> {
   const allUrls: string[] = [];
   const numericLimit = limit === 'all' ? null : limit;
@@ -411,13 +409,8 @@ async function loadOffers(supabase: SupabaseClient): Promise<Offer[]> {
   return (data ?? []) as Offer[];
 }
 
-async function checkProviderDescriptionExists(
-  supabase: SupabaseClient
-): Promise<boolean> {
-  const { error } = await supabase
-    .from('providers')
-    .select('provider_description')
-    .limit(1);
+async function checkProviderDescriptionExists(supabase: SupabaseClient): Promise<boolean> {
+  const { error } = await supabase.from('providers').select('provider_description').limit(1);
 
   if (error?.message?.includes('column') && error.message.includes('provider_description')) {
     return false;
@@ -426,7 +419,7 @@ async function checkProviderDescriptionExists(
 }
 
 async function loadExistingProviderKeys(
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<{ nameCityKeys: Set<string>; importSourceKeys: Set<string> }> {
   const nameCityKeys = new Set<string>();
   const importSourceKeys = new Set<string>();
@@ -445,8 +438,8 @@ async function loadExistingProviderKeys(
       nameCityKeys.add(
         makeProviderKey(
           (row.provider_name ?? '') as string,
-          (row.address_city ?? null) as string | null
-        )
+          (row.address_city ?? null) as string | null,
+        ),
       );
       // Build import-source key set for upsert detection
       const src = row.import_source as string | null;
@@ -468,8 +461,13 @@ export function transformPage(
   url: string,
   categories: Category[],
   includeDescription: boolean,
-  offers: Offer[]
-): { record: ProviderRecord | null; error?: string; unmappedCategory?: string; unmatchedSpeisen?: string[] } {
+  offers: Offer[],
+): {
+  record: ProviderRecord | null;
+  error?: string;
+  unmappedCategory?: string;
+  unmatchedSpeisen?: string[];
+} {
   const schema = extractSchemaOrgFromHtml(html);
   if (!schema) return { record: null, error: 'No Schema.org JSON-LD found' };
 
@@ -482,10 +480,8 @@ export function transformPage(
   const categorySlug = extractCategoryFromUrl(url);
   const categoryId = resolveCategoryId(categorySlug, categories);
 
-  const { street, zip, city, country } = parseGermanAddress(
-    schema.address?.streetAddress ?? ''
-  );
-  const resolvedCity = city ?? (schema.address?.addressLocality ?? null);
+  const { street, zip, city, country } = parseGermanAddress(schema.address?.streetAddress ?? '');
+  const resolvedCity = city ?? schema.address?.addressLocality ?? null;
 
   // Resolve Speisen → offers_ids
   const speisen = extractSpeisen(schema);
@@ -514,11 +510,14 @@ export function transformPage(
     import_source: postId ? 'joinhalal' : null,
     import_source_id: postId,
     import_source_url: url,
-    // Plan 089 M4: All JoinHalal imports are food providers with no-alcohol flag
+    // Plan 089 M4: All JoinHalal imports are food providers
     listing_type: 'food',
-    no_alcohol: true,
-    no_pork: false,
-    no_gambling: false,
+    // Tri-state (#415): an import with no information writes NULL, not a
+    // claim nobody made. Old defaults (true/false/false) produced both an
+    // unearned bronze tier and spurious "declared non-compliant" flags.
+    no_alcohol: null,
+    no_pork: null,
+    no_gambling: null,
     verification_method: 'online',
     has_certificate: false,
   };
@@ -531,8 +530,7 @@ export function transformPage(
     record.provider_description = isTemplate ? null : desc || null;
   }
 
-  const unmappedCategory =
-    !categoryId && categorySlug ? categorySlug : undefined;
+  const unmappedCategory = !categoryId && categorySlug ? categorySlug : undefined;
 
   return {
     record,
@@ -551,9 +549,7 @@ export function transformPage(
  * Does NOT write any data to the database.
  * Throws on unrecoverable conditions (no categories, etc.).
  */
-export async function runJoinHalalDryRun(
-  options: DryRunOptions
-): Promise<DryRunResult> {
+export async function runJoinHalalDryRun(options: DryRunOptions): Promise<DryRunResult> {
   const { supabase, limit, sitemapUrls = DEFAULT_SITEMAPS, signal } = options;
 
   // Check for pre-aborted signal
@@ -649,7 +645,7 @@ export async function runJoinHalalDryRun(
       url,
       categories,
       hasDescriptionColumn,
-      offers
+      offers,
     );
 
     if (error || !record) {
@@ -730,7 +726,7 @@ export async function runJoinHalalDryRun(
       sourceCategory,
       count: names.length,
       example: names[0],
-    })
+    }),
   );
 
   // Group unmapped offer entries by speise
@@ -745,7 +741,7 @@ export async function runJoinHalalDryRun(
       speise,
       count: names.length,
       example: names[0],
-    })
+    }),
   );
 
   const tEnd = performance.now();
@@ -858,7 +854,7 @@ export function normalizeMatchKey(name: string, city: string | null): string {
  */
 export function matchLegacyProviders(
   legacy: LegacyProviderRow[],
-  corpus: CorpusEntry[]
+  corpus: CorpusEntry[],
 ): MatchResult {
   const result: MatchResult = {
     matched: [],
@@ -991,7 +987,7 @@ export interface StaleCloneAuditResult {
  */
 export function auditStaleCloneOverlap(
   legacyRows: LegacyProviderRow[],
-  staleCloneRows: LegacyProviderRow[]
+  staleCloneRows: LegacyProviderRow[],
 ): StaleCloneAuditResult {
   const exactDuplicates: StaleCloneExactDuplicate[] = [];
   const partialOverlaps: StaleClonePartialOverlap[] = [];
@@ -1046,7 +1042,7 @@ export function auditStaleCloneOverlap(
     staleCloneRows.length,
     exactDuplicates.length,
     partialOverlaps.length,
-    uniqueToStaleClone.length
+    uniqueToStaleClone.length,
   );
 
   return {
@@ -1063,7 +1059,7 @@ function buildAuditRecommendation(
   total: number,
   exact: number,
   partial: number,
-  unique: number
+  unique: number,
 ): string {
   if (total === 0) {
     return 'No stale-clone rows found. No action required.';
@@ -1078,17 +1074,17 @@ function buildAuditRecommendation(
 
   if (exact > 0) {
     lines.push(
-      `\nAction: Soft-delete the ${exact} exact duplicate(s) from the stale-clone batch to prevent double-processing during provenance recovery.`
+      `\nAction: Soft-delete the ${exact} exact duplicate(s) from the stale-clone batch to prevent double-processing during provenance recovery.`,
     );
   }
   if (partial > 0) {
     lines.push(
-      `Action: Manual review required for ${partial} partial overlap(s) — same name+city but different source IDs may indicate renamed/relocated listings.`
+      `Action: Manual review required for ${partial} partial overlap(s) — same name+city but different source IDs may indicate renamed/relocated listings.`,
     );
   }
   if (exact === 0 && partial === 0) {
     lines.push(
-      '\nNo overlap detected between stale-clone and legacy batches. Provenance recovery can proceed without deduplication.'
+      '\nNo overlap detected between stale-clone and legacy batches. Provenance recovery can proceed without deduplication.',
     );
   }
 
