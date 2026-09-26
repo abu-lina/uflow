@@ -2,10 +2,20 @@
 
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Icon } from '@iconify/react';
+import {
+  AlertCircle,
+  ChevronRight,
+  Hamburger,
+  LoaderCircle,
+  MapPin,
+  MoonStar,
+  Square,
+  SquareCheck,
+  Store,
+  Utensils,
+} from 'lucide-react';
 
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -14,7 +24,20 @@ import { createProviderOrService } from '@/features/providers/services/mutations
 import { trackEvent } from '@/lib/analytics/plausible';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
-import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScreen';
+import {
+  RecommendSuccessScreen,
+  type SubmittedSealInput,
+} from '@/components/shared/RecommendSuccessScreen';
+import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
+import {
+  VerificationMethodField,
+  toVerificationMethod,
+} from '@/components/shared/VerificationMethodField';
+import {
+  recommendSubmissionSchema,
+  submissionFieldLabelKeys,
+  firstIssueField,
+} from '@/lib/validations/submissionSchemas';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
@@ -99,10 +122,11 @@ const ContactCheckbox = memo(
         <div className="flex w-full flex-row items-center gap-2">
           {/* Checkbox Icon */}
           <div className="flex-shrink-0">
-            <Icon
-              className="h-6 w-6 text-content"
-              icon={checked ? 'lucide:square-check' : 'lucide:square'}
-            />
+            {checked ? (
+              <SquareCheck className="h-icon-md w-icon-md text-content" />
+            ) : (
+              <Square className="h-icon-md w-icon-md text-content" />
+            )}
           </div>
 
           {/* Label + Input Container */}
@@ -167,7 +191,6 @@ interface RecommendFormData {
   phone: string;
   website: string;
   instagram: string;
-  userEmail: string; // User's email for follow-up
   message: string; // optional
 }
 
@@ -276,10 +299,10 @@ export function StreamlinedRecommendForm({
   const { user } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedSeal, setSubmittedSeal] = useState<SubmittedSealInput | null>(null);
   const searchParams = useSearchParams();
   const showSuccess = searchParams.get('success') === 'true';
   const [categories, setCategories] = useState<Category[]>([]);
-  const userEmailInputRef = useRef<HTMLInputElement>(null);
   const cityInputRef = useRef<HTMLInputElement>(null);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const cityInitializedRef = useRef(false); // Track if initial city has been loaded
@@ -319,7 +342,6 @@ export function StreamlinedRecommendForm({
         phone: contextFormData.phone || '',
         website: contextFormData.website || '',
         instagram: contextFormData.instagram || '',
-        userEmail: '',
         message: contextFormData.description || '',
       };
     }
@@ -353,7 +375,6 @@ export function StreamlinedRecommendForm({
       phone: contextFormData.phone || '',
       website: contextFormData.website || '',
       instagram: contextFormData.instagram || '',
-      userEmail: '',
       message: contextFormData.description || '',
     };
   });
@@ -994,6 +1015,8 @@ export function StreamlinedRecommendForm({
   const showCityValidation = formData.city.trim().length > 0 && !isCitySelected;
 
   // Validation - memoized to prevent unnecessary re-renders
+  // AC5.2: all three halal answers are required; "not sure" (null) counts as
+  // answered, only untouched (undefined) fails.
   const isFormValid = useMemo(() => {
     const hasBasics = !!formData.title && !!formData.category && isCitySelected;
     const hasContact =
@@ -1001,7 +1024,11 @@ export function StreamlinedRecommendForm({
       (selectedContacts.phone && formData.phone.trim().length > 0) ||
       (selectedContacts.website && formData.website.trim().length > 0) ||
       (selectedContacts.instagram && formData.instagram.trim().length > 0);
-    return hasBasics && hasContact;
+    const allAttestationsAnswered =
+      contextFormData.no_alcohol !== undefined &&
+      contextFormData.no_pork !== undefined &&
+      contextFormData.no_gambling !== undefined;
+    return hasBasics && hasContact && allAttestationsAnswered;
   }, [
     formData.title,
     formData.category,
@@ -1014,6 +1041,9 @@ export function StreamlinedRecommendForm({
     selectedContacts.website,
     selectedContacts.instagram,
     isCitySelected,
+    contextFormData.no_alcohol,
+    contextFormData.no_pork,
+    contextFormData.no_gambling,
   ]);
 
   const handleBack = useCallback(() => {
@@ -1034,7 +1064,6 @@ export function StreamlinedRecommendForm({
       phone: '',
       website: '',
       instagram: '',
-      userEmail: '',
       message: '',
     });
     // Reset contact checkboxes
@@ -1055,9 +1084,13 @@ export function StreamlinedRecommendForm({
       website: '',
       instagram: '',
       description: '',
+      no_alcohol: undefined,
+      no_pork: undefined,
+      no_gambling: undefined,
     });
     // Clear saved form data from localStorage
     clearSavedRecommendFormData();
+    setSubmittedSeal(null);
   }, [initialCity, updateFormData, router, clearSavedRecommendFormData]);
 
   // Handle "Zurück zur Übersicht" - navigate to home
@@ -1067,8 +1100,23 @@ export function StreamlinedRecommendForm({
 
   // Submit handler
   const handleSubmit = useCallback(async () => {
-    if (!isFormValid) {
-      if (!formData.title) {
+    // AC5.2/5.3: validate the full required set and name the missing field.
+    const parsed = recommendSubmissionSchema.safeParse({
+      title: formData.title,
+      city: formData.city,
+      category: formData.category,
+      no_alcohol: contextFormData.no_alcohol,
+      no_pork: contextFormData.no_pork,
+      no_gambling: contextFormData.no_gambling,
+    });
+    if (!parsed.success || !isFormValid) {
+      const issueField = parsed.success ? '' : firstIssueField(parsed.error);
+      if (issueField) {
+        const labelKey = submissionFieldLabelKeys[issueField];
+        toast.error(
+          t('submissionValidation.fieldRequired', { field: labelKey ? t(labelKey) : issueField }),
+        );
+      } else if (!formData.title) {
         toast.error(t('create.recommend.titleRequired'));
       } else if (!formData.category) {
         toast.error(t('create.recommend.categoryRequired'));
@@ -1084,9 +1132,6 @@ export function StreamlinedRecommendForm({
       setIsSubmitting(true);
 
       // Prepare formData for service function
-      // Use authenticated user's email if available, otherwise use form input
-      const userEmail = user?.email || formData.userEmail;
-
       const serviceFormData = {
         ...contextFormData,
         title: formData.title,
@@ -1097,7 +1142,6 @@ export function StreamlinedRecommendForm({
         phone: formData.phone,
         website: formData.website,
         instagram: formData.instagram,
-        userEmail: userEmail,
         description: formData.message,
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
@@ -1117,14 +1161,26 @@ export function StreamlinedRecommendForm({
 
       await createProviderOrService(
         serviceFormData,
-        user || null, // Pass authenticated user if available, otherwise null for anonymous
-        true, // Recommendation mode
+        user || null, // Page gate guarantees a logged-in user (#415)
       );
 
       trackEvent('provider_profile_completed', {
         city: formData.city,
         has_phone: !!formData.phone,
         has_website: !!formData.website,
+      });
+
+      // Keep the submitted verification inputs for the provisional seal on the
+      // success screen; updateFormData below resets them to undefined.
+      // B1 (#415): the seal must reflect what the user actually answered —
+      // null, not the 'online' schema default, when they skipped the question.
+      setSubmittedSeal({
+        verificationMethod: toVerificationMethod(contextFormData.verification_method) ?? null,
+        hasCertificate: contextFormData.has_certificate || false,
+        certificateUrl: contextFormData.certificate_url ?? null,
+        noAlcohol: contextFormData.no_alcohol ?? null,
+        noPork: contextFormData.no_pork ?? null,
+        noGambling: contextFormData.no_gambling ?? null,
       });
 
       // Clear form data
@@ -1138,9 +1194,10 @@ export function StreamlinedRecommendForm({
         website: '',
         instagram: '',
         description: '',
+        no_alcohol: undefined,
+        no_pork: undefined,
+        no_gambling: undefined,
       });
-      // Also clear local userEmail state
-      setFormData((prev) => ({ ...prev, userEmail: '' }));
       // Clear selected contacts
       setSelectedContacts({
         email: false,
@@ -1267,7 +1324,11 @@ export function StreamlinedRecommendForm({
   // Show success screen if submission was successful
   if (showSuccess) {
     return (
-      <RecommendSuccessScreen onGoBack={handleGoBack} onRecommendAnother={handleRecommendAnother} />
+      <RecommendSuccessScreen
+        seal={submittedSeal ?? undefined}
+        onGoBack={handleGoBack}
+        onRecommendAnother={handleRecommendAnother}
+      />
     );
   }
 
@@ -1290,7 +1351,7 @@ export function StreamlinedRecommendForm({
           <div className="relative">
             <div
               className={cn(
-                'flex h-[56px] w-full cursor-text items-center rounded-2xl border border-[#D4D4D4] bg-white px-3 py-2',
+                'flex h-[56px] w-full cursor-text items-center rounded-2xl border border-neutral bg-white px-3 py-2',
                 showCityValidation && 'border-warning/40',
               )}
               role="presentation"
@@ -1317,10 +1378,7 @@ export function StreamlinedRecommendForm({
                 />
               </div>
               {isCitySearching && (
-                <Icon
-                  className="ml-2 h-5 w-5 animate-spin text-content-muted"
-                  icon="material-symbols:progress-activity"
-                />
+                <LoaderCircle className="ml-2 h-icon-sm w-icon-sm animate-spin text-content-muted" />
               )}
             </div>
 
@@ -1328,16 +1386,13 @@ export function StreamlinedRecommendForm({
             {showCityDropdown && (
               <div
                 ref={cityDropdownRef}
-                className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+                className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-neutral bg-white shadow-lg"
                 id="city-search-results"
                 role="listbox"
               >
                 {isCitySearching ? (
                   <div className="flex items-center justify-center py-8">
-                    <Icon
-                      className="h-6 w-6 animate-spin text-primary"
-                      icon="material-symbols:progress-activity"
-                    />
+                    <LoaderCircle className="h-icon-md w-icon-md animate-spin text-primary" />
                   </div>
                 ) : citySearchResults.length === 0 ? (
                   <div className="px-4 py-8 text-center text-sm text-content-muted">
@@ -1384,7 +1439,7 @@ export function StreamlinedRecommendForm({
 
             {showCityValidation && (
               <div className="mt-2 flex items-start gap-2 rounded-2xl border border-warning/20 bg-warning-soft px-3 py-2">
-                <Icon className="mt-0.5 h-4 w-4 text-warning" icon="mdi:alert-circle-outline" />
+                <AlertCircle className="mt-0.5 h-icon-xs w-icon-xs text-warning" />
                 <span className="text-sm text-warning/90">
                   {t('create.importOsm.selectCityFirst')}
                 </span>
@@ -1420,10 +1475,7 @@ export function StreamlinedRecommendForm({
                 />
               </div>
               {isProviderNameSearching && (
-                <Icon
-                  className="ml-2 h-5 w-5 animate-spin text-content-muted"
-                  icon="material-symbols:progress-activity"
-                />
+                <LoaderCircle className="ml-2 h-icon-sm w-icon-sm animate-spin text-content-muted" />
               )}
             </div>
 
@@ -1431,16 +1483,13 @@ export function StreamlinedRecommendForm({
             {showProviderNameDropdown && (
               <div
                 ref={providerNameDropdownRef}
-                className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-[#D4D4D4] bg-white shadow-lg"
+                className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-neutral bg-white shadow-lg"
                 id="provider-name-search-results"
                 role="listbox"
               >
                 {isProviderNameSearching ? (
                   <div className="flex items-center justify-center py-8">
-                    <Icon
-                      className="h-6 w-6 animate-spin text-primary"
-                      icon="material-symbols:progress-activity"
-                    />
+                    <LoaderCircle className="h-icon-md w-icon-md animate-spin text-primary" />
                   </div>
                 ) : providerNameSearchResults.length === 0 ? (
                   <div className="px-4 py-8 text-center text-sm text-content-muted">
@@ -1468,25 +1517,28 @@ export function StreamlinedRecommendForm({
                       >
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
-                            <Icon
-                              className={cn(
-                                'h-4 w-4 flex-shrink-0',
-                                place.placeType === 'mosque' || place.placeType === 'islamic_center'
-                                  ? 'text-primary'
-                                  : 'text-content-muted',
-                              )}
-                              icon={
-                                place.placeType === 'mosque' || place.placeType === 'islamic_center'
-                                  ? 'mdi:mosque'
-                                  : place.placeType === 'restaurant'
-                                    ? 'mdi:silverware-fork-knife'
-                                    : place.placeType === 'fast_food'
-                                      ? 'mdi:food'
-                                      : place.placeType === 'shop'
-                                        ? 'mdi:store'
-                                        : 'mdi:map-marker'
-                              }
-                            />
+                            {(() => {
+                              const isIslamic =
+                                place.placeType === 'mosque' ||
+                                place.placeType === 'islamic_center';
+                              const PlaceIcon = isIslamic
+                                ? MoonStar
+                                : place.placeType === 'restaurant'
+                                  ? Utensils
+                                  : place.placeType === 'fast_food'
+                                    ? Hamburger
+                                    : place.placeType === 'shop'
+                                      ? Store
+                                      : MapPin;
+                              return (
+                                <PlaceIcon
+                                  className={cn(
+                                    'h-icon-xs w-icon-xs flex-shrink-0',
+                                    isIslamic ? 'text-primary' : 'text-content-muted',
+                                  )}
+                                />
+                              );
+                            })()}
                             <span className="text-[15px] font-medium text-content-heading">
                               {place.name}
                             </span>
@@ -1546,7 +1598,7 @@ export function StreamlinedRecommendForm({
               </span>
             )}
             <div className="absolute right-3 top-1/2 flex flex-shrink-0 -translate-y-1/2 items-center justify-center">
-              <Icon className="h-5 w-5 text-content-muted" icon="material-symbols:chevron-right" />
+              <ChevronRight className="h-icon-sm w-icon-sm text-content-muted" />
             </div>
           </div>
         </div>
@@ -1605,65 +1657,32 @@ export function StreamlinedRecommendForm({
         </div>
       </div>
 
-      {/* Section 3: User Email - Only show for anonymous users */}
-      {!user && (
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-content-heading">
-              {t('create.recommend.userEmailTitle')}
-            </h2>
-            <p className="text-base text-content-muted">
-              {t('create.recommend.userEmailDescription')}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-0">
-            {/* User Email Input */}
-            <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
-                  {t('create.recommend.userEmailLabel')}
-                </label>
-                <input
-                  ref={userEmailInputRef}
-                  aria-label={t('create.recommend.userEmailLabel')}
-                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                  placeholder={t('create.recommend.userEmailPlaceholder')}
-                  type="email"
-                  value={formData.userEmail}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    const cursorPosition = e.target.selectionStart || newValue.length;
-                    setFormData((prev) => ({ ...prev, userEmail: newValue }));
-                    // Maintain focus and cursor position after state update
-                    setTimeout(() => {
-                      if (userEmailInputRef.current) {
-                        userEmailInputRef.current.focus();
-                        userEmailInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
-                      }
-                    }, 0);
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Email Consent Text - Only show when email is provided */}
-            {formData.userEmail && (
-              <p className="mt-1 text-xs leading-[15px] text-content-muted">
-                {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
-                <Link className="underline hover:text-primary" href="/terms">
-                  {t('legal.termsOfService')}
-                </Link>{' '}
-                {t('legal.and')}{' '}
-                <Link className="underline hover:text-primary" href="/privacy-policy">
-                  {t('legal.privacyPolicy')}
-                </Link>
-                .
-              </p>
-            )}
-          </div>
+      {/* Section 3: Halal attestation (#415) - same questions as the owner flow */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold text-content-heading">
+            {t('halal.attestation.sectionTitle')} *
+          </h2>
+          <p className="text-base text-content-muted">
+            {t('halal.attestation.recommendDescription')}
+          </p>
         </div>
-      )}
+        <HalalAttestationFields
+          values={{
+            no_alcohol: contextFormData.no_alcohol,
+            no_pork: contextFormData.no_pork,
+            no_gambling: contextFormData.no_gambling,
+          }}
+          variant="neutral"
+          onChange={(field, value) => updateFormData({ [field]: value })}
+        />
+        {/* AC6.1: verification method is answerable here too — optional for
+            recommenders; unanswered means no seal is earned (B1). */}
+        <VerificationMethodField
+          value={toVerificationMethod(contextFormData.verification_method)}
+          onChange={(v) => updateFormData({ verification_method: v })}
+        />
+      </div>
 
       {/* Section 4: Message (Optional) */}
       <div className="flex flex-col gap-4">

@@ -85,9 +85,10 @@ export interface ProviderEditFormData {
   verificationMethod: string | null;
   hasCertificate: boolean;
   certificateUrl: string | null;
-  noAlcohol: boolean;
-  noPork: boolean;
-  noGambling: boolean;
+  // Tri-state (#415): NULL round-trips so "not sure" stays unknown.
+  noAlcohol: boolean | null;
+  noPork: boolean | null;
+  noGambling: boolean | null;
   muslimOwned: boolean;
   hasPrayerSpace: boolean;
   familyFriendly: boolean;
@@ -172,9 +173,9 @@ export function ProviderEditForm({
     verificationMethod: (ext?.verification_method as string | null) ?? null,
     hasCertificate: (ext?.has_certificate as boolean) ?? false,
     certificateUrl: (ext?.certificate_url as string | null) ?? null,
-    noAlcohol: (ext?.no_alcohol as boolean) ?? false,
-    noPork: (ext?.no_pork as boolean) ?? false,
-    noGambling: (ext?.no_gambling as boolean) ?? false,
+    noAlcohol: (ext?.no_alcohol as boolean | null) ?? null,
+    noPork: (ext?.no_pork as boolean | null) ?? null,
+    noGambling: (ext?.no_gambling as boolean | null) ?? null,
     reviewStatus: provider.review_status || 'pending',
     muslimOwned: (providerAny.muslim_owned as boolean) ?? false,
     hasPrayerSpace: (providerAny.has_prayer_space as boolean) ?? false,
@@ -264,9 +265,11 @@ export function ProviderEditForm({
           verificationMethod: parsed.verificationMethod || null,
           hasCertificate: parsed.hasCertificate ?? prev.hasCertificate,
           certificateUrl: parsed.certificateUrl ?? prev.certificateUrl,
-          noAlcohol: parsed.noAlcohol ?? prev.noAlcohol,
-          noPork: parsed.noPork ?? prev.noPork,
-          noGambling: parsed.noGambling ?? prev.noGambling,
+          // Key-presence merge: a stored explicit null ("not sure") must win
+          // over the previous value, not be discarded by ?? (#415 tri-state).
+          noAlcohol: 'noAlcohol' in parsed ? parsed.noAlcohol : prev.noAlcohol,
+          noPork: 'noPork' in parsed ? parsed.noPork : prev.noPork,
+          noGambling: 'noGambling' in parsed ? parsed.noGambling : prev.noGambling,
           reviewStatus: parsed.reviewStatus ?? prev.reviewStatus,
         }));
       } catch {

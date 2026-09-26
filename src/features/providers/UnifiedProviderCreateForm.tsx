@@ -15,6 +15,12 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { Button } from '@/components/ui/Button';
 import { useQueryClient } from '@tanstack/react-query';
 import { createProviderOrService } from '@/features/providers/services/mutations';
+import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
+import {
+  ownerSubmissionSchema,
+  submissionFieldLabelKeys,
+  firstIssueField,
+} from '@/lib/validations/submissionSchemas';
 
 interface UnifiedProviderCreateFormProps {
   onSuccess?: () => void;
@@ -136,49 +142,42 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
   };
 
   const isFormValid = () => {
-    // For recommendation mode with "Next" button, only validate basics (title, category, offers)
-    if (formData.creationMode === 'recommendation') {
-      return (
-        !!formData.title &&
-        !!formData.category &&
-        formData.offers_ids &&
-        formData.offers_ids.length > 0
-      );
-    }
-
-    // For owner mode (submit), validate location if not online business
-    if (formData.isOnlineBusiness) return true;
-    const validation = validateAddress({
-      street: formData.street,
-      zip: formData.zip,
-      city: formData.city,
-      country: formData.country,
-      isOnlineBusiness: formData.isOnlineBusiness,
-    });
-    return validation.isValid;
+    // The full required set applies (#415 AC5.2):
+    // basics + full address (unless online) + at least one image.
+    return ownerSubmissionSchema.safeParse(formData).success;
   };
 
   const handleSubmit = async () => {
-    // In recommendation mode, allow anonymous users (skip auth check)
-    const isRecommendationMode = formData.creationMode === 'recommendation';
-
-    if (!user && !isRecommendationMode) {
+    // All submission flows require login (#415).
+    if (!user) {
       toast.error(t('create.media.mustBeLoggedIn'));
       return;
     }
 
-    // Validate location if not online business
-    if (!formData.isOnlineBusiness) {
-      const validation = validateAddress({
-        street: formData.street,
-        zip: formData.zip,
-        city: formData.city,
-        country: formData.country,
-        isOnlineBusiness: formData.isOnlineBusiness,
-      });
-      setValidationErrors(validation.errors);
-      if (!validation.isValid) {
-        toast.error(t('create.location.validationError'));
+    // AC5.2/5.3: validate the owner required set and name the missing field.
+    {
+      const parsed = ownerSubmissionSchema.safeParse(formData);
+      if (!parsed.success) {
+        const issueField = firstIssueField(parsed.error);
+        if (
+          issueField === 'street' ||
+          issueField === 'zip' ||
+          issueField === 'city' ||
+          issueField === 'country'
+        ) {
+          const validation = validateAddress({
+            street: formData.street,
+            zip: formData.zip,
+            city: formData.city,
+            country: formData.country,
+            isOnlineBusiness: formData.isOnlineBusiness,
+          });
+          setValidationErrors(validation.errors);
+        }
+        const labelKey = submissionFieldLabelKeys[issueField];
+        toast.error(
+          t('submissionValidation.fieldRequired', { field: labelKey ? t(labelKey) : issueField }),
+        );
         return;
       }
     }
@@ -187,15 +186,11 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       setIsSubmitting(true);
 
       // Use the shared service function
-      await createProviderOrService(formData, user, isRecommendationMode);
+      await createProviderOrService(formData, user);
 
-      // Show success message
-      const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
-      if (isCommunityService) {
-        toast.success(t('create.media.communityServiceCreated'));
-      } else {
-        toast.success(t('create.media.providerCreated'));
-      }
+      // Show success message; every submission is pending review, not live
+      // yet — promise no timeline and no notification (same as C5).
+      toast.success(t('submissionStatus.submittedToast'));
 
       clearFormData();
       queryClient.invalidateQueries({ queryKey: ['providers'] });
@@ -446,6 +441,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                       {t('create.location.street')}
                     </label>
                     <input
+                      required
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterStreet')}
                       type="text"
@@ -468,6 +464,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
                       {t('create.location.zip')}
                     </label>
                     <input
+                      required
                       className="h-[18px] w-full border-none bg-transparent p-0 text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
                       placeholder={t('create.location.enterZip')}
                       type="text"
@@ -617,6 +614,27 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
         </div>
       </div>
 
+      {/* Halal Section — the wizard asks these as its own step; the desktop
+          single-page form collects them here. All three require a deliberate
+          answer (yes, no, or "not sure"). */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold text-content-heading">{t('createHalal.title')}</h2>
+          <p className="text-sm leading-relaxed text-content-muted">
+            {t('createHalal.attestationIntro')}
+          </p>
+          <HalalAttestationFields
+            values={{
+              no_alcohol: formData.no_alcohol,
+              no_pork: formData.no_pork,
+              no_gambling: formData.no_gambling,
+            }}
+            variant="oath"
+            onChange={(field, value) => updateFormData({ [field]: value })}
+          />
+        </div>
+      </div>
+
       {/* Media Section */}
       <div className="flex flex-col gap-6">
         <h2 className="text-xl font-semibold text-content-heading">{t('create.steps.media')}</h2>
@@ -629,7 +647,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
           >
             <div className="flex flex-1 flex-col items-start gap-1">
               <span className="text-xs font-normal leading-[15px] text-content-muted">
-                {t('create.media.images')}
+                {t('create.media.images')} *
               </span>
               <div className="break-words text-left text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content">
                 {formData.images && formData.images.length > 0
@@ -676,35 +694,19 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 pt-4">
-        {/* In recommendation mode, show "Next" button to navigate to location page */}
-        {formData.creationMode === 'recommendation' && (
-          <Button
-            disabled={isSubmitting || !isFormValid()}
-            variant="primary"
-            onClick={() => {
-              router.push('/create/location');
-            }}
-          >
-            {t('common.next')}
-          </Button>
-        )}
-
-        {/* Submit button - show only if not in recommendation mode or if form is complete */}
-        {formData.creationMode !== 'recommendation' && (
-          <Button
-            disabled={isSubmitting || !isFormValid()}
-            loading={isSubmitting}
-            loadingText={t('create.media.creating')}
-            type="submit"
-            variant="primary"
-          >
-            {isSubmitting
-              ? t('create.media.creating')
-              : isCommunityService
-                ? t('create.media.registerCommunityService')
-                : t('create.media.registerProvider')}
-          </Button>
-        )}
+        <Button
+          disabled={isSubmitting || !isFormValid()}
+          loading={isSubmitting}
+          loadingText={t('create.media.creating')}
+          type="submit"
+          variant="primary"
+        >
+          {isSubmitting
+            ? t('create.media.creating')
+            : isCommunityService
+              ? t('create.media.registerCommunityService')
+              : t('create.media.registerProvider')}
+        </Button>
       </div>
     </form>
   );

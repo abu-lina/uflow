@@ -8,9 +8,11 @@
 interface HalalStarsInput {
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
-  no_alcohol?: boolean;
-  no_pork?: boolean;
-  no_gambling?: boolean;
+  // AC6.8: the flag alone is not proof — gold/4 stars require a stored file.
+  certificate_url?: string | null;
+  no_alcohol?: boolean | null;
+  no_pork?: boolean | null;
+  no_gambling?: boolean | null;
 }
 
 interface BarakahBadgeInput {
@@ -33,7 +35,9 @@ export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 | 4 
     return 0;
   }
 
-  const hasCertificate = Boolean(provider.has_certificate);
+  // Same contract as computeSealTier: has_certificate without a real
+  // certificate_url is a bare toggle and earns nothing certificate-based.
+  const hasCertificate = Boolean(provider.has_certificate) && Boolean(provider.certificate_url);
 
   // Certificate alone is enough (gold-tier equivalent)
   if (hasCertificate) {
@@ -41,18 +45,14 @@ export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 | 4 
     return 4;
   }
 
-  // When attestation data is available (explicitly true or false, not undefined),
-  // require at least one positive answer. A provider with verification_method set
-  // but all attestation false hasn't passed the halal check.
-  // When attestation data is absent (all undefined, e.g. list views that don't
-  // join food_providers), fall through to show stars based on verification_method.
-  const attestationProvided =
-    provider.no_alcohol !== undefined || provider.no_pork !== undefined || provider.no_gambling !== undefined;
-  if (attestationProvided) {
-    const hasAttestation =
-      Boolean(provider.no_alcohol) || Boolean(provider.no_pork) || Boolean(provider.no_gambling);
-    if (!hasAttestation) return 0;
-  }
+  // Require at least one truthy attestation before awarding non-certificate
+  // stars — same contract as computeSealTier. verification_method is a schema
+  // default ('online'), so without this guard a provider with no real halal
+  // check (explicit false, "not sure" NULL, or simply unjoined) would show
+  // stars it did not earn (#415).
+  const hasAttestation =
+    Boolean(provider.no_alcohol) || Boolean(provider.no_pork) || Boolean(provider.no_gambling);
+  if (!hasAttestation) return 0;
 
   if (provider.verification_method === 'online') return 1;
   return 3;

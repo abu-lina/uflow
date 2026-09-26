@@ -7,15 +7,15 @@ export type ProviderCreationMode = 'owner' | 'recommendation';
 export interface ProviderFormData {
   // Creation mode
   creationMode: ProviderCreationMode;
-  
+
   // Entity type (determined by category selection)
   entityType: 'provider' | 'community_service';
-  
+
   // Basics
   title: string;
   category: string;
   description: string;
-  
+
   // Location
   isOnlineBusiness: boolean;
   street: string;
@@ -25,35 +25,37 @@ export interface ProviderFormData {
   latitude: number | null;
   longitude: number | null;
   showAddress: boolean;
-  
+
   // Contact
   website: string;
   instagram: string;
   phone: string;
   email: string;
-  
+
   // Offers & Needs
   offers_ids: string[];
   needs_ids: string[];
-  
+
   // Media
   images: File[];
-  
+
   // Community Services (multiple selection)
   selectedCommunityServiceIds: string[];
-  
+
   // Tags
   tags: string[];
-  
+
   // Social Project specific fields
   socialCategory: string;
   socialTitle: string;
   socialDescription: string;
 
-  // Halal compliance attestation
-  no_alcohol: boolean;
-  no_pork: boolean;
-  no_gambling: boolean;
+  // Halal compliance attestation (#415 tri-state: true=yes, false=no, null=not
+  // sure, undefined=never touched). undefined is dropped by JSON.stringify, so
+  // a draft round-trip keeps "untouched" distinct from "not sure" (AC5.2).
+  no_alcohol?: boolean | null;
+  no_pork?: boolean | null;
+  no_gambling?: boolean | null;
 
   // Halal verification
   verification_method: string;
@@ -88,9 +90,9 @@ const initialFormData: ProviderFormData = {
   socialCategory: '',
   socialTitle: '',
   socialDescription: '',
-  no_alcohol: false,
-  no_pork: false,
-  no_gambling: false,
+  no_alcohol: undefined,
+  no_pork: undefined,
+  no_gambling: undefined,
   verification_method: '',
   has_certificate: false,
   certificate_file: null,
@@ -111,6 +113,12 @@ interface FormProviderProps {
   children: React.ReactNode;
 }
 
+// v2 storage key (#415): drafts written before the tri-state attestation
+// change carry {"no_alcohol":false,...} from the old initialFormData. A
+// restored false is indistinguishable from a deliberate "No" answer, so
+// pre-v2 drafts must never be restored — a bumped key drops them entirely.
+const FORM_STORAGE_KEY = 'providerFormData_v2';
+
 export function FormProvider({ children }: FormProviderProps) {
   const [formData, setFormData] = useState<ProviderFormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,29 +126,31 @@ export function FormProvider({ children }: FormProviderProps) {
   // Load form data from localStorage on mount
   useEffect(() => {
     try {
-      const savedData = localStorage.getItem('providerFormData');
+      const savedData = localStorage.getItem(FORM_STORAGE_KEY);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
-        
+
         // Convert base64 image data back to File objects if they exist
         if (parsedData.images && parsedData.images.length > 0) {
-          const imageFiles = parsedData.images.map((img: { name: string; data: string; type: string }) => {
-            try {
-              const byteCharacters = atob(img.data);
-              const byteNumbers = new Array(byteCharacters.length);
-              for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
+          const imageFiles = parsedData.images
+            .map((img: { name: string; data: string; type: string }) => {
+              try {
+                const byteCharacters = atob(img.data);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                return new File([byteArray], img.name, { type: img.type });
+              } catch (error) {
+                console.error('Error converting image data:', error);
+                return null;
               }
-              const byteArray = new Uint8Array(byteNumbers);
-              return new File([byteArray], img.name, { type: img.type });
-            } catch (error) {
-              console.error('Error converting image data:', error);
-              return null;
-            }
-          }).filter(Boolean);
+            })
+            .filter(Boolean);
           parsedData.images = imageFiles;
         }
-        
+
         setFormData(parsedData);
       }
     } catch (error) {
@@ -158,37 +168,41 @@ export function FormProvider({ children }: FormProviderProps) {
         // Convert File objects to serializable format for localStorage
         const dataToSave = { ...formData };
         if (dataToSave.images && dataToSave.images.length > 0) {
-          const imageData = dataToSave.images.map(file => ({
+          const imageData = dataToSave.images.map((file) => ({
             name: file.name,
             type: file.type,
-            data: '' // Will be filled by converting to base64
+            data: '', // Will be filled by converting to base64
           }));
 
           // Convert files to base64 and save
-          Promise.all(dataToSave.images.map(file => {
-            return new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => {
-                const base64 = (reader.result as string).split(',')[1];
-                resolve(base64);
-              };
-              reader.readAsDataURL(file);
+          Promise.all(
+            dataToSave.images.map((file) => {
+              return new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const base64 = (reader.result as string).split(',')[1];
+                  resolve(base64);
+                };
+                reader.readAsDataURL(file);
+              });
+            }),
+          )
+            .then((base64Data) => {
+              const imageDataWithBase64 = imageData.map((img, index) => ({
+                ...img,
+                data: base64Data[index],
+              }));
+
+              const finalData = { ...dataToSave, images: imageDataWithBase64 };
+              localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(finalData));
+            })
+            .catch((error) => {
+              console.error('Error saving images to localStorage:', error);
+              // Save without images if conversion fails
+              localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(dataToSave));
             });
-          })).then(base64Data => {
-            const imageDataWithBase64 = imageData.map((img, index) => ({
-              ...img,
-              data: base64Data[index]
-            }));
-            
-            const finalData = { ...dataToSave, images: imageDataWithBase64 };
-            localStorage.setItem('providerFormData', JSON.stringify(finalData));
-          }).catch(error => {
-            console.error('Error saving images to localStorage:', error);
-            // Save without images if conversion fails
-            localStorage.setItem('providerFormData', JSON.stringify(dataToSave));
-          });
         } else {
-          localStorage.setItem('providerFormData', JSON.stringify(dataToSave));
+          localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(dataToSave));
         }
       } catch (error) {
         console.error('Error saving form data to localStorage:', error);
@@ -197,15 +211,17 @@ export function FormProvider({ children }: FormProviderProps) {
   }, [formData, isLoading]);
 
   const updateFormData = useCallback((data: Partial<ProviderFormData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
+    setFormData((prev) => ({ ...prev, ...data }));
   }, []);
 
   const setCreationMode = useCallback((mode: ProviderCreationMode) => {
-    setFormData(prev => ({ ...prev, creationMode: mode }));
+    setFormData((prev) => ({ ...prev, creationMode: mode }));
   }, []);
 
   const clearFormData = useCallback(() => {
     setFormData(initialFormData);
+    localStorage.removeItem(FORM_STORAGE_KEY);
+    // Also drop the pre-tri-state draft key; see FORM_STORAGE_KEY.
     localStorage.removeItem('providerFormData');
     localStorage.removeItem('providerCreationMode');
   }, []);
@@ -219,14 +235,10 @@ export function FormProvider({ children }: FormProviderProps) {
       setCreationMode,
       isLoading,
     }),
-    [formData, updateFormData, clearFormData, setCreationMode, isLoading]
+    [formData, updateFormData, clearFormData, setCreationMode, isLoading],
   );
 
-  return (
-    <FormContext.Provider value={contextValue}>
-      {children}
-    </FormContext.Provider>
-  );
+  return <FormContext.Provider value={contextValue}>{children}</FormContext.Provider>;
 }
 
 export function useFormData() {

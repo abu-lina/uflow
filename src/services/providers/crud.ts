@@ -168,7 +168,8 @@ export async function getProviderCount(client?: SupabaseClient): Promise<number>
   const supabase = getSupabaseClient(client);
   const { count, error } = await supabase
     .from('providers')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact', head: true })
+    .eq('review_status', 'approved');
   if (error) {
     console.error('Error fetching provider count:', error);
     throw error;

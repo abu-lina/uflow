@@ -6,11 +6,10 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter, usePathname } from 'next/navigation';
 
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Plus } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
-import { Button } from '@/components/ui/Button';
 import { SearchBar } from '@/features/search/components/SearchBar';
 import { SectionSelector } from '@/features/search/components/SectionSelector';
 import { useAuth } from '@/providers/auth-provider';
@@ -243,17 +242,17 @@ export function Header() {
 
             {/* Right: Auth */}
             <div className="flex h-12 items-center justify-end gap-4">
+              <Link
+                aria-label={t('navigation.create')}
+                className="hidden h-10 w-10 items-center justify-center rounded-xl border border-border text-content md:flex"
+                href="/create"
+              >
+                <Plus aria-hidden="true" className="h-icon-sm w-icon-sm" />
+              </Link>
               {loading ? (
                 <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-neutral-100" />
               ) : user ? (
                 <>
-                  <Button
-                    className="hidden h-10 w-[89px] rounded-xl border border-border px-[14px] md:flex"
-                    variant="primary"
-                    onClick={() => router.push('/create')}
-                  >
-                    {t('navigation.create')}
-                  </Button>
                   <div ref={dropdownRef} className="relative">
                     <button
                       aria-label="Profil Dropdown öffnen"

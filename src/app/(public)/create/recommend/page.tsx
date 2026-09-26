@@ -6,13 +6,16 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { StreamlinedRecommendForm } from '@/features/providers/StreamlinedRecommendForm';
+import { LoginGate } from '@/components/shared/LoginGate';
 import { useFormData } from '@/providers/form-provider';
+import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 function RecommendPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setCreationMode } = useFormData();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { t } = useLanguage();
 
   // Check if success screen should be shown from URL
@@ -54,6 +57,12 @@ function RecommendPageContent() {
 
   // Memoize title to prevent re-computation
   const pageTitle = useMemo(() => t('create.recommend.title'), [t]);
+
+  // Recommendations require a logged-in user (#415). Same lock screen the
+  // owner flow uses on /create/basics: login, then return here.
+  if (!isAuthLoading && !user) {
+    return <LoginGate returnPath="/create/recommend" title={pageTitle} />;
+  }
 
   return (
     <ScrollablePageLayout>

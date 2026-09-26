@@ -3,11 +3,10 @@ import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { createProviderCommunityServiceRelationship } from '@/services/communityServices';
 import { TrustLevel } from '@/types/badges';
+import { validateCertificateFile } from '@/lib/validations/certificate';
 
-// Extended form data type that may include userEmail for anonymous recommendations
-type ExtendedProviderFormData = ProviderFormData & {
-  userEmail?: string;
-};
+// Extended form data type (alias kept so callers with extra fields still typecheck)
+type ExtendedProviderFormData = ProviderFormData;
 
 export interface CreateProviderResult {
   provider_id?: string;
@@ -120,13 +119,13 @@ const FORM_TAG_TO_BADGE_KEY = {
 } as const;
 
 /**
- * Uploads entity images to the appropriate storage bucket and returns their public URLs.
- * Anonymous uploads use a randomized prefix; authenticated uploads are namespaced by user id.
+ * Uploads entity images to the appropriate storage bucket and returns their
+ * public URLs. Uploads are namespaced by user id (#415: submissions require a
+ * logged-in user).
  */
 async function uploadEntityImages(
   images: File[] | undefined,
   isCommunityService: boolean,
-  isAnonymous: boolean,
   userId: string | undefined,
 ): Promise<string[]> {
   if (!images || images.length === 0) {
@@ -139,10 +138,7 @@ async function uploadEntityImages(
 
   for (const imageFile of images) {
     const fileExt = imageFile.name.split('.').pop();
-    // Use different naming for anonymous users
-    const fileName = isAnonymous
-      ? `anon-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-      : `${userId}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const fileName = `${userId ?? 'unknown'}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${folderName}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
@@ -165,12 +161,39 @@ async function uploadEntityImages(
 }
 
 /**
+ * Uploads a halal certificate to the provider-certificates bucket (AC6.8).
+ * Same bucket/path conventions as the admin halal edit page. Type and size
+ * are re-validated at the service boundary; an upload failure throws so a
+ * submission never stores has_certificate without a file behind it.
+ */
+async function uploadCertificate(file: File, userId: string | undefined): Promise<string> {
+  const validation = validateCertificateFile(file);
+  if (validation !== 'ok') {
+    throw new Error(`Certificate file rejected: ${validation}`);
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${userId ?? 'unknown'}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `certificates/${fileName}`;
+
+  const { error } = await supabase.storage.from('provider-certificates').upload(filePath, file);
+  if (error) {
+    console.error('Error uploading certificate:', error);
+    throw error;
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('provider-certificates').getPublicUrl(filePath);
+  return publicUrl;
+}
+
+/**
  * Creates a provider or community service from form data
  * Handles image uploads, entity creation, and relationships
  *
  * @param formData - The form data containing all provider/service information
- * @param user - The authenticated user (null for anonymous recommendations)
- * @param isRecommendationMode - Whether this is a recommendation (anonymous) or owner creation
+ * @param user - The authenticated user; all submission flows require login (#415)
  * @returns The created entity ID (provider_id or community_service_id)
  */
 // AC5.9: a second submission with the same identity while one is in flight
@@ -180,19 +203,17 @@ const inFlightSubmissions = new Map<string, Promise<CreateProviderResult>>();
 export async function createProviderOrService(
   formData: ExtendedProviderFormData,
   user: User | null,
-  isRecommendationMode: boolean,
 ): Promise<CreateProviderResult> {
   const dedupeKey = JSON.stringify([
     formData.title,
     formData.category,
     formData.city,
-    formData.userEmail ?? null,
     user?.id ?? null,
-    isRecommendationMode,
+    formData.creationMode,
   ]);
   const existing = inFlightSubmissions.get(dedupeKey);
   if (existing) return existing;
-  const submission = doCreateProviderOrService(formData, user, isRecommendationMode).finally(() =>
+  const submission = doCreateProviderOrService(formData, user).finally(() =>
     inFlightSubmissions.delete(dedupeKey),
   );
   inFlightSubmissions.set(dedupeKey, submission);
@@ -202,20 +223,20 @@ export async function createProviderOrService(
 async function doCreateProviderOrService(
   formData: ExtendedProviderFormData,
   user: User | null,
-  isRecommendationMode: boolean,
 ): Promise<CreateProviderResult> {
-  // Explicitly check for null/undefined user in recommendation mode
-  const isAnonymous = (user === null || user === undefined) && isRecommendationMode;
+  // #415: all submission flows require a logged-in user; the submitter is
+  // identified by user_created_id (no email is collected from recommenders).
+  // Throw a readable error if a client gate is ever bypassed — RLS remains
+  // the enforcement, but a raw PostgREST error in a generic toast is not
+  // diagnosable.
+  if (!user) {
+    throw new Error('Authentication required to create a provider or service');
+  }
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
   const isOwner = formData.creationMode === 'owner';
 
   // Upload images if any exist
-  const uploadedUrls = await uploadEntityImages(
-    formData.images,
-    isCommunityService,
-    isAnonymous,
-    user?.id,
-  );
+  const uploadedUrls = await uploadEntityImages(formData.images, isCommunityService, user?.id);
 
   if (isCommunityService) {
     // M-5a: community_services table dropped — ummah providers created in providers table
@@ -242,8 +263,7 @@ async function doCreateProviderOrService(
       social_instagram: formData.instagram || null,
       provider_images: uploadedUrls.length > 0 ? uploadedUrls : null,
       review_status: 'pending' as const,
-      user_created_id: isAnonymous ? null : (user?.id ?? null),
-      recommender_email: isAnonymous && formData.userEmail ? formData.userEmail : null,
+      user_created_id: user?.id ?? null,
     };
 
     const { error: serviceError } = await supabase.from('providers').insert([insertData]);
@@ -287,6 +307,22 @@ async function doCreateProviderOrService(
       );
     }
 
+    // Defence in depth (#415): food/store submissions must carry a deliberate
+    // answer on all three halal attestations — true (yes), false (no), or
+    // explicit null ("not sure"); undefined means the question was never
+    // answered. Ummah/community-service submissions have no halal questions
+    // and are exempt.
+    if (
+      (resolvedListingType === 'food' || resolvedListingType === 'store') &&
+      [formData.no_alcohol, formData.no_pork, formData.no_gambling].some(
+        (answer) => answer === undefined,
+      )
+    ) {
+      throw new Error(
+        'Halal attestation required: all three questions must be answered (yes, no, or not sure).',
+      );
+    }
+
     const normalizedTags = new Set(
       (formData.tags || []).map((tag) => tag.trim().toLowerCase()).filter((tag) => tag.length > 0),
     );
@@ -310,8 +346,6 @@ async function doCreateProviderOrService(
     if (hasParkingTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.parking);
     if (hasSolidarityTag) requestedBadgeKeys.push(FORM_TAG_TO_BADGE_KEY.solidarity);
 
-    // For anonymous users, explicitly set both ID fields to null to satisfy RLS policy
-    // IMPORTANT: We must use explicit null (not undefined) and ensure fields are always present
     const insertData: Record<string, unknown> = {
       provider_id: generatedProviderId,
       listing_type: resolvedListingType,
@@ -333,32 +367,14 @@ async function doCreateProviderOrService(
       social_instagram: formData.instagram || null,
       provider_images: uploadedUrls.length > 0 ? JSON.stringify({ urls: uploadedUrls }) : null,
       review_status: 'pending' as const, // Providers need review
-      // Store recommender email for anonymous recommendations (with consent)
-      recommender_email: isAnonymous && formData.userEmail ? formData.userEmail : null,
     };
 
-    // CRITICAL: Always explicitly set these fields with null (not undefined)
-    // The RLS policy requires them to be NULL for anonymous users
-    // Using Object.assign to ensure they're always present in the object
-    if (isAnonymous) {
-      // Anonymous users: both must be explicitly null
-      Object.assign(insertData, {
-        user_created_id: null,
-        provider_owner_id: null,
-      });
-    } else if (user?.id) {
-      // Authenticated users
-      Object.assign(insertData, {
-        user_created_id: user.id,
-        provider_owner_id: isOwner && user.id ? user.id : null,
-      });
-    } else {
-      // Fallback: user is null but not anonymous (shouldn't happen, but be safe)
-      Object.assign(insertData, {
-        user_created_id: null,
-        provider_owner_id: null,
-      });
-    }
+    // The submitter is always identified by user_created_id; provider_owner_id
+    // is only set for owner submissions.
+    Object.assign(insertData, {
+      user_created_id: user?.id ?? null,
+      provider_owner_id: isOwner && user?.id ? user.id : null,
+    });
 
     // Insert without SELECT to avoid SELECT policy blocking pending reviews
     const { error: providerError } = await supabase.from('providers').insert([insertData]);
@@ -392,14 +408,27 @@ async function doCreateProviderOrService(
     // be approved — failure here must not be swallowed.
     if (resolvedListingType === 'food' || resolvedListingType === 'store') {
       const extTable = resolvedListingType === 'food' ? 'food_providers' : 'store_providers';
+      // AC6.8: upload the certificate (if any) before writing the row so
+      // certificate_url always points at a stored file.
+      const certificateUrl = formData.certificate_file
+        ? await uploadCertificate(formData.certificate_file, user?.id)
+        : formData.certificate_url || null;
       const extPayload: Record<string, unknown> = {
         provider_id: generatedProviderId,
-        no_alcohol: formData.no_alcohol || false,
-        no_pork: formData.no_pork || false,
-        no_gambling: formData.no_gambling || false,
+        // Tri-state (#415): true=yes, false=submitter said no, null=not sure.
+        // NULL must survive so reviewers can triage "no" vs "unknown".
+        no_alcohol: formData.no_alcohol ?? null,
+        no_pork: formData.no_pork ?? null,
+        no_gambling: formData.no_gambling ?? null,
+        // verification_method is TEXT NOT NULL DEFAULT 'online' with
+        // CHECK (... IN ('online','onsite')) — the 'online' fallback is a
+        // schema default and carries no verification claim (computeSealTier
+        // requires a truthy attestation before awarding a tier anyway).
         verification_method: formData.verification_method || 'online',
-        has_certificate: formData.has_certificate || false,
-        certificate_url: formData.certificate_url || null,
+        // AC6.8: has_certificate is only written when a certificate URL
+        // actually exists — a bare toggle must never produce a gold tier.
+        has_certificate: certificateUrl != null,
+        certificate_url: certificateUrl,
       };
       const { error: extError } = await supabase
         .from(extTable)
@@ -407,11 +436,20 @@ async function doCreateProviderOrService(
       if (extError) {
         console.error('Error saving halal data:', extError);
         // Best-effort compensation: remove the provider so it cannot sit
-        // pending forever without an approvable extension row.
-        try {
-          await supabase.from('providers').delete().eq('provider_id', generatedProviderId);
-        } catch (cleanupError) {
+        // pending forever without an approvable extension row. The delete is
+        // RLS-gated on provider_owner_id; for recommendations that is null,
+        // so it fails for exactly the case it exists for. The returned error
+        // must be surfaced (supabase returns errors, it does not throw) and
+        // the orphan id included so the row can be cleaned up manually.
+        const { error: cleanupError } = await supabase
+          .from('providers')
+          .delete()
+          .eq('provider_id', generatedProviderId);
+        if (cleanupError) {
           console.error('Failed to clean up provider after extension write failure:', cleanupError);
+          throw new Error(
+            `Halal data save failed (${extError.message}) and cleanup of orphaned provider '${generatedProviderId}' also failed (${cleanupError.message}). The provider row requires manual removal.`,
+          );
         }
         throw extError;
       }

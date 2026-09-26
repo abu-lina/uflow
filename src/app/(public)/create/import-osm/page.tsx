@@ -6,13 +6,16 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { StreamlinedImportForm } from '@/features/providers/StreamlinedImportForm';
+import { LoginGate } from '@/components/shared/LoginGate';
 import { useFormData } from '@/providers/form-provider';
+import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 
 function ImportOSMPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setCreationMode } = useFormData();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { t } = useLanguage();
 
   // Check if success screen should be shown from URL
@@ -52,6 +55,12 @@ function ImportOSMPageContent() {
 
   // Memoize title to prevent re-computation
   const pageTitle = useMemo(() => t('create.importOsm.title'), [t]);
+
+  // Recommendations require a logged-in user (#415) — same gate as
+  // /create/recommend and the owner flow.
+  if (!isAuthLoading && !user) {
+    return <LoginGate returnPath="/create/import-osm" title={pageTitle} />;
+  }
 
   return (
     <ScrollablePageLayout>

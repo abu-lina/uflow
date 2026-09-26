@@ -16,15 +16,13 @@ export interface MatchResult {
 
 /**
  * Find providers who need what the current provider offers
- * 
+ *
  * Example: If Provider A offers "Catering", this finds providers who need "Catering"
- * 
+ *
  * @param providerId - The provider_id of the current provider
  * @returns Array of matching providers with details about what matched
  */
-export async function findProvidersNeedingMyOffers(
-  providerId: string
-): Promise<MatchResult[]> {
+export async function findProvidersNeedingMyOffers(providerId: string): Promise<MatchResult[]> {
   try {
     // 1. Get current provider's offers from junction table
     const { data: providerOffers } = await supabase
@@ -52,11 +50,14 @@ export async function findProvidersNeedingMyOffers(
 
     const { data: matchedProviders } = await supabase
       .from('providers')
-      .select(`
+      .select(
+        `
         *,
         category:categories(name_de, name_en)
-      `)
-      .in('provider_id', matchedProviderIds);
+      `,
+      )
+      .in('provider_id', matchedProviderIds)
+      .eq('review_status', 'approved');
 
     if (!matchedProviders || matchedProviders.length === 0) {
       return [];
@@ -69,7 +70,10 @@ export async function findProvidersNeedingMyOffers(
       .in('offer_id', offeredIds);
 
     const offersMap = new Map(
-      (allOffers || []).map(o => [o.offer_id, { offer_id: o.offer_id, name_de: o.name_de, name_en: o.name_en }])
+      (allOffers || []).map((o) => [
+        o.offer_id,
+        { offer_id: o.offer_id, name_de: o.name_de, name_en: o.name_en },
+      ]),
     );
 
     // 4. Build match results
@@ -108,15 +112,13 @@ export async function findProvidersNeedingMyOffers(
 
 /**
  * Find providers who offer what the current provider needs
- * 
+ *
  * Example: If Provider A needs "Kitchen Equipment", this finds providers who offer it
- * 
+ *
  * @param providerId - The provider_id of the current provider
  * @returns Array of matching providers with details about what matched
  */
-export async function findProvidersOfferingMyNeeds(
-  providerId: string
-): Promise<MatchResult[]> {
+export async function findProvidersOfferingMyNeeds(providerId: string): Promise<MatchResult[]> {
   try {
     // 1. Get current provider's needs from junction table
     const { data: providerNeeds } = await supabase
@@ -144,11 +146,14 @@ export async function findProvidersOfferingMyNeeds(
 
     const { data: matchedProviders } = await supabase
       .from('providers')
-      .select(`
+      .select(
+        `
         *,
         category:categories(name_de, name_en)
-      `)
-      .in('provider_id', matchedProviderIds);
+      `,
+      )
+      .in('provider_id', matchedProviderIds)
+      .eq('review_status', 'approved');
 
     if (!matchedProviders || matchedProviders.length === 0) {
       return [];
@@ -161,7 +166,10 @@ export async function findProvidersOfferingMyNeeds(
       .in('need_id', neededIds);
 
     const needsMap = new Map(
-      (allNeeds || []).map(n => [n.need_id, { need_id: n.need_id, name_de: n.name_de, name_en: n.name_en }])
+      (allNeeds || []).map((n) => [
+        n.need_id,
+        { need_id: n.need_id, name_de: n.name_de, name_en: n.name_en },
+      ]),
     );
 
     // 4. Build match results
@@ -200,7 +208,7 @@ export async function findProvidersOfferingMyNeeds(
 
 /**
  * Get all matching providers (both directions)
- * 
+ *
  * @param providerId - The provider_id of the current provider
  * @returns Object with both types of matches
  */
@@ -221,19 +229,16 @@ export async function getAllMatches(providerId: string): Promise<{
 
 /**
  * Filter matches by category
- * 
+ *
  * @param matches - Array of match results
  * @param categoryId - Optional category ID to filter by
  * @returns Filtered matches
  */
 export function filterMatchesByCategory(
   matches: MatchResult[],
-  categoryId?: string | null
+  categoryId?: string | null,
 ): MatchResult[] {
   if (!categoryId) return matches;
 
-  return matches.filter(
-    match => match.provider.category_id === categoryId
-  );
+  return matches.filter((match) => match.provider.category_id === categoryId);
 }
-

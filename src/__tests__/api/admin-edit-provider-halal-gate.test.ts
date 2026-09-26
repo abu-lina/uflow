@@ -152,6 +152,26 @@ describe('PATCH /api/admin/edit-provider — halal attestation gate', () => {
     expect(mockReview).not.toHaveBeenCalled();
   });
 
+  it('round-trips NULL attestations without coercing to false and without auto-reject (#415)', async () => {
+    // Before and after: both not attested. Saving an edit form that carried
+    // NULL ("not sure") attestations must write NULL back, not false, and
+    // must not flip the gate (false -> false means no auto-reject).
+    mockHalalCheck.mockResolvedValue(notAttested);
+
+    const res = await PATCH(
+      makeRequest({ providerId: validId, noAlcohol: null, noPork: null, noGambling: null }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockUpdateFields).toHaveBeenCalledWith(
+      validId,
+      expect.objectContaining({ noAlcohol: null, noPork: null, noGambling: null }),
+      'admin-id',
+    );
+    expect(mockHalalCheck).toHaveBeenCalledTimes(2);
+    expect(mockReview).not.toHaveBeenCalled();
+  });
+
   it('logs audit entry with provider_review_rejected on auto-reject', async () => {
     mockHalalCheck.mockResolvedValueOnce(allAttested).mockResolvedValueOnce(notAttested);
 

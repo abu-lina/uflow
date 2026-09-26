@@ -28,10 +28,18 @@ export const HALAL_FIELD_LABELS: Record<string, string> = {
 
 export interface HalalAttestationCheckResult {
   allAttested: boolean;
-  /** Which specific attestations are missing (column names) */
+  /** Which specific attestations are missing (column names): denied + unanswered */
   missing: string[];
   /** Human-readable labels for missing attestations */
   missingLabels: string[];
+  /** Attestations the submitter answered "no" to (column === false) */
+  denied: string[];
+  /** Human-readable labels for denied attestations */
+  deniedLabels: string[];
+  /** Attestations left unknown / "not sure" (column IS NULL) */
+  unanswered: string[];
+  /** Human-readable labels for unanswered attestations */
+  unansweredLabels: string[];
   /** Which extension table was checked */
   sourceTable: 'food_providers' | 'store_providers' | null;
 }
@@ -63,7 +71,16 @@ export async function checkHalalAttestation(
 
   // Only food and store providers have attestation data
   if (provider.listing_type !== 'food' && provider.listing_type !== 'store') {
-    return { allAttested: true, missing: [], missingLabels: [], sourceTable: null };
+    return {
+      allAttested: true,
+      missing: [],
+      missingLabels: [],
+      denied: [],
+      deniedLabels: [],
+      unanswered: [],
+      unansweredLabels: [],
+      sourceTable: null,
+    };
   }
 
   const extTable = provider.listing_type === 'food' ? 'food_providers' : 'store_providers';
@@ -80,20 +97,34 @@ export async function checkHalalAttestation(
       allAttested: false,
       missing: [...HALAL_ATTESTATION_FIELDS],
       missingLabels: HALAL_ATTESTATION_FIELDS.map((f) => HALAL_FIELD_LABELS[f]),
+      denied: [],
+      deniedLabels: [],
+      unanswered: [...HALAL_ATTESTATION_FIELDS],
+      unansweredLabels: HALAL_ATTESTATION_FIELDS.map((f) => HALAL_FIELD_LABELS[f]),
       sourceTable: extTable,
     };
   }
 
-  const missing: string[] = [];
+  const denied: string[] = [];
+  const unanswered: string[] = [];
   const row = extData as unknown as Record<string, boolean | null>;
   for (const field of HALAL_ATTESTATION_FIELDS) {
-    if (!row[field]) missing.push(field);
+    if (row[field] === false) {
+      denied.push(field);
+    } else if (row[field] == null) {
+      unanswered.push(field);
+    }
   }
+  const missing = [...denied, ...unanswered];
 
   return {
     allAttested: missing.length === 0,
     missing,
     missingLabels: missing.map((f) => HALAL_FIELD_LABELS[f]),
+    denied,
+    deniedLabels: denied.map((f) => HALAL_FIELD_LABELS[f]),
+    unanswered,
+    unansweredLabels: unanswered.map((f) => HALAL_FIELD_LABELS[f]),
     sourceTable: extTable,
   };
 }

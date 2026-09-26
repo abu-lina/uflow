@@ -33,6 +33,7 @@ export const de = {
     about: 'Über uns',
     contact: 'Kontakt',
     create: 'Erstellen',
+    saved: 'Gespeichert',
   },
   auth: {
     login: 'Anmelden',
@@ -1218,5 +1219,95 @@ export const de = {
     switchToMap: 'Zur Kartenansicht',
     listViewLabel: 'Liste',
     mapViewLabel: 'Karte',
+  },
+  // #415: tri-state halal attestation (yes/no/not sure -> true/false/NULL)
+  halal: {
+    attestation: {
+      sectionTitle: 'Halal Compliance',
+      recommendDescription: 'Was weißt du über diesen Anbieter?',
+      noAlcohol: {
+        label: 'Kein Alkohol',
+        desc: 'Wird kein Alkohol verarbeitet, verkauft oder angeboten?',
+      },
+      noPork: {
+        label: 'Kein verbotenes Fleisch',
+        desc: 'Wird kein Schweinefleisch oder anderes verbotenes Fleisch verarbeitet, verkauft oder angeboten?',
+      },
+      noGambling: {
+        label: 'Kein Glücksspiel',
+        desc: 'Werden keine Glücksspiele oder Wetten angeboten?',
+      },
+      answer: {
+        yes: 'Ja',
+        no: 'Nein',
+        notSure: 'Nicht sicher',
+      },
+    },
+    admin: {
+      declaredNonCompliant: 'Als nicht konform angegeben',
+      unanswered: 'Nicht beantwortet',
+      declaredNotHalal: 'Nicht halal',
+      attestationIncomplete: 'Halal-Angaben unvollständig',
+      adminOnly: 'Nur Admin',
+    },
+  },
+  // Plan 255 C3 (#415): submission validation
+  submissionValidation: {
+    fieldRequired: '"{{field}}" ist ein Pflichtfeld.',
+  },
+  // Plan 255 C5 (#415): submission status (pending review)
+  submissionStatus: {
+    awaitingReview: 'Deine Einreichung wurde gespeichert und wartet auf eine manuelle Prüfung.',
+    provisionalSeal:
+      'Vorläufiges Siegel: Es wird erst öffentlich angezeigt, wenn die Einreichung geprüft wurde.',
+    pendingBadge: 'Wird geprüft',
+    submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
+  },
+  // Plan 255 C6 (#415): /create chooser extras
+  createPage: {
+    quickImportTitle: 'Quick Import (Beta)',
+    quickImportDescription:
+      'Importiere von Google oder Instagram und fülle alles in Sekunden automatisch aus!',
+    quickImportButton: 'Quick Import ausprobieren',
+  },
+  // Plan 255 C6 (#415): /create/halal page
+  createHalal: {
+    stepTitle: 'Halal',
+    title: 'Halal Compliance',
+    attestationIntro:
+      'Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder anbietest?',
+    verificationTitle: 'Verifizierungsmethode',
+    verificationDesc: 'Wie wurde die Halal-Konformität überprüft?',
+    methodOnline: 'Online',
+    methodOnlineDesc: 'Online überprüft (Menü, Website, Selbstauskunft)',
+    methodOnsite: 'Vor Ort',
+    methodOnsiteDesc: 'Vor Ort besucht und überprüft',
+    certificateTitle: 'Halal-Zertifikat',
+    certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
+    certificateUpload: 'Zertifikat hochladen',
+    certificateInvalidType: 'Ungültiger Dateityp. Bitte lade ein Bild oder eine PDF-Datei hoch.',
+    certificateTooLarge: 'Datei zu groß. Das Zertifikat darf maximal 5 MB groß sein.',
+  },
+  // Plan 255 (#415): admin halal edit sub-page
+  adminHalalEdit: {
+    title: 'Halal Check',
+    uploading: 'Wird hochgeladen...',
+    attestationWarning:
+      'Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.',
+    existingCertificate: 'Vorhandenes Zertifikat',
+    viewCertificate: 'Zertifikat anzeigen',
+    derivedTierInfo:
+      'Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.',
+    derivedTierLabel: 'Abgeleitetes Level',
+    tier: {
+      gold: 'Gold',
+      silver: 'Silber',
+      bronze: 'Bronze',
+    },
+    autoApprovedTitle: 'Auto-Approved',
+    autoApprovedDesc: 'Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.',
+    autoRejectedTitle: 'Auto-Rejected',
+    autoRejectedDesc:
+      'Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.',
   },
 } as const;

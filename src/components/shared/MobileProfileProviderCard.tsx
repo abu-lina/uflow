@@ -10,6 +10,7 @@ interface MobileProfileProviderCardProps {
   category: string;
   likes: number;
   savedText?: string;
+  statusBadge?: string;
   onClick?: () => void;
 }
 
@@ -19,6 +20,7 @@ export function MobileProfileProviderCard({
   category,
   likes,
   savedText = 'Gespeichert',
+  statusBadge,
   onClick,
 }: MobileProfileProviderCardProps) {
   const [imageError, setImageError] = useState(false);
@@ -57,23 +59,31 @@ export function MobileProfileProviderCard({
           onError={() => setImageError(true)}
         />
       </div>
-      
+
       {/* Content */}
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {/* Title */}
-        <div className="min-w-0 truncate font-inter-tight text-base font-semibold text-[#232323]" title={title}>
+        <div
+          className="min-w-0 truncate font-inter-tight text-base font-semibold text-[#232323]"
+          title={title}
+        >
           {title}
         </div>
-        
+
         {/* Category */}
-        <div className="font-inter text-sm text-[#555]">
-          {category}
-        </div>
-        
+        <div className="font-inter text-sm text-[#555]">{category}</div>
+
         {/* Likes */}
         <div className="font-inter text-sm text-[#555]">
           {likes}x {savedText}
         </div>
+
+        {/* Status badge (e.g. pending review) */}
+        {statusBadge && (
+          <span className="mt-0.5 w-fit rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 font-inter text-xs font-medium text-amber-700">
+            {statusBadge}
+          </span>
+        )}
       </div>
     </div>
   );

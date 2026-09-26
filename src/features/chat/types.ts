@@ -106,8 +106,8 @@ export interface ProviderCardData {
   family_friendly: boolean;
   women_friendly: boolean;
   halal_level?: number;
-  no_alcohol?: boolean;
-  no_pork?: boolean;
+  no_alcohol?: boolean | null;
+  no_pork?: boolean | null;
 }
 
 export interface ConversationListItem {
@@ -148,9 +148,9 @@ export interface RegistrationData {
   family_friendly?: boolean;
   women_friendly?: boolean;
   halal_level?: number;
-  no_alcohol?: boolean;
-  no_pork?: boolean;
-  no_gambling?: boolean;
+  no_alcohol?: boolean | null;
+  no_pork?: boolean | null;
+  no_gambling?: boolean | null;
   makes_donations?: boolean;
 }
 

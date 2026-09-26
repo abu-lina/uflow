@@ -114,9 +114,10 @@ export const providerEditUpdateSchema = z.object({
   verificationMethod: z.enum(['online', 'onsite']).nullable().optional(),
   hasCertificate: z.boolean().optional(),
   certificateUrl: z.string().url().max(2000).nullable().optional(),
-  noAlcohol: z.boolean().optional(),
-  noPork: z.boolean().optional(),
-  noGambling: z.boolean().optional(),
+  // Tri-state (#415): NULL round-trips so "not sure" stays unknown.
+  noAlcohol: z.boolean().nullable().optional(),
+  noPork: z.boolean().nullable().optional(),
+  noGambling: z.boolean().nullable().optional(),
   muslimOwned: z.boolean().optional(),
   hasPrayerSpace: z.boolean().optional(),
   familyFriendly: z.boolean().optional(),

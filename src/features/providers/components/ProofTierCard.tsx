@@ -16,15 +16,26 @@ import type { Provider } from '@/services/providers';
 export function computeSealTier(
   verificationMethod: 'online' | 'onsite' | null | undefined,
   hasCertificate: boolean | null | undefined,
-  attestation?: { noAlcohol?: boolean | null; noPork?: boolean | null; noGambling?: boolean | null },
+  attestation?: {
+    noAlcohol?: boolean | null;
+    noPork?: boolean | null;
+    noGambling?: boolean | null;
+  },
+  certificateUrl?: string | null,
 ): 'bronze' | 'silver' | 'gold' | null {
-  if (hasCertificate) return 'gold';
-  if (!verificationMethod && !hasCertificate) return null;
+  // AC6.8: gold requires an actual certificate on file. A bare has_certificate
+  // toggle (upload failed, legacy row, self-declared) must not produce gold.
+  const certified = Boolean(hasCertificate) && Boolean(certificateUrl);
+  if (certified) return 'gold';
+  if (!verificationMethod) return null;
   // Require at least one attestation answer before awarding a tier.
   // Without this, a provider with verification_method set as a DB default
   // (but no actual halal check done) would auto-show as bronze.
   if (attestation) {
-    const hasAttestation = Boolean(attestation.noAlcohol) || Boolean(attestation.noPork) || Boolean(attestation.noGambling);
+    const hasAttestation =
+      Boolean(attestation.noAlcohol) ||
+      Boolean(attestation.noPork) ||
+      Boolean(attestation.noGambling);
     if (!hasAttestation) return null;
   }
   if (verificationMethod === 'onsite') return 'silver';
@@ -40,11 +51,17 @@ type SealTier = 'bronze' | 'silver' | 'gold';
 interface ProofTierCardProps {
   verificationMethod: 'online' | 'onsite' | null | undefined;
   hasCertificate: boolean | null | undefined;
+  // Storage URL of the uploaded certificate; gold requires both the flag and
+  // a real file behind it (AC6.8).
+  certificateUrl?: string | null;
   listingType?: Provider['listing_type'];
   noAlcohol?: Provider['no_alcohol'];
   noPork?: Provider['no_pork'];
   noGambling?: Provider['no_gambling'];
   reviewStatus?: Provider['review_status'];
+  // Renders the seal for a pending submission (success screen), labelled
+  // provisional since review can still change or reject it.
+  provisional?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -215,19 +232,47 @@ function GoldAttestationSection({
 export function ProofTierCard({
   verificationMethod,
   hasCertificate,
+  certificateUrl,
   listingType,
   noAlcohol,
   noPork,
   noGambling,
   reviewStatus,
+  provisional = false,
 }: ProofTierCardProps) {
   const { t } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const tier = computeSealTier(verificationMethod, hasCertificate, { noAlcohol, noPork, noGambling });
+  const tier = computeSealTier(
+    verificationMethod,
+    hasCertificate,
+    {
+      noAlcohol,
+      noPork,
+      noGambling,
+    },
+    certificateUrl,
+  );
 
   // No tier means no verification data — don't render the card at all
   if (!tier) return null;
+
+  if (provisional) {
+    return (
+      <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
+        <SealRow
+          activeTier={tier}
+          altText={t(
+            `providerDetail.proofTier.sealAlt${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
+          )}
+        />
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <HugeHalalIcon aria-hidden className="h-6 w-6 flex-shrink-0 text-amber-600" />
+          <p className="text-sm text-amber-700">{t('submissionStatus.provisionalSeal')}</p>
+        </div>
+      </section>
+    );
+  }
 
   // Don't show the seal until an admin has approved the provider
   if (reviewStatus !== 'approved') {
@@ -235,9 +280,7 @@ export function ProofTierCard({
       <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
         <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
           <HugeHalalIcon aria-hidden className="h-6 w-6 flex-shrink-0 text-amber-600" />
-          <p className="text-sm text-amber-700">
-            {t('providerDetail.proofTier.pendingReview')}
-          </p>
+          <p className="text-sm text-amber-700">{t('providerDetail.proofTier.pendingReview')}</p>
         </div>
       </section>
     );

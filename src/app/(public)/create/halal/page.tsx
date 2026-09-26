@@ -2,16 +2,19 @@
 
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
-import { Icon } from '@iconify/react';
+import { FileBadge, Upload, X } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { StepIndicator } from '@/components/shared/StepIndicator';
+import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { validateCertificateFile } from '@/lib/validations/certificate';
 import { cn } from '@/lib/utils';
 
 export default function HalalPage() {
@@ -24,29 +27,16 @@ export default function HalalPage() {
   const isLoading = isAuthLoading || isFormDataLoading;
 
   const STEPS = [
-    { title: t('create.steps.basics'), icon: 'mdi:information' },
-    { title: t('create.steps.location'), icon: 'mdi:map-marker' },
-    { title: t('create.steps.contact'), icon: 'mdi:account-group' },
-    { title: 'Halal', icon: 'mdi:check-decagram' },
-    { title: t('create.steps.media'), icon: 'mdi:image-multiple' },
+    { title: t('create.steps.basics'), icon: 'lucide:info' },
+    { title: t('create.steps.location'), icon: 'lucide:map-pin' },
+    { title: t('create.steps.contact'), icon: 'lucide:users' },
+    { title: t('createHalal.stepTitle'), icon: 'lucide:badge-check' },
+    { title: t('create.steps.media'), icon: 'lucide:images' },
   ];
-
-  const isRecommendationMode = formData.creationMode === 'recommendation';
 
   if (isLoading) return <div className="p-8 text-center">{t('common.loading')}</div>;
 
-  if (isRecommendationMode) {
-    router.replace('/create/media');
-    return (
-      <div className="h-screen-fix flex items-center justify-center">
-        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-      </div>
-    );
-  }
-
   const handleSave = () => router.push('/create/media');
-  const toggleAtt = (field: 'no_alcohol' | 'no_pork' | 'no_gambling') =>
-    updateFormData({ [field]: !formData[field] });
   const setVer = (m: 'online' | 'onsite') => updateFormData({ verification_method: m });
   const toggleCert = () => {
     const nv = !formData.has_certificate;
@@ -55,34 +45,33 @@ export default function HalalPage() {
   };
   const handleCertUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) updateFormData({ certificate_file: f, has_certificate: true });
+    if (!f) return;
+    const validation = validateCertificateFile(f);
+    if (validation !== 'ok') {
+      toast.error(
+        t(
+          validation === 'invalidType'
+            ? 'createHalal.certificateInvalidType'
+            : 'createHalal.certificateTooLarge',
+        ),
+      );
+      e.target.value = '';
+      return;
+    }
+    updateFormData({ certificate_file: f, has_certificate: true });
   };
   const removeCert = () => {
     updateFormData({ certificate_file: null, has_certificate: false, certificate_url: '' });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const attItems = [
-    {
-      key: 'no_alcohol' as const,
-      label: 'Kein Alkohol',
-      desc: 'Wir verarbeiten, verkaufen oder bieten keinen Alkohol an',
-    },
-    {
-      key: 'no_pork' as const,
-      label: 'Kein verbotenes Fleisch',
-      desc: 'Wir verarbeiten, verkaufen oder bieten kein Schweinefleisch oder anderes verbotenes Fleisch an',
-    },
-    {
-      key: 'no_gambling' as const,
-      label: 'Kein Glücksspiel',
-      desc: 'Wir bieten keine Glücksspiele oder Wetten an',
-    },
-  ];
-
   return (
     <ScrollablePageLayout>
-      <PageHeader title="Halal Compliance" variant="back-and-title" onBack="/create/contact" />
+      <PageHeader
+        title={t('createHalal.title')}
+        variant="back-and-title"
+        onBack="/create/contact"
+      />
       <PageContent hasFooter maxWidth="full" paddingX="px-6 sm:px-0">
         <div
           className={cn(
@@ -95,76 +84,59 @@ export default function HalalPage() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold text-[#232323]">Halal Compliance</h2>
-            <p className="text-sm leading-relaxed text-[#7A7A7A]">
-              Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder
-              anbietest?
+            <h2 className="text-lg font-semibold text-content-heading">{t('createHalal.title')}</h2>
+            <p className="text-sm leading-relaxed text-content-muted">
+              {t('createHalal.attestationIntro')}
             </p>
-            <div className="flex flex-col gap-3">
-              {attItems.map((item) => {
-                const ch = formData[item.key];
-                return (
-                  <button
-                    key={item.key}
-                    className={`flex w-full items-start gap-4 rounded-2xl border-2 px-4 py-4 text-left transition-all ${ch ? 'border-primary bg-primary/5' : 'border-[#E5E5E5] bg-white'}`}
-                    type="button"
-                    onClick={() => toggleAtt(item.key)}
-                  >
-                    <div
-                      className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border-2 transition-colors ${ch ? 'border-primary bg-primary text-white' : 'border-[#999999] bg-white'}`}
-                    >
-                      {ch && <Icon className="h-4 w-4" icon="material-symbols:check" />}
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span
-                        className={`text-sm font-semibold ${ch ? 'text-primary' : 'text-[#272727]'}`}
-                      >
-                        {item.label}
-                      </span>
-                      <span className="text-xs leading-relaxed text-[#7A7A7A]">{item.desc}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <HalalAttestationFields
+              values={{
+                no_alcohol: formData.no_alcohol,
+                no_pork: formData.no_pork,
+                no_gambling: formData.no_gambling,
+              }}
+              variant="oath"
+              onChange={(field, value) => updateFormData({ [field]: value })}
+            />
           </div>
 
           <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold text-[#232323]">Verifizierungsmethode</h2>
-            <p className="text-sm text-[#7A7A7A]">Wie wurde die Halal-Konformität überprüft?</p>
+            <h2 className="text-lg font-semibold text-content-heading">
+              {t('createHalal.verificationTitle')}
+            </h2>
+            <p className="text-sm text-content-muted">{t('createHalal.verificationDesc')}</p>
             <div className="flex flex-col gap-3">
               {[
                 {
                   value: 'online' as const,
-                  label: 'Online',
-                  desc: 'Online überprüft (Menü, Website, Selbstauskunft)',
+                  label: t('createHalal.methodOnline'),
+                  desc: t('createHalal.methodOnlineDesc'),
                 },
                 {
                   value: 'onsite' as const,
-                  label: 'Vor Ort',
-                  desc: 'Vor Ort besucht und überprüft',
+                  label: t('createHalal.methodOnsite'),
+                  desc: t('createHalal.methodOnsiteDesc'),
                 },
               ].map((opt) => {
                 const sel = formData.verification_method === opt.value;
                 return (
                   <button
                     key={opt.value}
-                    className={`flex w-full items-start gap-4 rounded-2xl border-2 px-4 py-4 text-left transition-all ${sel ? 'border-primary bg-primary/5' : 'border-[#E5E5E5] bg-white'}`}
+                    className={`flex w-full items-start gap-4 rounded-2xl border-2 px-4 py-4 text-left transition-all ${sel ? 'border-primary bg-primary/5' : 'border-neutral bg-white'}`}
                     type="button"
                     onClick={() => setVer(opt.value)}
                   >
                     <div
-                      className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${sel ? 'border-primary' : 'border-[#999999]'}`}
+                      className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border-2 transition-colors ${sel ? 'border-primary' : 'border-content-muted'}`}
                     >
                       {sel && <div className="h-3 w-3 rounded-full bg-primary" />}
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <span
-                        className={`text-sm font-semibold ${sel ? 'text-primary' : 'text-[#272727]'}`}
+                        className={`text-sm font-semibold ${sel ? 'text-primary' : 'text-content-heading'}`}
                       >
                         {opt.label}
                       </span>
-                      <span className="text-xs leading-relaxed text-[#7A7A7A]">{opt.desc}</span>
+                      <span className="text-xs leading-relaxed text-content-muted">{opt.desc}</span>
                     </div>
                   </button>
                 );
@@ -175,10 +147,10 @@ export default function HalalPage() {
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-0.5">
-                <h2 className="text-lg font-semibold text-[#232323]">Halal-Zertifikat</h2>
-                <p className="text-xs text-[#7A7A7A]">
-                  Lade ein gültiges Halal-Zertifikat hoch (optional)
-                </p>
+                <h2 className="text-lg font-semibold text-content-heading">
+                  {t('createHalal.certificateTitle')}
+                </h2>
+                <p className="text-xs text-content-muted">{t('createHalal.certificateDesc')}</p>
               </div>
               <button
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.has_certificate ? 'bg-primary' : 'bg-gray-200'}`}
@@ -193,14 +165,14 @@ export default function HalalPage() {
             {formData.has_certificate && (
               <div className="flex flex-col gap-3">
                 {formData.certificate_file ? (
-                  <div className="flex w-full items-center justify-between rounded-2xl border border-[#E5E5E5] bg-white px-4 py-3">
+                  <div className="flex w-full items-center justify-between rounded-2xl border border-neutral bg-white px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <Icon className="h-6 w-6 text-primary" icon="mdi:file-document-outline" />
+                      <FileBadge className="h-icon-md w-icon-md text-primary" />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-[#272727]">
+                        <span className="text-sm font-medium text-content-heading">
                           {formData.certificate_file.name}
                         </span>
-                        <span className="text-xs text-[#7A7A7A]">
+                        <span className="text-xs text-content-muted">
                           {(formData.certificate_file.size / 1024).toFixed(1)} KB
                         </span>
                       </div>
@@ -210,10 +182,7 @@ export default function HalalPage() {
                       type="button"
                       onClick={removeCert}
                     >
-                      <Icon
-                        className="h-5 w-5 text-[#999999]"
-                        icon="material-symbols:close-rounded"
-                      />
+                      <X className="h-icon-sm w-icon-sm text-content-muted" />
                     </button>
                   </div>
                 ) : (
@@ -226,12 +195,12 @@ export default function HalalPage() {
                       onChange={handleCertUpload}
                     />
                     <button
-                      className="flex h-[54px] w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-[#D4D4D4] bg-white transition-colors hover:bg-gray-50"
+                      className="flex h-[54px] w-full items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-neutral bg-white transition-colors hover:bg-gray-50"
                       type="button"
                     >
-                      <Icon className="h-6 w-6 text-[#999999]" icon="lucide:upload" />
-                      <span className="text-sm font-medium text-[#999999]">
-                        Zertifikat hochladen
+                      <Upload className="h-icon-md w-icon-md text-content-muted" />
+                      <span className="text-sm font-medium text-content-muted">
+                        {t('createHalal.certificateUpload')}
                       </span>
                     </button>
                   </div>
@@ -239,25 +208,18 @@ export default function HalalPage() {
               </div>
             )}
           </div>
-
-          <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
-            <div className="flex items-start gap-3">
-              <Icon
-                className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600"
-                icon="material-symbols:info-outline"
-              />
-              <p className="text-xs leading-relaxed text-blue-700">
-                Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online =
-                Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.
-              </p>
-            </div>
-          </div>
         </div>
       </PageContent>
       <FooterAction
         actionButton={{
           label: t('common.next'),
           trailingIcon: 'lucide:chevron-right',
+          // All three attestations require a deliberate answer (yes, no, or
+          // "not sure"); undefined means the question was never touched.
+          disabled:
+            formData.no_alcohol === undefined ||
+            formData.no_pork === undefined ||
+            formData.no_gambling === undefined,
           onClick: handleSave,
           variant: 'primary',
         }}

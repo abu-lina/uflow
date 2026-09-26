@@ -134,7 +134,6 @@ const ownerFormData: ProviderFormData = {
 const recommendFormData = {
   ...ownerFormData,
   creationMode: 'recommendation' as const,
-  userEmail: 'tipper@example.com',
 };
 
 describe('C1: provider create/recommend submission', () => {
@@ -162,7 +161,7 @@ describe('C1: provider create/recommend submission', () => {
   it('AC5.4/AC7.1: owner submit writes exactly one providers row with listing_type in the insert and review_status pending', async () => {
     const user = { id: 'user-1' } as User;
 
-    await createProviderOrService(ownerFormData, user, false);
+    await createProviderOrService(ownerFormData, user);
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
     const payload = mockProviderInsert.mock.calls[0][0][0];
@@ -172,16 +171,19 @@ describe('C1: provider create/recommend submission', () => {
     expect(payload.provider_owner_id).toBe('user-1');
   });
 
-  it('AC5.4/AC5.5/AC7.1: anonymous recommend submit writes one pending providers row with listing_type and a food_providers extension row', async () => {
-    await createProviderOrService(recommendFormData, null, true);
+  it('AC5.4/AC5.5/AC7.1 + C3b: logged-in recommend submit writes one pending providers row identified by user_created_id, with listing_type and a food_providers extension row', async () => {
+    const user = { id: 'user-1' } as User;
+    await createProviderOrService(recommendFormData, user);
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
     const payload = mockProviderInsert.mock.calls[0][0][0];
     expect(payload.listing_type).toBe('food');
     expect(payload.review_status).toBe('pending');
-    expect(payload.user_created_id).toBeNull();
+    expect(payload.user_created_id).toBe('user-1');
     expect(payload.provider_owner_id).toBeNull();
-    expect(payload.recommender_email).toBe('tipper@example.com');
+    // C3b: anonymous recommending is gone; no email is stored on the row
+    expect(payload.recommender_email ?? null).toBeNull();
+    expect('recommender_email' in payload).toBe(false);
 
     expect(mockFoodExtUpsert).toHaveBeenCalledTimes(1);
     const extPayload = mockFoodExtUpsert.mock.calls[0][0];
@@ -198,7 +200,7 @@ describe('C1: provider create/recommend submission', () => {
     });
     const user = { id: 'user-1' } as User;
 
-    await createProviderOrService(ownerFormData, user, false);
+    await createProviderOrService(ownerFormData, user);
 
     const payload = mockProviderInsert.mock.calls[0][0][0];
     expect(payload.listing_type).toBe('store');
@@ -210,7 +212,7 @@ describe('C1: provider create/recommend submission', () => {
     const user = { id: 'user-1' } as User;
     const spoofed = { ...ownerFormData, review_status: 'approved' };
 
-    await createProviderOrService(spoofed as ProviderFormData, user, false);
+    await createProviderOrService(spoofed as ProviderFormData, user);
 
     const payload = mockProviderInsert.mock.calls[0][0][0];
     expect(payload.review_status).toBe('pending');
@@ -220,18 +222,52 @@ describe('C1: provider create/recommend submission', () => {
     const user = { id: 'user-1' } as User;
 
     await Promise.all([
-      createProviderOrService(ownerFormData, user, false),
-      createProviderOrService(ownerFormData, user, false),
+      createProviderOrService(ownerFormData, user),
+      createProviderOrService(ownerFormData, user),
     ]);
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
+  });
+
+  it('C3b: food/store submissions with an untouched attestation are rejected at the service boundary', async () => {
+    const user = { id: 'user-1' } as User;
+    const unanswered = { ...recommendFormData, no_alcohol: undefined };
+
+    await expect(createProviderOrService(unanswered as ProviderFormData, user)).rejects.toThrow(
+      /halal/i,
+    );
+    expect(mockProviderInsert).not.toHaveBeenCalled();
+  });
+
+  it('C3b: explicit "not sure" (null) answers satisfy the service-boundary check', async () => {
+    const user = { id: 'user-1' } as User;
+    const notSure = { ...recommendFormData, no_alcohol: null, no_pork: null, no_gambling: null };
+
+    await createProviderOrService(notSure, user);
+    expect(mockProviderInsert).toHaveBeenCalledTimes(1);
+  });
+
+  it('C3b: ummah/community-service submissions are exempt from the attestation check', async () => {
+    const user = { id: 'user-1' } as User;
+    const ummah = {
+      ...recommendFormData,
+      category: '4470c3e0-458f-40a6-a96e-ca0fbdf145d7',
+      no_alcohol: undefined,
+      no_pork: undefined,
+      no_gambling: undefined,
+    } as ProviderFormData;
+
+    await createProviderOrService(ummah, user);
+    // ummah branch inserts into providers with listing_type 'ummah', no ext row
+    expect(mockProviderInsert).toHaveBeenCalledTimes(1);
+    expect(mockProviderInsert.mock.calls[0][0][0].listing_type).toBe('ummah');
   });
 
   it('AC5.4: submit fails loudly instead of inserting when listing_type is unresolvable', async () => {
     mockCategorySingle.mockResolvedValue({ data: null, error: { message: 'no rows' } });
     const user = { id: 'user-1' } as User;
 
-    await expect(createProviderOrService(ownerFormData, user, false)).rejects.toThrow();
+    await expect(createProviderOrService(ownerFormData, user)).rejects.toThrow();
     expect(mockProviderInsert).not.toHaveBeenCalled();
   });
 });

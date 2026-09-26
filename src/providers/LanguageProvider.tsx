@@ -1,16 +1,24 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { translations, type Language } from '@/translations';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  ReactNode,
+} from 'react';
+import { getTranslations, loadTranslations, LANGUAGES, type Language } from '@/translations';
 
 // Supported languages mapping
 const LANGUAGE_MAPPING: Record<string, Language> = {
-  'en': 'en',
-  'de': 'de',
-  'ar': 'ar',
-  'tr': 'tr',
-  'ur': 'ur',
-  'ps': 'ps',
+  en: 'en',
+  de: 'de',
+  ar: 'ar',
+  tr: 'tr',
+  ur: 'ur',
+  ps: 'ps',
   'en-us': 'en',
   'en-gb': 'en',
   'en-ca': 'en',
@@ -31,7 +39,7 @@ const LANGUAGE_MAPPING: Record<string, Language> = {
 };
 
 // Valid language codes
-const VALID_LANGUAGES: Language[] = ['en', 'de', 'ar', 'tr', 'ur', 'ps'];
+const VALID_LANGUAGES: readonly Language[] = LANGUAGES;
 
 // Check if a language code is valid
 function isValidLanguage(lang: string | null): lang is Language {
@@ -60,18 +68,19 @@ function detectLanguage(): Language {
     // Priority 2: Auto-detect from browser languages (only if no saved preference)
     // Check navigator.languages array (user's language preference list)
     const browserLanguages = navigator.languages || [];
-    
+
     // Also include navigator.language as fallback if languages array is empty
-    const allLanguages = browserLanguages.length > 0 
-      ? browserLanguages 
-      : navigator.language 
-        ? [navigator.language] 
-        : [];
-    
+    const allLanguages =
+      browserLanguages.length > 0
+        ? browserLanguages
+        : navigator.language
+          ? [navigator.language]
+          : [];
+
     // Check each language in order of preference
     for (const lang of allLanguages) {
       const normalized = normalizeLanguageCode(lang);
-      
+
       // Check direct match first (e.g., 'en' -> 'en')
       if (normalized in LANGUAGE_MAPPING) {
         const detected = LANGUAGE_MAPPING[normalized];
@@ -79,7 +88,7 @@ function detectLanguage(): Language {
           return detected;
         }
       }
-      
+
       // Check full locale match (e.g., 'en-US' -> 'en')
       const fullLang = lang.toLowerCase();
       if (fullLang in LANGUAGE_MAPPING) {
@@ -112,6 +121,28 @@ interface LanguageProviderProps {
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<Language>('de'); // Always start with German to prevent hydration issues
+  const [bundleTick, setBundleTick] = useState(0);
+
+  // The gated locales load on demand; until the bundle arrives t() falls back
+  // to the eagerly-bundled 'de' strings.
+  useEffect(() => {
+    if (getTranslations(language) !== undefined) {
+      return;
+    }
+    let active = true;
+    loadTranslations(language)
+      .then(() => {
+        if (active) {
+          setBundleTick((v) => v + 1);
+        }
+      })
+      .catch((error) => {
+        console.warn(`Failed to load "${language}" translations:`, error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [language]);
 
   // Save language preference to localStorage only
   // This represents an explicit user choice, so it will always take precedence over auto-detection
@@ -121,7 +152,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       console.warn(`Invalid language code: ${lang}. Falling back to 'de'.`);
       lang = 'de';
     }
-    
+
     setLanguageState(lang);
     if (typeof window !== 'undefined') {
       // Save to localStorage for client-side persistence
@@ -138,7 +169,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
     // Priority 1: Check for saved user preference (explicit user choice)
     const savedLanguage = localStorage.getItem('preferred-language');
-    
+
     if (isValidLanguage(savedLanguage)) {
       // User has explicitly selected a language - use it
       setLanguageState(savedLanguage);
@@ -149,39 +180,43 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     // This only happens on first visit or if preference was cleared
     const detectedLang = detectLanguage();
     setLanguageState(detectedLang);
-    
+
     // Save the auto-detected language as initial preference
     // This allows it to persist across sessions, but user can still override it
     localStorage.setItem('preferred-language', detectedLang);
   }, []);
 
   // Translation function - memoized to prevent recreation on every render
-  const t = useCallback((key: string, variables?: Record<string, string | number>): string => {
-    const keys = key.split('.');
-    let value: unknown = translations[language];
+  const t = useCallback(
+    (key: string, variables?: Record<string, string | number>): string => {
+      const keys = key.split('.');
+      let value: unknown = getTranslations(language) ?? getTranslations('de');
 
-    for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = (value as Record<string, unknown>)[k];
-      } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn(`Translation key "${key}" not found for language "${language}"`);
+      for (const k of keys) {
+        if (value && typeof value === 'object' && k in value) {
+          value = (value as Record<string, unknown>)[k];
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`Translation key "${key}" not found for language "${language}"`);
+          }
+          return key;
         }
-        return key;
       }
-    }
 
-    let result = typeof value === 'string' ? value : key;
+      let result = typeof value === 'string' ? value : key;
 
-    // Replace variables in the format {{variableName}}
-    if (variables) {
-      for (const [varName, varValue] of Object.entries(variables)) {
-        result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(varValue));
+      // Replace variables in the format {{variableName}}
+      if (variables) {
+        for (const [varName, varValue] of Object.entries(variables)) {
+          result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(varValue));
+        }
       }
-    }
 
-    return result;
-  }, [language]);
+      return result;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [language, bundleTick],
+  );
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(
@@ -190,14 +225,10 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       setLanguage,
       t,
     }),
-    [language, setLanguage, t]
+    [language, setLanguage, t],
   );
 
-  return (
-    <LanguageContext.Provider value={contextValue}>
-      {children}
-    </LanguageContext.Provider>
-  );
+  return <LanguageContext.Provider value={contextValue}>{children}</LanguageContext.Provider>;
 }
 
 export function useLanguage() {

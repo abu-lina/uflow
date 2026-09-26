@@ -277,9 +277,14 @@ export async function searchProviders(
   // Plan 229: Use count: 'exact' to get the total matching count alongside data.
   let req = supabase.from('providers').select(selectFields, { count: 'exact' });
 
-  // Plan 058: Apply review_status filter when admin options provided
+  // Plan 058: Apply review_status filter when admin options provided.
+  // AC7.2 (#415): without admin options the query must still restrict to
+  // approved — migration 130 lets callers see their OWN pending rows, which
+  // must not leak into public search results.
   if (adminOptions?.status) {
     req = req.eq('review_status', adminOptions.status);
+  } else {
+    req = req.eq('review_status', 'approved');
   }
 
   // Plan 089: Apply listing_type filter when provided (section-based routing)

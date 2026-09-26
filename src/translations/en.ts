@@ -33,6 +33,7 @@ export const en = {
     about: 'About',
     contact: 'Contact',
     create: 'Create',
+    saved: 'Saved',
   },
   auth: {
     login: 'Login',
@@ -1113,7 +1114,7 @@ export const en = {
       whatIsThis: 'How do we check?',
       explanation:
         "Every listing on Ummah Flow meets our halal requirements. The trust level shows how thoroughly we've confirmed this.",
-      pendingReview: 'This provider\'s halal status is pending review by our team.',
+      pendingReview: "This provider's halal status is pending review by our team.",
     },
     trustBadges: {
       muslimOwned: 'Muslim',
@@ -1199,5 +1200,95 @@ export const en = {
     switchToMap: 'Switch to map view',
     listViewLabel: 'List',
     mapViewLabel: 'Map',
+  },
+  // #415: tri-state halal attestation (yes/no/not sure -> true/false/NULL)
+  halal: {
+    attestation: {
+      sectionTitle: 'Halal compliance',
+      recommendDescription: 'What do you know about this provider?',
+      noAlcohol: {
+        label: 'No alcohol',
+        desc: 'Is no alcohol processed, sold or offered?',
+      },
+      noPork: {
+        label: 'No prohibited meat',
+        desc: 'Is no pork or other prohibited meat processed, sold or offered?',
+      },
+      noGambling: {
+        label: 'No gambling',
+        desc: 'Are no gambling or betting services offered?',
+      },
+      answer: {
+        yes: 'Yes',
+        no: 'No',
+        notSure: 'Not sure',
+      },
+    },
+    admin: {
+      declaredNonCompliant: 'Declared non-compliant',
+      unanswered: 'Not answered',
+      declaredNotHalal: 'Not halal',
+      attestationIncomplete: 'Halal details incomplete',
+      adminOnly: 'Admin only',
+    },
+  },
+  // Plan 255 C3 (#415): submission validation
+  submissionValidation: {
+    fieldRequired: '"{{field}}" is required.',
+  },
+  // Plan 255 C5 (#415): submission status (pending review)
+  submissionStatus: {
+    awaitingReview: 'Your submission has been saved and is awaiting a manual review.',
+    provisionalSeal:
+      'Provisional seal: it only becomes public once the submission has been reviewed.',
+    pendingBadge: 'Under review',
+    submittedToast: 'Submitted! Your entry is now awaiting review.',
+  },
+  // Plan 255 C6 (#415): /create chooser extras
+  createPage: {
+    quickImportTitle: 'Quick Import (Beta)',
+    quickImportDescription: 'Import from Google or Instagram and auto-fill everything in seconds!',
+    quickImportButton: 'Try Quick Import',
+  },
+  // Plan 255 C6 (#415): /create/halal page
+  createHalal: {
+    stepTitle: 'Halal',
+    title: 'Halal Compliance',
+    // Religious oath — literal rendering, needs native-speaker sign-off.
+    attestationIntro:
+      'Do you testify before Allah that you do NOT process, sell, or offer the following?',
+    verificationTitle: 'Verification method',
+    verificationDesc: 'How was halal compliance verified?',
+    methodOnline: 'Online',
+    methodOnlineDesc: 'Verified online (menu, website, self-declaration)',
+    methodOnsite: 'On-site',
+    methodOnsiteDesc: 'Visited and verified on site',
+    certificateTitle: 'Halal certificate',
+    certificateDesc: 'Upload a valid halal certificate (optional)',
+    certificateUpload: 'Upload certificate',
+    certificateInvalidType: 'Invalid file type. Please upload an image or a PDF file.',
+    certificateTooLarge: 'File too large. The certificate may be at most 5 MB.',
+  },
+  // Plan 255 (#415): admin halal edit sub-page
+  adminHalalEdit: {
+    title: 'Halal Check',
+    uploading: 'Uploading...',
+    attestationWarning:
+      'All three attestation questions must be confirmed before the entry can be approved.',
+    existingCertificate: 'Existing certificate',
+    viewCertificate: 'View certificate',
+    derivedTierInfo:
+      'The halal level is derived automatically from the verification method: Online = Bronze, On-site = Silver, With certificate = Gold.',
+    derivedTierLabel: 'Derived level',
+    tier: {
+      gold: 'Gold',
+      silver: 'Silver',
+      bronze: 'Bronze',
+    },
+    autoApprovedTitle: 'Auto-Approved',
+    autoApprovedDesc: 'All attestation criteria met. The entry is pre-approved.',
+    autoRejectedTitle: 'Auto-Rejected',
+    autoRejectedDesc:
+      'Not all criteria met. The entry is pre-rejected. You can override this on the edit page.',
   },
 } as const;

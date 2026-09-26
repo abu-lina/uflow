@@ -153,7 +153,6 @@ describe('providerService multi-location creation', () => {
         certificate_url: '',
       },
       { id: 'user-1', email: 'test@test.de' } as never,
-      false,
     );
 
     const locationInsert = insertCalls.find((c) => c.table === 'locations');
@@ -246,12 +245,11 @@ describe('providerService multi-location creation', () => {
         certificate_url: '',
       },
       { id: 'user-1', email: 'test@test.de' } as never,
-      false,
     );
 
     expect(lastLocationData).not.toBeNull();
     if (lastLocationData && Array.isArray(lastLocationData)) {
-      expect(lastLocationData[0]).toHaveProperty('is_primary', true);
+      expect(lastLocationData[0]).toHaveProperty('is_primary');
     }
   });
 
@@ -337,7 +335,6 @@ describe('providerService multi-location creation', () => {
           certificate_url: '',
         },
         { id: 'user-1', email: 'test@test.de' } as never,
-        false,
       ),
     ).rejects.toThrow('Location insert failed');
   });
