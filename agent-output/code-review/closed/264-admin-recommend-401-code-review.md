@@ -2,7 +2,7 @@
 ID: 264
 Origin: 264
 UUID: 90270baf
-Status: Active
+Status: Committed
 ---
 
 # Code Review 264 — Restore authenticated `POST /api/providers` (admin recommend 401)
@@ -19,6 +19,7 @@ Status: Active
 | 2026-09-26 | Code Reviewer | Initial review after UAT returned NOT APPROVED (missing code review). One fix applied in review (HIGH-1). One HIGH finding remains open (HIGH-2), so the verdict is REJECTED. |
 | 2026-09-26 | Code Reviewer | Re-review after the Implementer remediation (`df36013d`). HIGH-2 is resolved. A multi-line JSX rescan found HIGH-3 in `saved/page.tsx`; the first-pass regex only matched single-line text nodes and missed it. Verdict stays REJECTED until HIGH-3 has an explicit disposition. |
 | 2026-09-26 | Code Reviewer | Focused re-review after HIGH-3 remediation. Verified `saved/page.tsx`, six locale files, new i18n regression test, and updated implementation evidence. HIGH-3 is resolved. Verdict upgraded to APPROVED_WITH_COMMENTS. |
+| 2026-09-26T18:44Z | DevOps | Status -> Committed for v0.15.18 | UAT approved and release readiness gates passed; no blocking review findings remain. |
 
 ## Scope Reviewed
 
