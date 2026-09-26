@@ -8,22 +8,31 @@ import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { ProviderOptionCard } from '@/components/create/ProviderOptionCard';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useFormData } from '@/providers/form-provider';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { cn } from '@/lib/utils';
 
 export default function CreateProviderPage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { setCreationMode } = useFormData();
 
   // Feature flags
   const isQuickImportEnabled = getFeatureFlag('enableQuickImport');
 
+  // AC4.3: creationMode is set BEFORE navigating. mutations.ts derives
+  // isOwner from formData.creationMode and writes provider_owner_id from it;
+  // leaving the mode ambiguous (or recovering it from stale localStorage at
+  // the destination) can silently grant the submitter ownership of a
+  // business they only recommended.
   const handleOwnProvider = () => {
+    setCreationMode('owner');
     router.push('/create/basics');
   };
 
   const handleRecommendProvider = () => {
-    router.push('/recommend-provider');
+    setCreationMode('recommendation');
+    router.push('/create/recommend');
   };
 
   const handleQuickCreate = () => {
@@ -32,7 +41,11 @@ export default function CreateProviderPage() {
 
   return (
     <ScrollablePageLayout>
-      <PageHeader title={t('create.title')} variant="title-only" />
+      <PageHeader
+        title={t('create.title')}
+        variant="back-and-title"
+        onBack={() => router.push('/')}
+      />
 
       <PageContent
         centerVertically

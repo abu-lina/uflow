@@ -6,9 +6,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import { ExploreIcon } from '@/components/ui/icons/ExploreIcon';
+import { CreateIcon } from '@/components/ui/icons/CreateIcon';
 import { SavedIcon } from '@/components/ui/icons/SavedIcon';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { useAuth } from '@/providers/auth-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 // Height is set to 72px for modern, touch-friendly, and visually balanced mobile nav bar.
 const navItems = [
@@ -16,6 +18,12 @@ const navItems = [
     label: 'Home',
     href: '/',
     icon: (isActive: boolean) => <ExploreIcon isActive={isActive} />,
+    noFrame: true,
+  },
+  {
+    label: 'Create',
+    href: '/create',
+    icon: (isActive: boolean) => <CreateIcon isActive={isActive} />,
     noFrame: true,
   },
   {
@@ -35,6 +43,7 @@ const navItems = [
 
 export function MobileFooterBar() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
@@ -83,7 +92,7 @@ export function MobileFooterBar() {
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-10">
+        <div className="flex w-full max-w-[400px] flex-row items-center justify-center gap-6 sm:gap-10">
           {navItems.map((item) => (
             <div
               key={item.href}
@@ -91,7 +100,7 @@ export function MobileFooterBar() {
               style={{ width: 40, height: 40 }}
             >
               <Link
-                aria-label={item.label}
+                aria-label={item.href === '/create' ? t('navigation.create') : item.label}
                 className={`flex items-center justify-center ${
                   isNavigating ? 'pointer-events-none' : ''
                 }`}
@@ -126,9 +135,11 @@ export function MobileFooterBar() {
                       ? pathname.startsWith('/profile') ||
                           pathname === '/login' ||
                           pathname === '/signup'
-                      : item.href === '/'
-                        ? isExploreActive
-                        : pathname === item.href,
+                      : item.href === '/create'
+                        ? pathname === '/create' || pathname.startsWith('/create')
+                        : item.href === '/'
+                          ? isExploreActive
+                          : pathname === item.href,
                   )}
               </Link>
             </div>

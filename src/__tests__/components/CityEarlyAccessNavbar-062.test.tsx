@@ -28,6 +28,10 @@ vi.mock('@/providers/auth-provider', () => ({
   useAuth: () => mockUseAuth(),
 }));
 
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
+}));
+
 // Mock usePathname
 let mockPathname = '/';
 vi.mock('next/navigation', () => ({

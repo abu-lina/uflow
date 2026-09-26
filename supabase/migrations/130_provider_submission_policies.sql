@@ -1,9 +1,14 @@
 -- Migration 130: Provider submission policies (Plan 255 / #415)
 --
--- 1. Constrain review_status on client inserts. The previous insert policy
---    let a direct API caller submit review_status='approved'. Client inserts
---    now require an authenticated user submitting 'pending' as themselves —
---    anonymous submissions are no longer possible (Plan 255: recommending
+-- 1. Constrain review_status, user_created_id, and provider_owner_id on
+--    client inserts. The previous insert policy let a direct API caller
+--    submit review_status='approved', and (before this migration) set
+--    provider_owner_id to an arbitrary uid — a privilege-escalation path,
+--    since the UPDATE/DELETE policies key on provider_owner_id. Client
+--    inserts now require an authenticated user submitting 'pending' as
+--    themselves, with provider_owner_id either NULL (recommendation) or
+--    their own uid (owner create) — anonymous submissions and third-party
+--    ownership claims are no longer possible (Plan 255: recommending
 --    requires login). Admin/moderator inserts keep the previous behaviour,
 --    and service_role bypasses RLS entirely, so the admin review path and
 --    backfill migrations are unaffected.
@@ -23,6 +28,8 @@ CREATE POLICY "Allow provider inserts" ON "public"."providers" FOR INSERT WITH C
     ("review_status" = 'pending'::"public"."review_status")
     AND
       ((( SELECT "auth"."role"() AS "role") = 'authenticated'::"text") AND ("user_created_id" = ( SELECT "auth"."uid"() AS "uid")))
+    AND
+      (("provider_owner_id" IS NULL) OR ("provider_owner_id" = ( SELECT "auth"."uid"() AS "uid")))
   )
 );
 

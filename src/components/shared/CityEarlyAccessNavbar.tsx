@@ -8,6 +8,7 @@ import { SavedIcon } from '@/components/ui/icons/SavedIcon';
 import { ProfileIcon } from '@/components/ui/icons/ProfileIcon';
 import { useAppStage } from '@/hooks/useAppStage';
 import { useAuth } from '@/providers/auth-provider';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
 
 /**
@@ -31,6 +32,7 @@ export function CityEarlyAccessNavbar() {
   const pathname = usePathname();
   const { stage } = useAppStage();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   // Determine active states
   // Home is active when:
@@ -39,7 +41,7 @@ export function CityEarlyAccessNavbar() {
   // - On /food (Stage 2) - the canonical discovery route
   const isHomeActive = pathname === '/' || pathname.startsWith('/city/') || pathname === '/food';
 
-  const isCreateActive = pathname === '/create' || pathname.startsWith('/create/recommend');
+  const isCreateActive = pathname === '/create' || pathname.startsWith('/create');
 
   const isSavedActive = pathname === '/saved';
 
@@ -88,15 +90,15 @@ export function CityEarlyAccessNavbar() {
           <ExploreIcon isActive={isHomeActive} />
         </Link>
 
-        {/* Create */}
+        {/* Create - routes to the /create chooser, not a specific flow */}
         <Link
-          aria-label="Create"
+          aria-label={t('navigation.create')}
           className={cn(
             'flex flex-1 flex-row items-center justify-center',
             'h-12',
             isCreateActive && 'border-b-[2.4px] border-primary',
           )}
-          href="/create/recommend"
+          href="/create"
           scroll={false}
         >
           <CreateIcon isActive={isCreateActive} />

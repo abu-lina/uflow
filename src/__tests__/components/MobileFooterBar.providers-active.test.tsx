@@ -28,6 +28,10 @@ vi.mock('@/providers/auth-provider', () => ({
   }),
 }));
 
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
+}));
+
 vi.mock('@/components/ui/icons/ExploreIcon', () => ({
   ExploreIcon: ({ isActive }: { isActive?: boolean }) => (
     <span data-testid="explore-icon">{isActive ? 'active' : 'inactive'}</span>

@@ -13,7 +13,6 @@ const APP_ROUTES = [
   '/profile',
   '/about',
   '/community-services',
-  '/recommend-provider',
   '/saved',
   '/login',
   '/signup',
@@ -104,7 +103,6 @@ export function isExcludedRoute(pathname: string): boolean {
  * These routes allow early access users to participate in building the community
  */
 const EARLY_ACCESS_ROUTES = [
-  '/recommend-provider',
   '/create',
   '/city',
   '/providers', // Allow access to provider list and detail pages in early access
@@ -158,9 +156,8 @@ export async function shouldRedirectToWaitlist(
   // Special case: Allow access to /create (overview page) and /create/* routes in early access mode even without waitlist token
   // This handles cases where the cookie might not be set/read correctly but the user is
   // legitimately in early access (coming from early access screen).
-  // Security: The individual page components will handle authentication/authorization checks
-  // (e.g., checking for recommendation mode from localStorage/formData). If the user is not
-  // in recommendation mode and not logged in, pages will show login screens.
+  // Security: The individual page components handle their own auth gates —
+  // the recommend and owner flows show a login screen to anonymous users.
   if (!isAppLaunched && (pathname === '/create' || pathname.startsWith('/create/'))) {
     // #415: recommending requires a logged-in user. Anonymous visitors get no
     // early-access pass into the recommend flows; they are redirected like any
@@ -175,13 +172,6 @@ export async function shouldRedirectToWaitlist(
       return true;
     }
     return false; // Allow access, let page components handle auth/authorization
-  }
-
-  // Special case: Allow access to /recommend-provider in early access mode even without waitlist token
-  // This allows users coming from city early access pages to suggest providers.
-  // The /recommend-provider page will set recommendation mode and redirect to /create/basics
-  if (!isAppLaunched && pathname === '/recommend-provider') {
-    return false; // Allow access, let page handle recommendation mode setup
   }
 
   // Special case: Allow access to /providers, /food (list page) and provider/community service detail pages
