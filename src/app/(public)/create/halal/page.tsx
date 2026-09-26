@@ -34,7 +34,21 @@ export default function HalalPage() {
     { title: t('create.steps.media'), icon: 'lucide:images' },
   ];
 
-  if (isLoading) return <div className="p-8 text-center">{t('common.loading')}</div>;
+  if (isLoading) {
+    return (
+      <ScrollablePageLayout createDesktopLayout>
+        <PageHeader
+          className="hidden md:block"
+          title={t('createHalal.title')}
+          variant="back-and-title"
+          onBack="/create/contact"
+        />
+        <div className="p-8 text-center md:mx-auto md:w-full md:max-w-2xl">
+          {t('common.loading')}
+        </div>
+      </ScrollablePageLayout>
+    );
+  }
 
   const handleSave = () => router.push('/create/media');
   const setVer = (m: 'online' | 'onsite') => updateFormData({ verification_method: m });
@@ -66,7 +80,7 @@ export default function HalalPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <ScrollablePageLayout createDesktopLayout>
       <PageHeader
         title={t('createHalal.title')}
         variant="back-and-title"

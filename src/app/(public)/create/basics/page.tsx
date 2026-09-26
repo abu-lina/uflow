@@ -33,12 +33,26 @@ export default function CreateBasicsPage() {
 
   // Loading state
   if (isLoading) {
-    return <div className="p-8 text-center">{t('common.loading')}</div>;
+    return (
+      <ScrollablePageLayout createDesktopLayout>
+        <PageHeader
+          className="hidden md:block"
+          title={t('create.basics.title')}
+          variant="back-and-title"
+          onBack="/create"
+        />
+        <div className="p-8 text-center md:mx-auto md:w-full md:max-w-2xl">
+          {t('common.loading')}
+        </div>
+      </ScrollablePageLayout>
+    );
   }
 
   // Authentication check - redirect to login with return URL
   if (!user) {
-    return <LoginGate returnPath="/create/basics" title={t('create.basics.title')} />;
+    return (
+      <LoginGate createDesktopLayout returnPath="/create/basics" title={t('create.basics.title')} />
+    );
   }
 
   const handleBack = () => {
@@ -46,7 +60,7 @@ export default function CreateBasicsPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <ScrollablePageLayout createDesktopLayout>
       <PageHeader title={t('create.basics.title')} variant="back-and-title" onBack={handleBack} />
 
       <PageContent

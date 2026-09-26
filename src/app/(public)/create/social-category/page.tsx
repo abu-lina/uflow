@@ -65,8 +65,12 @@ export default function SelectSocialCategoryPage() {
   };
 
   return (
-    <ScrollablePageLayout>
-      <PageHeader title="Kategorie auswählen" variant="back-and-title" onBack={handleBack} />
+    <ScrollablePageLayout createDesktopLayout>
+      <PageHeader
+        title={t('providers.selectCategory')}
+        variant="back-and-title"
+        onBack={handleBack}
+      />
 
       <PageContent
         className={cn('sm:mx-auto sm:max-w-[960px] sm:px-6 md:px-8')}

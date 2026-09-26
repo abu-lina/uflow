@@ -59,14 +59,17 @@ function ImportOSMPageContent() {
   // Recommendations require a logged-in user (#415) — same gate as
   // /create/recommend and the owner flow.
   if (!isAuthLoading && !user) {
-    return <LoginGate returnPath="/create/import-osm" title={pageTitle} />;
+    return <LoginGate createDesktopLayout returnPath="/create/import-osm" title={pageTitle} />;
   }
 
   return (
-    <ScrollablePageLayout>
-      {!showSuccessScreen && (
-        <PageHeader title={pageTitle} variant="back-and-title" onBack={handleBack} />
-      )}
+    <ScrollablePageLayout createDesktopLayout>
+      <PageHeader
+        className={showSuccessScreen ? 'hidden md:block' : ''}
+        title={pageTitle}
+        variant="back-and-title"
+        onBack={handleBack}
+      />
 
       <PageContent
         className="sm:mx-auto sm:max-w-[640px] sm:px-6 md:px-8"

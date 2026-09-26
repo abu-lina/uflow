@@ -1,0 +1,116 @@
+---
+ID: 265
+Origin: 265
+UUID: 7c4e91a3
+Status: Active
+---
+
+# Deployment Record: v0.15.19 — Stage 1 (Plan 265)
+
+**Plan Reference**: `agent-output/planning/closed/265-create-desktop-layout-plan.md`
+**Target Version**: v0.15.19
+**Type**: Bugfix patch
+**Environment**: production (https://ummahflow.com) & UAT (https://uat.ummahflow.com) — via PR merge, then Stage 2
+**Agent**: devops
+**Date**: 2026-09-26
+
+## Changelog
+
+| Date (UTC) | Agent  | Change                                                                                                                                                                                                                                                                           |
+| ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-26 | devops | Stage 1: version pre-flight confirmed v0.15.19, version bumped in package.json/package-lock.json/CHANGELOG.md, open-actions tracker created for DF-1, chain docs closed to `closed/` with status `Committed`, local commit prepared. Awaiting user release approval for Stage 2. |
+
+---
+
+## Release Context
+
+| Field              | Value                                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Plan ID            | 265                                                                                                                                               |
+| Epic               | Epic 3.1: Community-Driven Provider Recommendations                                                                                               |
+| Classification     | Bugfix (Desktop create flow layout broken / header collision)                                                                                     |
+| GitHub Issue       | [#430](https://github.com/abu-lina/uflow/issues/430)                                                                                              |
+| Plan doc           | `agent-output/planning/closed/265-create-desktop-layout-plan.md`                                                                                  |
+| Implementation doc | `agent-output/implementation/closed/265-create-desktop-layout-implementation.md`                                                                  |
+| Code Review doc    | `agent-output/code-review/closed/265-create-desktop-layout-code-review.md`                                                                        |
+| QA doc             | `agent-output/qa/closed/265-create-desktop-layout-qa.md`                                                                                          |
+| UAT doc            | `agent-output/uat/closed/265-create-desktop-layout-uat.md`                                                                                        |
+| Open Actions doc   | `agent-output/planning/265-open-actions.md` (DF-1: Post-merge live UAT verification)                                                              |
+| QA Status          | QA Complete (TypeScript clean, delta-lint clean, 2604 unit/integration tests pass, 28 regression tests pass, 102/102 static build routes compile) |
+| Code Review        | APPROVED_WITH_COMMENTS (3 review fixes verified: media loading spinner column alignment, PageHeader indentation, social-category translation)     |
+| UAT Status         | APPROVED FOR RELEASE (Conditional pending post-merge verification on uat.ummahflow.com)                                                           |
+
+**Plans included in this release**: Plan 265 (single-plan patch, v0.15.19)
+
+---
+
+## Version Pre-Flight
+
+| Check                       | Command                                                                | Result                                |
+| --------------------------- | ---------------------------------------------------------------------- | ------------------------------------- |
+| Latest tag on origin        | `git fetch origin --tags && git tag --list "v*" \| sort -V \| tail -5` | `v0.15.18` (latest released tag)      |
+| Current origin/main version | `git show origin/main:package.json \| grep '"version"'`                | `"version": "0.15.18"`                |
+| Target working version      | Latest tag + 1 patch                                                   | `v0.15.19` (FREE, tag does not exist) |
+| `package.json`              | Post-bump                                                              | `0.15.19`                             |
+| `package-lock.json`         | Post-bump                                                              | `0.15.19`                             |
+| `CHANGELOG.md` heading      | Post-bump                                                              | `## [0.15.19] - 2026-09-26`           |
+
+---
+
+## Stage 1: Pre-Release Verification
+
+### Branch & Sync
+
+| Check      | Result                                                                                                  |
+| ---------- | ------------------------------------------------------------------------------------------------------- |
+| Branch     | `fix/265-create-desktop-layout`                                                                         |
+| Tracking   | `origin/main`                                                                                           |
+| Divergence | `git rev-list --left-right --count origin/main...HEAD` → `0 0` (0 behind, 0 ahead) — fully synchronized |
+
+### Packaging Integrity & Technical Gates
+
+| Gate                         | Result  | Evidence                                                                        |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------- |
+| TypeScript strict type-check | ✅ PASS | `npm run type-check` — 0 errors                                                 |
+| Delta ESLint (changed files) | ✅ PASS | 0 errors, 0 warnings across all 20 modified source files and test files         |
+| Plan 265 regression suite    | ✅ PASS | `265-create-desktop-layout.test.tsx` — 28/28 passed                             |
+| Plan 250 regression suite    | ✅ PASS | `plan250-mobile-ui-jank-fixes.test.tsx` — 64/64 passed                          |
+| Full Vitest test suite       | ✅ PASS | `npx vitest run` — 2604 passed, 28 skipped (286 files passed)                   |
+| Production Next.js build     | ✅ PASS | 102/102 static pages compiled cleanly                                           |
+| Version consistency          | ✅ PASS | package.json `0.15.19` = package-lock.json `0.15.19` = CHANGELOG `## [0.15.19]` |
+
+---
+
+## Stage 1 Local Commit Details
+
+- **Commit type**: `fix(create)`
+- **Subject**: Desktop create flow layout and header clearance
+- **Referenced Plan**: `Refs PLAN-265`
+- **Pushed**: NO (Changes stay local until explicit Stage 2 release approval)
+
+---
+
+## Deferred Post-Deploy Obligations
+
+| ID   | Item                                                                                                 | Owner | Trigger                                | Status                                                        |
+| ---- | ---------------------------------------------------------------------------------------------------- | ----- | -------------------------------------- | ------------------------------------------------------------- |
+| DF-1 | Post-Merge UAT live confirmation on `uat.ummahflow.com` across guest & authenticated create subpages | UAT   | Deploy to UAT of Plan 265 merge commit | Open (tracked in `agent-output/planning/265-open-actions.md`) |
+
+---
+
+## Stage 2: Release Execution
+
+**User Confirmation**: "approved" — 2026-09-26
+**Confirmed by**: User (explicit)
+
+### Release Execution Log
+
+| Step                 | Command                                                                               | Result     |
+| -------------------- | ------------------------------------------------------------------------------------- | ---------- |
+| Push branch          | `git push origin fix/265-create-desktop-layout`                                       | ⏳ Pending |
+| PR creation / check  | `gh pr create`                                                                        | ⏳ Pending |
+| CI Verification      | `gh pr checks <PR#>`                                                                  | ⏳ Pending |
+| Squash merge         | `gh pr merge <PR#> --squash --delete-branch`                                          | ⏳ Pending |
+| Tag creation         | `git tag -a v0.15.19 <squash-sha> -m "Release v0.15.19 — Desktop create flow layout"` | ⏳ Pending |
+| Tag push             | `git push origin v0.15.19`                                                            | ⏳ Pending |
+| GitHub Issue closure | `gh issue close 430 --comment "Released in v0.15.19 🎉"`                              | ⏳ Pending |
