@@ -21,7 +21,7 @@ describe('buildNearMeUrl', () => {
       pathname: '/food',
       searchParams: new URLSearchParams('near_me=1'),
     });
-    expect(url).toBe('/food?');
+    expect(url).toBe('/food');
   });
 
   it('preserves unrelated params and sets open_now', () => {
@@ -54,6 +54,6 @@ describe('buildNearMeUrl', () => {
       pathname: '/food',
       searchParams: new URLSearchParams('open_now=1'),
     });
-    expect(url).toBe('/food?');
+    expect(url).toBe('/food');
   });
 });

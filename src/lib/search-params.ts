@@ -65,7 +65,8 @@ export function buildNearMeUrl(opts: {
   params.delete('near_lon');
   params.delete('near_radius');
 
-  return `${basePath}?${params.toString()}`;
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
 }
 
 export function buildSearchParams(

@@ -227,7 +227,7 @@ describe('ProvidersContent near-me exclusivity', () => {
     act(() => {
       filterBarProps().onToggleNearMe?.();
     });
-    expect(mockRouterPush).toHaveBeenCalledWith('/food/stuttgart?');
+    expect(mockRouterPush).toHaveBeenCalledWith('/food/stuttgart');
   });
 
   it('lands Near Me off when the URL carries no near_me param (city pick clears it)', () => {
