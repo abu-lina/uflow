@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { translateCityName } from '@/utils/cityTranslation';
-import { translations } from '@/translations';
 import { Icon } from '@/components/ui/Icon';
 
 interface MobileGreetingHeaderProps {
@@ -66,7 +65,8 @@ export function MobileGreetingHeader({ className = '', cityName }: MobileGreetin
 
   // Get translation template and split by {{city}} to get prefix and suffix
   const getCityTextParts = () => {
-    const translationTemplate = (translations[language]?.common?.supportYourUmmahInCity as string) || 'in {{city}}.';
+    const template = t('common.supportYourUmmahInCity');
+    const translationTemplate = template.includes('{{city}}') ? template : 'in {{city}}.';
     const parts = translationTemplate.split('{{city}}');
     return {
       prefix: parts[0] || '',
@@ -100,7 +100,7 @@ export function MobileGreetingHeader({ className = '', cityName }: MobileGreetin
             initial: { opacity: 0, x: -20 },
             transition: { duration: 0.4, delay: 0.2 },
           })}
-          className="font-inter text-2xl font-semibold leading-tight text-primary -mt-0.5"
+          className="-mt-0.5 font-inter text-2xl font-semibold leading-tight text-primary"
         >
           {cityName && cityTextParts ? (
             <>
@@ -109,13 +109,13 @@ export function MobileGreetingHeader({ className = '', cityName }: MobileGreetin
                 <span>{translatedCityName || cityName}</span>
                 <button
                   aria-label="Change city"
-                  className="inline-flex items-center justify-center hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-primary/50 rounded p-0.5"
+                  className="inline-flex items-center justify-center rounded p-0.5 transition-opacity hover:opacity-70 focus:outline-none focus:ring-2 focus:ring-primary/50"
                   type="button"
                   onClick={() => router.push('/city-selection')}
                 >
                   <Icon
                     aria-hidden="true"
-                    className="w-6 h-6 text-primary"
+                    className="h-6 w-6 text-primary"
                     icon="lucide:location-edit"
                   />
                 </button>

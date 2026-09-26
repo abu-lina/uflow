@@ -8,6 +8,8 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+const CERT_URL = 'https://cdn.example.com/certs/halal.pdf';
+
 import { ProofTierCard } from '@/features/providers/components/ProofTierCard';
 
 let mockLanguage = 'en';
@@ -32,10 +34,35 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   // Regression: certOnFile bug
   // ---------------------------------------------------------------------------
   it('[QA] certificate checklist item renders when hasCertificate is true (regression: certOnFile)', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={true} reviewStatus="approved" />);
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={true}
+        certificateUrl={CERT_URL}
+        reviewStatus="approved"
+      />,
+    );
+    expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
+  });
+
+  it('[QA] hasCertificate without a stored certificateUrl earns no gold and no certificate item (AC6.8)', () => {
+    // A bare toggle — upload failed, legacy row, self-declared — must not
+    // mint a gold tier or claim a certificate is on file.
+    const { container } = render(
+      <ProofTierCard
+        certificateUrl={null}
+        hasCertificate={true}
+        noAlcohol={true}
+        reviewStatus="approved"
+        verificationMethod="online"
+      />,
+    );
+    expect(screen.queryByAltText('providerDetail.proofTier.sealAltGold')).not.toBeInTheDocument();
     expect(
-      screen.getByText('providerDetail.proofTier.checkCertificateOnFile'),
-    ).toBeInTheDocument();
+      screen.queryByText('providerDetail.proofTier.checkCertificateOnFile'),
+    ).not.toBeInTheDocument();
+    // The attestation still earns bronze; the card is not empty.
+    expect(container).not.toBeEmptyDOMElement();
   });
 
   it('[QA] certificate checklist item does NOT render when hasCertificate is false', () => {
@@ -56,31 +83,65 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   // Progressive levels: 4 verification states
   // ---------------------------------------------------------------------------
   it('[QA] level 1 — online without certificate shows bronze seal + menu reviewed', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={false} noAlcohol={true} reviewStatus="approved" />);
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltBronze')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.summaryBronze')).toBeInTheDocument();
   });
 
   it('[QA] level 2 — online with certificate shows gold seal + certificate item', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={true} reviewStatus="approved" />);
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={true}
+        certificateUrl={CERT_URL}
+        reviewStatus="approved"
+      />,
+    );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.summaryGoldCertOnly')).toBeInTheDocument();
   });
 
   it('[QA] level 3 — onsite without certificate shows silver seal + onsite items', () => {
-    render(<ProofTierCard verificationMethod="onsite" hasCertificate={false} noAlcohol={true} reviewStatus="approved" />);
+    render(
+      <ProofTierCard
+        verificationMethod="onsite"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltSilver')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.proofTier.checkMenuReviewedOnsite')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.proofTier.checkSellsProcessNoAlcohol')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.proofTier.checkSellsProcessNoPork')).toBeInTheDocument();
+    expect(
+      screen.getByText('providerDetail.proofTier.checkMenuReviewedOnsite'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('providerDetail.proofTier.checkSellsProcessNoAlcohol'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('providerDetail.proofTier.checkSellsProcessNoPork'),
+    ).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMeatIsHalal')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.summarySilver')).toBeInTheDocument();
   });
 
   it('[QA] level 4 — onsite with certificate shows gold seal + all checklist items', () => {
-    render(<ProofTierCard verificationMethod="onsite" hasCertificate={true} reviewStatus="approved" />);
+    render(
+      <ProofTierCard
+        verificationMethod="onsite"
+        hasCertificate={true}
+        certificateUrl={CERT_URL}
+        reviewStatus="approved"
+      />,
+    );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
@@ -96,6 +157,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     render(
       <ProofTierCard
         hasCertificate={true}
+        certificateUrl={CERT_URL}
         listingType="food"
         noAlcohol={true}
         noPork={true}
@@ -114,6 +176,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     render(
       <ProofTierCard
         hasCertificate={true}
+        certificateUrl={CERT_URL}
         listingType="food"
         noAlcohol={false}
         noPork={true}
@@ -134,6 +197,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     render(
       <ProofTierCard
         hasCertificate={true}
+        certificateUrl={CERT_URL}
         listingType="food"
         noAlcohol={false}
         noPork={false}
@@ -155,6 +219,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     render(
       <ProofTierCard
         hasCertificate={true}
+        certificateUrl={CERT_URL}
         listingType="store"
         noAlcohol={false}
         noPork={false}
@@ -170,6 +235,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     render(
       <ProofTierCard
         hasCertificate={true}
+        certificateUrl={CERT_URL}
         listingType="ummah"
         noAlcohol={true}
         noPork={true}
@@ -182,8 +248,17 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   });
 
   it('[QA] whatWeVerified checklist is always present', () => {
-    render(<ProofTierCard verificationMethod="online" hasCertificate={false} noAlcohol={true} reviewStatus="approved" />);
-    expect(screen.getByText(v => v.startsWith('providerDetail.proofTier.whatWeVerified'))).toBeInTheDocument();
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    expect(
+      screen.getByText((v) => v.startsWith('providerDetail.proofTier.whatWeVerified')),
+    ).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
   });
 });

@@ -3,7 +3,8 @@
  *
  * Verifies that transformPage() sets the new section fields:
  *   - listing_type: 'food'   (all JoinHalal imports are food providers)
- *   - no_alcohol: true       (JoinHalal is a halal-food directory; alcohol = rejection)
+ *   - no_alcohol/no_pork/no_gambling: null (tri-state #415: no information =
+ *     NULL, not a claim nobody made; alcohol = rejection via review_status)
  *   - verification_method: 'online' (default)
  *   - has_certificate: false (default)
  *
@@ -45,45 +46,87 @@ function makeHtmlWithHalalMerkmale(halalMerkmale: string | null): string {
 
 describe('transformPage — Plan 089 section fields (M4)', () => {
   it('sets listing_type = food for all JoinHalal imports', () => {
-    const { record } = transformPage(makeHtmlWithHalalMerkmale('Handgeschächtet'), TEST_URL, CATEGORIES, false, OFFERS);
+    const { record } = transformPage(
+      makeHtmlWithHalalMerkmale('Handgeschächtet'),
+      TEST_URL,
+      CATEGORIES,
+      false,
+      OFFERS,
+    );
     expect(record).not.toBeNull();
     expect((record as unknown as Record<string, unknown>).listing_type).toBe('food');
   });
 
-  it('sets no_alcohol = true for non-alcohol entries', () => {
-    const { record } = transformPage(makeHtmlWithHalalMerkmale('Handgeschächtet'), TEST_URL, CATEGORIES, false, OFFERS);
+  it('sets no_alcohol = null for non-alcohol entries (no information, not a claim)', () => {
+    const { record } = transformPage(
+      makeHtmlWithHalalMerkmale('Handgeschächtet'),
+      TEST_URL,
+      CATEGORIES,
+      false,
+      OFFERS,
+    );
     expect(record).not.toBeNull();
-    expect((record as unknown as Record<string, unknown>).no_alcohol).toBe(true);
+    expect((record as unknown as Record<string, unknown>).no_alcohol).toBeNull();
   });
 
-  it('sets no_alcohol = true even when Alkoholverkauf present (rejection is handled separately)', () => {
-    // The no_alcohol field is set by the import; the review_status rejects but the field still reflects intent
-    const { record } = transformPage(makeHtmlWithHalalMerkmale('Alkoholverkauf'), TEST_URL, CATEGORIES, false, OFFERS);
+  it('sets no_alcohol = null even when Alkoholverkauf present (rejection is handled separately)', () => {
+    // The import writes no attestation claim; review_status rejects the row
+    const { record } = transformPage(
+      makeHtmlWithHalalMerkmale('Alkoholverkauf'),
+      TEST_URL,
+      CATEGORIES,
+      false,
+      OFFERS,
+    );
     expect(record).not.toBeNull();
-    expect((record as unknown as Record<string, unknown>).no_alcohol).toBe(true);
+    expect((record as unknown as Record<string, unknown>).no_alcohol).toBeNull();
   });
 
   it('sets verification_method = online as default', () => {
-    const { record } = transformPage(makeHtmlWithHalalMerkmale(null), TEST_URL, CATEGORIES, false, OFFERS);
+    const { record } = transformPage(
+      makeHtmlWithHalalMerkmale(null),
+      TEST_URL,
+      CATEGORIES,
+      false,
+      OFFERS,
+    );
     expect(record).not.toBeNull();
     expect((record as unknown as Record<string, unknown>).verification_method).toBe('online');
   });
 
   it('sets has_certificate = false as default', () => {
-    const { record } = transformPage(makeHtmlWithHalalMerkmale(null), TEST_URL, CATEGORIES, false, OFFERS);
+    const { record } = transformPage(
+      makeHtmlWithHalalMerkmale(null),
+      TEST_URL,
+      CATEGORIES,
+      false,
+      OFFERS,
+    );
     expect(record).not.toBeNull();
     expect((record as unknown as Record<string, unknown>).has_certificate).toBe(false);
   });
 
-  it('sets no_pork = false as default', () => {
-    const { record } = transformPage(makeHtmlWithHalalMerkmale(null), TEST_URL, CATEGORIES, false, OFFERS);
+  it('sets no_pork = null as default (not "declared serves pork")', () => {
+    const { record } = transformPage(
+      makeHtmlWithHalalMerkmale(null),
+      TEST_URL,
+      CATEGORIES,
+      false,
+      OFFERS,
+    );
     expect(record).not.toBeNull();
-    expect((record as unknown as Record<string, unknown>).no_pork).toBe(false);
+    expect((record as unknown as Record<string, unknown>).no_pork).toBeNull();
   });
 
-  it('sets no_gambling = false as default', () => {
-    const { record } = transformPage(makeHtmlWithHalalMerkmale(null), TEST_URL, CATEGORIES, false, OFFERS);
+  it('sets no_gambling = null as default (not "declared has gambling")', () => {
+    const { record } = transformPage(
+      makeHtmlWithHalalMerkmale(null),
+      TEST_URL,
+      CATEGORIES,
+      false,
+      OFFERS,
+    );
     expect(record).not.toBeNull();
-    expect((record as unknown as Record<string, unknown>).no_gambling).toBe(false);
+    expect((record as unknown as Record<string, unknown>).no_gambling).toBeNull();
   });
 });
