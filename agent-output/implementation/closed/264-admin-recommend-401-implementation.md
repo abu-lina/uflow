@@ -2,7 +2,7 @@
 ID: 264
 Origin: 264
 UUID: 90270baf
-Status: Committed
+Status: Released
 ---
 
 # Implementation 264 — Restore authenticated provider submissions
@@ -27,6 +27,7 @@ Status: Committed
 | 2026-09-26 | Implementer | Code Review 264 REJECTED (HIGH-2) | Added `chat.pageTitle` to all 6 locales and rendered it in the chat page `<h1>`, with a new i18n test written first. Also recorded the HIGH-1 fix applied during review, which wired existing keys into the chat FAB, panel and close labels. |
 | 2026-09-26 | Implementer | Code Review 264 re-review REJECTED (HIGH-3); user chose option (a) | Localized every hardcoded German login string on `saved/page.tsx` (error messages, toasts, magic-link-sent JSX, retry button). Reused 16 existing `login.*`/`common.retry` keys (the same keys `LoginPageContent` uses) and added 6 new `login.*` keys in all 6 locales. A new i18n test with 10 cases was written first. |
 | 2026-09-26T18:44Z | DevOps | Status -> Committed for v0.15.18 | Plan 264 release approved; release readiness evidence recorded and lifecycle closure prepared. |
+| 2026-09-26T19:08Z | DevOps | Status -> Released | v0.15.18 deployed successfully from `b2aa52a7`; production health HTTP 200. |
 
 ## Implementation Summary
 
