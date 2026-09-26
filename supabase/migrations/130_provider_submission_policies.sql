@@ -1,11 +1,12 @@
 -- Migration 130: Provider submission policies (Plan 255 / #415)
 --
 -- 1. Constrain review_status on client inserts. The previous insert policy
---    let a direct API caller submit review_status='approved'. Client roles
---    (authenticated, anon) may now only insert 'pending'. Admin/moderator
---    inserts keep the previous behaviour, and service_role bypasses RLS
---    entirely, so the admin review path and backfill migrations are
---    unaffected.
+--    let a direct API caller submit review_status='approved'. Client inserts
+--    now require an authenticated user submitting 'pending' as themselves —
+--    anonymous submissions are no longer possible (Plan 255: recommending
+--    requires login). Admin/moderator inserts keep the previous behaviour,
+--    and service_role bypasses RLS entirely, so the admin review path and
+--    backfill migrations are unaffected.
 --
 -- 2. Widen the self-read policy so a creator can read back their own
 --    pending submission (OR user_created_id = auth.uid()). Pending rows
@@ -20,10 +21,8 @@ CREATE POLICY "Allow provider inserts" ON "public"."providers" FOR INSERT WITH C
     WHERE (("users"."user_id" = ( SELECT "auth"."uid"() AS "uid")) AND ("users"."role" = ANY (ARRAY['admin'::"public"."user_role", 'moderator'::"public"."user_role"])))))
   OR (
     ("review_status" = 'pending'::"public"."review_status")
-    AND (
+    AND
       ((( SELECT "auth"."role"() AS "role") = 'authenticated'::"text") AND ("user_created_id" = ( SELECT "auth"."uid"() AS "uid")))
-      OR ((( SELECT "auth"."role"() AS "role") = 'anon'::"text") AND ("user_created_id" IS NULL) AND ("provider_owner_id" IS NULL))
-    )
   )
 );
 

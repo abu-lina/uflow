@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Icon } from '@iconify/react';
@@ -173,7 +172,6 @@ interface RecommendFormData {
   phone: string;
   website: string;
   instagram: string;
-  userEmail: string; // User's email for follow-up
   message: string; // optional
 }
 
@@ -282,12 +280,9 @@ export function StreamlinedRecommendForm({
   const { user } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // AC5.7: explicit consent, required only when an anonymous user enters an email
-  const [emailConsent, setEmailConsent] = useState(false);
   const searchParams = useSearchParams();
   const showSuccess = searchParams.get('success') === 'true';
   const [categories, setCategories] = useState<Category[]>([]);
-  const userEmailInputRef = useRef<HTMLInputElement>(null);
   const cityInputRef = useRef<HTMLInputElement>(null);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
   const cityInitializedRef = useRef(false); // Track if initial city has been loaded
@@ -327,7 +322,6 @@ export function StreamlinedRecommendForm({
         phone: contextFormData.phone || '',
         website: contextFormData.website || '',
         instagram: contextFormData.instagram || '',
-        userEmail: '',
         message: contextFormData.description || '',
       };
     }
@@ -361,7 +355,6 @@ export function StreamlinedRecommendForm({
       phone: contextFormData.phone || '',
       website: contextFormData.website || '',
       instagram: contextFormData.instagram || '',
-      userEmail: '',
       message: contextFormData.description || '',
     };
   });
@@ -1003,8 +996,7 @@ export function StreamlinedRecommendForm({
 
   // Validation - memoized to prevent unnecessary re-renders
   // AC5.2: all three halal answers are required; "not sure" (null) counts as
-  // answered, only untouched (undefined) fails. AC5.7: an anonymous user who
-  // enters an email must give explicit consent.
+  // answered, only untouched (undefined) fails.
   const isFormValid = useMemo(() => {
     const hasBasics = !!formData.title && !!formData.category && isCitySelected;
     const hasContact =
@@ -1016,8 +1008,7 @@ export function StreamlinedRecommendForm({
       contextFormData.no_alcohol !== undefined &&
       contextFormData.no_pork !== undefined &&
       contextFormData.no_gambling !== undefined;
-    const consentSatisfied = !!user || formData.userEmail.trim().length === 0 || emailConsent;
-    return hasBasics && hasContact && allAttestationsAnswered && consentSatisfied;
+    return hasBasics && hasContact && allAttestationsAnswered;
   }, [
     formData.title,
     formData.category,
@@ -1025,7 +1016,6 @@ export function StreamlinedRecommendForm({
     formData.phone,
     formData.website,
     formData.instagram,
-    formData.userEmail,
     selectedContacts.email,
     selectedContacts.phone,
     selectedContacts.website,
@@ -1034,8 +1024,6 @@ export function StreamlinedRecommendForm({
     contextFormData.no_alcohol,
     contextFormData.no_pork,
     contextFormData.no_gambling,
-    emailConsent,
-    user,
   ]);
 
   const handleBack = useCallback(() => {
@@ -1056,7 +1044,6 @@ export function StreamlinedRecommendForm({
       phone: '',
       website: '',
       instagram: '',
-      userEmail: '',
       message: '',
     });
     // Reset contact checkboxes
@@ -1081,7 +1068,6 @@ export function StreamlinedRecommendForm({
       no_pork: undefined,
       no_gambling: undefined,
     });
-    setEmailConsent(false);
     // Clear saved form data from localStorage
     clearSavedRecommendFormData();
   }, [initialCity, updateFormData, router, clearSavedRecommendFormData]);
@@ -1101,15 +1087,10 @@ export function StreamlinedRecommendForm({
       no_alcohol: contextFormData.no_alcohol,
       no_pork: contextFormData.no_pork,
       no_gambling: contextFormData.no_gambling,
-      // Consent only applies to the anonymous email input
-      userEmail: user ? '' : formData.userEmail,
-      emailConsent,
     });
     if (!parsed.success || !isFormValid) {
       const issueField = parsed.success ? '' : firstIssueField(parsed.error);
-      if (issueField === 'emailConsent') {
-        toast.error(t('submissionValidation.emailConsentRequired'));
-      } else if (issueField) {
+      if (issueField) {
         const labelKey = submissionFieldLabelKeys[issueField];
         toast.error(
           t('submissionValidation.fieldRequired', { field: labelKey ? t(labelKey) : issueField }),
@@ -1130,9 +1111,6 @@ export function StreamlinedRecommendForm({
       setIsSubmitting(true);
 
       // Prepare formData for service function
-      // Use authenticated user's email if available, otherwise use form input
-      const userEmail = user?.email || formData.userEmail;
-
       const serviceFormData = {
         ...contextFormData,
         title: formData.title,
@@ -1143,7 +1121,6 @@ export function StreamlinedRecommendForm({
         phone: formData.phone,
         website: formData.website,
         instagram: formData.instagram,
-        userEmail: userEmail,
         description: formData.message,
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
@@ -1163,7 +1140,7 @@ export function StreamlinedRecommendForm({
 
       await createProviderOrService(
         serviceFormData,
-        user || null, // Pass authenticated user if available, otherwise null for anonymous
+        user || null, // Page gate guarantees a logged-in user (#415)
         true, // Recommendation mode
       );
 
@@ -1188,9 +1165,6 @@ export function StreamlinedRecommendForm({
         no_pork: undefined,
         no_gambling: undefined,
       });
-      // Also clear local userEmail state and consent
-      setFormData((prev) => ({ ...prev, userEmail: '' }));
-      setEmailConsent(false);
       // Clear selected contacts
       setSelectedContacts({
         email: false,
@@ -1223,7 +1197,6 @@ export function StreamlinedRecommendForm({
     t,
     clearSavedRecommendFormData,
     user,
-    emailConsent,
   ]);
 
   // Navigate to category selection
@@ -1676,89 +1649,7 @@ export function StreamlinedRecommendForm({
         />
       </div>
 
-      {/* Section 4: User Email - Only show for anonymous users */}
-      {!user && (
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-lg font-semibold text-content-heading">
-              {t('create.recommend.userEmailTitle')}
-            </h2>
-            <p className="text-base text-content-muted">
-              {t('create.recommend.userEmailDescription')}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-0">
-            {/* User Email Input */}
-            <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
-              <div className="flex w-full flex-col gap-1">
-                <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
-                  {t('create.recommend.userEmailLabel')}
-                </label>
-                <input
-                  ref={userEmailInputRef}
-                  aria-label={t('create.recommend.userEmailLabel')}
-                  className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                  placeholder={t('create.recommend.userEmailPlaceholder')}
-                  type="email"
-                  value={formData.userEmail}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    const cursorPosition = e.target.selectionStart || newValue.length;
-                    setFormData((prev) => ({ ...prev, userEmail: newValue }));
-                    // Maintain focus and cursor position after state update
-                    setTimeout(() => {
-                      if (userEmailInputRef.current) {
-                        userEmailInputRef.current.focus();
-                        userEmailInputRef.current.setSelectionRange(cursorPosition, cursorPosition);
-                      }
-                    }, 0);
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* AC5.7: explicit consent checkbox, required only when an email is provided */}
-            {formData.userEmail.trim().length > 0 && (
-              <div
-                aria-checked={emailConsent}
-                className="mt-2 flex w-full cursor-pointer items-center rounded-2xl border border-border bg-white px-3 py-2"
-                role="checkbox"
-                tabIndex={0}
-                onClick={() => setEmailConsent((prev) => !prev)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setEmailConsent((prev) => !prev);
-                  }
-                }}
-              >
-                <div className="flex w-full flex-row items-center gap-2">
-                  <div className="flex-shrink-0">
-                    <Icon
-                      className="h-6 w-6 text-content"
-                      icon={emailConsent ? 'lucide:square-check' : 'lucide:square'}
-                    />
-                  </div>
-                  <span className="text-xs leading-[15px] text-content-muted">
-                    {t('submissionValidation.emailConsentLabel')}{' '}
-                    <Link
-                      className="underline hover:text-primary"
-                      href="/privacy-policy"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {t('legal.privacyPolicy')}
-                    </Link>
-                    {' *'}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Section 5: Message (Optional) */}
+      {/* Section 4: Message (Optional) */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold text-content-heading">

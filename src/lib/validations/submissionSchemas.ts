@@ -15,29 +15,27 @@ const answeredAttestation = z.union([z.boolean(), z.null()]);
 
 /**
  * Recommend flow required set: name, city, category, all three halal answers.
- * AC5.7: an anonymous recommender who enters an email must explicitly consent
- * (emailConsent); consent is not required when no email is given.
+ * Recommending requires a logged-in user; the submitter is identified by
+ * user_created_id, so no email or consent fields exist here.
  */
-export const recommendSubmissionSchema = z
-  .object({
-    title: z.string().trim().min(1),
-    city: z.string().trim().min(1),
-    category: z.string().trim().min(1),
-    no_alcohol: answeredAttestation,
-    no_pork: answeredAttestation,
-    no_gambling: answeredAttestation,
-    userEmail: z.string().optional(),
-    emailConsent: z.boolean().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.userEmail && data.userEmail.trim().length > 0 && data.emailConsent !== true) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['emailConsent'],
-        message: 'emailConsent required when a recommender email is provided',
-      });
-    }
-  });
+export const recommendSubmissionSchema = z.object({
+  title: z.string().trim().min(1),
+  city: z.string().trim().min(1),
+  category: z.string().trim().min(1),
+  no_alcohol: answeredAttestation,
+  no_pork: answeredAttestation,
+  no_gambling: answeredAttestation,
+});
+
+/**
+ * Import flow required set: all three halal answers. Other required fields
+ * are already enforced by the import form's own per-field checks.
+ */
+export const importSubmissionSchema = z.object({
+  no_alcohol: answeredAttestation,
+  no_pork: answeredAttestation,
+  no_gambling: answeredAttestation,
+});
 
 /**
  * Owner flow required set: the existing basics set (title, category, at least
@@ -85,7 +83,6 @@ export const submissionFieldLabelKeys: Record<string, string> = {
   no_alcohol: 'halal.attestation.noAlcohol.label',
   no_pork: 'halal.attestation.noPork.label',
   no_gambling: 'halal.attestation.noGambling.label',
-  emailConsent: 'submissionValidation.emailConsentLabel',
 };
 
 /** Field path of the first validation issue, for naming it in the error. */

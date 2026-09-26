@@ -1228,11 +1228,8 @@ export const en = {
       unanswered: 'Not answered',
     },
   },
-  // Plan 255 C3 (#415): submission validation + anonymous recommender email consent
+  // Plan 255 C3 (#415): submission validation
   submissionValidation: {
     fieldRequired: '"{{field}}" is required.',
-    emailConsentRequired: 'Please consent to your email address being stored.',
-    emailConsentLabel:
-      'I consent to my email address being stored so I can be contacted about the status of my recommendation. See the',
   },
 } as const;

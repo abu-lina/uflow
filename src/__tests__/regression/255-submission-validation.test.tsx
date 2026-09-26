@@ -7,7 +7,9 @@
  *   AC5.2  required sets: recommend = name/city/category/all three halal
  *          answers; owner = existing set + full address + >=1 image
  *   AC5.3  a failed validation names the specific field
- *   AC5.7  anonymous recommender email requires explicit consent
+ *   C3b    recommending requires login: no anonymous email/consent fields,
+ *          /create/recommend + /create/import-osm gate unauthenticated users,
+ *          and the import flow enforces the attestation set
  *   AC5.8  an untouched attestation stays untouched through a localStorage
  *          draft round-trip (JSON.stringify drops undefined)
  *   tri-state subtlety: undefined (untouched) is rejected; null ("not sure")
@@ -17,9 +19,12 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import {
   recommendSubmissionSchema,
   ownerSubmissionSchema,
+  importSubmissionSchema,
   submissionFieldLabelKeys,
   firstIssueField,
 } from '@/lib/validations/submissionSchemas';
@@ -95,29 +100,42 @@ describe('recommendSubmissionSchema', () => {
     expect(parsed.success).toBe(true);
   });
 
-  it('requires consent only when a recommender email is entered', () => {
-    const withEmailNoConsent = recommendSubmissionSchema.safeParse({
+  it('C3b: has no anonymous email or consent fields — recommending requires login', () => {
+    // Extra keys are stripped, never required: a stray userEmail/emailConsent
+    // cannot become part of the validated payload.
+    const parsed = recommendSubmissionSchema.safeParse({
       ...validRecommend,
       userEmail: 'person@example.com',
     });
-    expect(withEmailNoConsent.success).toBe(false);
-    if (!withEmailNoConsent.success) {
-      expect(firstIssueField(withEmailNoConsent.error)).toBe('emailConsent');
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect('userEmail' in parsed.data).toBe(false);
+      expect('emailConsent' in parsed.data).toBe(false);
     }
-
-    expect(
-      recommendSubmissionSchema.safeParse({
-        ...validRecommend,
-        userEmail: 'person@example.com',
-        emailConsent: true,
-      }).success,
-    ).toBe(true);
-
-    // No email -> consent not required
-    expect(recommendSubmissionSchema.safeParse({ ...validRecommend, userEmail: '' }).success).toBe(
-      true,
-    );
   });
+});
+
+describe('importSubmissionSchema', () => {
+  const answered = { no_alcohol: true, no_pork: null, no_gambling: false };
+
+  it('accepts a fully answered attestation set including explicit "not sure"', () => {
+    expect(importSubmissionSchema.safeParse(answered).success).toBe(true);
+    expect(
+      importSubmissionSchema.safeParse({ no_alcohol: null, no_pork: null, no_gambling: null })
+        .success,
+    ).toBe(true);
+  });
+
+  it.each(['no_alcohol', 'no_pork', 'no_gambling'] as const)(
+    'rejects an untouched (undefined) %s, naming the field',
+    (field) => {
+      const parsed = importSubmissionSchema.safeParse({ ...answered, [field]: undefined });
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(firstIssueField(parsed.error)).toBe(field);
+      }
+    },
+  );
 });
 
 describe('ownerSubmissionSchema', () => {
@@ -217,5 +235,72 @@ describe('HalalAttestationFields untouched state', () => {
     const notSureButtons = screen.getAllByText('halal.attestation.answer.notSure');
     fireEvent.click(notSureButtons[0]);
     expect(onChange).toHaveBeenCalledWith('no_alcohol', null);
+  });
+});
+
+// ── C3b: recommending requires a logged-in user ──────────────────────────────
+
+const ROOT = resolve(__dirname, '../../../');
+const readSrc = (p: string) => readFileSync(resolve(ROOT, p), 'utf-8');
+
+describe('C3b: login gate on recommend + import routes', () => {
+  it.each([
+    'src/app/(public)/create/recommend/page.tsx',
+    'src/app/(public)/create/import-osm/page.tsx',
+  ])('%s renders the login lock screen for unauthenticated users', (file) => {
+    const src = readSrc(file);
+    expect(src).toContain('!isAuthLoading && !user');
+    expect(src).toContain('returnUrl');
+    expect(src).toContain('create.basics.loginRequired');
+  });
+
+  it('middleware no longer lets anonymous visitors into the recommend flows', () => {
+    const src = readSrc('src/lib/middleware-utils.ts');
+    // The early-access /create/* pass-through now redirects to waitlist for
+    // recommend/import routes when there is no access token.
+    expect(src).toContain("pathname === '/create/recommend'");
+    expect(src).toContain("pathname === '/create/import-osm'");
+    expect(src).toContain('!accessToken');
+  });
+
+  it.each(['/create/recommend', '/create/import-osm'])(
+    'shouldRedirectToWaitlist(%s) redirects an anonymous visitor in early access',
+    async (pathname) => {
+      const { shouldRedirectToWaitlist } = await import('@/lib/middleware-utils');
+      // app not launched, no access token, no waitlist token -> redirect
+      await expect(shouldRedirectToWaitlist(pathname, false, undefined, undefined)).resolves.toBe(
+        true,
+      );
+      // a logged-in visitor (access token present) still passes through to the page gate
+      await expect(shouldRedirectToWaitlist(pathname, false, 'token', undefined)).resolves.toBe(
+        false,
+      );
+    },
+  );
+});
+
+describe('C3b: anonymous recommender email removed', () => {
+  it.each([
+    'src/features/providers/StreamlinedRecommendForm.tsx',
+    'src/features/providers/StreamlinedImportForm.tsx',
+  ])('%s collects no userEmail or email consent', (file) => {
+    const src = readSrc(file);
+    expect(src).not.toContain('userEmail');
+    expect(src).not.toContain('emailConsent');
+  });
+
+  it('mutations.ts never writes providers.recommender_email', () => {
+    const src = readSrc('src/features/providers/services/mutations.ts');
+    expect(src).not.toContain('recommender_email');
+    expect(src).not.toContain('userEmail');
+  });
+});
+
+describe('C3b: import flow collects halal attestations', () => {
+  it('StreamlinedImportForm renders the shared HalalAttestationFields and gates submit on them', () => {
+    const src = readSrc('src/features/providers/StreamlinedImportForm.tsx');
+    expect(src).toContain('HalalAttestationFields');
+    expect(src).toContain('importSubmissionSchema');
+    expect(src).toContain('contextFormData.no_alcohol !== undefined');
   });
 });

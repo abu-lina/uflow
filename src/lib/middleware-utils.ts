@@ -162,6 +162,18 @@ export async function shouldRedirectToWaitlist(
   // (e.g., checking for recommendation mode from localStorage/formData). If the user is not
   // in recommendation mode and not logged in, pages will show login screens.
   if (!isAppLaunched && (pathname === '/create' || pathname.startsWith('/create/'))) {
+    // #415: recommending requires a logged-in user. Anonymous visitors get no
+    // early-access pass into the recommend flows; they are redirected like any
+    // other protected route. Token holders pass through to the page gate.
+    if (
+      !accessToken &&
+      (pathname === '/create/recommend' ||
+        pathname.startsWith('/create/recommend/') ||
+        pathname === '/create/import-osm' ||
+        pathname.startsWith('/create/import-osm/'))
+    ) {
+      return true;
+    }
     return false; // Allow access, let page components handle auth/authorization
   }
 

@@ -177,16 +177,16 @@ describe('C2: tri-state attestation round-trip (AC6.2)', () => {
   });
 
   it('recommend submit preserves NULL (not sure) instead of coercing to false', async () => {
+    const user = { id: 'user-1' } as User;
     await createProviderOrService(
       {
         ...baseFormData,
         creationMode: 'recommendation',
-        userEmail: 'tip@example.com',
         no_alcohol: null,
         no_pork: null,
         no_gambling: null,
-      } as ProviderFormData & { userEmail: string },
-      null,
+      },
+      user,
       true,
     );
 
@@ -467,5 +467,17 @@ describe('C2: migrations (nullable attestations + policies)', () => {
     expect(pendingCheck).toBeGreaterThan(adminBranch);
     // Admin approve path (review-provider route) still works via service role,
     // which bypasses RLS; migration 128 backfill uses UPDATE, not INSERT.
+  });
+
+  it('130 has no anonymous insert branch — recommending requires login (C3b)', () => {
+    const sql = readSrc('supabase/migrations/130_provider_submission_policies.sql');
+    const insertPolicy = sql.slice(
+      sql.indexOf('CREATE POLICY "Allow provider inserts"'),
+      sql.indexOf('CREATE POLICY "Public can view'),
+    );
+    expect(insertPolicy).not.toContain("'anon'");
+    // only the authenticated client branch remains, still pending-constrained
+    expect(insertPolicy).toContain("'authenticated'");
+    expect(insertPolicy).toContain('"user_created_id" = ( SELECT "auth"."uid"() AS "uid")');
   });
 });

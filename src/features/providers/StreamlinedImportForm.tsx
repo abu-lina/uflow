@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Icon } from '@iconify/react';
@@ -15,6 +14,12 @@ import { trackEvent } from '@/lib/analytics/plausible';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
 import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScreen';
+import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
+import {
+  importSubmissionSchema,
+  firstIssueField,
+  submissionFieldLabelKeys,
+} from '@/lib/validations/submissionSchemas';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
@@ -174,7 +179,6 @@ interface ImportFormData {
   phone: string;
   website: string;
   instagram: string;
-  userEmail: string;
   message: string;
   selectedPlace: OSMPlace | null;
 }
@@ -309,7 +313,6 @@ export function StreamlinedImportForm({
         phone: '',
         website: '',
         instagram: '',
-        userEmail: '',
         message: '',
         selectedPlace: null,
       };
@@ -340,7 +343,6 @@ export function StreamlinedImportForm({
       phone: '',
       website: '',
       instagram: '',
-      userEmail: '',
       message: '',
       selectedPlace: null,
     };
@@ -833,7 +835,11 @@ export function StreamlinedImportForm({
       (selectedContacts.phone && formData.phone.trim().length > 0) ||
       (selectedContacts.website && formData.website.trim().length > 0) ||
       (selectedContacts.instagram && formData.instagram.trim().length > 0);
-    return hasBasics && hasContact;
+    const allAttestationsAnswered =
+      contextFormData.no_alcohol !== undefined &&
+      contextFormData.no_pork !== undefined &&
+      contextFormData.no_gambling !== undefined;
+    return hasBasics && hasContact && allAttestationsAnswered;
   }, [
     formData.title,
     formData.category,
@@ -843,6 +849,9 @@ export function StreamlinedImportForm({
     formData.instagram,
     selectedContacts,
     isCitySelected,
+    contextFormData.no_alcohol,
+    contextFormData.no_pork,
+    contextFormData.no_gambling,
   ]);
 
   const handleBack = useCallback(() => {
@@ -863,15 +872,28 @@ export function StreamlinedImportForm({
       phone: '',
       website: '',
       instagram: '',
-      userEmail: '',
       message: '',
       selectedPlace: null,
+    });
+    updateFormData({
+      title: '',
+      category: '',
+      city: '',
+      offers_ids: [],
+      email: '',
+      phone: '',
+      website: '',
+      instagram: '',
+      description: '',
+      no_alcohol: undefined,
+      no_pork: undefined,
+      no_gambling: undefined,
     });
     setSelectedContacts({ email: false, phone: false, website: false, instagram: false });
     if (typeof window !== 'undefined') {
       localStorage.removeItem(IMPORT_FORM_STORAGE_KEY);
     }
-  }, [router, initialCity]);
+  }, [router, initialCity, updateFormData]);
 
   const handleGoBack = useCallback(() => {
     router.push('/');
@@ -879,8 +901,20 @@ export function StreamlinedImportForm({
 
   // Submit handler
   const handleSubmit = useCallback(async () => {
-    if (!isFormValid) {
-      if (!formData.title) {
+    // Halal attestations are part of the required set; name the missing field.
+    const parsed = importSubmissionSchema.safeParse({
+      no_alcohol: contextFormData.no_alcohol,
+      no_pork: contextFormData.no_pork,
+      no_gambling: contextFormData.no_gambling,
+    });
+    if (!parsed.success || !isFormValid) {
+      const issueField = parsed.success ? '' : firstIssueField(parsed.error);
+      if (issueField) {
+        const labelKey = submissionFieldLabelKeys[issueField];
+        toast.error(
+          t('submissionValidation.fieldRequired', { field: labelKey ? t(labelKey) : issueField }),
+        );
+      } else if (!formData.title) {
         toast.error(t('create.recommend.titleRequired'));
       } else if (!formData.category) {
         toast.error(t('create.recommend.categoryRequired'));
@@ -895,8 +929,6 @@ export function StreamlinedImportForm({
     try {
       setIsSubmitting(true);
 
-      const userEmail = user?.email || formData.userEmail;
-
       const serviceFormData = {
         ...contextFormData,
         title: formData.title,
@@ -910,7 +942,6 @@ export function StreamlinedImportForm({
         phone: formData.phone,
         website: formData.website,
         instagram: formData.instagram,
-        userEmail: userEmail,
         description: formData.message,
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
@@ -943,8 +974,10 @@ export function StreamlinedImportForm({
         website: '',
         instagram: '',
         description: '',
+        no_alcohol: undefined,
+        no_pork: undefined,
+        no_gambling: undefined,
       });
-      setFormData((prev) => ({ ...prev, userEmail: '' }));
       setSelectedContacts({ email: false, phone: false, website: false, instagram: false });
       if (typeof window !== 'undefined') {
         localStorage.removeItem(IMPORT_FORM_STORAGE_KEY);
@@ -1409,53 +1442,25 @@ export function StreamlinedImportForm({
           </div>
         </div>
 
-        {/* Section 3: User Email - Only show for anonymous users */}
-        {!user && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <h3 className="text-lg font-semibold text-content-heading">
-                {t('create.recommend.userEmailTitle')}
-              </h3>
-              <p className="text-base text-content-muted">
-                {t('create.recommend.userEmailDescription')}
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-0">
-              <div className="flex h-[54px] w-full items-center rounded-2xl border border-border bg-white px-3 py-2">
-                <div className="flex w-full flex-col gap-1">
-                  <label className="font-inter-tight text-xs font-normal leading-[15px] text-content-muted">
-                    {t('create.recommend.userEmailLabel')}
-                  </label>
-                  <input
-                    aria-label={t('create.recommend.userEmailLabel')}
-                    className="h-[18px] w-full border-none bg-transparent p-0 font-inter text-[15px] font-medium leading-[18px] tracking-[0.15px] text-content focus:outline-none focus:ring-0"
-                    placeholder={t('create.recommend.userEmailPlaceholder')}
-                    type="email"
-                    value={formData.userEmail}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, userEmail: e.target.value }))
-                    }
-                  />
-                </div>
-              </div>
-
-              {formData.userEmail && (
-                <p className="mt-1 text-xs leading-[15px] text-content-muted">
-                  {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
-                  <Link className="underline hover:text-primary" href="/terms">
-                    {t('legal.termsOfService')}
-                  </Link>{' '}
-                  {t('legal.and')}{' '}
-                  <Link className="underline hover:text-primary" href="/privacy-policy">
-                    {t('legal.privacyPolicy')}
-                  </Link>
-                  .
-                </p>
-              )}
-            </div>
+        {/* Section 3: Halal attestation (#415) - same questions as the recommend flow */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-lg font-semibold text-content-heading">
+              {t('halal.attestation.sectionTitle')} *
+            </h3>
+            <p className="text-base text-content-muted">
+              {t('halal.attestation.recommendDescription')}
+            </p>
           </div>
-        )}
+          <HalalAttestationFields
+            values={{
+              no_alcohol: contextFormData.no_alcohol,
+              no_pork: contextFormData.no_pork,
+              no_gambling: contextFormData.no_gambling,
+            }}
+            onChange={(field, value) => updateFormData({ [field]: value })}
+          />
+        </div>
 
         {/* Section 4: Message (Optional) */}
         <div className="flex flex-col gap-4">

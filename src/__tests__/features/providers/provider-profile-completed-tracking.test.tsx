@@ -60,7 +60,6 @@ vi.mock('@/providers/form-provider', () => ({
       socialCategory: '',
       socialTitle: '',
       socialDescription: '',
-      userEmail: '',
       // AC5.2: all three halal answers must be provided for a recommend submit
       no_alcohol: true,
       no_pork: true,
@@ -121,7 +120,6 @@ const validFormStorage = JSON.stringify({
     phone: '',
     website: 'https://example.com',
     instagram: '',
-    userEmail: '',
     message: '',
     street: '',
     zip: '',

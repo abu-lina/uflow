@@ -7,12 +7,20 @@ import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { StreamlinedImportForm } from '@/features/providers/StreamlinedImportForm';
 import { useFormData } from '@/providers/form-provider';
+import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { TitleSection } from '@/components/layout/TitleSection';
+import { ContentSection } from '@/components/layout/ContentSection';
+import { IconWithTitle } from '@/components/ui/IconWithTitle';
+import { Icon } from '@/components/ui/Icon';
+import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
 
 function ImportOSMPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setCreationMode } = useFormData();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { t } = useLanguage();
 
   // Check if success screen should be shown from URL
@@ -52,6 +60,54 @@ function ImportOSMPageContent() {
 
   // Memoize title to prevent re-computation
   const pageTitle = useMemo(() => t('create.importOsm.title'), [t]);
+
+  // Recommendations require a logged-in user (#415) — same gate as
+  // /create/recommend and the owner flow.
+  if (!isAuthLoading && !user) {
+    const returnUrl = encodeURIComponent('/create/import-osm');
+    return (
+      <ScrollablePageLayout>
+        <PageHeader title={pageTitle} />
+        <PageContent
+          className={cn(
+            'flex min-h-[60vh] items-center justify-center',
+            'sm:mx-auto sm:max-w-[640px] sm:px-6 md:px-8',
+          )}
+          maxWidth="full"
+          paddingX="px-6 sm:px-0"
+        >
+          <div className="flex w-full flex-col">
+            <TitleSection className="mb-10">
+              <IconWithTitle
+                icon={
+                  <Icon
+                    className="h-full w-full text-content-heading"
+                    icon="material-symbols:lock-outline"
+                  />
+                }
+                size="large"
+                title={t('create.basics.loginRequired')}
+              >
+                <p className="mt-2 text-center text-base leading-normal text-content">
+                  {t('create.basics.loginDescription')}
+                </p>
+              </IconWithTitle>
+            </TitleSection>
+            <ContentSection>
+              <Button
+                fullWidth
+                type="button"
+                variant="auth"
+                onClick={() => router.push(`/login?returnUrl=${returnUrl}`)}
+              >
+                {t('create.basics.goToLogin')}
+              </Button>
+            </ContentSection>
+          </div>
+        </PageContent>
+      </ScrollablePageLayout>
+    );
+  }
 
   return (
     <ScrollablePageLayout>
