@@ -46,7 +46,15 @@ function setupSupabaseMock() {
     if (table === 'provider_badges') {
       return { insert: async () => ({ error: null }) };
     }
-    return { insert: async () => ({ error: null }) };
+    return {
+      insert: async () => ({ error: null }),
+      upsert: async () => ({ error: null }),
+      select: () => ({
+        eq: () => ({
+          single: async () => ({ data: { applicable_section: 'food' }, error: null }),
+        }),
+      }),
+    };
   });
 }
 
@@ -98,10 +106,18 @@ describe('providerService multi-location creation', () => {
       if (table === 'provider_badges') {
         return { insert: async () => ({ error: null }) };
       }
-      return { insert: async () => ({ error: null }) };
+      return {
+        insert: async () => ({ error: null }),
+        upsert: async () => ({ error: null }),
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: { applicable_section: 'food' }, error: null }),
+          }),
+        }),
+      };
     });
 
-    const result = await createProviderOrService(
+    await createProviderOrService(
       {
         creationMode: 'owner',
         entityType: 'provider',
@@ -128,21 +144,21 @@ describe('providerService multi-location creation', () => {
         socialCategory: '',
         socialTitle: '',
         socialDescription: '',
-      no_alcohol: false,
-      no_pork: false,
-      no_gambling: false,
-      verification_method: '',
-      has_certificate: false,
-      certificate_file: null,
-      certificate_url: '',
+        no_alcohol: false,
+        no_pork: false,
+        no_gambling: false,
+        verification_method: '',
+        has_certificate: false,
+        certificate_file: null,
+        certificate_url: '',
       },
       { id: 'user-1', email: 'test@test.de' } as never,
       false,
     );
 
-    const locationInsert = insertCalls.find(c => c.table === 'locations');
+    const locationInsert = insertCalls.find((c) => c.table === 'locations');
     expect(locationInsert).toBeDefined();
-    expect(locationInsert!.data).toBeDefined();
+    expect(locationInsert?.data).toBeDefined();
   });
 
   it('[post-fix PASSES] sets is_primary to true on the created location', async () => {
@@ -183,7 +199,15 @@ describe('providerService multi-location creation', () => {
       if (table === 'provider_badges') {
         return { insert: async () => ({ error: null }) };
       }
-      return { insert: async () => ({ error: null }) };
+      return {
+        insert: async () => ({ error: null }),
+        upsert: async () => ({ error: null }),
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: { applicable_section: 'food' }, error: null }),
+          }),
+        }),
+      };
     });
 
     await createProviderOrService(
@@ -213,13 +237,13 @@ describe('providerService multi-location creation', () => {
         socialCategory: '',
         socialTitle: '',
         socialDescription: '',
-      no_alcohol: false,
-      no_pork: false,
-      no_gambling: false,
-      verification_method: '',
-      has_certificate: false,
-      certificate_file: null,
-      certificate_url: '',
+        no_alcohol: false,
+        no_pork: false,
+        no_gambling: false,
+        verification_method: '',
+        has_certificate: false,
+        certificate_file: null,
+        certificate_url: '',
       },
       { id: 'user-1', email: 'test@test.de' } as never,
       false,
@@ -232,22 +256,15 @@ describe('providerService multi-location creation', () => {
   });
 
   it('[post-fix PASSES] throws error when location insert fails after provider insert', async () => {
-    let insertCount = 0;
     mockFrom.mockImplementation((table: string) => {
       if (table === 'providers') {
         return {
-          insert: () => {
-            insertCount++;
-            return { error: null };
-          },
+          insert: () => ({ error: null }),
         };
       }
       if (table === 'locations') {
         return {
-          insert: () => {
-            insertCount++;
-            return { error: new Error('Location insert failed') };
-          },
+          insert: () => ({ error: new Error('Location insert failed') }),
         };
       }
       if (table === 'provider_offers') {
@@ -272,7 +289,15 @@ describe('providerService multi-location creation', () => {
       if (table === 'provider_badges') {
         return { insert: async () => ({ error: null }) };
       }
-      return { insert: async () => ({ error: null }) };
+      return {
+        insert: async () => ({ error: null }),
+        upsert: async () => ({ error: null }),
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: { applicable_section: 'food' }, error: null }),
+          }),
+        }),
+      };
     });
 
     await expect(
@@ -303,13 +328,13 @@ describe('providerService multi-location creation', () => {
           socialCategory: '',
           socialTitle: '',
           socialDescription: '',
-      no_alcohol: false,
-      no_pork: false,
-      no_gambling: false,
-      verification_method: '',
-      has_certificate: false,
-      certificate_file: null,
-      certificate_url: '',
+          no_alcohol: false,
+          no_pork: false,
+          no_gambling: false,
+          verification_method: '',
+          has_certificate: false,
+          certificate_file: null,
+          certificate_url: '',
         },
         { id: 'user-1', email: 'test@test.de' } as never,
         false,

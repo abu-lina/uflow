@@ -40,7 +40,6 @@ import { IconWithTitle } from '@/components/ui/IconWithTitle';
 import { SelectableCard } from '@/components/shared/SelectableCard';
 import { MobileProfileProviderCard } from '@/components/shared/MobileProfileProviderCard';
 import { UserNavigationTabs, UserTab } from '@/components/shared/UserNavigationTabs';
-import { ProviderCreateForm } from '@/features/providers/ProviderCreateForm';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -902,11 +901,6 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 title={t('providers.noRecommendations')}
               />
             )}
-          </div>
-        )}
-        {activeTab === 'create' && (
-          <div className="flex flex-col items-center">
-            <ProviderCreateForm />
           </div>
         )}
         {activeTab === 'profile' && (

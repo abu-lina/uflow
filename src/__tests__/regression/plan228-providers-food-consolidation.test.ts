@@ -280,7 +280,9 @@ describe('review findings: no remaining /providers listing references', () => {
   it('create/contact/page.tsx does not navigate to /providers', () => {
     const src = readFileSync(resolve(ROOT, 'src/app/(public)/create/contact/page.tsx'), 'utf-8');
     expect(src).not.toContain("router.push('/providers')");
-    expect(src).toContain("router.push('/food')");
+    // #415: recommendation-mode submissions moved to /create/recommend; this
+    // page is owner-mode only and redirects stale recommendation state there.
+    expect(src).toContain("router.replace('/create/recommend')");
   });
 
   it('community-services/not-found.tsx links to /food', () => {

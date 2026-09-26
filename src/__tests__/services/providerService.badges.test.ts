@@ -62,6 +62,15 @@ vi.mock('@/lib/supabase/client', () => ({
 
       return {
         insert: vi.fn().mockResolvedValue({ error: null }),
+        upsert: vi.fn().mockResolvedValue({ error: null }),
+        select: () => ({
+          eq: () => ({
+            single: vi.fn().mockResolvedValue({
+              data: { applicable_section: 'food' },
+              error: null,
+            }),
+          }),
+        }),
       };
     }),
   },
@@ -97,13 +106,13 @@ const baseFormData: ProviderFormData = {
   socialCategory: '',
   socialTitle: '',
   socialDescription: '',
-      no_alcohol: false,
-      no_pork: false,
-      no_gambling: false,
-      verification_method: '',
-      has_certificate: false,
-      certificate_file: null,
-      certificate_url: '',
+  no_alcohol: false,
+  no_pork: false,
+  no_gambling: false,
+  verification_method: '',
+  has_certificate: false,
+  certificate_file: null,
+  certificate_url: '',
 };
 
 describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
@@ -111,7 +120,9 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
     vi.clearAllMocks();
 
     mockStorageUpload.mockResolvedValue({ error: null });
-    mockStorageGetPublicUrl.mockReturnValue({ data: { publicUrl: 'https://example.com/file.png' } });
+    mockStorageGetPublicUrl.mockReturnValue({
+      data: { publicUrl: 'https://example.com/file.png' },
+    });
 
     mockProviderInsert.mockResolvedValue({ error: null });
 
@@ -122,10 +133,10 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
 
     mockBadgeTypeIn.mockResolvedValue({
       data: [
-        { id: 'bt-muslim',      badge_key: 'MUSLIM_OWNED' },
-        { id: 'bt-prayer',      badge_key: 'PRAYER_FRIENDLY' },
-        { id: 'bt-sadaqah',    badge_key: 'SUPPORTS_SADAQAH' },
-        { id: 'bt-parking',    badge_key: 'HAS_PARKING' },
+        { id: 'bt-muslim', badge_key: 'MUSLIM_OWNED' },
+        { id: 'bt-prayer', badge_key: 'PRAYER_FRIENDLY' },
+        { id: 'bt-sadaqah', badge_key: 'SUPPORTS_SADAQAH' },
+        { id: 'bt-parking', badge_key: 'HAS_PARKING' },
         { id: 'bt-solidarity', badge_key: 'ECONOMIC_SOLIDARITY' },
       ],
       error: null,
@@ -177,10 +188,10 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
     // All 5 attribute tags now go through the badge system
     expect(badgeRows).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ badge_type_id: 'bt-muslim',      trust_level: 'SELF_DECLARED' }),
-        expect.objectContaining({ badge_type_id: 'bt-prayer',      trust_level: 'SELF_DECLARED' }),
-        expect.objectContaining({ badge_type_id: 'bt-sadaqah',    trust_level: 'SELF_DECLARED' }),
-        expect.objectContaining({ badge_type_id: 'bt-parking',    trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-muslim', trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-prayer', trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-sadaqah', trust_level: 'SELF_DECLARED' }),
+        expect.objectContaining({ badge_type_id: 'bt-parking', trust_level: 'SELF_DECLARED' }),
         expect.objectContaining({ badge_type_id: 'bt-solidarity', trust_level: 'SELF_DECLARED' }),
       ]),
     );
