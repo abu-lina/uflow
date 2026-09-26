@@ -724,6 +724,12 @@ export const ps = {
     afterConfirmationLogin: 'د تایید وروسته ننوتل',
     loading: 'Logging in...',
     submit: 'Login',
+    magicLinkSentTitle: 'میجک لینک ولیږل شو!',
+    magicLinkSentDescription: 'مهرباني وکړئ خپل بریښنالیک وګورئ او د ننوتلو لپاره په لینک کلیک وکړئ.',
+    magicLinkFailedToast: 'میجک لینک ناکام شو',
+    magicLinkFailedError: 'د میجک لینک په لیږلو کې ستونزه. مهرباني وکړئ بیا هڅه وکړئ.',
+    magicLinkDiagnostic: 'د تشخیص لپاره مهرباني وکړئ دا URL وګورئ: {{url}}',
+    loginSuccessToast: 'په بریالیتوب سره ننوتل',
   },
   signup: {
     afterConfirmationLogin: 'د تایید وروسته ننوتل',
@@ -1195,6 +1201,7 @@ export const ps = {
     openChat: 'چیټ پرانیزئ',
     closeChat: 'چیټ وتړئ',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'چیټ',
   },
   map: {
     zoomIn: 'لوی کول',

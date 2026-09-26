@@ -20,7 +20,7 @@ const CHAR_MAP: Record<string, string> = {
 
 export function slugify(input: string): string {
   let s = input;
-  s = s.replace(/[^\u0000-\u007F]/g, (ch) => CHAR_MAP[ch] ?? ch);
+  s = s.replace(/[\u0080-\uFFFF]/g, (ch) => CHAR_MAP[ch] ?? ch);
   s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   s = s.toLowerCase();
   s = s.replace(/[^a-z0-9]+/g, '-');

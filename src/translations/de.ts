@@ -728,6 +728,12 @@ export const de = {
     magicLinkLoading: 'Magic Link wird gesendet...',
     magicLinkDescription: 'Wir senden dir einen Magic Link per E-Mail. Kein Passwort erforderlich.',
     afterConfirmationLogin: 'Nach Bestätigung anmelden',
+    magicLinkSentTitle: 'Magic Link gesendet!',
+    magicLinkSentDescription: 'Bitte überprüfe deine E-Mail und klicke auf den Link zum Anmelden.',
+    magicLinkFailedToast: 'Magic Link fehlgeschlagen',
+    magicLinkFailedError: 'Fehler beim Senden des Magic Links. Bitte versuche es erneut.',
+    magicLinkDiagnostic: 'Bitte besuche diese URL für Diagnose: {{url}}',
+    loginSuccessToast: 'Erfolgreich angemeldet',
   },
   signup: {
     afterConfirmationLogin: 'Nach Bestätigung anmelden',
@@ -1207,6 +1213,7 @@ export const de = {
     openChat: 'Chat öffnen',
     closeChat: 'Chat schließen',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'Chat',
   },
   map: {
     zoomIn: 'Vergrößern',

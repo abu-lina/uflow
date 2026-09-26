@@ -1,8 +1,10 @@
 # Changelog
 
-## [Unreleased] - 2026-08-17
+## [Unreleased] - 2026-09-26
 
 ### Fixed
+
+- **Restore authenticated provider submissions (Plan 264)**: `POST /api/providers` now resolves the actor with `getUserFromCookie()`, which reads the cookie-synced Supabase session. Logged-in recommendations and owner listings no longer fail with 401; anonymous requests remain rejected. Added a regression test covering cookies emitted by `/api/auth/set` through the real route auth boundary.
 
 - **"Near me" now works on the home List view (Plan 217)**: Tapping the "In der Nähe" chip while in List view now reorders providers nearest-first and limits results to those within 25 km, with a distance badge on each card. The List branch consumes the same `useGeolocation` signal as the Map branch via the new `useHomeNearMe` hook and `HomeNearMeList` component. Open-now filtering is applied client-side and preserves distance ordering. Map view behavior is unchanged. Added `home_list_nearme_*` instrumentation and regression coverage.
 

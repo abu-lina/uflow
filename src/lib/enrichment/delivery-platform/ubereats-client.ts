@@ -388,8 +388,8 @@ class PlaywrightUberEatsClient {
 
   async searchRestaurants(
     city: string,
-    lat: number,
-    lon: number,
+    _lat: number,
+    _lon: number,
   ): Promise<UberEatsSearchResult[]> {
     await this.rateLimit();
 

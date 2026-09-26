@@ -112,7 +112,7 @@ const eslintConfig = [
         },
       ],
       'jsx-a11y/aria-props': 'error',
-      'jsx-a11y/aria-role': 'error',
+      'jsx-a11y/aria-role': ['error', { ignoreNonDOM: true }],
       'jsx-a11y/aria-unsupported-elements': 'error',
       'jsx-a11y/role-supports-aria-props': 'warn',
 
@@ -152,7 +152,7 @@ const eslintConfig = [
       'docs/references/**', // Third-party reference snapshots (non-app code)
       'docs/implementation/**', // Implementation reference scripts (browser context)
       'tests/**', // Performance and integration tests (k6, etc.)
-      'agent-output/qa/tmp/**', // QA temporary test files (not part of app tsconfig)
+      'agent-output/**', // Agent workflow artifacts (POCs, QA temp files — not part of app tsconfig)
     ],
   },
 

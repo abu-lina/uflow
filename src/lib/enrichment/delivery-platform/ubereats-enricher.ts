@@ -3,7 +3,6 @@ import type {
   DeliveryPlatformSnapshot,
   DeliveryEnrichmentResult,
 } from '../delivery-enricher';
-import { detectConflict } from '../joinhalal-enricher';
 import { StaticCityGeocoder } from './geocoder';
 import { stringSimilarity } from './provider-matcher';
 import { detectAlcohol } from './alcohol-detector';

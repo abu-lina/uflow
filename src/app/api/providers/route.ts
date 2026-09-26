@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { createProviderOrServiceServer } from '@/features/providers/services/create-provider.server';
 
@@ -50,10 +50,7 @@ const createProviderBodySchema = z
 export async function POST(request: NextRequest) {
   try {
     // Resolve the actor from the session first so the rate limit can key on it.
-    const supabase = createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getUserFromCookie();
     // All submission flows require a logged-in user (#415) — the endpoint
     // enforces the gate too, not just the client.
     if (!user) {

@@ -1,4 +1,4 @@
-import type { ChatMessage, ToolCall } from '@/features/chat/types';
+import type { ToolCall } from '@/features/chat/types';
 
 export interface RedirectCounter {
   count: number;
