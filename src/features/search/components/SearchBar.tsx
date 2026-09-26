@@ -229,21 +229,46 @@ function SearchBarContent({
     [searchParams, nearMeActive, openNowActive, router, pathname, selectedSection],
   );
 
+  // Armed only by a real user "Near Me" pick; the deferred city-stripping
+  // navigation below fires just once, when geolocation resolves.
+  const pendingNearMeNavRef = useRef(false);
+
   // ── Near Me handler (selected from location dropdown) ──────────────
-  // Navigates to /food?near_me=1 — ProvidersContent reads the param and
-  // triggers its own geolocation request + near-me results.
+  // Requests geolocation now and defers the navigation: the effect on
+  // geolocation.status pushes /food?near_me=1 only once granted, so a
+  // denied prompt keeps the city in the URL and in the chip.
   const handleSelectNearMe = useCallback(() => {
     setNearMeActive(true);
-    setSelectedLocation(LOCATION_ALL);
     setIsLocationOpen(false);
-    syncUrl({ active: true });
-  }, [syncUrl, setSelectedLocation]);
+    pendingNearMeNavRef.current = true;
+    geolocation.requestLocation();
+  }, [geolocation]);
+
+  // Deferred near-me navigation: only strip the city once geolocation
+  // actually succeeds. Denial/failure leaves selectedLocation untouched.
+  useEffect(() => {
+    if (!pendingNearMeNavRef.current) return;
+    if (geolocation.status === 'granted') {
+      pendingNearMeNavRef.current = false;
+      setSelectedLocation(LOCATION_ALL);
+      syncUrl({ active: true });
+    } else if (
+      geolocation.status === 'denied' ||
+      geolocation.status === 'unavailable' ||
+      geolocation.status === 'timeout'
+    ) {
+      pendingNearMeNavRef.current = false;
+    }
+  }, [geolocation.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Deactivate near-me when a city or "Everywhere" is picked.
   // Only resets local state + geolocation; does NOT navigate.
   // The caller (onLocationChange / onSearchSubmit) handles navigation
   // so we avoid two competing router.push calls.
   const deactivateNearMe = useCallback(() => {
+    // Disarm the pending nav so a late getCurrentPosition success can't
+    // navigate to near-me after the user already picked a different location.
+    pendingNearMeNavRef.current = false;
     if (nearMeActive) {
       setNearMeActive(false);
       geolocation.reset();
@@ -390,14 +415,9 @@ function SearchBarContent({
                 setIsLocationOpen(!isLocationOpen);
               }}
             >
-              {nearMeActive && (
-                <MapPin
-                  aria-hidden="true"
-                  className={`h-3.5 w-3.5 shrink-0 ${geoStatus === 'prompting' ? 'animate-pulse' : ''}`}
-                />
-              )}
+              {nearMeChipActive && <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />}
               <span className={geoStatus === 'prompting' && nearMeActive ? 'animate-pulse' : ''}>
-                {nearMeActive
+                {nearMeChipActive
                   ? t('suchen.nearMe.chipLabel')
                   : selectedLocation === LOCATION_ALL
                     ? t('search.everywhere')

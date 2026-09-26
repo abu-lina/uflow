@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -203,6 +203,10 @@ export function ProvidersContent({
     }
   }, [nearMeFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Armed only by a real user toggle-on; the deferred city-stripping
+  // navigation below fires just once, when geolocation resolves.
+  const pendingNearMeNavRef = useRef(false);
+
   // Shared map/discovery state: pins, view mode, open-now, header metrics
   const {
     pins,
@@ -234,27 +238,56 @@ export function ProvidersContent({
     urlSync: false,
   });
 
+  // Deferred near-me navigation: only strip the city from the path once
+  // geolocation actually succeeds. Denial/failure leaves URL and city intact.
+  useEffect(() => {
+    if (!pendingNearMeNavRef.current) return;
+    if (geolocation.status === 'granted') {
+      pendingNearMeNavRef.current = false;
+      router.push(
+        buildNearMeUrl({
+          section,
+          active: true,
+          openNow: isOpenNow,
+          pathname,
+          searchParams,
+        }),
+      );
+    } else if (
+      geolocation.status === 'denied' ||
+      geolocation.status === 'unavailable' ||
+      geolocation.status === 'timeout'
+    ) {
+      pendingNearMeNavRef.current = false;
+    }
+  }, [geolocation.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleToggleNearMe = () => {
     const nextActive = !(nearMeActive || geolocation.status === 'granted');
     if (!nextActive) {
+      // Disarm the pending nav so a late getCurrentPosition success can't
+      // re-activate near-me after the user already turned it off.
+      pendingNearMeNavRef.current = false;
       setNearMeActive(false);
       geolocation.reset();
+      // D2/D4: near-me and the path city are mutually exclusive — deactivating
+      // drops near_me without restoring the previous city.
+      router.push(
+        buildNearMeUrl({
+          section,
+          active: false,
+          openNow: isOpenNow,
+          pathname,
+          searchParams,
+        }),
+      );
     } else {
+      // No navigation here: the effect on geolocation.status pushes the
+      // near-me URL only once the permission prompt resolves to granted.
       setNearMeActive(true);
+      pendingNearMeNavRef.current = true;
       geolocation.requestLocation();
     }
-    // D2/D4: near-me and the path city are mutually exclusive — activating
-    // navigates to the section root; deactivating drops near_me without
-    // restoring the previous city.
-    router.push(
-      buildNearMeUrl({
-        section,
-        active: nextActive,
-        openNow: isOpenNow,
-        pathname,
-        searchParams,
-      }),
-    );
   };
 
   // Use React Query infinite query for paginated search results
