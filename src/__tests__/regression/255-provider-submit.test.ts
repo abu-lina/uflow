@@ -161,7 +161,7 @@ describe('C1: provider create/recommend submission', () => {
   it('AC5.4/AC7.1: owner submit writes exactly one providers row with listing_type in the insert and review_status pending', async () => {
     const user = { id: 'user-1' } as User;
 
-    await createProviderOrService(ownerFormData, user, false);
+    await createProviderOrService(ownerFormData, user);
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
     const payload = mockProviderInsert.mock.calls[0][0][0];
@@ -173,7 +173,7 @@ describe('C1: provider create/recommend submission', () => {
 
   it('AC5.4/AC5.5/AC7.1 + C3b: logged-in recommend submit writes one pending providers row identified by user_created_id, with listing_type and a food_providers extension row', async () => {
     const user = { id: 'user-1' } as User;
-    await createProviderOrService(recommendFormData, user, true);
+    await createProviderOrService(recommendFormData, user);
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
     const payload = mockProviderInsert.mock.calls[0][0][0];
@@ -200,7 +200,7 @@ describe('C1: provider create/recommend submission', () => {
     });
     const user = { id: 'user-1' } as User;
 
-    await createProviderOrService(ownerFormData, user, false);
+    await createProviderOrService(ownerFormData, user);
 
     const payload = mockProviderInsert.mock.calls[0][0][0];
     expect(payload.listing_type).toBe('store');
@@ -212,7 +212,7 @@ describe('C1: provider create/recommend submission', () => {
     const user = { id: 'user-1' } as User;
     const spoofed = { ...ownerFormData, review_status: 'approved' };
 
-    await createProviderOrService(spoofed as ProviderFormData, user, false);
+    await createProviderOrService(spoofed as ProviderFormData, user);
 
     const payload = mockProviderInsert.mock.calls[0][0][0];
     expect(payload.review_status).toBe('pending');
@@ -222,8 +222,8 @@ describe('C1: provider create/recommend submission', () => {
     const user = { id: 'user-1' } as User;
 
     await Promise.all([
-      createProviderOrService(ownerFormData, user, false),
-      createProviderOrService(ownerFormData, user, false),
+      createProviderOrService(ownerFormData, user),
+      createProviderOrService(ownerFormData, user),
     ]);
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
@@ -233,9 +233,9 @@ describe('C1: provider create/recommend submission', () => {
     const user = { id: 'user-1' } as User;
     const unanswered = { ...recommendFormData, no_alcohol: undefined };
 
-    await expect(
-      createProviderOrService(unanswered as ProviderFormData, user, true),
-    ).rejects.toThrow(/halal/i);
+    await expect(createProviderOrService(unanswered as ProviderFormData, user)).rejects.toThrow(
+      /halal/i,
+    );
     expect(mockProviderInsert).not.toHaveBeenCalled();
   });
 
@@ -243,7 +243,7 @@ describe('C1: provider create/recommend submission', () => {
     const user = { id: 'user-1' } as User;
     const notSure = { ...recommendFormData, no_alcohol: null, no_pork: null, no_gambling: null };
 
-    await createProviderOrService(notSure, user, true);
+    await createProviderOrService(notSure, user);
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
   });
 
@@ -257,7 +257,7 @@ describe('C1: provider create/recommend submission', () => {
       no_gambling: undefined,
     } as ProviderFormData;
 
-    await createProviderOrService(ummah, user, true);
+    await createProviderOrService(ummah, user);
     // ummah branch inserts into providers with listing_type 'ummah', no ext row
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
     expect(mockProviderInsert.mock.calls[0][0][0].listing_type).toBe('ummah');
@@ -267,7 +267,7 @@ describe('C1: provider create/recommend submission', () => {
     mockCategorySingle.mockResolvedValue({ data: null, error: { message: 'no rows' } });
     const user = { id: 'user-1' } as User;
 
-    await expect(createProviderOrService(ownerFormData, user, false)).rejects.toThrow();
+    await expect(createProviderOrService(ownerFormData, user)).rejects.toThrow();
     expect(mockProviderInsert).not.toHaveBeenCalled();
   });
 });

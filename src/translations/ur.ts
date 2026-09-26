@@ -33,6 +33,7 @@ export const ur = {
     about: 'کے بارے میں',
     contact: 'رابطہ',
     create: 'بنائیں',
+    saved: 'Gespeichert', // INTERIM de (#415)
   },
   auth: {
     login: 'لاگ ان',

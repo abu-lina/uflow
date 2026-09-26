@@ -15,26 +15,26 @@ import { useLanguage } from '@/providers/LanguageProvider';
 // Height is set to 72px for modern, touch-friendly, and visually balanced mobile nav bar.
 const navItems = [
   {
-    label: 'Home',
+    labelKey: 'navigation.home',
     href: '/',
     icon: (isActive: boolean) => <ExploreIcon isActive={isActive} />,
     noFrame: true,
   },
   {
-    label: 'Create',
+    labelKey: 'navigation.create',
     href: '/create',
     icon: (isActive: boolean) => <CreateIcon isActive={isActive} />,
     noFrame: true,
   },
   {
-    label: 'Saved',
+    labelKey: 'navigation.saved',
     href: '/saved',
     icon: (isActive: boolean) => <SavedIcon isActive={isActive} />,
     noFrame: true,
     // framed by default
   },
   {
-    label: 'Profile',
+    labelKey: 'navigation.profile',
     href: '/profile',
     icon: (isActive: boolean) => <ProfileIcon isActive={isActive} />,
     noFrame: true,
@@ -100,7 +100,7 @@ export function MobileFooterBar() {
               style={{ width: 40, height: 40 }}
             >
               <Link
-                aria-label={item.href === '/create' ? t('navigation.create') : item.label}
+                aria-label={t(item.labelKey)}
                 className={`flex items-center justify-center ${
                   isNavigating ? 'pointer-events-none' : ''
                 }`}

@@ -464,7 +464,7 @@ describe('C2: admin_update_provider RPC writes NULL, not COALESCE(false)', () =>
         // ON CONFLICT: explicit payload value wins, existing value kept only
         // when the key is absent — the coalescing pattern is gone.
         expect(sql).toContain(`ELSE ${tbl}_providers.${col} END`);
-        expect(sql).not.toContain(`COALESCE((v_${tbl}_providers->>'${col}')::boolean, false)`);
+        expect(sql).not.toContain(`COALESCE((v_${tbl}_providers->>'${col}')::boolean)`);
         expect(sql).not.toContain(`COALESCE(EXCLUDED.${col}, ${tbl}_providers.${col})`);
       }
     }
@@ -553,7 +553,6 @@ describe('H4: failed extension write + failed cleanup surfaces the orphan', () =
         creationMode: 'recommendation',
       },
       user,
-      true,
     ).then(
       () => {
         throw new Error('expected rejection');
@@ -581,7 +580,6 @@ describe('H4: failed extension write + failed cleanup surfaces the orphan', () =
           creationMode: 'recommendation',
         },
         user,
-        true,
       ),
     ).rejects.toEqual(expect.objectContaining({ message: 'rls violation' }));
     expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);

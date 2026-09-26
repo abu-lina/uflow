@@ -34,18 +34,7 @@ export default function HalalPage() {
     { title: t('create.steps.media'), icon: 'lucide:images' },
   ];
 
-  const isRecommendationMode = formData.creationMode === 'recommendation';
-
   if (isLoading) return <div className="p-8 text-center">{t('common.loading')}</div>;
-
-  if (isRecommendationMode) {
-    router.replace('/create/media');
-    return (
-      <div className="h-screen-fix flex items-center justify-center">
-        <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-      </div>
-    );
-  }
 
   const handleSave = () => router.push('/create/media');
   const setVer = (m: 'online' | 'onsite') => updateFormData({ verification_method: m });

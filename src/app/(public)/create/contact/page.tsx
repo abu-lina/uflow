@@ -18,11 +18,11 @@ export default function ContactPage() {
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
 
-  // Determine if in recommendation mode
+  // Stale 'recommendation' creationMode can persist in the form context after
+  // a recommend submission; this wizard page is owner-mode only (#415).
   const isRecommendationMode = formData.creationMode === 'recommendation';
 
-  // Steps with translations - 3 steps for recommendation, 4 for owner
-  const STEPS_RECOMMENDATION = [
+  const STEPS = [
     {
       title: t('create.steps.basics'),
       icon: 'mdi:information',
@@ -35,17 +35,11 @@ export default function ContactPage() {
       title: t('create.steps.contact'),
       icon: 'mdi:account-group',
     },
-  ];
-
-  const STEPS_OWNER = [
-    ...STEPS_RECOMMENDATION,
     {
       title: t('create.steps.media'),
       icon: 'mdi:image-multiple',
     },
   ];
-
-  const STEPS = isRecommendationMode ? STEPS_RECOMMENDATION : STEPS_OWNER;
 
   // Loading state
   if (isLoading) {
@@ -59,9 +53,8 @@ export default function ContactPage() {
     return <div className="p-8 text-center">{t('common.loading')}</div>;
   }
 
-  // In recommendation mode, allow anonymous users (skip auth check)
-  // Authentication check - redirect to login with return URL (unless recommendation mode)
-  if (!user && !isRecommendationMode) {
+  // Authentication check - redirect to login with return URL
+  if (!user) {
     const returnUrl = encodeURIComponent('/create/contact');
     return (
       <ScrollablePageLayout>

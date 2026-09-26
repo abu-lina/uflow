@@ -172,7 +172,6 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
         tags: ['muslim', 'parken', 'solidaritaet', 'gebet', 'spenden'],
       },
       user,
-      false,
     );
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
@@ -208,7 +207,6 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
         tags: ['muslim', 'gebet', 'spenden'],
       },
       user,
-      false,
     );
 
     expect(mockProviderUpdate).toHaveBeenCalledWith(

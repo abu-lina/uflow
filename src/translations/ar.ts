@@ -33,6 +33,7 @@ export const ar = {
     about: 'حول',
     contact: 'اتصل بنا',
     create: 'إنشاء',
+    saved: 'Gespeichert', // INTERIM de (#415)
   },
   auth: {
     login: 'تسجيل الدخول',

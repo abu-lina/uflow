@@ -247,7 +247,7 @@ export function Header() {
                 className="hidden h-10 w-10 items-center justify-center rounded-xl border border-border text-content md:flex"
                 href="/create"
               >
-                <Plus aria-hidden="true" className="size-5" />
+                <Plus aria-hidden="true" className="h-icon-sm w-icon-sm" />
               </Link>
               {loading ? (
                 <div className="flex h-10 w-24 animate-pulse items-center justify-center rounded-xl bg-neutral-100" />

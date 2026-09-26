@@ -33,6 +33,7 @@ export const tr = {
     about: 'Hakkında',
     contact: 'İletişim',
     create: 'Oluştur',
+    saved: 'Gespeichert', // INTERIM de (#415)
   },
   auth: {
     login: 'Giriş Yap',

@@ -267,8 +267,12 @@ describe('C3b: login gate on recommend + import routes', () => {
   ])('%s renders the login lock screen for unauthenticated users', (file) => {
     const src = readSrc(file);
     expect(src).toContain('!isAuthLoading && !user');
-    expect(src).toContain('returnUrl');
-    expect(src).toContain('create.basics.loginRequired');
+    // The lock screen is the shared LoginGate; its internals carry the
+    // return-URL round trip and the loginRequired copy.
+    expect(src).toContain('LoginGate');
+    const gate = readSrc('src/components/shared/LoginGate.tsx');
+    expect(gate).toContain('returnUrl');
+    expect(gate).toContain('create.basics.loginRequired');
   });
 
   it('middleware no longer lets anonymous visitors into the recommend flows', () => {

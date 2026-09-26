@@ -23,6 +23,19 @@ const PAGES = [
   'app/(public)/create/halal/page.tsx',
 ];
 
+// Components the create/recommend surfaces render — standards apply here
+// too, not just on the page files (S1/S2). The shared Icon wrapper
+// (components/ui/Icon) and StepIndicator internals are intentionally out of
+// scope for this migration.
+const COMPONENTS = [
+  'components/shared/HalalAttestationFields.tsx',
+  'components/shared/VerificationMethodField.tsx',
+  'components/shared/RecommendSuccessScreen.tsx',
+  'components/shared/LoginGate.tsx',
+  'features/providers/StreamlinedRecommendForm.tsx',
+  'features/providers/StreamlinedImportForm.tsx',
+];
+
 describe('255 C6 — no hardcoded user-visible strings', () => {
   it.each(PAGES)('%s uses no raw German/English copy from the previous baseline', (file) => {
     const src = page(file);
@@ -76,17 +89,18 @@ describe('255 C6 — no hardcoded user-visible strings', () => {
 });
 
 describe('255 C6 — icon and colour standards', () => {
-  it.each(PAGES)('%s has no @iconify import or mdi: icon names', (file) => {
+  it.each([...PAGES, ...COMPONENTS])('%s has no @iconify import or mdi: icon names', (file) => {
     const src = page(file);
     expect(src).not.toContain('@iconify');
     expect(src).not.toContain('mdi:');
     expect(src).not.toContain('material-symbols:');
   });
 
-  it.each(['app/(public)/create/page.tsx', 'app/(public)/create/halal/page.tsx'])(
+  it.each(['app/(public)/create/page.tsx', 'app/(public)/create/halal/page.tsx', ...COMPONENTS])(
     '%s has no hex colour literals',
     (file) => {
-      const src = page(file);
+      // Strip #415 issue references so they don't match the 3-char hex pattern.
+      const src = page(file).replaceAll('#415', '');
       expect(src).not.toMatch(/#[0-9A-Fa-f]{3,8}\b/);
     },
   );
@@ -95,6 +109,16 @@ describe('255 C6 — icon and colour standards', () => {
     const src = page('app/(public)/create/halal/page.tsx');
     expect(src).toContain("from 'lucide-react'");
     expect(src).toMatch(/[wh]-icon-(xs|sm|md|lg|xl)/);
+  });
+
+  it.each([
+    'components/shared/RecommendSuccessScreen.tsx',
+    'features/providers/StreamlinedRecommendForm.tsx',
+    'features/providers/StreamlinedImportForm.tsx',
+  ])('%s uses lucide-react icons with w-icon-*/h-icon-* tokens', (file) => {
+    const src = page(file);
+    expect(src).toContain("from 'lucide-react'");
+    expect(src).toMatch(/[wh]-icon-(xs|sm|md|lg|xl|2xl|3xl)/);
   });
 });
 

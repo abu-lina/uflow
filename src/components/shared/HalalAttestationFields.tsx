@@ -75,11 +75,11 @@ export function HalalAttestationFields({
       {FIELDS.map((item) => (
         <div
           key={item.key}
-          className="flex flex-col gap-3 rounded-2xl border-2 border-[#E5E5E5] bg-white px-4 py-4"
+          className="flex flex-col gap-3 rounded-2xl border-2 border-neutral bg-white px-4 py-4"
         >
           <div className="flex flex-col gap-0.5">
-            <span className="text-sm font-semibold text-[#272727]">{t(item.labelKey)}</span>
-            <span className="text-xs leading-relaxed text-[#7A7A7A]">{t(item.descKey)}</span>
+            <span className="text-sm font-semibold text-content-heading">{t(item.labelKey)}</span>
+            <span className="text-xs leading-relaxed text-content-muted">{t(item.descKey)}</span>
           </div>
           <div className="flex gap-2" role="radiogroup">
             {options.map((opt) => {
@@ -92,7 +92,7 @@ export function HalalAttestationFields({
                     'flex-1 rounded-full border px-3 py-2 text-xs font-semibold transition-colors',
                     selected
                       ? 'border-primary bg-primary/5 text-primary'
-                      : 'border-[#D4D4D4] bg-white text-[#7A7A7A] hover:border-[#999999]',
+                      : 'border-neutral bg-white text-content-muted hover:border-content-muted',
                   )}
                   role="radio"
                   type="button"

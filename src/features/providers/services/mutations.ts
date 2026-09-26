@@ -194,7 +194,6 @@ async function uploadCertificate(file: File, userId: string | undefined): Promis
  *
  * @param formData - The form data containing all provider/service information
  * @param user - The authenticated user; all submission flows require login (#415)
- * @param isRecommendationMode - Whether this is a recommendation or owner creation
  * @returns The created entity ID (provider_id or community_service_id)
  */
 // AC5.9: a second submission with the same identity while one is in flight
@@ -204,14 +203,13 @@ const inFlightSubmissions = new Map<string, Promise<CreateProviderResult>>();
 export async function createProviderOrService(
   formData: ExtendedProviderFormData,
   user: User | null,
-  isRecommendationMode: boolean,
 ): Promise<CreateProviderResult> {
   const dedupeKey = JSON.stringify([
     formData.title,
     formData.category,
     formData.city,
     user?.id ?? null,
-    isRecommendationMode,
+    formData.creationMode,
   ]);
   const existing = inFlightSubmissions.get(dedupeKey);
   if (existing) return existing;
@@ -228,6 +226,12 @@ async function doCreateProviderOrService(
 ): Promise<CreateProviderResult> {
   // #415: all submission flows require a logged-in user; the submitter is
   // identified by user_created_id (no email is collected from recommenders).
+  // Throw a readable error if a client gate is ever bypassed — RLS remains
+  // the enforcement, but a raw PostgREST error in a generic toast is not
+  // diagnosable.
+  if (!user) {
+    throw new Error('Authentication required to create a provider or service');
+  }
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
   const isOwner = formData.creationMode === 'owner';
 

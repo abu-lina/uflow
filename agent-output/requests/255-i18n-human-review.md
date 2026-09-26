@@ -85,17 +85,18 @@ framing instead).
 
 ## Pre-existing gaps (not from plan 255, seeded so i18n:check passes)
 
-| Key                         | German source    | English         | Notes                         |
-| --------------------------- | ---------------- | --------------- | ----------------------------- |
-| `suchen.was.allRestaurants` | Alle Restaurants | All Restaurants | Search "what" accordion chip. |
-| `suchen.was.everything`     | Alles            | Everything      | Search "what" accordion chip. |
+| Key                         | German source    | English         | Notes                              |
+| --------------------------- | ---------------- | --------------- | ---------------------------------- |
+| `suchen.was.allRestaurants` | Alle Restaurants | All Restaurants | Search "what" accordion chip.      |
+| `suchen.was.everything`     | Alles            | Everything      | Search "what" accordion chip.      |
+| `navigation.saved`          | Gespeichert      | Saved           | Mobile footer nav aria-label (S8). |
 
 ## Where to apply
 
 Each locale file (`src/translations/ar.ts`, `tr.ts`, `ur.ts`, `ps.ts`) contains:
 
-- `// INTERIM de (#415)` inline markers next to `suchen.was.*` and
-  `providerDetail.proofTier.pendingReview`
+- `// INTERIM de (#415)` inline markers next to `suchen.was.*`,
+  `navigation.saved`, and `providerDetail.proofTier.pendingReview`
 - one `// Plan 255 INTERIM` block at the end of the file holding `halal.*`,
   `submissionValidation`, `submissionStatus`, `createPage`, `createHalal`,
   `adminHalalEdit`

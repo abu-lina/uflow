@@ -33,6 +33,7 @@ export const en = {
     about: 'About',
     contact: 'Contact',
     create: 'Create',
+    saved: 'Saved',
   },
   auth: {
     login: 'Login',

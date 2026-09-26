@@ -39,12 +39,17 @@ describe('AC2: "+" nav entry routes to the /create chooser', () => {
 
   it('MobileFooterBar has 4 tabs: Home, Create, Saved, Profile in order', () => {
     const src = readSrc('src/components/common/MobileFooterBar.tsx');
-    const order = ['Home', 'Create', 'Saved', 'Profile'];
+    const order = [
+      'navigation.home',
+      'navigation.create',
+      'navigation.saved',
+      'navigation.profile',
+    ];
     let lastIndex = -1;
-    for (const label of order) {
-      const index = src.indexOf(`label: '${label}'`);
-      expect(index, `${label} missing`).toBeGreaterThan(-1);
-      expect(index, `${label} out of order`).toBeGreaterThan(lastIndex);
+    for (const labelKey of order) {
+      const index = src.indexOf(`labelKey: '${labelKey}'`);
+      expect(index, `${labelKey} missing`).toBeGreaterThan(-1);
+      expect(index, `${labelKey} out of order`).toBeGreaterThan(lastIndex);
       lastIndex = index;
     }
     expect(src).toContain("href: '/create'");
@@ -59,16 +64,9 @@ describe('AC2: "+" nav entry routes to the /create chooser', () => {
   });
 });
 
-describe('nav overflow: MobileFooterBar fits 4 tabs at 320/360/430px', () => {
-  // 4 tabs x 40px = 160px. Inner width = viewport - 48px (px-6 each side).
-  // gap-6 (24px): 160 + 3*24 = 232px — fits 320 (272px inner), 360 (312), 430 (382).
-  // The old gap-10 (40px) needed 280px and overflowed at 320px.
-  it('uses a responsive gap that is narrow below the sm breakpoint', () => {
-    const src = readSrc('src/components/common/MobileFooterBar.tsx');
-    expect(src).toContain('gap-6 sm:gap-10');
-    expect(src).not.toMatch(/justify-center\s+gap-10(?!-)/);
-  });
-});
+// Behavioural coverage for the 320/360/430px nav overflow lives in
+// src/__tests__/components/MobileFooterBar.providers-active.test.tsx —
+// it renders the bar and checks the rendered gap class fits each width.
 
 describe('AC3: CreateIcon matches post-#227 siblings', () => {
   const src = readSrc('src/components/ui/icons/CreateIcon.tsx');
@@ -146,12 +144,21 @@ describe('AC4: chooser routing and creationMode', () => {
     expect(src).not.toContain("creationMode === 'recommendation'");
     expect(src).toContain("setCreationMode('owner')");
     expect(src).toContain('if (!user)');
-    expect(src).toContain('returnUrl');
+    // The lock screen is the shared LoginGate; the return-URL round trip
+    // lives there now.
+    expect(src).toContain('LoginGate');
+    expect(src).toContain('returnPath="/create/basics"');
+    const gate = readSrc('src/components/shared/LoginGate.tsx');
+    expect(gate).toContain('returnUrl');
   });
 });
 
-describe('migration 130: client cannot claim third-party ownership', () => {
-  it('constrains provider_owner_id in the client insert branch', () => {
+// NOTE: these are migration-file text assertions. They prove the file on
+// disk contains the policy; they do NOT prove the SQL was applied or behaves
+// correctly against a live database — that gap requires DB access and is
+// tracked separately.
+describe('migration 130 file contents: client cannot claim third-party ownership', () => {
+  it('migration file constrains provider_owner_id in the client insert branch', () => {
     const sql = readSrc('supabase/migrations/130_provider_submission_policies.sql');
     const insertPolicy = sql.slice(
       sql.indexOf('CREATE POLICY "Allow provider inserts"'),

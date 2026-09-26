@@ -33,6 +33,7 @@ export const de = {
     about: 'Über uns',
     contact: 'Kontakt',
     create: 'Erstellen',
+    saved: 'Gespeichert',
   },
   auth: {
     login: 'Anmelden',

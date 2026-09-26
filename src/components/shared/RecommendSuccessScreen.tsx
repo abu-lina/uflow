@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { ChevronDown } from 'lucide-react';
-import { Icon } from '@iconify/react';
+import { ChevronDown, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
@@ -117,13 +116,7 @@ export function RecommendSuccessScreen({
                 : { duration: 0.5, delay: 0.2, ease: 'easeOut' }
             }
           >
-            <Icon
-              className="size-24 text-content-heading"
-              icon="lucide:heart"
-              style={{
-                strokeWidth: 8,
-              }}
-            />
+            <Heart className="h-icon-3xl w-icon-3xl text-content-heading" strokeWidth={2.5} />
           </motion.div>
 
           {/* Title + Subtitle Container */}

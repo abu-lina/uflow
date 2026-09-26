@@ -50,20 +50,27 @@ describe('matching service phase 3 junction tables', () => {
         }
 
         if (table === 'providers') {
+          // matching.ts now appends .eq('review_status', 'approved') (#415).
           return {
-            in: () => Promise.resolve({
-              data: [{ provider_id: 'provider-2', provider_name: 'P2', category_id: null }],
-              error: null,
+            in: () => ({
+              eq: (...eqArgs: unknown[]) => {
+                mockEq(...eqArgs);
+                return Promise.resolve({
+                  data: [{ provider_id: 'provider-2', provider_name: 'P2', category_id: null }],
+                  error: null,
+                });
+              },
             }),
           };
         }
 
         if (table === 'offers') {
           return {
-            in: () => Promise.resolve({
-              data: [{ offer_id: 'offer-1', name_de: 'Angebot 1' }],
-              error: null,
-            }),
+            in: () =>
+              Promise.resolve({
+                data: [{ offer_id: 'offer-1', name_de: 'Angebot 1' }],
+                error: null,
+              }),
           };
         }
 

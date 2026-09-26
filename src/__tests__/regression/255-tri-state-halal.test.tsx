@@ -167,7 +167,7 @@ describe('C2: tri-state attestation round-trip (AC6.2)', () => {
     [{ no_alcohol: false, no_pork: false, no_gambling: false }],
   ])('writes extension row preserving true/false/NULL: %j', async (atts) => {
     const user = { id: 'user-1' } as User;
-    await createProviderOrService({ ...baseFormData, ...atts }, user, false);
+    await createProviderOrService({ ...baseFormData, ...atts }, user);
 
     expect(mockFoodExtUpsert).toHaveBeenCalledTimes(1);
     const ext = mockFoodExtUpsert.mock.calls[0][0];
@@ -187,7 +187,6 @@ describe('C2: tri-state attestation round-trip (AC6.2)', () => {
         no_gambling: null,
       },
       user,
-      true,
     );
 
     const ext = mockFoodExtUpsert.mock.calls[0][0];
@@ -444,8 +443,11 @@ describe('C2 fix: no stars without a truthy attestation (#415)', () => {
   });
 });
 
-describe('C2: migrations (nullable attestations + policies)', () => {
-  it('129 makes all three attestation columns nullable on both extension tables', () => {
+// NOTE: migration-file text assertions. They prove the SQL file on disk
+// contains the clause, not that it was applied or behaves correctly against
+// a live database — that gap requires DB access and is tracked separately.
+describe('C2: migration file contents (nullable attestations + policies)', () => {
+  it('migration file 129 makes all three attestation columns nullable on both extension tables', () => {
     const sql = readSrc('supabase/migrations/129_halal_attestation_nullable.sql');
     for (const table of ['food_providers', 'store_providers']) {
       expect(sql).toContain(`ALTER TABLE public.${table}`);
@@ -456,7 +458,7 @@ describe('C2: migrations (nullable attestations + policies)', () => {
     }
   });
 
-  it('130 lets a creator read their own pending row but keeps pending hidden from others', () => {
+  it('migration file 130 lets a creator read their own pending row but keeps pending hidden from others', () => {
     const sql = readSrc('supabase/migrations/130_provider_submission_policies.sql');
     // self-read widened
     expect(sql).toContain('"user_created_id" = ( SELECT "auth"."uid"() AS "uid"))');
@@ -464,7 +466,7 @@ describe('C2: migrations (nullable attestations + policies)', () => {
     expect(sql).toContain('"review_status" = \'approved\'::"public"."review_status"');
   });
 
-  it('130 constrains client inserts to review_status pending while admin inserts stay unconstrained', () => {
+  it('migration file 130 constrains client inserts to review_status pending while admin inserts stay unconstrained', () => {
     const sql = readSrc('supabase/migrations/130_provider_submission_policies.sql');
     expect(sql).toContain('"review_status" = \'pending\'::"public"."review_status"');
     // The pending constraint sits in the client branch; the admin/moderator

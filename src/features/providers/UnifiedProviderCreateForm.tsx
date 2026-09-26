@@ -142,32 +142,20 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
   };
 
   const isFormValid = () => {
-    // For recommendation mode with "Next" button, only validate basics (title, category, offers)
-    if (formData.creationMode === 'recommendation') {
-      return (
-        !!formData.title &&
-        !!formData.category &&
-        formData.offers_ids &&
-        formData.offers_ids.length > 0
-      );
-    }
-
-    // For owner mode (submit), the full required set applies (#415 AC5.2):
+    // The full required set applies (#415 AC5.2):
     // basics + full address (unless online) + at least one image.
     return ownerSubmissionSchema.safeParse(formData).success;
   };
 
   const handleSubmit = async () => {
-    // In recommendation mode, allow anonymous users (skip auth check)
-    const isRecommendationMode = formData.creationMode === 'recommendation';
-
-    if (!user && !isRecommendationMode) {
+    // All submission flows require login (#415).
+    if (!user) {
       toast.error(t('create.media.mustBeLoggedIn'));
       return;
     }
 
     // AC5.2/5.3: validate the owner required set and name the missing field.
-    if (!isRecommendationMode) {
+    {
       const parsed = ownerSubmissionSchema.safeParse(formData);
       if (!parsed.success) {
         const issueField = firstIssueField(parsed.error);
@@ -198,7 +186,7 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
       setIsSubmitting(true);
 
       // Use the shared service function
-      await createProviderOrService(formData, user, isRecommendationMode);
+      await createProviderOrService(formData, user);
 
       // Show success message; every submission is pending review, not live
       // yet — promise no timeline and no notification (same as C5).
@@ -706,35 +694,19 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 pt-4">
-        {/* In recommendation mode, show "Next" button to navigate to location page */}
-        {formData.creationMode === 'recommendation' && (
-          <Button
-            disabled={isSubmitting || !isFormValid()}
-            variant="primary"
-            onClick={() => {
-              router.push('/create/location');
-            }}
-          >
-            {t('common.next')}
-          </Button>
-        )}
-
-        {/* Submit button - show only if not in recommendation mode or if form is complete */}
-        {formData.creationMode !== 'recommendation' && (
-          <Button
-            disabled={isSubmitting || !isFormValid()}
-            loading={isSubmitting}
-            loadingText={t('create.media.creating')}
-            type="submit"
-            variant="primary"
-          >
-            {isSubmitting
-              ? t('create.media.creating')
-              : isCommunityService
-                ? t('create.media.registerCommunityService')
-                : t('create.media.registerProvider')}
-          </Button>
-        )}
+        <Button
+          disabled={isSubmitting || !isFormValid()}
+          loading={isSubmitting}
+          loadingText={t('create.media.creating')}
+          type="submit"
+          variant="primary"
+        >
+          {isSubmitting
+            ? t('create.media.creating')
+            : isCommunityService
+              ? t('create.media.registerCommunityService')
+              : t('create.media.registerProvider')}
+        </Button>
       </div>
     </form>
   );

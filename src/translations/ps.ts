@@ -33,6 +33,7 @@ export const ps = {
     about: 'زموږ په اړه',
     contact: 'اړیکه',
     create: 'جوړول',
+    saved: 'Gespeichert', // INTERIM de (#415)
   },
   auth: {
     login: 'ننوتل',

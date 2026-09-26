@@ -193,7 +193,6 @@ describe('A1: certificate upload and the gold-tier guard', () => {
     await createProviderOrService(
       ownerFormData({ certificate_file: cert, has_certificate: true }),
       user,
-      false,
     );
 
     expect(mockCertUpload).toHaveBeenCalledTimes(1);
@@ -207,7 +206,6 @@ describe('A1: certificate upload and the gold-tier guard', () => {
     await createProviderOrService(
       ownerFormData({ certificate_file: null, has_certificate: true }),
       user,
-      false,
     );
 
     expect(mockCertUpload).not.toHaveBeenCalled();
@@ -230,7 +228,6 @@ describe('A1: certificate upload and the gold-tier guard', () => {
       createProviderOrService(
         ownerFormData({ certificate_file: bad, has_certificate: true }),
         user,
-        false,
       ),
     ).rejects.toThrow('Certificate file rejected');
   });

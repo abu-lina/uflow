@@ -59,9 +59,6 @@ export default function MediaUploadPage() {
   // Simple entity type determination based on category
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
 
-  // In recommendation mode, redirect to contact page (media step is skipped)
-  const isRecommendationMode = formData.creationMode === 'recommendation';
-
   // Show loading state while form data is being restored
   if (isLoading) {
     return (
@@ -74,22 +71,7 @@ export default function MediaUploadPage() {
     );
   }
 
-  // Redirect guard: If in recommendation mode, redirect to contact page
-  // The contact page will handle submission directly
-  if (isRecommendationMode) {
-    router.replace('/create/contact');
-    return (
-      <div className="h-screen-fix flex items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="text-gray-600">{t('common.loading')}</p>
-        </div>
-      </div>
-    );
-  }
-
   // Submit the complete entity creation (provider or community service)
-  // Note: This is only used in owner mode (recommendation mode redirects away)
   const handleSave = async () => {
     if (!user) {
       console.error('User not authenticated');
@@ -112,11 +94,7 @@ export default function MediaUploadPage() {
       setIsSubmitting(true);
 
       // Use the shared service function
-      await createProviderOrService(
-        formData,
-        user,
-        false, // isRecommendationMode = false (owner mode)
-      );
+      await createProviderOrService(formData, user);
 
       // Show success message; the submission is pending review, not live yet.
       toast.success(t('submissionStatus.submittedToast'));
