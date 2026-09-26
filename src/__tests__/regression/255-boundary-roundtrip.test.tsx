@@ -604,3 +604,104 @@ describe('H4: failed extension write + failed cleanup surfaces the orphan', () =
     expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
   });
 });
+
+// ── UAT-263: one id across every write; every post-insert failure cleans up ──
+//
+// Ported from the abandoned UAT-133 suite (its migration-file assertions are
+// dropped — this fix is the service-role route, not a policy change). These
+// prove that every write in the flow is issued with one shared provider id,
+// and that any failure after the providers insert runs the compensating
+// delete against that same id — in both the provider and ummah branches.
+
+describe('UAT-263: a submission lands every write with one id or cleans the orphan', () => {
+  const recommendActor = { userId: 'user-1', isOwner: false };
+
+  beforeEach(() => {
+    resetSupabaseMocks();
+    localStorage.clear();
+  });
+
+  it('provider, relations, location and extension row all write with one id', async () => {
+    await createProviderOrServiceServer({
+      formData: ownerFormData({
+        creationMode: 'recommendation',
+        no_alcohol: true,
+        no_pork: null,
+        no_gambling: false,
+        offers_ids: ['offer-1'],
+        needs_ids: ['need-1'],
+      }) as CreateProviderPayload,
+      actor: recommendActor,
+    });
+
+    // providers row: creator identified, owner NULL, pending.
+    const providerRow = (mockProviderInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    const providerId = providerRow.provider_id as string;
+    expect(providerRow.user_created_id).toBe('user-1');
+    expect(providerRow.provider_owner_id).toBeNull();
+    expect(providerRow.review_status).toBe('pending');
+
+    // Relation rows (offers + needs) point at the same provider.
+    expect(mockRelationInsert).toHaveBeenCalledTimes(2);
+    const relRows = mockRelationInsert.mock.calls.flatMap(
+      (call) => call[0] as Array<Record<string, unknown>>,
+    );
+    expect(relRows.length).toBe(2);
+    expect(relRows.every((r) => r.provider_id === providerId)).toBe(true);
+
+    // Primary location — the write that died under the owner-only RLS policy.
+    expect(mockLocationInsert).toHaveBeenCalledTimes(1);
+    const locationRow = (mockLocationInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    expect(locationRow.provider_id).toBe(providerId);
+    expect(locationRow.is_primary).toBe(true);
+
+    // Extension row carries the attestation (including the NULL "not sure").
+    const ext = mockFoodExtUpsert.mock.calls[0][0];
+    expect(ext.provider_id).toBe(providerId);
+    expect(ext.no_alcohol).toBe(true);
+    expect(ext.no_pork).toBeNull();
+    expect(ext.no_gambling).toBe(false);
+  });
+
+  it('a relation-insert failure after the provider insert deletes the orphan', async () => {
+    mockRelationInsert.mockResolvedValue({ error: { message: 'relation write failed' } });
+
+    await expect(
+      createProviderOrServiceServer({
+        formData: ownerFormData({
+          creationMode: 'recommendation',
+          no_alcohol: true,
+          no_pork: true,
+          no_gambling: true,
+          offers_ids: ['offer-1'],
+        }) as CreateProviderPayload,
+        actor: recommendActor,
+      }),
+    ).rejects.toEqual(expect.objectContaining({ message: 'relation write failed' }));
+    expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
+    const providerRow = (mockProviderInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    expect(mockProviderDeleteEq.mock.calls[0][0]).toBe('provider_id');
+    expect(mockProviderDeleteEq.mock.calls[0][1]).toBe(providerRow.provider_id);
+  });
+
+  it('an ummah submission also cleans up when a post-insert write fails', async () => {
+    mockLocationInsert.mockResolvedValue({ error: { message: 'rls violation' } });
+
+    await expect(
+      createProviderOrServiceServer({
+        formData: ownerFormData({
+          creationMode: 'recommendation',
+          category: '4470c3e0-458f-40a6-a96e-ca0fbdf145d7', // ummah category
+          no_alcohol: undefined,
+          no_pork: undefined,
+          no_gambling: undefined,
+        }) as CreateProviderPayload,
+        actor: recommendActor,
+      }),
+    ).rejects.toEqual(expect.objectContaining({ message: 'rls violation' }));
+    expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
+    const providerRow = (mockProviderInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    expect(mockProviderDeleteEq.mock.calls[0][0]).toBe('provider_id');
+    expect(mockProviderDeleteEq.mock.calls[0][1]).toBe(providerRow.provider_id);
+  });
+});
