@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { GeolocationStatus } from '@/hooks/useGeolocation';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
@@ -12,6 +12,10 @@ interface DiscoveryFilterBarProps {
   onToggleNearMe: () => void;
   onToggleOpenNow: () => void;
   className?: string;
+  /** Resolved city for the location chip; null/'' means Everywhere. */
+  locationCity?: string | null;
+  /** When provided, renders a location chip that navigates to the Wo picker. */
+  onLocationClick?: () => void;
   /** Optional admin-only content rendered inline with the filter bar. */
   adminSlot?: React.ReactNode;
 }
@@ -31,12 +35,16 @@ export function DiscoveryFilterBar({
   onToggleNearMe,
   onToggleOpenNow,
   className = '',
+  locationCity,
+  onLocationClick,
   adminSlot,
 }: DiscoveryFilterBarProps) {
   const { t } = useLanguage();
+  const locationLabel = locationCity || t('search.everywhere');
 
   const showPermissionDenied =
-    nearMeActive && (geoStatus === 'denied' || geoStatus === 'unavailable' || geoStatus === 'timeout');
+    nearMeActive &&
+    (geoStatus === 'denied' || geoStatus === 'unavailable' || geoStatus === 'timeout');
   const showPermissionDeniedHint = nearMeActive && geoStatus === 'denied';
   // Chip is "active" when location is granted, or when near-me is on from a
   // URL-driven state while geolocation is still idle. During prompting the chip
@@ -46,6 +54,18 @@ export function DiscoveryFilterBar({
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
       <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+        {onLocationClick && !nearMeChipActive ? (
+          <button
+            aria-label={`${t('suchen.accordions.wo')}: ${locationLabel}`}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide text-content-muted shadow-sm transition-colors hover:border-gray-300 hover:text-content"
+            type="button"
+            onClick={onLocationClick}
+          >
+            {locationLabel}
+            <ChevronDown aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+          </button>
+        ) : null}
+
         <button
           aria-pressed={nearMeChipActive}
           className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
