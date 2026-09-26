@@ -506,7 +506,7 @@ export default function SelectOffersPage() {
 
   return (
     <ErrorBoundary>
-      <ScrollablePageLayout>
+      <ScrollablePageLayout createDesktopLayout>
         <PageHeader
           className={cn('md:top-20 md:z-[100] [&>div]:md:max-w-full [&>div]:md:px-0')}
           title={t('create.offers.title')}

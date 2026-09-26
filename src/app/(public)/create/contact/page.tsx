@@ -43,21 +43,45 @@ export default function ContactPage() {
 
   // Loading state
   if (isLoading) {
-    return <div className="p-8 text-center">{t('common.loading')}</div>;
+    return (
+      <ScrollablePageLayout createDesktopLayout>
+        <PageHeader
+          className="hidden md:block"
+          title={t('create.contact.title')}
+          variant="back-and-title"
+          onBack="/create/location"
+        />
+        <div className="p-8 text-center md:mx-auto md:w-full md:max-w-2xl">
+          {t('common.loading')}
+        </div>
+      </ScrollablePageLayout>
+    );
   }
 
   // The recommend flow submits from /create/recommend (StreamlinedRecommendForm).
   // This wizard page is owner-mode only; redirect stale recommendation state.
   if (isRecommendationMode) {
     router.replace('/create/recommend');
-    return <div className="p-8 text-center">{t('common.loading')}</div>;
+    return (
+      <ScrollablePageLayout createDesktopLayout>
+        <PageHeader
+          className="hidden md:block"
+          title={t('create.contact.title')}
+          variant="back-and-title"
+          onBack="/create/location"
+        />
+        <div className="p-8 text-center md:mx-auto md:w-full md:max-w-2xl">
+          {t('common.loading')}
+        </div>
+      </ScrollablePageLayout>
+    );
   }
 
   // Authentication check - redirect to login with return URL
   if (!user) {
     const returnUrl = encodeURIComponent('/create/contact');
     return (
-      <ScrollablePageLayout>
+      <ScrollablePageLayout createDesktopLayout>
         <PageHeader title={t('create.contact.title')} variant="title-only" />
 
         <PageContent
@@ -88,7 +112,7 @@ export default function ContactPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <ScrollablePageLayout createDesktopLayout>
       <PageHeader
         title={t('create.contact.title')}
         variant="back-and-title"

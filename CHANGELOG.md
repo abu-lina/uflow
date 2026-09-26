@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.15.19] - 2026-09-26
+
+### Fixed
+
+- **Desktop create flow layout (Plan 265)**: All 16 routes under `/create` and `/create/*` now keep the route title and back action in normal document flow on desktop viewports ($\ge 768\text{px}$), positioned cleanly below the fixed global header in a centered 672px column (`max-w-2xl`). Wrapped bare loading, redirect-pending, and `LoginGate` screens in the desktop layout container, preserved header navigation on recommendation/OSM-import success states, and localized the category selection title on `/create/social-category`. Mobile viewports ($<768\text{px}$) and shared layout defaults remain unchanged.
+
 ## [0.15.18] - 2026-09-26
 
 ### Fixed
@@ -19,7 +25,6 @@
 ### Fixed
 
 - **Filter button lands on filters, map is opt-in via `?view=map` (Plan 216)**: Mobile users tapping the filter (sliders) button on the home searchbar, or the edit button on the results page, were dropped onto a full-screen map instead of the filter page. The `/search` destination now renders the filter accordions (Wo / Was / Wer / Filter) by default and only renders the mobile map when the explicit `?view=map` query parameter is present (intentional map deep link: `/search?section=food&view=map`). Unknown or missing `view` values fail safe to filters. The map-pin Supabase fetch is gated on map mode so no pin query runs when filters are shown. All entry paths (home sliders, results edit button, empty-query submit, legacy `/suchen` redirect) are fixed by the single render predicate. Added regression coverage for the no-view, `view=filters`, `view=map`, and desktop branches.
-
 
 ## [0.15.16] - 2026-08-16
 
@@ -131,7 +136,6 @@
 - Delivery Links renamed to "Order Links" for store-type providers
 - Delivery/order links now support custom website URLs beyond Wolt/Lieferando/UberEats
 - Values page: Food section hidden for non-food, Store section hidden for non-store providers
-
 
 ## [0.12.17] - 2026-05-14
 

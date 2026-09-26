@@ -40,7 +40,7 @@ export default function CreateProviderPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <ScrollablePageLayout createDesktopLayout>
       <PageHeader
         title={t('create.title')}
         variant="back-and-title"

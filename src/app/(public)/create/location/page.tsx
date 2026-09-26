@@ -97,7 +97,19 @@ export default function LocationPage() {
 
   // Loading state - wait for both auth and formData to load
   if (isLoading) {
-    return <div className="p-8 text-center">{t('common.loading')}</div>;
+    return (
+      <ScrollablePageLayout createDesktopLayout>
+        <PageHeader
+          className="hidden md:block"
+          title={t('create.location.title')}
+          variant="back-and-title"
+          onBack="/create/basics"
+        />
+        <div className="p-8 text-center md:mx-auto md:w-full md:max-w-2xl">
+          {t('common.loading')}
+        </div>
+      </ScrollablePageLayout>
+    );
   }
 
   // In recommendation mode, allow anonymous users (skip auth check)
@@ -144,7 +156,7 @@ export default function LocationPage() {
   if (!user && !isRecommendationMode && !isFormDataLoading) {
     const returnUrl = encodeURIComponent('/create/location');
     return (
-      <ScrollablePageLayout>
+      <ScrollablePageLayout createDesktopLayout>
         <PageHeader title={t('create.location.title')} variant="title-only" />
 
         <PageContent
@@ -257,7 +269,7 @@ export default function LocationPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <ScrollablePageLayout createDesktopLayout>
       <PageHeader
         title={t('create.location.title')}
         variant="back-and-title"

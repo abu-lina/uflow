@@ -62,12 +62,20 @@ export default function MediaUploadPage() {
   // Show loading state while form data is being restored
   if (isLoading) {
     return (
-      <div className="h-screen-fix flex items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="text-gray-600">{t('create.media.loadingFormData')}</p>
+      <ScrollablePageLayout createDesktopLayout>
+        <PageHeader
+          className="hidden md:block"
+          title={t('create.media.title')}
+          variant="back-and-title"
+          onBack="/create/halal"
+        />
+        <div className="h-screen-fix flex items-center justify-center md:mx-auto md:h-auto md:min-h-0 md:max-w-2xl md:items-start md:p-8">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+            <p className="text-gray-600">{t('create.media.loadingFormData')}</p>
+          </div>
         </div>
-      </div>
+      </ScrollablePageLayout>
     );
   }
 
@@ -117,7 +125,7 @@ export default function MediaUploadPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <ScrollablePageLayout createDesktopLayout>
       <PageHeader title={t('create.media.title')} variant="back-and-title" onBack="/create/halal" />
 
       <PageContent

@@ -17,20 +17,23 @@ interface LoginGateProps {
   title: string;
   /** Path the user returns to after login, e.g. '/create/basics'. */
   returnPath: string;
+  /** Opts create callers into the desktop contribution layout. */
+  createDesktopLayout?: boolean;
 }
 
 /** Shared login-required screen for the create submission flows (#415). */
-export function LoginGate({ title, returnPath }: LoginGateProps) {
+export function LoginGate({ title, returnPath, createDesktopLayout = false }: LoginGateProps) {
   const router = useRouter();
   const { t } = useLanguage();
   const returnUrl = encodeURIComponent(returnPath);
 
   return (
-    <ScrollablePageLayout>
+    <ScrollablePageLayout createDesktopLayout={createDesktopLayout}>
       <PageHeader title={title} />
       <PageContent
         className={cn(
           'flex min-h-[60vh] items-center justify-center',
+          createDesktopLayout && 'md:!min-h-0 md:!items-stretch md:!justify-start',
           'sm:mx-auto sm:max-w-[640px] sm:px-6 md:px-8',
         )}
         maxWidth="full"

@@ -4,9 +4,10 @@ import { ReactNode, useEffect, useRef, useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
-import { ScrollContext } from './ScrollablePageLayout';
+import { CreateDesktopLayoutContext, ScrollContext } from './ScrollablePageLayout';
 
-type HeaderVariant = 'title-only' | 'back-and-title' | 'back-title-icon' | 'title-and-icon' | 'about-logo';
+type HeaderVariant =
+  'title-only' | 'back-and-title' | 'back-title-icon' | 'title-and-icon' | 'about-logo';
 
 interface PageHeaderProps {
   /**
@@ -46,15 +47,15 @@ interface PageHeaderProps {
 
 /**
  * Unified reusable page header component with scroll-based visibility
- * 
+ *
  * **This component is fully reusable across all pages!**
- * 
+ *
  * Variants:
  * - title-only: Title only (no chevron, no icon)
  * - back-and-title: Back chevron + title  
  * - back-title-icon: Back chevron + title + right icon (48px)
  * - title-and-icon: Title + right icon (48px)
- * 
+ *
  * Features:
  * - Consistent spacing from safe area
  * - Responsive header height
@@ -62,13 +63,13 @@ interface PageHeaderProps {
  * - Flexible right-side content and icons
  * - Semantic HTML with <header> tag
  * - Smooth 300ms transitions (Material Design standard)
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage - static header
  * <PageHeader title="My Page" variant="title-only" />
  * ```
- * 
+ *
  */
 export function PageHeader({
   title,
@@ -97,14 +98,16 @@ export function PageHeader({
 
   // Determine which elements to show based on variant
   const shouldShowBackButton = variant === 'back-and-title' || variant === 'back-title-icon';
-  const shouldShowRightIcon = variant === 'back-title-icon' || variant === 'title-and-icon' || variant === 'about-logo';
-  
+  const shouldShowRightIcon =
+    variant === 'back-title-icon' || variant === 'title-and-icon' || variant === 'about-logo';
+
   // Priority: rightIcon > rightContent
   const actualRightContent = shouldShowRightIcon && rightIcon ? rightIcon : rightContent;
 
   // Get scroll context (from ScrollablePageLayout)
   const scrollContext = useContext(ScrollContext);
-  
+  const createDesktopLayout = useContext(CreateDesktopLayoutContext);
+
   // Use explicit prop if provided, otherwise use context
   const effectiveScrollRef = scrollContainerRef || scrollContext;
 
@@ -136,7 +139,7 @@ export function PageHeader({
 
     // Determine which element to listen to
     let scrollElement: HTMLElement | Window = window;
-    
+
     if (effectiveScrollRef?.current) {
       scrollElement = effectiveScrollRef.current;
     } else {
@@ -151,7 +154,7 @@ export function PageHeader({
     } else {
       window.addEventListener('scroll', handleScroll, { passive: true });
     }
-    
+
     return () => {
       if (scrollElement instanceof HTMLElement) {
         scrollElement.removeEventListener('scroll', handleScroll);
@@ -187,29 +190,24 @@ export function PageHeader({
     <header
       ref={headerRef}
       className={cn(
-        'fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2',
-        className
+        'fixed left-0 right-0 top-0 z-50 pb-2 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)]',
+        createDesktopLayout &&
+          'md:static md:z-auto md:!mx-auto md:w-full md:max-w-2xl md:pb-0 md:pt-[calc(var(--desktop-header-height,256px)_+_16px)]',
+        className,
       )}
       style={{
         // Smooth transition for all properties including backdrop-filter
-        transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+        transition:
+          'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
         // Glassy blur effect when scrolled - transparent with blur only
         // backdropFilter blurs everything behind the header element
         // blur(20px) creates the frosted glass blur effect
         // saturate(180%) makes colors more vibrant through the blur
         // isolation: isolate ensures backdrop-filter works correctly in stacking contexts
-        background: isScrolled 
-          ? 'rgba(255, 255, 255, 0.15)' 
-          : 'transparent',
-        backdropFilter: isScrolled 
-          ? 'blur(20px) saturate(180%)' 
-          : 'none',
-        WebkitBackdropFilter: isScrolled 
-          ? 'blur(20px) saturate(180%)' 
-          : 'none',
-        borderBottom: isScrolled 
-          ? '1px solid rgba(255, 255, 255, 0.18)' 
-          : '1px solid transparent',
+        background: isScrolled ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+        backdropFilter: isScrolled ? 'blur(20px) saturate(180%)' : 'none',
+        WebkitBackdropFilter: isScrolled ? 'blur(20px) saturate(180%)' : 'none',
+        borderBottom: isScrolled ? '1px solid rgba(255, 255, 255, 0.18)' : '1px solid transparent',
         isolation: 'isolate',
         marginLeft: '-1px',
         marginRight: '-1px',
@@ -217,17 +215,17 @@ export function PageHeader({
         paddingRight: '1px',
       }}
     >
-      <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
+      <div className="px-safe-24 flex h-header-height-mobile w-full items-center sm:h-header-height-tablet">
         {/* Back Button */}
         {shouldShowBackButton && onBack && (
           <button
             aria-label="Zurück"
-            className="flex items-center justify-center w-8 h-8 -ml-1"
+            className="-ml-1 flex h-8 w-8 items-center justify-center"
             onClick={handleBack}
           >
-            <Icon 
-              className="w-8 h-8 text-content-heading pointer-events-none" 
-              icon="material-symbols:chevron-left" 
+            <Icon
+              className="pointer-events-none h-8 w-8 text-content-heading"
+              icon="material-symbols:chevron-left"
             />
           </button>
         )}
@@ -243,12 +241,9 @@ export function PageHeader({
 
         {/* Right Content */}
         {actualRightContent && (
-          <div className="ml-auto flex items-center">
-            {actualRightContent}
-          </div>
+          <div className="ml-auto flex items-center">{actualRightContent}</div>
         )}
       </div>
     </header>
   );
 }
-
