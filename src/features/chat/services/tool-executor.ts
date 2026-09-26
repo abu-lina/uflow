@@ -4,8 +4,7 @@ import type { User } from '@supabase/supabase-js';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { getProviderById, fetchProviderCities, checkCityExists } from '@/services/providers';
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import { getProviderById, fetchProviderCities } from '@/services/providers';
 import { getOpenStatus } from '@/utils/openStatus';
 import type { OpeningHours } from '@/types/openingHours';
 import type { ToolCall, ToolDefinition } from '@/features/chat/types';
@@ -22,11 +21,13 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         properties: {
           query: {
             type: 'string',
-            description: 'Free-text search query. Leave EMPTY for broad searches like "what restaurants are in Berlin". Only use specific terms like "döner" or "pizza" when user asks for something specific. Database is mostly German — use German terms.',
+            description:
+              'Free-text search query. Leave EMPTY for broad searches like "what restaurants are in Berlin". Only use specific terms like "döner" or "pizza" when user asks for something specific. Database is mostly German — use German terms.',
           },
           category: {
             type: 'string',
-            description: 'Filter by cuisine/category — use the CATEGORY NAME like "Afghanisch", "Pakistanisch", "Döner". NOT a UUID — just the name. MUST use this for cuisine searches, not query.',
+            description:
+              'Filter by cuisine/category — use the CATEGORY NAME like "Afghanisch", "Pakistanisch", "Döner". NOT a UUID — just the name. MUST use this for cuisine searches, not query.',
           },
           city: {
             type: 'string',
@@ -55,7 +56,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           },
           open_now: {
             type: 'boolean',
-            description: 'Set to true when the user asks for providers that are CURRENTLY open/geöffnet/offen right now. Only returns providers currently open based on their opening hours.',
+            description:
+              'Set to true when the user asks for providers that are CURRENTLY open/geöffnet/offen right now. Only returns providers currently open based on their opening hours.',
           },
           limit: {
             type: 'integer',
@@ -122,11 +124,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     type: 'function',
     function: {
       name: 'check_registration_status',
-      description: 'Check the review status of a users registered providers. Useful when a user asks "wurde mein Restaurant schon genehmigt?" or "Status meiner Registrierung".',
+      description:
+        'Check the review status of a users registered providers. Useful when a user asks "wurde mein Restaurant schon genehmigt?" or "Status meiner Registrierung".',
       parameters: {
         type: 'object',
         properties: {
-          name: { type: 'string', description: 'Provider name to check (optional — leave empty to list all)' },
+          name: {
+            type: 'string',
+            description: 'Provider name to check (optional — leave empty to list all)',
+          },
         },
       },
     },
@@ -147,7 +153,8 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           },
           category_id: {
             type: 'string',
-            description: 'Category name (e.g. "Kebab / Döner") or UUID. Names are resolved automatically.',
+            description:
+              'Category name (e.g. "Kebab / Döner") or UUID. Names are resolved automatically.',
           },
           city: {
             type: 'string',
@@ -204,10 +211,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
 
 const VALID_LISTING_TYPES = ['food', 'store', 'ummah'] as const;
 
-export async function executeToolCall(
-  toolCall: ToolCall,
-  userId?: string,
-): Promise<string> {
+export async function executeToolCall(toolCall: ToolCall, userId?: string): Promise<string> {
   const { name, arguments: argsJson } = toolCall.function;
   let args: Record<string, unknown>;
 
@@ -221,11 +225,12 @@ export async function executeToolCall(
     case 'search_providers': {
       const rawQuery = args.query as string | undefined;
       const rawCategory = args.category as string | undefined;
-      
+
       // Strip generic terms that won't match provider names in tsvector search
-      const GENERIC_TERMS = /^(essen|food|restaurant|eat|store|shop|service|help|something|anything|all|everything)$/i;
-      let query = (!rawQuery || GENERIC_TERMS.test(rawQuery)) ? '' : rawQuery;
-      
+      const GENERIC_TERMS =
+        /^(essen|food|restaurant|eat|store|shop|service|help|something|anything|all|everything)$/i;
+      let query = !rawQuery || GENERIC_TERMS.test(rawQuery) ? '' : rawQuery;
+
       // Auto-detect: if query looks like a cuisine/type and no category set, move to category
       if (query && !rawCategory && !/^[0-9a-f]{8}-/i.test(query)) {
         // Check if this matches a known category name
@@ -242,12 +247,14 @@ export async function executeToolCall(
         }
       }
 
-
       const supabase = createSupabaseServerClient();
-      
+
       // Resolve category name to UUID if needed
       let categoryFilter = (args.category as string) || null;
-      if (categoryFilter && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryFilter)) {
+      if (
+        categoryFilter &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(categoryFilter)
+      ) {
         const adminForCat = getSupabaseAdmin();
         const { data: catData } = await adminForCat
           .from('categories')
@@ -282,9 +289,7 @@ export async function executeToolCall(
       });
 
       const openNow = args.open_now === true;
-      const results = openNow
-        ? annotated.filter((result) => result.is_open === true)
-        : annotated;
+      const results = openNow ? annotated.filter((result) => result.is_open === true) : annotated;
 
       return JSON.stringify({ results });
     }
@@ -322,7 +327,9 @@ export async function executeToolCall(
 
     case 'get_categories': {
       const supabase = createSupabaseServerClient();
-      let query = supabase.from('categories').select('category_id, name_de, name_en, applicable_section');
+      let query = supabase
+        .from('categories')
+        .select('category_id, name_de, name_en, applicable_section');
 
       if (args.query && typeof args.query === 'string') {
         query = query.ilike('name_de', `%${args.query}%`);
@@ -351,7 +358,7 @@ export async function executeToolCall(
       }
 
       const listingType = args.listing_type as string;
-      if (!VALID_LISTING_TYPES.includes(listingType as typeof VALID_LISTING_TYPES[number])) {
+      if (!VALID_LISTING_TYPES.includes(listingType as (typeof VALID_LISTING_TYPES)[number])) {
         throw new Error('listing_type must be one of: food, store, ummah');
       }
 
@@ -376,49 +383,45 @@ export async function executeToolCall(
       // Use admin client for provider creation (bypasses RLS)
       const adminForCreate = getSupabaseAdmin();
       const providerId = crypto.randomUUID();
-      
-      const { error: createError } = await adminForCreate
-        .from('providers')
-        .insert({
-          provider_id: providerId,
-          listing_type: listingType,
-          provider_name: formData.title,
-          provider_description: formData.description || null,
-          address_city: formData.city || null,
-          address_street: formData.street || null,
-          address_zip: formData.zip || null,
-          address_country: formData.country || 'DE',
-          category_id: formData.category || null,
-          contact_email: formData.email || null,
-          contact_phone: formData.phone || null,
-          social_website: formData.website || null,
-          show_address: formData.showAddress !== false,
-          review_status: 'pending',
-          user_created_id: userId,
-          muslim_owned: formData.tags?.includes('muslim') || false,
-          has_prayer_space: formData.tags?.includes('prayer') || false,
-          family_friendly: formData.tags?.includes('family_friendly') || false,
-          women_friendly: formData.tags?.includes('women_friendly') || false,
-        });
+
+      const { error: createError } = await adminForCreate.from('providers').insert({
+        provider_id: providerId,
+        listing_type: listingType,
+        provider_name: formData.title,
+        provider_description: formData.description || null,
+        address_city: formData.city || null,
+        address_street: formData.street || null,
+        address_zip: formData.zip || null,
+        address_country: formData.country || 'DE',
+        category_id: formData.category || null,
+        contact_email: formData.email || null,
+        contact_phone: formData.phone || null,
+        social_website: formData.website || null,
+        show_address: formData.showAddress !== false,
+        review_status: 'pending',
+        user_created_id: userId,
+        muslim_owned: formData.tags?.includes('muslim') || false,
+        has_prayer_space: formData.tags?.includes('prayer') || false,
+        family_friendly: formData.tags?.includes('family_friendly') || false,
+        women_friendly: formData.tags?.includes('women_friendly') || false,
+      });
 
       if (createError) {
         throw new Error(`Registration failed: ${createError.message}`);
       }
 
       // Create primary location record (matches web form behavior)
-      const { error: locationError } = await adminForCreate
-        .from('locations')
-        .insert({
-          provider_id: providerId,
-          location_name: null,
-          address_street: formData.street || null,
-          address_zip: formData.zip || null,
-          address_city: formData.city || null,
-          address_country: formData.country || 'DE',
-          show_address: formData.showAddress !== false,
-          contact_phone: formData.phone || null,
-          is_primary: true,
-        });
+      const { error: locationError } = await adminForCreate.from('locations').insert({
+        provider_id: providerId,
+        location_name: null,
+        address_street: formData.street || null,
+        address_zip: formData.zip || null,
+        address_city: formData.city || null,
+        address_country: formData.country || 'DE',
+        show_address: formData.showAddress !== false,
+        contact_phone: formData.phone || null,
+        is_primary: true,
+      });
 
       if (locationError) {
         console.error('[Registration] Failed to create primary location:', locationError);
@@ -432,18 +435,19 @@ export async function executeToolCall(
         const noGambling = !!(args.no_gambling as boolean);
         const verificationMethod = (args.verification_method as string) || 'online';
         const hasCertificate = !!(args.has_certificate as boolean);
-        
-        const { error: extError } = await adminForCreate
-          .from(extTable)
-          .upsert({
+
+        const { error: extError } = await adminForCreate.from(extTable).upsert(
+          {
             provider_id: providerId,
             no_alcohol: noAlcohol,
             no_pork: noPork,
             no_gambling: noGambling,
             verification_method: verificationMethod,
             has_certificate: hasCertificate,
-          }, { onConflict: 'provider_id' });
-        
+          },
+          { onConflict: 'provider_id' },
+        );
+
         if (extError) {
           console.error(`[Registration] Failed to insert into ${extTable}:`, extError);
         }
@@ -459,7 +463,11 @@ export async function executeToolCall(
     case 'check_registration_status': {
       const checkName = args.name as string | undefined;
       const admin = getSupabaseAdmin();
-      let query = admin.from('providers').select('provider_name, review_status, created_at').eq('user_created_id', userId).order('created_at', { ascending: false });
+      let query = admin
+        .from('providers')
+        .select('provider_name, review_status, created_at')
+        .eq('user_created_id', userId)
+        .order('created_at', { ascending: false });
       if (checkName) {
         query = query.ilike('provider_name', `%${checkName}%`);
       }
@@ -507,7 +515,9 @@ export async function mapChatArgsToFormData(
         categoryId = catData[0].category_id;
       } else {
         // Category not found — throw clear error so LLM can suggest alternatives
-        throw new Error(`Kategorie "${categoryId}" existiert nicht. Bitte wähle eine gültige Kategorie aus der Liste.`);
+        throw new Error(
+          `Kategorie "${categoryId}" existiert nicht. Bitte wähle eine gültige Kategorie aus der Liste.`,
+        );
       }
     } catch (e) {
       if (e instanceof Error && e.message.startsWith('Kategorie')) throw e;

@@ -19,13 +19,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import type { User } from '@supabase/supabase-js';
-import type { ProviderFormData } from '@/providers/form-provider';
+import type { CreateProviderPayload } from '@/features/providers/services/create-provider.server';
 
 const ROOT = resolve(__dirname, '../../../');
 const readSrc = (p: string) => readFileSync(resolve(ROOT, p), 'utf-8');
 
-// ── Mocks for createProviderOrService ────────────────────────────────────────
+// ── Mocks for createProviderOrServiceServer (writes go through the admin client) ──
 
 const mockProviderInsert = vi.fn();
 const mockProviderDeleteEq = vi.fn();
@@ -85,11 +84,47 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
+/** Routes table access like the browser-client mock above; installed on the
+ * admin client for server-side creation calls. */
+function providerCreationFrom(table: string) {
+  if (table === 'providers') {
+    return {
+      insert: (...args: unknown[]) => mockProviderInsert(...args),
+      update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+      delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
+    };
+  }
+  if (table === 'categories') {
+    return {
+      select: () => ({ eq: () => ({ single: () => mockCategorySingle() }) }),
+    };
+  }
+  if (table === 'food_providers') {
+    return { upsert: (...args: unknown[]) => mockFoodExtUpsert(...args) };
+  }
+  if (table === 'store_providers') {
+    return { upsert: (...args: unknown[]) => mockStoreExtUpsert(...args) };
+  }
+  if (table === 'locations') {
+    return { insert: (...args: unknown[]) => mockLocationInsert(...args) };
+  }
+  if (table === 'provider_offers' || table === 'provider_needs') {
+    return {
+      delete: () => ({ eq: (...args: unknown[]) => mockRelationDeleteEq(...args) }),
+      insert: (...args: unknown[]) => mockRelationInsert(...args),
+    };
+  }
+  if (table === 'badge_types') {
+    return { select: () => ({ in: (...args: unknown[]) => mockBadgeTypeIn(...args) }) };
+  }
+  return { insert: vi.fn().mockResolvedValue({ error: null }) };
+}
+
 vi.mock('@/services/communityServices', () => ({
   createProviderCommunityServiceRelationship: vi.fn().mockResolvedValue({ success: true }),
 }));
 
-// ── Mocks for halal-gate ─────────────────────────────────────────────────────
+// ── Mocks for halal-gate + server-side creation ──────────────────────────────
 
 const mockAdminFrom = vi.fn();
 vi.mock('@/lib/supabase/admin', () => ({
@@ -102,7 +137,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
 }));
 
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import { createProviderOrServiceServer } from '@/features/providers/services/create-provider.server';
 import { checkHalalAttestation } from '@/services/admin/halal-gate';
 import { buildExtensionFieldsPayload } from '@/services/admin/providerEdit';
 import { computeHalalStars } from '@/utils/sectionBadges';
@@ -111,7 +146,10 @@ import { HalalAttestationFields } from '@/components/shared/HalalAttestationFiel
 
 const FOOD_CATEGORY = 'food-cat-1';
 
-const baseFormData: ProviderFormData = {
+const ownerActor = { userId: 'user-1', isOwner: true };
+const recommendActor = { userId: 'user-1', isOwner: false };
+
+const baseFormData: CreateProviderPayload = {
   creationMode: 'owner',
   entityType: 'provider',
   title: 'Test Restaurant',
@@ -131,7 +169,6 @@ const baseFormData: ProviderFormData = {
   email: '',
   offers_ids: [],
   needs_ids: [],
-  images: [],
   selectedCommunityServiceIds: [],
   tags: [],
   socialCategory: '',
@@ -142,13 +179,13 @@ const baseFormData: ProviderFormData = {
   no_gambling: true,
   verification_method: 'online',
   has_certificate: false,
-  certificate_file: null,
   certificate_url: '',
 };
 
 describe('C2: tri-state attestation round-trip (AC6.2)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAdminFrom.mockImplementation(providerCreationFrom);
     mockProviderInsert.mockResolvedValue({ error: null });
     mockProviderDeleteEq.mockResolvedValue({ error: null });
     mockCategorySingle.mockResolvedValue({ data: { applicable_section: 'food' }, error: null });
@@ -166,8 +203,10 @@ describe('C2: tri-state attestation round-trip (AC6.2)', () => {
     [{ no_alcohol: null, no_pork: null, no_gambling: null }],
     [{ no_alcohol: false, no_pork: false, no_gambling: false }],
   ])('writes extension row preserving true/false/NULL: %j', async (atts) => {
-    const user = { id: 'user-1' } as User;
-    await createProviderOrService({ ...baseFormData, ...atts }, user);
+    await createProviderOrServiceServer({
+      formData: { ...baseFormData, ...atts },
+      actor: ownerActor,
+    });
 
     expect(mockFoodExtUpsert).toHaveBeenCalledTimes(1);
     const ext = mockFoodExtUpsert.mock.calls[0][0];
@@ -177,17 +216,16 @@ describe('C2: tri-state attestation round-trip (AC6.2)', () => {
   });
 
   it('recommend submit preserves NULL (not sure) instead of coercing to false', async () => {
-    const user = { id: 'user-1' } as User;
-    await createProviderOrService(
-      {
+    await createProviderOrServiceServer({
+      formData: {
         ...baseFormData,
         creationMode: 'recommendation',
         no_alcohol: null,
         no_pork: null,
         no_gambling: null,
       },
-      user,
-    );
+      actor: recommendActor,
+    });
 
     const ext = mockFoodExtUpsert.mock.calls[0][0];
     expect(ext.no_alcohol).toBeNull();

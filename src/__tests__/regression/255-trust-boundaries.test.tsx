@@ -105,11 +105,50 @@ vi.mock('@/services/communityServices', () => ({
   createProviderCommunityServiceRelationship: vi.fn().mockResolvedValue({ success: true }),
 }));
 
+// Server-side creation writes go through the admin client.
+const mockAdminFrom = vi.fn();
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: () => ({ from: (table: string) => mockAdminFrom(table) }),
+}));
+
+/** Table routing for server-side provider creation, mirroring the browser mock. */
+function providerCreationFrom(table: string) {
+  if (table === 'providers') {
+    return {
+      insert: (...args: unknown[]) => mockProviderInsert(...args),
+      delete: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+    };
+  }
+  if (table === 'categories') {
+    return { select: () => ({ eq: () => ({ single: () => mockCategorySingle() }) }) };
+  }
+  if (table === 'food_providers' || table === 'store_providers') {
+    return { upsert: (...args: unknown[]) => mockExtUpsert(...args) };
+  }
+  if (table === 'locations') {
+    return { insert: (...args: unknown[]) => mockLocationInsert(...args) };
+  }
+  if (table === 'provider_offers' || table === 'provider_needs') {
+    return {
+      delete: () => ({ eq: (...args: unknown[]) => mockRelationDeleteEq(...args) }),
+      insert: (...args: unknown[]) => mockRelationInsert(...args),
+    };
+  }
+  if (table === 'badge_types') {
+    return { select: () => ({ in: (...args: unknown[]) => mockBadgeTypeIn(...args) }) };
+  }
+  return { insert: vi.fn().mockResolvedValue({ error: null }) };
+}
+
+const mockFetch = vi.fn();
+
 vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
 }));
 
 import { createProviderOrService } from '@/features/providers/services/mutations';
+import { createProviderOrServiceServer } from '@/features/providers/services/create-provider.server';
+import type { CreateProviderPayload } from '@/features/providers/services/create-provider.server';
 import { computeSealTier } from '@/features/providers/components/ProofTierCard';
 import { computeHalalStars } from '@/utils/sectionBadges';
 import {
@@ -165,8 +204,22 @@ function ownerFormData(over: Partial<ProviderFormData> = {}): ProviderFormData {
   };
 }
 
+/** Form data minus client-only File fields — what /api/providers forwards to
+ * createProviderOrServiceServer after uploads complete. */
+function serverPayload(over: Partial<CreateProviderPayload> = {}): CreateProviderPayload {
+  const data = { ...ownerFormData() } as Record<string, unknown>;
+  delete data.images;
+  delete data.certificate_file;
+  return { ...(data as CreateProviderPayload), ...over };
+}
+
 function resetMocks() {
   vi.clearAllMocks();
+  vi.stubGlobal('fetch', mockFetch);
+  mockFetch.mockResolvedValue(
+    new Response(JSON.stringify({ provider_id: 'p-1' }), { status: 200 }),
+  );
+  mockAdminFrom.mockImplementation(providerCreationFrom);
   mockProviderInsert.mockResolvedValue({ error: null });
   mockExtUpsert.mockResolvedValue({ error: null });
   mockCategorySingle.mockResolvedValue({ data: { applicable_section: 'food' }, error: null });
@@ -187,7 +240,7 @@ function resetMocks() {
 describe('A1: certificate upload and the gold-tier guard', () => {
   beforeEach(resetMocks);
 
-  it('uploads certificate_file and stores its public URL in the extension row', async () => {
+  it('uploads certificate_file client-side and sends its public URL to /api/providers', async () => {
     const cert = new File(['cert'], 'halal-cert.pdf', { type: 'application/pdf' });
 
     await createProviderOrService(
@@ -196,19 +249,18 @@ describe('A1: certificate upload and the gold-tier guard', () => {
     );
 
     expect(mockCertUpload).toHaveBeenCalledTimes(1);
-    const ext = mockExtUpsert.mock.calls[0][0];
-    expect(ext.certificate_url).toBe('https://cdn.example.com/certificates/cert.pdf');
-    expect(ext.has_certificate).toBe(true);
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body as string);
+    expect(body.certificate_url).toBe('https://cdn.example.com/certificates/cert.pdf');
+    expect(body.has_certificate).toBe(true);
   });
 
-  it('writes has_certificate false and certificate_url null when no file exists', async () => {
-    // A toggled flag with no file behind it must not mint a certificate claim.
-    await createProviderOrService(
-      ownerFormData({ certificate_file: null, has_certificate: true }),
-      user,
-    );
+  it('server: writes has_certificate false and certificate_url null when no file exists', async () => {
+    // A toggled flag with no uploaded URL behind it must not mint a certificate claim.
+    await createProviderOrServiceServer({
+      formData: serverPayload({ certificate_url: '', has_certificate: true }),
+      actor: { userId: 'user-1', isOwner: true },
+    });
 
-    expect(mockCertUpload).not.toHaveBeenCalled();
     const ext = mockExtUpsert.mock.calls[0][0];
     expect(ext.certificate_url).toBeNull();
     expect(ext.has_certificate).toBe(false);

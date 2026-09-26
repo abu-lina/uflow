@@ -1,36 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { CreateProviderPayload } from '@/features/providers/services/create-provider.server';
 
 const mockFrom = vi.fn();
-let mockInsertResult = { error: null };
-const mockInsert = vi.fn(() => mockInsertResult);
-const mockStorageFrom = vi.fn();
+const mockDeleteEq = vi.fn();
 
-vi.mock('@/lib/supabase/client', () => ({
-  supabase: {
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: () => ({
     from: (...args: unknown[]) => mockFrom(...args),
-    storage: {
-      from: (...args: unknown[]) => mockStorageFrom(...args),
-    },
-  },
+  }),
 }));
 
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import { createProviderOrServiceServer } from '@/features/providers/services/create-provider.server';
 
 function setupSupabaseMock() {
   mockFrom.mockImplementation((table: string) => {
     if (table === 'providers') {
-      return { insert: mockInsert };
-    }
-    if (table === 'locations') {
-      return { insert: mockInsert };
-    }
-    if (table === 'provider_offers') {
       return {
-        delete: () => ({ eq: async () => ({ error: null }) }),
         insert: async () => ({ error: null }),
+        delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
       };
     }
-    if (table === 'provider_needs') {
+    if (table === 'provider_offers' || table === 'provider_needs') {
       return {
         delete: () => ({ eq: async () => ({ error: null }) }),
         insert: async () => ({ error: null }),
@@ -58,15 +48,53 @@ function setupSupabaseMock() {
   });
 }
 
+function basePayload(over: Partial<CreateProviderPayload> = {}): CreateProviderPayload {
+  return {
+    creationMode: 'owner',
+    entityType: 'provider',
+    title: 'Test Provider',
+    category: 'cat-1',
+    description: 'A test provider',
+    isOnlineBusiness: false,
+    street: 'Teststr. 1',
+    zip: '10115',
+    city: 'Berlin',
+    country: 'DE',
+    latitude: null,
+    longitude: null,
+    showAddress: true,
+    website: '',
+    instagram: '',
+    phone: '+49 30 123456',
+    email: '',
+    offers_ids: [],
+    needs_ids: [],
+    selectedCommunityServiceIds: [],
+    tags: [],
+    socialCategory: '',
+    socialTitle: '',
+    socialDescription: '',
+    no_alcohol: false,
+    no_pork: false,
+    no_gambling: false,
+    verification_method: '',
+    has_certificate: false,
+    certificate_url: '',
+    ...over,
+  };
+}
+
+const ownerActor = { userId: 'user-1', isOwner: true };
+
 describe('providerService multi-location creation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockInsertResult = { error: null };
+    mockDeleteEq.mockResolvedValue({ error: null });
     setupSupabaseMock();
   });
 
   it('[post-fix PASSES] creates a primary location row after provider INSERT succeeds', async () => {
-    let insertCalls: { table: string; data: unknown }[] = [];
+    const insertCalls: { table: string; data: unknown }[] = [];
     mockFrom.mockImplementation((table: string) => {
       if (table === 'providers') {
         return {
@@ -74,6 +102,7 @@ describe('providerService multi-location creation', () => {
             insertCalls.push({ table, data });
             return { error: null };
           },
+          delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
         };
       }
       if (table === 'locations') {
@@ -84,13 +113,7 @@ describe('providerService multi-location creation', () => {
           },
         };
       }
-      if (table === 'provider_offers') {
-        return {
-          delete: () => ({ eq: async () => ({ error: null }) }),
-          insert: async () => ({ error: null }),
-        };
-      }
-      if (table === 'provider_needs') {
+      if (table === 'provider_offers' || table === 'provider_needs') {
         return {
           delete: () => ({ eq: async () => ({ error: null }) }),
           insert: async () => ({ error: null }),
@@ -117,43 +140,7 @@ describe('providerService multi-location creation', () => {
       };
     });
 
-    await createProviderOrService(
-      {
-        creationMode: 'owner',
-        entityType: 'provider',
-        title: 'Test Provider',
-        category: 'cat-1',
-        description: 'A test provider',
-        isOnlineBusiness: false,
-        street: 'Teststr. 1',
-        zip: '10115',
-        city: 'Berlin',
-        country: 'DE',
-        latitude: null,
-        longitude: null,
-        showAddress: true,
-        website: '',
-        instagram: '',
-        phone: '+49 30 123456',
-        email: '',
-        offers_ids: [],
-        needs_ids: [],
-        images: [],
-        selectedCommunityServiceIds: [],
-        tags: [],
-        socialCategory: '',
-        socialTitle: '',
-        socialDescription: '',
-        no_alcohol: false,
-        no_pork: false,
-        no_gambling: false,
-        verification_method: '',
-        has_certificate: false,
-        certificate_file: null,
-        certificate_url: '',
-      },
-      { id: 'user-1', email: 'test@test.de' } as never,
-    );
+    await createProviderOrServiceServer({ formData: basePayload(), actor: ownerActor });
 
     const locationInsert = insertCalls.find((c) => c.table === 'locations');
     expect(locationInsert).toBeDefined();
@@ -174,15 +161,10 @@ describe('providerService multi-location creation', () => {
       if (table === 'providers') {
         return {
           insert: () => ({ error: null }),
+          delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
         };
       }
-      if (table === 'provider_offers') {
-        return {
-          delete: () => ({ eq: async () => ({ error: null }) }),
-          insert: async () => ({ error: null }),
-        };
-      }
-      if (table === 'provider_needs') {
+      if (table === 'provider_offers' || table === 'provider_needs') {
         return {
           delete: () => ({ eq: async () => ({ error: null }) }),
           insert: async () => ({ error: null }),
@@ -209,43 +191,7 @@ describe('providerService multi-location creation', () => {
       };
     });
 
-    await createProviderOrService(
-      {
-        creationMode: 'owner',
-        entityType: 'provider',
-        title: 'Test Provider',
-        category: 'cat-1',
-        description: 'A test provider',
-        isOnlineBusiness: false,
-        street: 'Teststr. 1',
-        zip: '10115',
-        city: 'Berlin',
-        country: 'DE',
-        latitude: null,
-        longitude: null,
-        showAddress: true,
-        website: '',
-        instagram: '',
-        phone: '+49 30 123456',
-        email: '',
-        offers_ids: [],
-        needs_ids: [],
-        images: [],
-        selectedCommunityServiceIds: [],
-        tags: [],
-        socialCategory: '',
-        socialTitle: '',
-        socialDescription: '',
-        no_alcohol: false,
-        no_pork: false,
-        no_gambling: false,
-        verification_method: '',
-        has_certificate: false,
-        certificate_file: null,
-        certificate_url: '',
-      },
-      { id: 'user-1', email: 'test@test.de' } as never,
-    );
+    await createProviderOrServiceServer({ formData: basePayload(), actor: ownerActor });
 
     expect(lastLocationData).not.toBeNull();
     if (lastLocationData && Array.isArray(lastLocationData)) {
@@ -253,11 +199,12 @@ describe('providerService multi-location creation', () => {
     }
   });
 
-  it('[post-fix PASSES] throws error when location insert fails after provider insert', async () => {
+  it('[post-fix PASSES] throws and deletes the provider when location insert fails', async () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === 'providers') {
         return {
           insert: () => ({ error: null }),
+          delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
         };
       }
       if (table === 'locations') {
@@ -265,13 +212,7 @@ describe('providerService multi-location creation', () => {
           insert: () => ({ error: new Error('Location insert failed') }),
         };
       }
-      if (table === 'provider_offers') {
-        return {
-          delete: () => ({ eq: async () => ({ error: null }) }),
-          insert: async () => ({ error: null }),
-        };
-      }
-      if (table === 'provider_needs') {
+      if (table === 'provider_offers' || table === 'provider_needs') {
         return {
           delete: () => ({ eq: async () => ({ error: null }) }),
           insert: async () => ({ error: null }),
@@ -299,43 +240,8 @@ describe('providerService multi-location creation', () => {
     });
 
     await expect(
-      createProviderOrService(
-        {
-          creationMode: 'owner',
-          entityType: 'provider',
-          title: 'Test Provider',
-          category: 'cat-1',
-          description: '',
-          isOnlineBusiness: false,
-          street: 'Teststr. 1',
-          zip: '10115',
-          city: 'Berlin',
-          country: 'DE',
-          latitude: null,
-          longitude: null,
-          showAddress: true,
-          website: '',
-          instagram: '',
-          phone: '',
-          email: '',
-          offers_ids: [],
-          needs_ids: [],
-          images: [],
-          selectedCommunityServiceIds: [],
-          tags: [],
-          socialCategory: '',
-          socialTitle: '',
-          socialDescription: '',
-          no_alcohol: false,
-          no_pork: false,
-          no_gambling: false,
-          verification_method: '',
-          has_certificate: false,
-          certificate_file: null,
-          certificate_url: '',
-        },
-        { id: 'user-1', email: 'test@test.de' } as never,
-      ),
+      createProviderOrServiceServer({ formData: basePayload(), actor: ownerActor }),
     ).rejects.toThrow('Location insert failed');
+    expect(mockDeleteEq).toHaveBeenCalledWith('provider_id', expect.any(String));
   });
 });

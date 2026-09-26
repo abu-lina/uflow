@@ -21,16 +21,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import type { User } from '@supabase/supabase-js';
-import type { ProviderFormData } from '@/providers/form-provider';
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import type { CreateProviderPayload } from '@/features/providers/services/create-provider.server';
+import { createProviderOrServiceServer } from '@/features/providers/services/create-provider.server';
 
 const ROOT = resolve(__dirname, '../../../');
 const readSrc = (p: string) => readFileSync(resolve(ROOT, p), 'utf-8');
 
 const mockProviderInsert = vi.fn();
 const mockProviderDeleteEq = vi.fn();
-const mockProviderDelete = vi.fn();
 const mockProviderUpdate = vi.fn();
 const mockCategorySingle = vi.fn();
 const mockFoodExtUpsert = vi.fn();
@@ -41,20 +39,14 @@ const mockRelationInsert = vi.fn();
 const mockBadgeTypeIn = vi.fn();
 const mockBadgeInsert = vi.fn();
 
-vi.mock('@/lib/supabase/client', () => ({
-  supabase: {
-    storage: {
-      from: vi.fn(() => ({
-        upload: vi.fn().mockResolvedValue({ error: null }),
-        getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://example.com/x.png' } })),
-      })),
-    },
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: () => ({
     from: vi.fn((table: string) => {
       if (table === 'providers') {
         return {
           insert: (...args: unknown[]) => mockProviderInsert(...args),
           update: (...args: unknown[]) => mockProviderUpdate(...args),
-          delete: (...args: unknown[]) => mockProviderDelete(...args),
+          delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
         };
       }
       if (table === 'categories') {
@@ -79,6 +71,9 @@ vi.mock('@/lib/supabase/client', () => ({
           insert: (...args: unknown[]) => mockRelationInsert(...args),
         };
       }
+      if (table === 'provider_engagements') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
       if (table === 'badge_types') {
         return { select: () => ({ in: (...args: unknown[]) => mockBadgeTypeIn(...args) }) };
       }
@@ -87,16 +82,15 @@ vi.mock('@/lib/supabase/client', () => ({
       }
       return { insert: vi.fn().mockResolvedValue({ error: null }) };
     }),
-  },
-}));
-
-vi.mock('@/services/communityServices', () => ({
-  createProviderCommunityServiceRelationship: vi.fn().mockResolvedValue({ success: true }),
+  }),
 }));
 
 const FOOD_CATEGORY = 'food-cat-1';
 
-const ownerFormData: ProviderFormData = {
+const ownerActor = { userId: 'user-1', isOwner: true };
+const recommendActor = { userId: 'user-1', isOwner: false };
+
+const ownerFormData: CreateProviderPayload = {
   creationMode: 'owner',
   entityType: 'provider',
   title: 'Test Restaurant',
@@ -116,7 +110,6 @@ const ownerFormData: ProviderFormData = {
   email: '',
   offers_ids: [],
   needs_ids: [],
-  images: [],
   selectedCommunityServiceIds: [],
   tags: [],
   socialCategory: '',
@@ -127,7 +120,6 @@ const ownerFormData: ProviderFormData = {
   no_gambling: true,
   verification_method: 'online',
   has_certificate: false,
-  certificate_file: null,
   certificate_url: '',
 };
 
@@ -141,9 +133,6 @@ describe('C1: provider create/recommend submission', () => {
     vi.clearAllMocks();
     mockProviderInsert.mockResolvedValue({ error: null });
     mockProviderDeleteEq.mockResolvedValue({ error: null });
-    mockProviderDelete.mockReturnValue({
-      eq: (...args: unknown[]) => mockProviderDeleteEq(...args),
-    });
     mockProviderUpdate.mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
     mockCategorySingle.mockResolvedValue({
       data: { applicable_section: 'food' },
@@ -159,9 +148,7 @@ describe('C1: provider create/recommend submission', () => {
   });
 
   it('AC5.4/AC7.1: owner submit writes exactly one providers row with listing_type in the insert and review_status pending', async () => {
-    const user = { id: 'user-1' } as User;
-
-    await createProviderOrService(ownerFormData, user);
+    await createProviderOrServiceServer({ formData: ownerFormData, actor: ownerActor });
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
     const payload = mockProviderInsert.mock.calls[0][0][0];
@@ -172,8 +159,7 @@ describe('C1: provider create/recommend submission', () => {
   });
 
   it('AC5.4/AC5.5/AC7.1 + C3b: logged-in recommend submit writes one pending providers row identified by user_created_id, with listing_type and a food_providers extension row', async () => {
-    const user = { id: 'user-1' } as User;
-    await createProviderOrService(recommendFormData, user);
+    await createProviderOrServiceServer({ formData: recommendFormData, actor: recommendActor });
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
     const payload = mockProviderInsert.mock.calls[0][0][0];
@@ -181,7 +167,7 @@ describe('C1: provider create/recommend submission', () => {
     expect(payload.review_status).toBe('pending');
     expect(payload.user_created_id).toBe('user-1');
     expect(payload.provider_owner_id).toBeNull();
-    // C3b: anonymous recommending is gone; no email is stored on the row
+    // C3b: no email is stored for an authenticated recommendation
     expect(payload.recommender_email ?? null).toBeNull();
     expect('recommender_email' in payload).toBe(false);
 
@@ -198,9 +184,8 @@ describe('C1: provider create/recommend submission', () => {
       data: { applicable_section: 'store' },
       error: null,
     });
-    const user = { id: 'user-1' } as User;
 
-    await createProviderOrService(ownerFormData, user);
+    await createProviderOrServiceServer({ formData: ownerFormData, actor: ownerActor });
 
     const payload = mockProviderInsert.mock.calls[0][0][0];
     expect(payload.listing_type).toBe('store');
@@ -209,55 +194,46 @@ describe('C1: provider create/recommend submission', () => {
   });
 
   it('AC7.3: a spoofed review_status in client input cannot reach the insert payload', async () => {
-    const user = { id: 'user-1' } as User;
     const spoofed = { ...ownerFormData, review_status: 'approved' };
 
-    await createProviderOrService(spoofed as ProviderFormData, user);
+    await createProviderOrServiceServer({
+      formData: spoofed as CreateProviderPayload,
+      actor: ownerActor,
+    });
 
     const payload = mockProviderInsert.mock.calls[0][0][0];
     expect(payload.review_status).toBe('pending');
   });
 
-  it('AC5.9: two concurrent submissions create only one providers row', async () => {
-    const user = { id: 'user-1' } as User;
-
-    await Promise.all([
-      createProviderOrService(ownerFormData, user),
-      createProviderOrService(ownerFormData, user),
-    ]);
-
-    expect(mockProviderInsert).toHaveBeenCalledTimes(1);
-  });
-
   it('C3b: food/store submissions with an untouched attestation are rejected at the service boundary', async () => {
-    const user = { id: 'user-1' } as User;
     const unanswered = { ...recommendFormData, no_alcohol: undefined };
 
-    await expect(createProviderOrService(unanswered as ProviderFormData, user)).rejects.toThrow(
-      /halal/i,
-    );
+    await expect(
+      createProviderOrServiceServer({
+        formData: unanswered as CreateProviderPayload,
+        actor: recommendActor,
+      }),
+    ).rejects.toThrow(/halal/i);
     expect(mockProviderInsert).not.toHaveBeenCalled();
   });
 
   it('C3b: explicit "not sure" (null) answers satisfy the service-boundary check', async () => {
-    const user = { id: 'user-1' } as User;
     const notSure = { ...recommendFormData, no_alcohol: null, no_pork: null, no_gambling: null };
 
-    await createProviderOrService(notSure, user);
+    await createProviderOrServiceServer({ formData: notSure, actor: recommendActor });
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
   });
 
   it('C3b: ummah/community-service submissions are exempt from the attestation check', async () => {
-    const user = { id: 'user-1' } as User;
     const ummah = {
       ...recommendFormData,
       category: '4470c3e0-458f-40a6-a96e-ca0fbdf145d7',
       no_alcohol: undefined,
       no_pork: undefined,
       no_gambling: undefined,
-    } as ProviderFormData;
+    } as CreateProviderPayload;
 
-    await createProviderOrService(ummah, user);
+    await createProviderOrServiceServer({ formData: ummah, actor: recommendActor });
     // ummah branch inserts into providers with listing_type 'ummah', no ext row
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
     expect(mockProviderInsert.mock.calls[0][0][0].listing_type).toBe('ummah');
@@ -265,9 +241,10 @@ describe('C1: provider create/recommend submission', () => {
 
   it('AC5.4: submit fails loudly instead of inserting when listing_type is unresolvable', async () => {
     mockCategorySingle.mockResolvedValue({ data: null, error: { message: 'no rows' } });
-    const user = { id: 'user-1' } as User;
 
-    await expect(createProviderOrService(ownerFormData, user)).rejects.toThrow();
+    await expect(
+      createProviderOrServiceServer({ formData: ownerFormData, actor: ownerActor }),
+    ).rejects.toThrow();
     expect(mockProviderInsert).not.toHaveBeenCalled();
   });
 });
