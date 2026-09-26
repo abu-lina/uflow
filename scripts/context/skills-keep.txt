@@ -1,0 +1,100 @@
+# Curated skill catalog for this project.
+#
+# Every SKILL.md discovered under a skills root has its name and description
+# injected into the system prompt of EVERY session. With 838 skills installed
+# that was ~69k tokens of fixed overhead before the first user message.
+#
+# This file is the allowlist. Skills listed here stay active; everything else
+# is archived (moved, not deleted) to ~/.cursor/skills-archive.
+#
+# Selection criteria, in order:
+#   1. Matches the actual stack in package.json (Next.js App Router, React,
+#      TypeScript, Tailwind, MUI, Supabase/Postgres, TanStack Query, next-intl,
+#      Vitest, Playwright, Testing Library, Zod).
+#   2. Matches the agent workflow in .devin/skills/orchestrator/SKILL.md
+#      (worktrees, subagent dispatch, phase gating, plan/spec docs).
+#   3. Cross-cutting engineering judgment that applies to most changes.
+#
+# Excluded on purpose: every other-language/other-cloud cluster (Azure SDK,
+# .NET, Java, Rust, Go, Python web, mobile/native, Unity/Unreal), offensive
+# security and pentest tooling, and the SaaS-connector long tail. Restore any of
+# them with: scripts/context/archive-skills.sh --restore <name>
+#
+# Lines starting with # are comments. One skill directory name per line.
+
+# --- Framework and language (stack: next, react, typescript, tailwind) ---
+nextjs-app-router-patterns
+nextjs-best-practices
+nextjs-supabase-auth
+react-patterns
+react-best-practices
+react-state-management
+react-ui-patterns
+typescript-advanced-types
+typescript-expert
+tailwind-patterns
+tailwind-design-system
+modern-javascript-patterns
+nodejs-best-practices
+i18n-localization
+
+# --- Data layer (stack: @supabase/ssr, @supabase/supabase-js, Postgres) ---
+postgres-best-practices
+postgresql
+supabase-automation
+sql-optimization-patterns
+database-migration
+
+# --- Testing (stack: vitest, @playwright/test, @testing-library/react) ---
+javascript-testing-patterns
+e2e-testing-patterns
+playwright-skill
+test-driven-development
+
+# --- Quality, review, debugging ---
+systematic-debugging
+debugging-strategies
+find-bugs
+error-handling-patterns
+verification-before-completion
+code-reviewer
+
+# --- Security (web app threat surface only) ---
+frontend-security-coder
+backend-security-coder
+api-security-best-practices
+
+# --- Agent workflow (orchestrator pipeline: worktrees, subagents, gates) ---
+writing-plans
+executing-plans
+brainstorming
+using-git-worktrees
+finishing-a-development-branch
+dispatching-parallel-agents
+subagent-driven-development
+requesting-code-review
+receiving-code-review
+context-window-management
+writing-skills
+
+# --- Git and PR ---
+commit
+create-pr
+address-github-comments
+
+# --- UI, accessibility, performance (eslint-plugin-jsx-a11y is in devDeps) ---
+frontend-design
+web-design-guidelines
+wcag-audit-patterns
+web-performance-optimization
+
+# --- API surface (next-swagger-doc, swagger-ui-react are in deps) ---
+api-patterns
+
+# --- Discovery surface (uflow is a public directory product) ---
+seo-fundamentals
+schema-markup
+programmatic-seo
+
+# --- Integrations actually in use ---
+notion-automation
