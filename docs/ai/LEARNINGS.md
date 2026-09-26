@@ -101,3 +101,9 @@ Older entries live in:
 
 - [2026-Q3](learnings-archive/2026-Q3.md)
 - [2026-Q2](learnings-archive/2026-Q2.md)
+
+## Archive
+
+Older entries live in:
+
+- [2026-Q3](learnings-archive/2026-Q3.md)
