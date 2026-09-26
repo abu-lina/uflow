@@ -34,6 +34,7 @@
     "lint:staged": "lint-staged",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "context:baseline": "node scripts/context/context-baseline.mjs",
     "format:tailwind": "prettier --plugin-search-dir=. --write 'src/**/*.{js,jsx,ts,tsx,mdx}'",
     "test": "vitest",
     "test:watch": "vitest --watch",

@@ -8,6 +8,16 @@ After each build chunk: review, then test, then **capture one learning**.
 - Run `@capture-learning.md` after review/test. The AI derives the learning from recent context (diffs, test results, review feedback); no paste required.
 - Persist the output: append the learning entry to `docs/ai/LEARNINGS.md` and apply any proposed diff to the right place (Notion task, rule, command, or agent) after you review it.
 - Do not consider the chunk done until at least one learning is captured and persisted (or explicitly "nothing to capture this time").
+- `LEARNINGS.md` keeps only the 10 newest entries; rotate with `node scripts/context/rotate-learnings.mjs`.
+
+## Never read large files whole
+
+Reading one of these whole can eat the remaining context window. Use `grep` with a narrow pattern, or `read` with `offset`/`limit`:
+
+- `package-lock.json`, `tsconfig.tsbuildinfo`, `CHANGELOG.md`, `test_results.log`, `joinhalal.log`, `delivery-menus.log`, `docs/ai/LEARNINGS.md`, every file in `.github/agents/` and `docs/ai/learnings-archive/`
+- Any file over ~32 KB, and anything under `node_modules/`, `.next/`, `coverage/`, `agent-output/`
+
+Prefer `grep` over `read` when looking for a specific symbol or string.
 
 ## Branch-first rule (Plan 172 learning)
 

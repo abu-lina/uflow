@@ -94,12 +94,12 @@ Multi-ticket: each ticket gets its own worktree. Fetch main before each. Work th
 Diagnose -> [Gate: confirm hypotheses] -> Fix -> Code Review -> Done
 ```
 
-| Phase           | Subagent                        | Skills                   | What it does                                                          |
-| --------------- | ------------------------------- | ------------------------ | --------------------------------------------------------------------- |
-| **Diagnose**    | Foreground (expensive)          | `diagnosing-bugs`        | Build feedback loop, reproduce, minimize, generate ranked hypotheses. |
-| **Fix**         | Background worker               | `diagnosing-bugs`, `tdd` | Instrument, fix with regression test, cleanup.                        |
-| **Code Review** | Foreground (expensive)          | `code-review`            | Two-axis review.                                                      |
-| **Done**        | (orchestrator)                  |                          | Update tracking file, capture learning.                               |
+| Phase           | Subagent               | Skills                   | What it does                                                          |
+| --------------- | ---------------------- | ------------------------ | --------------------------------------------------------------------- |
+| **Diagnose**    | Foreground (expensive) | `diagnosing-bugs`        | Build feedback loop, reproduce, minimize, generate ranked hypotheses. |
+| **Fix**         | Background worker      | `diagnosing-bugs`, `tdd` | Instrument, fix with regression test, cleanup.                        |
+| **Code Review** | Foreground (expensive) | `code-review`            | Two-axis review.                                                      |
+| **Done**        | (orchestrator)         |                          | Update tracking file, capture learning.                               |
 
 ---
 
@@ -109,12 +109,12 @@ Diagnose -> [Gate: confirm hypotheses] -> Fix -> Code Review -> Done
 Grill -> Implement -> Code Review -> Done
 ```
 
-| Phase           | Subagent       | Skills                        | What it does                                                          |
-| --------------- | -------------- | ----------------------------- | --------------------------------------------------------------------- |
+| Phase           | Subagent               | Skills                        | What it does                                                          |
+| --------------- | ---------------------- | ----------------------------- | --------------------------------------------------------------------- |
 | **Grill**       | Foreground (expensive) | `grilling`, `codebase-design` | Clarify scope, constraints, what must NOT change.                     |
 | **Implement**   | Background worker      | `tdd`                         | Characterization tests first, then refactor, verify tests still pass. |
 | **Code Review** | Foreground (expensive) | `code-review`                 | Review for behavior preservation, no scope creep.                     |
-| **Done**        | (orchestrator) |                               | Update tracking file, capture learning.                               |
+| **Done**        | (orchestrator)         |                               | Update tracking file, capture learning.                               |
 
 ---
 
@@ -124,12 +124,12 @@ Grill -> Implement -> Code Review -> Done
 Grill -> Implement -> Code Review -> Done
 ```
 
-| Phase           | Subagent       | Skills        | What it does                                             |
-| --------------- | -------------- | ------------- | -------------------------------------------------------- |
+| Phase           | Subagent               | Skills        | What it does                                             |
+| --------------- | ---------------------- | ------------- | -------------------------------------------------------- |
 | **Grill**       | Foreground (expensive) | `grilling`    | Pin down: what changes, what stays, acceptance criteria. |
 | **Implement**   | Background worker      | `tdd`         | Update existing tests, write new edge-case tests.        |
 | **Code Review** | Foreground (expensive) | `code-review` | Two-axis review.                                         |
-| **Done**        | (orchestrator) |               | Update tracking file, capture learning.                  |
+| **Done**        | (orchestrator)         |               | Update tracking file, capture learning.                  |
 
 ---
 
@@ -139,10 +139,10 @@ Grill -> Implement -> Code Review -> Done
 Fix -> Done
 ```
 
-| Phase    | Subagent       | Skills                   | What it does                                                        |
-| -------- | -------------- | ------------------------ | ------------------------------------------------------------------- |
+| Phase    | Subagent          | Skills                   | What it does                                                        |
+| -------- | ----------------- | ------------------------ | ------------------------------------------------------------------- |
 | **Fix**  | Background worker | `diagnosing-bugs`, `tdd` | Reproduce, regression test first, minimal fix, run test suite.      |
-| **Done** | (orchestrator) |                          | Update tracking file, capture learning. Push/deploy is user's call. |
+| **Done** | (orchestrator)    |                          | Update tracking file, capture learning. Push/deploy is user's call. |
 
 ---
 
@@ -154,11 +154,11 @@ Research -> Report -> Done
 
 No worktree needed.
 
-| Phase        | Subagent       | Skills     | What it does                                                             |
-| ------------ | -------------- | ---------- | ------------------------------------------------------------------------ |
+| Phase        | Subagent          | Skills     | What it does                                                             |
+| ------------ | ----------------- | ---------- | ------------------------------------------------------------------------ |
 | **Research** | Background worker | `research` | Investigate against primary sources, write findings to Markdown in repo. |
-| **Report**   | (orchestrator) |            | Present findings to user.                                                |
-| **Done**     | (orchestrator) |            | If actionable work surfaces, ask user to start a new request.            |
+| **Report**   | (orchestrator)    |            | Present findings to user.                                                |
+| **Done**     | (orchestrator)    |            | If actionable work surfaces, ask user to start a new request.            |
 
 ---
 
@@ -206,27 +206,27 @@ Use `is_background: false` for judgment phases (Grill, Diagnose, Code Review).
 
 Dispatch subagents at the cheapest tier that matches the phase's judgment requirements.
 
-| Tier | When to use | Subagent type |
-| --- | --- | --- |
-| **Foreground** | Phases requiring reasoning, user interaction, or quality gates | `is_background: false` |
-| **Background** | Execution phases following an existing spec | `is_background: true`, then `read_subagent` when done |
-| **None** | Orchestrator-only work (spec writing, tracking, tickets) | No subagent |
+| Tier           | When to use                                                    | Subagent type                                         |
+| -------------- | -------------------------------------------------------------- | ----------------------------------------------------- |
+| **Foreground** | Phases requiring reasoning, user interaction, or quality gates | `is_background: false`                                |
+| **Background** | Execution phases following an existing spec                    | `is_background: true`, then `read_subagent` when done |
+| **None**       | Orchestrator-only work (spec writing, tracking, tickets)       | No subagent                                           |
 
 ### Phase-to-tier mapping
 
-| Phase | Tier | Rationale |
-| --- | --- | --- |
-| Grill | Foreground | Needs user interaction, high judgment |
-| Diagnose | Foreground | Needs reasoning, hypothesis generation |
-| Code Review | Foreground | Quality gate, needs deep analysis |
-| Implement | Background | Follows spec, execution-heavy |
-| Fix | Background | Follows diagnosis, execution-heavy |
-| QA | Background | Runs test suite, verification |
-| Research | Background | Investigation, no user interaction needed |
-| Spec writing | None | Orchestrator writes directly |
-| Ticket writing | None | Orchestrator writes directly |
-| Done | None | Orchestrator updates tracking file |
-| Report | None | Orchestrator presents findings directly |
+| Phase          | Tier       | Rationale                                 |
+| -------------- | ---------- | ----------------------------------------- |
+| Grill          | Foreground | Needs user interaction, high judgment     |
+| Diagnose       | Foreground | Needs reasoning, hypothesis generation    |
+| Code Review    | Foreground | Quality gate, needs deep analysis         |
+| Implement      | Background | Follows spec, execution-heavy             |
+| Fix            | Background | Follows diagnosis, execution-heavy        |
+| QA             | Background | Runs test suite, verification             |
+| Research       | Background | Investigation, no user interaction needed |
+| Spec writing   | None       | Orchestrator writes directly              |
+| Ticket writing | None       | Orchestrator writes directly              |
+| Done           | None       | Orchestrator updates tracking file        |
+| Report         | None       | Orchestrator presents findings directly   |
 
 ## Push and PR
 
@@ -253,6 +253,8 @@ git worktree remove "../uflow-wt/<ID>-<slug>"
 8. **One request at a time.** New work goes under `## Follow-up requests` in the tracking file.
 9. **Verify DB schema from Supabase, not local files.** When touching data validation, enums, or constraints.
 10. **Capture learnings.** After review and test, append to `docs/ai/LEARNINGS.md`.
+11. **Carry forward only the tracking file.** Never hold a subagent's raw output, raw diffs, or full test logs in the router's own context; distill reports into the tracking file, then drop them.
+12. **Overflow = write and resume.** If the router's context fills, write state to the tracking file and resume via `/orchestrator resume <ID>`; do not keep accumulating.
 
 ## The orchestrator does NOT
 
