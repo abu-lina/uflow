@@ -394,9 +394,11 @@ async function doCreateProviderOrService(
       const extTable = resolvedListingType === 'food' ? 'food_providers' : 'store_providers';
       const extPayload: Record<string, unknown> = {
         provider_id: generatedProviderId,
-        no_alcohol: formData.no_alcohol || false,
-        no_pork: formData.no_pork || false,
-        no_gambling: formData.no_gambling || false,
+        // Tri-state (#415): true=yes, false=submitter said no, null=not sure.
+        // NULL must survive so reviewers can triage "no" vs "unknown".
+        no_alcohol: formData.no_alcohol ?? null,
+        no_pork: formData.no_pork ?? null,
+        no_gambling: formData.no_gambling ?? null,
         verification_method: formData.verification_method || 'online',
         has_certificate: formData.has_certificate || false,
         certificate_url: formData.certificate_url || null,

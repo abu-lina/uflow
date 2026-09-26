@@ -83,10 +83,11 @@ export interface Provider {
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
   // From food_providers extension table (joined in search queries)
-  no_alcohol?: boolean;
-  no_pork?: boolean;
+  // Tri-state (#415): true = attested, false = declared non-compliant, null = not sure
+  no_alcohol?: boolean | null;
+  no_pork?: boolean | null;
   // From store_providers extension table (joined in search queries)
-  no_gambling?: boolean;
+  no_gambling?: boolean | null;
   opening_hours?: OpeningHours | null;
   food_menu_items?: FoodMenuItem[];
   locations?: Location[];

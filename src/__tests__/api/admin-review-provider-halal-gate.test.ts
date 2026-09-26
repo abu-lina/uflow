@@ -94,6 +94,10 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
       allAttested: false,
       missing: ['no_alcohol', 'no_pork'],
       missingLabels: ['Kein Alkohol', 'Kein verbotenes Fleisch'],
+      denied: ['no_alcohol'],
+      deniedLabels: ['Kein Alkohol'],
+      unanswered: ['no_pork'],
+      unansweredLabels: ['Kein verbotenes Fleisch'],
       sourceTable: 'food_providers',
     });
 
@@ -172,6 +176,10 @@ describe('PATCH /api/admin/review-provider — halal attestation gate', () => {
       allAttested: false,
       missing: ['no_alcohol', 'no_pork', 'no_gambling'],
       missingLabels: ['Kein Alkohol', 'Kein verbotenes Fleisch', 'Kein Glücksspiel'],
+      denied: ['no_alcohol'],
+      deniedLabels: ['Kein Alkohol'],
+      unanswered: ['no_pork', 'no_gambling'],
+      unansweredLabels: ['Kein verbotenes Fleisch', 'Kein Glücksspiel'],
       sourceTable: 'food_providers',
     });
 

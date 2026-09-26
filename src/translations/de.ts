@@ -1219,4 +1219,32 @@ export const de = {
     listViewLabel: 'Liste',
     mapViewLabel: 'Karte',
   },
+  // #415: tri-state halal attestation (yes/no/not sure -> true/false/NULL)
+  halal: {
+    attestation: {
+      sectionTitle: 'Halal Compliance',
+      recommendDescription: 'Was weißt du über diesen Anbieter?',
+      noAlcohol: {
+        label: 'Kein Alkohol',
+        desc: 'Wird kein Alkohol verarbeitet, verkauft oder angeboten?',
+      },
+      noPork: {
+        label: 'Kein verbotenes Fleisch',
+        desc: 'Wird kein Schweinefleisch oder anderes verbotenes Fleisch verarbeitet, verkauft oder angeboten?',
+      },
+      noGambling: {
+        label: 'Kein Glücksspiel',
+        desc: 'Werden keine Glücksspiele oder Wetten angeboten?',
+      },
+      answer: {
+        yes: 'Ja',
+        no: 'Nein',
+        notSure: 'Nicht sicher',
+      },
+    },
+    admin: {
+      declaredNonCompliant: 'Als nicht konform angegeben',
+      unanswered: 'Nicht beantwortet',
+    },
+  },
 } as const;

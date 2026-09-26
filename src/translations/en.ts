@@ -1113,7 +1113,7 @@ export const en = {
       whatIsThis: 'How do we check?',
       explanation:
         "Every listing on Ummah Flow meets our halal requirements. The trust level shows how thoroughly we've confirmed this.",
-      pendingReview: 'This provider\'s halal status is pending review by our team.',
+      pendingReview: "This provider's halal status is pending review by our team.",
     },
     trustBadges: {
       muslimOwned: 'Muslim',
@@ -1199,5 +1199,33 @@ export const en = {
     switchToMap: 'Switch to map view',
     listViewLabel: 'List',
     mapViewLabel: 'Map',
+  },
+  // #415: tri-state halal attestation (yes/no/not sure -> true/false/NULL)
+  halal: {
+    attestation: {
+      sectionTitle: 'Halal compliance',
+      recommendDescription: 'What do you know about this provider?',
+      noAlcohol: {
+        label: 'No alcohol',
+        desc: 'Is no alcohol processed, sold or offered?',
+      },
+      noPork: {
+        label: 'No prohibited meat',
+        desc: 'Is no pork or other prohibited meat processed, sold or offered?',
+      },
+      noGambling: {
+        label: 'No gambling',
+        desc: 'Are no gambling or betting services offered?',
+      },
+      answer: {
+        yes: 'Yes',
+        no: 'No',
+        notSure: 'Not sure',
+      },
+    },
+    admin: {
+      declaredNonCompliant: 'Declared non-compliant',
+      unanswered: 'Not answered',
+    },
   },
 } as const;

@@ -100,9 +100,18 @@ export async function PATCH(request: Request) {
     if (validatedData.reviewStatus === 'approved') {
       const attestation = await checkHalalAttestation(validatedData.providerId);
       if (!attestation.allAttested) {
+        // Distinguish "submitter said no" from "not answered" so reviewers can
+        // triage differently (#415).
+        const detailParts: string[] = [];
+        if (attestation.deniedLabels.length > 0) {
+          detailParts.push(`Declared non-compliant: ${attestation.deniedLabels.join(', ')}`);
+        }
+        if (attestation.unansweredLabels.length > 0) {
+          detailParts.push(`Not answered: ${attestation.unansweredLabels.join(', ')}`);
+        }
         return NextResponse.json(
           {
-            error: `Cannot approve: halal attestation incomplete. Missing: ${attestation.missingLabels.join(', ')}`,
+            error: `Cannot approve: halal attestation incomplete. ${detailParts.join('. ')}`,
           },
           { status: 422 },
         );

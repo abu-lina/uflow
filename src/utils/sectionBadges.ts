@@ -8,9 +8,9 @@
 interface HalalStarsInput {
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
-  no_alcohol?: boolean;
-  no_pork?: boolean;
-  no_gambling?: boolean;
+  no_alcohol?: boolean | null;
+  no_pork?: boolean | null;
+  no_gambling?: boolean | null;
 }
 
 interface BarakahBadgeInput {
@@ -47,7 +47,9 @@ export function computeHalalStars(provider: HalalStarsInput): 0 | 1 | 2 | 3 | 4 
   // When attestation data is absent (all undefined, e.g. list views that don't
   // join food_providers), fall through to show stars based on verification_method.
   const attestationProvided =
-    provider.no_alcohol !== undefined || provider.no_pork !== undefined || provider.no_gambling !== undefined;
+    provider.no_alcohol !== undefined ||
+    provider.no_pork !== undefined ||
+    provider.no_gambling !== undefined;
   if (attestationProvided) {
     const hasAttestation =
       Boolean(provider.no_alcohol) || Boolean(provider.no_pork) || Boolean(provider.no_gambling);

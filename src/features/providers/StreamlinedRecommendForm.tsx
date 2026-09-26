@@ -15,6 +15,7 @@ import { trackEvent } from '@/lib/analytics/plausible';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
 import { RecommendSuccessScreen } from '@/components/shared/RecommendSuccessScreen';
+import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
@@ -1605,7 +1606,27 @@ export function StreamlinedRecommendForm({
         </div>
       </div>
 
-      {/* Section 3: User Email - Only show for anonymous users */}
+      {/* Section 3: Halal attestation (#415) - same questions as the owner flow */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-lg font-semibold text-content-heading">
+            {t('halal.attestation.sectionTitle')}
+          </h2>
+          <p className="text-base text-content-muted">
+            {t('halal.attestation.recommendDescription')}
+          </p>
+        </div>
+        <HalalAttestationFields
+          values={{
+            no_alcohol: contextFormData.no_alcohol,
+            no_pork: contextFormData.no_pork,
+            no_gambling: contextFormData.no_gambling,
+          }}
+          onChange={(field, value) => updateFormData({ [field]: value })}
+        />
+      </div>
+
+      {/* Section 4: User Email - Only show for anonymous users */}
       {!user && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
@@ -1665,7 +1686,7 @@ export function StreamlinedRecommendForm({
         </div>
       )}
 
-      {/* Section 4: Message (Optional) */}
+      {/* Section 5: Message (Optional) */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="text-lg font-semibold text-content-heading">

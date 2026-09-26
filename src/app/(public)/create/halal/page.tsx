@@ -9,6 +9,7 @@ import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { StepIndicator } from '@/components/shared/StepIndicator';
+import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -45,8 +46,6 @@ export default function HalalPage() {
   }
 
   const handleSave = () => router.push('/create/media');
-  const toggleAtt = (field: 'no_alcohol' | 'no_pork' | 'no_gambling') =>
-    updateFormData({ [field]: !formData[field] });
   const setVer = (m: 'online' | 'onsite') => updateFormData({ verification_method: m });
   const toggleCert = () => {
     const nv = !formData.has_certificate;
@@ -61,24 +60,6 @@ export default function HalalPage() {
     updateFormData({ certificate_file: null, has_certificate: false, certificate_url: '' });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
-
-  const attItems = [
-    {
-      key: 'no_alcohol' as const,
-      label: 'Kein Alkohol',
-      desc: 'Wir verarbeiten, verkaufen oder bieten keinen Alkohol an',
-    },
-    {
-      key: 'no_pork' as const,
-      label: 'Kein verbotenes Fleisch',
-      desc: 'Wir verarbeiten, verkaufen oder bieten kein Schweinefleisch oder anderes verbotenes Fleisch an',
-    },
-    {
-      key: 'no_gambling' as const,
-      label: 'Kein Glücksspiel',
-      desc: 'Wir bieten keine Glücksspiele oder Wetten an',
-    },
-  ];
 
   return (
     <ScrollablePageLayout>
@@ -100,33 +81,14 @@ export default function HalalPage() {
               Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder
               anbietest?
             </p>
-            <div className="flex flex-col gap-3">
-              {attItems.map((item) => {
-                const ch = formData[item.key];
-                return (
-                  <button
-                    key={item.key}
-                    className={`flex w-full items-start gap-4 rounded-2xl border-2 px-4 py-4 text-left transition-all ${ch ? 'border-primary bg-primary/5' : 'border-[#E5E5E5] bg-white'}`}
-                    type="button"
-                    onClick={() => toggleAtt(item.key)}
-                  >
-                    <div
-                      className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border-2 transition-colors ${ch ? 'border-primary bg-primary text-white' : 'border-[#999999] bg-white'}`}
-                    >
-                      {ch && <Icon className="h-4 w-4" icon="material-symbols:check" />}
-                    </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span
-                        className={`text-sm font-semibold ${ch ? 'text-primary' : 'text-[#272727]'}`}
-                      >
-                        {item.label}
-                      </span>
-                      <span className="text-xs leading-relaxed text-[#7A7A7A]">{item.desc}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            <HalalAttestationFields
+              values={{
+                no_alcohol: formData.no_alcohol,
+                no_pork: formData.no_pork,
+                no_gambling: formData.no_gambling,
+              }}
+              onChange={(field, value) => updateFormData({ [field]: value })}
+            />
           </div>
 
           <div className="flex flex-col gap-4">
@@ -238,19 +200,6 @@ export default function HalalPage() {
                 )}
               </div>
             )}
-          </div>
-
-          <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
-            <div className="flex items-start gap-3">
-              <Icon
-                className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600"
-                icon="material-symbols:info-outline"
-              />
-              <p className="text-xs leading-relaxed text-blue-700">
-                Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online =
-                Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.
-              </p>
-            </div>
           </div>
         </div>
       </PageContent>
