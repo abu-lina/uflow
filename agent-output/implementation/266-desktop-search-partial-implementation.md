@@ -19,9 +19,10 @@ Status: Active
 
 ## Changelog
 
-| Timestamp (UTC)   | Agent       | Change                                                                                                                                                                                                                                                               |
-| ----------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-26T21:27Z | Implementer | M2–M7 implemented. Migration 134 validated against local PG 17.6. Two defects found and fixed during implementation (see Defects Found During Implementation). Version bumped 0.15.18 → 0.15.20 after `git fetch --tags` showed origin/main had advanced to 0.15.19. |
+| Timestamp (UTC)   | Agent       | Change                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-26T21:27Z | Implementer | M2–M7 implemented. Migration 134 validated against local PG 17.6. Two defects found and fixed during implementation (see Defects Found During Implementation). Version bumped 0.15.18 → 0.15.20 after `git fetch --tags` showed origin/main had advanced to 0.15.19.                                                                                                                                                          |
+| 2026-09-26T23:10Z | Implementer | Code review REJECTED → fixed. Added a committed, executable SQL suite (PGlite). The suite found a **blocker the review missed**: `search_food_concepts` joined on the dropped `providers.offers_ids`, so migration 134 would abort on UAT/prod. Also fixed: empty-query categories (HIGH), provider suggestions not name-filtered (MEDIUM), and two further 107 regressions (description matching, zero-provider categories). |
 
 ## Memory Status
 
@@ -58,6 +59,7 @@ Both root causes from the analysis are closed by giving suggestions and results 
 | `src/__tests__/services/search-suggestions-plan266.test.ts`       | Regression: suggestions use the scoped RPC with section/city                                  |
 | `src/__tests__/services/search-result-menu-match-plan266.test.ts` | Regression: matched dish names survive the provider→SearchResult transform                    |
 | `src/features/providers/components/ProviderCard.plan266.test.tsx` | Regression: card renders matched dishes with a translated label                               |
+| `src/__tests__/migrations/134-desktop-search-partial.test.ts`     | **Executes** migration 134 in PGlite against a post-006 schema; 26 behavioural SQL tests      |
 
 ## Files Modified
 
@@ -73,7 +75,7 @@ Both root causes from the analysis are closed by giving suggestions and results 
 | `src/translations/{de,en,ar,tr,ur,ps}.ts`                 | `providers.serves` key (6 locales)                                                                                                                                                |
 | `src/__tests__/regression/255-trust-boundaries.test.tsx`  | Updated to assert the approved-only boundary at its new enforcement point                                                                                                         |
 | `src/__tests__/services/providers.test.ts`                | Updated to the new RPC contract; now asserts **no** ILIKE                                                                                                                         |
-| `package.json`, `package-lock.json`                       | 0.15.18 → 0.15.20                                                                                                                                                                 |
+| `package.json`, `package-lock.json`                       | 0.15.18 → 0.15.20; devDependency `@electric-sql/pglite@^0.5.8` (WASM Postgres for migration tests; no native build, no CI service)                                                |
 | `CHANGELOG.md`                                            | `[Unreleased]` entry                                                                                                                                                              |
 
 ## Defects Found During Implementation
@@ -83,6 +85,19 @@ Two defects were caught by validation that unit tests alone would not have surfa
 1. **Unbalanced parentheses + duplicated matching logic in `search_scoped_suggestions`.** The first draft re-implemented all five match predicates inside the suggestions RPC and failed to parse (`syntax error at or near ","`). Rather than only balancing the parentheses, the function was rewritten to call `search_providers_for_query`. This removed ~40 lines of duplicated SQL and is what actually enforces decision D4 — the two paths can no longer drift apart.
 
 2. **Index expression mismatch on `providers` (performance defect).** The index was declared on `to_tsvector('simple', provider_name)` while the RPC predicate used `to_tsvector('simple', coalesce(provider_name,''))`. Postgres treats these as different expressions, so the index was unusable and the query fell back to a sequential scan even with `enable_seqscan=off`. Corrected so the index expression matches the predicate exactly; `EXPLAIN` then confirms `Bitmap Index Scan`. A comment was added to the migration recording this constraint.
+
+### Code review round (2026-09-26T23:10Z)
+
+The committed SQL suite was written first and run against the unfixed migration.
+
+3. **BLOCKER (found by the new suite, not by review): migration would abort in production.** `search_food_concepts` joined on `p.offers_ids`, which migration 006 dropped (089 was the hotfix for exactly this). The local PG fixture still had the column, so the earlier harness passed. Red: `error: column p.offers_ids does not exist`. Fixed: restored the `provider_offers` junction join.
+4. **HIGH (review): `search_food_categories('')` returned nothing.** Restored 107 semantics: empty query returns all food categories, ranked by provider count.
+5. **MEDIUM (review): provider suggestions were not filtered by name.** `Lahm` suggested `Istanbul Grill` as a _provider_. Now name-matched with the same exact-OR-prefix predicate.
+6. **Two further 107 regressions (found while restoring 107):** categories must also match on **description**, and categories with **zero providers** must still be returned (`LEFT JOIN`). Both restored and tested.
+
+Not restored on purpose: 107's display-name rewrite (`'\\s*Küche\\s*$'`). It carries the same double-escape bug as F4 and was verified to be a **no-op in production** (`'Türkische Küche'` comes back unchanged), so dropping it keeps real output identical.
+
+Index note: `search_food_categories` now matches name + description, which does not match `idx_categories_simple_search` (name only). The categories table is small (dozens of rows), so a seq scan is acceptable; the hot paths (`providers`, `food_menu`) are unaffected.
 
 ## Verification Evidence
 
@@ -147,38 +162,43 @@ Both hot predicates are index-backed.
 
 ## M5 Branch Coverage
 
-| Branch                                          | Expected               | Evidence                                                           | Status |
-| ----------------------------------------------- | ---------------------- | ------------------------------------------------------------------ | ------ |
-| Desktop, provider suggestion, same section/city | Results                | SQL: `Istanbul`/food/Berlin                                        | ✅     |
-| Desktop, provider suggestion, other section     | Not suggested          | SQL: store row excluded from food scope                            | ✅     |
-| Desktop, provider suggestion, other city        | Not suggested          | SQL: Muenchen excluded when city=Berlin                            | ✅     |
-| Desktop, menu-item suggestion                   | Results + dish on card | SQL `{Lahmacun}` + card test + transform test                      | ✅     |
-| Desktop, cuisine suggestion                     | Results, no ILIKE      | SQL: `Afgh` → category match; `providers.test.ts` asserts no ILIKE | ✅     |
-| Desktop, Enter with partial term                | Prefix results         | SQL: `Istan`, `Kab`, `Ist`                                         | ✅     |
-| Mobile `/search`, offer-concept dish            | Results (unchanged)    | `search_food_concepts` executes without error                      | ✅     |
-| Mobile `/search`, `food_menu` dish              | Results + dish         | Same `/food?q=` path, now menu-aware                               | ✅     |
-| Mobile `/search`, multi-word "Was?"             | No error; results      | F4 proof + `search_food_categories('türkische küche')` → 1 row     | ✅     |
-| Ummah / store sections, partial term            | Prefix results         | `section_filter` is generic; store scope verified                  | ✅     |
+| Branch                                          | Expected                | Evidence                                                                | Status |
+| ----------------------------------------------- | ----------------------- | ----------------------------------------------------------------------- | ------ |
+| Desktop, provider suggestion, same section/city | Results                 | SQL: `Istanbul`/food/Berlin                                             | ✅     |
+| Desktop, provider suggestion, other section     | Not suggested           | SQL: store row excluded from food scope                                 | ✅     |
+| Desktop, provider suggestion, other city        | Not suggested           | SQL: Muenchen excluded when city=Berlin                                 | ✅     |
+| Desktop, menu-item suggestion                   | Results + dish on card  | SQL `{Lahmacun}` + card test + transform test                           | ✅     |
+| Desktop, cuisine suggestion                     | Results, no ILIKE       | SQL: `Afgh` → category match; `providers.test.ts` asserts no ILIKE      | ✅     |
+| Desktop, Enter with partial term                | Prefix results          | SQL: `Istan`, `Kab`, `Ist`                                              | ✅     |
+| Mobile `/search`, offer-concept dish            | Results (unchanged)     | Migration suite: `search_food_concepts('döner keb')`, junction join     | ✅     |
+| Mobile `/search`, empty "Was?" (initial load)   | Top concepts/categories | Migration suite: empty query → ranked rows, incl. 0-provider categories | ✅     |
+| Mobile `/search`, `food_menu` dish              | Results + dish          | Same `/food?q=` path, now menu-aware                                    | ✅     |
+| Mobile `/search`, multi-word "Was?"             | No error; results       | Migration suite: `search_food_categories('türkische küche')` → 1 row    | ✅     |
+| Ummah / store sections, partial term            | Prefix results          | `section_filter` is generic; store scope verified                       | ✅     |
 
 No row left unconfirmed.
 
 ## TDD Compliance
 
-| Function/Change                                                                          | Test File                                  | Test Written First?                   | Failure Verified? | Failure Reason                                                                                                         | Pass After Impl? |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `fetchSearchSuggestions` (scoped RPC)                                                    | `search-suggestions-plan266.test.ts`       | ✅ Yes                                | ✅ Yes            | `TypeError: supabase.from is not a function` (old ILIKE path)                                                          | ✅ Yes           |
-| `matched_menu_items` in `transformProviderToSearchResult`                                | `search-result-menu-match-plan266.test.ts` | ✅ Yes                                | ✅ Yes            | `AssertionError: expected undefined to deeply equal [ 'Lahmacun' ]`                                                    | ✅ Yes           |
-| ProviderCard matched-dish rendering                                                      | `ProviderCard.plan266.test.tsx`            | ✅ Yes                                | ✅ Yes            | `AssertionError: expected … to contain 'matched_menu_items'`                                                           | ✅ Yes           |
-| `search_prefix_query` / `search_providers_for_query` / `search_scoped_suggestions` (SQL) | `/tmp/plan266-behavior.sql` (executed)     | ⚠️ Post-fix (SQL behavioural harness) | ✅ Yes            | Pre-fix `to_tsquery` → `ERROR: syntax error in tsquery: "döner keb:*"`; pre-fix results path never queried `food_menu` | ✅ Yes           |
+| Function/Change                                                                          | Test File                                  | Test Written First?                                    | Failure Verified? | Failure Reason                                                                                                         | Pass After Impl? |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------ | ----------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `fetchSearchSuggestions` (scoped RPC)                                                    | `search-suggestions-plan266.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `TypeError: supabase.from is not a function` (old ILIKE path)                                                          | ✅ Yes           |
+| `matched_menu_items` in `transformProviderToSearchResult`                                | `search-result-menu-match-plan266.test.ts` | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected undefined to deeply equal [ 'Lahmacun' ]`                                                    | ✅ Yes           |
+| ProviderCard matched-dish rendering                                                      | `ProviderCard.plan266.test.tsx`            | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected … to contain 'matched_menu_items'`                                                           | ✅ Yes           |
+| `search_prefix_query` / `search_providers_for_query` / `search_scoped_suggestions` (SQL) | `134-desktop-search-partial.test.ts`       | ⚠️ Post-fix (first round, /tmp harness); now committed | ✅ Yes            | Pre-fix `to_tsquery` → `ERROR: syntax error in tsquery: "döner keb:*"`; pre-fix results path never queried `food_menu` | ✅ Yes           |
+| `search_food_concepts` junction join (blocker)                                           | `134-desktop-search-partial.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `error: column p.offers_ids does not exist` (migration aborted)                                                        | ✅ Yes           |
+| `search_food_categories` empty query (HIGH)                                              | `134-desktop-search-partial.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected [] to deeply equal [ {…}, {…}, {…} ]`                                                        | ✅ Yes           |
+| `search_food_categories` description match / 0-provider rows                             | `134-desktop-search-partial.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected [] to deeply equal [ 'Türkische Küche' ]` / `expected []`                                    | ✅ Yes           |
+| Provider suggestion name filter (MEDIUM)                                                 | `134-desktop-search-partial.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected [ { label: 'Istanbul Grill', … } ] to deeply equal []`                                       | ✅ Yes           |
 
-**Disclosure on the SQL row:** the SQL was verified by an executed behavioural harness against a real Postgres 17.6 instance, not by a committed test file. The repo has no SQL test harness, and adding one is out of scope for this plan. This is a genuine coverage gap: **the SQL behaviour is not protected by CI.** See Outstanding Items.
+The SQL is now protected by CI: the suite applies migration 134 to an in-process Postgres 18 (PGlite) whose schema mirrors production after migration 006, then runs behavioural assertions. It runs inside the normal `npx vitest run`, so no CI change is needed.
 
 ## Code Quality Validation
 
 | Gate             | Command              | Result                                                                                                                                                                                                                         |
 | ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Type check       | `npm run type-check` | ✅ Pass (0 errors)                                                                                                                                                                                                             |
-| Tests            | `npx vitest run`     | ✅ 2580 passed, 28 skipped, **0 failed** (290 files)                                                                                                                                                                           |
+| Tests            | `npx vitest run`     | ✅ 2606 passed, 28 skipped, **0 failed** (291 files) — review round                                                                                                                                                            |
 | Lint (full repo) | `npm run lint`       | ✅ 0 errors, 151 warnings — all pre-existing; **none in files touched by this plan** (verified by grep)                                                                                                                        |
 | Build            | `npm run build`      | ⚠️ Compiles + type-validates successfully; fails at page-data collection with `Missing NEXT_PUBLIC_SUPABASE_URL`. **Confirmed pre-existing**: clean `HEAD` (work stashed) fails identically. No `.env.local` in this worktree. |
 
@@ -217,7 +237,7 @@ This was **not** the first design. The initial version appended `section`/`city`
 
 ## Outstanding Items
 
-1. **SQL behaviour is not covered by CI** (see TDD Compliance). The RPCs were verified by an executed harness, but nothing prevents a future edit from silently reintroducing F4 or the index-expression mismatch. Recommend a follow-up to add a SQL test harness — this is the same class of gap that let F4 ship (migration test 077 asserted SQL _text_, not behaviour).
+1. ~~SQL behaviour is not covered by CI~~ — **resolved** in the review round (`134-desktop-search-partial.test.ts`). Limitation: the fixture schema is hand-maintained, not generated from the migration chain, so it can drift from production. It proved its worth immediately by catching the `offers_ids` blocker. A follow-up could reuse the harness for other RPC migrations.
 2. **UI not visually verified** — blocked on environment, see Deferrals. QA should specifically check the "Serves:" line for RTL (`ar`, `ur`) and for truncation with long dish names.
 3. **`search_provider_ids_by_name` is now unused by app code** but intentionally retained for rollback (D7). Cleanup is owned by the next search-touching plan.
 4. **Migration number 134** was re-checked against `origin/main` at 2026-09-26T21:27Z and is still free. If another worktree merges 134 first, renumber before merge.
