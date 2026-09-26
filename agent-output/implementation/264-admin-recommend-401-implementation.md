@@ -25,6 +25,7 @@ Status: Active
 | 2026-09-26 | Implementer | Plan 264 approved; user acknowledged D3 deferral | Changed `POST /api/providers` to resolve the session through `getUserFromCookie()`, realigned route unit mocks, added cookie-writer-to-route regression coverage, and updated the Unreleased changelog. |
 | 2026-09-26 | Implementer | User requested lint fix before QA/UAT | Cleared all 55 pre-existing full-repo lint errors with behavior-preserving edits (see Lint Remediation). `npm run lint` now 0 errors. |
 | 2026-09-26 | Implementer | Code Review 264 REJECTED (HIGH-2) | Added `chat.pageTitle` to all 6 locales and rendered it in the chat page `<h1>`, with a new i18n test written first. Also recorded the HIGH-1 fix applied during review, which wired existing keys into the chat FAB, panel and close labels. |
+| 2026-09-26 | Implementer | Code Review 264 re-review REJECTED (HIGH-3); user chose option (a) | Localized every hardcoded German login string on `saved/page.tsx` (error messages, toasts, magic-link-sent JSX, retry button). Reused 16 existing `login.*`/`common.retry` keys (the same keys `LoginPageContent` uses) and added 6 new `login.*` keys in all 6 locales. A new i18n test with 10 cases was written first. |
 
 ## Implementation Summary
 
@@ -65,7 +66,8 @@ N/A. This bugfix has no performance measurement milestone.
 | `src/app/(public)/chat/page.tsx`, `src/app/(public)/saved/page.tsx`, `src/features/chat/components/{ChatFloatingWidget,ChatMessage,ChatToggleButton,ProviderCard,QuickReplies,SuggestionCard}.tsx` | `eslint --fix` for `react/jsx-sort-props` (prop order only). |
 | `src/features/chat/components/ChatFloatingWidget.tsx`, `ChatToggleButton.tsx` | Code Review HIGH-1 (fixed during review): hardcoded `aria-label`s and heading replaced with the existing `t('chat.openChat')`, `t('chat.closeChat')` and `t('chat.assistantTitle')` keys. |
 | `src/app/(public)/chat/page.tsx` | HIGH-1: close `aria-label` changed to `t('common.close')`. HIGH-2: `<h1>` now renders `t('chat.pageTitle')`. |
-| `src/translations/{de,en,ar,tr,ur,ps}.ts` | HIGH-2: added the `chat.pageTitle` key with values Chat / Chat / الدردشة / Sohbet / چیٹ / چیټ. |
+| `src/translations/{de,en,ar,tr,ur,ps}.ts` | HIGH-2: added the `chat.pageTitle` key with values Chat / Chat / الدردشة / Sohbet / چیٹ / چیټ. HIGH-3: added six `login.*` keys: `magicLinkSentTitle`, `magicLinkSentDescription`, `magicLinkFailedToast`, `magicLinkFailedError`, `magicLinkDiagnostic` (interpolates `{{url}}`) and `loginSuccessToast`. |
+| `src/app/(public)/saved/page.tsx` | HIGH-3: every `setLoginError`/`toast` literal in `handleResendConfirmation` and `handleLoginSubmit`, plus the magic-link-sent JSX and the retry button, now uses `t()`. Existing keys reused: `enterEmailFirst`, `confirmationEmailFailed`, `confirmationEmailSent`, `emailFailedToast`/`Description`, `emailSentToast`/`Description`, `unexpectedError`, `errorOccurredToast`/`Description`, `emailNotConfirmed`, `emailNotFound`, `invalidCredentials`, `loginFailedToast`/`Description` and `common.retry`. The magic-link-sent toast reuses `magicLinkSentTitle`. Both callbacks already list `t` in their dependencies. |
 
 ## Files Created
 
@@ -73,6 +75,7 @@ N/A. This bugfix has no performance measurement milestone.
 |---|---|
 | `src/__tests__/regression/plan264-provider-recommend-auth.test.ts` | Exercise the real `/api/auth/set` cookie writer through the real provider route and verify actor attribution plus anonymous rejection. |
 | `src/__tests__/app/(public)/chat/page-i18n.test.tsx` | Code Review HIGH-1 and HIGH-2 regression: the chat page heading and close label render through translation keys. |
+| `src/__tests__/app/(public)/saved/page-i18n.test.tsx` | Code Review HIGH-3 regression: 10 cases drive the real submit and resend handlers through the magic-link, password and resend paths, and assert that the rendered messages and `sonner` toast arguments are translation keys (including the `{{url}}` interpolation). |
 | `agent-output/implementation/264-admin-recommend-401-implementation.md` | Implementation and verification record. |
 
 ## Deployment Path Audit
@@ -99,6 +102,7 @@ N/A. No deployment configuration or deployment entrypoint changed.
 |---|---|---|---|---|---|
 | `POST /api/providers` authentication behavior (existing handler; bugfix regression) | `src/__tests__/regression/plan264-provider-recommend-auth.test.ts` | ✅ Yes | ✅ Yes | Pre-fix route returned 401 where the cookie-synced recommendation expected 200 | ✅ Yes |
 | `ChatPage` heading and close label i18n (Code Review HIGH-2) | `src/__tests__/app/(public)/chat/page-i18n.test.tsx` | ✅ Yes | ✅ Yes | AssertionError: expected `chat.pageTitle`, received `Chat` | ✅ Yes |
+| `SavedProvidersPage` login-required i18n (Code Review HIGH-3; existing handlers) | `src/__tests__/app/(public)/saved/page-i18n.test.tsx` | ✅ Yes | ✅ Yes | 10/10 failed: `Unable to find an element with the text: login.…` / `expected spy to be called with 'login.…'` (German literals rendered) | ✅ Yes |
 
 No new production function or class was introduced. Test-local request/admin fixtures are exercised by the route regression.
 
@@ -130,6 +134,13 @@ No new production function or class was introduced. Test-local request/admin fix
 | `npm run lint` (after HIGH-2) | 0 errors, 151 warnings (unchanged). |
 | `npx vitest run` (after HIGH-2) | Passed: 284 files passed, 2 skipped; 2,567 tests passed, 28 skipped. |
 | `npm run build` (after HIGH-2; `npm_config_ignore_scripts=true`, dummy env with anon key of 30+ chars) | Exit 0; 102/102 static pages; `public/manifest.json` unchanged. |
+| `npx vitest run "src/__tests__/app/(public)/saved/page-i18n.test.tsx"` before HIGH-3 fix | Expected RED: 10 of 10 failed (German literals rendered or passed to toasts instead of keys). |
+| `npx vitest run` on the saved page-i18n test, plan082 saved regression, chat page-i18n, the plan264 regression test and the providers route test, after the fix | Passed: 5 files, 26 tests. |
+| `npx vitest run` (after HIGH-3) | Passed: 285 files passed, 2 skipped; 2,577 tests passed, 28 skipped. |
+| `npm run type-check` (after HIGH-3) | Passed. |
+| `npm run lint` (after HIGH-3) | Exit 0; 0 errors, 151 warnings (unchanged). |
+| `npm run build` (after HIGH-3; same dummy env) | Exit 0; `public/manifest.json` unchanged. |
+| Literal scan of `saved/page.tsx` for German text after HIGH-3 | Only remaining literal is the pre-existing `t('login.unexpectedError') \|\| '…'` fallback (same accepted fallback pattern as `t('login.emailLabel') \|\| 'E-Mail'`). |
 
 ## Outstanding Items
 
@@ -142,6 +153,9 @@ No new production function or class was introduced. Test-local request/admin fix
 - Search/Filter Client-Interaction Trace: N/A — no search/filter form submit handler or mixed-entity result action changed.
 - Multi-Plan State Audit: N/A — no prior-plan React or localStorage state mutations are in scope.
 - Memory: NO-MEMORY MODE; this artifact records the decisions and test evidence for continuity.
+- **HIGH-3 wording notes:** the reused keys shift some German wording slightly. Resend failures now say "Bitte versuche es erneut oder kontaktiere den Support." instead of "…später erneut", and the resend exception uses `login.unexpectedError`. This matches `LoginPageContent` and `LoginModal`, so login copy is now the same on all three surfaces.
+- **Follow-up (not in HIGH-3 scope):** the shared `src/components/ui/EmailVerificationAlert.tsx` hardcodes its resend label "Bestätigungs-E-Mail erneut senden". It is used by the login page, `LoginModal` and the saved page. The unmodified `signup/check-email/page.tsx` also hardcodes "E‑Mail erneut senden". Localizing both needs a shared-component change and should get its own ticket.
+- ar, ur and ps translations for the new keys need a native-speaker check (non-blocking).
 
 ## Next Steps
 
