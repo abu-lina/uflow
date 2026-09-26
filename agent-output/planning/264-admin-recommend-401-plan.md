@@ -2,7 +2,7 @@
 ID: 264
 Origin: 264
 UUID: 90270baf
-Status: QA Complete
+Status: UAT Approved
 ---
 
 # Plan 264 — Restore authenticated provider submission (`POST /api/providers` 401)
@@ -31,6 +31,7 @@ Status: QA Complete
 | 2026-09-26 | Code Reviewer | Re-review: still REJECTED | HIGH-2 resolved (`df36013d`). New HIGH-3: about 11 hardcoded German strings in `src/app/(public)/saved/page.tsx`. These are pre-existing, and the file is touched only by the lint prop reorder. Awaiting disposition: fix before UAT, or risk accepted plus a follow-up plan. |
 | 2026-09-26 | Code Reviewer | Status -> Code Review Approved | Focused re-review confirmed HIGH-3 remediation in `saved/page.tsx`, 6 locale files, and new `saved` page i18n regression tests. Code review verdict updated to APPROVED_WITH_COMMENTS; handoff returned to QA. |
 | 2026-09-26T18:04Z | QA | Status -> QA Complete | Post-review re-test passed: focused 26 tests, full 2,577 tests, type-check, lint, i18n parity, production build, and manifest integrity. Ready for UAT live admin/non-admin validation. |
+| 2026-09-26T18:22:25Z | UAT | Status -> UAT Approved | User confirmed live UAT validation is complete and working. PR #426 merged at `be94d47f`; ready for DevOps release execution. |
 
 ## Value Statement and Business Objective
 
