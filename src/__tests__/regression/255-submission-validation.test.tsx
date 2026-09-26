@@ -310,8 +310,12 @@ describe('C3b: anonymous recommender email removed', () => {
     expect(src).not.toContain('emailConsent');
   });
 
-  it('mutations.ts never writes providers.recommender_email', () => {
-    const src = readSrc('src/features/providers/services/mutations.ts');
+  it.each([
+    'src/features/providers/services/mutations.ts',
+    'src/features/providers/services/create-provider.server.ts',
+    'src/app/api/providers/route.ts',
+  ])('%s never writes providers.recommender_email', (file) => {
+    const src = readSrc(file);
     expect(src).not.toContain('recommender_email');
     expect(src).not.toContain('userEmail');
   });

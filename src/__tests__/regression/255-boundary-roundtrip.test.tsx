@@ -51,6 +51,58 @@ const mockBadgeInsert = vi.fn();
 const mockEngagementEq = vi.fn();
 const mockRpc = vi.fn();
 
+/** Table router shared by the browser-client mock and the service-role admin
+ * mock (server-side creation writes go through getSupabaseAdmin). */
+function providerFrom(table: string) {
+  if (table === 'providers') {
+    return {
+      insert: (...args: unknown[]) => mockProviderInsert(...args),
+      update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+      delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
+    };
+  }
+  if (table === 'categories') {
+    return {
+      select: () => ({
+        eq: () => ({ single: () => mockCategorySingle() }),
+        order: () => mockCategoryOrder(),
+      }),
+    };
+  }
+  if (table === 'food_providers') {
+    return { upsert: (...args: unknown[]) => mockFoodExtUpsert(...args) };
+  }
+  if (table === 'store_providers') {
+    return { upsert: (...args: unknown[]) => mockStoreExtUpsert(...args) };
+  }
+  if (table === 'locations') {
+    return { insert: (...args: unknown[]) => mockLocationInsert(...args) };
+  }
+  if (table === 'provider_offers' || table === 'provider_needs') {
+    return {
+      delete: () => ({ eq: (...args: unknown[]) => mockRelationDeleteEq(...args) }),
+      insert: (...args: unknown[]) => mockRelationInsert(...args),
+    };
+  }
+  if (table === 'provider_engagements') {
+    return {
+      select: () => ({ eq: () => mockEngagementEq() }),
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    };
+  }
+  if (table === 'badge_types') {
+    return { select: () => ({ in: (...args: unknown[]) => mockBadgeTypeIn(...args) }) };
+  }
+  if (table === 'provider_badges') {
+    return { insert: (...args: unknown[]) => mockBadgeInsert(...args) };
+  }
+  // offers / needs and anything else: selectable + orderable
+  return {
+    select: () => ({ order: () => Promise.resolve({ data: [], error: null }) }),
+    insert: vi.fn().mockResolvedValue({ error: null }),
+  };
+}
+
 vi.mock('@/lib/supabase/client', () => ({
   supabase: {
     storage: {
@@ -59,58 +111,16 @@ vi.mock('@/lib/supabase/client', () => ({
         getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://example.com/x.png' } })),
       })),
     },
-    from: vi.fn((table: string) => {
-      if (table === 'providers') {
-        return {
-          insert: (...args: unknown[]) => mockProviderInsert(...args),
-          update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
-          delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
-        };
-      }
-      if (table === 'categories') {
-        return {
-          select: () => ({
-            eq: () => ({ single: () => mockCategorySingle() }),
-            order: () => mockCategoryOrder(),
-          }),
-        };
-      }
-      if (table === 'food_providers') {
-        return { upsert: (...args: unknown[]) => mockFoodExtUpsert(...args) };
-      }
-      if (table === 'store_providers') {
-        return { upsert: (...args: unknown[]) => mockStoreExtUpsert(...args) };
-      }
-      if (table === 'locations') {
-        return { insert: (...args: unknown[]) => mockLocationInsert(...args) };
-      }
-      if (table === 'provider_offers' || table === 'provider_needs') {
-        return {
-          delete: () => ({ eq: (...args: unknown[]) => mockRelationDeleteEq(...args) }),
-          insert: (...args: unknown[]) => mockRelationInsert(...args),
-        };
-      }
-      if (table === 'provider_engagements') {
-        return { select: () => ({ eq: () => mockEngagementEq() }) };
-      }
-      if (table === 'badge_types') {
-        return { select: () => ({ in: (...args: unknown[]) => mockBadgeTypeIn(...args) }) };
-      }
-      if (table === 'provider_badges') {
-        return { insert: (...args: unknown[]) => mockBadgeInsert(...args) };
-      }
-      // offers / needs and anything else: selectable + orderable
-      return {
-        select: () => ({ order: () => Promise.resolve({ data: [], error: null }) }),
-        insert: vi.fn().mockResolvedValue({ error: null }),
-      };
-    }),
+    from: vi.fn(providerFrom),
     rpc: (...args: unknown[]) => mockRpc(...args),
   },
 }));
 
 vi.mock('@/lib/supabase/admin', () => ({
-  getSupabaseAdmin: () => ({ rpc: (...args: unknown[]) => mockRpc(...args) }),
+  getSupabaseAdmin: () => ({
+    from: providerFrom,
+    rpc: (...args: unknown[]) => mockRpc(...args),
+  }),
 }));
 
 // ── App-layer mocks ──────────────────────────────────────────────────────────
@@ -176,7 +186,8 @@ import { UnifiedProviderCreateForm } from '@/features/providers/UnifiedProviderC
 import { ProviderEditForm } from '@/features/providers/pages/ProviderEditForm';
 import HalalPage from '@/app/(public)/create/halal/page';
 import { FormProvider, useFormData } from '@/providers/form-provider';
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import { createProviderOrServiceServer } from '@/features/providers/services/create-provider.server';
+import type { CreateProviderPayload } from '@/features/providers/services/create-provider.server';
 import { updateProviderFields } from '@/services/admin/providerEdit';
 import { ownerSubmissionSchema } from '@/lib/validations/submissionSchemas';
 
@@ -239,8 +250,14 @@ function FormHarness({
   return <>{renderProp()}</>;
 }
 
+const mockFetch = vi.fn();
+
 function resetSupabaseMocks() {
   vi.clearAllMocks();
+  vi.stubGlobal('fetch', mockFetch);
+  mockFetch.mockResolvedValue(
+    new Response(JSON.stringify({ provider_id: 'p-1' }), { status: 200 }),
+  );
   mockProviderInsert.mockResolvedValue({ error: null });
   mockProviderDeleteEq.mockResolvedValue({ error: null });
   mockCategorySingle.mockResolvedValue({ data: { applicable_section: 'food' }, error: null });
@@ -290,11 +307,15 @@ describe('C1: desktop owner submit creates a provider (UnifiedProviderCreateForm
     fireEvent.click(submit);
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
-    expect(mockProviderInsert).toHaveBeenCalledTimes(1);
-    const ext = mockFoodExtUpsert.mock.calls[0][0];
-    expect(ext.no_alcohol).toBe(true);
-    expect(ext.no_pork).toBe(true);
-    expect(ext.no_gambling).toBe(true);
+    // The form delegates DB writes to /api/providers; the posted payload must
+    // carry the yes answers it collected.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe('/api/providers');
+    const body = JSON.parse(init.body as string);
+    expect(body.no_alcohol).toBe(true);
+    expect(body.no_pork).toBe(true);
+    expect(body.no_gambling).toBe(true);
 
     // E: the desktop owner toast must tell the truth — the submission is
     // pending review, not "created".
@@ -546,14 +567,13 @@ describe('H4: failed extension write + failed cleanup surfaces the orphan', () =
     mockFoodExtUpsert.mockResolvedValue({ error: { message: 'rls violation' } });
     mockProviderDeleteEq.mockResolvedValue({ error: { message: 'delete denied by RLS' } });
 
-    const user = { id: 'user-1' } as User;
-    const err: Error = await createProviderOrService(
-      {
+    const err: Error = await createProviderOrServiceServer({
+      formData: {
         ...ownerFormData({ no_alcohol: true, no_pork: true, no_gambling: true }),
         creationMode: 'recommendation',
-      },
-      user,
-    ).then(
+      } as CreateProviderPayload,
+      actor: { userId: 'user-1', isOwner: false },
+    }).then(
       () => {
         throw new Error('expected rejection');
       },
@@ -572,16 +592,116 @@ describe('H4: failed extension write + failed cleanup surfaces the orphan', () =
   it('a successful cleanup still propagates the original extension error', async () => {
     mockFoodExtUpsert.mockResolvedValue({ error: { message: 'rls violation' } });
 
-    const user = { id: 'user-1' } as User;
     await expect(
-      createProviderOrService(
-        {
+      createProviderOrServiceServer({
+        formData: {
           ...ownerFormData({ no_alcohol: true, no_pork: true, no_gambling: true }),
           creationMode: 'recommendation',
-        },
-        user,
-      ),
+        } as CreateProviderPayload,
+        actor: { userId: 'user-1', isOwner: false },
+      }),
     ).rejects.toEqual(expect.objectContaining({ message: 'rls violation' }));
     expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── UAT-263: one id across every write; every post-insert failure cleans up ──
+//
+// Ported from the abandoned UAT-133 suite (its migration-file assertions are
+// dropped — this fix is the service-role route, not a policy change). These
+// prove that every write in the flow is issued with one shared provider id,
+// and that any failure after the providers insert runs the compensating
+// delete against that same id — in both the provider and ummah branches.
+
+describe('UAT-263: a submission lands every write with one id or cleans the orphan', () => {
+  const recommendActor = { userId: 'user-1', isOwner: false };
+
+  beforeEach(() => {
+    resetSupabaseMocks();
+    localStorage.clear();
+  });
+
+  it('provider, relations, location and extension row all write with one id', async () => {
+    await createProviderOrServiceServer({
+      formData: ownerFormData({
+        creationMode: 'recommendation',
+        no_alcohol: true,
+        no_pork: null,
+        no_gambling: false,
+        offers_ids: ['offer-1'],
+        needs_ids: ['need-1'],
+      }) as CreateProviderPayload,
+      actor: recommendActor,
+    });
+
+    // providers row: creator identified, owner NULL, pending.
+    const providerRow = (mockProviderInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    const providerId = providerRow.provider_id as string;
+    expect(providerRow.user_created_id).toBe('user-1');
+    expect(providerRow.provider_owner_id).toBeNull();
+    expect(providerRow.review_status).toBe('pending');
+
+    // Relation rows (offers + needs) point at the same provider.
+    expect(mockRelationInsert).toHaveBeenCalledTimes(2);
+    const relRows = mockRelationInsert.mock.calls.flatMap(
+      (call) => call[0] as Array<Record<string, unknown>>,
+    );
+    expect(relRows.length).toBe(2);
+    expect(relRows.every((r) => r.provider_id === providerId)).toBe(true);
+
+    // Primary location — the write that died under the owner-only RLS policy.
+    expect(mockLocationInsert).toHaveBeenCalledTimes(1);
+    const locationRow = (mockLocationInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    expect(locationRow.provider_id).toBe(providerId);
+    expect(locationRow.is_primary).toBe(true);
+
+    // Extension row carries the attestation (including the NULL "not sure").
+    const ext = mockFoodExtUpsert.mock.calls[0][0];
+    expect(ext.provider_id).toBe(providerId);
+    expect(ext.no_alcohol).toBe(true);
+    expect(ext.no_pork).toBeNull();
+    expect(ext.no_gambling).toBe(false);
+  });
+
+  it('a relation-insert failure after the provider insert deletes the orphan', async () => {
+    mockRelationInsert.mockResolvedValue({ error: { message: 'relation write failed' } });
+
+    await expect(
+      createProviderOrServiceServer({
+        formData: ownerFormData({
+          creationMode: 'recommendation',
+          no_alcohol: true,
+          no_pork: true,
+          no_gambling: true,
+          offers_ids: ['offer-1'],
+        }) as CreateProviderPayload,
+        actor: recommendActor,
+      }),
+    ).rejects.toEqual(expect.objectContaining({ message: 'relation write failed' }));
+    expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
+    const providerRow = (mockProviderInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    expect(mockProviderDeleteEq.mock.calls[0][0]).toBe('provider_id');
+    expect(mockProviderDeleteEq.mock.calls[0][1]).toBe(providerRow.provider_id);
+  });
+
+  it('an ummah submission also cleans up when a post-insert write fails', async () => {
+    mockLocationInsert.mockResolvedValue({ error: { message: 'rls violation' } });
+
+    await expect(
+      createProviderOrServiceServer({
+        formData: ownerFormData({
+          creationMode: 'recommendation',
+          category: '4470c3e0-458f-40a6-a96e-ca0fbdf145d7', // ummah category
+          no_alcohol: undefined,
+          no_pork: undefined,
+          no_gambling: undefined,
+        }) as CreateProviderPayload,
+        actor: recommendActor,
+      }),
+    ).rejects.toEqual(expect.objectContaining({ message: 'rls violation' }));
+    expect(mockProviderDeleteEq).toHaveBeenCalledTimes(1);
+    const providerRow = (mockProviderInsert.mock.calls[0][0] as Array<Record<string, unknown>>)[0];
+    expect(mockProviderDeleteEq.mock.calls[0][0]).toBe('provider_id');
+    expect(mockProviderDeleteEq.mock.calls[0][1]).toBe(providerRow.provider_id);
   });
 });

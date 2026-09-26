@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { User } from '@supabase/supabase-js';
-import type { ProviderFormData } from '@/providers/form-provider';
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import type { CreateProviderPayload } from '@/features/providers/services/create-provider.server';
 
-const mockStorageUpload = vi.fn();
-const mockStorageGetPublicUrl = vi.fn();
 const mockProviderInsert = vi.fn();
+const mockProviderDeleteEq = vi.fn();
 const mockProviderUpdate = vi.fn();
 const mockProviderUpdateEq = vi.fn();
 const mockBadgeTypeSelect = vi.fn();
@@ -18,19 +15,14 @@ const mockProviderNeedsDelete = vi.fn();
 const mockProviderNeedsEq = vi.fn();
 const mockProviderNeedsInsert = vi.fn();
 
-vi.mock('@/lib/supabase/client', () => ({
-  supabase: {
-    storage: {
-      from: vi.fn(() => ({
-        upload: (...args: unknown[]) => mockStorageUpload(...args),
-        getPublicUrl: (...args: unknown[]) => mockStorageGetPublicUrl(...args),
-      })),
-    },
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: () => ({
     from: vi.fn((table: string) => {
       if (table === 'providers') {
         return {
           insert: (...args: unknown[]) => mockProviderInsert(...args),
           update: (...args: unknown[]) => mockProviderUpdate(...args),
+          delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
         };
       }
 
@@ -73,14 +65,12 @@ vi.mock('@/lib/supabase/client', () => ({
         }),
       };
     }),
-  },
+  }),
 }));
 
-vi.mock('@/services/communityServices', () => ({
-  createProviderCommunityServiceRelationship: vi.fn().mockResolvedValue({ success: true }),
-}));
+import { createProviderOrServiceServer } from '@/features/providers/services/create-provider.server';
 
-const baseFormData: ProviderFormData = {
+const baseFormData: CreateProviderPayload = {
   creationMode: 'owner',
   entityType: 'provider',
   title: 'Test Provider',
@@ -100,7 +90,6 @@ const baseFormData: ProviderFormData = {
   email: '',
   offers_ids: [],
   needs_ids: [],
-  images: [],
   selectedCommunityServiceIds: [],
   tags: [],
   socialCategory: '',
@@ -111,20 +100,17 @@ const baseFormData: ProviderFormData = {
   no_gambling: false,
   verification_method: '',
   has_certificate: false,
-  certificate_file: null,
   certificate_url: '',
 };
+
+const ownerActor = { userId: 'user-1', isOwner: true };
 
 describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockStorageUpload.mockResolvedValue({ error: null });
-    mockStorageGetPublicUrl.mockReturnValue({
-      data: { publicUrl: 'https://example.com/file.png' },
-    });
-
     mockProviderInsert.mockResolvedValue({ error: null });
+    mockProviderDeleteEq.mockResolvedValue({ error: null });
 
     mockProviderUpdateEq.mockResolvedValue({ error: null });
     mockProviderUpdate.mockReturnValue({
@@ -164,15 +150,13 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
     // FL-23: has_parking and economic_solidarity are no longer set directly in
     // the provider insert payload. They are routed through the badge system and
     // the sync_provider_badge_to_boolean trigger sets the boolean columns.
-    const user = { id: 'user-1' } as User;
-
-    await createProviderOrService(
-      {
+    await createProviderOrServiceServer({
+      formData: {
         ...baseFormData,
         tags: ['muslim', 'parken', 'solidaritaet', 'gebet', 'spenden'],
       },
-      user,
-    );
+      actor: ownerActor,
+    });
 
     expect(mockProviderInsert).toHaveBeenCalledTimes(1);
 
@@ -197,17 +181,15 @@ describe('createProviderOrService badge/boolean wiring (Plan 106)', () => {
   });
 
   it('[post-fix PASSES] falls back to direct provider boolean update when badge insert fails', async () => {
-    const user = { id: 'user-1' } as User;
-
     mockProviderBadgeInsert.mockResolvedValue({ error: { message: 'insert failed' } });
 
-    await createProviderOrService(
-      {
+    await createProviderOrServiceServer({
+      formData: {
         ...baseFormData,
         tags: ['muslim', 'gebet', 'spenden'],
       },
-      user,
-    );
+      actor: ownerActor,
+    });
 
     expect(mockProviderUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
