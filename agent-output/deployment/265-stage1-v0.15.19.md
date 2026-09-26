@@ -2,10 +2,10 @@
 ID: 265
 Origin: 265
 UUID: 7c4e91a3
-Status: Active
+Status: Released
 ---
 
-# Deployment Record: v0.15.19 — Stage 1 (Plan 265)
+# Deployment Record: v0.15.19 — Release (Plan 265)
 
 **Plan Reference**: `agent-output/planning/closed/265-create-desktop-layout-plan.md`
 **Target Version**: v0.15.19
@@ -19,6 +19,7 @@ Status: Active
 | Date (UTC) | Agent  | Change                                                                                                                                                                                                                                                                           |
 | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-09-26 | devops | Stage 1: version pre-flight confirmed v0.15.19, version bumped in package.json/package-lock.json/CHANGELOG.md, open-actions tracker created for DF-1, chain docs closed to `closed/` with status `Committed`, local commit prepared. Awaiting user release approval for Stage 2. |
+| 2026-09-26 | devops | Stage 2: Release approved by user. Branch pushed, PR #432 opened, all CI checks green, PR #432 squash-merged into main (`5e2f0708`), tag `v0.15.19` created and pushed, GitHub Issue #430 closed.                                                                                |
 
 ---
 
@@ -105,12 +106,12 @@ Status: Active
 
 ### Release Execution Log
 
-| Step                 | Command                                                                               | Result     |
-| -------------------- | ------------------------------------------------------------------------------------- | ---------- |
-| Push branch          | `git push origin fix/265-create-desktop-layout`                                       | ⏳ Pending |
-| PR creation / check  | `gh pr create`                                                                        | ⏳ Pending |
-| CI Verification      | `gh pr checks <PR#>`                                                                  | ⏳ Pending |
-| Squash merge         | `gh pr merge <PR#> --squash --delete-branch`                                          | ⏳ Pending |
-| Tag creation         | `git tag -a v0.15.19 <squash-sha> -m "Release v0.15.19 — Desktop create flow layout"` | ⏳ Pending |
-| Tag push             | `git push origin v0.15.19`                                                            | ⏳ Pending |
-| GitHub Issue closure | `gh issue close 430 --comment "Released in v0.15.19 🎉"`                              | ⏳ Pending |
+| Step                 | Command                                                                           | Result                                                               |
+| -------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Push branch          | `git push origin fix/265-create-desktop-layout`                                   | ✅ Pushed (`d66bdd5f`)                                               |
+| PR creation / check  | `gh pr create`                                                                    | ✅ [PR #432](https://github.com/abu-lina/uflow/pull/432)             |
+| CI Verification      | `gh pr checks 432`                                                                | ✅ PASS (Build, Tests, Lint & Type, Audit, IOC, Snyk)                |
+| Squash merge         | `gh pr merge 432 --squash --delete-branch`                                        | ✅ Merged into `origin/main` (`5e2f0708`)                            |
+| Tag creation         | `git tag -a v0.15.19 5e2f0708 -m "Release v0.15.19 — Desktop create flow layout"` | ✅ Tag `v0.15.19` created on squash SHA                              |
+| Tag push             | `git push origin v0.15.19`                                                        | ✅ Tag `v0.15.19` pushed to `origin`                                 |
+| GitHub Issue closure | `gh issue close 430 --comment "Released in v0.15.19 🎉"`                          | ✅ [Issue #430](https://github.com/abu-lina/uflow/issues/430) closed |
