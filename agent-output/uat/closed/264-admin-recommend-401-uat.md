@@ -2,7 +2,7 @@
 ID: 264
 Origin: 264
 UUID: 90270baf
-Status: UAT Approved
+Status: Committed
 ---
 
 # UAT Report: Restore authenticated provider submissions
@@ -18,6 +18,7 @@ Status: UAT Approved
 | 2026-09-26T17:28Z | QA | QA Complete; validate provider submissions for admin and non-admin users | UAT blocked: required Code Review artifact is missing and live admin/non-admin runtime evidence is unavailable. Release not approved. |
 | 2026-09-26T17:28Z | UAT | QA Complete after Code Review HIGH-3 re-test | Code Review and QA predecessor gates are complete. The UAT project is now verified, but live admin/non-admin runtime evidence remains unavailable, so release approval remains blocked. |
 | 2026-09-26T18:22:25Z | UAT | Operator confirmation received | User confirmed the UAT validation is complete and working. This closes the pending admin/non-admin runtime gate; PR #426 is merged as `be94d47f`. |
+| 2026-09-26T18:44Z | DevOps | Status -> Committed for v0.15.18 | UAT approval accepted for release preparation; raw runtime identifiers remain documented as non-blocking audit detail. |
 
 ## Value Statement Under Test
 
