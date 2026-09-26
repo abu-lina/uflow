@@ -37,8 +37,18 @@ vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ setQueryData: vi.fn() }),
 }));
 
+const { geoMock, pathnameRef } = vi.hoisted(() => ({
+  geoMock: {
+    status: 'idle' as string,
+    coords: null as { latitude: number; longitude: number } | null,
+    requestLocation: vi.fn(),
+    reset: vi.fn(),
+  },
+  pathnameRef: { current: '/food/stuttgart' },
+}));
+
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/food/stuttgart',
+  usePathname: () => pathnameRef.current,
   useRouter: () => ({ replace: vi.fn(), push: mockRouterPush, prefetch: vi.fn() }),
   useSearchParams: () => mockUseSearchParams(),
 }));
@@ -99,12 +109,7 @@ vi.mock('@/features/search/hooks/useNearMe', () => ({
 }));
 
 vi.mock('@/hooks/useGeolocation', () => ({
-  useGeolocation: () => ({
-    status: 'idle',
-    coords: null,
-    requestLocation: vi.fn(),
-    reset: vi.fn(),
-  }),
+  useGeolocation: () => geoMock,
 }));
 
 vi.mock('@/components/shared/MobileGreetingHeader', () => ({
@@ -184,6 +189,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockUseSearchParams.mockReturnValue(new URLSearchParams());
   filterBarPropsRef.current = null;
+  geoMock.status = 'idle';
+  geoMock.coords = null;
+  pathnameRef.current = '/food/stuttgart';
 });
 
 describe('ProvidersContent mobile location chip', () => {
@@ -213,12 +221,71 @@ describe('ProvidersContent mobile location chip', () => {
 });
 
 describe('ProvidersContent near-me exclusivity', () => {
-  it('pushes the section root with near_me=1 when Near Me is activated', () => {
+  it('does not navigate when Near Me is activated and the prompt is still open', () => {
+    geoMock.status = 'prompting';
     render(<ProvidersContent defaultLocation="Stuttgart" />);
     act(() => {
       filterBarProps().onToggleNearMe?.();
     });
+    expect(geoMock.requestLocation).toHaveBeenCalled();
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('pushes the section root with near_me=1 once geolocation is granted', () => {
+    geoMock.status = 'prompting';
+    const { rerender } = render(<ProvidersContent defaultLocation="Stuttgart" />);
+    act(() => {
+      filterBarProps().onToggleNearMe?.();
+    });
+    expect(mockRouterPush).not.toHaveBeenCalled();
+
+    geoMock.status = 'granted';
+    geoMock.coords = { latitude: 48.7, longitude: 9.1 };
+    rerender(<ProvidersContent defaultLocation="Stuttgart" />);
     expect(mockRouterPush).toHaveBeenCalledWith('/food?near_me=1');
+  });
+
+  it('never navigates when geolocation is denied and keeps nearMeActive for the hint', () => {
+    geoMock.status = 'prompting';
+    const { rerender } = render(<ProvidersContent defaultLocation="Stuttgart" />);
+    act(() => {
+      filterBarProps().onToggleNearMe?.();
+    });
+
+    geoMock.status = 'denied';
+    rerender(<ProvidersContent defaultLocation="Stuttgart" />);
+    expect(mockRouterPush).not.toHaveBeenCalled();
+    expect(filterBarProps().nearMeActive).toBe(true);
+  });
+
+  it('does not push a duplicate URL when near_me=1 arrives via the URL', () => {
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('near_me=1'));
+    pathnameRef.current = '/food';
+    geoMock.status = 'idle';
+    const { rerender } = render(<ProvidersContent />);
+
+    geoMock.status = 'granted';
+    geoMock.coords = { latitude: 48.7, longitude: 9.1 };
+    rerender(<ProvidersContent />);
+    expect(mockRouterPush).not.toHaveBeenCalled();
+  });
+
+  it('does not navigate when Near Me is toggled off before the prompt resolves', () => {
+    geoMock.status = 'prompting';
+    const { rerender } = render(<ProvidersContent defaultLocation="Stuttgart" />);
+    act(() => {
+      filterBarProps().onToggleNearMe?.();
+    });
+    act(() => {
+      filterBarProps().onToggleNearMe?.();
+    });
+    mockRouterPush.mockClear();
+
+    // Late success from the in-flight getCurrentPosition call
+    geoMock.status = 'granted';
+    geoMock.coords = { latitude: 48.7, longitude: 9.1 };
+    rerender(<ProvidersContent defaultLocation="Stuttgart" />);
+    expect(mockRouterPush).not.toHaveBeenCalledWith('/food?near_me=1');
   });
 
   it('pushes the near_me-stripped URL when Near Me is deactivated', () => {
