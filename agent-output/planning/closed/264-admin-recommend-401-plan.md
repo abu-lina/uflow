@@ -2,7 +2,7 @@
 ID: 264
 Origin: 264
 UUID: 90270baf
-Status: UAT Approved
+Status: Committed
 ---
 
 # Plan 264 — Restore authenticated provider submission (`POST /api/providers` 401)
@@ -32,6 +32,7 @@ Status: UAT Approved
 | 2026-09-26 | Code Reviewer | Status -> Code Review Approved | Focused re-review confirmed HIGH-3 remediation in `saved/page.tsx`, 6 locale files, and new `saved` page i18n regression tests. Code review verdict updated to APPROVED_WITH_COMMENTS; handoff returned to QA. |
 | 2026-09-26T18:04Z | QA | Status -> QA Complete | Post-review re-test passed: focused 26 tests, full 2,577 tests, type-check, lint, i18n parity, production build, and manifest integrity. Ready for UAT live admin/non-admin validation. |
 | 2026-09-26T18:22:25Z | UAT | Status -> UAT Approved | User confirmed live UAT validation is complete and working. PR #426 merged at `be94d47f`; ready for DevOps release execution. |
+| 2026-09-26T18:44Z | DevOps | Status -> Committed for v0.15.18 | Release approval received; version preflight, build, audit provenance and UAT deploy evidence recorded in `agent-output/deployment/0.15.18.md`. |
 
 ## Value Statement and Business Objective
 
