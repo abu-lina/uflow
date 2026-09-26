@@ -380,3 +380,10 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Learning**: When a component passes children via a slot prop (`filterBarSlot`) to a mocked wrapper, assert on the *element's props* (`filterBarSlot.props`) captured inside the wrapper mock, not on the child component's own mock. Element props are readable without rendering.
 - **Change to prevent repeat**: In `providers-content-location-chip.test.tsx` the `DiscoveryHeader` mock stores `filterBarSlot.props`; the same pattern applies to any `*Slot` prop in this codebase.
 - **Task/PR**: cr/256-mobile-location-chip (Request 256)
+
+### 2026-09-26 — Check whether the platform twin already enforces the rule, not just displays it
+
+- **Context**: Request 256 proposed making mobile Near Me "visually supersede" the city "the way the desktop chip merges the two states". Desktop doesn't merge them visually at all: `SearchBar.syncUrl` enforces exclusivity structurally by routing to the section root and stripping the city (`SearchBar.tsx:219-241`).
+- **Learning**: Before scoping a mobile/desktop parity change, verify whether the other platform *enforces* the rule or merely *displays* it. Verifying reframed this from "invent a cross-platform rule" into "close a mobile-only gap by extracting the rule desktop already had", which turned new logic into a shared-helper extraction (`buildNearMeUrl`). Corollary: when a request reverses a recorded decision (here plan 220 D7, "no need to display selected city label"), record the reversal as its own decision with rationale instead of letting it land silently.
+- **Change to prevent repeat**: When a request describes the other platform's behaviour, read that platform's code before writing the spec. Cite it in the analysis doc.
+- **Task/PR**: PR #417 (cr/256-mobile-location-chip), Request 256
