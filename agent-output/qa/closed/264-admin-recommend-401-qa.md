@@ -2,13 +2,13 @@
 ID: 264
 Origin: 264
 UUID: 90270baf
-Status: QA Complete
+Status: Released
 ---
 
 # QA Report: Restore authenticated provider submissions
 
 **Plan Reference**: `agent-output/planning/264-admin-recommend-401-plan.md`  
-**QA Status**: QA Complete  
+**QA Status**: Released
 **QA Specialist**: qa
 
 ## Changelog
@@ -18,6 +18,7 @@ Status: QA Complete
 | 2026-09-26T17:25Z | Implementer | Lint gate fixed; resume QA then UAT | Began QA strategy and verified inherited ID/Origin/UUID; implementation evidence received. |
 | 2026-09-26T17:26Z | Implementer | QA testing started | Focused provider route and cookie-contract tests passed (14/14). |
 | 2026-09-26T17:28Z | Implementer | QA execution complete | Full and focused test suites, lint, type-check, and production build passed; no current diff to `public/manifest.json`. |
+| 2026-09-26T19:08Z | DevOps | Status -> Released | Plan 264 deployed in v0.15.18 from `b2aa52a7`; production health HTTP 200. |
 
 ## Timeline
 
