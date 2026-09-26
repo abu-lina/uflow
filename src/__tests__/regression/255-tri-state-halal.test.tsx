@@ -106,6 +106,7 @@ import { createProviderOrService } from '@/features/providers/services/mutations
 import { checkHalalAttestation } from '@/services/admin/halal-gate';
 import { buildExtensionFieldsPayload } from '@/services/admin/providerEdit';
 import { computeHalalStars } from '@/utils/sectionBadges';
+import { computeSealTier } from '@/features/providers/components/ProofTierCard';
 import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 
 const FOOD_CATEGORY = 'food-cat-1';
@@ -344,19 +345,67 @@ describe('C2 fix: NULL round-trips through the admin edit path (#415 defect 1)',
   });
 });
 
-describe('C2 fix: all-NULL means no halal data, not not-halal (#415 defect 2)', () => {
-  it('computeHalalStars treats all-NULL like absent attestation data', () => {
-    const absent = computeHalalStars({ verification_method: 'online' });
-    const allNull = computeHalalStars({
-      verification_method: 'online',
-      no_alcohol: null,
-      no_pork: null,
-      no_gambling: null,
-    });
-    expect(allNull).toBe(absent);
+describe('C2 fix: no stars without a truthy attestation (#415)', () => {
+  it('all-NULL attestations earn 0 stars for both verification methods', () => {
+    expect(
+      computeHalalStars({
+        verification_method: 'online',
+        no_alcohol: null,
+        no_pork: null,
+        no_gambling: null,
+      }),
+    ).toBe(0);
+    expect(
+      computeHalalStars({
+        verification_method: 'onsite',
+        no_alcohol: null,
+        no_pork: null,
+        no_gambling: null,
+      }),
+    ).toBe(0);
   });
 
-  it('computeHalalStars still returns 0 when attestations are explicitly false', () => {
+  it('unjoined (all-undefined) attestations earn 0 stars', () => {
+    expect(computeHalalStars({ verification_method: 'online' })).toBe(0);
+    expect(computeHalalStars({ verification_method: 'onsite' })).toBe(0);
+  });
+
+  it('the certificate short-circuit is unchanged for all-NULL attestations', () => {
+    expect(
+      computeHalalStars({
+        verification_method: 'online',
+        has_certificate: true,
+        no_alcohol: null,
+        no_pork: null,
+        no_gambling: null,
+      }),
+    ).toBe(2);
+    expect(
+      computeHalalStars({
+        verification_method: 'onsite',
+        has_certificate: true,
+        no_alcohol: null,
+        no_pork: null,
+        no_gambling: null,
+      }),
+    ).toBe(4);
+  });
+
+  it('computeSealTier and computeHalalStars agree that all-NULL is no halal signal', () => {
+    expect(
+      computeSealTier('online', false, { noAlcohol: null, noPork: null, noGambling: null }),
+    ).toBeNull();
+    expect(
+      computeHalalStars({
+        verification_method: 'online',
+        no_alcohol: null,
+        no_pork: null,
+        no_gambling: null,
+      }),
+    ).toBe(0);
+  });
+
+  it('explicit all-false still earns 0 stars', () => {
     expect(
       computeHalalStars({
         verification_method: 'online',
@@ -365,6 +414,25 @@ describe('C2 fix: all-NULL means no halal data, not not-halal (#415 defect 2)', 
         no_gambling: false,
       }),
     ).toBe(0);
+  });
+
+  it('at least one true attestation keeps the existing star mapping', () => {
+    expect(
+      computeHalalStars({
+        verification_method: 'online',
+        no_alcohol: true,
+        no_pork: null,
+        no_gambling: null,
+      }),
+    ).toBe(1);
+    expect(
+      computeHalalStars({
+        verification_method: 'onsite',
+        no_alcohol: true,
+        no_pork: null,
+        no_gambling: null,
+      }),
+    ).toBe(3);
   });
 });
 
