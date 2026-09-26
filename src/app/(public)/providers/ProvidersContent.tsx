@@ -214,14 +214,21 @@ export function ProvidersContent({
     setIsOpenNow,
     viewMode,
     toggleViewMode,
+    hasOpenedMap,
     headerRef,
     headerHeight,
     userCoords,
-  } = useMapDiscovery(geolocation, 'list', isAdmin ? status : null, {
-    searchParams,
-    pathname,
-    replace: router.replace,
-  });
+  } = useMapDiscovery(
+    geolocation,
+    'list',
+    isAdmin ? status : null,
+    {
+      searchParams,
+      pathname,
+      replace: router.replace,
+    },
+    { deferPinsUntilMapOpened: true },
+  );
 
   const nearMe = useNearMe({
     coords: userCoords,
@@ -738,7 +745,7 @@ export function ProvidersContent({
       )}
 
       <main className="mobile-nav-spacing mx-auto min-h-full w-full max-w-screen-xl overflow-x-hidden pt-0 sm:pt-0 md:pt-[var(--desktop-header-height,153px)]">
-        {!showGreeting && section === 'food' && (
+        {!showGreeting && section === 'food' && hasOpenedMap && (
           <div
             style={{
               visibility: viewMode === 'map' ? 'visible' : 'hidden',

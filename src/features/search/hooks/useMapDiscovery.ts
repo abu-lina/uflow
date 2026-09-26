@@ -67,6 +67,7 @@ export interface UseMapDiscoveryResult {
   viewMode: ViewMode;
   setViewMode: React.Dispatch<React.SetStateAction<ViewMode>>;
   toggleViewMode: () => void;
+  hasOpenedMap: boolean;
   headerRef: React.RefObject<HTMLElement>;
   headerHeight: number;
   setHeaderHeight: React.Dispatch<React.SetStateAction<number>>;
@@ -82,12 +83,16 @@ export interface UseMapDiscoveryResult {
  *   Defaults to 'approved' when null/undefined.
  * @param urlSync - Optional URL-sync config. When provided the hook
  *   reads `?view=` on mount and writes it back on toggle/set.
+ * @param options.deferPinsUntilMapOpened - When true, the pin fetch is
+ *   deferred until the map view has been opened at least once. Opt-in:
+ *   consumers that need pins in list view (e.g. the home page) omit it.
  */
 export function useMapDiscovery(
   geolocation: { status: string; coords: GeolocationCoords | null },
   defaultViewMode: ViewMode = 'list',
   reviewStatus?: string | null,
   urlSync?: UrlSyncConfig,
+  options?: { deferPinsUntilMapOpened?: boolean },
 ): UseMapDiscoveryResult {
   const [isOpenNow, setIsOpenNow] = useState(() => urlSync?.searchParams.get('open_now') === '1');
 
@@ -103,8 +108,10 @@ export function useMapDiscovery(
     urlView === 'map' ? 'map' : urlView === 'list' ? 'list' : defaultViewMode;
 
   const [viewMode, _setViewMode] = useState<ViewMode>(initialView);
+  const deferPins = options?.deferPinsUntilMapOpened ?? false;
+  const [hasOpenedMap, setHasOpenedMap] = useState(initialView === 'map');
   const [allRows, setAllRows] = useState<RawLocationRow[]>([]);
-  const [pinsLoading, setPinsLoading] = useState(true);
+  const [pinsLoading, setPinsLoading] = useState(!deferPins);
   const [pinsError, setPinsError] = useState<Error | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(120);
@@ -177,8 +184,16 @@ export function useMapDiscovery(
     setViewMode((v) => (v === 'map' ? 'list' : 'map'));
   }, [viewMode, setViewMode]);
 
-  // Load map pins on mount and when reviewStatus changes
+  // Once the map view has been opened it stays "opened" so the map and
+  // its pins are not torn down when toggling back to list.
   useEffect(() => {
+    if (viewMode === 'map') setHasOpenedMap(true);
+  }, [viewMode]);
+
+  // Load map pins on mount and when reviewStatus changes. When the
+  // consumer defers pins, skip until the map has been opened once.
+  useEffect(() => {
+    if (deferPins && !hasOpenedMap) return;
     const load = async () => {
       setPinsLoading(true);
       setPinsError(null);
@@ -192,7 +207,7 @@ export function useMapDiscovery(
       }
     };
     void load();
-  }, [reviewStatus]);
+  }, [reviewStatus, deferPins, hasOpenedMap]);
 
   // Compute map pins from allRows, filtering by open-now when active
   const pins = useMemo<MapPin[]>(() => {
@@ -214,6 +229,7 @@ export function useMapDiscovery(
     viewMode,
     setViewMode,
     toggleViewMode,
+    hasOpenedMap,
     headerRef,
     headerHeight,
     setHeaderHeight,

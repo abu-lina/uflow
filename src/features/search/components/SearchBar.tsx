@@ -415,9 +415,7 @@ function SearchBarContent({
                 setIsLocationOpen(!isLocationOpen);
               }}
             >
-              {nearMeChipActive && (
-                <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-              )}
+              {nearMeChipActive && <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />}
               <span className={geoStatus === 'prompting' && nearMeActive ? 'animate-pulse' : ''}>
                 {nearMeChipActive
                   ? t('suchen.nearMe.chipLabel')

@@ -377,14 +377,14 @@ Short log of learnings from plan → build → review → test loops. Append one
 ### 2026-09-26 — Slot-prop mocks break "render the child" tests; capture element props instead
 
 - **Context**: `ProvidersContent` tests mock `DiscoveryHeader` to null, so mocking `DiscoveryFilterBar` to capture props never fires — the bar is passed as the `filterBarSlot` element and never rendered. First test run failed with `props is null` on every chip assertion.
-- **Learning**: When a component passes children via a slot prop (`filterBarSlot`) to a mocked wrapper, assert on the *element's props* (`filterBarSlot.props`) captured inside the wrapper mock, not on the child component's own mock. Element props are readable without rendering.
+- **Learning**: When a component passes children via a slot prop (`filterBarSlot`) to a mocked wrapper, assert on the _element's props_ (`filterBarSlot.props`) captured inside the wrapper mock, not on the child component's own mock. Element props are readable without rendering.
 - **Change to prevent repeat**: In `providers-content-location-chip.test.tsx` the `DiscoveryHeader` mock stores `filterBarSlot.props`; the same pattern applies to any `*Slot` prop in this codebase.
 - **Task/PR**: cr/256-mobile-location-chip (Request 256)
 
 ### 2026-09-26 — Check whether the platform twin already enforces the rule, not just displays it
 
 - **Context**: Request 256 proposed making mobile Near Me "visually supersede" the city "the way the desktop chip merges the two states". Desktop doesn't merge them visually at all: `SearchBar.syncUrl` enforces exclusivity structurally by routing to the section root and stripping the city (`SearchBar.tsx:219-241`).
-- **Learning**: Before scoping a mobile/desktop parity change, verify whether the other platform *enforces* the rule or merely *displays* it. Verifying reframed this from "invent a cross-platform rule" into "close a mobile-only gap by extracting the rule desktop already had", which turned new logic into a shared-helper extraction (`buildNearMeUrl`). Corollary: when a request reverses a recorded decision (here plan 220 D7, "no need to display selected city label"), record the reversal as its own decision with rationale instead of letting it land silently.
+- **Learning**: Before scoping a mobile/desktop parity change, verify whether the other platform _enforces_ the rule or merely _displays_ it. Verifying reframed this from "invent a cross-platform rule" into "close a mobile-only gap by extracting the rule desktop already had", which turned new logic into a shared-helper extraction (`buildNearMeUrl`). Corollary: when a request reverses a recorded decision (here plan 220 D7, "no need to display selected city label"), record the reversal as its own decision with rationale instead of letting it land silently.
 - **Change to prevent repeat**: When a request describes the other platform's behaviour, read that platform's code before writing the spec. Cite it in the analysis doc.
 - **Task/PR**: PR #417 (cr/256-mobile-location-chip), Request 256
 
@@ -394,3 +394,24 @@ Short log of learnings from plan → build → review → test loops. Append one
 - **Learning**: Three things worth carrying forward. (1) A status-watcher effect alone is not enough when the same status transition can be reached from a different entry path: `ProvidersContent` already auto-requests geolocation when `?near_me=1` arrives via URL from the desktop chip, so an unguarded "navigate on granted" effect fires there too and pushes the URL the user is already on — a duplicate history entry that breaks Back, not merely a wasted render. The deferred action needs a ref armed only by a real user gesture. (2) Deferring a state write turns any display gate reading the raw intent flag into a lie: keeping `nearMeActive` true on denial (so the permission-denied hint still renders) made the desktop chip read "Near me" while the URL and results were still Stuttgart. The honest flag already existed, `nearMeChipActive` = intent AND effective status; the gates had to move to it. When you defer, audit every consumer of the intent flag. (3) You cannot defer on an outcome you never request: `SearchBar` read `geolocation.status` and called `reset()` but never `requestLocation()`, so its status was permanently `idle` and its denied branch was dead code. A hook whose status you render but never drive is a signal that the surface is relying on some other component to do the asking.
 - **Change to prevent repeat**: `src/features/search/hooks/useNearMeToggle.ts:91-129` had already solved the same problem for `/search` (request on toggle, write the URL from an effect once granted). It was not reused because it owns its own near-me/open-now/radius state and syncs via `router.replace`, but its shape is the pattern to copy. Grep for existing hooks before designing a deferred-permission flow.
 - **Task/PR**: fix/257-near-me-denied-keeps-city, Request 257
+
+### 2026-09-26 — `visibility: hidden` is not lazy: hidden React trees still hydrate, fetch, and burn the main thread
+
+- **Context**: `/food/[city]` could not be scrolled for seconds on an iPhone SE PWA because `SearchMap` plus one ~8 KB `innerHTML` Leaflet marker per nationwide location mounted eagerly inside a `visibility: hidden` wrapper.
+- **Learning**: Hiding pixels does not defer work. To make lazy loading safe for a shared hook, add an opt-in flag (`deferPinsUntilMapOpened`) rather than changing default behaviour — `RootPageContent` needs pins in list view, `ProvidersContent` does not. For heavy repeated SVG artwork, render it once as a `<symbol>` sprite and reference it with `<use>` from a shared `L.divIcon`; substring edits on the existing markup kept the geometry pixel-identical without re-deriving paths.
+- **Change to prevent repeat**: When a page mounts a subtree that is only needed for a secondary view, gate mount on "was it ever shown" (`hasOpenedMap`) instead of toggling visibility, and scope `-webkit-overflow-scrolling` off universal selectors.
+- **Task/PR**: fix/261-food-city-scroll-block (Plan 261)
+
+### 2026-09-26 — Size a suspected cost against real row counts before calling it the root cause
+
+- **Context**: Plan 261 was explained as "one ~8 KB marker per nationwide food location saturates the main thread". Querying UAT afterwards showed only **6** approved food locations with coordinates (774 food locations exist, but 801 are pending and 110 rejected), so the marker loop was ~6 iterations there, not hundreds. The real UAT costs were the Leaflet chunk, `L.map()` init with tile requests, and the universal `-webkit-overflow-scrolling` compositing rule.
+- **Learning**: A code path that provably executes is not yet a sized cost. Reading the code tells you the loop runs; only the row count tells you whether it runs 6 times or 6000. Get the count before attributing magnitude, because the fix you prioritise depends on it.
+- **Change to prevent repeat**: In the Analyst/Diagnose phase, when a hypothesis is "this is expensive because it happens per row", query the actual count for the reported environment and cite it. State per-item cost and item count separately.
+- **Task/PR**: PR #420 (fix/261-food-city-scroll-block), Request 261
+
+### 2026-09-26 — PostgREST streams every matching row unless you pass an explicit `.limit()`
+
+- **Context**: `getMapLocations` selected every approved food location joined with providers and categories, with no limit and no ordering. Nothing in the call path bounded it; the map just rendered whatever came back.
+- **Learning**: Supabase/PostgREST query builders have no implicit page size, so an unbounded `.select()` is a latent full-table read that grows silently with the data. Pair the cap with an `.order()` so truncation is deterministic, otherwise the returned subset shuffles between loads once the cap is hit.
+- **Change to prevent repeat**: Any service function that returns a collection for rendering needs an explicit `.limit()` plus an `.order()`. Export the cap as a named constant (`MAP_LOCATIONS_LIMIT`) so tests can assert it and callers can see the ceiling.
+- **Task/PR**: PR #420 (fix/261-food-city-scroll-block), Request 261

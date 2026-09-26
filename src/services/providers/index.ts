@@ -52,7 +52,7 @@ export { fetchSearchSuggestions } from './suggestions';
 export type { SearchSuggestion } from './suggestions';
 
 // Map pins
-export { getMapLocations } from './map-pins';
+export { getMapLocations, MAP_LOCATIONS_LIMIT } from './map-pins';
 export type { RawLocationRow, RawProviderRow, RawCategoryRow } from './map-pins';
 
 // Filters

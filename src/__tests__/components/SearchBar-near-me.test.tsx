@@ -57,8 +57,7 @@ vi.mock('@/services/providers', () => ({
   fetchFilteredCities: vi.fn(() => Promise.resolve([])),
 }));
 
-const renderSearchBar = () =>
-  render(<SearchBar customCities={['Berlin', 'Stuttgart']} />);
+const renderSearchBar = () => render(<SearchBar customCities={['Berlin', 'Stuttgart']} />);
 
 function openLocationDropdown(container: HTMLElement) {
   const chip = container.querySelector('button[aria-haspopup="listbox"]') as HTMLElement;
