@@ -731,6 +731,15 @@ describe('UAT-133: migration 133 file contents', () => {
     expect(sql).not.toContain('auth.uid() IN (');
   });
 
+  it('migration file scopes the location creator branch to pending rows only', () => {
+    // Owner branch stays unconditional; creator branch requires
+    // review_status='pending' so a recommender cannot add publicly-visible
+    // locations to an approved listing they cannot edit.
+    expect(sql).toMatch(
+      /"p"\."user_created_id" = \( SELECT "auth"\."uid"\(\) AS "uid"\)\)\s+AND \("p"\."review_status" = 'pending'/,
+    );
+  });
+
   it('migration file contains a pending-creator branch on the providers DELETE policy', () => {
     expect(sql).toContain('ON "public"."providers" FOR DELETE');
     expect(sql).toContain('"user_created_id" = ( SELECT "auth"."uid"() AS "uid")');

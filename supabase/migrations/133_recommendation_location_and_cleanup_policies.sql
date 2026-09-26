@@ -12,6 +12,15 @@
 -- 1. locations INSERT now permits the provider's creator as well as its
 --    owner, expressed as EXISTS (...) rather than IN (SELECT ...) so a
 --    NULL-producing subquery can never silently evaluate to NULL again.
+--    The two branches are deliberately asymmetric: the owner branch is
+--    unconditional (an owner manages locations on an approved listing via
+--    the owner-scoped UPDATE/DELETE policies too), while the creator branch
+--    is scoped to review_status = 'pending'. Submission flows insert the
+--    primary location immediately after the pending providers row, so the
+--    legitimate creator use is always pending — but without the condition a
+--    recommender could keep adding publicly-visible locations to an approved
+--    listing they cannot otherwise edit. Do not "simplify" this into a
+--    single unconditioned check.
 --    Admin location upserts are unaffected: they run through the SECURITY
 --    DEFINER admin_update_provider RPC (migration 102). UPDATE/DELETE on
 --    locations stay owner-only — no submission path uses them.
@@ -30,7 +39,8 @@ CREATE POLICY "Provider owners and creators can insert locations" ON "public"."l
     FROM "public"."providers" "p"
     WHERE (("p"."provider_id" = "locations"."provider_id")
       AND (("p"."provider_owner_id" = ( SELECT "auth"."uid"() AS "uid"))
-        OR ("p"."user_created_id" = ( SELECT "auth"."uid"() AS "uid"))))
+        OR (("p"."user_created_id" = ( SELECT "auth"."uid"() AS "uid"))
+          AND ("p"."review_status" = 'pending'::"public"."review_status"))))
   )
 );
 
