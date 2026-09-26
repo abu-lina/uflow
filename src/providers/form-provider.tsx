@@ -113,6 +113,12 @@ interface FormProviderProps {
   children: React.ReactNode;
 }
 
+// v2 storage key (#415): drafts written before the tri-state attestation
+// change carry {"no_alcohol":false,...} from the old initialFormData. A
+// restored false is indistinguishable from a deliberate "No" answer, so
+// pre-v2 drafts must never be restored — a bumped key drops them entirely.
+const FORM_STORAGE_KEY = 'providerFormData_v2';
+
 export function FormProvider({ children }: FormProviderProps) {
   const [formData, setFormData] = useState<ProviderFormData>(initialFormData);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,7 +126,7 @@ export function FormProvider({ children }: FormProviderProps) {
   // Load form data from localStorage on mount
   useEffect(() => {
     try {
-      const savedData = localStorage.getItem('providerFormData');
+      const savedData = localStorage.getItem(FORM_STORAGE_KEY);
       if (savedData) {
         const parsedData = JSON.parse(savedData);
 
@@ -188,15 +194,15 @@ export function FormProvider({ children }: FormProviderProps) {
               }));
 
               const finalData = { ...dataToSave, images: imageDataWithBase64 };
-              localStorage.setItem('providerFormData', JSON.stringify(finalData));
+              localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(finalData));
             })
             .catch((error) => {
               console.error('Error saving images to localStorage:', error);
               // Save without images if conversion fails
-              localStorage.setItem('providerFormData', JSON.stringify(dataToSave));
+              localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(dataToSave));
             });
         } else {
-          localStorage.setItem('providerFormData', JSON.stringify(dataToSave));
+          localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(dataToSave));
         }
       } catch (error) {
         console.error('Error saving form data to localStorage:', error);
@@ -214,6 +220,8 @@ export function FormProvider({ children }: FormProviderProps) {
 
   const clearFormData = useCallback(() => {
     setFormData(initialFormData);
+    localStorage.removeItem(FORM_STORAGE_KEY);
+    // Also drop the pre-tri-state draft key; see FORM_STORAGE_KEY.
     localStorage.removeItem('providerFormData');
     localStorage.removeItem('providerCreationMode');
   }, []);

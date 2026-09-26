@@ -57,6 +57,11 @@ const validOwner = {
   zip: '10115',
   city: 'Berlin',
   country: 'Deutschland',
+  // H2: the halal step is part of the owner wizard; all three answers are
+  // required (null = "not sure" is a valid deliberate answer).
+  no_alcohol: true,
+  no_pork: null,
+  no_gambling: false,
 };
 
 describe('recommendSubmissionSchema', () => {
@@ -183,6 +188,18 @@ describe('ownerSubmissionSchema', () => {
     });
     expect(parsed.success).toBe(true);
   });
+
+  it.each(['no_alcohol', 'no_pork', 'no_gambling'] as const)(
+    'rejects an untouched (undefined) %s, naming the field',
+    (field) => {
+      const parsed = ownerSubmissionSchema.safeParse({ ...validOwner, [field]: undefined });
+      expect(parsed.success).toBe(false);
+      if (!parsed.success) {
+        expect(firstIssueField(parsed.error)).toBe(field);
+        expect(submissionFieldLabelKeys[field]).toBeTruthy();
+      }
+    },
+  );
 });
 
 describe('AC5.8 draft persistence of untouched attestations', () => {

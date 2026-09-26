@@ -396,11 +396,20 @@ async function doCreateProviderOrService(
       if (extError) {
         console.error('Error saving halal data:', extError);
         // Best-effort compensation: remove the provider so it cannot sit
-        // pending forever without an approvable extension row.
-        try {
-          await supabase.from('providers').delete().eq('provider_id', generatedProviderId);
-        } catch (cleanupError) {
+        // pending forever without an approvable extension row. The delete is
+        // RLS-gated on provider_owner_id; for recommendations that is null,
+        // so it fails for exactly the case it exists for. The returned error
+        // must be surfaced (supabase returns errors, it does not throw) and
+        // the orphan id included so the row can be cleaned up manually.
+        const { error: cleanupError } = await supabase
+          .from('providers')
+          .delete()
+          .eq('provider_id', generatedProviderId);
+        if (cleanupError) {
           console.error('Failed to clean up provider after extension write failure:', cleanupError);
+          throw new Error(
+            `Halal data save failed (${extError.message}) and cleanup of orphaned provider '${generatedProviderId}' also failed (${cleanupError.message}). The provider row requires manual removal.`,
+          );
         }
         throw extError;
       }

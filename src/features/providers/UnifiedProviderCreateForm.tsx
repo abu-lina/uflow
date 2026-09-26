@@ -15,6 +15,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { Button } from '@/components/ui/Button';
 import { useQueryClient } from '@tanstack/react-query';
 import { createProviderOrService } from '@/features/providers/services/mutations';
+import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 import {
   ownerSubmissionSchema,
   submissionFieldLabelKeys,
@@ -626,6 +627,26 @@ export function UnifiedProviderCreateForm({ onSuccess }: UnifiedProviderCreateFo
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Halal Section — the wizard asks these as its own step; the desktop
+          single-page form collects them here. All three require a deliberate
+          answer (yes, no, or "not sure"). */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold text-content-heading">{t('createHalal.title')}</h2>
+          <p className="text-sm leading-relaxed text-content-muted">
+            {t('createHalal.attestationIntro')}
+          </p>
+          <HalalAttestationFields
+            values={{
+              no_alcohol: formData.no_alcohol,
+              no_pork: formData.no_pork,
+              no_gambling: formData.no_gambling,
+            }}
+            onChange={(field, value) => updateFormData({ [field]: value })}
+          />
         </div>
       </div>
 

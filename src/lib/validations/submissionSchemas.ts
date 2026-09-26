@@ -39,8 +39,11 @@ export const importSubmissionSchema = z.object({
 
 /**
  * Owner flow required set: the existing basics set (title, category, at least
- * one offer) plus a full address (street, zip, city, country) and at least
- * one image. Online businesses are exempt from the address requirement.
+ * one offer) plus a full address (street, zip, city, country), at least
+ * one image, and all three halal answers. Online businesses are exempt from
+ * the address requirement. The halal step is part of the wizard for every
+ * owner submission, so the answers are required uniformly; the service-layer
+ * guard in mutations.ts scopes its enforcement to food/store.
  */
 export const ownerSubmissionSchema = z
   .object({
@@ -53,6 +56,9 @@ export const ownerSubmissionSchema = z
     zip: z.string().optional(),
     city: z.string().optional(),
     country: z.string().optional(),
+    no_alcohol: answeredAttestation,
+    no_pork: answeredAttestation,
+    no_gambling: answeredAttestation,
   })
   .superRefine((data, ctx) => {
     if (data.isOnlineBusiness) return;

@@ -326,20 +326,13 @@ describe('C2 fix: NULL round-trips through the admin edit path (#415 defect 1)',
     }
   });
 
-  it('the three edit-form load sites no longer coalesce NULL to false', () => {
+  it('the edit sub-pages render the shared tri-state component', () => {
+    // The ProviderEditForm NULL-merge is covered behaviourally in
+    // 255-boundary-roundtrip.test.tsx (a stored {"noAlcohol":null} must reach
+    // onSubmitForm as null); the old `?? false`/`?? prev` regex scans were
+    // blind to that bug shape, so this source check is limited to the pages.
     const halalPage = readSrc('src/app/(dashboard)/dashboard/providers/[id]/edit/halal/page.tsx');
     const valuesPage = readSrc('src/app/(dashboard)/dashboard/providers/[id]/edit/values/page.tsx');
-    const editForm = readSrc('src/features/providers/pages/ProviderEditForm.tsx');
-
-    for (const [name, src] of [
-      ['halal page', halalPage],
-      ['values page', valuesPage],
-      ['ProviderEditForm', editForm],
-    ] as const) {
-      expect(src, name).not.toMatch(/no_alcohol.*\?\? false|noAlcohol.*\?\? false/);
-    }
-    // The two sub-pages render the shared tri-state component; ProviderEditForm
-    // only carries the values through to the PATCH body.
     expect(halalPage).toContain('HalalAttestationFields');
     expect(valuesPage).toContain('HalalAttestationFields');
   });

@@ -265,9 +265,11 @@ export function ProviderEditForm({
           verificationMethod: parsed.verificationMethod || null,
           hasCertificate: parsed.hasCertificate ?? prev.hasCertificate,
           certificateUrl: parsed.certificateUrl ?? prev.certificateUrl,
-          noAlcohol: parsed.noAlcohol ?? prev.noAlcohol,
-          noPork: parsed.noPork ?? prev.noPork,
-          noGambling: parsed.noGambling ?? prev.noGambling,
+          // Key-presence merge: a stored explicit null ("not sure") must win
+          // over the previous value, not be discarded by ?? (#415 tri-state).
+          noAlcohol: 'noAlcohol' in parsed ? parsed.noAlcohol : prev.noAlcohol,
+          noPork: 'noPork' in parsed ? parsed.noPork : prev.noPork,
+          noGambling: 'noGambling' in parsed ? parsed.noGambling : prev.noGambling,
           reviewStatus: parsed.reviewStatus ?? prev.reviewStatus,
         }));
       } catch {

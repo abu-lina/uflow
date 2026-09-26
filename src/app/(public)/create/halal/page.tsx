@@ -209,6 +209,12 @@ export default function HalalPage() {
         actionButton={{
           label: t('common.next'),
           trailingIcon: 'lucide:chevron-right',
+          // All three attestations require a deliberate answer (yes, no, or
+          // "not sure"); undefined means the question was never touched.
+          disabled:
+            formData.no_alcohol === undefined ||
+            formData.no_pork === undefined ||
+            formData.no_gambling === undefined,
           onClick: handleSave,
           variant: 'primary',
         }}
