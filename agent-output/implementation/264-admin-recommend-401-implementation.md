@@ -24,6 +24,7 @@ Status: Active
 |---|---|---|---|
 | 2026-09-26 | Implementer | Plan 264 approved; user acknowledged D3 deferral | Changed `POST /api/providers` to resolve the session through `getUserFromCookie()`, realigned route unit mocks, added cookie-writer-to-route regression coverage, and updated the Unreleased changelog. |
 | 2026-09-26 | Implementer | User requested lint fix before QA/UAT | Cleared all 55 pre-existing full-repo lint errors with behavior-preserving edits (see Lint Remediation). `npm run lint` now 0 errors. |
+| 2026-09-26 | Implementer | Code Review 264 REJECTED (HIGH-2) | Added `chat.pageTitle` to all 6 locales and rendered it in the chat page `<h1>`, with a new i18n test written first. Also recorded the HIGH-1 fix applied during review, which wired existing keys into the chat FAB, panel and close labels. |
 
 ## Implementation Summary
 
@@ -62,12 +63,16 @@ N/A. This bugfix has no performance measurement milestone.
 | `src/lib/enrichment/delivery-enricher.ts`, `delivery-platform/ubereats-enricher.ts` | Removed unused imports. |
 | `src/lib/enrichment/delivery-platform/ubereats-client.ts` | Unused `lat`/`lon` params → `_lat`/`_lon` (signature unchanged). |
 | `src/app/(public)/chat/page.tsx`, `src/app/(public)/saved/page.tsx`, `src/features/chat/components/{ChatFloatingWidget,ChatMessage,ChatToggleButton,ProviderCard,QuickReplies,SuggestionCard}.tsx` | `eslint --fix` for `react/jsx-sort-props` (prop order only). |
+| `src/features/chat/components/ChatFloatingWidget.tsx`, `ChatToggleButton.tsx` | Code Review HIGH-1 (fixed during review): hardcoded `aria-label`s and heading replaced with the existing `t('chat.openChat')`, `t('chat.closeChat')` and `t('chat.assistantTitle')` keys. |
+| `src/app/(public)/chat/page.tsx` | HIGH-1: close `aria-label` changed to `t('common.close')`. HIGH-2: `<h1>` now renders `t('chat.pageTitle')`. |
+| `src/translations/{de,en,ar,tr,ur,ps}.ts` | HIGH-2: added the `chat.pageTitle` key with values Chat / Chat / الدردشة / Sohbet / چیٹ / چیټ. |
 
 ## Files Created
 
 | Path | Purpose |
 |---|---|
 | `src/__tests__/regression/plan264-provider-recommend-auth.test.ts` | Exercise the real `/api/auth/set` cookie writer through the real provider route and verify actor attribution plus anonymous rejection. |
+| `src/__tests__/app/(public)/chat/page-i18n.test.tsx` | Code Review HIGH-1 and HIGH-2 regression: the chat page heading and close label render through translation keys. |
 | `agent-output/implementation/264-admin-recommend-401-implementation.md` | Implementation and verification record. |
 
 ## Deployment Path Audit
@@ -93,6 +98,7 @@ N/A. No deployment configuration or deployment entrypoint changed.
 | Function / Behavior | Test File | Test Written First? | Failure Verified? | Failure Reason | Pass After Implementation? |
 |---|---|---|---|---|---|
 | `POST /api/providers` authentication behavior (existing handler; bugfix regression) | `src/__tests__/regression/plan264-provider-recommend-auth.test.ts` | ✅ Yes | ✅ Yes | Pre-fix route returned 401 where the cookie-synced recommendation expected 200 | ✅ Yes |
+| `ChatPage` heading and close label i18n (Code Review HIGH-2) | `src/__tests__/app/(public)/chat/page-i18n.test.tsx` | ✅ Yes | ✅ Yes | AssertionError: expected `chat.pageTitle`, received `Chat` | ✅ Yes |
 
 No new production function or class was introduced. Test-local request/admin fixtures are exercised by the route regression.
 
@@ -118,6 +124,12 @@ No new production function or class was introduced. Test-local request/admin fix
 | `npm run build` (after remediation, dummy env) | Exit 0; `public/manifest.json` restored afterwards. |
 | `npm run build` with command-scoped dummy Supabase values | Completed; route table generated. Existing Swagger dependency warnings were emitted. |
 | `npx vitest run src/__tests__/regression/plan228-providers-food-consolidation.test.ts` | Passed: 38 tests. This was rerun after restoring `public/manifest.json`, which the build pre-step regenerated from a stale script. |
+| `npx vitest run "src/__tests__/app/(public)/chat/page-i18n.test.tsx"` before HIGH-2 fix | Expected RED: 1 failed (`expected chat.pageTitle, received Chat`). |
+| `npx vitest run` on page-i18n, `RootClientLayout`, the plan264 regression test, the providers route test and `src/__tests__/api/chat`, after the fix | Passed: 5 files, 41 tests. |
+| `npm run type-check` (after HIGH-2) | Passed. |
+| `npm run lint` (after HIGH-2) | 0 errors, 151 warnings (unchanged). |
+| `npx vitest run` (after HIGH-2) | Passed: 284 files passed, 2 skipped; 2,567 tests passed, 28 skipped. |
+| `npm run build` (after HIGH-2; `npm_config_ignore_scripts=true`, dummy env with anon key of 30+ chars) | Exit 0; 102/102 static pages; `public/manifest.json` unchanged. |
 
 ## Outstanding Items
 
