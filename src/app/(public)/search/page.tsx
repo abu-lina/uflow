@@ -103,7 +103,9 @@ function SearchPageContent() {
     }
     return null;
   });
-  const [openAccordion, setOpenAccordion] = useState<AccordionKey | null>('was');
+  const [openAccordion, setOpenAccordion] = useState<AccordionKey | null>(
+    searchParams.get('open') === 'wo' ? 'wo' : 'was',
+  );
   const [recentSearches, setRecentSearches] = useState<WasSelection[]>(() => {
     try {
       const stored = localStorage.getItem('uflow:recent-was-searches');

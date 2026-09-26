@@ -31,6 +31,44 @@ export function buildResultsUrl(opts: {
   return qs ? `${path}?${qs}` : path;
 }
 
+/**
+ * Build the URL for a near-me/open-now toggle on results pages.
+ * When near-me is active the city is stripped from the path (geolocation
+ * results conflict with a city segment); otherwise the current path is kept.
+ * Stale near_lat/near_lon/near_radius params are always removed.
+ */
+export function buildNearMeUrl(opts: {
+  section: Section;
+  active: boolean;
+  openNow: boolean;
+  pathname: string;
+  searchParams: { toString(): string };
+}): string {
+  const { section, active, openNow, pathname, searchParams } = opts;
+  const basePath = active ? getResultsPathForSection(section) : pathname;
+
+  const params = new URLSearchParams(searchParams.toString());
+
+  if (active) {
+    params.set('near_me', '1');
+  } else {
+    params.delete('near_me');
+  }
+
+  if (openNow) {
+    params.set('open_now', '1');
+  } else {
+    params.delete('open_now');
+  }
+
+  params.delete('near_lat');
+  params.delete('near_lon');
+  params.delete('near_radius');
+
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
+}
+
 export function buildSearchParams(
   selectedWas: WasSelection | null,
   selectedSection: string = 'food',

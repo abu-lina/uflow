@@ -41,6 +41,7 @@ import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
 import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';
+import { buildNearMeUrl } from '@/lib/search-params';
 import type { SearchResult, NearMeFoodResult } from '@/services/providers';
 import {
   SEARCH_FILTER_KEY_SET,
@@ -227,13 +228,26 @@ export function ProvidersContent({
   });
 
   const handleToggleNearMe = () => {
-    if (nearMeActive || geolocation.status === 'granted') {
+    const nextActive = !(nearMeActive || geolocation.status === 'granted');
+    if (!nextActive) {
       setNearMeActive(false);
       geolocation.reset();
-      return;
+    } else {
+      setNearMeActive(true);
+      geolocation.requestLocation();
     }
-    setNearMeActive(true);
-    geolocation.requestLocation();
+    // D2/D4: near-me and the path city are mutually exclusive — activating
+    // navigates to the section root; deactivating drops near_me without
+    // restoring the previous city.
+    router.push(
+      buildNearMeUrl({
+        section,
+        active: nextActive,
+        openNow: isOpenNow,
+        pathname,
+        searchParams,
+      }),
+    );
   };
 
   // Use React Query infinite query for paginated search results
@@ -674,8 +688,10 @@ export function ProvidersContent({
                   ) : undefined
                 }
                 geoStatus={geolocation.status}
+                locationCity={location || null}
                 nearMeActive={nearMeActive}
                 openNowActive={isOpenNow}
+                onLocationClick={() => router.push(`/search?section=${section}&open=wo`)}
                 onToggleNearMe={handleToggleNearMe}
                 onToggleOpenNow={() => setIsOpenNow((v) => !v)}
               />

@@ -12,7 +12,7 @@ import { fetchSearchSuggestions, fetchAvailableFilters } from '@/services/provid
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
-import { getResultsPathForSection } from '@/config/sectionFilters';
+import { buildNearMeUrl } from '@/lib/search-params';
 
 import { logSupabaseError } from '@/utils/errorUtils';
 
@@ -216,29 +216,15 @@ function SearchBarContent({
       const active = overrides.active ?? nearMeActive;
       const openNow = overrides.openNow ?? openNowActive;
 
-      // When near-me is active, navigate to section root (strip city from path)
-      const basePath = active ? getResultsPathForSection(selectedSection) : pathname;
-
-      const params = new URLSearchParams(searchParams.toString());
-
-      if (active) {
-        params.set('near_me', '1');
-      } else {
-        params.delete('near_me');
-      }
-
-      if (openNow) {
-        params.set('open_now', '1');
-      } else {
-        params.delete('open_now');
-      }
-
-      // Clean up stale near params
-      params.delete('near_lat');
-      params.delete('near_lon');
-      params.delete('near_radius');
-
-      router.push(`${basePath}?${params.toString()}`);
+      router.push(
+        buildNearMeUrl({
+          section: selectedSection,
+          active,
+          openNow,
+          pathname,
+          searchParams,
+        }),
+      );
     },
     [searchParams, nearMeActive, openNowActive, router, pathname, selectedSection],
   );
