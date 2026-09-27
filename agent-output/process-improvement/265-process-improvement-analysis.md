@@ -2,7 +2,7 @@
 ID: 265
 Origin: 265
 UUID: 7c4e91a3
-Status: Active
+Status: Implemented
 ---
 
 # Process Improvement Analysis 265: Retrospective 265 — Desktop Create Flow Layout (v0.15.19)
@@ -15,7 +15,101 @@ Status: Active
 
 ---
 
-## Executive Summary
+## R2 Re-Review (2026-09-27) — Supersedes R1 Recommendations
+
+Mode: NO-MEMORY MODE (Flowbaby: "No workspace folder open"). All findings verified against current `.github/agents/*.agent.md`, the plan, and workflow files.
+
+### R2 Executive Summary
+
+| Field                       | Value                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| R1 recommendations          | 3 reviewed → 3 rejected (all already exist in agent instructions)                       |
+| R1 accuracy defects         | 3 (fabricated duration baseline, missed direct conflict, overstated handoff efficiency) |
+| New execution defects found | 5 (D1–D5); retrospective missed all of them                                             |
+| New instruction gaps        | 2 (PI-4 DevOps Released gate, PI-5 Retrospective duration sourcing)                     |
+| Overall risk                | LOW (both changes additive, single-file each)                                           |
+| Recommendation              | Approve PI-4 and PI-5; route D1–D5 one-off corrections to DevOps                        |
+
+### Verdict on R1 Recommendations
+
+| ID   | R1 Proposal                                  | R2 Verdict                                           | Evidence (existing instruction text)                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---- | -------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PI-1 | Two-Stage UAT protocol in uat/planner/critic | ❌ Reject: already covered                           | `uat.agent.md` "Deferred Follow-ups (MANDATORY when applicable)" requires "owner, trigger/due window, evidence required to close"; "Design-Review UAT for CSS/Layout-Only Changes (CONDITIONALLY ALLOWED)"; `devops.agent.md` L234 creates `[ID]-open-actions.md`; DevOps 3c "capture the follow-up evidence post-deploy … before declaring the release fully complete"; `critic.agent.md` L158 target artifact. Plan 265 R2 produced the full two-stage sequence using only these rules. |
+| PI-2 | Fix-in-Review, ≤3 lines                      | ❌ Reject: already exists and R1 text would conflict | `code-reviewer.agent.md` L219 "Fix-in-Review Protocol (CONDITIONALLY ALLOWED)", "rule of thumb: 10 lines/file, 3 files", "Ensure the implementer (or QA) has a clear verification path". R1's "≤3 lines" contradicts the existing threshold, and R1 reported that as "0 direct conflicts".                                                                                                                                                                                                |
+| PI-3 | Memory fallback guidance                     | ❌ Reject: already in all agents and the skill       | All 14 agents: "If the retrieval tool is unavailable or errors, explicitly declare: **NO-MEMORY MODE** and proceed artifact-first." `memory-contract` skill §5: "Fail loudly." Root cause is a Flowbaby multi-root/worktree defect, which is technical debt and not process.                                                                                                                                                                                                              |
+
+### R1 Accuracy Corrections
+
+| R1 Claim                                                             | Correction                                                                                                                                                                          |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "~134m total cycle, 33% faster than estimated" / "planned 3.3 hours" | Unsupported. Plan Duration Estimates: Planning "1-2 hours", Implementation "1-2 working days", DevOps "1-2 hours". No 200-minute baseline exists. The metric is withdrawn (see D3). |
+| "0 direct conflicts"                                                 | Wrong. PI-2's threshold conflicts with `code-reviewer.agent.md` L223.                                                                                                               |
+| "10 handoffs, Streamlined"                                           | QA, UAT, DevOps, Retrospective and PI ran in one session and context, so role separation was nominal. This is not an efficiency pattern to codify.                                  |
+
+### Execution Defects in Plan 265 (Missed by Retrospective)
+
+| #   | Defect                                                                                                                                                                                                                                             | Existing rule                                                                         | Cause                                                                                                                                                                                                                                  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Plan marked `Released`, issue #430 closed, roadmap `Current Version` → v0.15.19, and deployment doc says "Environment: production". At that point DF-1 was open and `deploy-hetzner.yml` (production, `workflow_dispatch` only) had **never run**. | Plan 265 Release Sequencing: "The plan is not marked Released before that"; DevOps 3c | **Instruction conflict in `devops.agent.md`**: step 11 and Phase 2D-1 ("Update ALL included plans' status to 'Released'") fire after the Stage 2 push regardless of plan-specific gates, and step 4 closes issues on the same trigger. |
+| D2  | Stage 2 functional smoke (`/providers`, `/`) not run; only `/api/health` checked                                                                                                                                                                   | DevOps 3b "Functional Smoke Tests (MANDATORY)"                                        | Compliance miss, not an instruction gap                                                                                                                                                                                                |
+| D3  | Retrospective invented "Planned Duration" values and a variance                                                                                                                                                                                    | Retrospective template shows `[estimate]` with no source                              | Template does not say where the estimate comes from                                                                                                                                                                                    |
+| D4  | KaTeX (`$\ge 768\text{px}$`) written into `CHANGELOG.md` (now on main), roadmap, and the DF-1 open-actions tracker                                                                                                                                 | None                                                                                  | A chat-rendering convention leaked into repo docs. Replace the three existing occurrences one-off rather than adding a general rule.                                                                                                   |
+| D5  | Post-release docs commits `31003905`, `2bbfcabd` are local only; branch diverged 3/1 from origin/main                                                                                                                                              | DevOps 7b "Post-release local sync"                                                   | Compliance miss; one-off action                                                                                                                                                                                                        |
+
+### PI-4: DevOps "Released" Gate: Plan-Specific Gates Override Generic Step Order (HIGH impact / LOW risk) 🆕
+
+- **Source**: D1
+- **Current state**: `devops.agent.md` L52 (step 11), Phase 2D step 1 and step 4 (issue close) trigger on the Stage 2 push. In UFlow, a push to main deploys **UAT only**; production is a separate manual dispatch.
+- **Conflict**: Direct contradiction with DevOps 3c and with any plan that gates production on a post-merge DF item.
+- **Affected agents**: `devops.agent.md` only
+- **Template**: insert after step 11 (L52) and reference it from Phase 2D step 1 and step 4:
+
+```markdown
+**Released gate (MANDATORY)**: `Released` means live in production. Before setting any plan to `Released`, closing its GitHub issue, or moving roadmap `Current Version`, confirm ALL:
+
+- The production deploy workflow (`deploy-hetzner.yml`, manual dispatch) succeeded for the release commit.
+- No DF-N item in `[ID]-open-actions.md` that gates production is still Open.
+- The plan's own Release/UAT Sequencing section (if present) imposes no stricter gate. Plan-specific gates override the generic step order in this file.
+
+Until then, leave plan Status as `Committed`, keep the issue open, and record "Merged to main / deployed to UAT, production pending [gate]" in the deployment doc and roadmap.
+```
+
+- **Deliberately excluded**: moving the git tag to post-production. The tag marks the version on main, and changing it would ripple into the planner/roadmap version-source rules (`planner.agent.md` L332). Deferred.
+
+### PI-5: Retrospective Planned-Duration Sourcing (MEDIUM impact / LOW risk) 🆕
+
+- **Source**: D3
+- **Current state**: `retrospective.agent.md` L120-127 table uses `[estimate]` with no provenance rule.
+- **Affected agents**: `retrospective.agent.md` only
+- **Template**: insert directly above the Phase table:
+
+```markdown
+**Duration provenance (MANDATORY)**: Copy "Planned Duration" verbatim from the plan's `Duration Estimates` section. Derive "Actual Duration" only from changelog timestamps. If a phase has no estimate or the units are not comparable (e.g., "1-2 working days" vs minutes), write `N/A` and do not compute a variance or percentage speed-up.
+```
+
+### One-Off Corrections (Outside PI Scope → DevOps)
+
+| #   | Action                                                                                                                                                     | Needs user OK       |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| C1  | Plan 265 Status `Released` → `Committed`; deployment doc Environment → "UAT (production pending DF-1)"; roadmap note → "on main / UAT, production pending" | Yes                 |
+| C2  | Reopen issue #430 until production deploys, or add a comment stating production is pending                                                                 | Yes (shared system) |
+| C3  | Run the `/providers` and `/` smoke checks on uat.ummahflow.com and record them in the deployment doc                                                       | No                  |
+| C4  | Replace KaTeX with plain text in `CHANGELOG.md`, roadmap, and `265-open-actions.md`                                                                        | No                  |
+| C5  | Correct the retrospective timeline (Planned → plan estimates or `N/A`; remove "33% faster")                                                                | No                  |
+| C6  | Push local docs commits through a follow-up docs PR to main                                                                                                | Yes (push)          |
+
+### R2 User Decision Required
+
+1. **Option 1 (Recommended)**: Approve PI-4 + PI-5, and authorize DevOps corrections C1–C6.
+2. **Option 2**: Approve PI-4 only (the D1 conflict is the only defect with release impact).
+3. **Option 3**: Review exact diffs of PI-4/PI-5 first.
+4. **Option 4**: Defer all instruction changes; run corrections C1–C6 only.
+
+---
+
+## R1 Analysis (Superseded — retained for audit trail)
+
+### Executive Summary
 
 | Field                     | Value                                                                                                                                    |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -176,13 +270,9 @@ Reviewers MAY apply minor fixes directly during review rather than rejecting for
 
 ---
 
-## User Decision Required
+## R1 User Decision (Superseded)
 
-Please select an option to proceed:
-
-1. **Option 1 (Recommended)**: Approve PI-1 and PI-2 for immediate implementation across `.github/agents/*.agent.md`.
-2. **Option 2**: Review specific agent diffs first before approving.
-3. **Option 3**: Defer agent instruction updates to a later maintenance session.
+R1 options withdrawn. See **R2 User Decision Required** above.
 
 ---
 
@@ -195,3 +285,14 @@ Please select an option to proceed:
 - UAT Report: [265-create-desktop-layout-uat.md](../uat/closed/265-create-desktop-layout-uat.md)
 - Deployment: [265-stage1-v0.15.19.md](../deployment/265-stage1-v0.15.19.md)
 - Open Actions: [265-open-actions.md](../planning/265-open-actions.md)
+
+---
+
+## Changelog
+
+| Date       | Agent              | Change                                                                                                                                                                                                                                                                                                         |
+| ---------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-27 | ProcessImprovement | R1: initial analysis (PI-1..PI-3).                                                                                                                                                                                                                                                                             |
+| 2026-09-27 | ProcessImprovement | R2 re-review: rejected PI-1..PI-3 as duplicates of existing instructions (PI-2 also conflicted with the existing threshold); withdrew the fabricated duration metric; added execution defects D1–D5, new gaps PI-4 (DevOps Released gate) and PI-5 (retro duration provenance), and one-off corrections C1–C6. |
+| 2026-09-27 | ProcessImprovement | User approved PI-4 and PI-5. Implemented in `devops.agent.md` and `retrospective.agent.md`. See `265-agent-instruction-updates.md`. C1–C6 routed to DevOps.                                                                                                                                                    |
+| 2026-09-27 | DevOps             | C3 HTTP smoke recorded (DF-1 remains open); C4 and C5 corrected locally. C1, C2, and C6 remain pending explicit user approval.                                                                                                                                                                                 |

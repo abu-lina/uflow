@@ -78,6 +78,7 @@ Process:
 5. Review issues/blockers: Open Questions, Blockers, resolution status, escalation appropriateness, patterns
 6. Count substantive changes: update frequency, additions vs corrections, planning gaps indicators
 7. Review timeline: phase durations, delays
+   - **Duration provenance (MANDATORY, PI-5)**: Copy "Planned Duration" verbatim from the plan's `Duration Estimates` section. Derive "Actual Duration" only from changelog timestamps. If a phase has no estimate or the units are not comparable (e.g., "1-2 working days" vs minutes), write `N/A` and do not compute a variance or percentage speed-up.
 8. Assess value delivery: objective achievement, cost
 9. Identify patterns: technical approaches, problem-solving, architectural decisions
 10. Note lessons learned: successes, failures, improvements

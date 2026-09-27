@@ -6,7 +6,7 @@
 
 ### Fixed
 
-- **Desktop create flow layout (Plan 265)**: All 16 routes under `/create` and `/create/*` now keep the route title and back action in normal document flow on desktop viewports ($\ge 768\text{px}$), positioned cleanly below the fixed global header in a centered 672px column (`max-w-2xl`). Wrapped bare loading, redirect-pending, and `LoginGate` screens in the desktop layout container, preserved header navigation on recommendation/OSM-import success states, and localized the category selection title on `/create/social-category`. Mobile viewports ($<768\text{px}$) and shared layout defaults remain unchanged.
+- **Desktop create flow layout (Plan 265)**: All 16 routes under `/create` and `/create/*` now keep the route title and back action in normal document flow on desktop viewports (768px and wider), positioned cleanly below the fixed global header in a centered 672px column (`max-w-2xl`). Wrapped bare loading, redirect-pending, and `LoginGate` screens in the desktop layout container, preserved header navigation on recommendation/OSM-import success states, and localized the category selection title on `/create/social-category`. Mobile viewports below 768px and shared layout defaults remain unchanged.
 
 ## [0.15.18] - 2026-09-26
 

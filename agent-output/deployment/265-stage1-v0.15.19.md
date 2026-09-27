@@ -115,3 +115,14 @@ Status: Released
 | Tag creation         | `git tag -a v0.15.19 5e2f0708 -m "Release v0.15.19 — Desktop create flow layout"` | ✅ Tag `v0.15.19` created on squash SHA                              |
 | Tag push             | `git push origin v0.15.19`                                                        | ✅ Tag `v0.15.19` pushed to `origin`                                 |
 | GitHub Issue closure | `gh issue close 430 --comment "Released in v0.15.19 🎉"`                          | ✅ [Issue #430](https://github.com/abu-lina/uflow/issues/430) closed |
+
+## Post-Merge HTTP Smoke Check (2026-09-27)
+
+**Recorded**: 2026-09-27T06:52Z
+
+| Route        | Command                                                                                     | Result                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `/providers` | `curl -sS -L -o /tmp/plan265-uat-providers.html -w ... https://uat.ummahflow.com/providers` | HTTP 200; 143,233 bytes; server-rendered HTML detected; "No results found" not detected. |
+| `/`          | `curl -sS -L -o /tmp/plan265-uat-home.html -w ... https://uat.ummahflow.com/`               | HTTP 200; 47,547 bytes; server-rendered HTML detected; "No results found" not detected.  |
+
+This is HTTP/server-rendered smoke evidence only. Browser automation was unavailable in this session; no visual or interactive browser validation was performed. It does not satisfy DF-1, which requires browser validation of AC1-AC7 across guest and authenticated create subpages. DF-1 remains Open, and production deployment remains pending.
