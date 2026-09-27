@@ -5,20 +5,22 @@ UUID: 7c4e91a3
 Status: Active
 ---
 
-# Deployment Record: v0.15.19 — Stage 1 (Plan 265)
+# Deployment Record: v0.15.19 — Release (Plan 265)
 
 **Plan Reference**: `agent-output/planning/closed/265-create-desktop-layout-plan.md`
 **Target Version**: v0.15.19
 **Type**: Bugfix patch
-**Environment**: production (https://ummahflow.com) & UAT (https://uat.ummahflow.com) — via PR merge, then Stage 2
+**Environment**: UAT (https://uat.ummahflow.com); production (https://ummahflow.com) pending DF-1
 **Agent**: devops
 **Date**: 2026-09-26
 
 ## Changelog
 
-| Date (UTC) | Agent  | Change                                                                                                                                                                                                                                                                           |
-| ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-26 | devops | Stage 1: version pre-flight confirmed v0.15.19, version bumped in package.json/package-lock.json/CHANGELOG.md, open-actions tracker created for DF-1, chain docs closed to `closed/` with status `Committed`, local commit prepared. Awaiting user release approval for Stage 2. |
+| Date (UTC) | Agent  | Change                                                                                                                                                                                                                                                                                               |
+| ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-26 | devops | Stage 1: version pre-flight confirmed v0.15.19, version bumped in package.json/package-lock.json/CHANGELOG.md, open-actions tracker created for DF-1, chain docs closed to `closed/` with status `Committed`, local commit prepared. Awaiting user release approval for Stage 2.                     |
+| 2026-09-26 | devops | Stage 2: Release approved by user. Branch pushed, PR #432 opened, all CI checks green, PR #432 squash-merged into main (`5e2f0708`), tag `v0.15.19` created and pushed, GitHub Issue #430 closed at that time (reopened 2026-09-27 pending DF-1).                                                    |
+| 2026-09-27 | devops | Corrected plan/deployment state under the production gate: UAT deployment is complete; DF-1 remains open; production is pending. Reopened GitHub Issue #430 at 07:03:56Z and recorded the pending gate in [the issue comment](https://github.com/abu-lina/uflow/issues/430#issuecomment-5853625872). |
 
 ---
 
@@ -105,12 +107,43 @@ Status: Active
 
 ### Release Execution Log
 
-| Step                 | Command                                                                               | Result     |
-| -------------------- | ------------------------------------------------------------------------------------- | ---------- |
-| Push branch          | `git push origin fix/265-create-desktop-layout`                                       | ⏳ Pending |
-| PR creation / check  | `gh pr create`                                                                        | ⏳ Pending |
-| CI Verification      | `gh pr checks <PR#>`                                                                  | ⏳ Pending |
-| Squash merge         | `gh pr merge <PR#> --squash --delete-branch`                                          | ⏳ Pending |
-| Tag creation         | `git tag -a v0.15.19 <squash-sha> -m "Release v0.15.19 — Desktop create flow layout"` | ⏳ Pending |
-| Tag push             | `git push origin v0.15.19`                                                            | ⏳ Pending |
-| GitHub Issue closure | `gh issue close 430 --comment "Released in v0.15.19 🎉"`                              | ⏳ Pending |
+| Step                 | Command                                                                           | Result                                                               |
+| -------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Push branch          | `git push origin fix/265-create-desktop-layout`                                   | ✅ Pushed (`d66bdd5f`)                                               |
+| PR creation / check  | `gh pr create`                                                                    | ✅ [PR #432](https://github.com/abu-lina/uflow/pull/432)             |
+| CI Verification      | `gh pr checks 432`                                                                | ✅ PASS (Build, Tests, Lint & Type, Audit, IOC, Snyk)                |
+| Squash merge         | `gh pr merge 432 --squash --delete-branch`                                        | ✅ Merged into `origin/main` (`5e2f0708`)                            |
+| Tag creation         | `git tag -a v0.15.19 5e2f0708 -m "Release v0.15.19 — Desktop create flow layout"` | ✅ Tag `v0.15.19` created on squash SHA                              |
+| Tag push             | `git push origin v0.15.19`                                                        | ✅ Tag `v0.15.19` pushed to `origin`                                 |
+| GitHub Issue closure | `gh issue close 430 --comment "Released in v0.15.19 🎉"`                          | ✅ [Issue #430](https://github.com/abu-lina/uflow/issues/430) closed |
+
+## Post-Rebase Documentation PR Checks (2026-09-27)
+
+| Check                                              | Result                                                                                                                                                                             |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Conflict markers in package metadata and CHANGELOG | PASS; none found.                                                                                                                                                                  |
+| JSON parse (`package.json`, `package-lock.json`)   | PASS.                                                                                                                                                                              |
+| `npm run build`                                    | BLOCKED after compilation and type-check: page-data collection requires `NEXT_PUBLIC_SUPABASE_URL`, unavailable in this worktree. CI must provide the build evidence before merge. |
+| `npm audit --audit-level=high`                     | 10 findings (5 moderate, 4 high, 1 critical). All checked direct package versions match `origin/main`; no dependency changes in this PR, so no new findings were introduced.       |
+
+## Follow-up Documentation PR
+
+**User Confirmation**: "approved" — 2026-09-27T07:05Z
+**Scope**: PI-4/PI-5 and Plan 265 release-status/evidence corrections. Production deployment is not included; DF-1 remains open.
+
+| Step        | Command                                                             | Result                                                                                                                   |
+| ----------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Rebase      | `git rebase origin/main`                                            | PASS; skipped the already-merged implementation commit; no conflicts.                                                    |
+| Push branch | `git push -u origin docs/265-release-gate-corrections`              | PASS; pushed at 2026-09-27T07:06Z.                                                                                       |
+| Create PR   | `gh pr create --base main --head docs/265-release-gate-corrections` | PASS; [PR #433](https://github.com/abu-lina/uflow/pull/433), created 2026-09-27T07:07:29Z. Mergeable; CI checks pending. |
+
+## Post-Merge HTTP Smoke Check (2026-09-27)
+
+**Recorded**: 2026-09-27T06:52Z
+
+| Route        | Command                                                                                     | Result                                                                                   |
+| ------------ | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `/providers` | `curl -sS -L -o /tmp/plan265-uat-providers.html -w ... https://uat.ummahflow.com/providers` | HTTP 200; 143,233 bytes; server-rendered HTML detected; "No results found" not detected. |
+| `/`          | `curl -sS -L -o /tmp/plan265-uat-home.html -w ... https://uat.ummahflow.com/`               | HTTP 200; 47,547 bytes; server-rendered HTML detected; "No results found" not detected.  |
+
+This is HTTP/server-rendered smoke evidence only. Browser automation was unavailable in this session; no visual or interactive browser validation was performed. It does not satisfy DF-1, which requires browser validation of AC1-AC7 across guest and authenticated create subpages. DF-1 remains Open, and production deployment remains pending.
