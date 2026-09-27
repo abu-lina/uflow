@@ -2,7 +2,7 @@
 ID: 265
 Origin: 265
 UUID: 7c4e91a3
-Status: Released
+Status: Committed
 ---
 
 # Plan 265: Desktop Create Flow Layout
@@ -45,6 +45,7 @@ As a desktop contributor, I want every step of adding or recommending a provider
 | 2026-09-26T21:15Z         | UAT           | UAT Complete (Conditional Approval): Pre-merge value assessment confirms desktop create flow layout is restored across all 16 routes, loading states, LoginGate, and success screens without mobile regressions. Post-merge live verification on uat.ummahflow.com tracked as DF-1. See agent-output/uat/265-create-desktop-layout-uat.md. Ready for DevOps.                                                                               |
 | 2026-09-26T21:20Z         | DevOps        | Stage 1 complete: Plan committed locally for release v0.15.19. Version pre-flight verified, package bumped, open actions tracker created for DF-1, documents closed.                                                                                                                                                                                                                                                                       |
 | 2026-09-26T21:30Z         | DevOps        | Stage 2 released: PR #432 squash-merged into main (5e2f0708), tag v0.15.19 pushed, GitHub Issue #430 closed. Status: Released.                                                                                                                                                                                                                                                                                                             |
+| 2026-09-27T07:04Z         | DevOps        | Corrected premature Released status to Committed under the production gate. Plan 265 is on main and deployed to UAT; production remains pending DF-1 browser verification.                                                                                                                                                                                                                                                                 |
 
 ## Scope and Alignment
 

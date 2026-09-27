@@ -39,12 +39,12 @@ Status: Implemented
 
 | ID  | Status                                  | Evidence / Gate                                                                                                                                                                    |
 | --- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| C1  | Waiting for explicit approval           | Plan/deployment/roadmap release-state edits not made.                                                                                                                              |
-| C2  | Waiting for explicit approval           | GitHub issue #430 remains unchanged.                                                                                                                                               |
+| C1  | Completed locally                       | Plan status is Committed; deployment environment and roadmap now identify UAT with production pending DF-1. Roadmap Current Version is v0.15.18 until production succeeds.         |
+| C2  | Completed                               | Reopened issue #430 and added [a comment](https://github.com/abu-lina/uflow/issues/430#issuecomment-5853625872) stating production is gated on DF-1.                               |
 | C3  | HTTP smoke completed; DF-1 remains open | `/providers` and `/` returned HTTP 200 with rendered HTML; no browser-backed AC1-AC7 validation was available. Recorded in the deployment record.                                  |
 | C4  | Completed locally                       | Replaced KaTeX viewport notation with plain text in `CHANGELOG.md`, roadmap, and the DF-1 tracker.                                                                                 |
 | C5  | Completed locally                       | Replaced unsupported duration values with plan estimates and timestamp-based actuals; removed the unsupported speed-up claim and corrected production status in the retrospective. |
-| C6  | Waiting for explicit approval           | No push or PR creation performed.                                                                                                                                                  |
+| C6  | Approved; in progress                   | Branch rebased onto current `origin/main`; local docs PR push/creation is the remaining step.                                                                                      |
 
 ## Validation Plan
 

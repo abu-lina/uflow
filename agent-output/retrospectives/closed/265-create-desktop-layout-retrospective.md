@@ -32,7 +32,7 @@ Status: Processed
 **Value Statement**: _"As a desktop contributor, I want every step of adding or recommending a provider to remain readable and usable below the global navigation, so that I can complete my contribution without overlapping headers or obscured controls."_
 **Value Delivered**: YES
 **Implementation Duration**: Not reported; the plan's estimates and available timestamps do not define one comparable end-to-end duration. Post-merge UAT remains open under DF-1, and production deployment is pending.
-**Overall Assessment**: Highly successful bugfix release (v0.15.19). Repaired the desktop layout across all 16 `/create` and `/create/*` routes, 6 bare loading/redirect states, `LoginGate` prompts, and success views by establishing an opt-in `CreateDesktopLayoutContext` contract. Zero regressions on mobile (<768px) and non-create pages.
+**Overall Assessment**: The v0.15.19 bugfix is merged to main and deployed to UAT; production remains pending DF-1. It repaired the desktop layout across all 16 `/create` and `/create/*` routes, 6 bare loading/redirect states, `LoginGate` prompts, and success views by establishing an opt-in `CreateDesktopLayoutContext` contract. Zero regressions on mobile (<768px) and non-create pages.
 **Focus**: Process improvements in pipeline sequencing, worktree memory handling, and cross-agent quality gates.
 
 ---
