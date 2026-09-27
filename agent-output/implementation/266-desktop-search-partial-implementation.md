@@ -23,6 +23,7 @@ Status: Active
 | ----------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-09-26T21:27Z | Implementer | M2–M7 implemented. Migration 134 validated against local PG 17.6. Two defects found and fixed during implementation (see Defects Found During Implementation). Version bumped 0.15.18 → 0.15.20 after `git fetch --tags` showed origin/main had advanced to 0.15.19.                                                                                                                                                          |
 | 2026-09-26T23:10Z | Implementer | Code review REJECTED → fixed. Added a committed, executable SQL suite (PGlite). The suite found a **blocker the review missed**: `search_food_concepts` joined on the dropped `providers.offers_ids`, so migration 134 would abort on UAT/prod. Also fixed: empty-query categories (HIGH), provider suggestions not name-filtered (MEDIUM), and two further 107 regressions (description matching, zero-provider categories). |
+| 2026-09-27T09:00Z | Implementer | Code review round 2 REJECTED → fixed. HIGH i18n: SearchBar fallback placeholder and ProviderCard location-count, halal-level, Approve and Reject labels now use `t()` with 4 new `providers.*` keys in all 6 locales. MEDIUM: added `idx_categories_desc_simple_search` matching the category name + description predicate. Both covered by failing-first tests.                                                              |
 
 ## Memory Status
 
@@ -44,7 +45,7 @@ Both root causes from the analysis are closed by giving suggestions and results 
 ## Milestones Completed
 
 - [x] **M1** — Pre-implementation UAT verification → **DEFERRED** (see Deferrals). F4 instead reproduced locally with an exact copy of the shipped function body.
-- [x] **M2** — Migration `134_plan_266_desktop_search_partial.sql`: shared tokenizer, provider matcher, scoped suggestions, F4 fix, GIN indexes.
+- [x] **M2** — Migration `134_plan_266_desktop_search_partial.sql`: shared tokenizer, provider matcher, scoped suggestions, F4 fix, 6 GIN indexes.
 - [x] **M3** — Service layer: `searchProviders` + `fetchSearchSuggestions` on the new RPCs; `matched_menu_items` threaded through types; zero ILIKE.
 - [x] **M4** — UI: SearchBar passes section/city; ProviderCard renders matched dish; i18n in 6 locales.
 - [x] **M5** — Branch coverage table (below).
@@ -53,30 +54,32 @@ Both root causes from the analysis are closed by giving suggestions and results 
 
 ## Files Created
 
-| Path                                                              | Purpose                                                                                       |
-| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `supabase/migrations/134_plan_266_desktop_search_partial.sql`     | Shared prefix tokenizer, provider-matching RPC, scoped suggestions RPC, F4 fix, 5 GIN indexes |
-| `src/__tests__/services/search-suggestions-plan266.test.ts`       | Regression: suggestions use the scoped RPC with section/city                                  |
-| `src/__tests__/services/search-result-menu-match-plan266.test.ts` | Regression: matched dish names survive the provider→SearchResult transform                    |
-| `src/features/providers/components/ProviderCard.plan266.test.tsx` | Regression: card renders matched dishes with a translated label                               |
-| `src/__tests__/migrations/134-desktop-search-partial.test.ts`     | **Executes** migration 134 in PGlite against a post-006 schema; 26 behavioural SQL tests      |
+| Path                                                              | Purpose                                                                                                |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `supabase/migrations/134_plan_266_desktop_search_partial.sql`     | Shared prefix tokenizer, provider-matching RPC, scoped suggestions RPC, F4 fix, 6 GIN indexes          |
+| `src/__tests__/services/search-suggestions-plan266.test.ts`       | Regression: suggestions use the scoped RPC with section/city                                           |
+| `src/__tests__/services/search-result-menu-match-plan266.test.ts` | Regression: matched dish names survive the provider→SearchResult transform                             |
+| `src/features/providers/components/ProviderCard.plan266.test.tsx` | Regression: card renders matched dishes with a translated label                                        |
+| `src/__tests__/migrations/134-desktop-search-partial.test.ts`     | **Executes** migration 134 in PGlite against a post-006 schema; 27 SQL tests (behaviour + index usage) |
+| `src/__tests__/components/ProviderCard-i18n-plan266.test.tsx`     | Regression: card labels render in German; SearchBar fallback has no hardcoded placeholder              |
 
 ## Files Modified
 
-| Path                                                      | Changes                                                                                                                                                                           |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/services/providers/search.ts`                        | Replaced 4-way fan-out + ILIKE with one `search_providers_for_query` call; collects `matched_menu_items`; removed now-unused `searchOffers`/`searchNeeds` imports (−48 lines net) |
-| `src/services/providers/suggestions.ts`                   | ILIKE fan-out → single scoped RPC; signature now `(query, limit, scope)`                                                                                                          |
-| `src/services/providers/types.ts`                         | `matched_menu_items?: string[]` on `Provider` + `SearchResult`; passed through transform                                                                                          |
-| `src/features/search/components/SearchBar.tsx`            | Passes `{section, city}`; refetches when scope changes                                                                                                                            |
-| `src/app/(public)/providers/ProvidersContent.tsx`         | Adapter passes `matched_menu_items`                                                                                                                                               |
-| `src/features/search/components/DiscoveryResultsGrid.tsx` | `matched_menu_items` on `DiscoveryCardItem` + card props                                                                                                                          |
-| `src/features/providers/components/ProviderCard.tsx`      | Renders capped "Serves: …" line; omitted when empty                                                                                                                               |
-| `src/translations/{de,en,ar,tr,ur,ps}.ts`                 | `providers.serves` key (6 locales)                                                                                                                                                |
-| `src/__tests__/regression/255-trust-boundaries.test.tsx`  | Updated to assert the approved-only boundary at its new enforcement point                                                                                                         |
-| `src/__tests__/services/providers.test.ts`                | Updated to the new RPC contract; now asserts **no** ILIKE                                                                                                                         |
-| `package.json`, `package-lock.json`                       | 0.15.18 → 0.15.20; devDependency `@electric-sql/pglite@^0.5.8` (WASM Postgres for migration tests; no native build, no CI service)                                                |
-| `CHANGELOG.md`                                            | `[Unreleased]` entry                                                                                                                                                              |
+| Path                                                            | Changes                                                                                                                                                                           |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/services/providers/search.ts`                              | Replaced 4-way fan-out + ILIKE with one `search_providers_for_query` call; collects `matched_menu_items`; removed now-unused `searchOffers`/`searchNeeds` imports (−48 lines net) |
+| `src/services/providers/suggestions.ts`                         | ILIKE fan-out → single scoped RPC; signature now `(query, limit, scope)`                                                                                                          |
+| `src/services/providers/types.ts`                               | `matched_menu_items?: string[]` on `Provider` + `SearchResult`; passed through transform                                                                                          |
+| `src/features/search/components/SearchBar.tsx`                  | Passes `{section, city}`; refetches when scope changes; Suspense fallback placeholder uses `t('search.placeholder')`                                                              |
+| `src/app/(public)/providers/ProvidersContent.tsx`               | Adapter passes `matched_menu_items`                                                                                                                                               |
+| `src/features/search/components/DiscoveryResultsGrid.tsx`       | `matched_menu_items` on `DiscoveryCardItem` + card props                                                                                                                          |
+| `src/features/providers/components/ProviderCard.tsx`            | Renders capped "Serves: …" line; omitted when empty; location count, halal level, Approve/Reject via `t()`                                                                        |
+| `src/translations/{de,en,ar,tr,ur,ps}.ts`                       | `providers.serves`, `locationsCount`, `halalLevel`, `approve`, `reject` (6 locales)                                                                                               |
+| `src/__tests__/components/ProviderCard-multi-location.test.tsx` | Expects the translated English label `2 locations` (was the hardcoded German literal)                                                                                             |
+| `src/__tests__/regression/255-trust-boundaries.test.tsx`        | Updated to assert the approved-only boundary at its new enforcement point                                                                                                         |
+| `src/__tests__/services/providers.test.ts`                      | Updated to the new RPC contract; now asserts **no** ILIKE                                                                                                                         |
+| `package.json`, `package-lock.json`                             | 0.15.18 → 0.15.20; devDependency `@electric-sql/pglite@^0.5.8` (WASM Postgres for migration tests; no native build, no CI service)                                                |
+| `CHANGELOG.md`                                                  | `[Unreleased]` entry                                                                                                                                                              |
 
 ## Defects Found During Implementation
 
@@ -97,7 +100,10 @@ The committed SQL suite was written first and run against the unfixed migration.
 
 Not restored on purpose: 107's display-name rewrite (`'\\s*Küche\\s*$'`). It carries the same double-escape bug as F4 and was verified to be a **no-op in production** (`'Türkische Küche'` comes back unchanged), so dropping it keeps real output identical.
 
-Index note: `search_food_categories` now matches name + description, which does not match `idx_categories_simple_search` (name only). The categories table is small (dozens of rows), so a seq scan is acceptable; the hot paths (`providers`, `food_menu`) are unaffected.
+### Code review round 2 (2026-09-27)
+
+7. **HIGH (review): hardcoded UI strings.** `SearchBar`'s Suspense fallback used a literal English placeholder. `ProviderCard` had a literal `Standorte` location count, `Halal Level` aria-label and title, and `Approve`/`Reject` labels. All now go through `t()`: the fallback reuses `search.placeholder`, and the card uses the new keys `providers.locationsCount`, `providers.halalLevel`, `providers.approve` and `providers.reject`, added in all 6 locales. The Plan 151 multi-location test pinned the German literal; tests render in English, so it now expects `2 locations`, and German is covered by the new test.
+8. **MEDIUM (review): no index for the category description predicate.** Added `idx_categories_desc_simple_search`, whose expression is exactly the predicate in `search_food_categories`. The name-only `idx_categories_simple_search` is kept because the category branch of `search_providers_for_query` and the cuisine suggestions still use it. Regression test: with `enable_seqscan = off`, the predicate plan must contain `Index Scan`.
 
 ## Verification Evidence
 
@@ -190,6 +196,9 @@ No row left unconfirmed.
 | `search_food_categories` empty query (HIGH)                                              | `134-desktop-search-partial.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected [] to deeply equal [ {…}, {…}, {…} ]`                                                        | ✅ Yes           |
 | `search_food_categories` description match / 0-provider rows                             | `134-desktop-search-partial.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected [] to deeply equal [ 'Türkische Küche' ]` / `expected []`                                    | ✅ Yes           |
 | Provider suggestion name filter (MEDIUM)                                                 | `134-desktop-search-partial.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected [ { label: 'Istanbul Grill', … } ] to deeply equal []`                                       | ✅ Yes           |
+| `idx_categories_desc_simple_search` (review round 2, MEDIUM)                             | `134-desktop-search-partial.test.ts`       | ✅ Yes                                                 | ✅ Yes            | `expected 'Seq Scan on categories c …' to contain 'Index Scan'`                                                        | ✅ Yes           |
+| ProviderCard labels via `t()` (review round 2, HIGH)                                     | `ProviderCard-i18n-plan266.test.tsx`       | ✅ Yes                                                 | ✅ Yes            | `Unable to find role="button" and name "Freigeben"`                                                                    | ✅ Yes           |
+| SearchBar fallback placeholder via `t()` (review round 2, HIGH)                          | `ProviderCard-i18n-plan266.test.tsx`       | ✅ Yes                                                 | ✅ Yes            | `AssertionError: expected '…' not to contain 'placeholder="Search in your Ummah"'`                                     | ✅ Yes           |
 
 The SQL is now protected by CI: the suite applies migration 134 to an in-process Postgres 18 (PGlite) whose schema mirrors production after migration 006, then runs behavioural assertions. It runs inside the normal `npx vitest run`, so no CI change is needed.
 
@@ -198,7 +207,7 @@ The SQL is now protected by CI: the suite applies migration 134 to an in-process
 | Gate             | Command              | Result                                                                                                                                                                                                                         |
 | ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Type check       | `npm run type-check` | ✅ Pass (0 errors)                                                                                                                                                                                                             |
-| Tests            | `npx vitest run`     | ✅ 2606 passed, 28 skipped, **0 failed** (291 files) — review round                                                                                                                                                            |
+| Tests            | `npx vitest run`     | ✅ 2609 passed, 28 skipped, **0 failed** (292 files) — review round 2                                                                                                                                                          |
 | Lint (full repo) | `npm run lint`       | ✅ 0 errors, 151 warnings — all pre-existing; **none in files touched by this plan** (verified by grep)                                                                                                                        |
 | Build            | `npm run build`      | ⚠️ Compiles + type-validates successfully; fails at page-data collection with `Missing NEXT_PUBLIC_SUPABASE_URL`. **Confirmed pre-existing**: clean `HEAD` (work stashed) fails identically. No `.env.local` in this worktree. |
 
