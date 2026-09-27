@@ -134,7 +134,7 @@ Status: Active
 | Step        | Command                                                             | Result                                                                |
 | ----------- | ------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | Rebase      | `git rebase origin/main`                                            | PASS; skipped the already-merged implementation commit; no conflicts. |
-| Push branch | `git push -u origin docs/265-release-gate-corrections`              | Pending.                                                              |
+| Push branch | `git push -u origin docs/265-release-gate-corrections`              | PASS; pushed at 2026-09-27T07:06Z.                                    |
 | Create PR   | `gh pr create --base main --head docs/265-release-gate-corrections` | Pending.                                                              |
 
 ## Post-Merge HTTP Smoke Check (2026-09-27)
