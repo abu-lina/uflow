@@ -131,11 +131,11 @@ Status: Active
 **User Confirmation**: "approved" — 2026-09-27T07:05Z
 **Scope**: PI-4/PI-5 and Plan 265 release-status/evidence corrections. Production deployment is not included; DF-1 remains open.
 
-| Step        | Command                                                             | Result                                                                |
-| ----------- | ------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Rebase      | `git rebase origin/main`                                            | PASS; skipped the already-merged implementation commit; no conflicts. |
-| Push branch | `git push -u origin docs/265-release-gate-corrections`              | PASS; pushed at 2026-09-27T07:06Z.                                    |
-| Create PR   | `gh pr create --base main --head docs/265-release-gate-corrections` | Pending.                                                              |
+| Step        | Command                                                             | Result                                                                                                                   |
+| ----------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Rebase      | `git rebase origin/main`                                            | PASS; skipped the already-merged implementation commit; no conflicts.                                                    |
+| Push branch | `git push -u origin docs/265-release-gate-corrections`              | PASS; pushed at 2026-09-27T07:06Z.                                                                                       |
+| Create PR   | `gh pr create --base main --head docs/265-release-gate-corrections` | PASS; [PR #433](https://github.com/abu-lina/uflow/pull/433), created 2026-09-27T07:07:29Z. Mergeable; CI checks pending. |
 
 ## Post-Merge HTTP Smoke Check (2026-09-27)
 

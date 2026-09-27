@@ -44,7 +44,7 @@ Status: Implemented
 | C3  | HTTP smoke completed; DF-1 remains open | `/providers` and `/` returned HTTP 200 with rendered HTML; no browser-backed AC1-AC7 validation was available. Recorded in the deployment record.                                  |
 | C4  | Completed locally                       | Replaced KaTeX viewport notation with plain text in `CHANGELOG.md`, roadmap, and the DF-1 tracker.                                                                                 |
 | C5  | Completed locally                       | Replaced unsupported duration values with plan estimates and timestamp-based actuals; removed the unsupported speed-up claim and corrected production status in the retrospective. |
-| C6  | Approved; PR creation in progress       | `docs/265-release-gate-corrections` pushed after a clean rebase; PR creation and conflict check are pending.                                                                       |
+| C6  | PR opened; CI pending                   | [PR #433](https://github.com/abu-lina/uflow/pull/433) targets `main`; GitHub reports mergeable, with CI/Snyk checks still pending.                                                 |
 
 ## Validation Plan
 
