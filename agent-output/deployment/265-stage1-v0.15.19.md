@@ -126,6 +126,17 @@ Status: Active
 | `npm run build`                                    | BLOCKED after compilation and type-check: page-data collection requires `NEXT_PUBLIC_SUPABASE_URL`, unavailable in this worktree. CI must provide the build evidence before merge. |
 | `npm audit --audit-level=high`                     | 10 findings (5 moderate, 4 high, 1 critical). All checked direct package versions match `origin/main`; no dependency changes in this PR, so no new findings were introduced.       |
 
+## Follow-up Documentation PR
+
+**User Confirmation**: "approved" — 2026-09-27T07:05Z
+**Scope**: PI-4/PI-5 and Plan 265 release-status/evidence corrections. Production deployment is not included; DF-1 remains open.
+
+| Step        | Command                                                             | Result                                                                |
+| ----------- | ------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Rebase      | `git rebase origin/main`                                            | PASS; skipped the already-merged implementation commit; no conflicts. |
+| Push branch | `git push -u origin docs/265-release-gate-corrections`              | Pending.                                                              |
+| Create PR   | `gh pr create --base main --head docs/265-release-gate-corrections` | Pending.                                                              |
+
 ## Post-Merge HTTP Smoke Check (2026-09-27)
 
 **Recorded**: 2026-09-27T06:52Z
