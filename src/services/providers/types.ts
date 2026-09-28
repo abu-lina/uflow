@@ -91,6 +91,7 @@ export interface Provider {
   no_gambling?: boolean | null;
   opening_hours?: OpeningHours | null;
   food_menu_items?: FoodMenuItem[];
+  matched_menu_items?: string[];
   locations?: Location[];
 }
 
@@ -115,6 +116,7 @@ export interface SearchResult {
   needs_ids: string[];
   offers?: Array<{ name_de: string }>;
   food_menu_items?: FoodMenuItem[];
+  matched_menu_items?: string[];
   needs?: Array<{ name_de: string }>;
   badges?: ProviderBadgeWithType[];
   category?: {
@@ -173,6 +175,7 @@ export function transformProviderToSearchResult(provider: Provider): SearchResul
     needs_ids: provider.needs_ids,
     offers: provider.offers,
     needs: provider.needs,
+    matched_menu_items: provider.matched_menu_items,
     badges: provider.badges,
     category: provider.category,
     type: 'provider' as const,

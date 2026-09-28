@@ -192,7 +192,10 @@ function SearchBarContent({
     const timeout = setTimeout(async () => {
       setIsLoadingSuggestions(true);
       try {
-        const results = await fetchSearchSuggestions(query);
+        const results = await fetchSearchSuggestions(query, 10, {
+          section: selectedSection,
+          city: selectedLocation === LOCATION_ALL ? undefined : selectedLocation,
+        });
         if (!cancelled) setSuggestions(results);
       } catch (err) {
         console.debug('[SearchBar] Suggestions error:', err);
@@ -206,7 +209,7 @@ function SearchBarContent({
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [searchQuery]);
+  }, [searchQuery, selectedLocation, selectedSection]);
 
   // ── URL sync helper for open-now / near-me params ────────────────
   // Near-me navigates to the section root (e.g. /food) since having a city
@@ -628,6 +631,7 @@ function SearchBarContent({
 }
 
 export function SearchBar(props: SearchBarProps) {
+  const { t } = useLanguage();
   return (
     <Suspense
       fallback={
@@ -637,7 +641,7 @@ export function SearchBar(props: SearchBarProps) {
           <input
             disabled
             className="min-w-0 flex-1 appearance-none border-0 bg-transparent text-sm font-normal text-gray-400 shadow-none outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-            placeholder="Search in your Ummah"
+            placeholder={t('search.placeholder')}
             type="text"
           />
           <Search className="h-5 w-5 shrink-0 text-gray-500" />

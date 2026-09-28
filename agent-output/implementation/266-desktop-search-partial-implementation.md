@@ -265,6 +265,19 @@ This was **not** the first design. The initial version appended `section`/`city`
 | 4. Menu-item matches shown on the card                     | ✅ `matched_menu_items` → "Serves: …", 6 locales                              |
 | 5. Zero ILIKE in suggestion + `searchProviders` query path | ✅ `grep -n "ilike"` returns nothing in both files; asserted by test          |
 
+## Post-UAT Delta Review
+
+After DEV browser validation showed `document.documentElement.dir` remained `ltr` for Arabic, Urdu, and Pashto, `LanguageProvider` was updated to synchronize the root document `dir` and `lang` attributes whenever the active language changes. This is a small client-only bugfix with no API, database, dependency, or route changes.
+
+| Check                    | Result                                                                                                                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Failing-first regression | `LanguageProvider-rtl.test.tsx` failed before the fix with expected `ltr` vs `rtl`; it passes after the fix.                                                                                                       |
+| Focused validation       | RTL regression plus Plan 266 i18n tests: 3/3 passed.                                                                                                                                                               |
+| Type-check               | `npm run type-check`: passed.                                                                                                                                                                                      |
+| Lint                     | `npm run lint`: 0 errors, 151 warnings.                                                                                                                                                                            |
+| Full suite               | 2,617 passed, 24 skipped, 1 failed. The failure is unrelated: `plan228-providers-food-consolidation.test.ts` expects a `/food` shortcut while the pre-existing dirty `public/manifest.json` contains `/providers`. |
+| Browser follow-up        | Required after the fix in a configured browser environment; prior DEV screenshots predate the root-direction change.                                                                                               |
+
 ## Deferrals
 
 | Item                           | Owner     | Reason                                                                                                                                                                                                                                                                          | Trigger to close                                          |
@@ -276,7 +289,7 @@ This was **not** the first design. The initial version appended `section`/`city`
 ## Outstanding Items
 
 1. ~~SQL behaviour is not covered by CI~~ — **resolved** in the review round (`134-desktop-search-partial.test.ts`). Limitation: the fixture schema is hand-maintained, not generated from the migration chain, so it can drift from production. It proved its worth immediately by catching the `offers_ids` blocker. A follow-up could reuse the harness for other RPC migrations.
-2. **UI not visually verified** — blocked on environment, see Deferrals. QA should specifically check the "Serves:" line for RTL (`ar`, `ur`) and for truncation with long dish names.
+2. **Post-fix RTL visual verification** — focused regression passes, but a configured browser rerun is still required to confirm visual RTL layout and the "Serves:" line for `ar`, `ur`, and `ps`.
 3. **`search_provider_ids_by_name` is now unused by app code** but intentionally retained for rollback (D7). Cleanup is owned by the next search-touching plan.
 4. **Migration number 134** was re-checked against `origin/main` at 2026-09-26T21:27Z and is still free. If another worktree merges 134 first, renumber before merge.
 5. **Version**: plan targeted "next patch after 0.15.18", but `origin/main` is now 0.15.19, so 0.15.20 was used. Preliminary — confirm at DevOps Stage 1.

@@ -9,7 +9,7 @@ Status: Active
 
 **Plan Reference**: `agent-output/planning/266-desktop-search-partial-plan.md`
 **Implementation Reference**: `agent-output/implementation/266-desktop-search-partial-implementation.md`
-**Date**: 2026-09-27
+**Date**: 2026-09-28
 **Reviewer**: Code Reviewer
 **Session**: S266-desktop-search-partial
 
@@ -17,6 +17,7 @@ Status: Active
 
 | Timestamp (UTC)   | Agent Handoff | Request                                                       | Summary                                                                                                                                                                                     |
 | ----------------- | ------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-28T00:00Z | Implementer   | Final pre-QA code quality gate after RTL follow-up            | Reviewed current implementation state and mandatory checklists. Applied one fix-in-review to remove a hardcoded migration filename in tests. No blocking findings remain. Verdict APPROVED. |
 | 2026-09-26T21:31Z | Implementer   | Review migration 134, suggestion signature, and updated tests | Found one HIGH functional regression in empty mobile category search and one MEDIUM suggestion-quality defect. Verdict REJECTED.                                                            |
 | 2026-09-27        | Implementer   | Re-review migration 134 and committed SQL tests               | Prior findings resolved; executable PGlite coverage added. Re-review found missing category-description GIN index and hardcoded labels in modified UI components. Verdict remains REJECTED. |
 | 2026-09-27T06:48Z | Implementer   | Re-review round 2 fixes                                       | Both blocking findings resolved. Corrected two test assertions during review to preserve meaningful location-label and fallback-key coverage. Verdict APPROVED_WITH_COMMENTS.               |
@@ -49,9 +50,18 @@ The shared Postgres search RPCs, invoker security, and GIN-backed full-text matc
 
 - **Resolution**: Added `idx_categories_desc_simple_search` with the same `simple` tsvector expression as the name-plus-description predicate in `search_food_categories`. The name-only index remains for the provider-matcher and cuisine-suggestion predicates. The PGlite regression test disables sequential scans and requires an index scan in the plan.
 
-### Current Findings
+## Current Findings
 
-None. The two review-blocking findings are resolved. Translation wording in locales other than German and English should receive the usual native-speaker/UAT review; that is not a code-quality blocker.
+### Medium
+
+**[MEDIUM] Test resilience: hardcoded migration filename in test fixture loader — RESOLVED (fix-in-review)**
+
+- **Location**: `src/__tests__/migrations/134-desktop-search-partial.test.ts`
+- **Issue**: The migration suite loaded `134_plan_266_desktop_search_partial.sql` by exact filename. If migration numbering changes during rebase/merge, this test can fail despite valid migration content.
+- **Resolution**: Replaced exact filename loading with pattern-based resolution (`*_plan_266_desktop_search_partial.sql`) from `supabase/migrations`.
+- **Disposition**: **Fixed before QA** in this review cycle (small safe fix; no architecture or dependency impact).
+
+No open blocking findings remain.
 
 ## Review Scope Checks
 
@@ -62,6 +72,14 @@ None. The two review-blocking findings are resolved. Translation wording in loca
 - Provider, menu, category-name, and category-name-plus-description expression indexes match their predicates. The new PGlite index test exercises the description predicate with sequential scans disabled.
 - `src/__tests__/migrations/134-desktop-search-partial.test.ts` executes the migration and behavior against PGlite with a post-migration-006 schema. It is hand-maintained and does not enable RLS; I independently checked the provider SELECT policy and confirmed invoker execution remains subject to it.
 - The migration must still be applied before application deployment; neither deploy workflow applies migrations.
+- Migration SQL correctness review: no invalid aggregates on unsupported types ✅ / no mutable display-name targeting ✅ / idempotent patterns present (`CREATE OR REPLACE`, `IF NOT EXISTS`) ✅.
+
+### Migration Filename Reference Check
+
+- Trigger: migration file created under `supabase/migrations/`.
+- Search term used: `134_plan_266_desktop_search_partial.sql`.
+- Scope checked: `src/__tests__/`, `tests/`.
+- Result: one hardcoded reference found in `src/__tests__/migrations/134-desktop-search-partial.test.ts`; fixed in-review via pattern-based lookup.
 
 ### `fetchSearchSuggestions` signature
 
@@ -87,7 +105,7 @@ None. The two review-blocking findings are resolved. Translation wording in loca
 - Baseline migration 107's empty-query branch and provider-count ordering.
 - `git diff --check`: clean.
 - The implementation document reports type-check, lint, and full Vitest passing (2609 passed, 28 skipped). Per Code Reviewer role, I did not execute tests; QA must rerun its gates after the two review-only test assertion edits.
-- i18n scan: 4 modified components checked — no hardcoded user-facing labels found. The five formerly hardcoded labels now use translation keys, and all six locales contain the relevant entries.
+- i18n scan: 4 modified components checked (`SearchBar`, `ProviderCard`, `DiscoveryResultsGrid`, `ProvidersContent`) — no hardcoded user-facing JSX labels found in the changed surfaces.
 - Migration index check: provider-name, menu, offers, needs, category-name, and category-name-plus-description indexes exist. The added PGlite regression checks index-plan use for the latter predicate.
 - Static diagnostics: no errors in `ProviderCard-multi-location.test.tsx` or `ProviderCard-i18n-plan266.test.tsx` after the review-only assertion corrections.
 
@@ -100,13 +118,13 @@ None. The two review-blocking findings are resolved. Translation wording in loca
 
 ## Verdict
 
-**Status**: APPROVED_WITH_COMMENTS
-**Rationale**: Both blocking findings are resolved: UI labels are localized in all supported locales, and the category-description predicate now has a matching GIN index. The implementation reports passing type-check, lint, and tests; this reviewer did not run tests. QA should rerun the focused migration/component tests and project gates after the review-only test assertion updates, then handle the documented browser/RTL verification.
+**Status**: APPROVED
+**Rationale**: Architecture alignment remains intact, required i18n and migration SQL checks pass, and the only newly identified issue (hardcoded migration filename in tests) was resolved during review via a minimal fix-in-review. No remaining code-quality blockers prevent QA execution.
 
 ## Required Actions
 
-1. QA: run the project test, type-check, and lint gates, including migration 134 and the ProviderCard/SearchBar tests.
-2. QA/UAT: perform the deferred browser verification, including RTL presentation and the new translated labels.
+1. QA: run the project test, type-check, and lint gates, including migration 134 and provider/search component regressions.
+2. QA/UAT: perform the deferred browser verification, including RTL presentation and translated labels.
 
 ## Next Steps
 

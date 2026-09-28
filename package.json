@@ -1,6 +1,6 @@
 {
   "name": "ummah-flow",
-  "version": "0.15.19",
+  "version": "0.15.20",
   "private": true,
   "engines": {
     "node": ">=22.0.0",
@@ -103,6 +103,7 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@eslint/eslintrc": "^3.0.0",
     "@eslint/js": "^9.25.1",
     "@next/bundle-analyzer": "^16.0.0",
