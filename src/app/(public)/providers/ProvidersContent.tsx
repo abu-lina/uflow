@@ -562,6 +562,7 @@ export function ProvidersContent({
       social_instagram: result.social_instagram,
       badges: result.badges,
       offers: result.offers,
+      matched_menu_items: result.matched_menu_items,
       verification_method: result.originalProvider?.verification_method,
       has_certificate: result.originalProvider?.has_certificate,
       review_status: status,

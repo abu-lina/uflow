@@ -86,6 +86,7 @@ export const ProviderCard = React.memo(
         no_gambling,
         opening_hours,
         offers,
+        matched_menu_items,
       },
       ref,
     ) => {
@@ -208,6 +209,9 @@ export const ProviderCard = React.memo(
       const specialtyNames = (offers || []).map((offer) => offer.name_de).filter(Boolean);
       const visibleSpecialties = specialtyNames.slice(0, 2);
       const specialtiesOverflow = specialtyNames.length > 2 ? specialtyNames.length - 2 : 0;
+      const visibleMatchedMenuItems = (matched_menu_items || []).slice(0, 2);
+      const matchedMenuItemsOverflow =
+        (matched_menu_items?.length || 0) > 2 ? (matched_menu_items?.length || 0) - 2 : 0;
       const openStatus = getOpenStatus(opening_hours ?? null);
       const openStatusLabel = openStatus.isOpen
         ? t('providerDetail.openStatus.open')
@@ -507,9 +511,18 @@ export const ProviderCard = React.memo(
                   {locations && locations.length > 1 && (
                     <div className="mt-1 inline-flex h-6 max-w-full items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px]">
                       <span className="truncate whitespace-nowrap font-inter-tight text-sm font-medium text-content">
-                        {locations.length} Standorte
+                        {t('providers.locationsCount', { count: locations.length })}
                       </span>
                     </div>
+                  )}
+                  {visibleMatchedMenuItems.length > 0 && (
+                    <p
+                      className="w-full truncate font-inter text-xs font-medium text-text-muted sm:text-sm"
+                      title={`${t('providers.serves')}: ${matched_menu_items?.join(' · ')}`}
+                    >
+                      {t('providers.serves')}: {visibleMatchedMenuItems.join(' · ')}
+                      {matchedMenuItemsOverflow > 0 ? ` · +${matchedMenuItemsOverflow}` : ''}
+                    </p>
                   )}
                 </div>
                 {specialtyNames.length > 0 && (
@@ -562,10 +575,10 @@ export const ProviderCard = React.memo(
                     <div className="flex h-6 w-full items-center gap-1.5 overflow-hidden">
                       {halalStars > 0 && (
                         <div
-                          aria-label={`Halal Level ${halalStars}`}
+                          aria-label={t('providers.halalLevel', { level: halalStars })}
                           className="flex h-6 shrink-0 items-center gap-0.5 rounded-[3px] border border-[#CDCDCD] bg-background/80 px-1.5 backdrop-blur-sm"
                           role="img"
-                          title={`Halal Level ${halalStars}`}
+                          title={t('providers.halalLevel', { level: halalStars })}
                         >
                           {Array.from({ length: halalStars }).map((_, i) => (
                             <Icon
@@ -587,7 +600,7 @@ export const ProviderCard = React.memo(
                     {mode === 'moderation' ? (
                       <div className="hidden w-full gap-2 sm:flex">
                         <Button
-                          aria-label="Approve"
+                          aria-label={t('providers.approve')}
                           className="h-12 flex-1 items-center justify-center gap-1.5"
                           disabled={isReviewing}
                           icon={
@@ -601,10 +614,10 @@ export const ProviderCard = React.memo(
                             onApprove?.();
                           }}
                         >
-                          Approve
+                          {t('providers.approve')}
                         </Button>
                         <Button
-                          aria-label="Reject"
+                          aria-label={t('providers.reject')}
                           className="h-12 flex-1 items-center justify-center gap-1.5"
                           disabled={isReviewing}
                           icon={
@@ -618,7 +631,7 @@ export const ProviderCard = React.memo(
                             onReject?.();
                           }}
                         >
-                          Reject
+                          {t('providers.reject')}
                         </Button>
                       </div>
                     ) : null}

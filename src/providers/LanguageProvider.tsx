@@ -186,6 +186,15 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     localStorage.setItem('preferred-language', detectedLang);
   }, []);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document.documentElement.dir = ['ar', 'ur', 'ps'].includes(language) ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
+
   // Translation function - memoized to prevent recreation on every render
   const t = useCallback(
     (key: string, variables?: Record<string, string | number>): string => {
@@ -213,8 +222,9 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       }
 
       return result;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // bundleTick re-creates t when a lazy translation bundle finishes loading.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [language, bundleTick],
   );
 

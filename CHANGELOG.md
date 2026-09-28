@@ -1,6 +1,14 @@
 # Changelog
 
-## [Unreleased]
+## [Unreleased] - 2026-09-26
+
+### Fixed
+
+- **Desktop search: clicking a suggestion now always shows results, and partial words match (Plan 266)**: Suggestions and the results list are now produced by the same Postgres matcher, so a suggestion can no longer be offered for something the results page cannot find. Three concrete fixes: (1) menu-item suggestions such as "Lahmacun" previously returned an empty list because the results query never searched menu items — they now return the places that serve the dish, and the matched dish is shown on the provider card; (2) suggestions are now limited to the section and city you are browsing, so a suggestion from another city or section is no longer offered; (3) typing the start of a word now finds matches ("Istan" → Istanbul Grill, "Lahm" → places serving Lahmacun), including short words like "Ist" that German text search would otherwise discard.
+
+- **Multi-word search on the mobile "Was?" picker no longer errors (Plan 266)**: `search_food_concepts` and `search_food_categories` built an invalid text-search query for any input containing a space (for example "döner keb"), causing a `syntax error in tsquery`. Both now use a shared, correctly-escaped tokenizer.
+
+- **Removed `ILIKE` from the search path (Plan 266)**: Category matching in `searchProviders` and the entire suggestion path now use indexed `tsvector` matching, per the project's Postgres-first search policy.
 
 ## [0.15.19] - 2026-09-26
 

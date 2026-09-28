@@ -44,6 +44,7 @@ export interface DiscoveryCardItem {
   badges?: ProviderBadgeWithType[];
   locations?: Location[];
   offers?: Array<{ name_de: string }>;
+  matched_menu_items?: string[];
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
   review_status?: ReviewStatusFilter;
@@ -115,6 +116,7 @@ function itemToProviderCardProps(item: DiscoveryCardItem) {
     badges: item.badges,
     locations: item.locations,
     offers: item.offers,
+    matched_menu_items: item.matched_menu_items,
     verification_method: item.verification_method,
     has_certificate: item.has_certificate,
     distanceKm: item.distanceKm,

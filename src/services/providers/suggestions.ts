@@ -6,56 +6,39 @@ export interface SearchSuggestion {
   type: 'provider' | 'menuItem' | 'cuisine';
 }
 
+/** Plan 266: scope for suggestions, mirroring the active results scope. */
+export interface SearchSuggestionScope {
+  /** Active section; omit to search all sections. */
+  section?: 'food' | 'store' | 'ummah';
+  /** Selected city; omit when "everywhere" is selected. */
+  city?: string;
+  client?: SupabaseClient;
+}
+
 /**
  * Fetch typeahead suggestions across providers, food menu items, and categories.
- * Used by SearchBar for autocomplete.
+ *
+ * Plan 266: suggestions are produced by the same DB matcher that produces the
+ * results list (`search_providers_for_query`), so a suggestion can never be
+ * offered for a scope that would return an empty result list. The
+ * `review_status = 'approved'` restriction is enforced inside the RPC.
  */
 export async function fetchSearchSuggestions(
   query: string,
   limit = 10,
-  client?: SupabaseClient,
+  scope: SearchSuggestionScope = {},
 ): Promise<SearchSuggestion[]> {
   const trimmed = query.trim();
   if (trimmed.length < 2) return [];
 
-  const supabase = getSupabaseClient(client);
-
-  const [providerRes, menuRes, categoryRes] = await Promise.all([
-    supabase
-      .from('providers')
-      .select('provider_name')
-      .eq('review_status', 'approved')
-      .ilike('provider_name', `%${trimmed}%`)
-      .limit(5),
-    supabase.from('food_menu').select('name_de, name_en').ilike('name_de', `%${trimmed}%`).limit(5),
-    supabase
-      .from('categories')
-      .select('name_de, name_en')
-      .ilike('name_de', `%${trimmed}%`)
-      .limit(5),
-  ]);
-
-  const providerNames: SearchSuggestion[] = (providerRes.data || [])
-    .map((p) => ({ label: p.provider_name, type: 'provider' as const }))
-    .filter((p) => p.label);
-
-  const menuItems: SearchSuggestion[] = (menuRes.data || [])
-    .map((m) => ({ label: m.name_de || m.name_en || '', type: 'menuItem' as const }))
-    .filter((m) => m.label);
-
-  const categories: SearchSuggestion[] = (categoryRes.data || [])
-    .map((c) => ({ label: c.name_de || c.name_en || '', type: 'cuisine' as const }))
-    .filter((c) => c.label);
-
-  const combined = [...providerNames, ...menuItems, ...categories];
-
-  // Deduplicate by label
-  const seen = new Set<string>();
-  const deduped = combined.filter((item) => {
-    if (seen.has(item.label)) return false;
-    seen.add(item.label);
-    return true;
+  const supabase = getSupabaseClient(scope.client);
+  const { data, error } = await supabase.rpc('search_scoped_suggestions', {
+    search_query: trimmed,
+    section_filter: scope.section ?? null,
+    city_filter: scope.city ?? null,
+    result_limit: limit,
   });
 
-  return deduped.slice(0, limit);
+  if (error) throw error;
+  return (data ?? []) as SearchSuggestion[];
 }
