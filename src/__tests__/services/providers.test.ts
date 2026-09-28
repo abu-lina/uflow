@@ -196,6 +196,32 @@ describe('providers service', () => {
   });
 
   describe('searchProviders', () => {
+    it('[post-fix PASSES] scopes admin all searches to the four moderation statuses', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: [{ provider_id: 'p-1', matched_menu_items: [] }],
+        error: null,
+      });
+      mockReturns.mockResolvedValueOnce({ data: [], error: null, count: 0 });
+
+      const adminOptions: Parameters<typeof searchProviders>[5] = {
+        status: 'all',
+        isAdmin: true,
+      };
+      await searchProviders('Munchies', '', '', 12, 0, adminOptions, 'food');
+
+      expect(mockRpc).toHaveBeenCalledWith(
+        'search_providers_for_query',
+        expect.objectContaining({ review_status_filter: 'all' }),
+      );
+      expect(mockIn).toHaveBeenCalledWith('review_status', [
+        'approved',
+        'pending',
+        'rejected',
+        'needs_revision',
+      ]);
+      expect(mockEq).not.toHaveBeenCalledWith('review_status', 'all');
+    });
+
     it('[post-fix PASSES] selects category_images for overview fallback stock image rendering', async () => {
       await searchProviders('', '', '', 12, 0);
 

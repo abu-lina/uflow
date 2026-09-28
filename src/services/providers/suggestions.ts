@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from './client';
+import type { AdminSearchOptions } from './types';
 
 export interface SearchSuggestion {
   label: string;
@@ -12,6 +13,8 @@ export interface SearchSuggestionScope {
   section?: 'food' | 'store' | 'ummah';
   /** Selected city; omit when "everywhere" is selected. */
   city?: string;
+  /** Explicit admin review scope; omitted callers retain the approved-only DB default. */
+  reviewStatusScope?: AdminSearchOptions['status'];
   client?: SupabaseClient;
 }
 
@@ -37,6 +40,7 @@ export async function fetchSearchSuggestions(
     section_filter: scope.section ?? null,
     city_filter: scope.city ?? null,
     result_limit: limit,
+    ...(scope.reviewStatusScope ? { review_status_scope: scope.reviewStatusScope } : {}),
   });
 
   if (error) throw error;

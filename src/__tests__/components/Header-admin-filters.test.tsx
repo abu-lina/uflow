@@ -21,6 +21,7 @@ describe('Header admin status filters (Plan 235)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseIsAdmin.mockReturnValue({ isAdmin: false, isLoading: false });
+    window.history.replaceState({}, '', '/');
   });
 
   it('does NOT render admin status filter tabs for non-admin users', () => {
@@ -44,5 +45,14 @@ describe('Header admin status filters (Plan 235)', () => {
     expect(screen.getByRole('tab', { name: /pending/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /rejected/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /needs.*revision/i })).toBeInTheDocument();
+  });
+
+  it.each(['all', 'unexpected'])('[post-fix PASSES] treats status=%s as the All tab', (status) => {
+    mockUseIsAdmin.mockReturnValue({ isAdmin: true, isLoading: false });
+    window.history.replaceState({}, '', `/food?status=${status}`);
+
+    render(<Header />);
+
+    expect(screen.getByRole('tab', { name: /^all$/i })).toHaveAttribute('aria-selected', 'true');
   });
 });

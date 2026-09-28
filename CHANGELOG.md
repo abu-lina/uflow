@@ -1,8 +1,10 @@
 # Changelog
 
-## [Unreleased] - 2026-09-26
+## [Unreleased] - 2026-09-28
 
 ### Fixed
+
+- **Admin discovery "All" scope on food and store (Plan 267)**: Admins now see approved, pending, rejected, and needs-revision listings in the list view, with each card labeled from its own review status and no moderation buttons on All. Owner-removed listings stay excluded; public searches remain approved-only. Admin suggestions follow the selected review scope. Apply migration 135 before deploying the app.
 
 - **Desktop search: clicking a suggestion now always shows results, and partial words match (Plan 266)**: Suggestions and the results list are now produced by the same Postgres matcher, so a suggestion can no longer be offered for something the results page cannot find. Three concrete fixes: (1) menu-item suggestions such as "Lahmacun" previously returned an empty list because the results query never searched menu items — they now return the places that serve the dish, and the matched dish is shown on the provider card; (2) suggestions are now limited to the section and city you are browsing, so a suggestion from another city or section is no longer offered; (3) typing the start of a word now finds matches ("Istan" → Istanbul Grill, "Lahm" → places serving Lahmacun), including short words like "Ist" that German text search would otherwise discard.
 

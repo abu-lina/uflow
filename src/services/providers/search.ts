@@ -279,7 +279,9 @@ export async function searchProviders(
   // AC7.2 (#415): without admin options the query must still restrict to
   // approved — migration 130 lets callers see their OWN pending rows, which
   // must not leak into public search results.
-  if (adminOptions?.status) {
+  if (adminOptions?.status === 'all') {
+    req = req.in('review_status', ['approved', 'pending', 'rejected', 'needs_revision']);
+  } else if (adminOptions?.status) {
     req = req.eq('review_status', adminOptions.status);
   } else {
     req = req.eq('review_status', 'approved');

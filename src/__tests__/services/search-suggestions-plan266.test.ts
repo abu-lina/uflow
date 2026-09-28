@@ -34,4 +34,23 @@ describe('Plan 266 search suggestions', () => {
       { label: 'Istanbul Grill', type: 'provider' },
     ]);
   });
+
+  it('[post-fix PASSES] forwards the effective admin review scope to the suggestions RPC', async () => {
+    mockRpc.mockResolvedValue({ data: [{ label: 'Munchies', type: 'provider' }], error: null });
+
+    const { fetchSearchSuggestions } = await import('@/services/providers/suggestions');
+    await fetchSearchSuggestions('Munchies', 10, {
+      section: 'food',
+      city: 'Berlin',
+      reviewStatusScope: 'all',
+    } as Parameters<typeof fetchSearchSuggestions>[2]);
+
+    expect(mockRpc).toHaveBeenCalledWith('search_scoped_suggestions', {
+      search_query: 'Munchies',
+      section_filter: 'food',
+      city_filter: 'Berlin',
+      result_limit: 10,
+      review_status_scope: 'all',
+    });
+  });
 });

@@ -203,7 +203,7 @@ export type ReviewStatusFilter = 'approved' | 'pending' | 'rejected' | 'needs_re
 
 /** Admin options for filtering by review status (Plan 058) */
 export interface AdminSearchOptions {
-  status: 'approved' | 'pending' | 'rejected' | 'needs_revision';
+  status: 'approved' | 'pending' | 'rejected' | 'needs_revision' | 'all';
   isAdmin: true;
 }
 

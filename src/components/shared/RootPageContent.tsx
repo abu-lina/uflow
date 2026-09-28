@@ -205,7 +205,7 @@ export function RootPageContent() {
       listing_type: result.listing_type,
       location_latitude: result.location_latitude,
       location_longitude: result.location_longitude,
-      review_status: (result.review_status as ReviewStatusFilter) ?? adminStatus,
+      review_status: (result.review_status as ReviewStatusFilter) ?? adminStatus ?? undefined,
       review_feedback: result.review_feedback,
     };
   }
