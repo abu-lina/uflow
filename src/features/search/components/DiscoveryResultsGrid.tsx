@@ -11,7 +11,7 @@ import type { ProviderBadgeWithType } from '@/types/badges';
 import type { OpeningHours } from '@/types/openingHours';
 import type { Location } from '@/types/location';
 import type { Section } from '@/providers/search-provider';
-import type { ReviewStatusFilter } from '@/services/providers';
+import type { Provider } from '@/services/providers';
 
 export interface DiscoveryCardItem {
   id: string;
@@ -47,7 +47,7 @@ export interface DiscoveryCardItem {
   matched_menu_items?: string[];
   verification_method?: 'online' | 'onsite' | null;
   has_certificate?: boolean;
-  review_status?: ReviewStatusFilter;
+  review_status?: Provider['review_status'];
   review_feedback?: string | null;
   /** Bookmark state for this row (used when enableBookmarks is true). */
   isBookmarked?: boolean;
@@ -67,6 +67,8 @@ interface DiscoveryResultsGridProps {
   onBookmarkChange?: (providerId: string, isBookmarked: boolean) => void;
   /** Enables moderation mode (Approve/Reject) and requires onApprove/onReject. */
   enableModeration?: boolean;
+  /** Enables read-only status labels without moderation actions. */
+  showReviewStatus?: boolean;
   onApprove?: (providerId: string) => void;
   onReject?: (providerId: string) => void;
   reviewingProviderId?: string | null;
@@ -135,6 +137,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   bookmarkedIds = [],
   onBookmarkChange,
   enableModeration = false,
+  showReviewStatus = false,
   onApprove,
   onReject,
   reviewingProviderId,
@@ -286,7 +289,8 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
               isBookmarked={enableBookmarks ? bookmarkedIds.includes(item.provider_id) : undefined}
               isReviewing={reviewingProviderId === item.provider_id}
               mode={enableModeration ? 'moderation' : 'bookmark'}
-              reviewStatus={enableModeration ? item.review_status : undefined}
+              reviewStatus={enableModeration || showReviewStatus ? item.review_status : undefined}
+              showReviewStatus={showReviewStatus}
               onApprove={
                 enableModeration && onApprove ? () => onApprove(item.provider_id) : undefined
               }

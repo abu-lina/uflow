@@ -12,7 +12,7 @@ import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
-import type { Provider, ReviewStatusFilter } from '@/services/providers';
+import type { Provider } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
 import { getCategoryCardBackgroundColor, parseCategoryImages } from '@/utils/imageUtils';
 import { hashId } from '@/utils/imageUtils';
@@ -36,7 +36,9 @@ interface ProviderCardProps extends Omit<Provider, 'id'> {
   /** Card mode: 'bookmark' (default) shows Save/Saved, 'moderation' shows Approve/Reject */
   mode?: 'bookmark' | 'moderation';
   /** Review status for moderation mode badge display */
-  reviewStatus?: ReviewStatusFilter;
+  reviewStatus?: Provider['review_status'];
+  /** Explicitly show a read-only review status label in bookmark mode. */
+  showReviewStatus?: boolean;
   /** Callback when admin approves the provider */
   onApprove?: () => void;
   /** Callback when admin rejects the provider */
@@ -72,6 +74,7 @@ export const ProviderCard = React.memo(
         // Plan 058: Moderation mode props
         mode = 'bookmark',
         reviewStatus,
+        showReviewStatus = false,
         onApprove,
         onReject,
         isReviewing = false,
@@ -379,7 +382,7 @@ export const ProviderCard = React.memo(
               </div>
             )}
             {/* Plan 058: Review status badge for moderation mode */}
-            {!showSkeleton && mode === 'moderation' && reviewStatus && (
+            {!showSkeleton && (mode === 'moderation' || showReviewStatus) && reviewStatus && (
               <div className="absolute right-3 top-3">
                 <div
                   className={`inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border px-2 backdrop-blur-[1.50px] ${

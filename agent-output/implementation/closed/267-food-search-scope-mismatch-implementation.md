@@ -2,7 +2,7 @@
 ID: 267
 Origin: 267
 UUID: ed174b2e
-Status: Active
+Status: Committed
 ---
 
 # Implementation Report: Plan 267 - Admin All Status Scope on Food Search
@@ -23,6 +23,7 @@ Status: Active
 | ----------------- | --------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 2026-09-28T12:03Z | Critic -> Implementer | Implement approved Plan 267      | Started test-first implementation; root cause reconfirmed in search service.                                                                           |
 | 2026-09-28T12:28Z | Implementer           | Plan 267 implementation complete | M1-M5 implemented locally; full tests, lint and type-check passed; build passed with isolated dummy Supabase settings. Migration not applied remotely. |
+| 2026-09-28T14:45Z | DevOps                | Plan committed locally           | Document closed to `closed/`. Status -> Committed.                                                                                                     |
 
 ## Implementation Summary
 

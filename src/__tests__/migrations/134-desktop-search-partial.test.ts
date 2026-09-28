@@ -3,14 +3,13 @@ import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-// Executes migration 134 against a real (WASM) Postgres. SQL-text assertions are
-// what let F4 ship in migration 077, so these tests check behaviour instead.
+// Executes migrations 134 and 135 against a real (WASM) Postgres.
 
 // Mirrors production columns after migration 006 (providers.offers_ids dropped).
 const SCHEMA = `
   CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
   CREATE TYPE public.listing_type_enum AS ENUM ('food', 'store', 'ummah');
-  CREATE TYPE public.review_status AS ENUM ('pending', 'approved', 'rejected');
+  CREATE TYPE public.review_status AS ENUM ('pending', 'approved', 'rejected', 'needs_revision', 'removed_by_owner');
   CREATE TABLE public.categories (
     category_id uuid PRIMARY KEY, name_de text, name_en text,
     description_de text, description_en text, category_images jsonb, applicable_section text
@@ -41,6 +40,9 @@ const ID = {
   istMuc: '00000000-0000-0000-0000-0000000000b3',
   store: '00000000-0000-0000-0000-0000000000b4',
   pending: '00000000-0000-0000-0000-0000000000b5',
+  rejected: '00000000-0000-0000-0000-0000000000b6',
+  needsRevision: '00000000-0000-0000-0000-0000000000b7',
+  removedByOwner: '00000000-0000-0000-0000-0000000000b8',
 };
 
 const FIXTURE = `
@@ -56,7 +58,10 @@ const FIXTURE = `
     ('${ID.kab}', 'Kabul Kitchen', '${ID.afgh}', 'Berlin', 'approved', 'food'),
     ('${ID.istMuc}', 'Istanbul Imbiss', '${ID.turk}', 'Muenchen', 'approved', 'food'),
     ('${ID.store}', 'Istanbul Markt', NULL, 'Berlin', 'approved', 'store'),
-    ('${ID.pending}', 'Istanbul Pending', '${ID.turk}', 'Berlin', 'pending', 'food');
+    ('${ID.pending}', 'Istanbul Pending', '${ID.turk}', 'Berlin', 'pending', 'food'),
+    ('${ID.rejected}', 'Istanbul Rejected', '${ID.turk}', 'Berlin', 'rejected', 'food'),
+    ('${ID.needsRevision}', 'Istanbul Needs Revision', '${ID.turk}', 'Berlin', 'needs_revision', 'food'),
+    ('${ID.removedByOwner}', 'Istanbul Owner Removed', '${ID.turk}', 'Berlin', 'removed_by_owner', 'food');
   INSERT INTO public.provider_offers VALUES
     ('${ID.ist}', '${ID.doner}'), ('${ID.istMuc}', '${ID.doner}'), ('${ID.pending}', '${ID.doner}');
   INSERT INTO public.food_menu (provider_id, name_de, name_en, is_available) VALUES
@@ -76,6 +81,15 @@ if (!migrationFile) {
 }
 
 const migrationSql = readFileSync(join(migrationDir, migrationFile), 'utf8');
+const adminScopeMigrationFile = readdirSync(migrationDir).find(
+  (name) => name === '135_plan_267_admin_all_status_scope.sql',
+);
+
+if (!adminScopeMigrationFile) {
+  throw new Error('Plan 267 migration 135 file not found in supabase/migrations');
+}
+
+const adminScopeMigrationSql = readFileSync(join(migrationDir, adminScopeMigrationFile), 'utf8');
 
 let db: PGlite;
 
@@ -89,6 +103,17 @@ const providersFor = (q: string, section: string | null = 'food', city: string |
     [q, section, city],
   );
 
+const providersForScope = (
+  q: string,
+  reviewScope: string | null,
+  section: string | null = 'food',
+  city: string | null = 'Berlin',
+) =>
+  rows<{ provider_id: string; matched_menu_items: string[] }>(
+    'SELECT * FROM public.search_providers_for_query($1, $2, $3, $4)',
+    [q, section, city, reviewScope],
+  );
+
 const suggestionsFor = (
   q: string,
   section: string | null = 'food',
@@ -99,11 +124,23 @@ const suggestionsFor = (
     [q, section, city],
   );
 
-describe('migration 134 (executed against Postgres)', () => {
+const suggestionsForScope = (
+  q: string,
+  reviewScope: string,
+  section: string | null = 'food',
+  city: string | null = 'Berlin',
+) =>
+  rows<{ label: string; type: string }>(
+    'SELECT * FROM public.search_scoped_suggestions($1, $2, $3, 10, $4)',
+    [q, section, city, reviewScope],
+  );
+
+describe('migrations 134 and 135 (executed against Postgres)', () => {
   beforeAll(async () => {
     db = new PGlite();
     await db.exec(SCHEMA);
     await db.exec(migrationSql);
+    await db.exec(adminScopeMigrationSql);
     await db.exec(FIXTURE);
   }, 60_000);
 
@@ -112,7 +149,7 @@ describe('migration 134 (executed against Postgres)', () => {
   });
 
   it('is idempotent (re-applies cleanly)', async () => {
-    await expect(db.exec(migrationSql)).resolves.toBeDefined();
+    await expect(db.exec(adminScopeMigrationSql)).resolves.toBeDefined();
   });
 
   describe('search_prefix_query', () => {
@@ -139,6 +176,21 @@ describe('migration 134 (executed against Postgres)', () => {
   });
 
   describe('search_providers_for_query', () => {
+    it('keeps both search RPCs as SECURITY INVOKER', async () => {
+      const functions = await rows<{ proname: string; prosecdef: boolean }>(
+        `SELECT p.proname, p.prosecdef FROM pg_proc p
+         JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'public'
+           AND p.proname IN ('search_providers_for_query', 'search_scoped_suggestions')
+         ORDER BY p.proname`,
+      );
+
+      expect(functions).toEqual([
+        { proname: 'search_providers_for_query', prosecdef: false },
+        { proname: 'search_scoped_suggestions', prosecdef: false },
+      ]);
+    });
+
     it.each([
       ['Istan', ID.ist],
       ['Ist', ID.ist], // stopword-shaped under the german config
@@ -174,6 +226,36 @@ describe('migration 134 (executed against Postgres)', () => {
       expect(ids).not.toContain(ID.pending);
     });
 
+    it('keeps an explicit NULL review scope approved-only', async () => {
+      const ids = (await providersForScope('Istanbul', null)).map((row) => row.provider_id);
+      expect(ids).toEqual([ID.ist]);
+    });
+
+    it('returns the four moderation statuses for the all sentinel, excluding owner removals', async () => {
+      const ids = (await providersForScope('Istanbul', 'all')).map((row) => row.provider_id);
+
+      expect(ids.sort()).toEqual([ID.ist, ID.pending, ID.rejected, ID.needsRevision].sort());
+      expect(ids).not.toContain(ID.removedByOwner);
+    });
+
+    it('retains the provider-name GIN index for prefix matching', async () => {
+      await db.exec('SET enable_seqscan = off');
+      try {
+        const plan = await rows<{ 'QUERY PLAN': string }>(
+          `EXPLAIN (ANALYZE, BUFFERS)
+           SELECT p.provider_id FROM public.providers p
+           WHERE to_tsvector('simple', coalesce(p.provider_name, ''))
+             @@ public.search_prefix_query('Istan')
+             AND p.review_status::text IN ('approved', 'pending', 'rejected', 'needs_revision')`,
+        );
+        expect(plan.map((row) => row['QUERY PLAN']).join('\n')).toContain(
+          'idx_providers_name_simple_search',
+        );
+      } finally {
+        await db.exec('RESET enable_seqscan');
+      }
+    });
+
     it.each(['', '!!! &&& ***', 'a & b | c ! d :* (x)', "' OR 1=1 --"])(
       'handles hostile input %j without error',
       async (q) => {
@@ -183,6 +265,38 @@ describe('migration 134 (executed against Postgres)', () => {
   });
 
   describe('search_scoped_suggestions', () => {
+    it('has exactly one five-argument signature with the default scope', async () => {
+      const signatures = await rows<{ pronargs: number }>(
+        `SELECT pronargs FROM pg_proc p
+         JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'public' AND p.proname = 'search_scoped_suggestions'`,
+      );
+
+      expect(signatures).toEqual([{ pronargs: 5 }]);
+      const providerSuggestions = (await suggestionsFor('Ist')).filter(
+        (suggestion) => suggestion.type === 'provider',
+      );
+      expect(providerSuggestions).toEqual([{ label: 'Istanbul Grill', type: 'provider' }]);
+    });
+
+    it('suggests only the four moderation statuses for the all sentinel', async () => {
+      const suggestions = await suggestionsForScope('Istanbul', 'all');
+      const providerLabels = suggestions
+        .filter((suggestion) => suggestion.type === 'provider')
+        .map((suggestion) => suggestion.label)
+        .sort();
+
+      expect(providerLabels).toEqual(
+        [
+          'Istanbul Grill',
+          'Istanbul Pending',
+          'Istanbul Rejected',
+          'Istanbul Needs Revision',
+        ].sort(),
+      );
+      expect(providerLabels).not.toContain('Istanbul Owner Removed');
+    });
+
     it('suggests a provider only when its name matches the query', async () => {
       const lahm = await suggestionsFor('Lahm');
       expect(lahm).toContainEqual({ label: 'Lahmacun', type: 'menuItem' });
