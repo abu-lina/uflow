@@ -26,6 +26,7 @@ Status: Active
 | 2026-09-28T10:00Z         | QA            | Post-review QA re-test                 | Migration test-loader fix passed 31/31 focused migration tests, type-check, and diff check. UAT remains conditional because runtime release gates are unchanged.                                                                                                                         |
 | 2026-09-28T10:15Z         | User          | Shared database release strategy       | User confirmed the UAT/PROD-shared Supabase project is the release target because no separate Supabase project is available. Migration-first execution remains required.                                                                                                                 |
 | 2026-09-28T10:16Z approx. | User          | Shared database SQL smoke verification | Confirmed `search_prefix_query('döner keb')` returns `'döner':* & 'keb':*`; provider search returns provider `3ec9a671-702b-4d1a-a502-63fde3d8d52d` with matched menu item `Tac Tac Istanbul`; scoped suggestions returns `menuItem: Tac Tac Istanbul`.                                  |
+| 2026-09-28T11:30Z         | DevOps        | Gate closure run                       | Committed and rebased onto `origin/main` (`724adbc6`, 0 behind); draft PR #434 CI all green (DF-2). Chromium RTL check `ar`/`ur`/`ps` = `dir=rtl`, `de` = `ltr`, desktop and mobile (DF-1). Shared-DB warm timings within thresholds; pre-change `/food?q=` baseline captured (DF-3).    |
 
 **Memory**: NO-MEMORY MODE. Flowbaby retrieval returned `No workspace folder open`; this assessment is artifact-first.
 
@@ -123,8 +124,8 @@ The defining flow is now demonstrated against real DEV records in Chromium: the 
 
 ## Release Decision
 
-**Final Status**: CONDITIONAL APPROVAL. **Not approved for production deployment until DF-1, DF-2, and DF-3 are closed.**  
-**Rationale**: Automated evidence supports expected functionality, but the live visual value gate, configured build, and UAT database/migration/timing gates have not been demonstrated.  
+**Final Status**: APPROVED FOR UAT DEPLOYMENT (merge PR #434). **Production deployment is approved once the post-deploy `/food?q=` comparison on UAT is within 20% of the recorded baseline.**  
+**Rationale**: DF-1 and DF-2 are closed, and DF-3 thresholds are met on the shared database. Only the post-deploy response comparison remains, and it can run only after UAT is serving the new code.  
 **Recommended Version**: Next available patch after current `origin/main`; DevOps must confirm the exact version at Stage 1.  
 **Key Changes for Changelog**:
 
@@ -135,7 +136,9 @@ The defining flow is now demonstrated against real DEV records in Chromium: the 
 
 ## Next Actions and Deferred Follow-ups
 
-### DF-1: Real-data visual validation (Medium)
+### DF-1: Real-data visual validation (Medium) — CLOSED 2026-09-28
+
+- **Closure evidence**: Playwright Chromium, local dev server against DEV, `/food?q=burger`. `ar`/`ur`/`ps` render `dir=rtl` with matching `lang`, `de` renders `ltr`, desktop 1280×800 and mobile 390×844. Mirrored layout and localized matched-dish line confirmed in `evidence/266-rtl-*.png`. Minor, out of scope: at 1280 px in `ar`, the header register button is clipped at the left edge (header layout, not Plan 266).
 
 - **Owner**: QA/UAT.
 - **Trigger/due window**: DevOps Stage 1 after migration 134 is applied to UAT; complete before production approval.
@@ -144,7 +147,9 @@ The defining flow is now demonstrated against real DEV records in Chromium: the 
 - **Release conditional**: yes. An unreachable state need not be tested; scope evidence to states reachable in the deployed flow and explain any feature-flag or prerequisite-state exclusions.
 - **Fallback execution path**: when a Supabase development project and browser runtime are available, configure the local app against that project, provision through the dev SQL tool if needed, and repeat the same live-route checks. Do not substitute mocked props or an unidentified/production database for this gate.
 
-### DF-2: Configured CI production build (Medium)
+### DF-2: Configured CI production build (Medium) — CLOSED 2026-09-28
+
+- **Closure evidence**: PR #434 (commit `724adbc6`), GitHub Actions run `36401702826`: Lint & Type Check, Run Tests, Build Verification, Security Audit, Supply Chain IOC Scan, Snyk and CI Summary all pass.
 
 - **Owner**: DevOps/CI operator.
 - **Trigger/due window**: Before merge/release execution, at DevOps Stage 1.
@@ -152,7 +157,11 @@ The defining flow is now demonstrated against real DEV records in Chromium: the 
 - **Required evidence**: the production build workflow succeeds for the release commit with the required Supabase URL and secrets configured; record workflow/run and commit. A local build is not CI closure evidence.
 - **Release conditional**: yes; hold production deployment if the configured build fails.
 
-### DF-3: UAT database preflight, performance, and migration-first deployment (High)
+### DF-3: UAT database preflight, performance, and migration-first deployment (High) — THRESHOLDS MET, POST-DEPLOY CHECK OPEN
+
+- **Shared-DB evidence (2026-09-28)**: `rdtdtcfntopcxcigkqoq` holds 35,796 available menu items, 169 offers, 57 categories and 5,128 provider offers. `EXPLAIN ANALYZE` across `ist`, `istanbul`, `lahm`, `döner keb` and `burger` (section `food`, 3 runs each): warm matcher 24.9–74.3 ms (≤200) and warm suggestions 27.5–73.7 ms (≤100). Cold first calls: matcher `ist` 141 ms, suggestions `lahm` 144 ms and `burger` 433 ms. Suggestions are debounced client-side; watch the cold `burger` case after deploy.
+- **Pre-change `/food?q=` baseline (live v0.15.19, TTFB median of 5)**: PROD burger 153 ms, lahm 155 ms, istanbul 145 ms; UAT burger 167 ms, lahm 158 ms, istanbul 142 ms.
+- **Remaining**: after merging PR #434 (auto-deploys UAT), repeat the same 5-request TTFB measurement on UAT. A median above 1.2× baseline holds production deployment.
 
 - **Owner**: DevOps.
 - **Trigger/due window**: DevOps Stage 1, before UAT app deployment; repeat the migration-first ordering for production deployment.
