@@ -420,10 +420,6 @@ export const en = {
       description: 'Recommend someone you know so others can find them.',
       buttonText: 'Recommend provider',
     },
-    chatHint: {
-      prefix: 'You can also register quickly via the',
-      link: 'Chat Assistant',
-    },
     recommend: {
       title: 'Recommend Provider',
       step1Title: 'Basic Information',
