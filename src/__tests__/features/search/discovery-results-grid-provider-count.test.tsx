@@ -137,11 +137,13 @@ function makeItem(id: string): DiscoveryCardItem {
 
 // IntersectionObserver mock for jsdom
 beforeEach(() => {
-  window.IntersectionObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  window.IntersectionObserver = vi.fn().mockImplementation(function () {
+    return {
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    };
+  });
 });
 
 describe('Plan 229 - Provider count display', () => {

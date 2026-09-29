@@ -148,9 +148,7 @@ async function importProvenanceScript(args: string[]): Promise<ProvenanceHarness
   process.argv = ['node', 'scripts/import-joinhalal.ts', ...args];
   globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-  const exitSpy = vi
-    .spyOn(process, 'exit')
-    .mockImplementation((() => undefined) as never);
+  const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -162,6 +160,9 @@ async function importProvenanceScript(args: string[]): Promise<ProvenanceHarness
 
   return { update, updateIdEq, updateReviewEq, fetchMock, logSpy };
 }
+
+vi.unmock('@supabase/supabase-js');
+vi.unmock('dotenv');
 
 describe('JoinHalal provenance recovery CLI (Plan 058)', () => {
   const originalArgv = [...process.argv];
@@ -193,8 +194,6 @@ describe('JoinHalal provenance recovery CLI (Plan 058)', () => {
     }
 
     vi.restoreAllMocks();
-    vi.unmock('@supabase/supabase-js');
-    vi.unmock('dotenv');
   });
 
   it('dry-run reports matched and skipped-reviewed rows without issuing updates', async () => {
@@ -202,12 +201,12 @@ describe('JoinHalal provenance recovery CLI (Plan 058)', () => {
 
     expect(harness.fetchMock).toHaveBeenCalledWith(
       'https://joinhalal.com/locations-sitemap1.xml',
-      expect.any(Object)
+      expect.any(Object),
     );
     expect(harness.fetchMock).toHaveBeenCalledWith(MATCH_URL, expect.any(Object));
     expect(harness.update).not.toHaveBeenCalled();
 
-    const output = harness.logSpy.mock.calls.map(([line]) => String(line)).join('\n');
+    const output = harness.logSpy.mock.calls.map(([line]: unknown[]) => String(line)).join('\n');
     expect(output).toContain('Already have import_source_url: 1');
     expect(output).toContain('Need provenance recovery: 2');
     expect(output).toContain('Matched (single candidate) : 1');
@@ -226,7 +225,7 @@ describe('JoinHalal provenance recovery CLI (Plan 058)', () => {
     expect(harness.updateIdEq).toHaveBeenCalledWith('id', 'legacy-pending');
     expect(harness.updateReviewEq).toHaveBeenCalledWith('review_status', 'pending');
 
-    const output = harness.logSpy.mock.calls.map(([line]) => String(line)).join('\n');
+    const output = harness.logSpy.mock.calls.map(([line]: unknown[]) => String(line)).join('\n');
     expect(output).toContain('Persisting provenance for 1 matched providers...');
     expect(output).toContain('Successfully persisted : 1');
     expect(output).toContain('Failed                 : 0');

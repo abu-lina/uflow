@@ -42,7 +42,9 @@ module.exports = {
   ],
 
   // Git files
-  '.gitignore': ['prettier --write'],
+  '.gitignore': [
+    'node -e "process.exit(0)"', // Skip processing — prettier has no parser for .gitignore
+  ],
 
   // Documentation
   'README.md': ['prettier --write'],

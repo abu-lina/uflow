@@ -52,7 +52,7 @@ describe('Header desktop height CSS variable (Plan 227)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock ResizeObserver to capture its callback and trigger it manually
-    global.ResizeObserver = vi.fn().mockImplementation((cb) => {
+    global.ResizeObserver = vi.fn().mockImplementation(function (cb) {
       observeCallback = cb;
       return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
     });

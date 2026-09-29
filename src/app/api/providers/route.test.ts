@@ -152,10 +152,11 @@ function mockSession(userId: string | null) {
   return userId ? { id: userId, email: 'user@example.com' } : null;
 }
 
+vi.unmock('zod');
+
 describe('/api/providers POST', () => {
   beforeEach(async () => {
     vi.resetModules();
-    vi.unmock('zod');
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', STORAGE_ORIGIN);
     ({ POST } = await import('@/app/api/providers/route'));
     vi.clearAllMocks();
@@ -309,7 +310,7 @@ describe('/api/providers POST', () => {
     const { checkRateLimit } = await import('@/lib/rate-limit');
 
     vi.mocked(getUserFromCookie).mockResolvedValue(mockSession('user-1') as never);
-    vi.mocked(checkRateLimit).mockReturnValue(false);
+    vi.mocked(checkRateLimit).mockReturnValueOnce(false);
 
     const response = await POST(makeRequest(validBody()));
     expect(response.status).toBe(429);
