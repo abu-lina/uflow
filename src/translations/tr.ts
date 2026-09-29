@@ -419,10 +419,6 @@ export const tr = {
       description: 'Tanıdığınız birini önerin ki başkaları onu bulabilsin.',
       buttonText: 'Sağlayıcı öner',
     },
-    chatHint: {
-      prefix: 'Sohbet asistani ile de hizlica kayit olabilirsiniz:',
-      link: 'Sohbet Asistani',
-    },
     recommend: {
       title: 'Sağlayıcı Öner',
       step1Title: 'Temel Bilgiler',

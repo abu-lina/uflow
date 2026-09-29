@@ -422,10 +422,6 @@ export const de = {
       description: 'Empfiehl jemanden, den du kennst, damit andere ihn finden können.',
       buttonText: 'Anbieter empfehlen',
     },
-    chatHint: {
-      prefix: 'Du kannst auch schnell registrieren per',
-      link: 'Chat-Assistent',
-    },
     recommend: {
       title: 'Anbieter empfehlen',
       step1Title: 'Basics',
