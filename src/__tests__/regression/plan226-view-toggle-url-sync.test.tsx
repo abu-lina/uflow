@@ -7,7 +7,7 @@
  * read from the URL when present.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { renderHook, act, cleanup } from '@testing-library/react';
 import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
 
@@ -17,7 +17,7 @@ vi.mock('@/services/providers', () => ({
 }));
 
 describe('Plan 226 useMapDiscovery URL sync', () => {
-  let mockReplace: ReturnType<typeof vi.fn>;
+  let mockReplace: Mock<(url: string, options?: { scroll?: boolean }) => void>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -42,33 +42,25 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
 
   it('reads ?view=list from URL and uses it as initial view mode (overriding default map)', () => {
     const params = new URLSearchParams('view=list');
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'map', null, makeUrlSync(params)),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'map', null, makeUrlSync(params)));
     expect(result.current.viewMode).toBe('list');
   });
 
   it('reads ?view=map from URL and uses it as initial view mode (overriding default list)', () => {
     const params = new URLSearchParams('view=map');
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'list', null, makeUrlSync(params)),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'list', null, makeUrlSync(params)));
     expect(result.current.viewMode).toBe('map');
   });
 
   it('falls back to defaultViewMode when ?view= is absent', () => {
     const params = new URLSearchParams();
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'map', null, makeUrlSync(params)),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'map', null, makeUrlSync(params)));
     expect(result.current.viewMode).toBe('map');
   });
 
   it('falls back to defaultViewMode when ?view= has an invalid value', () => {
     const params = new URLSearchParams('view=grid');
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'list', null, makeUrlSync(params)),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'list', null, makeUrlSync(params)));
     expect(result.current.viewMode).toBe('list');
   });
 
@@ -76,9 +68,7 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
 
   it('toggleViewMode updates URL with ?view=list when switching from map', () => {
     const params = new URLSearchParams();
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'map', null, makeUrlSync(params)),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'map', null, makeUrlSync(params)));
 
     act(() => result.current.toggleViewMode());
 
@@ -91,9 +81,7 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
 
   it('toggleViewMode strips ?view= when switching back to default (map)', () => {
     const params = new URLSearchParams('view=list');
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'map', null, makeUrlSync(params)),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'map', null, makeUrlSync(params)));
 
     act(() => result.current.toggleViewMode());
 
@@ -126,9 +114,7 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
 
   it('setViewMode syncs URL when urlSync is provided', () => {
     const params = new URLSearchParams();
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'map', null, makeUrlSync(params)),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'map', null, makeUrlSync(params)));
 
     act(() => result.current.setViewMode('list'));
 
@@ -141,9 +127,7 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
   // ── No urlSync = pure state (backward compat) ──────────────────────────────
 
   it('works as pure state when no urlSync is provided', () => {
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'map'),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'map'));
 
     expect(result.current.viewMode).toBe('map');
 
@@ -157,9 +141,7 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
 
   it('strips ?view= when toggling back to the default view', () => {
     const params = new URLSearchParams();
-    const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'map', null, makeUrlSync(params)),
-    );
+    const { result } = renderHook(() => useMapDiscovery(geo, 'map', null, makeUrlSync(params)));
 
     // Toggle away from default (map → list): should add ?view=list
     act(() => result.current.toggleViewMode());

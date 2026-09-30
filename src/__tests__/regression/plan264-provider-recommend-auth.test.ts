@@ -7,8 +7,7 @@ const authUser = { id: 'admin-uuid', email: 'admin@example.com', aud: 'authentic
 
 vi.mock('next/headers', () => ({
   cookies: async () => ({
-    get: (name: string) =>
-      name in cookieJar ? { name, value: cookieJar[name] } : undefined,
+    get: (name: string) => (name in cookieJar ? { name, value: cookieJar[name] } : undefined),
     getAll: () => Object.entries(cookieJar).map(([name, value]) => ({ name, value })),
   }),
 }));
@@ -63,10 +62,11 @@ function makeRecommendationRequest() {
   });
 }
 
+vi.unmock('zod');
+
 describe('Plan 264 provider recommendation authentication', () => {
   beforeEach(() => {
     vi.resetModules();
-    vi.unmock('zod');
     vi.clearAllMocks();
     cookieJar = {};
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://test.supabase.co');
@@ -96,7 +96,10 @@ describe('Plan 264 provider recommendation authentication', () => {
     const authSetResponse = await setAuthCookies(
       new NextRequest('http://localhost:3000/api/auth/set', {
         method: 'POST',
-        body: JSON.stringify({ access_token: 'valid-access-token', refresh_token: 'refresh-token' }),
+        body: JSON.stringify({
+          access_token: 'valid-access-token',
+          refresh_token: 'refresh-token',
+        }),
       }),
     );
     const issuedCookies = authSetResponse.cookies.getAll();

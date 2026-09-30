@@ -71,11 +71,17 @@ async function importBackfillScript(args: string[]): Promise<BackfillHarness> {
   const update = vi.fn().mockReturnValue({ in: updateIn });
   const selectEq = vi.fn((field: string, value: string) => {
     if (field === 'import_source' && value === 'joinhalal') {
-      return Promise.resolve({ data: providers.filter((provider) => provider.import_source === 'joinhalal'), error: null });
+      return Promise.resolve({
+        data: providers.filter((provider) => provider.import_source === 'joinhalal'),
+        error: null,
+      });
     }
 
     if (field === 'user_created_id' && value === IMPORT_BOT_UUID) {
-      return Promise.resolve({ data: providers.filter((provider) => provider.user_created_id === IMPORT_BOT_UUID), error: null });
+      return Promise.resolve({
+        data: providers.filter((provider) => provider.user_created_id === IMPORT_BOT_UUID),
+        error: null,
+      });
     }
 
     return Promise.resolve({ data: [], error: null });
@@ -108,9 +114,7 @@ async function importBackfillScript(args: string[]): Promise<BackfillHarness> {
 
   globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-  const exitSpy = vi
-    .spyOn(process, 'exit')
-    .mockImplementation((() => undefined) as never);
+  const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -124,6 +128,9 @@ async function importBackfillScript(args: string[]): Promise<BackfillHarness> {
 
   return { update, updateIn, updateEq, fetchMock, logSpy };
 }
+
+vi.unmock('@supabase/supabase-js');
+vi.unmock('dotenv');
 
 describe('JoinHalal backfill CLI (Plan 057)', () => {
   const originalArgv = [...process.argv];
@@ -155,8 +162,6 @@ describe('JoinHalal backfill CLI (Plan 057)', () => {
     }
 
     vi.restoreAllMocks();
-    vi.unmock('@supabase/supabase-js');
-    vi.unmock('dotenv');
   });
 
   it('dry-run reports candidates without issuing updates and skips already reviewed providers', async () => {
@@ -165,11 +170,11 @@ describe('JoinHalal backfill CLI (Plan 057)', () => {
     expect(harness.fetchMock).toHaveBeenCalledTimes(1);
     expect(harness.fetchMock).toHaveBeenCalledWith(
       'https://joinhalal.com/locations/restaurant/pending-positive/',
-      expect.any(Object)
+      expect.any(Object),
     );
     expect(harness.update).not.toHaveBeenCalled();
 
-    const output = harness.logSpy.mock.calls.map(([line]) => String(line)).join('\n');
+    const output = harness.logSpy.mock.calls.map(([line]: unknown[]) => String(line)).join('\n');
     expect(output).toContain('Would reject          : 1');
     expect(output).toContain('Skipped (reviewed)    : 1');
     expect(output).toContain('No URL (skipped)      : 1');
@@ -183,8 +188,8 @@ describe('JoinHalal backfill CLI (Plan 057)', () => {
     expect(harness.updateIn).toHaveBeenCalledWith('id', ['pending-positive']);
     expect(harness.updateEq).toHaveBeenCalledWith('review_status', 'pending');
 
-    const output = harness.logSpy.mock.calls.map(([line]) => String(line)).join('\n');
-    expect(output).toContain("Updated 1 providers to rejected.");
+    const output = harness.logSpy.mock.calls.map(([line]: unknown[]) => String(line)).join('\n');
+    expect(output).toContain('Updated 1 providers to rejected.');
   });
 
   it('falls back to legacy import-bot rows when import_source provenance is missing', async () => {
@@ -236,9 +241,7 @@ describe('JoinHalal backfill CLI (Plan 057)', () => {
       process.argv = ['node', 'scripts/import-joinhalal.ts', '--backfill-alcohol', '--dry-run'];
       globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-      const exitSpy = vi
-        .spyOn(process, 'exit')
-        .mockImplementation((() => undefined) as never);
+      const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
       vi.spyOn(console, 'warn').mockImplementation(() => undefined);
       vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -254,7 +257,9 @@ describe('JoinHalal backfill CLI (Plan 057)', () => {
     expect(legacyOnlyHarness.fetchMock).toHaveBeenCalledTimes(1);
 
     const output = legacyOnlyHarness.logSpy.mock.calls.map(([line]) => String(line)).join('\n');
-    expect(output).toContain("No import_source='joinhalal' rows found; using 1 legacy import-bot rows.");
+    expect(output).toContain(
+      "No import_source='joinhalal' rows found; using 1 legacy import-bot rows.",
+    );
     expect(output).toContain('Would reject          : 1');
   });
 });
