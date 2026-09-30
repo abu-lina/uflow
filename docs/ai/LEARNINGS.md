@@ -448,3 +448,46 @@ Short log of learnings from plan → build → review → test loops. Append one
   - Before importing an existing helper into a `server-only` module, check which Supabase client its module imports. A `@/lib/supabase/client` import means browser-session semantics; server callers need the admin client or an explicitly-passed client.
   - A relocation is only proven by a test that fails when the relocated behaviour is removed. Spot-check at least the cleanup and error paths that way — the ummah cleanup branch in this change had no test at all until it was checked deliberately.
 - **Task/PR**: Request 263, PR #423, commits `ed31c380`, `c4bedf58`
+
+### 269 - Dependabot raises alerts for ecosystems it was never told to update, so zero PRs can still mean real debt
+
+- **Date**: 2026-09-30
+- **Context**: 12 open npm security alerts (2 high) had accumulated across three lockfiles with not one Dependabot PR against them. `.github/dependabot.yml` registered only `package-ecosystem: github-actions` at `/`. The alert graph scans dependencies regardless of config, but Dependabot only opens update PRs for ecosystems declared in `dependabot.yml`. So the PR list looked healthy (4 open, all CI bumps) while the alert list had been growing untouched. The repo has three independent npm manifests (`/`, `/tools/memory-backend`, `/tools/uflow-memory-extension`) and none were registered.
+- **Learning**: "No Dependabot PRs" and "no Dependabot debt" are different facts sourced from different mechanisms. Reviewing the PR queue never surfaces this gap, because the absence of a PR is exactly the symptom. Only `gh api repos/<org>/<repo>/dependabot/alerts` shows it. A repo with multiple manifests compounds the risk: registering the root directory does nothing for `tools/*`, each directory needs its own entry.
+- **Change to prevent repeat**:
+  - Audit with `gh api repos/<org>/<repo>/dependabot/alerts --paginate -q '[.[] | select(.state=="open")] | length'`, not by reading the PR list.
+  - Cross-check every manifest against the config: `find . -name package.json -not -path '*/node_modules/*'` versus the `directory:` entries in `dependabot.yml`. Any manifest without an entry is invisible to update PRs.
+  - When adding npm ecosystems to a repo that has never had them, group `minor`/`patch` by `dependency-type` so the first Monday doesn't open 30 PRs and get the whole thing muted.
+- **Task/PR**: Request 269, PR #446, commit `ced921eb`
+
+### 269 - Triage vulnerable versions from the lockfile; `npm ls` reports whatever is on disk
+
+- **Date**: 2026-09-30
+- **Context**: Triaging which packages were actually vulnerable. `npm ls vitest` at root reported `vitest@3.2.7 invalid: "5.0.1" from the root project` — `node_modules` was stale. The alert range for the `@vitest/mocker` path-traversal advisory is `>= 2.1.0, < 4.1.11`, so 3.2.7 looks vulnerable. But `package-lock.json` pinned 5.0.1, which is what CI and every deploy install. Root was never affected. Had the fix been scoped from `npm ls`, it would have bumped an already-safe root dependency and produced a large unnecessary lockfile diff. The same stale tree also reported `brace-expansion@5.0.9` correctly, which made the output look trustworthy.
+- **Learning**: Dependabot scans the committed lockfile; `npm ls` and `npm why` report the local `node_modules`, which drifts the moment anyone changes a manifest without reinstalling. For dependency-graph questions the two disagree silently and the stale answer is plausible, so nothing flags it. Partial agreement between them is not evidence: one correct line invites trusting the wrong one.
+- **Change to prevent repeat**:
+  - Read resolved versions straight from the lockfile, e.g. `python3 -c "import json;pk=json.load(open('package-lock.json'))['packages'];print(pk['node_modules/<pkg>']['version'])"`. Use `npm ls` only to understand *who depends on what*, never to decide *which version is installed*.
+  - When `npm ls` prints `invalid:`, treat the whole tree's version output as unreliable, not just that line.
+- **Task/PR**: Request 269, PR #446, commit `ba2ab244`
+
+### 269 - `npm install` rewrites lockfile `dev` flags, and an open-ended `overrides` range can hoist a major across a peer boundary
+
+- **Date**: 2026-09-30
+- **Context**: Two separate traps in one small dependency fix. (1) Bumping one `overrides` entry and running `npm install` also flipped 26 `@rollup/rollup-*` platform binaries plus `@napi-rs/lzma-linux-x64-gnu` to `"dev": true`, turning a 6-line diff into 32. `node_modules/rollup` itself stays `dev: false` — it is a production dependency via `@ducanh2912/next-pwa` -> `workbox-build` -> `@rollup/plugin-node-resolve` (peerOptional) — so the result was a lockfile where a prod package's native binaries are dev-only. Any `npm ci --omit=dev` would then fail with `Cannot find module @rollup/rollup-linux-x64-gnu`. It stayed latent only because `Dockerfile:29` and `deploy-uat.yml:100` run plain `npm ci`, and `Dockerfile:27` already carries the comment "Using `--omit=dev` can cause build failures", which is plausibly this exact bug from a previous encounter. (2) Pinning `"brace-expansion": ">=2.1.7"` to patch a 2.x transitive made npm hoist 5.0.12 to the top level, violating `minimatch@9`'s `^2.0.1`. `"^2.1.7"` resolved it nested under minimatch where it belonged.
+- **Learning**: An `overrides` bump is not a surgical edit; `npm install` recomputes the whole tree including `dev` metadata, and that metadata is load-bearing for `--omit=dev` installs even though it changes no version. Separately, `>=` in an override is only safe when the package has one live major line in the tree. When several majors coexist (`brace-expansion` 2.x under minimatch@9, 5.x under minimatch@10) an open-ended range resolves to the newest and breaks the older consumer, and because overrides bypass peer checks it lands without complaint.
+- **Change to prevent repeat**:
+  - After any `overrides` change, diff the lockfile for anything that is not a version/resolved/integrity swap: `git diff -- package-lock.json | grep '^[+-]' | grep -v 'version\|resolved\|integrity'`. Revert metadata-only churn, or hand-edit the entry and verify with `npm ci` that the lockfile is still installable.
+  - Before writing an override range, check how many majors of that package are in the tree (`grep -c '"node_modules.*<pkg>"' package-lock.json` and inspect each consumer's declared spec). More than one live major means use `^`, not `>=`.
+  - A security PR should contain only the security change; unexplained lockfile churn is diff a reviewer cannot evaluate.
+- **Task/PR**: Request 269, PR #446, commit `ba2ab244`
+
+### 270 - A stale Dependabot PR's diff describes the repo it was opened against, not the one you have
+
+- **Date**: 2026-09-30
+- **Context**: Dependabot PR #276 ("bump actions/checkout from 4 to 7") touched 12 workflow files and was `DIRTY` with a failing test job. Taken at face value it read as a risky 12-file major CI bump needing a real investigation. Current `main` had already migrated most refs since: of 22 `actions/checkout` refs, 13 were SHA-pinned to v6.0.2, 4 floated on `@v6`, and only 5 were still on `@v4`. One of those 5 lived in `discover-halal.yml`, which did not exist when #276 was opened, so the PR could never have fixed it. Its CI logs had also expired (`HTTP 410`), making the reported failure undiagnosable from the PR. Rebasing it would have been strictly more work than a clean sweep on current main, and would still have missed a file.
+- **Learning**: A long-lived dependency PR's file list is a snapshot of the past, and the conflict is the signal that the snapshot expired. The failing check compounds the illusion, since it invites debugging a failure that may have nothing to do with the bump and whose evidence is already garbage-collected. Re-deriving the true scope from current `main` took one grep and shrank the task from "12 files, unknown failure" to "5 straggler refs plus a style split".
+- **Change to prevent repeat**:
+  - Before working a stale dependency PR, re-derive scope on current main (`grep -rn "<dep>@" <dir>`) and compare against the PR's file list. A mismatch means close and redo, not rebase.
+  - Check whether a failing check's logs still exist (`gh run view <id> --log-failed`) before planning around that failure. Expired logs mean the only real signal is a fresh run.
+  - Fold the version bump and the pin-style normalization into one change when a repo has drifted into multiple styles; grep for the *absence* of the new pin (`grep -v <new-sha>`) to prove no ref was missed.
+- **Task/PR**: Request 270, PR #456, commit `54ffb10a`
