@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0",
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.2"
   },
   "overrides": {
     "esbuild": "^0.28.1"
