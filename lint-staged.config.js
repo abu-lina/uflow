@@ -41,9 +41,6 @@ module.exports = {
     'node -e "process.exit(0)"', // Skip processing
   ],
 
-  // Git files
-  '.gitignore': ['prettier --write'],
-
   // Documentation
   'README.md': ['prettier --write'],
 

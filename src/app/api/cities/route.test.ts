@@ -27,19 +27,30 @@ describe('/api/cities', () => {
     const { createSupabaseServerClient } = await import('@/lib/supabase/server');
 
     const mockRpc = vi.fn().mockResolvedValue({
-      data: [{ id: '1', city_name: 'Berlin', country: 'Germany', is_unlocked: true, provider_count: 10, interest_count: 2 }],
+      data: [
+        {
+          id: '1',
+          city_name: 'Berlin',
+          country: 'Germany',
+          is_unlocked: true,
+          provider_count: 10,
+          interest_count: 2,
+        },
+      ],
       error: null,
     });
 
     vi.mocked(createSupabaseServerClient).mockReturnValue({
       rpc: mockRpc,
-    } as any);
+    } as never);
 
     const request = new NextRequest('http://localhost:3000/api/cities');
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('Cache-Control')).toBe('public, s-maxage=300, stale-while-revalidate=600');
+    expect(response.headers.get('Cache-Control')).toBe(
+      'public, s-maxage=300, stale-while-revalidate=600',
+    );
   });
 
   it('should return empty array when no cities data found', async () => {
@@ -52,7 +63,7 @@ describe('/api/cities', () => {
 
     vi.mocked(createSupabaseServerClient).mockReturnValue({
       rpc: mockRpc,
-    } as any);
+    } as never);
 
     const request = new NextRequest('http://localhost:3000/api/cities');
     const response = await GET(request);
@@ -64,7 +75,7 @@ describe('/api/cities', () => {
 
   it('should return 429 when rate limited (no Cache-Control)', async () => {
     const { checkRateLimit } = await import('@/lib/rate-limit');
-    vi.mocked(checkRateLimit).mockReturnValue(false);
+    vi.mocked(checkRateLimit).mockReturnValueOnce(false);
 
     const request = new NextRequest('http://localhost:3000/api/cities');
     const response = await GET(request);
@@ -83,7 +94,7 @@ describe('/api/cities', () => {
 
     vi.mocked(createSupabaseServerClient).mockReturnValue({
       rpc: mockRpc,
-    } as any);
+    } as never);
 
     const request = new NextRequest('http://localhost:3000/api/cities');
     const response = await GET(request);

@@ -16,18 +16,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 // jsdom polyfills for browser APIs used by SearchResultsList
-const mockIntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+const mockIntersectionObserver = vi.fn().mockImplementation(function () {
+  return {
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  };
+});
 vi.stubGlobal('IntersectionObserver', mockIntersectionObserver);
 
-const mockResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+const mockResizeObserver = vi.fn().mockImplementation(function () {
+  return {
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  };
+});
 vi.stubGlobal('ResizeObserver', mockResizeObserver);
 
 // Mock dependencies that SearchResultsList uses
@@ -112,9 +116,7 @@ beforeEach(() => {
 describe('SearchResultsList — layout rendering contract (Plan 053)', () => {
   it('[post-fix PASSES] renders grid layout with 12 items (below any threshold)', () => {
     const results = generateMockResults(12);
-    const { container } = render(
-      <SearchResultsList {...defaultProps} searchResults={results} />,
-    );
+    const { container } = render(<SearchResultsList {...defaultProps} searchResults={results} />);
 
     // The CSS grid container should be present
     const gridContainer = container.querySelector('.grid');
@@ -128,9 +130,7 @@ describe('SearchResultsList — layout rendering contract (Plan 053)', () => {
 
   it('[pre-fix FAILS] [post-fix PASSES] renders SAME grid layout with 60 items (above old VIRTUALIZATION_THRESHOLD=50)', () => {
     const results = generateMockResults(60);
-    const { container } = render(
-      <SearchResultsList {...defaultProps} searchResults={results} />,
-    );
+    const { container } = render(<SearchResultsList {...defaultProps} searchResults={results} />);
 
     // BUG PATH: Pre-fix, the component switches to react-window FixedSizeList
     // at 50+ items, losing the CSS grid. Post-fix, the grid must persist.
@@ -144,9 +144,7 @@ describe('SearchResultsList — layout rendering contract (Plan 053)', () => {
 
   it('[pre-fix FAILS] [post-fix PASSES] renders SAME grid layout with 100 items (well above old threshold)', () => {
     const results = generateMockResults(100);
-    const { container } = render(
-      <SearchResultsList {...defaultProps} searchResults={results} />,
-    );
+    const { container } = render(<SearchResultsList {...defaultProps} searchResults={results} />);
 
     const gridContainer = container.querySelector('.grid');
     expect(gridContainer).toBeTruthy();
@@ -157,9 +155,7 @@ describe('SearchResultsList — layout rendering contract (Plan 053)', () => {
 
   it('[pre-fix FAILS] [post-fix PASSES] does NOT render a react-window FixedSizeList at any item count', () => {
     const results = generateMockResults(60);
-    const { container } = render(
-      <SearchResultsList {...defaultProps} searchResults={results} />,
-    );
+    const { container } = render(<SearchResultsList {...defaultProps} searchResults={results} />);
 
     // The virtual list wrapper had h-[70vh] and min-h-[400px] classes.
     // After fix, this element should NOT exist.
@@ -234,9 +230,7 @@ describe('SearchResultsList — data filtering', () => {
       null as unknown as SearchResult,
       { ...generateMockResults(1)[0], id: null as unknown as string },
     ];
-    render(
-      <SearchResultsList {...defaultProps} searchResults={results} />,
-    );
+    render(<SearchResultsList {...defaultProps} searchResults={results} />);
 
     // Should only render the 3 valid results
     expect(screen.getAllByTestId('provider-card')).toHaveLength(3);

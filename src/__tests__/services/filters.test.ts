@@ -38,7 +38,9 @@ function createChainableClient(): { client: SupabaseClient; chain: ChainRecorder
       if (prop === 'then') return target.then.bind(target);
       if (prop in chain) {
         return (...args: unknown[]) => {
-          (chain as unknown as Record<string, ReturnType<typeof vi.fn>>)[prop as string](...args);
+          (chain as unknown as Record<string, (...args: unknown[]) => unknown>)[prop as string](
+            ...args,
+          );
           return builder;
         };
       }

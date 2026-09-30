@@ -83,9 +83,7 @@ async function importAuditScript(): Promise<ReturnType<typeof vi.spyOn>> {
   process.argv = ['node', 'scripts/import-joinhalal.ts', '--audit-stale-clone'];
   globalThis.fetch = vi.fn() as unknown as typeof fetch;
 
-  const exitSpy = vi
-    .spyOn(process, 'exit')
-    .mockImplementation((() => undefined) as never);
+  const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => undefined) as never);
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -97,6 +95,9 @@ async function importAuditScript(): Promise<ReturnType<typeof vi.spyOn>> {
 
   return logSpy;
 }
+
+vi.unmock('@supabase/supabase-js');
+vi.unmock('dotenv');
 
 describe('JoinHalal stale-clone audit CLI (Plan 058 Step 6)', () => {
   const originalArgv = [...process.argv];
@@ -128,14 +129,12 @@ describe('JoinHalal stale-clone audit CLI (Plan 058 Step 6)', () => {
     }
 
     vi.restoreAllMocks();
-    vi.unmock('@supabase/supabase-js');
-    vi.unmock('dotenv');
   });
 
   it('produces audit report with overlap classification and recommendation', async () => {
     const logSpy = await importAuditScript();
 
-    const output = logSpy.mock.calls.map(([line]) => String(line)).join('\n');
+    const output = logSpy.mock.calls.map(([line]: unknown[]) => String(line)).join('\n');
 
     // Reports batch sizes
     expect(output).toContain('Stale-clone batch: 2 rows');
