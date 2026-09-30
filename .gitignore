@@ -9,6 +9,8 @@ node_modules
 # testing
 coverage
 .nyc_output
+# vitest artifacts (blob reports, reporter output)
+.vitest/
 
 # next.js
 .next/

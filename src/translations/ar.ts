@@ -383,6 +383,11 @@ export const ar = {
     call: 'اتصال',
     website: 'الموقع الإلكتروني',
     addressTapToNavigate: 'اضغط على العنوان للتنقل',
+    serves: 'يقدم',
+    locationsCount: '{{count}} مواقع',
+    halalLevel: 'مستوى الحلال {{level}}',
+    approve: 'موافقة',
+    reject: 'رفض',
     online: 'عبر الإنترنت',
     donations: 'التبرعات',
     initiativesSupported: 'المبادرات المدعومة',
@@ -412,10 +417,6 @@ export const ar = {
       title: 'أعرف مزوداً',
       description: 'أوصِ بشخص تعرفه حتى يتمكن الآخرون من العثور عليه.',
       buttonText: 'التوصية بمزود',
-    },
-    chatHint: {
-      prefix: 'يمكنك أيضا التسجيل بسرعة عبر',
-      link: 'مساعد الدردشة',
     },
     recommend: {
       title: 'التوصية بمزود',
@@ -716,6 +717,12 @@ export const ar = {
     magicLinkLoading: 'جاري إرسال الرابط السحري...',
     magicLinkDescription: 'سنرسل لك رابطًا سحريًا عبر البريد الإلكتروني. لا حاجة لكلمة المرور.',
     afterConfirmationLogin: 'تسجيل الدخول بعد التأكيد',
+    magicLinkSentTitle: 'تم إرسال الرابط السحري!',
+    magicLinkSentDescription: 'يرجى التحقق من بريدك الإلكتروني والنقر على الرابط لتسجيل الدخول.',
+    magicLinkFailedToast: 'فشل إرسال الرابط السحري',
+    magicLinkFailedError: 'حدث خطأ أثناء إرسال الرابط السحري. يرجى المحاولة مرة أخرى.',
+    magicLinkDiagnostic: 'يرجى زيارة هذا الرابط للتشخيص: {{url}}',
+    loginSuccessToast: 'تم تسجيل الدخول بنجاح',
   },
   signup: {
     afterConfirmationLogin: 'تسجيل الدخول بعد التأكيد',
@@ -1180,6 +1187,7 @@ export const ar = {
     openChat: 'فتح الدردشة',
     closeChat: 'إغلاق الدردشة',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'الدردشة',
   },
   map: {
     zoomIn: 'تكبير',

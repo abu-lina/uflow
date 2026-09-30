@@ -19,6 +19,11 @@ const { mockUseInfiniteQuery } = vi.hoisted(() => ({
     refetch: vi.fn(),
   })),
 }));
+const { mockIsAdmin, mockMapDiscovery, mockDiscoveryGrid } = vi.hoisted(() => ({
+  mockIsAdmin: vi.fn(() => ({ isAdmin: false })),
+  mockMapDiscovery: vi.fn(),
+  mockDiscoveryGrid: vi.fn(),
+}));
 
 vi.mock('@tanstack/react-query', () => ({
   useInfiniteQuery: mockUseInfiniteQuery,
@@ -61,7 +66,10 @@ vi.mock('@/features/providers/components/SearchResultsList', () => ({
 }));
 
 vi.mock('@/features/search/components/DiscoveryResultsGrid', () => ({
-  DiscoveryResultsGrid: () => null,
+  DiscoveryResultsGrid: (props: Record<string, unknown>) => {
+    mockDiscoveryGrid(props);
+    return null;
+  },
 }));
 
 vi.mock('@/features/search/components/DiscoveryHeader', () => ({
@@ -92,6 +100,23 @@ vi.mock('@/features/search/hooks/useNearMe', () => ({
     error: null,
     refetch: vi.fn(),
   }),
+}));
+
+vi.mock('@/features/search/hooks/useMapDiscovery', () => ({
+  useMapDiscovery: (_geolocation: unknown, _viewMode: unknown, selectedStatus: unknown) => {
+    mockMapDiscovery(selectedStatus);
+    return {
+      pins: [],
+      isOpenNow: false,
+      setIsOpenNow: vi.fn(),
+      viewMode: 'list',
+      toggleViewMode: vi.fn(),
+      hasOpenedMap: false,
+      headerRef: { current: null },
+      headerHeight: 0,
+      userCoords: null,
+    };
+  },
 }));
 
 vi.mock('@/hooks/useGeolocation', () => ({
@@ -140,7 +165,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
 }));
 
 vi.mock('@/hooks/useIsAdmin', () => ({
-  useIsAdmin: () => ({ isAdmin: false }),
+  useIsAdmin: () => mockIsAdmin(),
 }));
 
 vi.mock('@/features/admin/hooks/useProviderReview', () => ({
@@ -197,7 +222,37 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockUseSearchParams.mockReturnValue(new URLSearchParams());
   mockSelectedLocationRef.current = '';
+  mockIsAdmin.mockReturnValue({ isAdmin: false });
 });
+
+function mockSearchPage(reviewStatus: string) {
+  mockUseInfiniteQuery.mockReturnValue({
+    data: {
+      pages: [
+        {
+          results: [{ id: 'provider-1', name: 'Munchies', review_status: reviewStatus }],
+          hasMore: false,
+        },
+      ],
+    },
+    error: null,
+    fetchNextPage: vi.fn(),
+    hasNextPage: false,
+    isFetchingNextPage: false,
+    isLoading: false,
+    refetch: vi.fn(),
+  });
+}
+
+function getSearchQueryOptions() {
+  return mockUseInfiniteQuery.mock.calls[0]?.[0] as
+    | {
+        queryKey: unknown[];
+        initialData?: unknown;
+        queryFn: (context: { pageParam: number }) => Promise<unknown>;
+      }
+    | undefined;
+}
 
 describe('ProvidersContent location resolution (Plan 172)', () => {
   it('resolves to city name when URL has location=Berlin', () => {
@@ -236,5 +291,100 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     mockSelectedLocationRef.current = '';
     render(<ProvidersContent />);
     expect(getQueryKeyLocation()).toBe('');
+  });
+
+  it('[post-fix PASSES] requests admin All without reusing approved SSR data and labels each row status', async () => {
+    mockIsAdmin.mockReturnValue({ isAdmin: true });
+    mockUseSearchParams.mockReturnValue(
+      new URLSearchParams('section=food&q=Munchies&location=Berlin&filters=muslim'),
+    );
+    mockSearchPage('pending');
+
+    render(
+      <ProvidersContent initialData={{ results: [], hasMore: false }} initialSection="food" />,
+    );
+
+    const queryOptions = getSearchQueryOptions();
+    expect(queryOptions?.queryKey[4]).toBe('all');
+    expect(queryOptions?.initialData).toBeUndefined();
+    expect(mockMapDiscovery).toHaveBeenCalledWith(null);
+    expect(mockDiscoveryGrid).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enableModeration: false,
+        showReviewStatus: true,
+        items: [expect.objectContaining({ review_status: 'pending' })],
+      }),
+    );
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ results: [], hasMore: false, totalCount: 0 }),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+    await queryOptions?.queryFn({ pageParam: 0 });
+    const requestUrl = new URL(String(mockFetch.mock.calls[0]?.[0]), 'http://localhost');
+    expect(requestUrl.searchParams.get('q')).toBe('Munchies');
+    expect(requestUrl.searchParams.get('location')).toBe('Berlin');
+    expect(requestUrl.searchParams.get('filters')).toBe('muslim');
+    expect(requestUrl.searchParams.get('section')).toBe('food');
+    expect(requestUrl.searchParams.get('status')).toBe('all');
+    vi.unstubAllGlobals();
+  });
+
+  it('[post-fix PASSES] normalizes status=all to the read-only All tab before map and card rendering', () => {
+    mockIsAdmin.mockReturnValue({ isAdmin: true });
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('section=food&q=Munchies&status=all'));
+    mockSearchPage('rejected');
+
+    render(<ProvidersContent />);
+
+    expect(getSearchQueryOptions()?.queryKey[4]).toBe('all');
+    expect(mockMapDiscovery).toHaveBeenCalledWith(null);
+    expect(mockDiscoveryGrid).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enableModeration: false,
+        showReviewStatus: true,
+        items: [expect.objectContaining({ review_status: 'rejected' })],
+      }),
+    );
+  });
+
+  it('[post-fix PASSES] keeps a specific status tab actionable and sends it to the map', () => {
+    mockIsAdmin.mockReturnValue({ isAdmin: true });
+    mockUseSearchParams.mockReturnValue(
+      new URLSearchParams('section=food&q=Munchies&status=pending'),
+    );
+    mockSearchPage('pending');
+
+    render(<ProvidersContent />);
+
+    expect(getSearchQueryOptions()?.queryKey[4]).toBe('pending');
+    expect(mockMapDiscovery).toHaveBeenCalledWith('pending');
+    expect(mockDiscoveryGrid).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enableModeration: true,
+        showReviewStatus: false,
+        items: [expect.objectContaining({ review_status: 'pending' })],
+      }),
+    );
+  });
+
+  it('[post-fix PASSES] applies admin All status labels to the store section', () => {
+    mockIsAdmin.mockReturnValue({ isAdmin: true });
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('section=store&q=Munchies'));
+    mockSearchPage('rejected');
+
+    render(<ProvidersContent />);
+
+    expect(getSearchQueryOptions()?.queryKey[4]).toBe('all');
+    expect(getSearchQueryOptions()?.queryKey[5]).toBe('store');
+    expect(mockMapDiscovery).toHaveBeenCalledWith(null);
+    expect(mockDiscoveryGrid).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enableModeration: false,
+        showReviewStatus: true,
+        items: [expect.objectContaining({ review_status: 'rejected' })],
+      }),
+    );
   });
 });

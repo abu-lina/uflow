@@ -4,7 +4,67 @@ name: DevOps
 target: vscode
 argument-hint: Specify the version to release or deployment task to perform
 tools:
-  [execute/getTerminalOutput, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/problems, read/readFile, supabase/apply_migration, supabase/create_branch, supabase/delete_branch, supabase/deploy_edge_function, supabase/execute_sql, supabase/generate_typescript_types, supabase/get_advisors, supabase/get_edge_function, supabase/get_logs, supabase/get_project_url, supabase/get_publishable_keys, supabase/list_branches, supabase/list_edge_functions, supabase/list_extensions, supabase/list_migrations, supabase/list_tables, supabase/merge_branch, supabase/rebase_branch, supabase/reset_branch, supabase/search_docs, edit/createDirectory, edit/createFile, edit/editFiles, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, web/fetch, supabase-dev/apply_migration, supabase-dev/create_branch, supabase-dev/delete_branch, supabase-dev/deploy_edge_function, supabase-dev/execute_sql, supabase-dev/generate_typescript_types, supabase-dev/get_advisors, supabase-dev/get_edge_function, supabase-dev/get_logs, supabase-dev/get_project_url, supabase-dev/get_publishable_keys, supabase-dev/list_branches, supabase-dev/list_edge_functions, supabase-dev/list_extensions, supabase-dev/list_migrations, supabase-dev/list_tables, supabase-dev/merge_branch, supabase-dev/rebase_branch, supabase-dev/reset_branch, supabase-dev/search_docs, todo, uflow.uflow-memory/flowbaby_storeMemory, uflow.uflow-memory/flowbaby_retrieveMemory]
+  [
+    execute/getTerminalOutput,
+    execute/runInTerminal,
+    read/terminalSelection,
+    read/terminalLastCommand,
+    read/problems,
+    read/readFile,
+    supabase/apply_migration,
+    supabase/create_branch,
+    supabase/delete_branch,
+    supabase/deploy_edge_function,
+    supabase/execute_sql,
+    supabase/generate_typescript_types,
+    supabase/get_advisors,
+    supabase/get_edge_function,
+    supabase/get_logs,
+    supabase/get_project_url,
+    supabase/get_publishable_keys,
+    supabase/list_branches,
+    supabase/list_edge_functions,
+    supabase/list_extensions,
+    supabase/list_migrations,
+    supabase/list_tables,
+    supabase/merge_branch,
+    supabase/rebase_branch,
+    supabase/reset_branch,
+    supabase/search_docs,
+    edit/createDirectory,
+    edit/createFile,
+    edit/editFiles,
+    search/changes,
+    search/codebase,
+    search/fileSearch,
+    search/listDirectory,
+    search/textSearch,
+    search/usages,
+    web/fetch,
+    supabase-dev/apply_migration,
+    supabase-dev/create_branch,
+    supabase-dev/delete_branch,
+    supabase-dev/deploy_edge_function,
+    supabase-dev/execute_sql,
+    supabase-dev/generate_typescript_types,
+    supabase-dev/get_advisors,
+    supabase-dev/get_edge_function,
+    supabase-dev/get_logs,
+    supabase-dev/get_project_url,
+    supabase-dev/get_publishable_keys,
+    supabase-dev/list_branches,
+    supabase-dev/list_edge_functions,
+    supabase-dev/list_extensions,
+    supabase-dev/list_migrations,
+    supabase-dev/list_tables,
+    supabase-dev/merge_branch,
+    supabase-dev/rebase_branch,
+    supabase-dev/reset_branch,
+    supabase-dev/search_docs,
+    todo,
+    uflow.uflow-memory/flowbaby_storeMemory,
+    uflow.uflow-memory/flowbaby_retrieveMemory,
+  ]
 model: Claude Sonnet 4.6
 handoffs:
   - label: Request Implementation Fixes
@@ -49,7 +109,15 @@ Core Responsibilities:
 8. Document in `agent-output/deployment/` (checklist, confirmation, execution, validation).
 9. Maintain deployment history.
 10. Retrieve/store memory.
-11. **Status tracking**: After Stage 2 push succeeds **and** the PR comparison is confirmed conflict-free (including any required rebase/force-push), update all included plans' Status field to "Released" and add changelog entry. Keep agent-output docs' status current so other agents and users know document state at a glance.
+11. **Status tracking**: After Stage 2 push succeeds **and** the PR comparison is confirmed conflict-free (including any required rebase/force-push), update all included plans' Status field to "Released" and add changelog entry, subject to the **Released gate** below. Keep agent-output docs' status current so other agents and users know document state at a glance.
+
+    **Released gate (MANDATORY, PI-4)**: `Released` means live in production. Before setting any plan to `Released`, closing its GitHub issue (Phase 2D step 4), or moving roadmap `Current Version` (Phase 2D step 5), confirm ALL:
+    - The production deploy workflow (`deploy-hetzner.yml`, manual dispatch) succeeded for the release commit. A push to `main` deploys UAT only.
+    - No DF-N item in `[ID]-open-actions.md` that gates production is still Open.
+    - The plan's own Release/UAT Sequencing section (if present) imposes no stricter gate. Plan-specific gates override the generic step order in this file.
+
+    Until then, leave plan Status as `Committed`, keep the issue open, and record "Merged to main / deployed to UAT, production pending [gate]" in the deployment doc and roadmap. The git tag on the squash commit is still created at Stage 2.
+
 12. **Commit on plan approval**: After UAT approves a plan, commit all plan changes locally with detailed message referencing plan ID and target release. Do NOT push yet.
 13. **Track release readiness**: Monitor which plans are committed locally for the current target release. Coordinate with Roadmap agent to maintain accurate release→plan mappings.
 14. **Execute release on approval**: Only push when user explicitly approves the release version (not individual plans). A release bundles all committed plans for that version.
@@ -130,22 +198,22 @@ The working target is that result + 1 patch. For example, if `v0.10.37` is the h
 
 4d. **Stage 1 origin sync (MANDATORY)**:
 
-   First, check for branch divergence (PI-7 — mandatory for all plans, including multi-iteration follow-ons where the previous iteration's squash-merge produces a guaranteed ahead/behind state):
+    First, check for branch divergence (PI-7 — mandatory for all plans, including multi-iteration follow-ons where the previous iteration's squash-merge produces a guaranteed ahead/behind state):
 
-   ```bash
-   git fetch origin --tags
-   git rev-list --left-right --count origin/main...HEAD
-   # Expected: "0  K" (0 behind, K ahead).
-   # If left count > 0: rebase before staging (see sequence below).
-   ```
+    ```bash
+    git fetch origin --tags
+    git rev-list --left-right --count origin/main...HEAD
+    # Expected: "0  K" (0 behind, K ahead).
+    # If left count > 0: rebase before staging (see sequence below).
+    ```
 
-   If behind (`N  K` where N > 0), rebase:
+    If behind (`N  K` where N > 0), rebase:
 
-   ```bash
-   git stash --include-untracked
-   git rebase origin/main
-   git stash pop
-   ```
+    ```bash
+    git stash --include-untracked
+    git rebase origin/main
+    git stash pop
+    ```
 
 - If the rebase produces conflicts: resolve them, then re-run `npm run type-check` and a representative test subset to confirm the post-rebase build is still clean before continuing.
 - **Rationale**: Moving the rebase to Stage 1 means conflicts are resolved before the commit structure is formed. Stage 2 push is then conflict-free and lower-risk. (Stage 2 step 8 remote-sync check remains as a final safety gate.)
@@ -421,15 +489,17 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
    ```markdown
    ## Stage 2: Release Execution
+
    **User Confirmation**: "[exact confirmation text]" — [timestamp]
    **Confirmed by**: User (explicit)
 
    ### Release Execution Log
-   | Step | Command | Result |
-   | ---- | ------- | ------ |
-   | Push branch | `git push origin main` | ⏳ Pending |
+
+   | Step         | Command                              | Result     |
+   | ------------ | ------------------------------------ | ---------- |
+   | Push branch  | `git push origin main`               | ⏳ Pending |
    | Tag creation | `git tag -a v[X.Y.Z] <sha> -m "..."` | ⏳ Pending |
-   | Tag push | `git push origin v[X.Y.Z]` | ⏳ Pending |
+   | Tag push     | `git push origin v[X.Y.Z]`           | ⏳ Pending |
    ```
 
    After each push/tag command completes, immediately update the corresponding row with the actual result, SHA, and timestamp. Stage the completed deployment doc and commit it in the same session. If a follow-up commit is unavoidable (e.g., post-push doc correction), keep it scoped: single file, `chore(devops):` prefix, explanation of why it was unavoidable.
@@ -449,21 +519,22 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 3. Verify the PR comparison has no merge conflicts. If conflicts exist, rebase onto `origin/main`, resolve, and force-push with `--force-with-lease` before proceeding.
 4a. **Wait for CI** before merging. Monitor CI with the non-interactive polling pattern:
 
-   ```bash
-   # Standard CI poll — works in all terminal contexts (PI-5)
-   sleep 90 && gh pr checks <PR#> --repo <org>/<repo> 2>&1 | cat
-   ```
+    ```bash
+    # Standard CI poll — works in all terminal contexts (PI-5)
+    sleep 90 && gh pr checks <PR#> --repo <org>/<repo> 2>&1 | cat
+    ```
 
-   Set `N=90` for standard pipelines; `N=150` for test-heavy suites. Repeat with longer delays if still pending. **Never use `gh pr checks --watch`** — it opens the terminal alternate buffer and is inaccessible to automated polling. Do not merge while checks are pending or failing.
+    Set `N=90` for standard pipelines; `N=150` for test-heavy suites. Repeat with longer delays if still pending. **Never use `gh pr checks --watch`** — it opens the terminal alternate buffer and is inaccessible to automated polling. Do not merge while checks are pending or failing.
 
 4b. **PR merge and tag (squash-merge workflow)**:
-   - Merge the PR: `gh pr merge <PR#> --repo <org>/<repo> --squash --delete-branch`
-   - Fetch the squash commit: `git fetch origin --tags`
-   - Confirm squash commit SHA: `git rev-parse origin/main`
-   - Create annotated tag on the squash commit: `git tag -a v[X.Y.Z] <squash-sha> -m "Release v[X.Y.Z] — [plan summary]"`
-   - Push tag: `git push origin v[X.Y.Z]`
 
-   **NEVER** create the tag on the session branch before merge. On squash-merge the session branch commit is not in `main`'s history and the tag becomes orphaned. If a pre-merge tag was created by mistake: `git tag -d v[X.Y.Z] && git push origin :refs/tags/v[X.Y.Z]` then recreate on the squash commit after merge.
+    - Merge the PR: `gh pr merge <PR#> --repo <org>/<repo> --squash --delete-branch`
+    - Fetch the squash commit: `git fetch origin --tags`
+    - Confirm squash commit SHA: `git rev-parse origin/main`
+    - Create annotated tag on the squash commit: `git tag -a v[X.Y.Z] <squash-sha> -m "Release v[X.Y.Z] — [plan summary]"`
+    - Push tag: `git push origin v[X.Y.Z]`
+
+    **NEVER** create the tag on the session branch before merge. On squash-merge the session branch commit is not in `main`'s history and the tag becomes orphaned. If a pre-merge tag was created by mistake: `git tag -d v[X.Y.Z] && git push origin :refs/tags/v[X.Y.Z]` then recreate on the squash commit after merge.
 
 5. Publish: vsce/npm/twine/GitHub (environment-specific).
 6. Verify: visible, version correct, assets accessible.
@@ -471,7 +542,7 @@ If a follow-up push is still required (for example: unavoidable docs corrections
 
 **Phase 2D: Post-Release**
 
-1. Update ALL included plans' status to "Released".
+1. Update ALL included plans' status to "Released" only when the **Released gate** (Core Responsibilities step 11) is satisfied; otherwise keep `Committed`.
 2. Record metadata (version, environment, timestamp, URLs, authorizer, included plans).
 3. Verify success (installable, version matches, no errors).
    3b. **Functional Smoke Tests (MANDATORY)**: After deployment reports success (and before declaring Stage 2 complete), run a minimal set of functional smoke checks that cover server-rendered defaults:
@@ -528,34 +599,37 @@ After release is confirmed complete, normalize the main deployment doc:
 
 Neither option is a general allowance to skip build verification permanently. Option (b) creates a named obligation that must be closed before the next plan's Stage 1 commit.
 
-   3g. **PROD migration apply (MANDATORY when release includes migration files)**:
+    3g. **PROD migration apply (MANDATORY when release includes migration files)**:
 
-   The GitHub Actions deploy workflow builds and pushes a Docker image only — it does NOT run `supabase db push`. Migrations must be applied manually after every release that includes migration files.
+    The GitHub Actions deploy workflow builds and pushes a Docker image only — it does NOT run `supabase db push`. Migrations must be applied manually after every release that includes migration files.
 
-   **Tool options** (use whichever is available in the session):
-   - MCP: `mcp_supabase_apply_migration` per migration file, in filename-sort order
-   - CLI: `supabase db push --linked` against the PROD project ref
+    **Tool options** (use whichever is available in the session):
 
-   **Known environment mapping** (confirm in `docs/architecture/ENVIRONMENTS.md` or from user if uncertain):
-   - DEV: `qrekonfhaenjdnjhwdum` (CLI-linked, `.env.local`)
-   - PROD: `rdtdtcfntopcxcigkqoq` (MCP tool default)
+    - MCP: `mcp_supabase_apply_migration` per migration file, in filename-sort order
+    - CLI: `supabase db push --linked` against the PROD project ref
 
-   **Apply order**: Filename sort order (same as Supabase CLI). When using MCP tools, apply each migration individually and verify each returns `{"success":true}` before continuing.
+    **Known environment mapping** (confirm in `docs/architecture/ENVIRONMENTS.md` or from user if uncertain):
 
-   **Verification SQL** (run after all migrations applied):
-   ```sql
-   SELECT table_name, constraint_type, constraint_name
-   FROM information_schema.table_constraints
-   WHERE table_schema = 'public' AND constraint_type = 'PRIMARY KEY'
-   ORDER BY table_name;
-   ```
+    - DEV: `qrekonfhaenjdnjhwdum` (CLI-linked, `.env.local`)
+    - PROD: `rdtdtcfntopcxcigkqoq` (MCP tool default)
 
-   **Record in deployment doc**: tool used, project ref, each migration applied (filename + result), verification SQL output.
+    **Apply order**: Filename sort order (same as Supabase CLI). When using MCP tools, apply each migration individually and verify each returns `{"success":true}` before continuing.
 
-   If a migration was already applied (idempotent-safe with `IF NOT EXISTS` guards): note it and continue — do not treat as an error.
+    **Verification SQL** (run after all migrations applied):
+
+    ```sql
+    SELECT table_name, constraint_type, constraint_name
+    FROM information_schema.table_constraints
+    WHERE table_schema = 'public' AND constraint_type = 'PRIMARY KEY'
+    ORDER BY table_name;
+    ```
+
+    **Record in deployment doc**: tool used, project ref, each migration applied (filename + result), verification SQL output.
+
+    If a migration was already applied (idempotent-safe with `IF NOT EXISTS` guards): note it and continue — do not treat as an error.
 
 4. **Close GitHub Issues for released plans (MANDATORY when applicable)**:
-   For each plan included in this release, check the plan document header for a `GitHub Issue` field containing a full URL (e.g., `GitHub Issue: https://github.com/abu-lina/uflow/issues/N`).
+   Only after the **Released gate** (Core Responsibilities step 11) is satisfied. For each plan included in this release, check the plan document header for a `GitHub Issue` field containing a full URL (e.g., `GitHub Issue: https://github.com/abu-lina/uflow/issues/N`).
 
    If the field is present and the issue is still open, close it with a release comment:
 
@@ -690,11 +764,13 @@ If a referenced skill path is missing or appears stale:
 2. Move all to their respective `closed/` folders (PI-6 — avoid double-staging):
 
    **For tracked files** (previously committed to git): use `git mv`:
+
    ```bash
    git mv agent-output/planning/<file> agent-output/planning/closed/<file>
    ```
 
    **For new files** (never committed — created during this pipeline): do NOT `git add` the original path first. Use the safe sequence:
+
    ```bash
    # Option A (preferred): create directly in closed/ from the start
    # Option B: if already created at original path

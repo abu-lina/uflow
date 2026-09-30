@@ -387,6 +387,11 @@ export const de = {
     call: 'Anrufen',
     website: 'Website',
     addressTapToNavigate: 'Adresse antippen zum Navigieren',
+    serves: 'Serviert',
+    locationsCount: '{{count}} Standorte',
+    halalLevel: 'Halal-Stufe {{level}}',
+    approve: 'Freigeben',
+    reject: 'Ablehnen',
     online: 'Online',
     donations: 'Spenden',
     initiativesSupported: 'Initiativen unterstützt',
@@ -416,10 +421,6 @@ export const de = {
       title: 'Ich kenne einen Anbieter',
       description: 'Empfiehl jemanden, den du kennst, damit andere ihn finden können.',
       buttonText: 'Anbieter empfehlen',
-    },
-    chatHint: {
-      prefix: 'Du kannst auch schnell registrieren per',
-      link: 'Chat-Assistent',
     },
     recommend: {
       title: 'Anbieter empfehlen',
@@ -728,6 +729,12 @@ export const de = {
     magicLinkLoading: 'Magic Link wird gesendet...',
     magicLinkDescription: 'Wir senden dir einen Magic Link per E-Mail. Kein Passwort erforderlich.',
     afterConfirmationLogin: 'Nach Bestätigung anmelden',
+    magicLinkSentTitle: 'Magic Link gesendet!',
+    magicLinkSentDescription: 'Bitte überprüfe deine E-Mail und klicke auf den Link zum Anmelden.',
+    magicLinkFailedToast: 'Magic Link fehlgeschlagen',
+    magicLinkFailedError: 'Fehler beim Senden des Magic Links. Bitte versuche es erneut.',
+    magicLinkDiagnostic: 'Bitte besuche diese URL für Diagnose: {{url}}',
+    loginSuccessToast: 'Erfolgreich angemeldet',
   },
   signup: {
     afterConfirmationLogin: 'Nach Bestätigung anmelden',
@@ -1207,6 +1214,7 @@ export const de = {
     openChat: 'Chat öffnen',
     closeChat: 'Chat schließen',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'Chat',
   },
   map: {
     zoomIn: 'Vergrößern',

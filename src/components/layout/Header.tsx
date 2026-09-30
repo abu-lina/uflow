@@ -65,7 +65,15 @@ export function Header() {
   useEffect(() => {
     if (!isAdmin) return;
     const params = new URLSearchParams(window.location.search);
-    setAdminStatus((params.get('status') as ReviewStatusFilter) ?? null);
+    const status = params.get('status');
+    setAdminStatus(
+      status === 'approved' ||
+        status === 'pending' ||
+        status === 'rejected' ||
+        status === 'needs_revision'
+        ? status
+        : null,
+    );
   }, [isAdmin, pathname]);
 
   const handleStatusChange = useCallback(

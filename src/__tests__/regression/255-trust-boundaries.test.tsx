@@ -521,10 +521,22 @@ function approvedEqCalls(calls: Array<{ method: string; args: unknown[] }>) {
 
 describe('C: public reads apply review_status=approved (AC7.2)', () => {
   it('fetchSearchSuggestions filters providers to approved', async () => {
-    const { client, calls } = recordingClient();
-    await fetchSearchSuggestions('ber', 10, client);
-    expect(calls.filter((c) => c.method === 'from' && c.args[0] === 'providers').length).toBe(1);
-    expect(approvedEqCalls(calls).length).toBeGreaterThanOrEqual(1);
+    // Plan 266: the approved-only restriction moved from a client-side
+    // .eq('review_status','approved') into the search_scoped_suggestions RPC,
+    // which hardcodes review_status = 'approved' in SQL. The trust boundary is
+    // preserved by routing suggestions exclusively through that RPC and never
+    // reading the providers table directly from the client.
+    const rpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    const from = vi.fn(() => {
+      throw new Error('suggestions must not read tables directly');
+    });
+    const client = { rpc, from } as never;
+
+    await fetchSearchSuggestions('ber', 10, { client });
+
+    expect(from).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc.mock.calls[0][0]).toBe('search_scoped_suggestions');
   });
 
   it('fetchFilteredCities without a search query filters providers to approved', async () => {

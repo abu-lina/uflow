@@ -384,6 +384,11 @@ export const tr = {
     call: 'Ara',
     website: 'Web sitesi',
     addressTapToNavigate: 'Navigasyon için adrese dokunun',
+    serves: 'Sunar',
+    locationsCount: '{{count}} konum',
+    halalLevel: 'Helal seviyesi {{level}}',
+    approve: 'Onayla',
+    reject: 'Reddet',
     online: 'Çevrimiçi',
     donations: 'Bağışlar',
     initiativesSupported: 'Desteklenen girişimler',
@@ -413,10 +418,6 @@ export const tr = {
       title: 'Bir sağlayıcı tanıyorum',
       description: 'Tanıdığınız birini önerin ki başkaları onu bulabilsin.',
       buttonText: 'Sağlayıcı öner',
-    },
-    chatHint: {
-      prefix: 'Sohbet asistani ile de hizlica kayit olabilirsiniz:',
-      link: 'Sohbet Asistani',
     },
     recommend: {
       title: 'Sağlayıcı Öner',
@@ -721,6 +722,13 @@ export const tr = {
     magicLinkLoading: 'Sihirli bağlantı gönderiliyor...',
     magicLinkDescription: 'Size e-posta ile bir Sihirli Bağlantı göndereceğiz. Şifre gerekmez.',
     afterConfirmationLogin: 'Onay sonrası giriş yap',
+    magicLinkSentTitle: 'Sihirli Bağlantı gönderildi!',
+    magicLinkSentDescription:
+      'Lütfen e-postanızı kontrol edin ve giriş yapmak için bağlantıya tıklayın.',
+    magicLinkFailedToast: 'Sihirli Bağlantı başarısız',
+    magicLinkFailedError: 'Sihirli Bağlantı gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
+    magicLinkDiagnostic: "Tanılama için lütfen bu URL'yi ziyaret edin: {{url}}",
+    loginSuccessToast: 'Başarıyla giriş yapıldı',
   },
   signup: {
     afterConfirmationLogin: 'Onay sonrası giriş yap',
@@ -1196,6 +1204,7 @@ export const tr = {
     openChat: 'Sohbeti aç',
     closeChat: 'Sohbeti kapat',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'Sohbet',
   },
   map: {
     zoomIn: 'Yakınlaştır',

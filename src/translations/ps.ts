@@ -386,6 +386,11 @@ export const ps = {
     call: 'کال',
     website: 'وېب پاڼه',
     addressTapToNavigate: 'د لارښود لپاره پته ټایپ کړئ',
+    serves: 'وړاندې کوي',
+    locationsCount: '{{count}} ځایونه',
+    halalLevel: 'د حلال کچه {{level}}',
+    approve: 'منظورول',
+    reject: 'ردول',
     online: 'آنلاین',
     donations: 'خیرات',
     initiativesSupported: 'ملاتړ شوي نوښتونه',
@@ -415,10 +420,6 @@ export const ps = {
       title: 'زه یو وړاندې کوونکی پېژنم',
       description: 'د خپل پېژندل شوي کس وړاندیز وکړئ ترڅو نور یې ومومي.',
       buttonText: 'وړاندې کوونکی وړاندیز کړئ',
-    },
-    chatHint: {
-      prefix: 'تاسو د چیٹ مرستیال له لارې هم ګړندی ثبت کولی شئ:',
-      link: 'چیٹ مرستیال',
     },
     recommend: {
       title: 'وړاندې کوونکی وړاندیز کړئ',
@@ -724,6 +725,13 @@ export const ps = {
     afterConfirmationLogin: 'د تایید وروسته ننوتل',
     loading: 'Logging in...',
     submit: 'Login',
+    magicLinkSentTitle: 'میجک لینک ولیږل شو!',
+    magicLinkSentDescription:
+      'مهرباني وکړئ خپل بریښنالیک وګورئ او د ننوتلو لپاره په لینک کلیک وکړئ.',
+    magicLinkFailedToast: 'میجک لینک ناکام شو',
+    magicLinkFailedError: 'د میجک لینک په لیږلو کې ستونزه. مهرباني وکړئ بیا هڅه وکړئ.',
+    magicLinkDiagnostic: 'د تشخیص لپاره مهرباني وکړئ دا URL وګورئ: {{url}}',
+    loginSuccessToast: 'په بریالیتوب سره ننوتل',
   },
   signup: {
     afterConfirmationLogin: 'د تایید وروسته ننوتل',
@@ -1195,6 +1203,7 @@ export const ps = {
     openChat: 'چیټ پرانیزئ',
     closeChat: 'چیټ وتړئ',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'چیټ',
   },
   map: {
     zoomIn: 'لوی کول',

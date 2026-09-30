@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { render, mockMatchMedia } from '../utils/test-utils';
+import { render } from '../utils/test-utils';
 import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { mockProviders } from '../mocks/providerData';
 import type { Provider } from '@/services/providers';
@@ -9,7 +9,6 @@ import * as AuthProviderModule from '@/providers/auth-provider';
 
 describe('ProviderCard Component', () => {
   const mockProvider = mockProviders[0]; // Bilal Moschee
-  const mockOnClick = vi.fn();
   const mockOnBookmarkChange = vi.fn();
 
   beforeEach(() => {
@@ -416,11 +415,7 @@ describe('ProviderCard Component', () => {
     it('[pre-fix FAILS] [post-fix PASSES] renders top-2 specialties with +N overflow', () => {
       const providerWithSpecialties = {
         ...mockProvider,
-        offers: [
-          { name_de: 'Shawarma' },
-          { name_de: 'Falafel' },
-          { name_de: 'Manti' },
-        ],
+        offers: [{ name_de: 'Shawarma' }, { name_de: 'Falafel' }, { name_de: 'Manti' }],
       };
 
       render(
@@ -480,8 +475,6 @@ describe('ProviderCard Component', () => {
 
       expect(screen.queryByTestId('provider-open-status')).not.toBeInTheDocument();
     });
-
-
   });
 
   // Verification status tests removed - component doesn't have verification badges
@@ -645,7 +638,7 @@ describe('ProviderCard Component', () => {
 
   /**
    * Plan 058 M3: Admin Moderation Mode
-   * 
+   *
    * ProviderCard supports a `mode` prop to switch between:
    * - 'bookmark' (default): Shows Save/Saved button
    * - 'moderation': Shows Approve/Reject buttons for admin review
@@ -748,6 +741,37 @@ describe('ProviderCard Component', () => {
 
       // Should show a status indicator
       expect(screen.getByText(/pending/i)).toBeInTheDocument();
+    });
+
+    it('[post-fix PASSES] shows an opted-in status label in bookmark mode without moderation actions', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="bookmark"
+          reviewStatus="pending"
+          showReviewStatus
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      expect(screen.getByText(/^pending$/i)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
+    });
+
+    it('does not show review status in bookmark mode without the explicit opt-in', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          mode="bookmark"
+          reviewStatus="pending"
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      expect(screen.queryByText(/^pending$/i)).not.toBeInTheDocument();
     });
 
     it('should show approved status with appropriate styling', () => {

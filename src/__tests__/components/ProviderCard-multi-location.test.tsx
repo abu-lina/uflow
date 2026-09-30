@@ -6,7 +6,6 @@ import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { mockProviders } from '../mocks/providerData';
 
 describe('ProviderCard — Multi-Location (Plan 151)', () => {
-  const mockOnClick = vi.fn();
   const mockOnBookmarkChange = vi.fn();
   const baseProvider = mockProviders[0];
 
@@ -39,11 +38,7 @@ describe('ProviderCard — Multi-Location (Plan 151)', () => {
     };
 
     render(
-      <ProviderCard
-        {...provider}
-        isBookmarked={false}
-        onBookmarkChange={mockOnBookmarkChange}
-      />,
+      <ProviderCard {...provider} isBookmarked={false} onBookmarkChange={mockOnBookmarkChange} />,
     );
 
     expect(screen.getByText(/Musterstr 42/)).toBeInTheDocument();
@@ -60,11 +55,7 @@ describe('ProviderCard — Multi-Location (Plan 151)', () => {
     };
 
     render(
-      <ProviderCard
-        {...provider}
-        isBookmarked={false}
-        onBookmarkChange={mockOnBookmarkChange}
-      />,
+      <ProviderCard {...provider} isBookmarked={false} onBookmarkChange={mockOnBookmarkChange} />,
     );
 
     expect(screen.getByText(/Altstr 10/)).toBeInTheDocument();
@@ -113,14 +104,10 @@ describe('ProviderCard — Multi-Location (Plan 151)', () => {
     };
 
     render(
-      <ProviderCard
-        {...provider}
-        isBookmarked={false}
-        onBookmarkChange={mockOnBookmarkChange}
-      />,
+      <ProviderCard {...provider} isBookmarked={false} onBookmarkChange={mockOnBookmarkChange} />,
     );
 
-    expect(screen.getByText('2 Standorte')).toBeInTheDocument();
+    expect(screen.getByText('2 locations')).toBeInTheDocument();
   });
 
   it('hides standorte badge when locations array has only one entry', () => {
@@ -148,17 +135,13 @@ describe('ProviderCard — Multi-Location (Plan 151)', () => {
     };
 
     render(
-      <ProviderCard
-        {...provider}
-        isBookmarked={false}
-        onBookmarkChange={mockOnBookmarkChange}
-      />,
+      <ProviderCard {...provider} isBookmarked={false} onBookmarkChange={mockOnBookmarkChange} />,
     );
 
-    expect(screen.queryByText(/Standorte/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/locations/)).not.toBeInTheDocument();
   });
 
-  it('uses primary location\'s address when multiple locations exist', () => {
+  it("uses primary location's address when multiple locations exist", () => {
     const provider = {
       ...baseProvider,
       locations: [
@@ -200,11 +183,7 @@ describe('ProviderCard — Multi-Location (Plan 151)', () => {
     };
 
     render(
-      <ProviderCard
-        {...provider}
-        isBookmarked={false}
-        onBookmarkChange={mockOnBookmarkChange}
-      />,
+      <ProviderCard {...provider} isBookmarked={false} onBookmarkChange={mockOnBookmarkChange} />,
     );
 
     // Should show Hamburg (primary) not Berlin

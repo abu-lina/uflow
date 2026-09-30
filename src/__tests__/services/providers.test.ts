@@ -128,17 +128,17 @@ describe('providers service', () => {
     });
 
     it('uses providers-only search path when search query is provided', async () => {
-      const { searchOffers } = await import('@/services/offers');
-      const { searchNeeds } = await import('@/services/needs');
       const { getBadgesForEntities } = await import('@/services/badges');
 
-      vi.mocked(searchOffers).mockResolvedValueOnce([]);
-      vi.mocked(searchNeeds).mockResolvedValueOnce([]);
       vi.mocked(getBadgesForEntities).mockResolvedValueOnce(new Map());
 
-      // searchProviders() internals call this provider-name RPC
+      // Plan 266: searchProviders() resolves matches via a single scoped RPC
+      // that also returns the matched menu items per provider.
       mockRpc.mockResolvedValueOnce({
-        data: [{ provider_id: 'p-1' }, { provider_id: 'p-2' }],
+        data: [
+          { provider_id: 'p-1', matched_menu_items: [] },
+          { provider_id: 'p-2', matched_menu_items: ['Lahmacun'] },
+        ],
         error: null,
       });
 
@@ -155,11 +155,12 @@ describe('providers service', () => {
       const result = await fetchFilteredCities(null, 'test query');
 
       expect(result).toEqual(['Berlin', 'Hamburg']);
-      expect(mockRpc).toHaveBeenCalledWith('search_provider_ids_by_name', {
-        search_query: 'test query',
-      });
-      // searchProviders now uses ILIKE for category name search (legitimate, alongside tsvector for providers)
-      expect(mockIlike).toHaveBeenCalled();
+      expect(mockRpc).toHaveBeenCalledWith(
+        'search_providers_for_query',
+        expect.objectContaining({ search_query: 'test query' }),
+      );
+      // Plan 266: category matching moved into the tsvector RPC — no ILIKE.
+      expect(mockIlike).not.toHaveBeenCalled();
     });
 
     it('filters out null and empty cities', async () => {
@@ -195,6 +196,32 @@ describe('providers service', () => {
   });
 
   describe('searchProviders', () => {
+    it('[post-fix PASSES] scopes admin all searches to the four moderation statuses', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: [{ provider_id: 'p-1', matched_menu_items: [] }],
+        error: null,
+      });
+      mockReturns.mockResolvedValueOnce({ data: [], error: null, count: 0 });
+
+      const adminOptions: Parameters<typeof searchProviders>[5] = {
+        status: 'all',
+        isAdmin: true,
+      };
+      await searchProviders('Munchies', '', '', 12, 0, adminOptions, 'food');
+
+      expect(mockRpc).toHaveBeenCalledWith(
+        'search_providers_for_query',
+        expect.objectContaining({ review_status_filter: 'all' }),
+      );
+      expect(mockIn).toHaveBeenCalledWith('review_status', [
+        'approved',
+        'pending',
+        'rejected',
+        'needs_revision',
+      ]);
+      expect(mockEq).not.toHaveBeenCalledWith('review_status', 'all');
+    });
+
     it('[post-fix PASSES] selects category_images for overview fallback stock image rendering', async () => {
       await searchProviders('', '', '', 12, 0);
 

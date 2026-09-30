@@ -1,0 +1,57 @@
+---
+ID: 266
+Origin: 266
+UUID: 4f5bf2ef
+Status: Active
+---
+
+# Plan 266 DevOps Preflight: Ready to Merge
+
+**Date (UTC)**: 2026-09-27  
+**Plan**: [266-desktop-search-partial-plan.md](../planning/266-desktop-search-partial-plan.md)  
+**UAT**: [266-desktop-search-partial-uat.md](../uat/266-desktop-search-partial-uat.md)  
+**QA**: [266-desktop-search-partial-qa.md](../qa/266-desktop-search-partial-qa.md)
+
+## Changelog
+
+| Timestamp (UTC)           | Agent       | Change                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-27T13:30Z         | DevOps      | User confirmation: “i explicitly approve for release”. Authorization recorded; no version was specified and required gates remain open.                                                                                                                                                                                                                       |
+| 2026-09-27T14:02Z         | DevOps      | Applied migration 134 to the separate DEV project, verified real search flows and DEV timings/index plans, and captured browser screenshots. UAT/PROD remains untouched; release remains blocked.                                                                                                                                                             |
+| 2026-09-27T14:08Z         | DevOps      | Built and smoke-tested the local `linux/amd64` Docker image against DEV. Refreshed origin: candidate `v0.15.20`, migration 134 remains free on main; branch is 2 behind/6 ahead. No CI run exists.                                                                                                                                                            |
+| 2026-09-28T07:54Z         | Implementer | Fixed root RTL synchronization in `LanguageProvider`; focused RTL/i18n tests and type-check pass. Full suite has one unrelated dirty-manifest failure; UAT browser rerun remains open.                                                                                                                                                                        |
+| 2026-09-28T10:16Z approx. | User / UAT  | User chose the shared UAT/PROD DB and applied migration 134 manually via Supabase SQL on `rdtdtcfntopcxcigkqoq`. Smoke results: tokenizer `'döner':* & 'keb':*`; matcher returns provider `3ec9a671-…` with menu `Tac Tac Istanbul`; scoped suggestion returns `menuItem Tac Tac Istanbul`.                                                                   |
+| 2026-09-28T10:40Z         | Implementer | Restored the unrelated `public/manifest.json` edit to `HEAD` (Plan 228 `/food` shortcut). Full suite 292 files / 2618 tests pass; `npm run lint` exit 0 (0 errors, 151 warnings); type-check exit 0.                                                                                                                                                          |
+| 2026-09-28T11:30Z         | DevOps      | Committed, rebased onto `origin/main` (`724adbc6`, 0 behind / 7 ahead), and resolved version conflicts to `0.15.20`. Post-rebase: type-check, lint and vitest (2642 passed) all green. Pushed the session branch; draft PR #434 CI run `36401702826` is all green. Chromium RTL check passed. Shared-DB timings met; pre-change `/food?q=` baseline captured. |
+
+## Decision
+
+**Status: READY TO MERGE PR #434.** DF-1 and DF-2 are closed, and DF-3 thresholds are met on the shared DB. Merging to `main` auto-deploys UAT (`deploy-uat.yml`). Production (`deploy-hetzner.yml`) is manual and waits on the post-deploy `/food?q=` comparison plus version-specific confirmation of `v0.15.20`.
+
+Migration 134 is live on DEV `qrekonfhaenjdnjhwdum` and on the shared UAT/PROD project `rdtdtcfntopcxcigkqoq` (applied manually by the user, smoke-verified). The branch is rebased (0 behind); no tag or deployment has been made.
+
+## Gate Tracker
+
+| Gate                                       | Status                                     | Owner                | Closure evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------ | ------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UAT release approval                       | APPROVED FOR UAT DEPLOYMENT                | UAT / user           | Resolve DF-1 through DF-3, then record explicit `APPROVED FOR RELEASE` and update Plan 266 status.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| User release approval                      | RECEIVED, VERSION-SPECIFIC SUMMARY PENDING | User / DevOps        | Generic authorization recorded at 2026-09-27T13:30Z. Candidate target is `v0.15.20`; after prerequisites close, present the exact release summary and capture version-specific Stage 2 confirmation.                                                                                                                                                                                                                                                                                                                                               |
+| DF-1 live visual/value validation          | CLOSED (Chromium RTL ar/ur/ps pass)        | QA/UAT               | DEV Chromium verified suggestion click, Enter prefix, matched `Serves: Burger` card, mobile `/search`, and six translated strings. Implementer fixed root `dir`/`lang` synchronization and focused RTL/i18n tests pass 3/3. Remaining: rerun configured browser visual RTL check after the fix; UAT/PROD route is not deployed.                                                                                                                                                                                                                    |
+| DF-2 configured production build           | CLOSED (PR #434 CI green)                  | DevOps / CI operator | `npm run build:standalone` passed; the local `linux/amd64` Docker image built successfully and smoke tests passed at `/`, `/providers`, and the matched result route on desktop/mobile. Ordinary `npm run build` failed at `/dashboard/import` dynamic page-data collection. No PR or configured GitHub CI run exists; CI success on the release commit remains required.                                                                                                                                                                          |
+| DF-3 UAT migration, preflight, and timings | THRESHOLDS MET; POST-DEPLOY CHECK OPEN     | DevOps / UAT owner   | DEV only: migration 134 applied and ledger verified; matcher exact/prefix/two-word timings 20.853/13.124/13.912 ms; suggestions 15.499/17.185/16.191 ms; provider-name and menu GIN bitmap scans confirmed. DEV has 6 approved food providers/1 menu item; no `/food?q=` pre-change baseline. Shared UAT/PROD `rdtdtcfntopcxcigkqoq`: migration 134 applied manually by the user on 2026-09-28 and SQL smoke-verified. Remaining: shared-DB representative timings (suggestions ≤100 ms, matcher ≤200 ms) and `/food?q=` ≤20% regression baseline. |
+| Version/tag/branch preflight               | REBASED; TAG PENDING                       | DevOps               | Refreshed tags/main: `v0.15.19` / package `0.15.19`; worktree package `0.15.20`; migration 134 absent on origin/main. Branch is `2 behind / 6 ahead`. Rebase after UAT approval, preserve dirty work, rerun tests, and reconfirm target before Stage 1.                                                                                                                                                                                                                                                                                            |
+
+## Environment and Tool Constraints
+
+- Flowbaby retrieval failed with `No workspace folder open`; operating in no-memory mode.
+- Supabase CLI identified `DEV-uflow` (`qrekonfhaenjdnjhwdum`) and `PROD-uflow` (`rdtdtcfntopcxcigkqoq`); `env.uat.template` says UAT uses the same project as PROD. No UAT-specific project is available in the listed projects.
+- Shell, GitHub CLI, Supabase CLI, Playwright, and Docker are available. GitHub reports no PR or CI run for `session/266-desktop-search-partial`. The worktree remains dirty; no user changes were staged or committed by this phase. The branch is 2 commits behind and 6 ahead of refreshed `origin/main`.
+- Supabase DEV migration history had many unrelated local/remote mismatches. Migration 134 was applied as a targeted DEV SQL file and migration 134 alone was recorded as applied; no broad `db push` was run.
+- Local `npm run build:standalone` and a `linux/amd64` Docker build completed successfully using DEV public config. The Docker image smoke checks passed. No image was pushed to a registry.
+- A deployment-domain lifecycle scan found 29 legacy docs with terminal `Committed`/`Released` status outside `agent-output/deployment/closed/`. They are unrelated to Plan 266 and were deliberately not mixed into this release-preflight work; handle as a separate docs-only cleanup before the next Stage 1 commit.
+
+## Next Steps
+
+1. Mark PR #434 ready and merge it. UAT deploys automatically.
+2. On UAT, repeat the 5-request `/food?q=` TTFB check for burger, lahm and istanbul. The baseline medians are 167, 158 and 142 ms; hold production if any median exceeds 1.2× its baseline.
+3. Tag `v0.15.20` and run `deploy-hetzner.yml` with version-specific confirmation.

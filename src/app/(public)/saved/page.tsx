@@ -164,7 +164,7 @@ export default function SavedProvidersPage() {
 
   const handleResendConfirmation = useCallback(async () => {
     if (!loginFormData.email) {
-      setLoginError('Bitte gib zuerst deine E-Mail-Adresse ein.');
+      setLoginError(t('login.enterEmailFirst'));
       return;
     }
 
@@ -184,9 +184,9 @@ export default function SavedProvidersPage() {
       });
 
       if (!tokenResponse.ok) {
-        setLoginError('Bestätigungs-E-Mail konnte nicht gesendet werden.');
-        toast.error('E-Mail konnte nicht gesendet werden', {
-          description: 'Bitte versuche es später erneut.',
+        setLoginError(t('login.confirmationEmailFailed'));
+        toast.error(t('login.emailFailedToast'), {
+          description: t('login.emailFailedDescription'),
           duration: 4000,
         });
         return;
@@ -210,24 +210,24 @@ export default function SavedProvidersPage() {
       });
 
       if (emailResponse.ok) {
-        setLoginError('Bestätigungs-E-Mail wurde gesendet. Bitte überprüfe dein Postfach.');
+        setLoginError(t('login.confirmationEmailSent'));
         setIsEmailConfirmationError(false);
-        toast.success('E-Mail gesendet', {
-          description: 'Bitte überprüfe dein Postfach.',
+        toast.success(t('login.emailSentToast'), {
+          description: t('login.emailSentDescription'),
           duration: 4000,
         });
       } else {
-        setLoginError('Bestätigungs-E-Mail konnte nicht gesendet werden.');
-        toast.error('E-Mail konnte nicht gesendet werden', {
-          description: 'Bitte versuche es später erneut.',
+        setLoginError(t('login.confirmationEmailFailed'));
+        toast.error(t('login.emailFailedToast'), {
+          description: t('login.emailFailedDescription'),
           duration: 4000,
         });
       }
     } catch (error) {
       console.error('Resend confirmation error:', error);
-      setLoginError('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.');
-      toast.error('Fehler', {
-        description: 'Bitte versuche es später erneut.',
+      setLoginError(t('login.unexpectedError'));
+      toast.error(t('login.errorOccurredToast'), {
+        description: t('login.errorOccurredDescription'),
         duration: 4000,
       });
     } finally {
@@ -248,13 +248,13 @@ export default function SavedProvidersPage() {
         
         if (error) {
           if (error.message === 'EMAIL_NOT_CONFIRMED') {
-            setLoginError('Bitte überprüfe deine E-Mail und bestätige deine Registrierung vor der Anmeldung.');
+            setLoginError(t('login.emailNotConfirmed'));
             setIsEmailConfirmationError(true);
           } else if (error.message === 'EMAIL_NOT_FOUND') {
-            setLoginError('Diese E-Mail-Adresse ist nicht registriert. Bitte erstelle zuerst ein Konto.');
+            setLoginError(t('login.emailNotFound'));
             setIsEmailConfirmationError(false);
           } else {
-            const errorMessage = error.message || 'Fehler beim Senden des Magic Links. Bitte versuche es erneut.';
+            const errorMessage = error.message || t('login.magicLinkFailedError');
             setLoginError(errorMessage);
             setIsEmailConfirmationError(false);
             
@@ -263,10 +263,10 @@ export default function SavedProvidersPage() {
               ? error.diagnosticUrl 
               : undefined;
             const toastDescription = diagnosticUrl 
-              ? `Bitte besuche diese URL für Diagnose: ${diagnosticUrl}`
-              : 'Bitte versuche es erneut oder kontaktiere den Support.';
+              ? t('login.magicLinkDiagnostic', { url: diagnosticUrl })
+              : t('login.emailFailedDescription');
             
-            toast.error('Magic Link fehlgeschlagen', {
+            toast.error(t('login.magicLinkFailedToast'), {
               description: toastDescription,
               duration: 8000,
             });
@@ -277,8 +277,8 @@ export default function SavedProvidersPage() {
         // Success - magic link sent
         if (data) {
           setMagicLinkSent(true);
-          toast.success('Magic Link gesendet', {
-            description: 'Bitte überprüfe deine E-Mail und klicke auf den Link zum Anmelden.',
+          toast.success(t('login.magicLinkSentTitle'), {
+            description: t('login.magicLinkSentDescription'),
             duration: 5000,
           });
           // Clear email field
@@ -292,16 +292,16 @@ export default function SavedProvidersPage() {
         
         if (error) {
           if (error.message === 'EMAIL_NOT_CONFIRMED') {
-            setLoginError('Bitte überprüfe deine E-Mail und bestätige deine Registrierung vor der Anmeldung.');
+            setLoginError(t('login.emailNotConfirmed'));
             setIsEmailConfirmationError(true);
           } else if (error.message === 'EMAIL_NOT_FOUND') {
-            setLoginError('Diese E-Mail-Adresse ist nicht registriert. Bitte erstelle zuerst ein Konto.');
+            setLoginError(t('login.emailNotFound'));
             setIsEmailConfirmationError(false);
           } else {
-            setLoginError('Ungültige E-Mail oder Passwort. Bitte versuche es erneut.');
+            setLoginError(t('login.invalidCredentials'));
             setIsEmailConfirmationError(false);
-            toast.error('Anmeldung fehlgeschlagen', {
-              description: 'Bitte überprüfe deine Anmeldedaten und versuche es erneut.',
+            toast.error(t('login.loginFailedToast'), {
+              description: t('login.loginFailedDescription'),
               duration: 4000,
             });
           }
@@ -311,7 +311,7 @@ export default function SavedProvidersPage() {
         // Success - user will be automatically updated via auth provider
         // The page will re-render and show saved items
         if (data) {
-          toast.success('Erfolgreich angemeldet');
+          toast.success(t('login.loginSuccessToast'));
           // Clear form
           setLoginFormData({ email: '', password: '' });
           setLoginError(null);
@@ -371,10 +371,10 @@ export default function SavedProvidersPage() {
                   <div className="rounded-lg bg-green-50 p-4 text-center">
                     <Icon className="mx-auto mb-2 h-8 w-8 text-green-600" icon="lucide:mail-check" />
                     <p className="text-sm font-medium text-green-800">
-                      Magic Link gesendet!
+                      {t('login.magicLinkSentTitle')}
                     </p>
                     <p className="mt-1 text-sm text-green-700">
-                      Bitte überprüfe deine E-Mail und klicke auf den Link zum Anmelden.
+                      {t('login.magicLinkSentDescription')}
                     </p>
                   </div>
                   <Button
@@ -386,7 +386,7 @@ export default function SavedProvidersPage() {
                       setLoginFormData({ email: '', password: '' });
                     }}
                   >
-                    Erneut versuchen
+                    {t('common.retry')}
                   </Button>
                 </div>
               ) : (
@@ -504,8 +504,8 @@ export default function SavedProvidersPage() {
       >
         {shouldShowSearchBar && (
           <HomeSearchBar
-            activeSection={selectedSection}
             hideFilters
+            activeSection={selectedSection}
             query={searchQuery}
             onQueryChange={setSearchQuery}
           />
@@ -558,8 +558,8 @@ export default function SavedProvidersPage() {
               return (
                 <li key={provider.id}>
                   <SelectableCard
-                    backgroundColor={categoryBgColor}
                     actionType="unsave"
+                    backgroundColor={categoryBgColor}
                     bottomText={address}
                     category={provider.category?.name_de || ''}
                     imageUrl={imageUrl}

@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { SearchBar } from '@/features/search/components/SearchBar';
+import { fetchSearchSuggestions } from '@/services/providers';
 
 const { mockRouterPush, mockSetSelectedLocation, geoMock, navMock, searchCtxMock } = vi.hoisted(
   () => ({
@@ -21,6 +22,7 @@ const { mockRouterPush, mockSetSelectedLocation, geoMock, navMock, searchCtxMock
       searchQuery: '',
       selectedLocation: 'Stuttgart',
       selectedSection: 'food' as string,
+      isAdmin: false,
     },
   }),
 );
@@ -50,6 +52,10 @@ vi.mock('@/hooks/useGeolocation', () => ({
   useGeolocation: () => geoMock,
 }));
 
+vi.mock('@/hooks/useIsAdmin', () => ({
+  useIsAdmin: () => ({ isAdmin: searchCtxMock.isAdmin }),
+}));
+
 vi.mock('@/services/providers', () => ({
   fetchSearchSuggestions: vi.fn(() => Promise.resolve([])),
   fetchAvailableFilters: vi.fn(() => Promise.resolve([])),
@@ -71,6 +77,9 @@ function clickNearMeOption() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  searchCtxMock.searchQuery = '';
+  searchCtxMock.selectedSection = 'food';
+  searchCtxMock.isAdmin = false;
   geoMock.status = 'idle';
   geoMock.coords = null;
   navMock.searchParams = new URLSearchParams();
@@ -79,6 +88,51 @@ beforeEach(() => {
 });
 
 describe('SearchBar Near Me (deferred navigation)', () => {
+  it('[post-fix PASSES] requests admin All suggestions from the All review scope', async () => {
+    searchCtxMock.searchQuery = 'Munchies';
+    searchCtxMock.isAdmin = true;
+    navMock.searchParams = new URLSearchParams('status=all');
+
+    renderSearchBar();
+
+    await waitFor(() => {
+      expect(fetchSearchSuggestions).toHaveBeenCalledWith('Munchies', 10, {
+        section: 'food',
+        city: 'Stuttgart',
+        reviewStatusScope: 'all',
+      });
+    });
+  });
+
+  it('[post-fix PASSES] requests admin suggestions from the selected status scope', async () => {
+    searchCtxMock.searchQuery = 'Munchies';
+    searchCtxMock.isAdmin = true;
+    navMock.searchParams = new URLSearchParams('status=pending');
+
+    renderSearchBar();
+
+    await waitFor(() => {
+      expect(fetchSearchSuggestions).toHaveBeenCalledWith('Munchies', 10, {
+        section: 'food',
+        city: 'Stuttgart',
+        reviewStatusScope: 'pending',
+      });
+    });
+  });
+
+  it('keeps non-admin suggestions on the default approved scope', async () => {
+    searchCtxMock.searchQuery = 'Munchies';
+
+    renderSearchBar();
+
+    await waitFor(() => {
+      expect(fetchSearchSuggestions).toHaveBeenCalledWith('Munchies', 10, {
+        section: 'food',
+        city: 'Stuttgart',
+      });
+    });
+  });
+
   it('requests geolocation and does not navigate while prompting', () => {
     geoMock.status = 'prompting';
     const { container } = renderSearchBar();

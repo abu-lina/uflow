@@ -15,7 +15,7 @@ import {
 } from '@/features/chat/services/guardrails';
 import { buildSystemPrompt } from '@/features/chat/prompts/system-prompt';
 import { MAX_MESSAGE_LENGTH } from '@/features/chat/types';
-import type { ChatMessage, ToolCall } from '@/features/chat/types';
+import type { ChatMessage } from '@/features/chat/types';
 import type { ProviderCardData } from '@/features/chat/types';
 import { getFeatureFlag } from '@/config/feature-flags';
 
@@ -28,30 +28,21 @@ const MAX_TOOL_CALLS = 2;
 
 function extractOptions(content: string): string[] | undefined {
   if (!content) return undefined;
-  
-  const options: string[] = [];
-  
+
   // Pattern 1: Numbered list (1. Option, 2. Option)
   const numberedMatch = content.match(/^\d+\.\s+(.+)$/gm);
   if (numberedMatch && numberedMatch.length >= 2) {
     return numberedMatch.map(m => m.replace(/^\d+\.\s+/, '').trim());
   }
   
-  // Pattern 2: Ja/Nein questions
-  if (/möchtest du|soll ich|willst du|brauchst du|kann ich/i.test(content)) {
-    if (/(ja|nein|yes|no)/i.test(content)) {
-      options.push('Ja', 'Nein');
-    }
-  }
-  
   // Pattern 3: Bullet points (• or -)
-  const bulletMatch = content.match(/^[•\-]\s+(.+)$/gm);
+  const bulletMatch = content.match(/^[•-]\s+(.+)$/gm);
   if (bulletMatch && bulletMatch.length >= 2) {
-    return bulletMatch.map(m => m.replace(/^[•\-]\s+/, '').trim());
+    return bulletMatch.map(m => m.replace(/^[•-]\s+/, '').trim());
   }
   
   // Pattern 4: Newline-separated simple options (plain text list without numbers)
-  const lineMatch = content.match(/^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&()\/,.-]*(?: [A-Za-zÄÖÜäöüß&()\/,.-]+)*$/gm);
+  const lineMatch = content.match(/^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&()/,.-]*(?: [A-Za-zÄÖÜäöüß&()/,.-]+)*$/gm);
   if (lineMatch && lineMatch.length >= 3) {
     const filtered = lineMatch
       .map(l => l.trim())
@@ -74,7 +65,7 @@ function extractOptions(content: string): string[] | undefined {
     }
   }
   
-  return options.length > 0 ? options : undefined;
+  return undefined;
 }
 
 
@@ -104,7 +95,9 @@ async function saveStreamToDb(
         try {
           const parsed = JSON.parse(data);
           if (parsed.content) assistantContent += parsed.content;
-        } catch {}
+        } catch {
+          // Skip unparseable chunks
+        }
       }
     }
 
@@ -419,7 +412,9 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                     if (opts && opts.length > 0) {
                       controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
                     }
-                  } catch {}
+                  } catch {
+                    // Option extraction is best-effort; never block stream completion
+                  }
                   if (providerResults && providerResults.length > 0) {
                     controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
                   }
@@ -511,7 +506,9 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                     if (opts && opts.length > 0) {
                       controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
                     }
-                  } catch {}
+                  } catch {
+                    // Option extraction is best-effort; never block stream completion
+                  }
                   if (providerResults && providerResults.length > 0) {
                     controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
                   }
@@ -519,7 +516,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                   controller.close();
                   return;
                 }
-                try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) { collectedContent += c; controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } } catch {}
+                try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) { collectedContent += c; controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } } catch { /* Skip unparseable chunks */ }
               }
             }
           } catch (e) { controller.error(e); }
@@ -552,7 +549,7 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     if (options && options.length > 0 && finalMessage.content) {
       let cleaned = finalMessage.content
         .replace(/^\d+\.\s+.+$/gm, '')
-        .replace(/^[•\-]\s+.+$/gm, '');
+        .replace(/^[•-]\s+.+$/gm, '');
       // Strip lines that match extracted options exactly
       for (const opt of options) {
         const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

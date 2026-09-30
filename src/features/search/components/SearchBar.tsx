@@ -11,6 +11,7 @@ import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import { fetchSearchSuggestions, fetchAvailableFilters } from '@/services/providers';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useGeolocation } from '@/hooks/useGeolocation';
+import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
 import { buildNearMeUrl } from '@/lib/search-params';
 
@@ -40,12 +41,23 @@ function SearchBarContent({
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
+  const { isAdmin } = useIsAdmin();
   const geolocation = useGeolocation();
   // State for input and dropdowns
   const [isTyping, setIsTyping] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const { searchQuery, setSearchQuery, selectedLocation, setSelectedLocation, selectedSection } =
     useSearch();
+  const statusParam = searchParams.get('status');
+  const selectedReviewStatus =
+    statusParam === 'approved' ||
+    statusParam === 'pending' ||
+    statusParam === 'rejected' ||
+    statusParam === 'needs_revision'
+      ? statusParam
+      : null;
+  const adminReviewScope =
+    isAdmin && selectedSection !== 'ummah' ? (selectedReviewStatus ?? 'all') : undefined;
 
   // Locations array stores actual city names; LOCATION_ALL is added in the dropdown as first option
   const [locations, setLocations] = useState<string[]>([]);
@@ -192,7 +204,11 @@ function SearchBarContent({
     const timeout = setTimeout(async () => {
       setIsLoadingSuggestions(true);
       try {
-        const results = await fetchSearchSuggestions(query);
+        const results = await fetchSearchSuggestions(query, 10, {
+          section: selectedSection,
+          city: selectedLocation === LOCATION_ALL ? undefined : selectedLocation,
+          ...(adminReviewScope ? { reviewStatusScope: adminReviewScope } : {}),
+        });
         if (!cancelled) setSuggestions(results);
       } catch (err) {
         console.debug('[SearchBar] Suggestions error:', err);
@@ -206,7 +222,7 @@ function SearchBarContent({
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [searchQuery]);
+  }, [searchQuery, selectedLocation, selectedSection, adminReviewScope]);
 
   // ── URL sync helper for open-now / near-me params ────────────────
   // Near-me navigates to the section root (e.g. /food) since having a city
@@ -628,6 +644,7 @@ function SearchBarContent({
 }
 
 export function SearchBar(props: SearchBarProps) {
+  const { t } = useLanguage();
   return (
     <Suspense
       fallback={
@@ -637,7 +654,7 @@ export function SearchBar(props: SearchBarProps) {
           <input
             disabled
             className="min-w-0 flex-1 appearance-none border-0 bg-transparent text-sm font-normal text-gray-400 shadow-none outline-none ring-0 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-            placeholder="Search in your Ummah"
+            placeholder={t('search.placeholder')}
             type="text"
           />
           <Search className="h-5 w-5 shrink-0 text-gray-500" />

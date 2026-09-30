@@ -1,8 +1,28 @@
 # Changelog
 
-## [Unreleased] - 2026-08-17
+## [Unreleased] - 2026-09-28
 
 ### Fixed
+
+- **Admin discovery "All" scope on food and store (Plan 267)**: Admins now see approved, pending, rejected, and needs-revision listings in the list view, with each card labeled from its own review status and no moderation buttons on All. Owner-removed listings stay excluded; public searches remain approved-only. Admin suggestions follow the selected review scope. Apply migration 135 before deploying the app.
+
+- **Desktop search: clicking a suggestion now always shows results, and partial words match (Plan 266)**: Suggestions and the results list are now produced by the same Postgres matcher, so a suggestion can no longer be offered for something the results page cannot find. Three concrete fixes: (1) menu-item suggestions such as "Lahmacun" previously returned an empty list because the results query never searched menu items — they now return the places that serve the dish, and the matched dish is shown on the provider card; (2) suggestions are now limited to the section and city you are browsing, so a suggestion from another city or section is no longer offered; (3) typing the start of a word now finds matches ("Istan" → Istanbul Grill, "Lahm" → places serving Lahmacun), including short words like "Ist" that German text search would otherwise discard.
+
+- **Multi-word search on the mobile "Was?" picker no longer errors (Plan 266)**: `search_food_concepts` and `search_food_categories` built an invalid text-search query for any input containing a space (for example "döner keb"), causing a `syntax error in tsquery`. Both now use a shared, correctly-escaped tokenizer.
+
+- **Removed `ILIKE` from the search path (Plan 266)**: Category matching in `searchProviders` and the entire suggestion path now use indexed `tsvector` matching, per the project's Postgres-first search policy.
+
+## [0.15.19] - 2026-09-26
+
+### Fixed
+
+- **Desktop create flow layout (Plan 265)**: All 16 routes under `/create` and `/create/*` now keep the route title and back action in normal document flow on desktop viewports (768px and wider), positioned cleanly below the fixed global header in a centered 672px column (`max-w-2xl`). Wrapped bare loading, redirect-pending, and `LoginGate` screens in the desktop layout container, preserved header navigation on recommendation/OSM-import success states, and localized the category selection title on `/create/social-category`. Mobile viewports below 768px and shared layout defaults remain unchanged.
+
+## [0.15.18] - 2026-09-26
+
+### Fixed
+
+- **Restore authenticated provider submissions (Plan 264)**: `POST /api/providers` now resolves the actor with `getUserFromCookie()`, which reads the cookie-synced Supabase session. Logged-in recommendations and owner listings no longer fail with 401; anonymous requests remain rejected. Added a regression test covering cookies emitted by `/api/auth/set` through the real route auth boundary.
 
 - **"Near me" now works on the home List view (Plan 217)**: Tapping the "In der Nähe" chip while in List view now reorders providers nearest-first and limits results to those within 25 km, with a distance badge on each card. The List branch consumes the same `useGeolocation` signal as the Map branch via the new `useHomeNearMe` hook and `HomeNearMeList` component. Open-now filtering is applied client-side and preserves distance ordering. Map view behavior is unchanged. Added `home_list_nearme_*` instrumentation and regression coverage.
 
@@ -15,7 +35,6 @@
 ### Fixed
 
 - **Filter button lands on filters, map is opt-in via `?view=map` (Plan 216)**: Mobile users tapping the filter (sliders) button on the home searchbar, or the edit button on the results page, were dropped onto a full-screen map instead of the filter page. The `/search` destination now renders the filter accordions (Wo / Was / Wer / Filter) by default and only renders the mobile map when the explicit `?view=map` query parameter is present (intentional map deep link: `/search?section=food&view=map`). Unknown or missing `view` values fail safe to filters. The map-pin Supabase fetch is gated on map mode so no pin query runs when filters are shown. All entry paths (home sliders, results edit button, empty-query submit, legacy `/suchen` redirect) are fixed by the single render predicate. Added regression coverage for the no-view, `view=filters`, `view=map`, and desktop branches.
-
 
 ## [0.15.16] - 2026-08-16
 
@@ -127,7 +146,6 @@
 - Delivery Links renamed to "Order Links" for store-type providers
 - Delivery/order links now support custom website URLs beyond Wolt/Lieferando/UberEats
 - Values page: Food section hidden for non-food, Store section hidden for non-store providers
-
 
 ## [0.12.17] - 2026-05-14
 

@@ -1,7 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseClient } from './client';
-import { searchOffers } from '../offers';
-import { searchNeeds } from '../needs';
 import { EntityType } from '@/types/badges';
 import type { ProviderBadgeWithType } from '@/types/badges';
 import { getBadgesForEntities } from '../badges';
@@ -281,7 +279,9 @@ export async function searchProviders(
   // AC7.2 (#415): without admin options the query must still restrict to
   // approved — migration 130 lets callers see their OWN pending rows, which
   // must not leak into public search results.
-  if (adminOptions?.status) {
+  if (adminOptions?.status === 'all') {
+    req = req.in('review_status', ['approved', 'pending', 'rejected', 'needs_revision']);
+  } else if (adminOptions?.status) {
     req = req.eq('review_status', adminOptions.status);
   } else {
     req = req.eq('review_status', 'approved');
@@ -309,67 +309,30 @@ export async function searchProviders(
   // Always order by created_at descending for consistent pagination
   req = req.order('created_at', { ascending: false });
 
+  const matchedMenuItemsByProvider = new Map<string, string[]>();
   if (query) {
-    // First, search for matching offers, needs, and provider names using full-text search (tsvector)
-    // All three now use GIN indexes for fast searches (Plan 007: ILIKE removal)
-    const [matchingOffers, matchingNeeds, matchingProviderNames, matchingCategoryIds] =
-      await Promise.all([
-        searchOffers(query),
-        searchNeeds(query),
-        supabase.rpc('search_provider_ids_by_name', { search_query: query }),
-        supabase.from('categories').select('category_id').ilike('name_de', `%${query}%`),
-      ]);
-
-    const matchingOfferIds = matchingOffers.map((offer) => offer.offer_id);
-    const matchingNeedIds = matchingNeeds.map((need) => need.need_id);
-    const matchingProviderIds = Array.isArray(matchingProviderNames.data)
-      ? matchingProviderNames.data.map((p: { provider_id: string }) => p.provider_id)
-      : [];
-    const categoryNameMatchIds: string[] = (matchingCategoryIds.data || []).map(
-      (c: { category_id: string }) => c.category_id,
+    const { data: matchingProviders, error: matchingProvidersError } = await supabase.rpc(
+      'search_providers_for_query',
+      {
+        search_query: query,
+        section_filter: listingType ?? null,
+        city_filter: isValidLocation(location) ? location : null,
+        review_status_filter: adminOptions?.status ?? 'approved',
+        limit_count: 500,
+      },
     );
 
-    const [providerOfferMatches, providerNeedMatches] = await Promise.all([
-      matchingOfferIds.length > 0
-        ? supabase.from('provider_offers').select('provider_id').in('offer_id', matchingOfferIds)
-        : Promise.resolve({ data: [], error: null }),
-      matchingNeedIds.length > 0
-        ? supabase.from('provider_needs').select('provider_id').in('need_id', matchingNeedIds)
-        : Promise.resolve({ data: [], error: null }),
-    ]);
+    if (matchingProvidersError) throw matchingProvidersError;
 
-    const providersByOffers = (providerOfferMatches.data || []).map((row) => row.provider_id);
-    const providersByNeeds = (providerNeedMatches.data || []).map((row) => row.provider_id);
+    const matchingProviderIds = (matchingProviders ?? []).map(
+      (row: { provider_id: string; matched_menu_items?: string[] }) => {
+        matchedMenuItemsByProvider.set(row.provider_id, row.matched_menu_items ?? []);
+        return row.provider_id;
+      },
+    );
 
-    // Build the search condition to include:
-    // 1. Provider name matches (using tsvector RPC — replaces previous ILIKE)
-    // 2. Provider offers any of the matching offers (tsvector search)
-    // 3. Provider fulfills any of the matching needs (tsvector search)
-    // 4. Category name matches (cuisine/category search)
-    const searchConditions: string[] = [];
-
-    if (matchingProviderIds.length > 0) {
-      searchConditions.push(`provider_id.in.(${matchingProviderIds.join(',')})`);
-    }
-
-    if (providersByOffers.length > 0) {
-      searchConditions.push(`provider_id.in.(${Array.from(new Set(providersByOffers)).join(',')})`);
-    }
-
-    if (providersByNeeds.length > 0) {
-      searchConditions.push(`provider_id.in.(${Array.from(new Set(providersByNeeds)).join(',')})`);
-    }
-
-    if (categoryNameMatchIds.length > 0) {
-      searchConditions.push(`category_id.in.(${categoryNameMatchIds.join(',')})`);
-    }
-
-    if (searchConditions.length > 0) {
-      req = req.or(searchConditions.join(','));
-    } else {
-      // No matches found for any search vector — return empty
-      return { providers: [], totalCount: 0 };
-    }
+    if (matchingProviderIds.length === 0) return { providers: [], totalCount: 0 };
+    req = req.in('provider_id', matchingProviderIds);
   }
 
   if (isValidCategoryId(category)) {
@@ -421,6 +384,7 @@ export async function searchProviders(
   // Map back to providers efficiently
   const providersWithOffersAndNeeds = data.map((provider) => ({
     ...provider,
+    matched_menu_items: matchedMenuItemsByProvider.get(provider.provider_id) || [],
     offers: (offersByProvider.get(provider.provider_id) || [])
       .map((id) => offersMap.get(id))
       .filter(Boolean) as Array<{ name_de: string }>,

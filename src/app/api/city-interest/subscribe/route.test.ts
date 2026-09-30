@@ -17,10 +17,11 @@ vi.mock('@/lib/rate-limit', () => ({
   getClientIdentifier: vi.fn(() => '127.0.0.1'),
 }));
 
+vi.unmock('zod');
+
 describe('/api/city-interest/subscribe', () => {
   beforeEach(async () => {
     vi.resetModules();
-    vi.unmock('zod');
     ({ POST } = await import('@/app/api/city-interest/subscribe/route'));
     vi.clearAllMocks();
   });
@@ -57,8 +58,8 @@ describe('/api/city-interest/subscribe', () => {
         }),
       };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
-      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
+      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as never);
 
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
         method: 'POST',
@@ -93,8 +94,8 @@ describe('/api/city-interest/subscribe', () => {
 
       const mockAdminClient = { from: mockFrom };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
-      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
+      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as never);
 
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
         method: 'POST',
@@ -109,7 +110,7 @@ describe('/api/city-interest/subscribe', () => {
           email: 'session@example.com',
           selected_city: 'Berlin',
         }),
-        { onConflict: 'email' }
+        { onConflict: 'email' },
       );
     });
   });
@@ -134,8 +135,8 @@ describe('/api/city-interest/subscribe', () => {
         }),
       };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
-      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
+      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as never);
 
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
         method: 'POST',
@@ -163,7 +164,7 @@ describe('/api/city-interest/subscribe', () => {
         },
       };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
 
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
         method: 'POST',
@@ -192,7 +193,7 @@ describe('/api/city-interest/subscribe', () => {
         },
       };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
 
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
         method: 'POST',
@@ -239,8 +240,8 @@ describe('/api/city-interest/subscribe', () => {
 
       const mockAdminClient = { from: mockFrom };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
-      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
+      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as never);
 
       const longCityName = ' '.repeat(10) + 'A'.repeat(150) + ' '.repeat(10);
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
@@ -255,7 +256,7 @@ describe('/api/city-interest/subscribe', () => {
         expect.objectContaining({
           selected_city: 'A'.repeat(100),
         }),
-        { onConflict: 'email' }
+        { onConflict: 'email' },
       );
     });
 
@@ -277,8 +278,8 @@ describe('/api/city-interest/subscribe', () => {
 
       const mockAdminClient = { from: mockFrom };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
-      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
+      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as never);
 
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
         method: 'POST',
@@ -292,7 +293,7 @@ describe('/api/city-interest/subscribe', () => {
         expect.objectContaining({
           email: 'user@example.com',
         }),
-        { onConflict: 'email' }
+        { onConflict: 'email' },
       );
     });
   });
@@ -317,8 +318,8 @@ describe('/api/city-interest/subscribe', () => {
         }),
       };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
-      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
+      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as never);
 
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
         method: 'POST',
@@ -354,8 +355,8 @@ describe('/api/city-interest/subscribe', () => {
         }),
       };
 
-      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as any);
-      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as any);
+      vi.mocked(createSupabaseServerClient).mockReturnValue(mockSupabaseClient as never);
+      vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminClient as never);
 
       const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
         method: 'POST',

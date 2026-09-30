@@ -6,7 +6,7 @@ import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { Button } from '@/components/ui/Button';
 import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { usePrefetchProvider } from '@/hooks/useProvider';
-import type { SearchResult, Provider, ReviewStatusFilter } from '@/services/providers';
+import type { SearchResult, Provider } from '@/services/providers';
 
 interface SearchResultsListProps {
   searchResults: SearchResult[];
@@ -161,7 +161,7 @@ export const SearchResultsList = memo(function SearchResultsList({
                 loading={index < 4 ? 'eager' : 'lazy'}
                 mode={mode}
                 priority={index < 4}
-                reviewStatus={result.review_status as ReviewStatusFilter}
+                reviewStatus={result.review_status ?? undefined}
                 onApprove={() => onApprove?.(result.id)}
                 onBookmarkChange={(isBookmarked: boolean) =>
                   onBookmarkChange(result.id, isBookmarked)

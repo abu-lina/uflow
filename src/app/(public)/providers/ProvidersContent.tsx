@@ -68,7 +68,7 @@ async function fetchProvidersFromAPI(
   location: string,
   page: number,
   pageSize: number,
-  status?: ReviewStatusFilter,
+  status?: ReviewStatusFilter | 'all',
   section?: Section,
   filters?: SearchFilterKey[],
 ): Promise<{ results: SearchResult[]; hasMore: boolean; totalCount: number }> {
@@ -175,8 +175,16 @@ export function ProvidersContent({
 
   // Plan 058: Admin status filter from URL params
   // Only applied when user is admin (non-admins can't use status filter)
-  const statusParam = searchParams.get('status') as ReviewStatusFilter;
-  const status = isAdmin ? statusParam : null;
+  const statusParam = searchParams.get('status');
+  const statusFromUrl: ReviewStatusFilter =
+    statusParam === 'approved' ||
+    statusParam === 'pending' ||
+    statusParam === 'rejected' ||
+    statusParam === 'needs_revision'
+      ? statusParam
+      : null;
+  const status = isAdmin ? statusFromUrl : null;
+  const reviewStatusScope = isAdmin && section !== 'ummah' && status === null ? 'all' : status;
   const rawFilters = searchParams.get('filters') || '';
   const filters = rawFilters
     .split(',')
@@ -302,7 +310,7 @@ export function ProvidersContent({
         query,
         category,
         location,
-        status,
+        reviewStatusScope,
         section,
         normalizedFilters?.join(',') ?? '',
       ],
@@ -313,7 +321,7 @@ export function ProvidersContent({
           location,
           pageParam,
           PAGE_SIZE,
-          status,
+          reviewStatusScope,
           section,
           normalizedFilters,
         ),
@@ -322,7 +330,7 @@ export function ProvidersContent({
       // Use server-rendered initial data when available (Plan 010 P1a)
       // Note: initialData only applies when no status filter is active
       // Plan 228: Gate on section match to prevent stale data when switching sections
-      ...(!status &&
+      ...((reviewStatusScope === null || reviewStatusScope === 'approved') &&
         initialData &&
         hasMatchingInitialFilters &&
         section === initialSection && {
@@ -562,9 +570,10 @@ export function ProvidersContent({
       social_instagram: result.social_instagram,
       badges: result.badges,
       offers: result.offers,
+      matched_menu_items: result.matched_menu_items,
       verification_method: result.originalProvider?.verification_method,
       has_certificate: result.originalProvider?.has_certificate,
-      review_status: status,
+      review_status: result.review_status,
       review_feedback: result.review_feedback,
       isBookmarked: bookmarkedProviderIds.includes(result.id),
     };
@@ -615,6 +624,7 @@ export function ProvidersContent({
         openNow={isOpenNow}
         reviewingProviderId={reviewingProviderId}
         section={section}
+        showReviewStatus={!enableModeration && isAdmin && section !== 'ummah'}
         totalCount={isOpenNow ? undefined : totalCount}
         onApprove={handleApprove}
         onBookmarkChange={handleBookmarkChange}

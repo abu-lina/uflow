@@ -80,15 +80,23 @@ describe('GET /api/providers/search', () => {
     expect(response.status).toBe(200);
     expectCorrelationIdHeader(response);
     expect(data).toEqual(mockResults);
-    expect(mockSearch).toHaveBeenCalledWith('test', null, '', 0, 12, undefined, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith(
+      'test',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it('should apply Cache-Control: no-store when free-text query is present', async () => {
     mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-    const request = new Request(
-      'http://localhost:3000/api/providers/search?q=halal+bakery',
-    );
+    const request = new Request('http://localhost:3000/api/providers/search?q=halal+bakery');
     const response = await GET(request);
 
     expect(response.headers.get('Cache-Control')).toBe('no-store');
@@ -97,9 +105,7 @@ describe('GET /api/providers/search', () => {
   it('should apply Cache-Control with 60s TTL for default browse (no query)', async () => {
     mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-    const request = new Request(
-      'http://localhost:3000/api/providers/search',
-    );
+    const request = new Request('http://localhost:3000/api/providers/search');
     const response = await GET(request);
 
     expect(response.headers.get('Cache-Control')).toBe(
@@ -113,7 +119,17 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith(
+      '',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it('should pass category and location params to search', async () => {
@@ -124,7 +140,17 @@ describe('GET /api/providers/search', () => {
     );
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', 'cat-1', 'Berlin', 0, 12, undefined, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith(
+      '',
+      'cat-1',
+      'Berlin',
+      0,
+      12,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   // --- Plan 044: location normalization regression tests ---
@@ -135,7 +161,17 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith(
+      '',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   // RC-2/RC-3: empty location param must preserve the LOCATION_ALL sentinel
@@ -145,31 +181,57 @@ describe('GET /api/providers/search', () => {
     const request = new Request('http://localhost:3000/api/providers/search?location=');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith(
+      '',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   // RC-3: legacy 'Everywhere' label must normalise to empty string, not filter by city name
   it('should normalise legacy "Everywhere" location to empty string', async () => {
     mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-    const request = new Request(
-      'http://localhost:3000/api/providers/search?location=Everywhere',
-    );
+    const request = new Request('http://localhost:3000/api/providers/search?location=Everywhere');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith(
+      '',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   // RC-3: legacy 'Überall' label must normalise to empty string, not filter by city name
   it('should normalise legacy "Überall" location to empty string', async () => {
     mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-    const request = new Request(
-      'http://localhost:3000/api/providers/search?location=%C3%9Cberall',
-    );
+    const request = new Request('http://localhost:3000/api/providers/search?location=%C3%9Cberall');
     await GET(request);
 
-    expect(mockSearch).toHaveBeenCalledWith('', null, '', 0, 12, undefined, undefined, undefined, undefined);
+    expect(mockSearch).toHaveBeenCalledWith(
+      '',
+      null,
+      '',
+      0,
+      12,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it('should return 500 on search failure', async () => {
@@ -198,9 +260,7 @@ describe('GET /api/providers/search', () => {
       mockIsAdminOrModerator.mockResolvedValue(false);
       mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-      const request = new Request(
-        'http://localhost:3000/api/providers/search?status=pending',
-      );
+      const request = new Request('http://localhost:3000/api/providers/search?status=pending');
       const response = await GET(request);
 
       expect(response.status).toBe(403);
@@ -212,9 +272,7 @@ describe('GET /api/providers/search', () => {
       mockGetUserFromCookie.mockResolvedValue(null);
       mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-      const request = new Request(
-        'http://localhost:3000/api/providers/search?status=pending',
-      );
+      const request = new Request('http://localhost:3000/api/providers/search?status=pending');
       const response = await GET(request);
 
       expect(response.status).toBe(403);
@@ -230,15 +288,63 @@ describe('GET /api/providers/search', () => {
         hasMore: false,
       });
 
-      const request = new Request(
-        'http://localhost:3000/api/providers/search?status=pending',
-      );
+      const request = new Request('http://localhost:3000/api/providers/search?status=pending');
       const response = await GET(request);
 
       expect(response.status).toBe(200);
       expect(mockSearch).toHaveBeenCalledWith(
-        '', null, '', 0, 12, { status: 'pending', isAdmin: true }, undefined, undefined, mockAdminClient
+        '',
+        null,
+        '',
+        0,
+        12,
+        { status: 'pending', isAdmin: true },
+        undefined,
+        undefined,
+        mockAdminClient,
       );
+    });
+
+    it('[post-fix PASSES] should allow admin all scope through the gated service-role path', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
+      mockIsAdminOrModerator.mockResolvedValue(true);
+      mockSearch.mockResolvedValue({
+        results: [{ id: 'provider-1', name: 'Pending Provider', review_status: 'pending' }],
+        hasMore: false,
+        totalCount: 1,
+      });
+
+      const request = new Request(
+        'http://localhost:3000/api/providers/search?q=Munchies&section=food&status=all',
+      );
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
+      expect(data.results[0]).toHaveProperty('review_status', 'pending');
+      expect(mockSearch).toHaveBeenCalledWith(
+        'Munchies',
+        null,
+        '',
+        0,
+        12,
+        { status: 'all', isAdmin: true },
+        'food',
+        undefined,
+        mockAdminClient,
+      );
+    });
+
+    it('[post-fix PASSES] should return 403 when a non-admin requests all statuses', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'user-123' });
+      mockIsAdminOrModerator.mockResolvedValue(false);
+
+      const request = new Request('http://localhost:3000/api/providers/search?status=all');
+      const response = await GET(request);
+
+      expect(response.status).toBe(403);
+      expect(mockSearch).not.toHaveBeenCalled();
     });
 
     it('should parse and forward validated filters to service search', async () => {
@@ -288,9 +394,7 @@ describe('GET /api/providers/search', () => {
     it('should apply no-store cache-control when filters are present', async () => {
       mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-      const request = new Request(
-        'http://localhost:3000/api/providers/search?filters=gebet',
-      );
+      const request = new Request('http://localhost:3000/api/providers/search?filters=gebet');
       const response = await GET(request);
 
       expect(response.headers.get('Cache-Control')).toBe('no-store');
@@ -301,9 +405,7 @@ describe('GET /api/providers/search', () => {
       mockIsAdminOrModerator.mockResolvedValue(true);
       mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-      const request = new Request(
-        'http://localhost:3000/api/providers/search?status=approved',
-      );
+      const request = new Request('http://localhost:3000/api/providers/search?status=approved');
       const response = await GET(request);
 
       expect(response.headers.get('Cache-Control')).toBe('no-store');
@@ -315,9 +417,7 @@ describe('GET /api/providers/search', () => {
       mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
       // No status param, just regular browse as admin
-      const request = new Request(
-        'http://localhost:3000/api/providers/search',
-      );
+      const request = new Request('http://localhost:3000/api/providers/search');
       const response = await GET(request);
 
       expect(response.headers.get('Cache-Control')).toBe(
@@ -331,11 +431,9 @@ describe('GET /api/providers/search', () => {
       mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
       const validStatuses = ['approved', 'pending', 'rejected', 'needs_revision'];
-      
+
       for (const status of validStatuses) {
-        const request = new Request(
-          `http://localhost:3000/api/providers/search?status=${status}`,
-        );
+        const request = new Request(`http://localhost:3000/api/providers/search?status=${status}`);
         const response = await GET(request);
         expect(response.status).toBe(200);
       }
@@ -346,9 +444,7 @@ describe('GET /api/providers/search', () => {
       mockIsAdminOrModerator.mockResolvedValue(true);
       mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
-      const request = new Request(
-        'http://localhost:3000/api/providers/search?status=invalid',
-      );
+      const request = new Request('http://localhost:3000/api/providers/search?status=invalid');
       const response = await GET(request);
 
       expect(response.status).toBe(400);
@@ -360,19 +456,19 @@ describe('GET /api/providers/search', () => {
       mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
       mockIsAdminOrModerator.mockResolvedValue(true);
       const mockResultWithMetadata = {
-        results: [{
-          id: 'provider-1',
-          name: 'Test Provider',
-          review_status: 'pending',
-          review_feedback: 'Needs more info',
-        }],
+        results: [
+          {
+            id: 'provider-1',
+            name: 'Test Provider',
+            review_status: 'pending',
+            review_feedback: 'Needs more info',
+          },
+        ],
         hasMore: false,
       };
       mockSearch.mockResolvedValue(mockResultWithMetadata);
 
-      const request = new Request(
-        'http://localhost:3000/api/providers/search?status=pending',
-      );
+      const request = new Request('http://localhost:3000/api/providers/search?status=pending');
       const response = await GET(request);
       const data = await response.json();
 

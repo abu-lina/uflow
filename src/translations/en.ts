@@ -385,6 +385,11 @@ export const en = {
     call: 'Call',
     website: 'Website',
     addressTapToNavigate: 'Tap address to navigate',
+    serves: 'Serves',
+    locationsCount: '{{count}} locations',
+    halalLevel: 'Halal level {{level}}',
+    approve: 'Approve',
+    reject: 'Reject',
     online: 'Online',
     donations: 'Donations',
     initiativesSupported: 'Initiatives supported',
@@ -414,10 +419,6 @@ export const en = {
       title: 'I know a provider',
       description: 'Recommend someone you know so others can find them.',
       buttonText: 'Recommend provider',
-    },
-    chatHint: {
-      prefix: 'You can also register quickly via the',
-      link: 'Chat Assistant',
     },
     recommend: {
       title: 'Recommend Provider',
@@ -720,6 +721,12 @@ export const en = {
     magicLinkLoading: 'Sending Magic Link...',
     magicLinkDescription: "We'll send you a Magic Link via email. No password required.",
     afterConfirmationLogin: 'Login after confirmation',
+    magicLinkSentTitle: 'Magic Link sent!',
+    magicLinkSentDescription: 'Please check your email and click the link to sign in.',
+    magicLinkFailedToast: 'Magic Link failed',
+    magicLinkFailedError: 'Failed to send the Magic Link. Please try again.',
+    magicLinkDiagnostic: 'Please visit this URL for diagnostics: {{url}}',
+    loginSuccessToast: 'Signed in successfully',
   },
   signup: {
     afterConfirmationLogin: 'Login after confirmation',
@@ -1188,6 +1195,7 @@ export const en = {
     openChat: 'Open chat',
     closeChat: 'Close chat',
     assistantTitle: 'Ummah Flow Assistant',
+    pageTitle: 'Chat',
   },
   map: {
     zoomIn: 'Zoom in',

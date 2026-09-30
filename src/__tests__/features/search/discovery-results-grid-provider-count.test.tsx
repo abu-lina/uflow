@@ -10,6 +10,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+const { mockProviderCard } = vi.hoisted(() => ({ mockProviderCard: vi.fn() }));
+
+vi.mock('@/features/providers/components/ProviderCard', () => ({
+  ProviderCard: (props: Record<string, unknown>) => {
+    mockProviderCard(props);
+    return null;
+  },
+}));
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
@@ -128,11 +137,13 @@ function makeItem(id: string): DiscoveryCardItem {
 
 // IntersectionObserver mock for jsdom
 beforeEach(() => {
-  window.IntersectionObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }));
+  window.IntersectionObserver = vi.fn().mockImplementation(function () {
+    return {
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    };
+  });
 });
 
 describe('Plan 229 - Provider count display', () => {
@@ -158,6 +169,29 @@ describe('Plan 229 - Provider count display', () => {
     expect(countEl).toBeTruthy();
     expect(countEl.textContent).toContain('42');
     expect(countEl.textContent).toContain('Restaurants');
+  });
+
+  it('[post-fix PASSES] renders an opted-in row status without moderation actions', () => {
+    render(
+      <DiscoveryResultsGrid
+        headerOffset={0}
+        isLoading={false}
+        items={[{ ...makeItem('1'), review_status: 'pending' }]}
+        openNow={false}
+        showReviewStatus
+      />,
+      { wrapper: Wrapper },
+    );
+
+    expect(mockProviderCard).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'bookmark',
+        reviewStatus: 'pending',
+        showReviewStatus: true,
+        onApprove: undefined,
+        onReject: undefined,
+      }),
+    );
   });
 
   it('uses section-aware label for store section', () => {

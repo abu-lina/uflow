@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Zap } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
@@ -40,7 +39,7 @@ export default function CreateProviderPage() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <ScrollablePageLayout createDesktopLayout>
       <PageHeader
         title={t('create.title')}
         variant="back-and-title"
@@ -106,17 +105,6 @@ export default function CreateProviderPage() {
             onClick={handleRecommendProvider}
           />
         </div>
-
-        {/* Chat alternative hint */}
-        <p className="text-center text-sm text-content-muted">
-          {t('create.chatHint.prefix')}{' '}
-          <Link
-            className="font-medium text-primary underline underline-offset-2 transition-opacity hover:opacity-70"
-            href="/"
-          >
-            {t('create.chatHint.link')}
-          </Link>
-        </p>
       </PageContent>
     </ScrollablePageLayout>
   );
