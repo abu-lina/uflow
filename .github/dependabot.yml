@@ -25,6 +25,11 @@ updates:
       - "dependencies"
       - "npm"
     open-pull-requests-limit: 10
+    ignore:
+      # @types/node major must track the Node runtime (see engines), not float to newest.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
     groups:
       production-minor-patch:
         dependency-type: "production"
@@ -49,6 +54,11 @@ updates:
       - "dependencies"
       - "npm"
     open-pull-requests-limit: 5
+    ignore:
+      # @types/node major must track the Node runtime (see engines), not float to newest.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
     groups:
       all-minor-patch:
         patterns:
@@ -69,6 +79,11 @@ updates:
       - "dependencies"
       - "npm"
     open-pull-requests-limit: 5
+    ignore:
+      # @types/node major must track the Node runtime (see engines), not float to newest.
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
     groups:
       all-minor-patch:
         patterns:
