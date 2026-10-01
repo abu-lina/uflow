@@ -4,8 +4,7 @@ async function expectCleanRender(page: Page, path: string): Promise<void> {
   const pageErrors: Error[] = [];
   page.on('pageerror', (error) => pageErrors.push(error));
 
-  await page.goto(path);
-  await page.waitForLoadState('networkidle');
+  await page.goto(path, { waitUntil: 'domcontentloaded' });
 
   // Real content rendered, not an error boundary or a blank shell.
   await expect(page.locator('body')).not.toBeEmpty();

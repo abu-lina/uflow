@@ -35,12 +35,17 @@ jobs:
       - name: Start local Supabase stack
         run: supabase start
 
+      - name: Export local Supabase credentials
+        run: |
+          STATUS=$(supabase status -o json)
+          echo "NEXT_PUBLIC_SUPABASE_URL=$(echo "$STATUS" | jq -r .API_URL)" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(echo "$STATUS" | jq -r .ANON_KEY)" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(echo "$STATUS" | jq -r .SERVICE_ROLE_KEY)" >> "$GITHUB_ENV"
+
+      # NEXT_PUBLIC_* vars are inlined into the client bundle at build time,
+      # so the build must run against the real local keys.
       - name: Build production bundle
         run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_placeholder_for_build_only
-          SUPABASE_SERVICE_ROLE_KEY: sb_secret_placeholder_for_build_only
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

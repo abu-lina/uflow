@@ -2,12 +2,13 @@ import { expect, test, type Page } from '@playwright/test';
 
 import { TEST_EMAIL, TEST_PASSWORD } from './fixtures';
 
-// i18n-safe handle on the authenticated user menu; the copy is translated,
-// the aria-label is a fixed string in Header.tsx.
-const PROFILE_MENU = 'button[aria-label="Profil Dropdown öffnen"]';
+const PROFILE_MENU = '[data-testid="profile-menu-trigger"]';
+const LOGOUT_BUTTON = '[data-testid="logout-button"]';
 
 async function login(page: Page): Promise<void> {
-  await page.goto('/login');
+  // 'load' (not the default commit) so hydration is complete before we click
+  // submit; a pre-hydration click is dropped and the form never submits.
+  await page.goto('/login', { waitUntil: 'load' });
   await page.locator('input[type="email"]').fill(TEST_EMAIL);
   await page.locator('input[type="password"]').fill(TEST_PASSWORD);
   await page.locator('button[type="submit"]').click();
@@ -50,7 +51,7 @@ test.describe('authentication', () => {
     await login(page);
 
     await page.locator(PROFILE_MENU).click();
-    await page.locator('button.text-danger').click();
+    await page.locator(LOGOUT_BUTTON).click();
 
     await expect(page.locator(PROFILE_MENU)).not.toBeVisible({ timeout: 15_000 });
 
