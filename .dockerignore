@@ -20,8 +20,14 @@ docs/
 .cursor/
 
 # Tests
+# Patterns must be path-anchored: a bare `__tests__` only matches a root-level
+# entry, so src/__tests__ (254 files) was still being copied into the build
+# context. Next 16 type-checks those files during `next build`, and they import
+# from scripts/ which IS ignored, so the image build failed with TS2307.
 tests/
-__tests__
+**/__tests__
+e2e/
+playwright.config.ts
 
 # Scripts
 scripts/
