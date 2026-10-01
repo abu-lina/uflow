@@ -43,9 +43,13 @@ jobs:
           echo "SUPABASE_SERVICE_ROLE_KEY=$(echo "$STATUS" | jq -r .SERVICE_ROLE_KEY)" >> "$GITHUB_ENV"
 
       # NEXT_PUBLIC_* vars are inlined into the client bundle at build time,
-      # so the build must run against the real local keys.
+      # so the build must run against the real local keys. PLAYWRIGHT_E2E is
+      # likewise baked into the middleware bundle and disables rate limiting
+      # for the test run only.
       - name: Build production bundle
         run: npm run build
+        env:
+          PLAYWRIGHT_E2E: '1'
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
