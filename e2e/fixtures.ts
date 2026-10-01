@@ -1,5 +1,7 @@
 import { execFileSync } from 'node:child_process';
 
+import { test as base } from '@playwright/test';
+
 export const TEST_EMAIL = 'e2e-smoke@uflow.test';
 export const TEST_PASSWORD = 'e2e-smoke-pw-276';
 
@@ -38,3 +40,21 @@ export function resolveSupabaseEnv(): SupabaseEnv {
   }
   return { apiUrl, anonKey, serviceRoleKey };
 }
+
+// The middleware rate limiter buckets by x-forwarded-for / x-real-ip /
+// cf-connecting-ip and falls back to one shared 'unknown' bucket (30 API
+// requests/min). `next start` sets none of them, so without a unique header
+// every test shares that bucket and the suite 429s. Give each test its own
+// synthetic IP via extraHTTPHeaders instead of disabling the limiter.
+export const test = base.extend({
+  page: async ({ page }, use, testInfo) => {
+    let hash = 0;
+    for (const c of testInfo.testId) hash = (hash * 31 + c.charCodeAt(0)) | 0;
+    const ip = `10.231.${(testInfo.parallelIndex * 8 + testInfo.workerIndex + 1) % 256}.${
+      (Math.abs(hash) + testInfo.retry) % 256
+    }`;
+    await page.setExtraHTTPHeaders({ 'x-forwarded-for': ip });
+    await use(page);
+  },
+});
+export { expect } from '@playwright/test';

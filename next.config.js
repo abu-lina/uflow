@@ -143,12 +143,6 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
 
-  // ESLint configuration
-  // ESLint runs in CI separately; skip during Docker/build to save 30-90s per build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Allow dev server to accept requests from:
   // - LAN IP (iPhone on same WiFi); update IP if your Mac's address changes.
   // - ngrok (tunnel URL on phone / office networks that block direct LAN).

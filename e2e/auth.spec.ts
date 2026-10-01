@@ -1,6 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
-import { TEST_EMAIL, TEST_PASSWORD } from './fixtures';
+import { expect, test, TEST_EMAIL, TEST_PASSWORD } from './fixtures';
 
 const PROFILE_MENU = '[data-testid="profile-menu-trigger"]';
 const LOGOUT_BUTTON = '[data-testid="logout-button"]';

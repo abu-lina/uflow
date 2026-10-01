@@ -42,6 +42,7 @@ describe('OwnerDecisionContent', () => {
       forward: vi.fn(),
       refresh: vi.fn(),
       prefetch: vi.fn(),
+      bfcacheId: '',
     });
   });
 
