@@ -108,6 +108,9 @@ function buildCsp() {
       'https://api.unisvg.com',
       'https://api.simplesvg.com',
       'https://*.supabase.co',
+      // Covers a self-hosted or local Supabase (http://127.0.0.1:54321) in
+      // production builds; the hosted URL is already matched by *.supabase.co.
+      process.env.NEXT_PUBLIC_SUPABASE_URL || null,
       'https://nominatim.openstreetmap.org',
       'https://tile.openstreetmap.de',
       'https://tiles.stadiamaps.com',
