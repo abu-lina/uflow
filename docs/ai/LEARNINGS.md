@@ -491,3 +491,50 @@ Short log of learnings from plan → build → review → test loops. Append one
   - Check whether a failing check's logs still exist (`gh run view <id> --log-failed`) before planning around that failure. Expired logs mean the only real signal is a fresh run.
   - Fold the version bump and the pin-style normalization into one change when a repo has drifted into multiple styles; grep for the *absence* of the new pin (`grep -v <new-sha>`) to prove no ref was missed.
 - **Task/PR**: Request 270, PR #456, commit `54ffb10a`
+
+### 273 - Review a lockfile by per-package version delta, never by package count
+
+- **Date**: 2026-09-30
+- **Context**: Landing 8 "production-minor-patch" bumps from Dependabot. The reported result was "1297 -> 1275 packages, -22", which reads like a clean win. Measuring the committed final state directly gave **1312, net +15**: the -22 was a mid-task reading taken after an earlier removal commit, before the bumps were installed. Diffing per-package rather than counting showed why: `@tanstack/react-query-devtools` 5.101.4 -> 5.104.0 had pulled in **roughly 20 packages of Solid.js** (`solid-js`, 13 `@solid-primitives/*`, `@kobalte/core`, `seroval`, `goober`, `@floating-ui/*`) via `@kobalte/core`. `npm why solid-js` traced it in one command. The devtools package was also declared in `dependencies`, not `devDependencies`, and nothing in the repo imported it, so an entire alternative UI framework had been added to the production tree for dead code. Removing it turned +15 into **-18**.
+- **Learning**: A lockfile package count is a single scalar summarising thousands of lines, and it hides composition entirely: a bump that adds 37 and removes 22 looks like "-22" if you measure at the wrong moment and like "nothing much" if you only read the total. A transitive framework arriving inside a patch-level-looking bump is invisible at that resolution. The second-order lesson is that an unused dependency is not merely dead weight, it is an unbounded liability: nobody reviews the transitive consequences of bumping something they believe is inert.
+- **Change to prevent repeat**:
+  - Review any lockfile change with a per-package delta against the merge base, not a count or a line total:
+    ```
+    python3 -c "
+    import json,subprocess
+    old=json.loads(subprocess.run(['git','show','main:package-lock.json'],capture_output=True,text=True).stdout)['packages']
+    new=json.load(open('package-lock.json'))['packages']
+    for k in sorted(set(new)-set(old)): print('+',k,new[k].get('version'))
+    for k in sorted(set(old)-set(new)): print('-',k)
+    for k in sorted(set(old)&set(new)):
+        if old[k].get('version')!=new[k].get('version'): print('~',k,old[k].get('version'),'->',new[k].get('version'))
+    "
+    ```
+  - Any unfamiliar package name in the `+` list gets `npm why <pkg>` before the PR goes up.
+  - Measure counts on the committed final state only. A figure taken between commits is not a result.
+  - When auditing dependencies, grep for actual imports before upgrading: `@mui/material`, `@mui/icons-material` and `@tanstack/react-query-devtools` were all declared in `dependencies` with zero importers. `next.config.js`'s `optimizePackageImports` listed MUI, which made it look used while no code referenced it.
+- **Task/PR**: Request 273, PR #471, commits `290d3623`, `df23bfdc`, `a6ce111a`
+
+### 274 - A green pipeline cannot verify a renamed prop; that needs a test proven to fail
+
+- **Date**: 2026-09-30
+- **Context**: `lottie-react` 2 -> 3 is breaking in two ways that only surface at runtime: the default export was removed (v3 exports named components only), and the `animationData` prop was renamed to `src`. `src/components/ui/LottieAnimation.tsx` was the only consumer and had **zero** test coverage. The default-export change is caught by the compiler. The prop rename is not: passing `animationData` to a v3 `<Lottie>` means `src` is `undefined`, the component renders nothing, and nothing throws. `npm run lint`, `npm run type-check`, `npm run build` and all 2678 tests passed identically with the correct and the incorrect prop name. Verification came from reading the installed package: `build/animation/normalizeAnimationSource.cjs:34` returns `{ animationData: { ...source } }` from a `src` object, confirming the rename and that passing a parsed JSON object is the supported path.
+- **Learning**: For a change whose failure mode is a silently absent value rather than an error, every gate in the pipeline is blind, and the more gates pass the more confident the change looks. The declared type of a prop bag does not catch a key that was renamed, because the wrong key is simply an excess property on an object the compiler never relates to the old name. "Build passes" is evidence about compilation, never about rendering.
+- **Change to prevent repeat**:
+  - When a dependency upgrade renames a prop, option or config key, add a test asserting the **new** name is passed and the **old** name is not. Pinning both directions makes a revert or a bad merge fail loudly.
+  - Prove the test discriminates: revert the component to the broken version, confirm the test fails, then restore. A test that passes against the broken code is worth nothing, and this is cheap to check.
+  - Verify a renamed API against the installed package (`node_modules/<pkg>/**/*.d.ts` and the built source), not release notes alone. The normalisation function showed both the new prop name and the accepted value shapes.
+  - Mock the dependency rather than rendering it, for anything that wants canvas/WebGL/SVG in jsdom. Asserting on the props handed to a `vi.fn()` is stable and tests the contract that actually broke.
+- **Task/PR**: Request 274, PR #472, commits `d5b8890f`, `adf20b82`
+
+### 274 - "Minor" and "dev-only" in a Dependabot title say nothing about the blast radius
+
+- **Date**: 2026-09-30
+- **Context**: Four PRs in one dependency sweep were each mislabelled by their own metadata. (1) A `production-minor-patch` group contained `@supabase/ssr` `^0.6.1 -> ^0.12.7`; under semver, `0.x` puts breaking changes in the **minor** slot, so that is six breaking release lines on the library handling auth session cookies, grouped as routine. (2) `@vitejs/plugin-react` 4 -> 6, labelled `deps-dev`, requires peer `vite: ^8.0.0` while the repo declares `vite: 7.3.5` exact *and* pins `overrides.vite: 7.3.5`; it also moved to the oxc/rolldown toolchain and added three new peers. (3) `@testing-library/jest-dom` 6 -> 7, also `deps-dev`, adds a peer `@testing-library/dom >=10 <11` against a resolved 9.3.4 that arrives via `@testing-library/react@14`, so it is gated on an RTL major across all 295 test files. (4) Conversely, `next` 15 -> 16 was *assumed* to need React 19, but `next@16.3.6` peers list `react: ^18.2.0 || ^19.0.0`, identical to 15.5.26, so it is not React-gated at all.
+- **Learning**: The semver range in a PR title describes the version arithmetic, not the risk. Three independent things break the correspondence: `0.x` relocates the breaking axis to minor, a peer-dependency requirement can make a "dev" bump demand a major upgrade elsewhere, and a reputation for being hard ("Next majors need a React major") can overstate risk just as easily as a label understates it. A `dev` classification bounds *where* breakage lands, never *how much*.
+- **Change to prevent repeat**:
+  - Read `npm view <pkg>@<target> peerDependencies --json` before classifying any major as low-risk, and compare against what the repo declares **and** overrides. A `vite: ^8` peer against a pinned `vite: 7.3.5` is a blocker, not a warning.
+  - Treat a `0.x` minor bump as a major. Check how many minor lines are being crossed, and for an auth, crypto, or persistence library, require verification the test suite does not provide.
+  - Check the assumed blocker too. Comparing the old and new versions' peer ranges side by side is one command and it settles the question instead of inheriting folklore.
+  - When a grouped PR mixes `0.x` and `1.0+` packages, split it: land the 1.0+ members and re-raise the `0.x` ones individually. Dependabot groups by version arithmetic and cannot make this distinction.
+- **Task/PR**: Request 274, PRs #471 / #472, with #455, #462, #464 documented and deferred
