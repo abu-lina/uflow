@@ -1,9 +1,11 @@
 /**
  * Rate Limiting Utility
- * 
+ *
  * Provides rate limiting for API routes using in-memory storage.
  * For production, consider using Redis-based rate limiting (@upstash/ratelimit).
  */
+
+import { getTrustedClientIp } from '@/lib/security/clientIp';
 
 interface RateLimitEntry {
   count: number;
@@ -26,10 +28,10 @@ export function checkRateLimit(
   identifier: string,
   limit: number,
   windowMs: number,
-  storeKey: string = 'default'
+  storeKey: string = 'default',
 ): boolean {
   const now = Date.now();
-  
+
   // Get or create store for this endpoint
   let store = rateLimitStores.get(storeKey);
   if (!store) {
@@ -67,7 +69,7 @@ export function getRemainingRequests(
   identifier: string,
   limit: number,
   windowMs: number,
-  storeKey: string = 'default'
+  storeKey: string = 'default',
 ): number | null {
   const now = Date.now();
   const store = rateLimitStores.get(storeKey);
@@ -136,10 +138,8 @@ export const rateLimiters = {
    * - 200 messages per day per user
    */
   chat: {
-    perMinute: (identifier: string) =>
-      checkRateLimit(identifier, 20, 60 * 1000, 'chat-minute'),
-    perDay: (identifier: string) =>
-      checkRateLimit(identifier, 200, 86_400_000, 'chat-day'),
+    perMinute: (identifier: string) => checkRateLimit(identifier, 20, 60 * 1000, 'chat-minute'),
+    perDay: (identifier: string) => checkRateLimit(identifier, 200, 86_400_000, 'chat-day'),
   },
 };
 
@@ -147,26 +147,13 @@ export const rateLimiters = {
  * Get client identifier from request
  * Prioritizes user ID if available, falls back to IP
  */
-export function getClientIdentifier(
-  request: Request,
-  userId?: string
-): string {
+export function getClientIdentifier(request: Request, userId?: string): string {
   if (userId) {
     return `user:${userId}`;
   }
 
-  // Get IP from headers - prioritize Cloudflare, then x-forwarded-for, then x-real-ip
-  const cfIp = request.headers.get('cf-connecting-ip');
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  
-  // Use Cloudflare IP if available (most reliable)
-  const ip = cfIp?.trim() || 
-             (forwarded ? forwarded.split(',')[0].trim() : null) || 
-             realIp?.trim() || 
-             'unknown';
-  
+  const ip = getTrustedClientIp(request.headers);
+
   // Ensure no spaces in identifier
   return `ip:${ip.replace(/\s+/g, '')}`;
 }
-
