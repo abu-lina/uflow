@@ -1,6 +1,6 @@
 'use client';
 
-import Lottie from 'lottie-react';
+import { Lottie } from 'lottie-react';
 import { useMemo } from 'react';
 
 interface LottieAnimationProps {
@@ -30,9 +30,9 @@ export function LottieAnimation({
   return (
     <div className={className} style={style}>
       <Lottie
-        animationData={animationData}
         autoplay={autoplay}
         loop={loop}
+        src={animationData}
         style={{ height: '100%', width: '100%' }}
       />
     </div>
