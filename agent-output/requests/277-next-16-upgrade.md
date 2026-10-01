@@ -22,26 +22,52 @@ which version in lockstep.
 
 ## Target
 
-`next` and `eslint-config-next` to **16.3.6**, not the newer 16.3.8.
+`next` and `eslint-config-next` to **16.3.8**, both pinned exact.
 
-16.3.6 was published 9 days ago; 16.3.7 is 2 days old and 16.3.8 is 1 day old.
-Project policy prefers a release that has been public for at least 7 days, since
-a meaningful share of supply-chain attacks are caught and yanked within days.
-16.3.6 is also what Dependabot proposed.
+### This was 16.3.6 first, and that was wrong
+
+The original target was 16.3.6, chosen because it had been public 9 days while
+16.3.7 and 16.3.8 were 2 and 1 days old, and policy here prefers a release that
+has been out at least 7 days (a meaningful share of supply-chain attacks are
+caught and yanked within days). 16.3.6 was also Dependabot's proposal.
+
+Snyk failed the PR and was right. **`next@16.3.6` carries a high-severity SSRF**:
+CVE-2026-94483, SNYK-JS-NEXT-20366781, CWE-918, CVSS 8.3, fixed in **16.3.8**
+(so 16.3.7 is affected too). The rapid 16.3.7 and 16.3.8 releases, one day apart
+after a 7-day gap, were the security releases.
+
+Resolution: a published CVSS 8.3 SSRF is a **confirmed** risk; the 7-day rule
+mitigates a **hypothetical** one. Known beats hypothetical, so take 16.3.8.
+
+### Why every other signal said "clean"
+
+Worth recording, because the reassurance was false:
+
+| Source                                    | Said                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| `npm audit` (all levels)                  | 0 vulnerabilities                                                                     |
+| GitHub advisory DB, `next@16.3.6`         | clean; 16.3.6 is itself the patch for `GHSA-vcvr-r3jv-pc5j`, a critical `next/og` RCE |
+| GitHub advisory DB, 7 new transitive deps | no advisories                                                                         |
+| Snyk                                      | **high-severity SSRF**                                                                |
+
+GHSA does not carry CVE-2026-94483 yet, and `npm audit` reads GHSA. So the
+"0 vulnerabilities" result was not evidence of safety, it was evidence that one
+database had not caught up. Two independent scanners disagreed and the one with
+the finding was correct.
 
 ## Ground truth established before briefing
 
 ### Next 16 is not blocked here
 
-| Check | Result |
-| --- | --- |
-| `next-intl@4.4.0` peer | lists `^16.0.0` explicitly |
-| `@ducanh2912/next-pwa@10.2.9` peer | `next: >=14.0.0` |
-| `next-swagger-doc@0.4.1` peer | `next: >=9` |
-| Node | Next 16 needs `>=20.9.0`; repo declares `>=22.12.0` |
-| React 19 | **not** gated; `next@16`'s react peer range is unchanged from 15 |
-| `next lint` removal | non-issue; repo already runs `eslint .` with `eslint.config.mjs` |
-| `@next/bundle-analyzer` | already declared at `^16.0.0` |
+| Check                              | Result                                                           |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| `next-intl@4.4.0` peer             | lists `^16.0.0` explicitly                                       |
+| `@ducanh2912/next-pwa@10.2.9` peer | `next: >=14.0.0`                                                 |
+| `next-swagger-doc@0.4.1` peer      | `next: >=9`                                                      |
+| Node                               | Next 16 needs `>=20.9.0`; repo declares `>=22.12.0`              |
+| React 19                           | **not** gated; `next@16`'s react peer range is unchanged from 15 |
+| `next lint` removal                | non-issue; repo already runs `eslint .` with `eslint.config.mjs` |
+| `@next/bundle-analyzer`            | already declared at `^16.0.0`                                    |
 
 ### The one real risk: Turbopack becomes the default bundler
 
