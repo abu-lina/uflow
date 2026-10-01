@@ -2,7 +2,7 @@
 ID: 276
 Origin: 274
 UUID: 9C2E4A17-63BD-4F5A-8E70-21D4B9F3C0A6
-Status: In Progress
+Status: Complete
 Type: change-request
 Branch: feature/276-e2e-smoke-suite
 Worktree: ../uflow-wt/276-e2e-smoke
@@ -109,7 +109,43 @@ Four behaviours, chosen because unit tests structurally cannot see them:
 
 - [x] Investigate auth, cookies, CI, runner collisions
 - [x] Branch + tracking
-- [ ] Implement config, specs, global setup, workflow
-- [ ] Prove the suite discriminates (break `cookieAdapter`, confirm failure)
-- [ ] PR, CI, merge
-- [ ] Capture learning
+- [x] Implement config, specs, global setup, workflow
+- [x] Prove the suite discriminates (breaking `cookieAdapter` turned out to be
+      inert; disabling the `sb-access-token` write is what makes the suite fail)
+- [x] PR, CI, merge
+- [x] Capture learning
+
+## Outcome
+
+Merged as PR #474, squash commit `cd9c104c`. Five specs, chromium only, no new
+dependencies. CI proof: run `36870418579`, 5/5 green in 14.5s against a
+production build with a from-scratch Supabase stack.
+
+The suite is **not** a required status check yet. That call was vindicated
+immediately: the first CI run failed on a pre-existing migration collision while
+every required check stayed green, so `mergeStateStatus` was `UNSTABLE` rather
+than blocking the repo.
+
+### Three pre-existing defects it found
+
+| Defect | Fix |
+| --- | --- |
+| CSP `connect-src` refused a local or self-hosted Supabase in production builds (only allowed `127.0.0.1` when `isDev`) | added the configured `NEXT_PUBLIC_SUPABASE_URL` in `next.config.js` |
+| First workflow draft passed placeholder `NEXT_PUBLIC_*` into the build, which Next inlines into the client bundle; the placeholder slipped past the guard at `src/lib/supabase/client.ts:44` because it is 41 chars and starts with `sb_` | export real local keys before `npm run build` |
+| `089_fix_search_food_concepts_junction.sql` and `089_add_food_category_american.sql` shared version `089`, breaking every from-scratch `supabase start` / `db reset` with SQLSTATE 23505 | renamed the later file to `136_` (filename only, migration is idempotent) |
+
+### Correction to the `@supabase/ssr` risk ranking
+
+I had rated `@supabase/ssr` `0.6 -> 0.12` the highest-risk open upgrade. Wrong.
+`cookieAdapter` has no `setAll` and its `set`/`remove` are no-ops, so official
+SSR cookies are never written; `getUserFromCookie` always logs `ssr_miss` and
+falls through to the custom httpOnly `sb-access-token`, which is what actually
+carries server-side auth. Breaking `cookieAdapter.getAll` changes nothing
+observable. The real risk surface is `/api/auth/set`, `/api/auth/logout` and the
+middleware read at `src/middleware.ts:78`.
+
+### Open follow-up
+
+`Header.tsx:266` hardcodes a German `aria-label` ("Profil Dropdown öffnen") in
+an i18n'd app, so every locale gets a German label to screen readers. The tests
+key off a `data-testid` precisely so fixing that a11y bug won't break them.

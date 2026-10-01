@@ -538,3 +538,51 @@ Short log of learnings from plan → build → review → test loops. Append one
   - Check the assumed blocker too. Comparing the old and new versions' peer ranges side by side is one command and it settles the question instead of inheriting folklore.
   - When a grouped PR mixes `0.x` and `1.0+` packages, split it: land the 1.0+ members and re-raise the `0.x` ones individually. Dependabot groups by version arithmetic and cannot make this distinction.
 - **Task/PR**: Request 274, PRs #471 / #472, with #455, #462, #464 documented and deferred
+
+### 276 - A gate verified only in dev mode is not verified
+
+- **Date**: 2026-10-01
+- **Context**: The new Playwright smoke suite passed 5/5 locally against `npm run dev`, then failed every auth test the moment it ran the way CI runs it (`npm run build` + `npm run start`). Two separate production-only defects were hiding behind the dev server. (1) The workflow built with `NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_placeholder_for_build_only` and injected the real key into the server's runtime env, but Next **inlines `NEXT_PUBLIC_*` into the client bundle at build time**, so the browser shipped a placeholder key and got 401s. It failed quietly rather than loudly: that string is 41 characters and starts with `sb_`, so it satisfies both the prefix and 30-character checks in `src/lib/supabase/client.ts:44` and never trips the placeholder guard. (2) Underneath that, `next.config.js` only added `http://127.0.0.1:*` to CSP `connect-src` when `isDev`, so a production build against a local or self-hosted Supabase had every browser-side Supabase call refused by CSP.
+- **Learning**: `npm run dev` differs from the deployed artefact in exactly the places a smoke suite is supposed to cover. Dev reads env at request time while a production build freezes `NEXT_PUBLIC_*` into JavaScript, and dev relaxes security headers that production enforces. So a suite whose entire purpose is catching deploy-time breakage, verified only against the dev server, proves nothing about the thing it guards. Both bugs were pre-existing and invisible to every other check in CI.
+- **Change to prevent repeat**:
+  - Verify any E2E or smoke suite against a real production build before trusting it. Make the config switch explicit, e.g. `command: process.env.CI ? 'npm run start' : 'npm run dev'`, and run the `CI=1` path locally at least once.
+  - Never pass placeholder values for `NEXT_PUBLIC_*` into a build whose output will actually be exercised. Resolve real values before `npm run build`, not into the server's runtime env afterwards.
+  - When adding a placeholder guard, make it reject the placeholders you actually use. A guard keyed on substrings like `your` or `placeholder` plus a length floor is trivially passed by a realistic-looking fake.
+  - Treat `isDev`-conditional security headers as a production surface. Anything allowed only when `isDev` should be checked against a production build on a non-hosted backend.
+- **Task/PR**: Request 276, PR #474, commit `72c4941a`
+
+### 276 - A new CI gate starts non-blocking, because its first failure usually is not its own
+
+- **Date**: 2026-10-01
+- **Context**: The E2E workflow's first CI run failed, and the cause had nothing to do with the suite: `supabase start` died with `duplicate key value violates unique constraint "schema_migrations_pkey"` (SQLSTATE 23505), `Key (version)=(089) already exists`. Two migrations shared the `089` prefix, `089_fix_search_food_concepts_junction.sql` (2026-05-12) and `089_add_food_category_american.sql` (2026-06-04), and the Supabase CLI derives the `schema_migrations.version` primary key from that prefix. Every from-scratch `supabase start` or `db reset` on main was broken, which also meant clean local onboarding was broken. Nobody noticed because everyone already had a populated local database; only a fresh stack exposes it. A doc under `agent-output/implementation/closed/267-*` had already recorded the collision without it being fixed. Because the job was deliberately left out of the ruleset's required checks, `mergeStateStatus` was `UNSTABLE`, not blocked: the failure was informative and the repo kept merging.
+- **Learning**: A new gate's first job is to tell you about the repo, and what it finds first is usually a latent defect in the environment rather than a bug in the code under test. The repo's ruleset uses `strict_required_status_checks_policy: true`, so promoting that job to required on day one would have blocked **every** merge in the repo on an unrelated migration-numbering mistake from four months earlier. The sequencing matters more than the strictness: earn the required status with a track record.
+- **Change to prevent repeat**:
+  - Land a new CI job non-blocking. Promote it to a required check only after it has run green repeatedly on real PRs.
+  - When any tool derives an identifier from a filename, duplicate prefixes are a primary-key collision waiting to happen. `ls migrations | sed -E 's/^([0-9]+)_.*/\1/' | sort | uniq -d` must return empty; it is worth a CI assertion of its own.
+  - Renumber the **later** of two colliding migrations. The earlier one legitimately owns the version and is already recorded under it remotely.
+  - Before renaming any migration, confirm it is re-runnable. This one declared its own intent ("Keep this idempotent across environments") and used `INSERT ... WHERE NOT EXISTS` plus a normalizing `UPDATE`, which made re-application under a new version a safe no-op.
+  - Fix a defect a doc has already recorded. A written-down problem that nobody actioned is indistinguishable from an unknown one.
+- **Task/PR**: Request 276, PR #474, commit `85e2198b`
+
+### 276 - Never key a test selector to the thing the test is meant to guard
+
+- **Date**: 2026-10-01
+- **Context**: The first pass at the auth spec selected the user menu with `button[aria-label="Profil Dropdown öffnen"]` and the logout control with `button.text-danger`. Both worked. Both were wrong. The `aria-label` is hardcoded German at `Header.tsx:266` in an app that translates everything through `LanguageProvider`, so it is an accessibility bug in its own right (every locale hears a German label), and the correct fix would have broken the test. `text-danger` is a Tailwind theme utility used 38 times across `src/`, and a stated purpose of this suite is guarding the Tailwind v3 to v4 migration, which rewrites config and class generation. Both were replaced with `data-testid` hooks.
+- **Learning**: "The selector is stable today" is the wrong test. The right question is what has to change for it to break, and whether that change is one you expect and want. A selector built on a generated utility class cannot distinguish "logout broke" from "class generation changed", which is precisely the signal the suite exists to produce during the migration it is supposed to protect. A selector built on an known-buggy string actively punishes fixing the bug. Either way the suite argues against improving the code.
+- **Change to prevent repeat**:
+  - Prefer an explicit `data-testid` for behavioural tests. Reach for copy, `aria-label`, or utility classes only when they are genuinely semantic and genuinely stable.
+  - Before accepting a selector, name the change that would break it. If that change is one you are planning (a framework migration) or one you want (an a11y fix), pick a different handle.
+  - Never select on translated copy in an i18n'd app, and treat a hardcoded non-translated string as a bug to report rather than a hook to depend on.
+- **Task/PR**: Request 276, PR #474, commit `72c4941a`
+
+### 276 - Rank upgrade risk by the code path that executes, not by what the manifest declares
+
+- **Date**: 2026-10-01
+- **Context**: I ranked `@supabase/ssr` `0.6 -> 0.12` as the highest-risk open upgrade, reasoning from the manifest and the semver `0.x` rule: six breaking minor lines on the library handling auth session cookies. Building the smoke suite disproved it. `src/lib/supabase/cookieAdapter.ts` has no `setAll`, and its `set`/`remove` are no-ops, so the official SSR cookies are **never written**. `getUserFromCookie` consequently always logs `event: 'auth_attempt', result: 'ssr_miss'` and falls through to a custom httpOnly `sb-access-token` cookie, which is what actually carries server-side auth. Breaking `cookieAdapter.getAll` outright, the discrimination test I had specified, changed no observable behaviour at all; the suite passed against it. The real risk surface is the hand-rolled `sb-access-token` flow (`/api/auth/set`, `/api/auth/logout`, the middleware read at `src/middleware.ts:78`).
+- **Learning**: A dependency can be declared, imported, constructed, and still be load-bearing for nothing. Risk ranked from `package.json` plus semver arithmetic measures the library's capacity to break, not this codebase's exposure to it. Here a fallback path silently absorbed the library's total failure, which also means the upgrade is lower risk **and** the custom code is higher risk than the manifest suggests. Note the failure mode of my own planning: I specified a discrimination target from reading the code, and the target turned out to be inert. Prescribing which break should fail a test is a hypothesis, not a fact, until the break is run.
+- **Change to prevent repeat**:
+  - Before ranking an upgrade's risk, confirm the library's code path actually executes and carries the behaviour. A no-op adapter method or an unconditional fallback means it does not.
+  - When specifying a discrimination test, state the expected failure as a hypothesis and require the result either way. "Break X, confirm the test fails" must be reported honestly as "X did not fail, here is why", which is how the real contract was found.
+  - Grep for fallback chains around any dependency you are about to upgrade. `getUserFromCookie`'s try/catch plus custom-cookie fallback is exactly the shape that converts a hard dependency failure into a silent downgrade.
+  - When a library turns out to be inert, record it. Candidate follow-ups are removing it or wiring it up properly, and either beats upgrading something that does nothing.
+- **Task/PR**: Request 276, PR #474, commits `6ae8b5d6`, `72c4941a`
