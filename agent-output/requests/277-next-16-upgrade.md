@@ -2,7 +2,7 @@
 ID: 277
 Origin: 276
 UUID: 1B8F3D52-4C06-47A9-B5E1-7A2D9C40E6F3
-Status: In Progress
+Status: Complete
 Type: change-request
 Branch: feature/277-next-16-upgrade
 Worktree: ../uflow-wt/277-next-16
@@ -130,7 +130,43 @@ Serwist migration earlier than planned; stop and escalate rather than improvise.
 
 - [x] Investigate peer deps, bundler default, PWA coupling, Serwist readiness
 - [x] Branch + tracking
-- [ ] Bump, add `--webpack`, verify build and PWA output
-- [ ] Service-worker assertion in the smoke suite
-- [ ] PR, CI, merge; close #466 and #463
-- [ ] Capture learning
+- [x] Bump, add `--webpack`, verify build and PWA output
+- [x] Service-worker assertion in the smoke suite
+- [x] PR, CI, merge; close #466 and #463
+- [x] Capture learning
+
+## Outcome
+
+Merged as PR #476, squash commit `59a446e3`. Dependabot #466 and #463 closed as
+superseded, each with the CVE reasoning.
+
+Final state: `next` and `eslint-config-next` pinned exact at **16.3.8**, React
+untouched at `^18.3.1`, `--webpack` on all seven build entry points, and
+`scripts/verify-pwa-output.js` failing any production build that does not emit a
+service worker with the push-handler import.
+
+CI proof on the merged commit: `Next.js 16.3.8 (webpack)`, guard `OK`, smoke
+suite 6/6 including the new PWA spec, Snyk `1 security test has passed`.
+
+### Three things this surfaced
+
+| Finding | Resolution |
+| --- | --- |
+| `next@16.3.6` carries CVE-2026-94483, a high-severity SSRF (CVSS 8.3) that `npm audit` and GHSA both missed | moved the target to 16.3.8 |
+| The production Docker build (`Dockerfile:56` -> `build:standalone`) still defaulted to Turbopack after the first pass, so the image would have shipped with no service worker while CI stayed green | `--webpack` on all seven call sites, plus an output guard |
+| A rate-limiter bypass was added to production middleware to stop the suite 429ing | rejected; replaced with a per-test synthetic `x-forwarded-for`, leaving `src/middleware.ts` at zero diff |
+
+### Follow-ups raised, not done here
+
+- `@ducanh2912/next-pwa` was last published 2024-09-18 and is abandoned in favour
+  of Serwist. That, not Next 16, is what pins this repo to webpack. Sequencing:
+  Serwist migration, then drop `--webpack`.
+- `getRateLimitKey` falls back to a single `'unknown'` bucket. If a deployment is
+  not behind a proxy setting `x-forwarded-for` / `x-real-ip` / `cf-connecting-ip`,
+  every user shares one 30 requests/minute API bucket.
+- `prebuild` regenerates `public/manifest.json` with a different shortcut URL
+  (`/food` vs the committed `/providers`), so any local production build dirties
+  the tree and breaks the plan228 regression test.
+- +5 lint warnings, all `@next/next/no-location-assign-relative-destination`.
+  Left as warnings rather than suppressed.
+- The `middleware` to `proxy` file-convention rename Next 16 now suggests.
