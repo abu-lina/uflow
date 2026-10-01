@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test.describe('PWA service worker', () => {
   // next-pwa only generates the service worker in a production build; under

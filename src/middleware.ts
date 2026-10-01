@@ -27,11 +27,6 @@ function checkRateLimit(
   key: string,
   maxRequests: number,
 ): { allowed: boolean; remaining: number; resetTime: number } {
-  // E2E suites issue bursts of navigations and prefetches from one IP; only set
-  // via playwright.config.ts webServer.env, never in production.
-  if (process.env.PLAYWRIGHT_E2E === '1') {
-    return { allowed: true, remaining: maxRequests, resetTime: Date.now() };
-  }
   const now = Date.now();
   const record = rateLimitStore.get(key);
 
