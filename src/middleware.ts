@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { shouldRedirectToWaitlist } from '@/lib/middleware-utils';
+import { getTrustedClientIp } from '@/lib/security/clientIp';
 
 // Simple in-memory rate limiting store (for production, use Redis or similar)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -10,17 +11,8 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests per minute per IP
 const API_RATE_LIMIT_MAX_REQUESTS = 30; // 30 requests per minute for API routes
 
-function getRateLimitKey(req: NextRequest): string {
-  // Use IP address for rate limiting
-  // Check multiple headers in order of preference
-  const forwarded = req.headers.get('x-forwarded-for');
-  const realIp = req.headers.get('x-real-ip');
-  const cfIp = req.headers.get('cf-connecting-ip'); // Cloudflare
-
-  // Use the first available IP, prioritizing x-forwarded-for
-  const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || cfIp || 'unknown';
-
-  return ip;
+export function getRateLimitKey(req: NextRequest): string {
+  return getTrustedClientIp(req.headers);
 }
 
 function checkRateLimit(

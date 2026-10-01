@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 // Rate limiting storage (in production, use Redis or similar)
@@ -10,7 +11,7 @@ function checkRateLimit(ip: string): boolean {
   const maxAttempts = 5;
 
   const current = rateLimitMap.get(ip);
-  
+
   if (!current || now > current.resetTime) {
     rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
     return true;
@@ -27,39 +28,32 @@ function checkRateLimit(ip: string): boolean {
 export async function POST(request: Request) {
   try {
     // Get client IP for rate limiting
-    const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0] : 'unknown';
+    const ip = getTrustedClientIp(request.headers);
 
     // Check rate limit
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
         { error: 'Too many password reset attempts. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     const { token, email, password } = await request.json();
-    
+
     if (!token || !email || !password) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
     // Validate password strength
     if (password.length < 6) {
       return NextResponse.json(
         { error: 'Password must be at least 6 characters long' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -68,7 +62,7 @@ export async function POST(request: Request) {
 
     // Validate token from database
     console.log(`[RESET] Validating token for email: ${email}`);
-    
+
     const supabaseAdmin = getSupabaseAdmin();
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
@@ -82,41 +76,37 @@ export async function POST(request: Request) {
     if (tokenError || !tokenData) {
       console.error(`[RESET] Token validation failed:`, {
         email,
-        tokenError: tokenError ? {
-          message: tokenError.message,
-          details: tokenError.details,
-          hint: tokenError.hint,
-          code: tokenError.code
-        } : null,
-        hasTokenData: !!tokenData
+        tokenError: tokenError
+          ? {
+              message: tokenError.message,
+              details: tokenError.details,
+              hint: tokenError.hint,
+              code: tokenError.code,
+            }
+          : null,
+        hasTokenData: !!tokenData,
       });
       return NextResponse.json(
-        { 
+        {
           error: 'Invalid or expired reset link',
-          details: tokenError?.message || 'Token not found'
+          details: tokenError?.message || 'Token not found',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
+
     console.log(`[RESET] Token found, checking expiration and usage status`);
 
     // Check if token is expired
     if (new Date() > new Date(tokenData.expires_at)) {
       console.log(`[SECURITY] Expired token attempt for: ${email} from IP: ${ip}`);
-      return NextResponse.json(
-        { error: 'Reset link has expired' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Reset link has expired' }, { status: 400 });
     }
 
     // Check if token is already used
     if (tokenData.used) {
       console.log(`[SECURITY] Already used token attempt for: ${email} from IP: ${ip}`);
-      return NextResponse.json(
-        { error: 'Reset link has already been used' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Reset link has already been used' }, { status: 400 });
     }
 
     // Mark token as used
@@ -127,40 +117,31 @@ export async function POST(request: Request) {
 
     if (updateTokenError) {
       console.error('Error updating token:', updateTokenError);
-      return NextResponse.json(
-        { error: 'Failed to process reset request' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to process reset request' }, { status: 500 });
     }
 
     // Update user password in Supabase auth system
     const { error: updateUserError } = await supabaseAdmin.auth.admin.updateUserById(
       tokenData.user_id,
       {
-        password: password
-      }
+        password: password,
+      },
     );
 
     if (updateUserError) {
       console.error('[SECURITY] Error updating password:', updateUserError);
-      return NextResponse.json(
-        { error: 'Failed to update password' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to update password' }, { status: 500 });
     }
 
     // Log successful password reset
     console.log(`[SECURITY] Password successfully reset for: ${email} from IP: ${ip}`);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      message: 'Password updated successfully'
+      message: 'Password updated successfully',
     });
   } catch (error) {
     console.error('Password reset error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,11 +1,13 @@
 /**
  * Security Utilities
- * 
+ *
  * Provides security functions for bot/hacker prevention:
  * - Disposable email detection
  * - IP blocking management
  * - Request timing analysis
  */
+
+import { getTrustedClientIp } from '@/lib/security/clientIp';
 
 // Blocked disposable email domains
 // Comprehensive list of known temporary/disposable email services
@@ -42,7 +44,7 @@ const DISPOSABLE_EMAIL_DOMAINS = [
   'tmail.ws',
   'tmpmail.org',
   'zoemail.org',
-  
+
   // Additional common disposable email services
   'dunefee.com',
   '0-mail.com',
@@ -624,11 +626,14 @@ const DISPOSABLE_EMAIL_DOMAINS = [
 
 // Suspicious IPs tracking (in production, use Redis/database)
 // Format: { ip: { count: number, blockedUntil: number, attempts: number[] } }
-const suspiciousIPs = new Map<string, { 
-  count: number; 
-  blockedUntil: number;
-  attempts: number[];
-}>();
+const suspiciousIPs = new Map<
+  string,
+  {
+    count: number;
+    blockedUntil: number;
+    attempts: number[];
+  }
+>();
 
 /**
  * Check if an email is from a disposable email service
@@ -643,37 +648,21 @@ export function isDisposableEmail(email: string): boolean {
  * Get client IP from request headers
  */
 export function getClientIP(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIP = request.headers.get('x-real-ip');
-  const cfConnectingIP = request.headers.get('cf-connecting-ip'); // Cloudflare
-  
-  // Priority: Cloudflare > X-Forwarded-For > X-Real-IP
-  if (cfConnectingIP) {
-    return cfConnectingIP.trim();
-  }
-  
-  if (forwarded) {
-    // X-Forwarded-For can contain multiple IPs, take the first one
-    return forwarded.split(',')[0].trim();
-  }
-  
-  if (realIP) {
-    return realIP.trim();
-  }
-  
-  return 'unknown';
+  return getTrustedClientIp(request.headers);
 }
 
 /**
  * Check if an IP is a localhost address (development)
  */
 export function isLocalhostIP(ip: string): boolean {
-  return ip === '127.0.0.1' || 
-         ip === '::1' || 
-         ip === 'localhost' || 
-         ip === 'unknown' ||
-         ip.startsWith('127.') ||
-         ip.startsWith('::ffff:127.');
+  return (
+    ip === '127.0.0.1' ||
+    ip === '::1' ||
+    ip === 'localhost' ||
+    ip === 'unknown' ||
+    ip.startsWith('127.') ||
+    ip.startsWith('::ffff:127.')
+  );
 }
 
 /**
@@ -684,14 +673,14 @@ export function checkIPBlocked(ip: string): boolean {
   if (isLocalhostIP(ip) && process.env.NODE_ENV !== 'production') {
     return false;
   }
-  
+
   const entry = suspiciousIPs.get(ip);
   if (!entry) return false;
-  
+
   if (Date.now() < entry.blockedUntil) {
     return true; // Still blocked
   }
-  
+
   // Block expired, remove it
   suspiciousIPs.delete(ip);
   return false;
@@ -705,10 +694,10 @@ export function checkIPBlocked(ip: string): boolean {
 export function markSuspiciousIP(ip: string, hours: number = 24): void {
   const now = Date.now();
   const existing = suspiciousIPs.get(ip);
-  
+
   suspiciousIPs.set(ip, {
     count: (existing?.count || 0) + 1,
-    blockedUntil: now + (hours * 60 * 60 * 1000),
+    blockedUntil: now + hours * 60 * 60 * 1000,
     attempts: [...(existing?.attempts || []), now].slice(-10), // Keep last 10 attempts
   });
 }
@@ -736,7 +725,7 @@ export function getAllBlockedIPs(): Array<{
     timeRemainingMinutes: number;
     attempts: number[];
   }> = [];
-  
+
   suspiciousIPs.forEach((entry, ip) => {
     if (now < entry.blockedUntil) {
       // Still blocked
@@ -748,11 +737,11 @@ export function getAllBlockedIPs(): Array<{
         blockedUntilDate: new Date(entry.blockedUntil).toISOString(),
         timeRemaining,
         timeRemainingMinutes: Math.ceil(timeRemaining / (60 * 1000)),
-        attempts: entry.attempts
+        attempts: entry.attempts,
       });
     }
   });
-  
+
   // Sort by time remaining (shortest first)
   return blocked.sort((a, b) => a.timeRemaining - b.timeRemaining);
 }
@@ -779,30 +768,30 @@ export function clearAllBlockedIPs(): void {
  * - Contains at least one letter
  * - Contains at least one number
  */
-export function validatePasswordComplexity(password: string): { 
-  valid: boolean; 
-  error?: string 
+export function validatePasswordComplexity(password: string): {
+  valid: boolean;
+  error?: string;
 } {
   if (password.length < 8) {
-    return { 
-      valid: false, 
-      error: 'Password must be at least 8 characters long' 
+    return {
+      valid: false,
+      error: 'Password must be at least 8 characters long',
     };
   }
 
   // Check for at least one letter
   if (!/[a-zA-Z]/.test(password)) {
-    return { 
-      valid: false, 
-      error: 'Password must contain at least one letter' 
+    return {
+      valid: false,
+      error: 'Password must contain at least one letter',
     };
   }
 
   // Check for at least one number
   if (!/\d/.test(password)) {
-    return { 
-      valid: false, 
-      error: 'Password must contain at least one number' 
+    return {
+      valid: false,
+      error: 'Password must contain at least one number',
     };
   }
 
@@ -827,20 +816,19 @@ export function isSuspiciousTiming(startTime: number): boolean {
 export function cleanupExpiredBlocks(): void {
   const now = Date.now();
   const ipsToDelete: string[] = [];
-  
+
   // Collect IPs to delete (avoid modifying Map during iteration)
   suspiciousIPs.forEach((entry, ip) => {
     if (now >= entry.blockedUntil) {
       ipsToDelete.push(ip);
     }
   });
-  
+
   // Delete expired entries
-  ipsToDelete.forEach(ip => suspiciousIPs.delete(ip));
+  ipsToDelete.forEach((ip) => suspiciousIPs.delete(ip));
 }
 
 // Clean up expired blocks every hour
 if (typeof setInterval !== 'undefined') {
   setInterval(cleanupExpiredBlocks, 60 * 60 * 1000);
 }
-
