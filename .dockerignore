@@ -39,7 +39,11 @@ playwright.config.ts
 vitest.config.ts
 
 # Scripts
-scripts/
+# Only the PWA build guard ships into the context: build:standalone invokes
+# it after `next build`. `scripts/*` (not `scripts/`) so the exception can
+# re-include a single file; matched subdirectories stay fully excluded.
+scripts/*
+!scripts/verify-pwa-output.js
 
 # Temporary files
 imports/lottie/.temp-gif-frames/
