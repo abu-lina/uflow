@@ -442,6 +442,43 @@ The `x-forwarded-for is not allowed by Access-Control-Allow-Headers` CORS noise 
 Iconify domains in that log is the known, documented side effect of the spec's
 `extraHTTPHeaders` applying to cross-origin fetches. No assertion depends on it.
 
+#### Failure 2, part two: a service worker's script fetch ignores `extraHTTPHeaders`
+
+The precache fix was necessary and not sufficient. CI run 37031029612 came back with
+`e2e/pwa.spec.ts` green (so `/sw.js` was being served) and the session-boundary spec red at
+the **first** session: `first session registered no service worker`, 429 on `/sw.js` again.
+
+The downloaded Playwright trace settled it from one side: that session's own page load made
+**17** rate-limited requests, so its per-IP bucket could not possibly be full. Then from the
+other side, locally:
+
+1. Three back-to-back page loads on three different synthetic IPs, each installing the full
+   290-entry worker: 0 x 429, all three `activated`. So the worker's **precache** fetches do
+   carry the page context's `extraHTTPHeaders`.
+2. 105 header-less requests to `/offline.html` to exhaust the shared `'unknown'` bucket, then
+   the same path twice: header-less **429**, with `x-forwarded-for` **200**.
+3. With that bucket still spent, a fresh-IP page load (`10.242.0.1`): `registrations=0`,
+   `/sw.js` statuses `[429]`, console
+   `A bad HTTP response code (429) was received when fetching the script`.
+
+So the service worker's **script** fetch does not carry the context's `extraHTTPHeaders`,
+which means `e2e/fixtures.ts`'s per-test synthetic IP never applied to it and it always fell
+into `getTrustedClientIp`'s shared `'unknown'` bucket (`src/lib/security/clientIp.ts:40`).
+Six specs' worth of worker traffic spent that bucket before the PWA spec ran.
+
+Two test-layer fixes, neither touching the limiter:
+
+- `playwright.config.ts`: `use.serviceWorkers: 'block'`. The suite runs against a production
+  build, so every page load in six specs that assert nothing about the PWA was registering a
+  worker and precaching 290 URLs. `e2e/sw-session-boundary.spec.ts` launches its own
+  persistent context with `serviceWorkers: 'allow'` and `e2e/pwa.spec.ts` only uses `request`,
+  so the two specs that do test the worker are unaffected.
+- `e2e/fixtures.ts`: the `request` fixture now gets its own synthetic IP (`10.230.*`), the
+  same treatment `page` has always had. Playwright's built-in `APIRequestContext` sends no
+  proxy header, so every `request.get()` in the suite was also sharing `'unknown'`, and both
+  PWA specs open with `request.get('/sw.js')` as a precondition. That was the whole of CI run
+  37030165919: both specs red in under 150ms on a 429 that says nothing about the worker.
+
 ### Failure 3: a regression test still pointed at the old config location
 
 `src/__tests__/regression/plan211-map-tiles-iphone.test.ts` read `next.config.js` and asserted
