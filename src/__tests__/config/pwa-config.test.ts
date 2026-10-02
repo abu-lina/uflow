@@ -50,6 +50,10 @@ import { runtimeCaching } from '@/lib/pwa/runtimeCaching';
 const nextConfigSource = readFileSync(resolve(process.cwd(), 'next.config.js'), 'utf-8');
 const serwistConfigSource = readFileSync(resolve(process.cwd(), 'serwist.config.mjs'), 'utf-8');
 
+// Stands in for the worker's `location.href`, which string matchers resolve
+// against.
+const SCOPE = 'https://ummahflow.com/sw.js';
+
 const ICONIFY_URLS = [
   'https://api.iconify.design/lucide.json?icons=share-2',
   'https://api.unisvg.com/mdi.json?icons=instagram',
@@ -68,8 +72,10 @@ describe('service worker runtime caching (Plan 046 / 064 regression)', () => {
         // index 0, so mirror that rule rather than treating any match as a hit.
         return result !== null && result.index === 0;
       }
-      // A string matcher is an exact-URL route.
-      if (typeof matcher === 'string') return matcher === url.href;
+      // A string matcher is an exact-URL route: Serwist's parseRoute resolves it
+      // against the worker's location and compares `url.href`, so mirror that
+      // rather than comparing the raw string.
+      if (typeof matcher === 'string') return new URL(matcher, SCOPE).href === url.href;
       return Boolean(
         matcher({
           request,
@@ -92,27 +98,54 @@ describe('service worker runtime caching (Plan 046 / 064 regression)', () => {
     expect(matching).toHaveLength(1);
   });
 
-  it('consists of exactly the two ported rules', () => {
+  it('consists of exactly the three rules: two ported, plus start-url', () => {
     // Asserted on the module's value, not its source text, so it catches
     // `runtimeCaching = defaultCache` (1 entry in dev, 20 in production) and any
-    // third rule added without a matching assertion above.
-    expect(runtimeCaching).toHaveLength(2);
+    // fourth rule added without a matching assertion above.
+    expect(runtimeCaching).toHaveLength(3);
     expect(runtimeCaching.map((entry) => entry.handler.constructor.name)).toEqual([
       'CacheFirst',
       'StaleWhileRevalidate',
+      'NetworkFirst',
     ]);
   });
 
-  it('uses only anchored RegExp matchers, so no function matcher can test sameOrigin', () => {
+  it('keeps the start-url route, which is what makes the offline fallback reachable', () => {
+    // Parity with @ducanh2912/next-pwa's `cacheStartUrl` default, which emitted
+    // `registerRoute("/", new NetworkFirst({ cacheName: "start-url" }), "GET")`.
+    // It is the ONLY route that handles a document request, so it is the only
+    // thing that lets `fallbacks` in src/lib/pwa/sw.ts fire. Dropping it silently
+    // kills the offline page.
+    //
+    // The artifact-level guard is the start-url control in
+    // scripts/verify-sw-no-cross-origin-routes.mjs. This asserts the shape;
+    // that asserts the built worker really intercepts `/`.
+    const startUrl = runtimeCaching.at(-1);
+    expect(startUrl?.matcher).toBe('/');
+    expect(startUrl?.handler.constructor.name).toBe('NetworkFirst');
+  });
+
+  it('uses no function matcher, so none can test sameOrigin', () => {
     // defaultCache's entry 19 is `({ sameOrigin }) => !sameOrigin`, a function
-    // matcher. Requiring every matcher to be a `^`-anchored RegExp rules that
-    // shape out structurally, and the `^` is what Serwist's RegExpRoute needs to
-    // accept a cross-origin match at all (it requires match index 0), so an
-    // unanchored rewrite would silently stop matching Supabase while gaining the
-    // ability to match things mid-URL.
+    // matcher. Only a function matcher can express that shape at all, so banning
+    // the shape structurally rules it out.
+    //
+    // The two allowed forms:
+    // - a `^`-anchored RegExp. The `^` is what Serwist's RegExpRoute needs to
+    //   accept a cross-origin match at all (it requires match index 0), so an
+    //   unanchored rewrite would silently stop matching Supabase while gaining the
+    //   ability to match things mid-URL.
+    // - an absolute-path string. Serwist's parseRoute resolves it against
+    //   location.href and compares `url.href` exactly, so it can only ever match
+    //   one same-origin URL.
     for (const { matcher } of runtimeCaching) {
-      expect(matcher).toBeInstanceOf(RegExp);
-      expect((matcher as RegExp).source.startsWith('^')).toBe(true);
+      expect(typeof matcher).not.toBe('function');
+      if (typeof matcher === 'string') {
+        expect(matcher.startsWith('/')).toBe(true);
+      } else {
+        expect(matcher).toBeInstanceOf(RegExp);
+        expect((matcher as RegExp).source.startsWith('^')).toBe(true);
+      }
     }
   });
 

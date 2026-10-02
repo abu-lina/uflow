@@ -44,12 +44,24 @@ new Serwist({
   // what turned a failed generic fetch into "CORS request did not succeed" in
   // incident 046. The new behaviour is strictly better.
   //
-  // KNOWN GAP, see agent-output/requests/282-serwist-migration.md: neither of the
-  // two runtime caching rules ever handles a document request, so this entry
-  // cannot currently fire. The route that used to make it fire was next-pwa's
-  // `cacheStartUrl` default (`registerRoute("/", new NetworkFirst({ cacheName:
-  // "start-url" }))`), which is not part of `workboxOptions.runtimeCaching` and
-  // was therefore not in the port list.
+  // WHAT MAKES THIS FIRE, and why that route must not be deleted: this entry is
+  // only reachable through a runtime caching rule that handles a document
+  // request, because Serwist attaches it as a `handlerDidError` plugin on the
+  // strategies in `runtimeCaching`, not as a global navigation handler. The
+  // images and js/css rules never see `request.destination === 'document'`.
+  //
+  // The start-url route at the end of `src/lib/pwa/runtimeCaching.ts`
+  // (`matcher: '/'` -> `NetworkFirst`, `cacheName: 'start-url'`) is the one that
+  // does, restoring what `@ducanh2912/next-pwa` generated from its
+  // `cacheStartUrl` default. Delete it and this `fallbacks` block goes silently
+  // dead: `/offline.html` stays precached and still loads if requested directly,
+  // but an offline navigation gets the browser's error page.
+  // `scripts/verify-sw-no-cross-origin-routes.mjs` asserts a document request to
+  // `/` is intercepted, so that regression fails the build.
+  //
+  // Scope, deliberate: the fallback covers `/` only, which is parity with the old
+  // behaviour. An offline user on `/food` still gets the browser error page. See
+  // the follow-ups in agent-output/requests/282-serwist-migration.md.
   fallbacks: {
     entries: [
       {

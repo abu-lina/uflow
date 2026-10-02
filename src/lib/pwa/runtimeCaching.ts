@@ -1,11 +1,18 @@
-import { CacheFirst, ExpirationPlugin, StaleWhileRevalidate, type RuntimeCaching } from 'serwist';
+import {
+  CacheFirst,
+  ExpirationPlugin,
+  NetworkFirst,
+  StaleWhileRevalidate,
+  type RuntimeCaching,
+} from 'serwist';
 
 /**
  * The service worker's complete runtime caching list.
  *
- * Ported rule-by-rule from the `workboxOptions.runtimeCaching` array that
- * `@ducanh2912/next-pwa` used to consume (see the 282 migration). Two rules,
- * no more. Deliberately NOT built from `defaultCache`.
+ * Three rules, no more: the two ported from the `workboxOptions.runtimeCaching`
+ * array that `@ducanh2912/next-pwa` used to consume, plus the start-url route
+ * that library generated from its own `cacheStartUrl` default (see the 282
+ * migration). Deliberately NOT built from `defaultCache`.
  *
  * ## Do not import `defaultCache` from `@serwist/next/worker`
  *
@@ -50,9 +57,14 @@ import { CacheFirst, ExpirationPlugin, StaleWhileRevalidate, type RuntimeCaching
  *      agent-output/retrospectives/closed/064-iconify-sw-cors-fix-retrospective.md
  *      agent-output/research/282-defaultcache-iconify.md
  *
- * Both matchers stay `^`-anchored on purpose. `RegExpRoute` only accepts a
- * cross-origin match when it starts at index 0, so dropping the `^` would
+ * Both RegExp matchers stay `^`-anchored on purpose. `RegExpRoute` only accepts
+ * a cross-origin match when it starts at index 0, so dropping the `^` would
  * silently stop these rules matching the very origins they exist for.
+ *
+ * No matcher here may be a function. `defaultCache`'s cross-origin catch-all is
+ * `({ sameOrigin }) => !sameOrigin`, and only a function matcher can express
+ * that shape at all; an anchored RegExp or an exact path string cannot.
+ * `src/__tests__/config/pwa-config.test.ts` enforces it structurally.
  */
 export const runtimeCaching: RuntimeCaching[] = [
   // Cross-origin image assets (e.g. Supabase Storage provider photos).
@@ -80,5 +92,33 @@ export const runtimeCaching: RuntimeCaching[] = [
         }),
       ],
     }),
+  },
+  // The start URL. DO NOT DELETE THIS AS "UNUSED": it is the only route that
+  // ever sees a document request, and therefore the only thing that lets
+  // `fallbacks: { entries: [{ url: '/offline.html', ... }] }` in sw.ts fire at
+  // all. Serwist attaches the fallback as a `handlerDidError` plugin on the
+  // runtime caching strategies; with no document-handling route, an offline
+  // navigation never reaches a Serwist handler and the browser shows its own
+  // error page instead of /offline.html.
+  //
+  // This is a restoration, not an addition. `@ducanh2912/next-pwa` generated
+  // exactly this from its `cacheStartUrl` default (on by default, never
+  // configured here) and emitted `registerRoute("/", new NetworkFirst({
+  // cacheName: "start-url", ... }), "GET")`. It sat outside
+  // `workboxOptions.runtimeCaching`, so the 282 port list missed it; request 282
+  // restores parity deliberately.
+  //
+  // Parity means parity. A broader `request.destination === 'document'` route
+  // would make the offline page work on /food and every other route, but that is
+  // a behaviour change to navigation caching for the whole app, not a port. It is
+  // logged as a follow-up instead.
+  //
+  // The matcher is the string `'/'`, same as next-pwa emitted. Serwist's
+  // `parseRoute` turns a string into `new URL(capture, location.href)` plus an
+  // exact `url.href === captureUrl.href` comparison, so it matches the scope
+  // origin's `/` and nothing else: same-origin, exact, zero Iconify surface.
+  {
+    matcher: '/',
+    handler: new NetworkFirst({ cacheName: 'start-url' }),
   },
 ];
