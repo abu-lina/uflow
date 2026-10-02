@@ -120,12 +120,13 @@ async function runBrowserSession(
 
 test.describe('service worker across a browser session boundary', () => {
   test('a returning session is not forced to reload', async ({ baseURL, request }, testInfo) => {
-    // Needs a real generated service worker. `next.config.js:6` only disables
-    // the PWA plugin on DISABLE_PWA=true, so measured locally: `next dev`
-    // without that flag still writes a dev-stub /sw.js and this runs; with
-    // DISABLE_PWA=true nothing is generated, /sw.js 404s, there is nothing for a
-    // cleanup to find, and the spec would pass for the wrong reason. Hence the
-    // skip. That is a local-only courtesy: in CI the webServer is
+    // Needs a real generated service worker. Since request 282 the worker is
+    // built by a separate `serwist build` step after `next build`
+    // (scripts/build-sw.js), so `npm run dev` never writes a /sw.js at all and
+    // RootClientLayout only registers when NODE_ENV === 'production'. Locally
+    // that means /sw.js 404s, there is nothing for a cleanup to find, and the
+    // spec would pass for the wrong reason. Hence the skip. That is a
+    // local-only courtesy: in CI the webServer is
     // `npm run start` on a production build, so a non-200 is a broken setup, not
     // a reason to skip. Asserting instead of skipping is what stops CI producing
     // an assertion-free run that looks identical to a pass (a 429, a 5xx or a

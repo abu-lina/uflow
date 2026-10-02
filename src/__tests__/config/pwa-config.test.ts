@@ -1,79 +1,139 @@
 /**
- * Regression tests — Plan 046 + Plan 064 hotfix: Iconify PWA service-worker intercept fix
+ * Regression tests — Plan 046 + Plan 064 hotfix + request 282 (Serwist migration):
+ * the service worker must not intercept Iconify CDN requests.
  *
- * Root cause verified in agent-output/analysis/closed/046-iconify-pwa-analysis.md:
- * @ducanh2912/next-pwa@10.x silently ignores workbox-specific options (runtimeCaching,
- * importScripts, exclude/buildExcludes) when they are placed at the TOP LEVEL of
- * withPWA({...}). They must be nested inside workboxOptions: { ... }.
+ * ## The rule, which is verified and must not change
  *
- * When top-level options are ignored:
- * - The default cache activates, including a `!sameOrigin` NetworkFirst catch-all
- * - Combined with fallbacks.document, a handlerDidError plugin returns Response.error()
- *   for generic XHR/fetch requests (request.destination === "")
- * - Iconify CDN API calls (api.iconify.design, api.unisvg.com, api.simplesvg.com)
- *   match the cross-origin catch-all and hit the error path → CORS failure
+ * No service-worker route may be registered for api.iconify.design,
+ * api.unisvg.com or api.simplesvg.com. Registering one means the worker calls
+ * `event.respondWith()` and re-issues the request from the service-worker
+ * context, and that re-issued request behaved differently enough to stop icons
+ * loading on /p/[id] ("no-response :: error:{}", status null) while the same
+ * request succeeded when the browser made it directly. With no matching route
+ * Serwist never calls respondWith, so the browser handles those requests
+ * natively.
  *
- * Plan 064 hotfix (UAT regression):
- * The Plan 064 release added a NetworkOnly route as a safety net. In UAT this caused a
- * NEW failure mode: the SW intercepted Iconify requests and re-issued fetch() from the
- * service-worker context. In Firefox ETP (Enhanced Tracking Protection) or with content
- * blockers, that SW-context cross-origin fetch is blocked at network level (status null),
- * producing "no-response :: error:{}" regardless of CORS headers on the Iconify server.
- * The NetworkOnly route is unnecessary because correctly nesting workboxOptions (tested
- * below) already eliminates the default catch-all. Without a registered route Workbox
- * does NOT intercept Iconify requests — the browser handles them natively.
+ * Two separate incidents made this rule:
+ * - 046: @ducanh2912/next-pwa@10.x silently ignored top-level workbox options,
+ *   which activated its default cache, which contained a `!sameOrigin`
+ *   NetworkFirst catch-all that matched Iconify.
+ * - 064/069: a NetworkOnly route was then added for those domains as a safety
+ *   net, which intercepted them explicitly and made things worse.
  *
- * These tests assert the CORRECT config shape so neither mis-placement can silently
- * recur in future edits.
+ * ## The mechanism, corrected
+ *
+ * Retrospectives 064 and 069 (and the old version of this comment) attributed
+ * the 064 regression to "Firefox Enhanced Tracking Protection blocks the
+ * SW-context fetch". That attribution is UNVERIFIED and should be treated as
+ * folklore: the three Iconify domains appear on none of the lists ETP
+ * classifies by (0 matches in Disconnect's services.json, EasyPrivacy and
+ * EasyList), and a Playwright Firefox 155 reproduction of the exact NetworkOnly
+ * semantics returned HTTP 200 with ETP both on and off. The fix was right; the
+ * explanation was not. See agent-output/research/282-defaultcache-iconify.md.
+ *
+ * That is also why there is no ETP Playwright spec: it would pass whether or
+ * not the bug was present.
+ *
+ * ## What is tested where
+ *
+ * These tests assert the rule at the source. The build-time guard on the
+ * shipped artifact is scripts/verify-sw-no-cross-origin-routes.mjs, which
+ * executes the built public/sw.js and asserts `respondWith` is never called for
+ * these origins. Both run; neither replaces the other.
  */
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { describe, it, expect } from 'vitest';
 
-const configSource = readFileSync(resolve(process.cwd(), 'next.config.js'), 'utf-8');
+import { runtimeCaching } from '@/lib/pwa/runtimeCaching';
 
-describe('next.config.js PWA configuration (Plan 046 regression)', () => {
-  it('contains workboxOptions block — required by @ducanh2912/next-pwa@10.x API', () => {
-    // Top-level withPWA options (pre-v10 shape) are silently ignored by v10.
-    // All workbox-specific settings must live inside workboxOptions: { ... }.
-    expect(configSource).toContain('workboxOptions:');
+const nextConfigSource = readFileSync(resolve(process.cwd(), 'next.config.js'), 'utf-8');
+const serwistConfigSource = readFileSync(resolve(process.cwd(), 'serwist.config.mjs'), 'utf-8');
+
+const ICONIFY_URLS = [
+  'https://api.iconify.design/lucide.json?icons=share-2',
+  'https://api.unisvg.com/mdi.json?icons=instagram',
+  'https://api.simplesvg.com/entypo.json?icons=old-phone',
+];
+
+describe('service worker runtime caching (Plan 046 / 064 regression)', () => {
+  it.each(ICONIFY_URLS)('registers no route matching %s', (rawUrl) => {
+    const url = new URL(rawUrl);
+    const request = new Request(rawUrl, { method: 'GET' });
+
+    const matching = runtimeCaching.filter(({ matcher }) => {
+      if (matcher instanceof RegExp) {
+        const result = matcher.exec(url.href);
+        // Serwist's RegExpRoute only accepts a cross-origin match that starts at
+        // index 0, so mirror that rule rather than treating any match as a hit.
+        return result !== null && result.index === 0;
+      }
+      // A string matcher is an exact-URL route.
+      if (typeof matcher === 'string') return matcher === url.href;
+      return Boolean(
+        matcher({
+          request,
+          url,
+          sameOrigin: false,
+          event: undefined as never,
+        }),
+      );
+    });
+
+    expect(matching).toEqual([]);
   });
 
-  it('does not have runtimeCaching at the top level of withPWA() — would be silently ignored', () => {
-    // Two-space indent = top level of withPWA({...}). If this pattern exists,
-    // the array is consumed by the @ducanh2912/next-pwa option parser but never
-    // forwarded to Workbox, activating the default !sameOrigin NetworkFirst cache.
-    expect(configSource).not.toContain('\n  runtimeCaching:');
+  it('matches a Supabase Storage image, so the rules above are not vacuously empty', () => {
+    const rawUrl = 'https://abcdefg.supabase.co/storage/v1/object/public/photos/a.jpg';
+    const url = new URL(rawUrl);
+    const matching = runtimeCaching.filter(
+      ({ matcher }) => matcher instanceof RegExp && matcher.exec(url.href)?.index === 0,
+    );
+    expect(matching).toHaveLength(1);
   });
 
-  it('does not have importScripts at the top level of withPWA() — would be silently ignored', () => {
-    // importScripts at top level is ignored in v10; the push handler would not
-    // be imported into the generated service worker.
-    expect(configSource).not.toContain('\n  importScripts:');
+  it('consists of exactly the two ported rules', () => {
+    // Asserted on the module's value, not its source text, so it catches
+    // `runtimeCaching = defaultCache` (1 entry in dev, 20 in production) and any
+    // third rule added without a matching assertion above.
+    expect(runtimeCaching).toHaveLength(2);
+    expect(runtimeCaching.map((entry) => entry.handler.constructor.name)).toEqual([
+      'CacheFirst',
+      'StaleWhileRevalidate',
+    ]);
   });
 
-  it('does NOT register any explicit service-worker route for Iconify CDN API domains', () => {
-    // Plan 064 hotfix regression: the original release added `handler: 'NetworkOnly'`
-    // for Iconify domains as a safety net, but this caused SW to re-issue fetch() from
-    // the SW context. Firefox ETP and content blockers block SW-context cross-origin
-    // fetches to CDN domains at network level (status null) regardless of CORS headers.
-    //
-    // The correct behaviour: NO runtimeCaching entry at all for these domains.
-    // With workboxOptions correctly nested (tested above), Workbox does not generate
-    // the default !sameOrigin catch-all, so Iconify requests are never intercepted —
-    // the browser's native fetch handles them without any SW restriction.
-    //
-    // This test checks that the code literal `'NetworkOnly'` (handler value) is absent,
-    // which confirms no route registers that handler in the runtimeCaching array.
-    expect(configSource).not.toContain("'NetworkOnly'");
+  it('uses only anchored RegExp matchers, so no function matcher can test sameOrigin', () => {
+    // defaultCache's entry 19 is `({ sameOrigin }) => !sameOrigin`, a function
+    // matcher. Requiring every matcher to be a `^`-anchored RegExp rules that
+    // shape out structurally, and the `^` is what Serwist's RegExpRoute needs to
+    // accept a cross-origin match at all (it requires match index 0), so an
+    // unanchored rewrite would silently stop matching Supabase while gaining the
+    // ability to match things mid-URL.
+    for (const { matcher } of runtimeCaching) {
+      expect(matcher).toBeInstanceOf(RegExp);
+      expect((matcher as RegExp).source.startsWith('^')).toBe(true);
+    }
   });
 
-  it('does not have a urlPattern regex that intercepts Iconify CDN origins', () => {
-    // The regex pattern that previously matched the three Iconify CDN domains had the
-    // form: /^https:\/\/(api\.iconify\.design|api\.unisvg\.com|api\.simplesvg\.com)\//
-    // Verify the escaped-dot form (regex literal) is gone from active code.
-    // Plain-text references in comments use unescaped dots and will NOT match this.
-    expect(configSource).not.toContain('api\\.iconify\\.design|api\\.unisvg\\.com');
+  it('keeps the service worker at public/sw.js', () => {
+    // Load-bearing in four places: Dockerfile:76 copies public/,
+    // scripts/verify-pwa-output.js asserts the path,
+    // scripts/check-uat-pwa-config.sh checks it in the container, and
+    // RootClientLayout registers '/sw.js'.
+    expect(serwistConfigSource).toContain("swDest: 'public/sw.js'");
+  });
+
+  it('no longer configures the PWA through next.config.js', () => {
+    // @ducanh2912/next-pwa is gone, so the `workboxOptions:` nesting that
+    // incident 046 was about cannot recur. The config now lives in
+    // serwist.config.mjs and src/lib/pwa/.
+    // The require(), not the string: next.config.js still explains in comments
+    // why the plugin was removed, and that explanation is worth keeping.
+    expect(nextConfigSource).not.toContain("require('@ducanh2912/next-pwa')");
+    expect(nextConfigSource).not.toContain('withPWA(');
+    expect(nextConfigSource).not.toContain('workboxOptions');
+    expect(nextConfigSource).not.toContain('runtimeCaching:');
   });
 });
 
@@ -82,9 +142,7 @@ describe('next.config.js CSP configuration (Plan 064 regression)', () => {
     // frame-src restricts <iframe>/<frame> embedding sources.
     // Iconify APIs serve JSON — they are never embedded as iframes.
     // They belong in connect-src and default-src only.
-    const frameSrcLine = configSource
-      .split('\n')
-      .find((line) => line.includes('frame-src'));
+    const frameSrcLine = nextConfigSource.split('\n').find((line) => line.includes('frame-src'));
     expect(frameSrcLine).toBeDefined();
     expect(frameSrcLine).not.toContain('api.iconify.design');
     expect(frameSrcLine).not.toContain('api.unisvg.com');
@@ -92,35 +150,10 @@ describe('next.config.js CSP configuration (Plan 064 regression)', () => {
   });
 
   it('retains Iconify API domains in connect-src (required for fetch() calls from @iconify/react)', () => {
-    const connectSrcIdx = configSource.indexOf("'connect-src'");
+    const connectSrcIdx = nextConfigSource.indexOf("'connect-src'");
     expect(connectSrcIdx).toBeGreaterThan(0);
     // Grab enough context around connect-src to find all its origins
-    const connectSrcChunk = configSource.slice(connectSrcIdx, connectSrcIdx + 400);
-    expect(connectSrcChunk).toContain('api.iconify.design');
-    expect(connectSrcChunk).toContain('api.unisvg.com');
-    expect(connectSrcChunk).toContain('api.simplesvg.com');
-  });
-});
-
-describe('next.config.js CSP configuration (Plan 064 regression)', () => {
-  it('does not include Iconify API domains in frame-src (they are JSON APIs, not iframe sources)', () => {
-    // frame-src restricts <iframe>/<frame> embedding sources.
-    // Iconify APIs serve JSON — they are never embedded as iframes.
-    // They belong in connect-src and default-src only.
-    const frameSrcLine = configSource
-      .split('\n')
-      .find((line) => line.includes('frame-src'));
-    expect(frameSrcLine).toBeDefined();
-    expect(frameSrcLine).not.toContain('api.iconify.design');
-    expect(frameSrcLine).not.toContain('api.unisvg.com');
-    expect(frameSrcLine).not.toContain('api.simplesvg.com');
-  });
-
-  it('retains Iconify API domains in connect-src (required for fetch() calls from @iconify/react)', () => {
-    const connectSrcIdx = configSource.indexOf("'connect-src'");
-    expect(connectSrcIdx).toBeGreaterThan(0);
-    // Grab enough context around connect-src to find all its origins
-    const connectSrcChunk = configSource.slice(connectSrcIdx, connectSrcIdx + 400);
+    const connectSrcChunk = nextConfigSource.slice(connectSrcIdx, connectSrcIdx + 400);
     expect(connectSrcChunk).toContain('api.iconify.design');
     expect(connectSrcChunk).toContain('api.unisvg.com');
     expect(connectSrcChunk).toContain('api.simplesvg.com');
