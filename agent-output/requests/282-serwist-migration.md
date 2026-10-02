@@ -339,6 +339,120 @@ $ ls public/sw.js
 ls: public/sw.js: No such file or directory
 ```
 
+## CI went red after the first push, on three distinct failures (PR #486)
+
+All three were real, all three were consequences of the migration, and none of them could
+have been seen locally through `npm run build`. Runs 37026068710 (CI Pipeline) and
+37026068860 (E2E Smoke).
+
+### Failure 1: CI calls `next build` directly, so npm's `postbuild` hook never fires
+
+`FAIL: public/sw.js was not generated.` in Build Verification.
+
+Configurator mode moved worker generation OUT of `next build` and INTO `scripts/build-sw.js`,
+reached from `npm run build` through `postbuild`. **npm lifecycle hooks do not run for
+`npx next build`**, so every pipeline step that invokes the binary directly produced no
+worker, and `scripts/verify-pwa-output.js` correctly failed on the missing file.
+
+Three steps did that, now all calling `npm run build:sw` instead of
+`node scripts/verify-pwa-output.js`:
+
+| File                                             | Step                           | Before                                                                   | After                                          |
+| ------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------ | ---------------------------------------------- |
+| `.github/workflows/ci.yml:119`                   | Build application              | `... \| tee .next-build-output.txt && node scripts/verify-pwa-output.js` | `... && npm run build:sw`                      |
+| `.github/workflows/weekly-quality-gates.yml:39`  | Build application (Lighthouse) | `npx next build --webpack && node scripts/verify-pwa-output.js`          | `npx next build --webpack && npm run build:sw` |
+| `.github/workflows/weekly-quality-gates.yml:216` | Build and analyze              | `node scripts/verify-pwa-output.js`                                      | `npm run build:sw`                             |
+
+`set -o pipefail`, the `tee` pipeline and the `&&` chaining in `ci.yml` are unchanged. Side
+benefit: `scripts/verify-sw-no-cross-origin-routes.mjs` (the Iconify probe) was never running
+in CI before this, because only `build:sw` invokes it.
+
+Every other direct invocation in the repo, checked rather than assumed:
+
+| Site                                                                      | Command                                  | Worker built?          |
+| ------------------------------------------------------------------------- | ---------------------------------------- | ---------------------- |
+| `Dockerfile:56`                                                           | `npm run build:standalone`               | YES, chains `build:sw` |
+| `.github/workflows/e2e.yml:48`                                            | `npm run build` + `verify-pwa-output.js` | YES, via `postbuild`   |
+| `.github/workflows/snyk-pr-verification.yml:148`                          | `npm run build`                          | YES, via `postbuild`   |
+| `scripts/verify-snyk-pr.sh:129`                                           | `npm run build`                          | YES, via `postbuild`   |
+| `scripts/bisect-flicker.sh:115`                                           | `npm run build`                          | YES, via `postbuild`   |
+| `deploy/`, `performance-test.yml`, `deploy-uat.yml`, `deploy-hetzner.yml` | no `next build` at all                   | n/a                    |
+
+`e2e.yml:48`'s trailing `node scripts/verify-pwa-output.js` **is now redundant**: `postbuild`
+has already run `build:sw`, which runs that script plus the other two guards. Left in place
+deliberately rather than changed silently; it is a harmless second run of the same assertion,
+and removing it is a one-line follow-up.
+
+### Failure 2: the service worker never finishes installing, because its precache does not fit the rate limiter
+
+```
+A bad HTTP response code (429) was received when fetching the script.
+TypeError: Failed to register a ServiceWorker ... script ('http://127.0.0.1:3000/sw.js')
+Error: the registration must survive the session boundary; Expected: > 0, Received: 0
+```
+
+The stated cause (unconditional `register()` amplifying `/sw.js` fetches) was **not** the
+cause, and was measured not to be: with the `registrations.length === 0` guard restored, the
+spec still failed locally, reproduced on the full `CI=1 npx playwright test` suite. Two
+sessions, with and without the guard, both fetch `/sw.js` exactly once; the second fetch is
+the browser's own soft update on navigation, not the call site.
+
+The real chain, measured:
+
+1. `@serwist/next` defaults `precachePrerendered` to **true** (`dist/index.config.mjs:29,36`),
+   appending `.next/server/{app,pages}/**/*.html` to the glob. `@ducanh2912/next-pwa` never
+   did this. Compared against the live next-pwa worker on `https://ummahflow.com/sw.js`:
+   **54 -> 112** precache entries that `src/middleware.ts` counts, +61 document routes
+   (`/about`, `/login`, 16 x `/create/*`, 20 x `/city/*`, ...).
+2. The non-API bucket is **100 requests/min per client IP** (`src/middleware.ts:11-12`,
+   matcher at `:137` excludes only `/api`, `/_next/static`, `/_next/image`, `favicon.ico`).
+   The page view that triggers the install has already spent ~50 of it.
+3. The tail of the precache gets 429s. Serwist rejects the `install` event on any non-OK
+   precache response, so the worker stays stuck `installing` forever: never activates, no
+   offline page, no push, and nothing in the build output says so.
+4. The registration therefore does not survive the session, and session 2 re-registers into
+   a bucket that is still spent, which is the 429 on `/sw.js` in the CI log.
+
+Measured with a throwaway Playwright probe against `npm run start`, one synthetic client IP:
+
+| Build                                | 429s                                       | Worker state after 8s | Precached  |
+| ------------------------------------ | ------------------------------------------ | --------------------- | ---------- |
+| `precachePrerendered` default (true) | 10 (`/images/seals/*`, `/images/Home.png`) | `installing`, forever | 86 of 112  |
+| `precachePrerendered: false`         | **0**                                      | **`activated`**       | 290 of 290 |
+
+Fix: `precachePrerendered: false` in `serwist.config.mjs`. That is parity with next-pwa, not
+a workaround; middleware-matched entries go 112 -> 51 (the 3 missing vs next-pwa's 54 are
+`/sw-push-handler.js` and `/fallback-*.js`, which no longer exist, and the two Lottie JSONs,
+now over `maximumFileSizeToCacheInBytes`). Guarded by a new assertion in
+`src/__tests__/config/pwa-config.test.ts`.
+
+**The rate limiter was not touched**, and must not be: in production nginx proxies image and
+document requests to Next with the real client IP
+(`deploy/nginx/nginx-uat-template.conf:161-170`), so a 112-request precache would blow a real
+visitor's own budget on their first page view too. The limiter was reporting a true fact.
+
+The `registrations.length === 0` guard is restored anyway, on its own merits (reversing
+decision 7): `register()` runs an update check that refetches `/sw.js`, this effect runs on
+every mount of the root layout, and request 281's four-arm fixture already proved the guard
+costs nothing in update coverage because the browser soft-updates an in-scope worker on
+navigation. One fetch per page view against each real user's own rate-limit budget is a
+production cost with no benefit, so dropping it was a (smaller) regression in its own right.
+
+The `x-forwarded-for is not allowed by Access-Control-Allow-Headers` CORS noise for the
+Iconify domains in that log is the known, documented side effect of the spec's
+`extraHTTPHeaders` applying to cross-origin fetches. No assertion depends on it.
+
+### Failure 3: a regression test still pointed at the old config location
+
+`src/__tests__/regression/plan211-map-tiles-iphone.test.ts` read `next.config.js` and asserted
+the Supabase image-cache regex was present as **text**. The rule moved to
+`src/lib/pwa/runtimeCaching.ts`. Repointed at the imported `runtimeCaching` array: it now
+asserts a Supabase Storage image matches and that `tile.openstreetmap.de`,
+`basemaps.cartocdn.com`, `api.iconify.design` and `example.com` do not. Stronger than before,
+because the old version could only catch one literal spelling of a broadened regex. Shown
+failing on a deliberately broadened matcher:
+`https://tile.openstreetmap.de/12/2048/1361.png must not hit the image cache: expected true to be false`.
+
 ## Verification record
 
 | Check                                                                    | Result                                                                                                                                                                         |
@@ -386,24 +500,44 @@ loaded lazily and precaching 12 MB of Lottie JSON on install would be worse than
 warning. Precache totals: 351 URLs / 18.6 MB locally, 331 URLs / 17.5 MB in Docker (the
 `.dockerignore` `*.md` rule drops a handful of README files from `public/`).
 
+Precache totals changed again with `precachePrerendered: false`: **290 URLs / 15.6 MB**
+locally, of which 51 are paths `src/middleware.ts` rate-limits.
+
+### Re-verified after the CI fixes (hook, precache scope, repointed test)
+
+| Check                                                                               | Result                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npx next build --webpack && npm run build:sw`, the exact command `ci.yml` now runs | PASS. The step never exercised locally before this: `public/sw.js` written, 331 URLs precached, then all three guards green. Previously this exact command produced no worker at all                                                           |
+| `npm run build` (the `postbuild` path)                                              | PASS, 290 URLs / 15.6 MB, all three guards green                                                                                                                                                                                               |
+| `CI=1 npx playwright test` (full suite, twice)                                      | PASS both times, 7 passed. This is what reproduces the CI failure: the 2-spec run passed even with the bug, because the failure needs the other specs' concurrent load                                                                         |
+| `CI=1 npx playwright test e2e/sw-session-boundary.spec.ts e2e/pwa.spec.ts`          | PASS, registrations > 0 on both sessions, no 429 for `/sw.js`                                                                                                                                                                                  |
+| Install-time 429 probe, `precachePrerendered` default                               | **RED** — 10 x 429, worker `installing` after 8s, 86 of 112 entries cached. This is the CI failure, reproduced locally                                                                                                                         |
+| Install-time 429 probe, `precachePrerendered: false`                                | GREEN — 0 x 429 across 357 responses, worker `activated`, 290 of 290 entries cached                                                                                                                                                            |
+| `plan211-map-tiles-iphone.test.ts` repointed                                        | PASS (3 tests), and shown RED against a deliberately broadened matcher                                                                                                                                                                         |
+| `pwa-config.test.ts`                                                                | PASS, 12 tests (was 11; one added for `precachePrerendered: false`)                                                                                                                                                                            |
+| `npx tsc --noEmit`                                                                  | PASS                                                                                                                                                                                                                                           |
+| `npm run lint`                                                                      | PASS, 0 errors, 132 warnings (unchanged baseline)                                                                                                                                                                                              |
+| `docker build`                                                                      | NOT re-run. Nothing here touches the Dockerfile or `.dockerignore`, and the image path builds through `build:standalone`, which already chained `build:sw`. `precachePrerendered: false` changes the manifest contents, not how it is produced |
+
 ## Decisions
 
-| #   | Decision                           | Choice                                                                              | Rationale                                                                                                                                                                                                                                                                        |
-| --- | ---------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Target mode                        | Configurator mode, not `@serwist/turbopack`                                         | Keeps `swDest` at `public/sw.js`, so the Dockerfile copy, the verify script, the UAT check and the registration call all survive (request 280, Q4)                                                                                                                               |
-| 2   | Version pinning                    | Exact, no caret                                                                     | Org guardrail; the existing `^10.2.9` caret is a known deviation                                                                                                                                                                                                                 |
-| 3   | `defaultCache`                     | Never imported, not even for dev                                                    | Entries 19 and 20 both match cross-origin Iconify; entry 19 is byte-identical to the next-pwa route behind incident 046. The dev branch is worse: a lone dot-star NetworkOnly                                                                                                    |
-| 4   | Push handler                       | Imported from the worker entry, bundled by esbuild; file moved to `src/lib/pwa/`    | `importScripts` throws in a module worker and keeps `/sw-push-handler.js` as a cacheable HTTP resource. Bundling retires the nginx no-cache dependency entirely                                                                                                                  |
-| 5   | Registration                       | Keep `ServiceWorkerRegistration`, drop `SerwistProvider`                            | The provider registers `type: "module"`, monkey-patches `history.pushState`/`replaceState` and adds `online -> location.reload()`. Request 281 existed to remove a forced reload                                                                                                 |
-| 6   | Registration gate                  | `NODE_ENV === 'production'`, not hostname                                           | `e2e/sw-session-boundary.spec.ts` runs a production build against `127.0.0.1` and requires a worker there. A hostname gate breaks it and confines all local validation to Docker                                                                                                 |
-| 7   | `registrations.length === 0` guard | Dropped                                                                             | `register()` is idempotent and is the documented update path. With next-pwa's injection gone this is the only registration path, so the guard went from redundant to harmful                                                                                                     |
-| 8   | `DevServiceWorkerReset`            | Deleted                                                                             | A second blind unregister-every-worker-and-wipe-every-cache effect. With registration gated on `NODE_ENV === 'production'`, dev never holds a worker, so it has nothing to clean. Keeping it is exactly the "remediation that outlives its cause" pattern request 281 documented |
-| 9   | Firefox ETP spec                   | Not written                                                                         | The three Iconify domains are on none of the lists ETP classifies by, and a Firefox 155 reproduction returned 200 with ETP on and off. The spec would pass whether or not the bug was present                                                                                    |
-| 10  | Iconify guard                      | `node:vm` execution of the built `sw.js`, asserting `respondWith` is never called   | Tests the property that is actually true, on the artifact that actually ships, with no dependency on esbuild's minifier output shape. Shown failing against two deliberately-wrong builds                                                                                        |
-| 11  | `--webpack`                        | Kept on all 7 scripts                                                               | Turbopack cannot build this repo (swagger-client / js-yaml). Unrelated to the PWA. See "What did not get done"                                                                                                                                                                   |
-| 12  | `cacheStartUrl` / offline fallback | Restored, parity only: `matcher: '/'` -> `NetworkFirst({ cacheName: 'start-url' })` | Reviewer decision after the gap was flagged. It is the only route that handles a document request, so it is the only thing that lets `fallbacks` fire. NOT broadened to `request.destination === 'document'`: that changes navigation caching app-wide, so it is a follow-up     |
-| 13  | browserslist override              | Exact pin, `4.29.1`                                                                 | `>=4.28.7` is unbounded and violates the dependency guardrail. 4.29.1 was 8 days old at pin time with no OSV advisory                                                                                                                                                            |
-| 14  | Start-url matcher shape            | The string `'/'`, not a function matcher                                            | Byte-for-byte what next-pwa emitted, and `parseRoute` resolves a string against `location.href` and compares exact hrefs. Keeps the structural "no function matcher" property that rules out `defaultCache`'s `({ sameOrigin }) => !sameOrigin`                                  |
+| #   | Decision                           | Choice                                                                              | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --- | ---------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Target mode                        | Configurator mode, not `@serwist/turbopack`                                         | Keeps `swDest` at `public/sw.js`, so the Dockerfile copy, the verify script, the UAT check and the registration call all survive (request 280, Q4)                                                                                                                                                                                                                                                                                                          |
+| 2   | Version pinning                    | Exact, no caret                                                                     | Org guardrail; the existing `^10.2.9` caret is a known deviation                                                                                                                                                                                                                                                                                                                                                                                            |
+| 3   | `defaultCache`                     | Never imported, not even for dev                                                    | Entries 19 and 20 both match cross-origin Iconify; entry 19 is byte-identical to the next-pwa route behind incident 046. The dev branch is worse: a lone dot-star NetworkOnly                                                                                                                                                                                                                                                                               |
+| 4   | Push handler                       | Imported from the worker entry, bundled by esbuild; file moved to `src/lib/pwa/`    | `importScripts` throws in a module worker and keeps `/sw-push-handler.js` as a cacheable HTTP resource. Bundling retires the nginx no-cache dependency entirely                                                                                                                                                                                                                                                                                             |
+| 5   | Registration                       | Keep `ServiceWorkerRegistration`, drop `SerwistProvider`                            | The provider registers `type: "module"`, monkey-patches `history.pushState`/`replaceState` and adds `online -> location.reload()`. Request 281 existed to remove a forced reload                                                                                                                                                                                                                                                                            |
+| 6   | Registration gate                  | `NODE_ENV === 'production'`, not hostname                                           | `e2e/sw-session-boundary.spec.ts` runs a production build against `127.0.0.1` and requires a worker there. A hostname gate breaks it and confines all local validation to Docker                                                                                                                                                                                                                                                                            |
+| 7   | `registrations.length === 0` guard | **Kept** (dropped, then restored after CI)                                          | Reversed. `register()` runs an update check that refetches `/sw.js`, and this effect runs on every mount of the root layout, so dropping it spent one extra request per page view of every real user's 100 req/min budget. Request 281's four-arm fixture proved the guard costs nothing: all four arms picked up a bumped worker, including the arm that never calls `register()` again, because the browser soft-updates an in-scope worker on navigation |
+| 7b  | `precachePrerendered`              | `false`                                                                             | `@serwist/next` defaults it true and precaches every prerendered page, which next-pwa never did: 54 -> 112 middleware-counted install requests against a 100 req/min bucket, so install 429s and the worker never activates. Parity, and the actual fix for the CI 429                                                                                                                                                                                      |
+| 8   | `DevServiceWorkerReset`            | Deleted                                                                             | A second blind unregister-every-worker-and-wipe-every-cache effect. With registration gated on `NODE_ENV === 'production'`, dev never holds a worker, so it has nothing to clean. Keeping it is exactly the "remediation that outlives its cause" pattern request 281 documented                                                                                                                                                                            |
+| 9   | Firefox ETP spec                   | Not written                                                                         | The three Iconify domains are on none of the lists ETP classifies by, and a Firefox 155 reproduction returned 200 with ETP on and off. The spec would pass whether or not the bug was present                                                                                                                                                                                                                                                               |
+| 10  | Iconify guard                      | `node:vm` execution of the built `sw.js`, asserting `respondWith` is never called   | Tests the property that is actually true, on the artifact that actually ships, with no dependency on esbuild's minifier output shape. Shown failing against two deliberately-wrong builds                                                                                                                                                                                                                                                                   |
+| 11  | `--webpack`                        | Kept on all 7 scripts                                                               | Turbopack cannot build this repo (swagger-client / js-yaml). Unrelated to the PWA. See "What did not get done"                                                                                                                                                                                                                                                                                                                                              |
+| 12  | `cacheStartUrl` / offline fallback | Restored, parity only: `matcher: '/'` -> `NetworkFirst({ cacheName: 'start-url' })` | Reviewer decision after the gap was flagged. It is the only route that handles a document request, so it is the only thing that lets `fallbacks` fire. NOT broadened to `request.destination === 'document'`: that changes navigation caching app-wide, so it is a follow-up                                                                                                                                                                                |
+| 13  | browserslist override              | Exact pin, `4.29.1`                                                                 | `>=4.28.7` is unbounded and violates the dependency guardrail. 4.29.1 was 8 days old at pin time with no OSV advisory                                                                                                                                                                                                                                                                                                                                       |
+| 14  | Start-url matcher shape            | The string `'/'`, not a function matcher                                            | Byte-for-byte what next-pwa emitted, and `parseRoute` resolves a string against `location.href` and compares exact hrefs. Keeps the structural "no function matcher" property that rules out `defaultCache`'s `({ sameOrigin }) => !sameOrigin`                                                                                                                                                                                                             |
 
 ## Follow-up requests
 
@@ -502,6 +636,31 @@ Unbounded ranges violate the dependency guardrail, and `"js-yaml": ">=4.3.0"` is
 floated js-yaml from the intended 4.3.x to 5.4.2. `browserslist` was pinned exactly in this
 request; the rest were left alone to keep the diff reviewable.
 
+### 8. The precache budget and the rate limiter still sit close together
+
+With `precachePrerendered: false` the install needs 51 requests that `src/middleware.ts`
+counts, and the page view that triggers it spends roughly 50 more, against a ceiling of 100
+per minute per IP. Measured headroom on a first visit: 0 x 429 across 357 responses, so it
+fits, but barely, and nothing guards the margin. Adding ~50 files to `public/` would push a
+first visit over the limit again and the only symptom would be a worker stuck `installing`.
+
+Two candidate fixes, both out of scope here:
+
+- Exempt plain static asset paths (not documents, not API) from the non-API bucket, or count
+  them in a separate much larger bucket. This is the real mismatch: a precache is one logical
+  action, and 51 requests from one client in one second is not abuse.
+- Add a budget guard to `scripts/verify-pwa-output.js`: count manifest entries that the
+  middleware matcher would see and fail the build above a threshold. Not added here because a
+  hard-coded threshold near today's measured 51 would be flaky; it needs the limiter change
+  first to get a sane margin.
+
+### 9. Drop the redundant `verify-pwa-output.js` call in `e2e.yml`
+
+`.github/workflows/e2e.yml:48` runs `npm run build && node scripts/verify-pwa-output.js`.
+`postbuild` already ran `build:sw`, which runs that script plus the other two guards, so the
+trailing call is a duplicate. One-line removal, left alone here to keep this diff about the
+three CI failures.
+
 ## Learnings
 
 Captured in `docs/ai/LEARNINGS.md` as entry 282:
@@ -513,3 +672,9 @@ Captured in `docs/ai/LEARNINGS.md` as entry 282:
 2. A documented root cause can be folklore. The "Firefox ETP" mechanism was cited in four
    files for six months and is unverified. The fix being right does not make the
    explanation right.
+3. Moving artifact generation out of `next build` and into an npm lifecycle hook silently
+   breaks every pipeline step that invokes the binary directly, because npm hooks do not fire
+   for `npx next build`. Verifying through `npm run build` is exactly what hid it.
+4. "Parity" has to include the new library's own defaults, not just the options you ported.
+   `precachePrerendered: true` was never written anywhere and still doubled the install-time
+   request count into a rate-limited bucket.
