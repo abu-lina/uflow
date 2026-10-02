@@ -236,19 +236,34 @@ function ServiceWorkerRegistration() {
     if (process.env.NODE_ENV !== 'production') return;
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
 
-    // Called unconditionally, with no getRegistrations() pre-check.
+    // Register only when nothing is registered yet. DO NOT DROP THIS CHECK.
     //
-    // register() is idempotent: calling it with the same scope and scriptURL
-    // does not restart installation, and it is the documented way to pick up an
-    // updated worker. The old `registrations.length === 0` guard meant a client
-    // that already had a worker never re-registered, so this path could never
-    // deliver an update. That was merely redundant while next-pwa injected its
-    // own registration; now that this is the only path, it is harmful.
-    navigator.serviceWorker.register('/sw.js').catch((error) => {
-      // Logged in all environments: a failure here means no push notifications
-      // and no offline fallback, with no other symptom.
-      console.error('❌ Service Worker registration failed:', error);
-    });
+    // `register()` is not free: every call runs an update check, which refetches
+    // /sw.js over the network. This effect runs on every mount of the root
+    // layout, so an unconditional register() adds one /sw.js request per page
+    // view for every real user. /sw.js is same-origin and matched by
+    // `src/middleware.ts`, which buckets non-API requests at 100 req/min per
+    // client IP, so the amplification spends a user's own rate-limit budget and
+    // eventually answers /sw.js with a 429, at which point registration fails
+    // (`A bad HTTP response code (429) was received when fetching the script`).
+    // It was dropped once during request 282 and CI caught exactly that.
+    //
+    // It costs nothing in update coverage. Request 281 measured this with a
+    // local fixture that bumped /sw.js v1 -> v2 across four call-site arms: all
+    // four picked up v2, including the arm that never calls register() again,
+    // because the browser soft-updates an in-scope worker on navigation. The
+    // byte-comparison update path does not depend on this call site.
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => {
+        if (registrations.length > 0) return;
+        return navigator.serviceWorker.register('/sw.js').then(() => undefined);
+      })
+      .catch((error) => {
+        // Logged in all environments: a failure here means no push notifications
+        // and no offline fallback, with no other symptom.
+        console.error('❌ Service Worker registration failed:', error);
+      });
   }, []);
   return null;
 }
