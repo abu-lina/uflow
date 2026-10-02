@@ -1,6 +1,6 @@
 /**
  * Push Notification Handler for Service Worker
- * 
+ *
  * This file handles push events and notification clicks.
  * It will be imported/merged with the main service worker.
  */
@@ -61,7 +61,7 @@ self.addEventListener('push', (event) => {
           url: notificationData.data.url,
         },
       }),
-    })
+    }),
   );
 });
 
@@ -76,7 +76,7 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action) {
     // Handle specific actions if needed
     console.log('Notification action clicked:', event.action);
-    
+
     // You can add custom logic for different actions here
     // For example, opening a specific page based on action
     const actionUrl = event.notification.data?.actions?.[event.action]?.url;
@@ -105,7 +105,7 @@ self.addEventListener('notificationclick', (event) => {
         if (clients.openWindow) {
           return clients.openWindow(urlToOpen);
         }
-      })
+      }),
   );
 });
 
@@ -114,4 +114,3 @@ self.addEventListener('notificationclose', (event) => {
   // You can track notification dismissals here if needed
   console.log('Notification closed:', event.notification.tag);
 });
-

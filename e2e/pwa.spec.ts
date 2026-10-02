@@ -1,17 +1,21 @@
 import { expect, test } from './fixtures';
 
 test.describe('PWA service worker', () => {
-  // next-pwa only generates the service worker in a production build; under
-  // `npm run dev` the plugin is disabled and /sw.js 404s, so this spec must
-  // only run where a real build is served (CI=1 -> `npm run start`).
+  // The worker is built by `serwist build` after `next build`, so it only
+  // exists where a real build is served (CI=1 -> `npm run start`). Under
+  // `npm run dev` nothing generates it and /sw.js 404s.
   test.skip(!process.env.CI, 'service worker is only generated in production builds');
 
-  // Guards the webpack-dependent SW generation in next.config.js: if the
-  // bundler silently switched to Turbopack, /sw.js would 404 or lose the
-  // push-handler importScripts entry.
-  test('sw.js is served and imports the push handler', async ({ request }) => {
+  test('sw.js is served and carries the push handler', async ({ request }) => {
     const response = await request.get('/sw.js');
     expect(response.status()).toBe(200);
-    expect(await response.text()).toContain('sw-push-handler.js');
+    const body = await response.text();
+    // Serwist bundles src/lib/pwa/sw-push-handler.js with esbuild rather than
+    // importScripts-ing it, so the filename is gone from the output and only
+    // its behaviour remains. Same markers as scripts/verify-pwa-output.js;
+    // esbuild normalises string literals to double quotes.
+    expect(body).toContain('addEventListener("push"');
+    expect(body).toContain('showNotification');
+    expect(body).toContain('UFLOW');
   });
 });
