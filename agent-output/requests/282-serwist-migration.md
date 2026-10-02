@@ -898,3 +898,156 @@ Captured in `docs/ai/LEARNINGS.md` as entry 282:
    `({ sameOrigin }) => !sameOrigin` and could not tell it apart from
    `sameOrigin && destination === 'document'`. Asserting the behaviour (every matcher must be
    false for the Iconify origins) is shorter and strictly stronger.
+
+## Post-review: the exemption was too broad, and the `main` merge
+
+### The security defect in the Part 1 exemption
+
+`isStaticAssetRequest` keyed purely on file extension, and the predicate runs on every
+path. So `/p/anything.json`, `/food.json`, `/city/berlin.png`, `/about.html` and
+`/create/listing.js` were all exempt from the 100 req/min page bucket while still reaching
+the app. `/p/[slug]` does a provider lookup before it 404s, which makes that an unmetered
+database request per hit for anyone who can append `.json` to a URL.
+
+The earlier shadowing test could not catch it: every negative case in it (`/images`,
+`/icons`, `/food`, `/city/berlin`) was a path the app itself serves, so it only proved the
+exemption cannot mistake a real route for an asset, never that it cannot mistake a fake
+asset for a real route.
+
+The rule is now **an exact known static file, or a static extension INSIDE a known asset
+directory**. Both halves are load-bearing: without the extension test,
+`startsWith('/images')` would exempt a future extensionless `/images` page.
+
+```ts
+const STATIC_ASSET_FILES = new Set([
+  '/clear-storage.html',
+  '/favicon.ico',
+  '/manifest.json',
+  '/offline.html',
+  '/sw.js',
+  '/sw.js.map',
+]);
+const STATIC_ASSET_DIRS = ['/animations/', '/icons/', '/images/', '/leaflet/', '/screenshots/'];
+
+export function isStaticAssetRequest(pathname: string): boolean {
+  if (STATIC_ASSET_FILES.has(pathname)) return true;
+  if (!STATIC_ASSET_PATHNAME.test(pathname)) return false;
+  return STATIC_ASSET_DIRS.some((dir) => pathname.startsWith(dir));
+}
+```
+
+Both lists are the closed set `ls public/` reports: 5 top-level files plus `/sw.js.map`, and
+5 asset directories. `STATIC_ASSET_PATHNAME` is unchanged. No limit moved, no other
+exemption was added, and `getRateLimitKey`, `checkRateLimit`, both limit constants and
+`src/lib/security/clientIp.ts` are untouched.
+
+#### The bypass tests, red against the old predicate
+
+Six new tests in the same `describe('Request 282 ...')` block, all shown red against the
+extension-only predicate (re-proven post-merge by temporarily restoring it):
+
+| Test                                                               | Against extension-only                                      | Against the fix |
+| ------------------------------------------------------------------ | ----------------------------------------------------------- | --------------- |
+| `[control] still rate-limits /p/some-slug.json`                    | **FAIL** `expected +0 to be 20`                             | PASS            |
+| `[control] still rate-limits /food.json`                           | **FAIL** `expected +0 to be 20`                             | PASS            |
+| `[control] still rate-limits /city/berlin.png`                     | **FAIL** `expected +0 to be 20`                             | PASS            |
+| `[control] still rate-limits /about.html`                          | **FAIL** `expected +0 to be 20`                             | PASS            |
+| `[control] still rate-limits /create/listing.js`                   | **FAIL** `expected +0 to be 20`                             | PASS            |
+| `does not exempt an app route carrying a static-looking extension` | **FAIL** `/p/some-slug.json ...: expected true to be false` | PASS            |
+
+`0` of 120 requests got a 429 under the old predicate where 20 must; the bypass is real, on
+all five paths. Full file: 21 tests, 6 failed / 15 passed against the old predicate, 21
+passed against the fix. The pre-existing tests are unchanged in substance, and `/images`
+and `/icons` (extensionless) are still asserted `false`. `/manifest.json`, `/favicon.ico`
+and `/leaflet/marker.png` were added to the asserted-`true` set.
+
+#### Re-measured headroom under the narrower rule
+
+Same probe, same method, against a post-merge production build. A third classification
+column was added so the two predicates are compared on identical captured traffic:
+
+| Phase                        | HTTP requests | Counted **before** | Counted, **extension-only** | Counted, **after the fix** | 429s |
+| ---------------------------- | ------------- | ------------------ | --------------------------- | -------------------------- | ---- |
+| Page view of `/`             | 58            | 14                 | 13                          | **13**                     | 0    |
+| Install (worker precache)    | 291           | 50                 | 1                           | **1**                      | 0    |
+| Both, one client, one minute | 349           | **64**             | 14                          | **14**                     | 0    |
+
+**The narrower rule changed nothing**, at any phase, as expected but now measured rather
+than assumed: the precache only fetches from `/images/`, `/icons/` and the root file set.
+Headroom against the 100 req/min bucket is **86**, and install still costs 1 counted
+request. Worker `activated`, 290 of 290 precache entries cached, 0 x 429.
+
+The `before` figure is 64 here against 66 in the earlier measurement. That is Next's link
+prefetching varying run to run (14 app-route documents this time, 16 then), not the
+predicate; the three runs taken post-merge all reported 64/14/14.
+
+The one remaining counted install request is still `/images/seals/README.md`, because `.md`
+is not an asset extension. **Follow-up worth its own line:** a README is being shipped as a
+public static asset. It should move out of `public/` rather than have `.md` added to the
+extension list.
+
+### Merging `origin/main` (`b6337c31`)
+
+Merge, not rebase, since the branch is pushed and has review history. Three conflicts:
+
+- **`package.json`** — one hunk, resolved by taking both sides. main's `@supabase/ssr`
+  `^0.6.1 -> ^0.12.7` and `next-swagger-doc` `^0.4.1 -> ^0.5.0` are kept, as are this
+  branch's removal of `@ducanh2912/next-pwa`, the serwist trio at exactly `9.5.12`, and the
+  `browserslist` `4.29.1` override. (`next-swagger-doc` auto-merged; only `@supabase/ssr`
+  conflicted, because `@serwist/next` sorts next to it.)
+- **`package-lock.json`** — not hand-merged. Reset to main's copy, then regenerated with
+  `npm install` from the resolved `package.json` (`added 58, removed 18, changed 8`, 0
+  vulnerabilities). Verified from the lock afterwards: `serwist`, `@serwist/next` and
+  `@serwist/cli` all resolve to exactly `9.5.12` (as do the transitive `@serwist/build`,
+  `@serwist/utils`, `@serwist/webpack-plugin`, `@serwist/window`), `browserslist` resolves
+  to `4.29.1` at the single node in the tree, and `@ducanh2912` appears nowhere.
+- **`docs/ai/LEARNINGS.md`** — append-only on both sides, both sets kept in full. main's 12
+  entries insert in request-number order before this branch's 274-282 block, so the
+  auto-merge needed no reordering. Arithmetic checks out: 691 base + 86 (branch) + 133
+  (main) = 910 lines, 66 entry headings, and every heading from both parents is present
+  (verified with `comm` against each parent).
+
+### Post-merge verification
+
+| Check                                                            | Result                                                                                                                                                                                                         |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm install`                                                    | PASS, 0 vulnerabilities                                                                                                                                                                                        |
+| `npx next build --webpack && npm run build:sw` (CI's exact line) | PASS. 290 URLs / 15.6 MB precached, all three guards green (push handler, the `/offline.html` + `/` + `/food` document controls, no Iconify route)                                                             |
+| Bypass tests vs the **old** extension-only predicate             | **RED as designed** — 6 failed / 15 passed, `expected +0 to be 20` on all five fake-extension routes                                                                                                           |
+| Bypass tests vs the fix                                          | GREEN — 21 passed                                                                                                                                                                                              |
+| `279-trusted-client-ip.test.ts`                                  | PASS, 21 tests (was 12)                                                                                                                                                                                        |
+| `pwa-config.test.ts`                                             | PASS, 14 tests                                                                                                                                                                                                 |
+| `plan211-map-tiles-iphone.test.ts`                               | PASS, 3 tests                                                                                                                                                                                                  |
+| `plan123-iteration2-middleware-profile-exemption.test.ts`        | PASS, 4 tests                                                                                                                                                                                                  |
+| All four together                                                | PASS, 42 tests                                                                                                                                                                                                 |
+| `CI=1 npx playwright test` (full suite)                          | PASS, 7 passed in 15.5s, including all three auth specs against the new `@supabase/ssr` 0.12.7                                                                                                                 |
+| `npx tsc --noEmit`                                               | PASS                                                                                                                                                                                                           |
+| `npm run lint`                                                   | PASS, 0 errors, 132 warnings (unchanged baseline)                                                                                                                                                              |
+| `docker build`                                                   | PASS. Run because the dependency tree changed. All three guards ran INSIDE the image build (290 URLs at build log line 330), and the image has a valid `/app/public/sw.js`, 62,865 bytes, push handler present |
+| Headroom probe                                                   | 64 counted before / 14 after, install 1, 0 x 429, worker `activated`, 290/290 cached                                                                                                                           |
+
+#### `@supabase/ssr` 0.12.7 is fine; one false alarm, and it was mine
+
+The first post-merge Playwright run failed all three auth specs with
+`Ungültige E-Mail oder Passwort`. That was **not** the dependency bump: it was my own build.
+I had built with CI's placeholder `NEXT_PUBLIC_SUPABASE_URL=https://ci-build-test.supabase.co`
+(this worktree has no `.env.local`), and `NEXT_PUBLIC_*` vars are inlined into the client
+bundle at build time, so the browser-side Supabase client was pointed at a non-existent
+project while `playwright.config.ts`'s `webServer.env` only fixed the server process.
+`.github/workflows/e2e.yml:45-48` says so in as many words: "NEXT_PUBLIC_* vars are inlined
+into the client bundle at build time, so the build must run against the real local keys."
+Rebuilt with the keys from `supabase status -o json`, as that workflow does, and all 7
+specs pass. No secret was written to any file; the credentials were passed as process env
+only.
+
+#### `js-yaml` warnings after `next-swagger-doc` `^0.5.0`
+
+Still present, unchanged: **6** instances of
+`Attempted import error: 'js-yaml' does not contain a default export`, all from
+`swagger-client` / `swagger-ui-react` reached via `src/app/api-docs/page.tsx`, i.e. from
+`swagger-ui-react` rather than from `next-swagger-doc` itself. The build still ends
+`✓ Compiled successfully`. Reported only; the `--webpack` removal and the swagger problem
+were explicitly out of scope and were not touched.
+
+Not committed, as instructed: `public/sw.js` (gitignored) and `public/manifest.json` (no
+churn produced; `git status public/` is empty).
