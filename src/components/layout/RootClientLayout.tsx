@@ -240,14 +240,19 @@ function ServiceWorkerRegistration() {
     //
     // `register()` is not free: it fetches /sw.js (on a fresh client) or runs an
     // update check (on a client that already has one), and this effect runs on
-    // every mount of the root layout. /sw.js is same-origin and matched by
-    // `src/middleware.ts`, so each of those fetches is charged to a 100 req/min
-    // bucket: in production the visitor's own, keyed off the `X-Real-IP` nginx
-    // sets on `location = /sw.js`; anywhere Next is reached without a proxy, the
-    // shared 'unknown' bucket, because a worker's script fetch carries none of
-    // the page's headers (measured in request 282). Either way, when the bucket
-    // runs out registration fails outright: `A bad HTTP response code (429) was
-    // received when fetching the script`.
+    // every mount of the root layout. One unnecessary HTTP request per mount, of
+    // a ~67 KB file, for every visitor.
+    //
+    // It used to be worse than that, and the history matters because it is what
+    // the 429 in request 282's CI log was: /sw.js is same-origin and matched by
+    // `src/middleware.ts`, so each fetch was charged to a 100 req/min bucket.
+    // Worse, a worker's script fetch carries none of the page's headers
+    // (measured in 282), so without a proxy setting `X-Real-IP` it landed in the
+    // shared 'unknown' bucket, and when that ran out registration failed
+    // outright: `A bad HTTP response code (429) was received when fetching the
+    // script`. `/sw.js` is now exempt from that bucket, since `src/middleware.ts`
+    // skips static-asset paths, so this call site can no longer 429. The guard
+    // stays on the remaining merit: it is a request that buys nothing.
     //
     // It costs nothing in update coverage. Request 281 measured this with a
     // local fixture that bumped /sw.js v1 -> v2 across four call-site arms: all

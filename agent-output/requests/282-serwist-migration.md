@@ -556,25 +556,184 @@ locally, of which 51 are paths `src/middleware.ts` rate-limits.
 | `npm run lint`                                                                      | PASS, 0 errors, 132 warnings (unchanged baseline)                                                                                                                                                                                              |
 | `docker build`                                                                      | NOT re-run. Nothing here touches the Dockerfile or `.dockerignore`, and the image path builds through `build:standalone`, which already chained `build:sw`. `precachePrerendered: false` changes the manifest contents, not how it is produced |
 
+### Pre-merge additions: static-asset exemption + runtime document caching
+
+Two changes decided by the reviewer after PR #486 went green. Both address the same
+measurement: with `precachePrerendered: false` the install fitted inside the 100 req/min
+bucket, but only barely, and the offline page still covered `/` alone.
+
+#### 1. Static assets are exempt from the page rate limit (`src/middleware.ts`)
+
+`_next/static` and `_next/image` were ALREADY fully exempt, because the matcher at
+`src/middleware.ts:135-140` excludes them. Files served out of `public/` (`/images/**`,
+`/icons/**`, `/sw.js`, `/offline.html`) are the same class: immutable files, no auth, no
+database access, no side effects, and fronted by Cloudflare with
+`public, max-age=31536000, immutable`. Counting one class and not the other was the
+inconsistency; a service-worker precache is one logical action, and 290 requests from one
+client in one second is not abuse.
+
+Implemented as an in-handler predicate, not a matcher regex: a matcher with a nested
+lookahead plus `(?:...)` and `$` is fragile under path-to-regexp, and
+`isStaticAssetRequest()` is directly unit-testable.
+
+```ts
+const STATIC_ASSET_PATHNAME =
+  /\.(?:css|js|mjs|map|json|webmanifest|html|txt|xml|png|jpe?g|gif|svg|webp|avif|ico|bmp|woff2?|ttf|otf|eot|mp4|webm|wasm)$/i;
+// ...
+} else if (!isStaticAssetRequest(pathname)) {
+```
+
+Matched by file EXTENSION, deliberately, and not by directory prefix: `/images` as a prefix
+would also exempt a future `/images` page. Verified that nothing in `src/app/` can collide:
+no route segment contains a dot, and there is no `sitemap.xml`/`robots.txt` route (checked
+with `find src/app -type d -name "*.*"` and `find src/app -name "sitemap*" -o -name
+"robots*"`, both empty).
+
+**Nothing else moved.** No limit was raised. `getRateLimitKey`, `checkRateLimit`,
+`RATE_LIMIT_MAX_REQUESTS`, `API_RATE_LIMIT_MAX_REQUESTS`, `src/lib/security/clientIp.ts` and
+`shouldRedirectToWaitlist` are untouched, and exempt paths still fall through to
+`NextResponse.next()`.
+
+#### 2. Runtime document caching (`src/lib/pwa/runtimeCaching.ts`)
+
+The `{ matcher: '/', handler: new NetworkFirst({ cacheName: 'start-url' }) }` route is
+replaced by:
+
+```ts
+{
+  matcher: ({ request, sameOrigin }) => sameOrigin && request.destination === 'document',
+  handler: new NetworkFirst({
+    cacheName: 'pages',
+    networkTimeoutSeconds: 10,
+    plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 })],
+  }),
+}
+```
+
+It subsumes the start-url route, since `/` is a document request. Offline now works on any
+page the user has actually visited, and the offline fallback is reachable from every
+same-origin navigation instead of only `/`.
+
+**Why not `precachePrerendered: true`, which also widens offline coverage:** it buys that
+coverage by downloading all **61 prerendered HTML documents** into every first-time
+visitor's cache during install. That is the thing that took middleware-counted install
+requests from 54 to 112 and left the worker stuck `installing`. It stays `false`. Runtime
+caching gets the same user-visible benefit for the pages that matter (the ones actually
+visited) at zero install cost. `networkTimeoutSeconds: 10` so a dead-slow network falls
+back to cache rather than hanging.
+
+#### The function-matcher ban had to change, and was replaced by something stronger
+
+`src/__tests__/config/pwa-config.test.ts` banned function matchers outright, which is how it
+structurally excluded `defaultCache`'s `({ sameOrigin }) => !sameOrigin`. A function matcher
+is now required, so the syntactic ban is replaced by the property it stood in for: **every
+matcher, whatever its shape, must evaluate to `false` for a cross-origin request to
+`api.iconify.design`, `api.unisvg.com` and `api.simplesvg.com`**, evaluated at three
+`request.destination` values (`document`, `image`, unset). Function matchers are called with
+a realistic Serwist matcher argument (`{ url, request, sameOrigin, event }`); the
+`parseRoute`-mirroring logic for string and RegExp matchers is unchanged, and RegExp matchers
+are still asserted `^`-anchored.
+
+Strictly stronger: `!sameOrigin` returns true for those URLs and is rejected, while
+`sameOrigin && destination === 'document'` returns false and is permitted. Shown red by
+pasting `defaultCache`'s entry 19 back in: 5 of 14 tests fail, including
+`every matcher evaluates to false for the Iconify origins, whatever its shape` with
+`https://api.iconify.design/... as document: expected [ { …(2) } ] to deeply equal []`.
+
+`scripts/verify-sw-no-cross-origin-routes.mjs` remains the authoritative check and is
+untouched except to GAIN a control. Both the test file and `runtimeCaching.ts` now say so in
+comments.
+
+#### Re-measured headroom (the number that justifies change 1)
+
+Probe: Chromium persistent context, one synthetic `x-forwarded-for`, against `npm run start`
+on this build. Requests are attributed to the worker with Playwright's
+`request.serviceWorker()`, and the same captured traffic is classified twice: `before` =
+matcher-only exclusions (`/api`, `/_next/static`, `/_next/image`, `favicon.ico`), `after` =
+that minus what `isStaticAssetRequest` exempts.
+
+| Phase                        | HTTP requests | Counted **before** | Counted **after** | 429s |
+| ---------------------------- | ------------- | ------------------ | ----------------- | ---- |
+| Page view of `/`             | 60            | 16                 | 15                | 0    |
+| Install (worker precache)    | 291           | 50                 | **1**             | 0    |
+| Both, one client, one minute | 351           | **66**             | **16**            | 0    |
+
+So headroom against the 100 req/min bucket goes from **34 to 84**, and install itself goes
+from 50 counted requests to 1. The single remaining counted install request is
+`/images/seals/README.md`; `.md` is not in the extension list and was deliberately not added.
+
+Worker state after the run: `activated`, 290 of 290 precache entries cached, 0 x 429.
+
+Two corrections to earlier numbers in this document, from the same probe:
+
+- A page view spends **16** counted requests, not "~50". The 15 that remain after the
+  exemption are all app-route documents: `/`, plus Next's link prefetches of `/about`,
+  `/create`, `/food`, `/terms`, `/privacy-policy`, `/impressum`. Those are correctly counted.
+- Install counts **50** before the exemption, not 51 (the earlier figure was derived from the
+  manifest, this one from observed traffic).
+
+#### Offline coverage, verified live
+
+Same probe harness, worker activated, then `context.setOffline(true)`:
+
+| Navigation                        | Result                                                     |
+| --------------------------------- | ---------------------------------------------------------- |
+| `/food`, visited while online     | the real page, from the `pages` cache (title `Ummah Flow`) |
+| `/about`, visited while online    | its cached 307, so the redirect still resolves offline     |
+| `/city/berlin`, **never** visited | `/offline.html` (title `Offline - Ummah Flow`)             |
+
+Before this change the first two gave the browser's error page. The `pages` cache held 2
+entries after browsing, which is the expiration cap working as configured, not a precache.
+
+One consequence worth naming: a cached 307 from the waitlist redirect can be served to an
+offline user for up to 7 days after launch flips. Online users always hit the network first
+(NetworkFirst), so this only affects offline navigations, and the cap bounds it.
+
+#### Verification record for the two additions
+
+| Check                                                                      | Result                                                                                                                                                                                                      |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npx next build --webpack && npm run build:sw` (CI's exact line)           | PASS. 290 URLs / 15.6 MB precached, all three guards green, including the new `/food` document control                                                                                                      |
+| New `/food` document control, route **removed**                            | **RED as designed** — `FAIL: public/sw.js did not intercept a document request to https://ummahflow.com/.`, exit 1                                                                                          |
+| New `/food` control, **old root-only `matcher: '/'` route** in its place   | **RED as designed**, and this is the point: the `/` control passes, `/food` fails, with `Note: the control for / passed and this one did not ... root-only`                                                 |
+| New `/food` control, document route present                                | GREEN — `(control) https://ummahflow.com/food INTERCEPTED for a document request, as it must be`                                                                                                            |
+| Part 1 app-route control, **negation removed** (`} else if (isStatic...)`) | **RED as designed** — 8 tests fail, all four app routes report `expected +0 to be 20`                                                                                                                       |
+| Part 1 shadowing test, predicate **broadened to `startsWith('/images')`**  | **RED as designed** — `/images must not be treated as an asset: expected true to be false`                                                                                                                  |
+| `pwa-config.test.ts` with `defaultCache` entry 19 pasted back in           | **RED as designed** — 5 of 14 fail, including the new behavioural assertion at `destination: document`                                                                                                      |
+| `279-trusted-client-ip.test.ts`                                            | PASS, 12 tests (was 2)                                                                                                                                                                                      |
+| `pwa-config.test.ts`                                                       | PASS, 14 tests (was 12)                                                                                                                                                                                     |
+| `plan211-map-tiles-iphone.test.ts`                                         | PASS, 3 tests (unaffected: it filters for RegExp matchers only)                                                                                                                                             |
+| `plan123-iteration2-middleware-profile-exemption.test.ts`                  | PASS, 4 tests                                                                                                                                                                                               |
+| `CI=1 npx playwright test` (full suite)                                    | PASS, 7 passed in 15.4s, including `sw-session-boundary` and `pwa`                                                                                                                                          |
+| `npx tsc --noEmit`                                                         | PASS                                                                                                                                                                                                        |
+| `npm run lint`                                                             | PASS, 0 errors, 132 warnings (unchanged baseline)                                                                                                                                                           |
+| `docker build`                                                             | NOT run, and not needed: neither `Dockerfile` nor `.dockerignore` is touched. The image builds through `build:standalone`, which already chains `build:sw`, and all three guards run inside the image build |
+
+Not committed, as instructed: `public/sw.js` (gitignored) and `public/manifest.json` (no
+churn produced). The two throwaway probes live in `/tmp`, not the repo.
+
 ## Decisions
 
-| #   | Decision                           | Choice                                                                              | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| --- | ---------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Target mode                        | Configurator mode, not `@serwist/turbopack`                                         | Keeps `swDest` at `public/sw.js`, so the Dockerfile copy, the verify script, the UAT check and the registration call all survive (request 280, Q4)                                                                                                                                                                                                                                                                                                          |
-| 2   | Version pinning                    | Exact, no caret                                                                     | Org guardrail; the existing `^10.2.9` caret is a known deviation                                                                                                                                                                                                                                                                                                                                                                                            |
-| 3   | `defaultCache`                     | Never imported, not even for dev                                                    | Entries 19 and 20 both match cross-origin Iconify; entry 19 is byte-identical to the next-pwa route behind incident 046. The dev branch is worse: a lone dot-star NetworkOnly                                                                                                                                                                                                                                                                               |
-| 4   | Push handler                       | Imported from the worker entry, bundled by esbuild; file moved to `src/lib/pwa/`    | `importScripts` throws in a module worker and keeps `/sw-push-handler.js` as a cacheable HTTP resource. Bundling retires the nginx no-cache dependency entirely                                                                                                                                                                                                                                                                                             |
-| 5   | Registration                       | Keep `ServiceWorkerRegistration`, drop `SerwistProvider`                            | The provider registers `type: "module"`, monkey-patches `history.pushState`/`replaceState` and adds `online -> location.reload()`. Request 281 existed to remove a forced reload                                                                                                                                                                                                                                                                            |
-| 6   | Registration gate                  | `NODE_ENV === 'production'`, not hostname                                           | `e2e/sw-session-boundary.spec.ts` runs a production build against `127.0.0.1` and requires a worker there. A hostname gate breaks it and confines all local validation to Docker                                                                                                                                                                                                                                                                            |
-| 7   | `registrations.length === 0` guard | **Kept** (dropped, then restored after CI)                                          | Reversed. `register()` runs an update check that refetches `/sw.js`, and this effect runs on every mount of the root layout, so dropping it spent one extra request per page view of every real user's 100 req/min budget. Request 281's four-arm fixture proved the guard costs nothing: all four arms picked up a bumped worker, including the arm that never calls `register()` again, because the browser soft-updates an in-scope worker on navigation |
-| 7b  | `precachePrerendered`              | `false`                                                                             | `@serwist/next` defaults it true and precaches every prerendered page, which next-pwa never did: 54 -> 112 middleware-counted install requests against a 100 req/min bucket, so install 429s and the worker never activates. Parity, and the actual fix for the CI 429                                                                                                                                                                                      |
-| 8   | `DevServiceWorkerReset`            | Deleted                                                                             | A second blind unregister-every-worker-and-wipe-every-cache effect. With registration gated on `NODE_ENV === 'production'`, dev never holds a worker, so it has nothing to clean. Keeping it is exactly the "remediation that outlives its cause" pattern request 281 documented                                                                                                                                                                            |
-| 9   | Firefox ETP spec                   | Not written                                                                         | The three Iconify domains are on none of the lists ETP classifies by, and a Firefox 155 reproduction returned 200 with ETP on and off. The spec would pass whether or not the bug was present                                                                                                                                                                                                                                                               |
-| 10  | Iconify guard                      | `node:vm` execution of the built `sw.js`, asserting `respondWith` is never called   | Tests the property that is actually true, on the artifact that actually ships, with no dependency on esbuild's minifier output shape. Shown failing against two deliberately-wrong builds                                                                                                                                                                                                                                                                   |
-| 11  | `--webpack`                        | Kept on all 7 scripts                                                               | Turbopack cannot build this repo (swagger-client / js-yaml). Unrelated to the PWA. See "What did not get done"                                                                                                                                                                                                                                                                                                                                              |
-| 12  | `cacheStartUrl` / offline fallback | Restored, parity only: `matcher: '/'` -> `NetworkFirst({ cacheName: 'start-url' })` | Reviewer decision after the gap was flagged. It is the only route that handles a document request, so it is the only thing that lets `fallbacks` fire. NOT broadened to `request.destination === 'document'`: that changes navigation caching app-wide, so it is a follow-up                                                                                                                                                                                |
-| 13  | browserslist override              | Exact pin, `4.29.1`                                                                 | `>=4.28.7` is unbounded and violates the dependency guardrail. 4.29.1 was 8 days old at pin time with no OSV advisory                                                                                                                                                                                                                                                                                                                                       |
-| 14  | Start-url matcher shape            | The string `'/'`, not a function matcher                                            | Byte-for-byte what next-pwa emitted, and `parseRoute` resolves a string against `location.href` and compares exact hrefs. Keeps the structural "no function matcher" property that rules out `defaultCache`'s `({ sameOrigin }) => !sameOrigin`                                                                                                                                                                                                             |
+| #   | Decision                           | Choice                                                                                                        | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Target mode                        | Configurator mode, not `@serwist/turbopack`                                                                   | Keeps `swDest` at `public/sw.js`, so the Dockerfile copy, the verify script, the UAT check and the registration call all survive (request 280, Q4)                                                                                                                                                                                                                                                                                                          |
+| 2   | Version pinning                    | Exact, no caret                                                                                               | Org guardrail; the existing `^10.2.9` caret is a known deviation                                                                                                                                                                                                                                                                                                                                                                                            |
+| 3   | `defaultCache`                     | Never imported, not even for dev                                                                              | Entries 19 and 20 both match cross-origin Iconify; entry 19 is byte-identical to the next-pwa route behind incident 046. The dev branch is worse: a lone dot-star NetworkOnly                                                                                                                                                                                                                                                                               |
+| 4   | Push handler                       | Imported from the worker entry, bundled by esbuild; file moved to `src/lib/pwa/`                              | `importScripts` throws in a module worker and keeps `/sw-push-handler.js` as a cacheable HTTP resource. Bundling retires the nginx no-cache dependency entirely                                                                                                                                                                                                                                                                                             |
+| 5   | Registration                       | Keep `ServiceWorkerRegistration`, drop `SerwistProvider`                                                      | The provider registers `type: "module"`, monkey-patches `history.pushState`/`replaceState` and adds `online -> location.reload()`. Request 281 existed to remove a forced reload                                                                                                                                                                                                                                                                            |
+| 6   | Registration gate                  | `NODE_ENV === 'production'`, not hostname                                                                     | `e2e/sw-session-boundary.spec.ts` runs a production build against `127.0.0.1` and requires a worker there. A hostname gate breaks it and confines all local validation to Docker                                                                                                                                                                                                                                                                            |
+| 7   | `registrations.length === 0` guard | **Kept** (dropped, then restored after CI)                                                                    | Reversed. `register()` runs an update check that refetches `/sw.js`, and this effect runs on every mount of the root layout, so dropping it spent one extra request per page view of every real user's 100 req/min budget. Request 281's four-arm fixture proved the guard costs nothing: all four arms picked up a bumped worker, including the arm that never calls `register()` again, because the browser soft-updates an in-scope worker on navigation |
+| 7b  | `precachePrerendered`              | `false`                                                                                                       | `@serwist/next` defaults it true and precaches every prerendered page, which next-pwa never did: 54 -> 112 middleware-counted install requests against a 100 req/min bucket, so install 429s and the worker never activates. Parity, and the actual fix for the CI 429                                                                                                                                                                                      |
+| 8   | `DevServiceWorkerReset`            | Deleted                                                                                                       | A second blind unregister-every-worker-and-wipe-every-cache effect. With registration gated on `NODE_ENV === 'production'`, dev never holds a worker, so it has nothing to clean. Keeping it is exactly the "remediation that outlives its cause" pattern request 281 documented                                                                                                                                                                            |
+| 9   | Firefox ETP spec                   | Not written                                                                                                   | The three Iconify domains are on none of the lists ETP classifies by, and a Firefox 155 reproduction returned 200 with ETP on and off. The spec would pass whether or not the bug was present                                                                                                                                                                                                                                                               |
+| 10  | Iconify guard                      | `node:vm` execution of the built `sw.js`, asserting `respondWith` is never called                             | Tests the property that is actually true, on the artifact that actually ships, with no dependency on esbuild's minifier output shape. Shown failing against two deliberately-wrong builds                                                                                                                                                                                                                                                                   |
+| 11  | `--webpack`                        | Kept on all 7 scripts                                                                                         | Turbopack cannot build this repo (swagger-client / js-yaml). Unrelated to the PWA. See "What did not get done"                                                                                                                                                                                                                                                                                                                                              |
+| 12  | `cacheStartUrl` / offline fallback | Restored, parity only: `matcher: '/'` -> `NetworkFirst({ cacheName: 'start-url' })`. **SUPERSEDED by 15**     | Reviewer decision after the gap was flagged. It is the only route that handles a document request, so it is the only thing that lets `fallbacks` fire. NOT broadened to `request.destination === 'document'`: that changes navigation caching app-wide, so it is a follow-up                                                                                                                                                                                |
+| 13  | browserslist override              | Exact pin, `4.29.1`                                                                                           | `>=4.28.7` is unbounded and violates the dependency guardrail. 4.29.1 was 8 days old at pin time with no OSV advisory                                                                                                                                                                                                                                                                                                                                       |
+| 14  | Start-url matcher shape            | The string `'/'`, not a function matcher. **SUPERSEDED by 16**                                                | Byte-for-byte what next-pwa emitted, and `parseRoute` resolves a string against `location.href` and compares exact hrefs. Keeps the structural "no function matcher" property that rules out `defaultCache`'s `({ sameOrigin }) => !sameOrigin`                                                                                                                                                                                                             |
+| 15  | Offline coverage scope             | Widened to every same-origin document, via runtime `NetworkFirst('pages')`, 50 entries / 7 days / 10s timeout | Reviewer decision, taking the follow-up decision 12 deferred. Chosen over `precachePrerendered: true`, which buys the same coverage by downloading 61 HTML documents into every first-time visitor's cache on install, which is exactly what broke install. Runtime caching covers the pages a user actually visited, at zero install cost                                                                                                                  |
+| 16  | Function-matcher ban               | Replaced by the behavioural property it stood in for                                                          | Decision 15 needs a function matcher. Every matcher, whatever its shape, must evaluate to `false` for the three Iconify origins at three `request.destination` values. Strictly stronger than the syntactic ban: it still rejects `({ sameOrigin }) => !sameOrigin` (shown red) and permits `sameOrigin && destination === 'document'`                                                                                                                      |
+| 17  | Static-asset rate limiting         | Exempt from the non-API bucket, matched by file extension, inside the handler                                 | Reviewer decision, taking follow-up 8. `_next/static` and `_next/image` were already fully exempt via the matcher; files in `public/` are the same class. In-handler so the predicate is unit-testable, by extension rather than directory prefix so it cannot shadow a future `/images` page. No limit raised, nothing else exempted. Install goes from 50 counted requests to 1                                                                           |
 
 ## Follow-up requests
 
@@ -646,18 +805,12 @@ blocks, and `src/__tests__/config/nginx-config.test.ts` still guards them with 8
 tests. Nothing is broken; the config and its 8 tests now protect a URL nobody fetches. Remove
 both together, not the config alone.
 
-### 5. The offline fallback only covers `/`
+### 5. ~~The offline fallback only covers `/`~~ DONE in this request
 
-Parity with the old next-pwa behaviour, and deliberately not widened in request 282. The
-consequence: a user who goes offline on `/food`, `/p/[id]` or any route other than `/` still
-gets the browser's error page, not `/offline.html`. Only `/` is routed, because only the
-start-url route handles a document request.
-
-Widening it means a route matching `request.destination === 'document'` (or a
-`NavigationRoute`), which changes navigation caching semantics for every route in the app:
-what gets cached, what is served from cache when stale, and how an SSR-dependent page behaves
-on a slow network. Worth deciding deliberately rather than inheriting. Decide it as a product
-question ("should the whole app have an offline page?"), not as a config tweak.
+Closed by the pre-merge addition above (decision 15). The same-origin document route makes
+`/offline.html` reachable from every navigation, and a visited page is served from the
+`pages` cache instead. Verified live: offline `/food` serves the real page, offline
+`/city/berlin` (never visited) serves `/offline.html`.
 
 ### 6. Add `agent-output/` to `.dockerignore`
 
@@ -673,25 +826,45 @@ Unbounded ranges violate the dependency guardrail, and `"js-yaml": ">=4.3.0"` is
 floated js-yaml from the intended 4.3.x to 5.4.2. `browserslist` was pinned exactly in this
 request; the rest were left alone to keep the diff reviewable.
 
-### 8. The precache budget and the rate limiter still sit close together
+### 8. ~~The precache budget and the rate limiter still sit close together~~ DONE, with one
 
-With `precachePrerendered: false` the install needs 51 requests that `src/middleware.ts`
-counts, and the page view that triggers it spends roughly 50 more, against a ceiling of 100
-per minute per IP. Measured headroom on a first visit: 0 x 429 across 357 responses, so it
-fits, but barely, and nothing guards the margin. Adding ~50 files to `public/` would push a
-first visit over the limit again and the only symptom would be a worker stuck `installing`.
+part left
 
-Two candidate fixes, both out of scope here:
+Closed by the pre-merge addition above (decision 17): static-asset paths are exempt from the
+non-API bucket, so install goes from 50 counted requests to 1 and a first visit's total goes
+from 66 to 16 against the ceiling of 100.
 
-- Exempt plain static asset paths (not documents, not API) from the non-API bucket, or count
-  them in a separate much larger bucket. This is the real mismatch: a precache is one logical
-  action, and 51 requests from one client in one second is not abuse.
-- Add a budget guard to `scripts/verify-pwa-output.js`: count manifest entries that the
-  middleware matcher would see and fail the build above a threshold. Not added here because a
-  hard-coded threshold near today's measured 51 would be flaky; it needs the limiter change
-  first to get a sane margin.
+The second candidate fix is still open and now cheap: add a budget guard to
+`scripts/verify-pwa-output.js` that counts manifest entries the middleware would still COUNT
+(i.e. extensionless ones) and fails above a small threshold. Today that number is 1
+(`/images/seals/README.md`), so a threshold of, say, 10 is nowhere near flaky, where a
+threshold near the old 50 would have been.
 
-### 9. Drop the redundant `verify-pwa-output.js` call in `e2e.yml`
+### 9. The API rate-limit branch in `src/middleware.ts` is dead code (SECURITY, own request)
+
+**Flagging, not fixing.** The matcher at `src/middleware.ts:135-140` is
+`'/((?!api|_next/static|_next/image|favicon.ico).*)'`, so middleware **never runs for API
+routes at all**. That makes the entire `isApiRoute` branch at `src/middleware.ts:88-110`,
+including `API_RATE_LIMIT_MAX_REQUESTS = 30`, unreachable: every `X-RateLimit-*` header it
+sets and every 429 it returns are code that cannot execute.
+
+Nothing is exposed today. The sensitive endpoints got their own route-level limits in request
+279, and those are what actually run. But a _generic_ API route added tomorrow gets **no
+middleware rate limiting whatsoever**, while the code reads as though it does, which is the
+worse half of the problem: the next person adding an endpoint will reasonably assume a
+baseline 30 req/min applies.
+
+Worth its own request because the fix is a real decision, not an edit: either include `api`
+in the matcher (which turns 30 req/min on for every endpoint at once, and needs the existing
+route-level limiters checked for double counting), or delete the dead branch and make the
+per-route limiter the documented and only mechanism. Deleting it is not obviously wrong, but
+it should be deliberate and it should come with a lint or test that catches an unprotected new
+endpoint.
+
+Worth noting alongside: the in-memory `rateLimitStore` is per-process, so neither mechanism
+holds across instances. Already known; not new here.
+
+### 10. Drop the redundant `verify-pwa-output.js` call in `e2e.yml`
 
 `.github/workflows/e2e.yml:48` runs `npm run build && node scripts/verify-pwa-output.js`.
 `postbuild` already ran `build:sw`, which runs that script plus the other two guards, so the
@@ -715,3 +888,13 @@ Captured in `docs/ai/LEARNINGS.md` as entry 282:
 4. "Parity" has to include the new library's own defaults, not just the options you ported.
    `precachePrerendered: true` was never written anywhere and still doubled the install-time
    request count into a rate-limited bucket.
+5. A rate limiter that counted `public/` files while the matcher already exempted
+   `_next/static` was miscategorising, not reporting. The test that distinguishes that fix
+   from a bypass is the control's own: drive the app routes past the ceiling from one IP and
+   prove the 429 still happens. Observed red twice, under an inverted negation and under a
+   directory-prefix predicate.
+6. A guard that bans a SHAPE to exclude a BEHAVIOUR expires the moment you need that shape.
+   `expect(typeof matcher).not.toBe('function')` existed to keep out
+   `({ sameOrigin }) => !sameOrigin` and could not tell it apart from
+   `sameOrigin && destination === 'document'`. Asserting the behaviour (every matcher must be
+   false for the Iconify origins) is shorter and strictly stronger.
