@@ -50,18 +50,22 @@ new Serwist({
   // strategies in `runtimeCaching`, not as a global navigation handler. The
   // images and js/css rules never see `request.destination === 'document'`.
   //
-  // The start-url route at the end of `src/lib/pwa/runtimeCaching.ts`
-  // (`matcher: '/'` -> `NetworkFirst`, `cacheName: 'start-url'`) is the one that
-  // does, restoring what `@ducanh2912/next-pwa` generated from its
-  // `cacheStartUrl` default. Delete it and this `fallbacks` block goes silently
+  // The same-origin document route at the end of
+  // `src/lib/pwa/runtimeCaching.ts` (`({ request, sameOrigin }) => sameOrigin &&
+  // request.destination === 'document'` -> `NetworkFirst`, `cacheName: 'pages'`)
+  // is the one that does. Delete it and this `fallbacks` block goes silently
   // dead: `/offline.html` stays precached and still loads if requested directly,
   // but an offline navigation gets the browser's error page.
-  // `scripts/verify-sw-no-cross-origin-routes.mjs` asserts a document request to
-  // `/` is intercepted, so that regression fails the build.
+  // `scripts/verify-sw-no-cross-origin-routes.mjs` asserts that document
+  // requests to both `/` and `/food` are intercepted, so that regression fails
+  // the build.
   //
-  // Scope, deliberate: the fallback covers `/` only, which is parity with the old
-  // behaviour. An offline user on `/food` still gets the browser error page. See
-  // the follow-ups in agent-output/requests/282-serwist-migration.md.
+  // Scope: every same-origin navigation, not just `/`. The old
+  // `@ducanh2912/next-pwa` behaviour (and the first cut of this migration)
+  // covered `/` alone, so an offline user on `/food` got the browser error page.
+  // Widened through runtime document caching rather than by re-enabling
+  // `precachePrerendered`, which buys offline coverage by downloading 61 HTML
+  // documents into every first-time visitor's cache on install.
   fallbacks: {
     entries: [
       {

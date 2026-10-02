@@ -60,33 +60,51 @@ const ICONIFY_URLS = [
   'https://api.simplesvg.com/entypo.json?icons=old-phone',
 ];
 
+/**
+ * Mirrors how Serwist decides whether a route matches a given request, for all
+ * three matcher shapes, and returns the rules that would match `rawUrl`.
+ *
+ * This is the structural mirror of the behavioural guard. The AUTHORITATIVE
+ * check is `scripts/verify-sw-no-cross-origin-routes.mjs`, which executes the
+ * built `public/sw.js` under `node:vm` and asserts `event.respondWith` is never
+ * called for these origins; it runs on every build and must not be weakened or
+ * deleted. This test is the fast feedback loop on the source, nothing more.
+ */
+function rulesMatching(rawUrl: string, { destination }: { destination?: string } = {}) {
+  const url = new URL(rawUrl);
+  const request = new Request(rawUrl, { method: 'GET' });
+  // Node's Request always reports `destination === ''` and cannot be
+  // constructed with one, while a real navigation reports `'document'`. Spelled
+  // on, same as scripts/verify-sw-no-cross-origin-routes.mjs does, and verified
+  // rather than assumed so a Node change cannot make these assertions vacuous.
+  if (destination) {
+    Object.defineProperty(request, 'destination', { value: destination, configurable: true });
+    if (request.destination !== destination) {
+      throw new Error(`Could not set request.destination to "${destination}" on this runtime.`);
+    }
+  }
+  const sameOrigin = url.origin === new URL(SCOPE).origin;
+
+  return runtimeCaching.filter(({ matcher }) => {
+    if (matcher instanceof RegExp) {
+      const result = matcher.exec(url.href);
+      // Serwist's RegExpRoute only accepts a cross-origin match that starts at
+      // index 0, so mirror that rule rather than treating any match as a hit.
+      return result !== null && result.index === 0;
+    }
+    // A string matcher is an exact-URL route: Serwist's parseRoute resolves it
+    // against the worker's location and compares `url.href`, so mirror that
+    // rather than comparing the raw string.
+    if (typeof matcher === 'string') return new URL(matcher, SCOPE).href === url.href;
+    // A function matcher gets the same argument object Serwist builds in
+    // `handleRequest`.
+    return Boolean(matcher({ request, url, sameOrigin, event: undefined as never }));
+  });
+}
+
 describe('service worker runtime caching (Plan 046 / 064 regression)', () => {
   it.each(ICONIFY_URLS)('registers no route matching %s', (rawUrl) => {
-    const url = new URL(rawUrl);
-    const request = new Request(rawUrl, { method: 'GET' });
-
-    const matching = runtimeCaching.filter(({ matcher }) => {
-      if (matcher instanceof RegExp) {
-        const result = matcher.exec(url.href);
-        // Serwist's RegExpRoute only accepts a cross-origin match that starts at
-        // index 0, so mirror that rule rather than treating any match as a hit.
-        return result !== null && result.index === 0;
-      }
-      // A string matcher is an exact-URL route: Serwist's parseRoute resolves it
-      // against the worker's location and compares `url.href`, so mirror that
-      // rather than comparing the raw string.
-      if (typeof matcher === 'string') return new URL(matcher, SCOPE).href === url.href;
-      return Boolean(
-        matcher({
-          request,
-          url,
-          sameOrigin: false,
-          event: undefined as never,
-        }),
-      );
-    });
-
-    expect(matching).toEqual([]);
+    expect(rulesMatching(rawUrl)).toEqual([]);
   });
 
   it('matches a Supabase Storage image, so the rules above are not vacuously empty', () => {
@@ -98,7 +116,7 @@ describe('service worker runtime caching (Plan 046 / 064 regression)', () => {
     expect(matching).toHaveLength(1);
   });
 
-  it('consists of exactly the three rules: two ported, plus start-url', () => {
+  it('consists of exactly the three rules: two ported, plus the document route', () => {
     // Asserted on the module's value, not its source text, so it catches
     // `runtimeCaching = defaultCache` (1 entry in dev, 20 in production) and any
     // fourth rule added without a matching assertion above.
@@ -110,41 +128,72 @@ describe('service worker runtime caching (Plan 046 / 064 regression)', () => {
     ]);
   });
 
-  it('keeps the start-url route, which is what makes the offline fallback reachable', () => {
-    // Parity with @ducanh2912/next-pwa's `cacheStartUrl` default, which emitted
-    // `registerRoute("/", new NetworkFirst({ cacheName: "start-url" }), "GET")`.
-    // It is the ONLY route that handles a document request, so it is the only
-    // thing that lets `fallbacks` in src/lib/pwa/sw.ts fire. Dropping it silently
-    // kills the offline page.
-    //
-    // The artifact-level guard is the start-url control in
-    // scripts/verify-sw-no-cross-origin-routes.mjs. This asserts the shape;
-    // that asserts the built worker really intercepts `/`.
-    const startUrl = runtimeCaching.at(-1);
-    expect(startUrl?.matcher).toBe('/');
-    expect(startUrl?.handler.constructor.name).toBe('NetworkFirst');
+  it.each(['/', '/food'])(
+    'keeps a document route for %s, which is what makes the offline fallback reachable',
+    (path) => {
+      // A route that handles a document request is the ONLY thing that lets
+      // `fallbacks` in src/lib/pwa/sw.ts fire, because Serwist attaches the
+      // fallback as a `handlerDidError` plugin on the runtimeCaching strategies
+      // rather than as a global navigation handler. Dropping it silently kills
+      // the offline page.
+      //
+      // `/food` is here because the route is deliberately wider than the
+      // `matcher: '/'` start-url route it replaced: offline now works on any
+      // page the user has visited. The alternative way to get that coverage,
+      // `precachePrerendered: true`, downloads 61 HTML documents on install and
+      // is asserted off below.
+      //
+      // The artifact-level guards are the two document controls in
+      // scripts/verify-sw-no-cross-origin-routes.mjs. This asserts the shape;
+      // those assert the built worker really intercepts these navigations.
+      const matching = rulesMatching(`${new URL(SCOPE).origin}${path}`, {
+        destination: 'document',
+      });
+      expect(matching).toHaveLength(1);
+      expect(matching[0].handler.constructor.name).toBe('NetworkFirst');
+    },
+  );
+
+  it('matches only documents, so a same-origin asset is left to the precache route', () => {
+    // Guards against the document matcher being broadened to every same-origin
+    // request, which would put the precached `/images/**` and `/_next/static/**`
+    // responses behind a NetworkFirst 'pages' cache.
+    const origin = new URL(SCOPE).origin;
+    expect(rulesMatching(`${origin}/images/seals/halal.png`, { destination: 'image' })).toEqual([]);
+    expect(rulesMatching(`${origin}/`, { destination: 'image' })).toEqual([]);
   });
 
-  it('uses no function matcher, so none can test sameOrigin', () => {
-    // defaultCache's entry 19 is `({ sameOrigin }) => !sameOrigin`, a function
-    // matcher. Only a function matcher can express that shape at all, so banning
-    // the shape structurally rules it out.
+  it('every matcher evaluates to false for the Iconify origins, whatever its shape', () => {
+    // This replaced a blanket "no function matcher" ban. The ban existed to rule
+    // out defaultCache's entry 19, `({ sameOrigin }) => !sameOrigin`, by shape;
+    // the property it was standing in for is the one asserted here and in the
+    // it.each above, and that property is strictly stronger. `!sameOrigin`
+    // returns true for all three Iconify URLs and is rejected;
+    // `sameOrigin && destination === 'document'` returns false and is allowed.
     //
-    // The two allowed forms:
-    // - a `^`-anchored RegExp. The `^` is what Serwist's RegExpRoute needs to
-    //   accept a cross-origin match at all (it requires match index 0), so an
-    //   unanchored rewrite would silently stop matching Supabase while gaining the
-    //   ability to match things mid-URL.
-    // - an absolute-path string. Serwist's parseRoute resolves it against
-    //   location.href and compares `url.href` exactly, so it can only ever match
-    //   one same-origin URL.
+    // The authoritative check remains the behavioural one in
+    // scripts/verify-sw-no-cross-origin-routes.mjs, against the built sw.js.
+    for (const rawUrl of ICONIFY_URLS) {
+      const url = new URL(rawUrl);
+      // Documents, images and the default destination, so a matcher cannot pass
+      // this merely by reading `request.destination`.
+      for (const destination of ['document', 'image', undefined] as const) {
+        expect(rulesMatching(rawUrl, { destination }), `${rawUrl} as ${destination}`).toEqual([]);
+      }
+      expect(url.origin).not.toBe(new URL(SCOPE).origin);
+    }
+
+    // RegExp matchers stay `^`-anchored: the `^` is what Serwist's RegExpRoute
+    // needs to accept a cross-origin match at all (it requires match index 0),
+    // so an unanchored rewrite would silently stop matching Supabase while
+    // gaining the ability to match things mid-URL.
     for (const { matcher } of runtimeCaching) {
-      expect(typeof matcher).not.toBe('function');
-      if (typeof matcher === 'string') {
+      if (matcher instanceof RegExp) {
+        expect(matcher.source.startsWith('^')).toBe(true);
+      } else if (typeof matcher === 'string') {
         expect(matcher.startsWith('/')).toBe(true);
       } else {
-        expect(matcher).toBeInstanceOf(RegExp);
-        expect((matcher as RegExp).source.startsWith('^')).toBe(true);
+        expect(typeof matcher).toBe('function');
       }
     }
   });

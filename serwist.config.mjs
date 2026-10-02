@@ -95,10 +95,16 @@ export default serwist({
   // after 8s and 86 of 112 entries cached. Then the registration does not survive
   // the session, which is what `e2e/sw-session-boundary.spec.ts` caught.
   //
-  // The limiter is not the thing to change: in production nginx proxies image and
-  // document requests to Next with the real client IP
+  // Raising the limit is not the thing to change: in production nginx proxies
+  // image and document requests to Next with the real client IP
   // (`deploy/nginx/nginx-uat-template.conf:161-170`), so a new visitor's first
   // page view plus a 112-request precache would blow their own budget too.
+  // `src/middleware.ts` now exempts static-asset paths from the page bucket
+  // (same class as `_next/static`, which the matcher always excluded), which is
+  // what gives install real headroom. This option still stays false: 61 HTML
+  // documents downloaded by every first-time visitor is a bandwidth cost, not
+  // just a request count, and offline coverage is bought at runtime instead by
+  // the same-origin document route in `src/lib/pwa/runtimeCaching.ts`.
   precachePrerendered: false,
   // Keep a classic (non-module) worker so `register('/sw.js')` without
   // `{ type: 'module' }` keeps working, matching today's registration call.

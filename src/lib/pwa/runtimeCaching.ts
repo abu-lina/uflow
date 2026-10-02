@@ -10,9 +10,10 @@ import {
  * The service worker's complete runtime caching list.
  *
  * Three rules, no more: the two ported from the `workboxOptions.runtimeCaching`
- * array that `@ducanh2912/next-pwa` used to consume, plus the start-url route
- * that library generated from its own `cacheStartUrl` default (see the 282
- * migration). Deliberately NOT built from `defaultCache`.
+ * array that `@ducanh2912/next-pwa` used to consume, plus the same-origin
+ * document route that replaces (and subsumes) the start-url route that library
+ * generated from its own `cacheStartUrl` default (see the 282 migration).
+ * Deliberately NOT built from `defaultCache`.
  *
  * ## Do not import `defaultCache` from `@serwist/next/worker`
  *
@@ -61,10 +62,15 @@ import {
  * a cross-origin match when it starts at index 0, so dropping the `^` would
  * silently stop these rules matching the very origins they exist for.
  *
- * No matcher here may be a function. `defaultCache`'s cross-origin catch-all is
- * `({ sameOrigin }) => !sameOrigin`, and only a function matcher can express
- * that shape at all; an anchored RegExp or an exact path string cannot.
- * `src/__tests__/config/pwa-config.test.ts` enforces it structurally.
+ * The invariant every matcher here must satisfy is behavioural, not syntactic:
+ * it must evaluate to FALSE for a cross-origin request to the three Iconify
+ * origins. That is what `src/__tests__/config/pwa-config.test.ts` asserts, by
+ * evaluating each matcher (function matchers included) against those URLs. It
+ * replaced an older blanket "no function matchers" ban, which excluded
+ * `defaultCache`'s `({ sameOrigin }) => !sameOrigin` only by accident of shape
+ * and also excluded the `sameOrigin && destination === 'document'` route below.
+ * The behavioural check is strictly stronger: `!sameOrigin` returns true for
+ * Iconify and is rejected; `sameOrigin && ...` returns false and is allowed.
  */
 export const runtimeCaching: RuntimeCaching[] = [
   // Cross-origin image assets (e.g. Supabase Storage provider photos).
@@ -93,32 +99,42 @@ export const runtimeCaching: RuntimeCaching[] = [
       ],
     }),
   },
-  // The start URL. DO NOT DELETE THIS AS "UNUSED": it is the only route that
-  // ever sees a document request, and therefore the only thing that lets
+  // Same-origin documents. DO NOT DELETE THIS AS "UNUSED": it is the only route
+  // that ever sees a document request, and therefore the only thing that lets
   // `fallbacks: { entries: [{ url: '/offline.html', ... }] }` in sw.ts fire at
   // all. Serwist attaches the fallback as a `handlerDidError` plugin on the
   // runtime caching strategies; with no document-handling route, an offline
   // navigation never reaches a Serwist handler and the browser shows its own
   // error page instead of /offline.html.
   //
-  // This is a restoration, not an addition. `@ducanh2912/next-pwa` generated
-  // exactly this from its `cacheStartUrl` default (on by default, never
-  // configured here) and emitted `registerRoute("/", new NetworkFirst({
-  // cacheName: "start-url", ... }), "GET")`. It sat outside
-  // `workboxOptions.runtimeCaching`, so the 282 port list missed it; request 282
-  // restores parity deliberately.
+  // It replaces, and subsumes, the `matcher: '/'` -> `NetworkFirst('start-url')`
+  // route that `@ducanh2912/next-pwa` generated from its `cacheStartUrl` default:
+  // `/` is a document request, so it still goes through here. The widening is
+  // deliberate and chosen over the alternative. `@serwist/next` defaults
+  // `precachePrerendered: true`, which would cover more pages offline by
+  // downloading all 61 prerendered HTML documents into every first-time
+  // visitor's cache on install; that is what took middleware-counted install
+  // requests from 54 to 112 and left the worker stuck `installing`. Caching
+  // documents at RUNTIME gives offline coverage of the pages a user actually
+  // visited, at zero install cost. `precachePrerendered` stays false.
   //
-  // Parity means parity. A broader `request.destination === 'document'` route
-  // would make the offline page work on /food and every other route, but that is
-  // a behaviour change to navigation caching for the whole app, not a port. It is
-  // logged as a follow-up instead.
+  // Scoped to `sameOrigin` so it cannot touch a cross-origin document, which
+  // keeps the Iconify property above intact: this matcher returns FALSE for
+  // api.iconify.design, which is the shape
+  // `src/__tests__/config/pwa-config.test.ts` asserts (it evaluates every
+  // matcher against those three origins rather than banning function matchers,
+  // which is what rules out `defaultCache`'s `({ sameOrigin }) => !sameOrigin`
+  // while allowing this).
   //
-  // The matcher is the string `'/'`, same as next-pwa emitted. Serwist's
-  // `parseRoute` turns a string into `new URL(capture, location.href)` plus an
-  // exact `url.href === captureUrl.href` comparison, so it matches the scope
-  // origin's `/` and nothing else: same-origin, exact, zero Iconify surface.
+  // `networkTimeoutSeconds: 10` so a dead-slow network falls back to the cached
+  // copy instead of hanging; `ExpirationPlugin` caps the cache at 50 pages / 7
+  // days so a long browsing session cannot grow it without bound.
   {
-    matcher: '/',
-    handler: new NetworkFirst({ cacheName: 'start-url' }),
+    matcher: ({ request, sameOrigin }) => sameOrigin && request.destination === 'document',
+    handler: new NetworkFirst({
+      cacheName: 'pages',
+      networkTimeoutSeconds: 10,
+      plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 })],
+    }),
   },
 ];
