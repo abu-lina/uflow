@@ -51,17 +51,17 @@ keep `--webpack`, not to swap one broken PWA setup for another.
 
 ## Phases
 
-| #   | Phase                 | Status  | Outcome   |
-| --- | --------------------- | ------- | --------- |
-| 0   | Tracking file created | Done    | This file |
+| #   | Phase                 | Status  | Outcome                                          |
+| --- | --------------------- | ------- | ------------------------------------------------ |
+| 0   | Tracking file created | Done    | This file                                        |
 | 1   | Research              | Done    | `agent-output/research/280-serwist-readiness.md` |
-| 2   | Report                | Pending |           |
-| 3   | Done / go-no-go gate  | Pending |           |
+| 2   | Report                | Pending |                                                  |
+| 3   | Done / go-no-go gate  | Pending |                                                  |
 
 ## Decisions
 
-| #   | Decision | Choice | Rationale |
-| --- | -------- | ------ | --------- |
+| #   | Decision                                                                           | Choice         | Rationale                                                                                                                                                                     |
+| --- | ---------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Gate the migration behind a readiness check rather than dispatching implementation | Research first | Backlog entry conditions the work on verifying Serwist readiness; dispatching an implementation brief on an unsettled ask risks a swap that silently drops the service worker |
 
 ## Research questions
