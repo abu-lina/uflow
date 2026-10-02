@@ -77,6 +77,29 @@ export default serwist({
     'public/workbox-*.js',
     'public/fallback-*.js',
   ],
+  // Parity, and the reason CI went red. `@serwist/next` defaults this to TRUE
+  // (`dist/index.config.mjs:29,36`), which appends
+  // `.next/server/{app,pages}/**/*.html` to the glob: every prerendered page
+  // becomes a precache entry. `@ducanh2912/next-pwa` never did that. Measured
+  // against the deployed next-pwa worker on https://ummahflow.com/sw.js, it took
+  // the install-time requests that `src/middleware.ts` counts (everything except
+  // /api, /_next/static, /_next/image, favicon.ico) from 54 to 112: +61 document
+  // routes (/about, /login, 16 x /create/*, 20 x /city/*, ...).
+  //
+  // 112 of them cannot fit. The non-API bucket is 100 requests/min per client IP
+  // (`src/middleware.ts:11-12`), the page view that triggers the install has
+  // already spent part of it, so the tail of the precache gets 429s, Serwist's
+  // install event rejects on any non-OK precache response, and the worker stays
+  // stuck `installing` forever: no activation, no offline page, no push. Observed
+  // directly: 10 x 429 on `/images/seals/*` with the worker still `installing`
+  // after 8s and 86 of 112 entries cached. Then the registration does not survive
+  // the session, which is what `e2e/sw-session-boundary.spec.ts` caught.
+  //
+  // The limiter is not the thing to change: in production nginx proxies image and
+  // document requests to Next with the real client IP
+  // (`deploy/nginx/nginx-uat-template.conf:161-170`), so a new visitor's first
+  // page view plus a 112-request precache would blow their own budget too.
+  precachePrerendered: false,
   // Keep a classic (non-module) worker so `register('/sw.js')` without
   // `{ type: 'module' }` keeps working, matching today's registration call.
   esbuildOptions: { format: 'iife' },

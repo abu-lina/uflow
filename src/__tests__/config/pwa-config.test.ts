@@ -157,6 +157,19 @@ describe('service worker runtime caching (Plan 046 / 064 regression)', () => {
     expect(serwistConfigSource).toContain("swDest: 'public/sw.js'");
   });
 
+  it('does not precache prerendered pages, which blows the rate-limit budget on install', () => {
+    // `@serwist/next` defaults `precachePrerendered` to true and appends
+    // `.next/server/{app,pages}/**/*.html` to the glob. That added 61 document
+    // routes (/about, /login, 16 x /create/*, 20 x /city/*) that
+    // @ducanh2912/next-pwa never precached, taking the install-time requests
+    // `src/middleware.ts` counts from 54 to 112 against a 100 req/min per-IP
+    // bucket. The tail 429s, Serwist rejects install on any non-OK precache
+    // response, and the worker stays stuck `installing`: no activation, no
+    // offline page, no push. Measured: 10 x 429, 86 of 112 entries cached, worker
+    // `installing` after 8s. With it false: 0 x 429, 290 entries, `activated`.
+    expect(serwistConfigSource).toContain('precachePrerendered: false');
+  });
+
   it('no longer configures the PWA through next.config.js', () => {
     // @ducanh2912/next-pwa is gone, so the `workboxOptions:` nesting that
     // incident 046 was about cannot recur. The config now lives in
