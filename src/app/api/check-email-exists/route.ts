@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 // Rate limiting store (in production, use Redis)
@@ -27,24 +28,20 @@ function checkRateLimit(ip: string): boolean {
 export async function POST(request: Request) {
   try {
     // Get client IP for rate limiting
-    const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0] : 'unknown';
+    const ip = getTrustedClientIp(request.headers);
 
     // Check rate limit
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     const { email } = await request.json();
-    
+
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
 
     // F-049-12: Log security event without PII
@@ -61,7 +58,7 @@ export async function POST(request: Request) {
     while (user === null) {
       const { data, error: listError } = await supabaseAdmin.auth.admin.listUsers({
         page,
-        perPage
+        perPage,
       });
 
       if (listError) {
@@ -69,7 +66,7 @@ export async function POST(request: Request) {
         break;
       }
 
-      user = data.users.find(u => u.email === email);
+      user = data.users.find((u) => u.email === email);
 
       // If found or reached end of list, break
       if (user || data.users.length < perPage) {
@@ -81,10 +78,7 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('[SECURITY] Database error during email check:', error);
-      return NextResponse.json(
-        { error: 'Failed to check email' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to check email' }, { status: 500 });
     }
 
     // F-049-04: Reduce user enumeration.
@@ -93,33 +87,29 @@ export async function POST(request: Request) {
     // Only confirmed accounts are distinguishable (required for login flow).
     // userId is never returned to prevent data leakage.
     if (!user) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         confirmed: false,
-        message: 'If this email is registered, you will receive further instructions.'
+        message: 'If this email is registered, you will receive further instructions.',
       });
     }
 
-    const emailConfirmed = 
-      user.email_confirmed_at !== null || 
-      user.user_metadata?.email_confirmed === true;
+    const emailConfirmed =
+      user.email_confirmed_at !== null || user.user_metadata?.email_confirmed === true;
 
     if (!emailConfirmed) {
       // Same response as "not found" to prevent enumeration
-      return NextResponse.json({ 
+      return NextResponse.json({
         confirmed: false,
-        message: 'If this email is registered, you will receive further instructions.'
+        message: 'If this email is registered, you will receive further instructions.',
       });
     }
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       confirmed: true,
-      message: 'If this email is registered, you will receive further instructions.'
+      message: 'If this email is registered, you will receive further instructions.',
     });
   } catch (error) {
     console.error('[SECURITY] Check email error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

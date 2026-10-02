@@ -348,6 +348,7 @@ describe('ProviderDetailSections', () => {
       forward: vi.fn(),
       refresh: vi.fn(),
       prefetch: vi.fn(),
+      bfcacheId: '',
     }));
 
     useQueryMock.mockReturnValue({
@@ -380,6 +381,7 @@ describe('ProviderDetailSections', () => {
       forward: vi.fn(),
       refresh: vi.fn(),
       prefetch: vi.fn(),
+      bfcacheId: '',
     }));
 
     useQueryMock.mockReturnValue({
@@ -534,7 +536,13 @@ describe('ProviderDetailSections', () => {
         badges={[]}
         isLoadingBadges={false}
         locations={locations}
-        provider={{ ...mockProviders[0], verification_method: 'online', no_alcohol: true, offers: [], needs: [] }}
+        provider={{
+          ...mockProviders[0],
+          verification_method: 'online',
+          no_alcohol: true,
+          offers: [],
+          needs: [],
+        }}
       />,
     );
 

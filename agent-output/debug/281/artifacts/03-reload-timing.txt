@@ -1,0 +1,11 @@
+run 1: loadEvents=[215] finalNavType=navigate NO RELOAD SNAPSHOT
+run 2: loadEvents=[163,344] finalNavType=reload {"tReloadMs":186.7,"fcpMs":172,"msAfterFcp":14.7,"navType":"navigate","domNodes":788,"visibleTextLen":759,"textHead":"UMMAH FLOW About Food Ummah Stores Login Register EVERYWHERE OPEN NOW In the name of Allah, the Most Gracious From Muslims for Muslims A ma"}
+run 3: loadEvents=[165,336] finalNavType=reload {"tReloadMs":186.1,"fcpMs":176,"msAfterFcp":10.1,"navType":"navigate","domNodes":788,"visibleTextLen":759,"textHead":"UMMAH FLOW About Food Ummah Stores Login Register EVERYWHERE OPEN NOW In the name of Allah, the Most Gracious From Muslims for Muslims A ma"}
+run 4: loadEvents=[135,243] finalNavType=reload {"tReloadMs":152.3,"fcpMs":144,"msAfterFcp":8.3,"navType":"navigate","domNodes":788,"visibleTextLen":759,"textHead":"UMMAH FLOW About Food Ummah Stores Login Register EVERYWHERE OPEN NOW In the name of Allah, the Most Gracious From Muslims for Muslims A ma"}
+run 5: loadEvents=[166,335] finalNavType=reload {"tReloadMs":187.6,"fcpMs":176,"msAfterFcp":11.6,"navType":"navigate","domNodes":788,"visibleTextLen":759,"textHead":"UMMAH FLOW About Food Ummah Stores Login Register EVERYWHERE OPEN NOW In the name of Allah, the Most Gracious From Muslims for Muslims A ma"}
+run 6: loadEvents=[147,309] finalNavType=reload {"tReloadMs":162.9,"fcpMs":152,"msAfterFcp":10.9,"navType":"navigate","domNodes":771,"visibleTextLen":759,"textHead":"UMMAH FLOW About Food Ummah Stores Login Register EVERYWHERE OPEN NOW In the name of Allah, the Most Gracious From Muslims for Muslims A ma"}
+
+forced reloads: 5/6 sessions
+ms after first-contentful-paint: min=8.3 max=14.7 values=14.7, 10.1, 8.3, 11.6, 10.9
+dom nodes at reload: 788, 788, 788, 788, 771
+visible text length at reload: 759, 759, 759, 759, 759

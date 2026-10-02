@@ -108,6 +108,9 @@ function buildCsp() {
       'https://api.unisvg.com',
       'https://api.simplesvg.com',
       'https://*.supabase.co',
+      // Covers a self-hosted or local Supabase (http://127.0.0.1:54321) in
+      // production builds; the hosted URL is already matched by *.supabase.co.
+      process.env.NEXT_PUBLIC_SUPABASE_URL || null,
       'https://nominatim.openstreetmap.org',
       'https://tile.openstreetmap.de',
       'https://tiles.stadiamaps.com',
@@ -139,12 +142,6 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
-
-  // ESLint configuration
-  // ESLint runs in CI separately; skip during Docker/build to save 30-90s per build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
 
   // Allow dev server to accept requests from:
   // - LAN IP (iPhone on same WiFi); update IP if your Mac's address changes.
@@ -181,15 +178,7 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    optimizePackageImports: [
-      '@mui/material',
-      '@mui/icons-material',
-      'motion',
-      'lucide-react',
-      'lottie-react',
-      'sonner',
-      '@iconify/react',
-    ],
+    optimizePackageImports: ['motion', 'lucide-react', 'lottie-react', 'sonner', '@iconify/react'],
     // Preload critical chunks
     webpackBuildWorker: true,
   },

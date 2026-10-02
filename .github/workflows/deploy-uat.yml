@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
 
@@ -47,7 +47,7 @@ jobs:
           target: '/tmp/'
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -100,7 +100,7 @@ jobs:
         run: npm ci --no-audit
 
       - name: Build and push Docker image to GHCR
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           push: true
@@ -265,11 +265,29 @@ jobs:
             echo "✅ UAT container swap complete"
 
             echo "🔧 Updating Nginx for UAT..."
-            if [ -f "/tmp/nginx-uat-template.conf" ]; then
-                cp /tmp/nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
-                ln -sf /etc/nginx/sites-available/uat-ummahflow /etc/nginx/sites-enabled/uat-ummahflow
+            # scp-action v1.0.0 preserves the relative source path, so the file
+            # lands at /tmp/deploy/nginx/... not /tmp/. deploy-hetzner.yml was
+            # already fixed for this; UAT was not, so it silently skipped the
+            # update and nginx changes never applied.
+            # The upload step is conditional on the template having changed, so
+            # a missing file is only an error when an update was expected.
+            NGINX_CHANGED="${{ steps.nginx-check.outputs.changed }}"
+            if [ -f /tmp/nginx-uat-template.conf ]; then
+                CONFIG_SRC=/tmp/nginx-uat-template.conf
+            elif [ -f /tmp/deploy/nginx/nginx-uat-template.conf ]; then
+                CONFIG_SRC=/tmp/deploy/nginx/nginx-uat-template.conf
             else
-                echo "⚠️ nginx-uat-template.conf not found, skipping Nginx update"
+                CONFIG_SRC=""
+            fi
+            if [ -n "$CONFIG_SRC" ]; then
+                echo "   using $CONFIG_SRC"
+                cp "$CONFIG_SRC" /etc/nginx/sites-available/uat-ummahflow
+                ln -sf /etc/nginx/sites-available/uat-ummahflow /etc/nginx/sites-enabled/uat-ummahflow
+            elif [ "$NGINX_CHANGED" = "true" ]; then
+                echo "❌ nginx-uat-template.conf changed but was not uploaded (checked /tmp/ and /tmp/deploy/nginx/)"
+                exit 1
+            else
+                echo "ℹ️ nginx template unchanged; leaving existing config in place"
             fi
 
             echo "🧪 Testing Nginx config..."

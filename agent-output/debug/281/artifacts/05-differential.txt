@@ -1,0 +1,42 @@
+
+[A warmup (fresh profile)]
+   cleanupBodyRan=true  reloadLogged=false  loadEvents=[260]  navType=navigate
+   registrations=["https://ummahflow.com/sw.js"]
+   caches=["start-url","workbox-precache-v2-https://ummahflow.com/"]
+   requests=76  transferred=777KB
+
+[A session-2 CONTROL: cleanup allowed]
+   cleanupBodyRan=true  reloadLogged=true  loadEvents=[170,347]  navType=reload
+   registrations=["https://ummahflow.com/sw.js"]
+   caches=["start-url","workbox-precache-v2-https://ummahflow.com/"]
+   requests=128  transferred=79KB
+
+[A session-3 CONTROL: cleanup allowed]
+   cleanupBodyRan=true  reloadLogged=true  loadEvents=[163,305]  navType=reload
+   registrations=["https://ummahflow.com/sw.js"]
+   caches=["start-url","workbox-precache-v2-https://ummahflow.com/"]
+   requests=124  transferred=70KB
+
+[B warmup (fresh profile)]
+   cleanupBodyRan=false  reloadLogged=false  loadEvents=[251]  navType=navigate
+   registrations=["https://ummahflow.com/sw.js"]
+   caches=["start-url","workbox-precache-v2-https://ummahflow.com/"]
+   requests=76  transferred=777KB
+
+[B session-2 TREATMENT: cleanup no-op]
+   cleanupBodyRan=false  reloadLogged=false  loadEvents=[164]  navType=navigate
+   registrations=["https://ummahflow.com/sw.js"]
+   caches=["start-url","static-resources","workbox-precache-v2-https://ummahflow.com/"]
+   requests=73  transferred=42KB
+
+[B session-3 TREATMENT: cleanup no-op]
+   cleanupBodyRan=false  reloadLogged=false  loadEvents=[152]  navType=navigate
+   registrations=["https://ummahflow.com/sw.js"]
+   caches=["start-url","static-resources","workbox-precache-v2-https://ummahflow.com/"]
+   requests=74  transferred=43KB
+
+================ VERDICT ================
+A session-2 CONTROL: cleanup allowed     reload=true  loads=2 caches=2 regs=1 reqs=128 79KB
+A session-3 CONTROL: cleanup allowed     reload=true  loads=2 caches=2 regs=1 reqs=124 70KB
+B session-2 TREATMENT: cleanup no-op     reload=false loads=1 caches=3 regs=1 reqs=73 42KB
+B session-3 TREATMENT: cleanup no-op     reload=false loads=1 caches=3 regs=1 reqs=74 43KB
