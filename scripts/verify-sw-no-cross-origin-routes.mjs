@@ -13,6 +13,12 @@
 // `fetch` listener Serwist registers is captured, and a fake FetchEvent is
 // dispatched for each Iconify origin with `respondWith` as a spy.
 //
+// It also carries three positive controls, because "nothing was intercepted" and
+// "the worker never routed anything" look identical from here: a fetch listener
+// must exist, `/offline.html` must be intercepted (precache route), and a
+// document request to `/` must be intercepted (start-url route, the only thing
+// that lets the offline fallback fire).
+//
 // Why not grep the bundle: every grepable marker (`cacheName:"cross-origin"`,
 // `matcher:/.*\/i`, the property name `matcher` itself) depends on esbuild's
 // current minifier output shape, and `mangleProps` is a supported esbuildOptions
@@ -139,11 +145,27 @@ if (fetchListeners.length === 0) {
   process.exit(1);
 }
 
-/** Dispatches a fake FetchEvent and reports whether respondWith was called. */
-function intercepts(requestUrl) {
+/**
+ * Dispatches a fake FetchEvent and reports whether respondWith was called.
+ *
+ * `destination` is spelled onto the Request because Node's Request always
+ * reports `""` and cannot be constructed with one, while a real navigation
+ * reports `"document"`. The start-url control below depends on the distinction.
+ */
+function intercepts(requestUrl, { destination } = {}) {
   let responded = false;
+  const request = new Request(requestUrl, { method: 'GET' });
+  if (destination) {
+    Object.defineProperty(request, 'destination', { value: destination, configurable: true });
+    if (request.destination !== destination) {
+      throw new Error(
+        `Could not set request.destination to "${destination}" on this Node runtime. ` +
+          'The start-url control below would assert the wrong thing, so failing loud instead.',
+      );
+    }
+  }
   const event = {
-    request: new Request(requestUrl, { method: 'GET' }),
+    request,
     respondWith(promise) {
       responded = true;
       // The handler is never awaited; swallow its rejection so an unhandled
@@ -179,6 +201,38 @@ if (!intercepts(CONTROL_URL)) {
 }
 
 console.log(`  (control) ${CONTROL_URL} INTERCEPTED, as it must be`);
+
+// Positive control, part three: the offline fallback must stay REACHABLE.
+//
+// `fallbacks: { entries: [{ url: '/offline.html', matcher: document }] }` in
+// src/lib/pwa/sw.ts is not a global navigation handler. Serwist attaches it as a
+// `handlerDidError` plugin on the runtimeCaching strategies, so it can only fire
+// for a request some route actually handles. The images and js/css rules never
+// see a document request, which leaves the start-url route
+// (`matcher: '/'` -> NetworkFirst 'start-url') as the only thing that does.
+//
+// That route is what @ducanh2912/next-pwa generated from its `cacheStartUrl`
+// default. It was missed by the 282 port list (it sat outside
+// `workboxOptions.runtimeCaching`), which silently killed the offline page while
+// every other check stayed green: the fallback entry was present, /offline.html
+// was precached, and nothing failed. This control is here so that cannot happen
+// twice. If it fails, the offline fallback is dead config, not a style nit.
+const START_URL = `${ORIGIN}/`;
+if (!intercepts(START_URL, { destination: 'document' })) {
+  console.error(`FAIL: public/sw.js did not intercept a document request to ${START_URL}.`);
+  console.error(
+    'The start-url route is missing from src/lib/pwa/runtimeCaching.ts, so no route ' +
+      'handles a document request. `fallbacks` in src/lib/pwa/sw.ts can then never ' +
+      'fire and an offline navigation gets the browser error page instead of ' +
+      '/offline.html, with no other check going red.',
+  );
+  console.error('');
+  console.error('Restore it (parity with @ducanh2912/next-pwa cacheStartUrl):');
+  console.error("  { matcher: '/', handler: new NetworkFirst({ cacheName: 'start-url' }) }");
+  process.exit(1);
+}
+
+console.log(`  (control) ${START_URL} INTERCEPTED for a document request, as it must be`);
 
 const intercepted = CROSS_ORIGIN_URLS.filter((requestUrl) => intercepts(requestUrl));
 
