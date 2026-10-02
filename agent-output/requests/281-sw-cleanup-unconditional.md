@@ -90,26 +90,28 @@ script, so whether this is user-visible needs confirming rather than assuming.
 
 ## Phases
 
-| #   | Phase                 | Status  | Outcome   |
-| --- | --------------------- | ------- | --------- |
-| 0   | Tracking file created | Done    | This file |
-| 1   | Diagnose              | Done    | Root cause **confirmed** on production. Primary defect real and user-visible; secondary defect (RootClientLayout.tsx:253) **refuted**. See Diagnosis. |
-| 2   | Gate: confirm hypothesis | Pending |        |
-| 3   | Fix                   | Pending |           |
-| 4   | Code Review           | Pending |           |
-| 5   | Done                  | Pending |           |
+| #   | Phase                    | Status  | Outcome                                                                                                                                               |
+| --- | ------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | Tracking file created    | Done    | This file                                                                                                                                             |
+| 1   | Diagnose                 | Done    | Root cause **confirmed** on production. Primary defect real and user-visible; secondary defect (RootClientLayout.tsx:253) **refuted**. See Diagnosis. |
+| 2   | Gate: confirm hypothesis | Done    | Passed. Hypothesis confirmed at runtime; fix option 1 (delete the cleanup) chosen by the lead.                                                        |
+| 3   | Fix                      | Done    | Cleanup deleted, regression test added and proven red-before/green-after. See Implementation notes.                                                   |
+| 4   | Code Review              | Pending |                                                                                                                                                       |
+| 5   | Done                     | Pending |                                                                                                                                                       |
 
 ## Decisions
 
-| #   | Decision | Choice | Rationale |
-| --- | -------- | ------ | --------- |
-| 1   | Order relative to the Serwist migration | Diagnose this first | A session-scoped cache wipe makes the migration unverifiable |
-| 2   | Scope of the Diagnose phase | Confirm the runtime path before proposing any fix | The mechanism above is static reading only; learning 278 is precisely the cost of shipping against an unverified path |
+| #   | Decision                                                     | Choice                                                                                      | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Order relative to the Serwist migration                      | Diagnose this first                                                                         | A session-scoped cache wipe makes the migration unverifiable                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 2   | Scope of the Diagnose phase                                  | Confirm the runtime path before proposing any fix                                           | The mechanism above is static reading only; learning 278 is precisely the cost of shipping against an unverified path                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 3   | Shape of the fix                                             | Delete `serviceWorkerCleanup.ts` outright, no environment gate and no `localStorage` marker | Q6: the `supabase-cache` route the cleanup flushed was deleted in the same commit that added it, 8 months ago. Nothing is left to remediate, so a gate would only preserve the bug for production users                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 4   | `ServiceWorkerRegistration` (`RootClientLayout.tsx:237-273`) | **Keep it.** Out of scope for 281                                                           | Removal is provably safe _today_ (`next.config.js:3` `register: true` makes `@ducanh2912/next-pwa` inject `window.workbox.register()` at module eval, no hostname gate, every page load; diagnosis Q3/Q5). It is **not** provable post-Serwist: that injected registration is the plugin's, and request 282 removes the plugin. Verifying the post-migration half needs `@serwist/next` actually installed, which belongs to 282. Deleting it now would mean 282 lands with no application-level registration and no evidence anything replaced it. Fold the deletion into 282, where it can be verified in the same breath |
 
 ## Diagnosis
 
 Verdict: **root cause confirmed at runtime against production** (https://ummahflow.com,
-main @ de0add38). The primary defect is real and user-visible. The *secondary* defect
+main @ de0add38). The primary defect is real and user-visible. The _secondary_ defect
 (`RootClientLayout.tsx:253`) is **refuted**: it is redundant dead code, not a bug.
 
 One finding the static analysis missed changes the shape of the fix: there is a **third**
@@ -117,14 +119,14 @@ service-worker registration call site, and it is the one that actually keeps the
 
 ### TL;DR
 
-| Q | Answer |
-| --- | --- |
-| 1. Does it execute in production? | **Yes.** Cleanup code verbatim in the shipped bundle; fires on every page load. |
-| 2. Real user-visible symptom? | **Forced full-page reload on the first page view of every browser session**, ~10ms after FCP on `/`, ~410-480ms after FCP on `/food`. Costs +1 full load, +~50 requests, +~30KB. PWA precache destroyed every session. |
-| 3. The race | Resolved. `ServiceWorkerRegistration` always loses pre-reload (3/3, explained by React effect order). Post-reload it is **non-deterministic** (1/3 runs double-registered). Both outcomes are benign. |
-| 4. Two session boundaries? | **Confirmed permanent cycle.** 14/14 second-and-later sessions forced a reload. |
-| 5. Secondary defect at line 253? | **Refuted.** Clients pick up a new `sw.js` even when `register()` is never called again. |
-| 6. Why does it exist? | One-shot remediation from **2026-02-05 (8 months ago)** for a `supabase-cache` route that no longer exists. Shipped with no version or date guard. |
+| Q                                 | Answer                                                                                                                                                                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Does it execute in production? | **Yes.** Cleanup code verbatim in the shipped bundle; fires on every page load.                                                                                                                                        |
+| 2. Real user-visible symptom?     | **Forced full-page reload on the first page view of every browser session**, ~10ms after FCP on `/`, ~410-480ms after FCP on `/food`. Costs +1 full load, +~50 requests, +~30KB. PWA precache destroyed every session. |
+| 3. The race                       | Resolved. `ServiceWorkerRegistration` always loses pre-reload (3/3, explained by React effect order). Post-reload it is **non-deterministic** (1/3 runs double-registered). Both outcomes are benign.                  |
+| 4. Two session boundaries?        | **Confirmed permanent cycle.** 14/14 second-and-later sessions forced a reload.                                                                                                                                        |
+| 5. Secondary defect at line 253?  | **Refuted.** Clients pick up a new `sw.js` even when `register()` is never called again.                                                                                                                               |
+| 6. Why does it exist?             | One-shot remediation from **2026-02-05 (8 months ago)** for a `supabase-cache` route that no longer exists. Shipped with no version or date guard.                                                                     |
 
 ### Feedback loop
 
@@ -137,14 +139,14 @@ disk cache survive on disk; `sessionStorage` does not. That is exactly the "new 
 session" condition that `sessionStorage['sw-cleaned-up']` gates on, so each
 close/reopen is one session boundary.
 
-| Harness | Question | Runtime |
-| --- | --- | --- |
-| `repro.mjs` | Does it fire on prod, and across session boundaries? | ~60s |
-| `trace-order.mjs` | Exact call ordering of every `register`/`getRegistrations`/`unregister` | ~90s |
-| `measure-reload.mjs` | How long after FCP does the reload land, was the page painted? | ~110s |
-| `slow-and-deeplink.mjs` | Slow 3G, and non-`/` entry routes | ~90s |
-| `differential.mjs` | Single-variable A/B proving causation + request/byte cost | ~140s |
-| `sw-update-fixture.mjs` | Does the line-253 guard strand clients on a stale `sw.js`? | **~25s, fully local** |
+| Harness                 | Question                                                                | Runtime               |
+| ----------------------- | ----------------------------------------------------------------------- | --------------------- |
+| `repro.mjs`             | Does it fire on prod, and across session boundaries?                    | ~60s                  |
+| `trace-order.mjs`       | Exact call ordering of every `register`/`getRegistrations`/`unregister` | ~90s                  |
+| `measure-reload.mjs`    | How long after FCP does the reload land, was the page painted?          | ~110s                 |
+| `slow-and-deeplink.mjs` | Slow 3G, and non-`/` entry routes                                       | ~90s                  |
+| `differential.mjs`      | Single-variable A/B proving causation + request/byte cost               | ~140s                 |
+| `sw-update-fixture.mjs` | Does the line-253 guard strand clients on a stale `sw.js`?              | **~25s, fully local** |
 
 Production access was read-only throughout: GETs of `/`, `/about`, `/food`, `/sw.js` and
 static chunks. No logins, no form posts, no rate-limited endpoints touched.
@@ -208,7 +210,7 @@ any React effect, on **every** page load, with no hostname gate and no "is somet
 already registered" check:
 
 ```js
-window.workbox = new f(window.location.origin + "/sw.js", { scope: "/" });
+window.workbox = new f(window.location.origin + '/sw.js', { scope: '/' });
 window.workbox.register();
 ```
 
@@ -253,12 +255,12 @@ is `reload`, not `navigate`.
 
 Timing varies by entry route (`slow-and-deeplink.mjs`):
 
-| Entry | Network | FCP | reload fires | after FCP |
-| --- | --- | --- | --- | --- |
-| `/` | unthrottled | 144-176ms | 152-188ms | **8-15ms** |
-| `/` | Slow 3G (400kbps/400ms) | 740ms | 758ms | **18ms** |
-| `/food` | unthrottled | 204ms | 610ms | **406ms** |
-| `/about` | unthrottled | 228ms | 704ms | **476ms** |
+| Entry    | Network                 | FCP       | reload fires | after FCP  |
+| -------- | ----------------------- | --------- | ------------ | ---------- |
+| `/`      | unthrottled             | 144-176ms | 152-188ms    | **8-15ms** |
+| `/`      | Slow 3G (400kbps/400ms) | 740ms     | 758ms        | **18ms**   |
+| `/food`  | unthrottled             | 204ms     | 610ms        | **406ms**  |
+| `/about` | unthrottled             | 228ms     | 704ms        | **476ms**  |
 
 On `/` it is a flash. On `/food` the listing renders, then 400ms later the page throws
 itself away and refetches. **It fires on deep-link entries too**, because
@@ -272,7 +274,7 @@ of my instrumentation; do not treat multi-second delays as the common case.
 
 **Does the cache survive a session boundary? No.** Caches wiped every session:
 `start-url`, `workbox-precache-v2-https://ummahflow.com/`, `static-resources`
-(`images-cache` would go too once populated; the cleanup deletes *all* CacheStorage keys
+(`images-cache` would go too once populated; the cleanup deletes _all_ CacheStorage keys
 for the origin). The precache is rebuilt after the reload, so offline capability returns
 within the session, but **every session opens with a window where the app is not
 offline-capable**.
@@ -304,14 +306,14 @@ and the destroyed precache.
 
 Mapped by minified offset in the layout chunk (`trace-order.mjs`):
 
-| Offset | Source |
-| --- | --- |
+| Offset                         | Source                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------- |
 | `layout…js:1:13995` / `:14061` | `RootClientLayout.tsx:251` `getRegistrations()` and `:256` `register("/sw.js")` |
-| `layout…js:1:21520` | `serviceWorkerCleanup.ts:23` `getRegistrations()` |
-| `8928…js:1:184731` | next-pwa's `window.workbox.register()` |
+| `layout…js:1:21520`            | `serviceWorkerCleanup.ts:23` `getRegistrations()`                               |
+| `8928…js:1:184731`             | next-pwa's `window.workbox.register()`                                          |
 
 **Pre-reload load, deterministic 3/3.** next-pwa registers first at module eval
-(+141 to +228ms). `ServiceWorkerRegistration` then fires ~2ms *before* the cleanup,
+(+141 to +228ms). `ServiceWorkerRegistration` then fires ~2ms _before_ the cleanup,
 because `RootClientLayout` is a descendant of `ClientProviders` and React runs child
 effects before parent effects:
 
@@ -356,7 +358,7 @@ converges. **This is forever, not a one-off.**
 Counts across all harnesses:
 
 - **Second-and-later sessions: 14/14 forced a reload.** Deterministic.
-- **First-ever visit: 1/5.** Non-deterministic, and it is the *fast* path that escapes:
+- **First-ever visit: 1/5.** Non-deterministic, and it is the _fast_ path that escapes:
   the cleanup's `getRegistrations()` usually resolves before next-pwa's `register()` has
   produced a registration object, so it logs "No service workers found" and skips the
   reload. The one reload came from the instrumented run, where added await hops delayed
@@ -466,7 +468,7 @@ Delete `src/lib/pwa/serviceWorkerCleanup.ts` and the `useEffect` at
   `[SW Cleanup]` console line appears. Needs the persistent-context trick from
   `repro.mjs`; the existing `e2e/pwa.spec.ts` patterns do not cover session boundaries.
   Note the e2e suite runs against localhost, where `ServiceWorkerRegistration` is gated
-  off and `DISABLE_PWA=true`, so the test must assert the *absence of the cleanup*
+  off and `DISABLE_PWA=true`, so the test must assert the _absence of the cleanup_
   (which has no hostname gate and therefore does run on localhost) rather than SW
   behaviour.
 
@@ -482,7 +484,7 @@ Replace the `sessionStorage` gate with something like
   ship one reload to the entire user base, just once instead of forever. Pick this only
   if you want to flush February workers before deleting; then it becomes two releases,
   and you have to remember to do the second one.
-- **Regression test:** yes, and harder: assert cleanup runs on session 1 and *not* on
+- **Regression test:** yes, and harder: assert cleanup runs on session 1 and _not_ on
   session 2 of the same profile. Needs persistent context plus `localStorage`
   manipulation. Also needs a test that the marker is never written before the cleanup
   completes, or a mid-cleanup crash strands the client.
@@ -505,7 +507,7 @@ Replace the `sessionStorage` gate with something like
 - **Why not:** this is the fix the title of the request implies, and the diagnosis says it
   is wrong. The cleanup's problem is not that it runs in the wrong environment; it is
   that production is exactly where it runs and production is where it does the damage. A
-  hostname gate would *preserve* the bug for every real user and hide it from local dev.
+  hostname gate would _preserve_ the bug for every real user and hide it from local dev.
   Listed only so it is explicitly ruled out.
 
 **Pick 1.** Add 3 as a follow-up. Either way, 281 should land before the Serwist
@@ -515,8 +517,117 @@ verification meaningless.
 ## Implementation notes
 
 - Branch: `fix/281-sw-cleanup-unconditional`
-- Tests added:
-- Files changed:
+
+### Files changed
+
+| File                                                       | Change                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/lib/pwa/serviceWorkerCleanup.ts`                      | **Deleted** (70 lines). The directory `src/lib/pwa/` is now empty and gone too.                                                                                                                                                                                                                                                                                    |
+| `src/components/layout/ClientProviders.tsx`                | Dropped the import (line 9), the `useEffect` call site and its stale "once per session" comment (lines 60-63), and `useEffect` from the React import, which no longer has any other use in the file.                                                                                                                                                               |
+| `src/components/layout/__tests__/ClientProviders.test.tsx` | Dropped the `vi.mock('@/lib/pwa/serviceWorkerCleanup')` block and the now-unused `mockCleanupServiceWorkers` spy. No assertion depended on the cleanup, so the Sonner safe-area test is unchanged and still passes. Two cosmetic Prettier hunks came along because the file was already unformatted on `main` and `lint-staged` runs `prettier --write` on commit. |
+| `e2e/sw-session-boundary.spec.ts`                          | **New** regression spec (152 lines).                                                                                                                                                                                                                                                                                                                               |
+
+Nothing else in the repo referenced `cleanupServiceWorkers`, `serviceWorkerCleanup`
+or `sw-cleaned-up`; the only remaining hits are this request file and the
+`agent-output/debug/281/` evidence trail.
+
+### Tests added
+
+`e2e/sw-session-boundary.spec.ts`, test name "a returning session is not forced to reload".
+
+It reuses the load-bearing trick from the diagnosis harnesses:
+`chromium.launchPersistentContext(profileDir)`, then close and reopen the **same**
+profile. The service-worker registration and CacheStorage survive on disk,
+`sessionStorage` does not, which is exactly the state the old cleanup triggered on.
+Playwright's default per-test context shares nothing between tests, so the stock
+`page` fixture can never reproduce this.
+
+On the second session it asserts:
+
+1. no `[SW Cleanup]` console line,
+2. `performance.getEntriesByType('navigation')[0].type === 'navigate'`, not `reload`,
+3. exactly one document `load` event,
+4. the registration and at least one cache survived the boundary.
+
+Plus one precondition on session 1 (`registrations > 0`) whose only job is to stop
+the spec passing vacuously: with no worker registered the cleanup returned early at
+line 25 without reloading, and the whole thing would go green for the wrong reason
+(learning 278).
+
+Three things worth knowing if you touch it:
+
+- **It needs a production build.** `test.skip` triggers on `GET /sw.js !== 200`
+  rather than on `process.env.CI`, so it runs in CI (`webServer` is
+  `npm run start`) _and_ against any local `npm run build && npm run start`, and
+  skips loudly under `next dev` where the PWA plugin is off.
+- **Count `load` events, not `framenavigated`.** The App Router does a
+  same-document history navigation on the landing page, so `framenavigated` reads 2
+  on a perfectly healthy session. That cost one red/green cycle to find.
+- **One `x-forwarded-for` per session.** The middleware rate limiter allows 30 API
+  requests/min per IP and one landing-page load spends a good chunk of it; sharing
+  one IP across both sessions produced a 429 in the pre-fix run.
+
+### Red-before / green-after
+
+Both runs used a local `npm run build` (`DISABLE_PWA` unset, so the plugin is on and
+`public/sw.js` is generated) served by `CI=1 npx playwright test`, i.e. `npm run start`.
+
+Red, with `serviceWorkerCleanup.ts` restored and the final spec unchanged:
+
+```
+✘ 1 [chromium] › a returning session is not forced to reload (15.3s)
+  Error: no code may unregister workers and wipe caches on a session boundary
+  + "[SW Cleanup] Starting service worker cleanup..."
+  + "[SW Cleanup] Found 1 service worker(s)"
+  + "[SW Cleanup] Unregistering: http://127.0.0.1:3000/sw.js"
+  + "[SW Cleanup] All service workers unregistered"
+  + "[SW Cleanup] Found 2 cache(s)"
+  + "[SW Cleanup] Deleting cache: start-url"
+  + "[SW Cleanup] Deleting cache: workbox-precache-v2-http://127.0.0.1:3000/"
+  + "[SW Cleanup] All caches cleared"
+  + "[SW Cleanup] Reloading page to apply changes..."
+```
+
+The console assertion fires first, so the reload assertions were checked separately
+by temporarily reordering them against the same buggy build:
+
+```
+✘ Error: expect(received).toBe(expected)
+  Expected: "navigate"
+  Received: "reload"
+```
+
+Green, after the deletion:
+
+```
+✓ 1 [chromium] › a returning session is not forced to reload (14.4s)
+  1 passed (17.1s)
+```
+
+Also green at `--repeat-each=2` (2 parallel workers, 2/2 passed), because the
+pre-reload race in the diagnosis made flakiness a fair worry.
+
+This also reproduces the production bug on `127.0.0.1` for the first time: the
+diagnosis could only show it against https://ummahflow.com. The cleanup has no
+hostname gate and the plugin's injected registration is not hostname-gated either,
+so a local production build is enough.
+
+### Verification
+
+| Check                                                                     | Result                                                                           |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `npx vitest run src/components/layout/__tests__/ClientProviders.test.tsx` | 1 passed                                                                         |
+| `npx playwright test e2e/sw-session-boundary.spec.ts` (CI=1, prod build)  | 1 passed; red before the fix, see above                                          |
+| `npm run lint`                                                            | 0 errors, 132 warnings, all pre-existing. Zero in any file this request touched. |
+| `npx tsc --noEmit`                                                        | clean                                                                            |
+| `scripts/verify-pwa-output.js` (runs as `postbuild`)                      | `OK: public/sw.js generated and imports sw-push-handler.js` on every build       |
+
+No existing guard, assertion or lint rule was weakened, skipped or deleted.
+
+`public/manifest.json` was reverted before committing: `prebuild`
+(`scripts/generate-manifest.js`) rewrites it with `"url": "/providers"` where the
+committed file has `"/food"`, and committing that churn would break the plan228
+regression test.
 
 ## Review findings
 
@@ -532,6 +643,20 @@ verification meaningless.
 ## Follow-up requests
 
 _New work discovered during this request. Do not act on these; finish the current request first._
+
+- **Fold the `ServiceWorkerRegistration` deletion into request 282.** All 37 lines
+  (`RootClientLayout.tsx:237-273`) are redundant with the plugin's injected
+  registration today, and deleting them also removes the benign post-reload
+  double-register race. It was deliberately left in place here (Decision 4) because
+  the evidence that something still registers only covers the current
+  `@ducanh2912/next-pwa` setup. 282 replaces that plugin, so it is the request that
+  can prove the post-migration half and delete the code in the same breath.
+- **`DevServiceWorkerReset` (`RootClientLayout.tsx:218-235`) is a second blind
+  unregister-plus-wipe-all-caches effect.** It is gated to
+  `NODE_ENV === 'development'` **and** localhost/127.0.0.1, so it is dead code in any
+  production build and did not contribute to this bug. But it means `npm run dev`
+  can never hold a service worker, which is worth a deliberate decision during the
+  Serwist migration rather than inheriting it by accident.
 
 ## Learnings
 

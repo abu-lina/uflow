@@ -5,16 +5,13 @@ import { render, waitFor } from '@testing-library/react';
 
 import { ClientProviders } from '../ClientProviders';
 
-const mockCleanupServiceWorkers = vi.fn();
-const mockToaster = vi.fn((props?: unknown) => <div data-props={JSON.stringify(props)} data-testid="sonner-toaster" />);
+const mockToaster = vi.fn((props?: unknown) => (
+  <div data-props={JSON.stringify(props)} data-testid="sonner-toaster" />
+));
 
 vi.mock('sonner', () => ({
   Toaster: (props: unknown) => mockToaster(props),
   toast: vi.fn(),
-}));
-
-vi.mock('@/lib/pwa/serviceWorkerCleanup', () => ({
-  cleanupServiceWorkers: () => mockCleanupServiceWorkers(),
 }));
 
 vi.mock('@/design-system', () => ({
@@ -66,7 +63,7 @@ describe('ClientProviders toaster safe-area config', () => {
     render(
       <ClientProviders initialUser={null}>
         <div>content</div>
-      </ClientProviders>
+      </ClientProviders>,
     );
 
     await waitFor(() => {
