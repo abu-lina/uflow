@@ -90,14 +90,14 @@ script, so whether this is user-visible needs confirming rather than assuming.
 
 ## Phases
 
-| #   | Phase                    | Status  | Outcome                                                                                                                                               |
-| --- | ------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0   | Tracking file created    | Done    | This file                                                                                                                                             |
-| 1   | Diagnose                 | Done    | Root cause **confirmed** on production. Primary defect real and user-visible; secondary defect (RootClientLayout.tsx:253) **refuted**. See Diagnosis. |
-| 2   | Gate: confirm hypothesis | Done    | Passed. Hypothesis confirmed at runtime; fix option 1 (delete the cleanup) chosen by the lead.                                                        |
-| 3   | Fix                      | Done    | Cleanup deleted, regression test added and proven red-before/green-after. See Implementation notes.                                                   |
-| 4   | Code Review              | Pending |                                                                                                                                                       |
-| 5   | Done                     | Pending |                                                                                                                                                       |
+| #   | Phase                    | Status | Outcome                                                                                                                                               |
+| --- | ------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | Tracking file created    | Done   | This file                                                                                                                                             |
+| 1   | Diagnose                 | Done   | Root cause **confirmed** on production. Primary defect real and user-visible; secondary defect (RootClientLayout.tsx:253) **refuted**. See Diagnosis. |
+| 2   | Gate: confirm hypothesis | Done   | Passed. Hypothesis confirmed at runtime; fix option 1 (delete the cleanup) chosen by the lead.                                                        |
+| 3   | Fix                      | Done   | Cleanup deleted, regression test added and proven red-before/green-after. See Implementation notes.                                                   |
+| 4   | Code Review              | Done   | No Critical, no High, 1 Medium (skip predicate) + 4 Low. All 8 PR #485 checks green. Follow-ups applied in one pass. See Review findings.             |
+| 5   | Done                     | Done   | Medium and all Lows fixed, learning captured in `docs/ai/LEARNINGS.md`, evidence trail trimmed.                                                       |
 
 ## Decisions
 
@@ -162,8 +162,12 @@ node agent-output/debug/281/differential.mjs
 These scripts resolve Playwright from `/Users/NARAFIQ/Projects/uflow/node_modules`
 because this worktree has no `node_modules`. Override with `PLAYWRIGHT_FROM=<repo>`.
 
-Artifacts committed at `agent-output/debug/281/artifacts/` (full set, including all
-screenshots, regenerates into `/tmp/sw281-artifacts/`).
+Artifacts committed at `agent-output/debug/281/artifacts/`: all six text logs plus one
+screenshot. The `/food` deep-link screenshot (423KB, 78% of the directory) was dropped
+in review; its timing is in `04-slow3g-and-deeplink.txt` as text, and
+`07-home-painted-at-moment-of-forced-reload.png` already proves the page was painted
+when the reload fired. Re-running any harness regenerates the full set into
+`/tmp/sw281-artifacts/`.
 
 ### Q1 — It executes in production. Confirmed.
 
@@ -525,7 +529,7 @@ verification meaningless.
 | `src/lib/pwa/serviceWorkerCleanup.ts`                      | **Deleted** (70 lines). The directory `src/lib/pwa/` is now empty and gone too.                                                                                                                                                                                                                                                                                    |
 | `src/components/layout/ClientProviders.tsx`                | Dropped the import (line 9), the `useEffect` call site and its stale "once per session" comment (lines 60-63), and `useEffect` from the React import, which no longer has any other use in the file.                                                                                                                                                               |
 | `src/components/layout/__tests__/ClientProviders.test.tsx` | Dropped the `vi.mock('@/lib/pwa/serviceWorkerCleanup')` block and the now-unused `mockCleanupServiceWorkers` spy. No assertion depended on the cleanup, so the Sonner safe-area test is unchanged and still passes. Two cosmetic Prettier hunks came along because the file was already unformatted on `main` and `lint-staged` runs `prettier --write` on commit. |
-| `e2e/sw-session-boundary.spec.ts`                          | **New** regression spec (152 lines).                                                                                                                                                                                                                                                                                                                               |
+| `e2e/sw-session-boundary.spec.ts`                          | **New** regression spec. Amended in the review pass (`a5c19ecb`): CI-branched `/sw.js` probe, `10.232.` IP prefix, console context on every assertion, corrected comments.                                                                                                                                                                                         |
 
 Nothing else in the repo referenced `cleanupServiceWorkers`, `serviceWorkerCleanup`
 or `sw-cleaned-up`; the only remaining hits are this request file and the
@@ -556,16 +560,26 @@ line 25 without reloading, and the whole thing would go green for the wrong reas
 
 Three things worth knowing if you touch it:
 
-- **It needs a production build.** `test.skip` triggers on `GET /sw.js !== 200`
-  rather than on `process.env.CI`, so it runs in CI (`webServer` is
-  `npm run start`) _and_ against any local `npm run build && npm run start`, and
-  skips loudly under `next dev` where the PWA plugin is off.
+- **It needs a production build.** The `/sw.js` probe now branches on
+  `process.env.CI`: in CI a non-200 is an assertion failure, locally it is a
+  `test.skip`. See Review findings M1 for why the original single predicate was
+  wrong. It runs in CI (`webServer` is `npm run start`) _and_ against any local
+  `npm run build && npm run start`.
+  Correction to an earlier claim in this file: `next dev` does **not** turn the
+  PWA plugin off. `next.config.js:6` disables it only on `DISABLE_PWA=true`, so
+  plain `next dev` writes a 3471-byte dev-stub `public/sw.js`, serves it 200, and
+  the spec runs in full (verified: `1 passed`). The skip only fires with
+  `DISABLE_PWA=true`, where nothing is generated and `/sw.js` 404s.
 - **Count `load` events, not `framenavigated`.** The App Router does a
   same-document history navigation on the landing page, so `framenavigated` reads 2
   on a perfectly healthy session. That cost one red/green cycle to find.
-- **One `x-forwarded-for` per session.** The middleware rate limiter allows 30 API
-  requests/min per IP and one landing-page load spends a good chunk of it; sharing
-  one IP across both sessions produced a 429 in the pre-fix run.
+- **One `x-forwarded-for` per session.** Sharing one IP across both sessions
+  produced a real 429 in the pre-fix run. The attribution in the original comment
+  was wrong, though: `src/middleware.ts:137`'s matcher excludes `/api`, so these
+  page loads hit the non-API branch at `src/middleware.ts:115`, which allows 100
+  requests/min, not the 30/min API branch. Corrected in the spec comment. The
+  spec also allocates from `10.232.` rather than `10.231.` so it cannot collide
+  with `e2e/fixtures.ts:53` (Review findings M2).
 
 ### Red-before / green-after
 
@@ -631,14 +645,84 @@ regression test.
 
 ## Review findings
 
+**Verdict: no Critical, no High.** One Medium, four Low. All 8 PR #485 checks green.
+Everything below was fixed in one follow-up pass; the diagnosis and the fix itself
+were not reopened.
+
+The finding that matters most is the one that is _not_ a defect: the guard was
+observed **executing** in CI run `36974467949`, passing in **15.3s**. That runtime is
+the evidence. A vacuous or skipped version of this spec completes in well under a
+second (the `DISABLE_PWA=true` simulation below returned in 57ms), so 15.3s can only
+mean two full persistent-context browser sessions actually ran. Request 278's failure
+mode was a guard present in the script text that never once executed; this one is
+ruled out by measurement, not by reading.
+
 ### Standards axis
+
+| #   | Severity   | Finding                                                                                                                                                                                                                                                                                                                                                            | Status                                                                                                                                                                                                                   |
+| --- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| M1  | **Medium** | **False-green exit in the regression guard.** The skip predicate was `swResponse.status() !== 200`. The intent was "skip under `next dev`", but a 429, a 5xx or a redirect took the same assertion-free exit, and in CI that produces a run indistinguishable from a pass. Same family as learnings 278 and 279: a not-found branch that warns instead of failing. | **Fixed.** The probe branches on `process.env.CI`: in CI a non-200 is `expect(...).toBe(200)` with the message "CI must serve a real /sw.js; this guard may never skip here"; locally it is still a polite `test.skip`.  |
+| L1  | Low        | **IP allocator collision.** The spec built `10.231.${(workerIndex + 1) % 256}.${session}` while `e2e/fixtures.ts:53` builds `10.231.${(parallelIndex * 8 + workerIndex + 1) % 256}.${hash}`. At `parallelIndex === 0` the third octets coincide, so a fixture test whose name-hash landed on 1 or 2 could share a rate-limit bucket with a session here.           | **Fixed** by moving this spec to the `10.232.` prefix. `e2e/fixtures.ts` untouched on purpose: six other specs depend on it and a shared helper is not worth that churn for a one-character-class change.                |
+| L2  | Low        | **Wrong rate-limit attribution in a comment.** It claimed the limiter "allows 30 API requests/min". `src/middleware.ts:137`'s matcher excludes `/api`, so these page loads hit the non-API branch at `src/middleware.ts:115`: 100 requests/min. The observed 429 was real; the number and branch named were not.                                                   | **Fixed** in the spec comment and in Implementation notes.                                                                                                                                                               |
+| L3  | Low        | **Thin failure messages.** Only the `navigationType` assertion carried the second session's console. A red on `documentLoads`, `registrations` or `cacheKeys` could not be diagnosed from the CI log without pulling the trace.                                                                                                                                    | **Fixed.** All four assertions now append the same `consoleContext`.                                                                                                                                                     |
+| L4  | Low        | **Two comments that did not match the code.** `probe()` said "retry once" where the loop allows three attempts, and `SESSION_SETTLE_MS = 6_000` was an undocumented magic wait whose failure mode is a false green (a reload landing after the window passes the spec).                                                                                            | **Fixed.** Retry comment corrected. The settle window is now documented as deliberate: you cannot wait on the absence of an event, so it is sized at ~12x the slowest measured reload (476ms) and marked do-not-shorten. |
+
+Quarantine of the evidence trail was checked and confirmed correct:
+`tsconfig.json:49` excludes `agent-output/`, `eslint.config.mjs:155` ignores it, and
+`playwright.config.ts:6` scopes `testDir` to `./e2e`, so nothing under
+`agent-output/debug/281/` can be compiled, linted or picked up as a test. Committing
+the trail is this repo's convention and it stays. It was trimmed, not removed: the
+423KB `/food` deep-link screenshot (78% of the directory) is gone, since
+`04-slow3g-and-deeplink.txt` already carries that timing as text and
+`07-home-painted-at-moment-of-forced-reload.png` already proves the page was painted
+when the reload fired. 540K to 124K.
 
 ### Spec axis
 
+The fix matches Decision 3: delete `src/lib/pwa/serviceWorkerCleanup.ts` outright, no
+environment gate, no `localStorage` marker. Nothing was left half-done and nothing
+beyond the request's scope was touched.
+
+- **Primary defect, resolved.** No code path unregisters workers or wipes caches on a
+  session boundary. The regression guard asserts the four observable consequences
+  (no `[SW Cleanup]` console line, `navigationType === 'navigate'`, exactly one
+  document `load`, registration and precache both surviving), and was red before the
+  deletion and green after.
+- **Secondary defect, correctly left alone.** `RootClientLayout.tsx:253` was refuted
+  in diagnosis (Q5) and `ServiceWorkerRegistration` was deliberately kept per
+  Decision 4, since the evidence that something still registers only holds for the
+  current `@ducanh2912/next-pwa` setup. Folded into request 282 as a follow-up rather
+  than deleted on a hunch here.
+- **Vacuity, guarded explicitly.** The `first.registrations > 0` precondition exists
+  so the spec cannot go green with nothing registered, which is exactly how the old
+  cleanup returned early without reloading. M1 closed the other, larger vacuity hole
+  above it.
+- **No guard weakened.** No assertion, lint rule or CI check was skipped, relaxed or
+  deleted anywhere in this request.
+- **One claim in this file was wrong and is now corrected.** `next dev` does not turn
+  the PWA plugin off; `next.config.js:6` keys off `DISABLE_PWA=true` only. Measured:
+  plain `next dev` still writes a dev-stub `/sw.js` and the spec runs in full.
+
 ## QA results
 
-- Suite: pass / fail
-- Regressions:
+- Suite: not run in full; CI covers it. Narrow verification only, all pass.
+- Regressions: none.
+
+| Check                                                          | Result                                                                                       |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `CI=1 npx playwright test e2e/sw-session-boundary.spec.ts`     | **1 passed (14.6s)** against a local `npm run build` + `npm run start`                       |
+| Local `next dev`, `DISABLE_PWA=true` (so `/sw.js` 404s)        | **1 skipped.** The local path still skips politely; M1 did not invert it into always-failing |
+| Local `next dev`, no `DISABLE_PWA` (dev-stub `/sw.js`, 200)    | **1 passed.** The spec runs in full here, which is how the stale premise was caught          |
+| `CI=1` with `/sw.js` absent (the simulation M1 is written for) | **1 failed in 57ms**: "CI must serve a real /sw.js; this guard may never skip here", 404     |
+| `npm run lint`                                                 | 0 errors, 132 warnings, all pre-existing. Zero in any file this request touched              |
+| `npx tsc --noEmit`                                             | clean                                                                                        |
+| `scripts/verify-pwa-output.js` (`postbuild`)                   | `OK: public/sw.js generated and imports sw-push-handler.js`                                  |
+
+The `DISABLE_PWA=true` rows are the ones that matter: together they prove the guard
+is red when `/sw.js` is missing under CI and merely skipped when it is missing
+locally, which is the whole point of M1. `public/manifest.json` was reverted after
+every build, since `prebuild` rewrites it with `"url": "/providers"` where the
+committed file has `"/food"`.
 
 ## Follow-up requests
 
@@ -657,7 +741,39 @@ _New work discovered during this request. Do not act on these; finish the curren
   production build and did not contribute to this bug. But it means `npm run dev`
   can never hold a service worker, which is worth a deliberate decision during the
   Serwist migration rather than inheriting it by accident.
+- **Add `agent-output/` to `.dockerignore`.** It currently excludes `*.md` and
+  `docs/` but not `agent-output/`, so every harness and ~463KB of PNGs enter the
+  Docker build context. Pre-existing and not caused by this request: 28 other PNGs
+  under `agent-output/` are already in the context today, and trimming the 281
+  screenshot only reduced it. Deliberately out of scope here, since learning 278
+  established that any `.dockerignore` change needs a real `docker build` to verify
+  (patterns that silently match nothing look identical to ones that work, and
+  `**/` anchoring differs from `.gitignore`). That verification is the whole task.
+- **Two things request 282 (Serwist migration) must carry.** First, deleting
+  `agent-output/debug/281/` outright: that directory's own README names request 281
+  closing as its exit condition, and 282 is where it closes. Second, re-establishing
+  service-worker registration, or deleting `ServiceWorkerRegistration`
+  (`RootClientLayout.tsx:237-273`) with evidence. Removing `@ducanh2912/next-pwa`
+  removes the `register: true` injection in `next.config.js:3`, and that injection
+  is what actually registers the worker today (diagnosis: "there is a third
+  registration call site, and it is the important one"). 282 must not land with the
+  plugin gone and nothing proven to have replaced it.
 
 ## Learnings
 
 _Captured after review and test (workflow.mdc rule)._
+
+One entry appended to `docs/ai/LEARNINGS.md`:
+**"281 - A remediation gated on `sessionStorage` is not one-shot, it is permanent."**
+
+The learning is not "we deleted dead code". It is that `sessionStorage` cannot express
+"one-shot": it means once per session, which for a returning user means always. A
+temporary remediation needs a durable, versioned marker and a removal trigger written
+down when it ships, or it becomes permanent behaviour nobody remembers owning. This
+one ran for 8 months after the `supabase-cache` route it was flushing had been
+deleted, and the comment saying "runs once per session" was accurate while still
+reading as reassurance.
+
+Folded in as a secondary point: the skip predicate in the test guarding this very fix
+was the same false-green family as 278 and 279. Writing the guard is not the hard
+part; making sure it cannot silently decline to run is.

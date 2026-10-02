@@ -15,14 +15,14 @@ browser-session boundary, which is exactly what `sessionStorage['sw-cleaned-up']
 
 ## Scripts
 
-| Script | Question | Target | Runtime |
-| --- | --- | --- | --- |
-| `repro.mjs` | Does the cleanup fire on prod, and what happens across session boundaries? | prod | ~60s |
-| `trace-order.mjs` | Exact ordering of every `register` / `getRegistrations` / `unregister` call | prod | ~90s |
-| `measure-reload.mjs` | How long after first-contentful-paint does the forced reload land, and was the page painted? | prod | ~110s |
-| `slow-and-deeplink.mjs` | Same under Slow 3G, and with a non-`/` entry route | prod | ~90s |
-| `differential.mjs` | Single-variable A/B (pre-seed the sessionStorage flag) proving causation, plus request/byte cost | prod | ~140s |
-| `sw-update-fixture.mjs` | Does `RootClientLayout.tsx:253`'s `length === 0` guard strand clients on a stale `sw.js`? | **local** | ~25s |
+| Script                  | Question                                                                                         | Target    | Runtime |
+| ----------------------- | ------------------------------------------------------------------------------------------------ | --------- | ------- |
+| `repro.mjs`             | Does the cleanup fire on prod, and what happens across session boundaries?                       | prod      | ~60s    |
+| `trace-order.mjs`       | Exact ordering of every `register` / `getRegistrations` / `unregister` call                      | prod      | ~90s    |
+| `measure-reload.mjs`    | How long after first-contentful-paint does the forced reload land, and was the page painted?     | prod      | ~110s   |
+| `slow-and-deeplink.mjs` | Same under Slow 3G, and with a non-`/` entry route                                               | prod      | ~90s    |
+| `differential.mjs`      | Single-variable A/B (pre-seed the sessionStorage flag) proving causation, plus request/byte cost | prod      | ~140s   |
+| `sw-update-fixture.mjs` | Does `RootClientLayout.tsx:253`'s `length === 0` guard strand clients on a stale `sw.js`?        | **local** | ~25s    |
 
 ```bash
 node agent-output/debug/281/sw-update-fixture.mjs   # tightest loop: local, deterministic
@@ -44,4 +44,7 @@ node agent-output/debug/281/differential.mjs        # proves the bug on producti
 - **The SW script fetch for an update check is browser-internal** and does not surface via
   Playwright's `request` events, which is why `sw-update-fixture.mjs` exists as a local
   fixture rather than a production measurement.
-- Artifacts land in `/tmp/sw281-artifacts/`; the committed subset is in `artifacts/`.
+- Artifacts land in `/tmp/sw281-artifacts/`; the committed subset is in `artifacts/`. That
+  subset is the six text logs plus `07-home-painted-at-moment-of-forced-reload.png`. The
+  `/food` deep-link screenshot was dropped in review (423KB for a point already made in
+  text by `04-slow3g-and-deeplink.txt`); re-run `slow-and-deeplink.mjs` to regenerate it.
