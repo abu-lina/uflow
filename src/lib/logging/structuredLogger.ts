@@ -3,6 +3,8 @@
  * Provides JSON-formatted logs for better observability
  */
 
+import { getTrustedClientIp } from '@/lib/security/clientIp';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogEntry {
@@ -33,7 +35,7 @@ function createLogEntry(
   message: string,
   context?: Record<string, unknown>,
   error?: Error,
-  metadata?: LogEntry['metadata']
+  metadata?: LogEntry['metadata'],
 ): LogEntry {
   const entry: LogEntry = {
     timestamp: new Date().toISOString(),
@@ -81,7 +83,12 @@ export const logger = {
     console.warn(JSON.stringify(entry));
   },
 
-  error: (message: string, error?: Error, context?: Record<string, unknown>, metadata?: LogEntry['metadata']) => {
+  error: (
+    message: string,
+    error?: Error,
+    context?: Record<string, unknown>,
+    metadata?: LogEntry['metadata'],
+  ) => {
     const entry = createLogEntry('error', message, context, error, metadata);
     console.error(JSON.stringify(entry));
   },
@@ -92,14 +99,14 @@ export const logger = {
  */
 export function getRequestMetadata(request: Request): LogEntry['metadata'] {
   const url = new URL(request.url);
-  
+
   return {
     method: request.method,
     path: url.pathname,
-    ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
-               request.headers.get('x-real-ip') || 
-               undefined,
+    ipAddress: (() => {
+      const ip = getTrustedClientIp(request.headers);
+      return ip === 'unknown' ? undefined : ip;
+    })(),
     userAgent: request.headers.get('user-agent') || undefined,
   };
 }
-

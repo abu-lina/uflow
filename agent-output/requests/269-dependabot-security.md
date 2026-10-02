@@ -29,12 +29,12 @@ Two buckets, confirmed with the user as "Everything".
 
 Ground truth read from lockfiles (not `node_modules`, which is stale at root).
 
-| Manifest | Package | Locked | Target | Alerts cleared |
-| --- | --- | --- | --- | --- |
-| `package-lock.json` | `brace-expansion` | 5.0.9 | `>=5.0.12` | 205 (high), 206 (high), 207 |
-| `tools/uflow-memory-extension` | `ip-address` | 10.2.0 | `>=10.7.1` | 177, 178, 184 (high), 203, 208, 213 |
-| `tools/uflow-memory-extension` | `brace-expansion` | 2.1.4 | `>=2.1.7` | 211 |
-| `tools/memory-backend` | `vitest` / `@vitest/mocker` | 3.2.6 | `^5.0.1` (fallback `^4.1.11`) | 199, 200 |
+| Manifest                       | Package                     | Locked | Target                        | Alerts cleared                      |
+| ------------------------------ | --------------------------- | ------ | ----------------------------- | ----------------------------------- |
+| `package-lock.json`            | `brace-expansion`           | 5.0.9  | `>=5.0.12`                    | 205 (high), 206 (high), 207         |
+| `tools/uflow-memory-extension` | `ip-address`                | 10.2.0 | `>=10.7.1`                    | 177, 178, 184 (high), 203, 208, 213 |
+| `tools/uflow-memory-extension` | `brace-expansion`           | 2.1.4  | `>=2.1.7`                     | 211                                 |
+| `tools/memory-backend`         | `vitest` / `@vitest/mocker` | 3.2.6  | `^5.0.1` (fallback `^4.1.11`) | 199, 200                            |
 
 No alert touches runtime application code. The two `high` alerts are the root `brace-expansion`
 chain (reachable in prod via `@ducanh2912/next-pwa` -> `workbox-build` -> `glob` -> `minimatch`)
@@ -42,12 +42,12 @@ and the extension `ip-address` chain (dev-only, under `@electron/rebuild`).
 
 ### Bucket B: 4 open Dependabot PRs (GitHub Actions)
 
-| PR | Bump | State |
-| --- | --- | --- |
-| #401 | `docker/build-push-action` 7.0.0 -> 7.4.0 | all checks green, BEHIND main |
-| #400 | `codecov/codecov-action` 7.0.0 -> 7.1.1 | all checks green, BEHIND main |
-| #399 | `docker/setup-buildx-action` 4.3.0 -> 4.4.1 | all checks green, BEHIND main |
-| #276 | `actions/checkout` 4 -> 7 (12 workflows) | DIRTY (conflict) + "Run Tests" FAILURE |
+| PR   | Bump                                        | State                                  |
+| ---- | ------------------------------------------- | -------------------------------------- |
+| #401 | `docker/build-push-action` 7.0.0 -> 7.4.0   | all checks green, BEHIND main          |
+| #400 | `codecov/codecov-action` 7.0.0 -> 7.1.1     | all checks green, BEHIND main          |
+| #399 | `docker/setup-buildx-action` 4.3.0 -> 4.4.1 | all checks green, BEHIND main          |
+| #276 | `actions/checkout` 4 -> 7 (12 workflows)    | DIRTY (conflict) + "Run Tests" FAILURE |
 
 `main` is **not** branch-protected, so BEHIND does not block merging #401/#400/#399.
 #276 is split out to request 270 because it is a cross-cutting major CI bump with a real failure.
@@ -60,27 +60,27 @@ config is in scope (user chose "all three manifests").
 
 ## Decisions
 
-| # | Decision | Choice | Rationale |
-| --- | --- | --- | --- |
-| 1 | Scope | Everything: all 4 dep changes + all 4 Actions PRs | User choice |
-| 2 | Fix mechanism for transitive deps | `overrides` in `package.json` | Already the established repo pattern; root has 19 override entries pinning exactly this class of transitive CVE |
-| 3 | memory-backend vitest target | `^5.0.1`, fallback `^4.1.11` | Root already runs vitest 5.0.1 green in CI, so 5.x is proven against this toolchain. Aligning avoids a third vitest major in the repo. 4.1.11 is the documented minimum that clears alerts 199/200 |
-| 4 | `actions/checkout` 4 -> 7 (#276) | Split to request 270 | Conflicted + failing tests across 12 workflows; own branch and review cycle |
-| 5 | dependabot.yml | Add npm for all 3 manifests, with grouped minor/patch | Prevents recurrence. Grouping limits PR noise while still surfacing security updates individually |
-| 6 | Merging to main | Gate with user before any merge | Authority action; not assumed from "Everything" |
+| #   | Decision                          | Choice                                                | Rationale                                                                                                                                                                                          |
+| --- | --------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Scope                             | Everything: all 4 dep changes + all 4 Actions PRs     | User choice                                                                                                                                                                                        |
+| 2   | Fix mechanism for transitive deps | `overrides` in `package.json`                         | Already the established repo pattern; root has 19 override entries pinning exactly this class of transitive CVE                                                                                    |
+| 3   | memory-backend vitest target      | `^5.0.1`, fallback `^4.1.11`                          | Root already runs vitest 5.0.1 green in CI, so 5.x is proven against this toolchain. Aligning avoids a third vitest major in the repo. 4.1.11 is the documented minimum that clears alerts 199/200 |
+| 4   | `actions/checkout` 4 -> 7 (#276)  | Split to request 270                                  | Conflicted + failing tests across 12 workflows; own branch and review cycle                                                                                                                        |
+| 5   | dependabot.yml                    | Add npm for all 3 manifests, with grouped minor/patch | Prevents recurrence. Grouping limits PR noise while still surfacing security updates individually                                                                                                  |
+| 6   | Merging to main                   | Gate with user before any merge                       | Authority action; not assumed from "Everything"                                                                                                                                                    |
 
 ## Phases
 
-| # | Phase | Status | Outcome |
-| --- | --- | --- | --- |
-| 0 | Tracking file created | Done | This file |
-| 1 | Triage Dependabot alerts + PRs | Done | 12 alerts -> 4 changes; 4 PRs triaged; config gap found |
-| 2 | Fix (deps + dependabot.yml) | Done | 2 commits on `fix/269-dependabot-security` |
-| 3 | Code review | Done | 1 finding raised and fixed (lockfile dev-flag churn) |
-| 4 | Verify alerts cleared | Done | `npm audit --audit-level=high` = 0 in all 3 packages |
-| 5 | PR opened | Done | PR #446 |
-| 6 | Merge gate | Done | PR #446 squash-merged as 9f62ad04 |
-| 7 | Merge companion Actions PRs | Done | #401, #400, #399 all squash-merged |
+| #   | Phase                          | Status | Outcome                                                 |
+| --- | ------------------------------ | ------ | ------------------------------------------------------- |
+| 0   | Tracking file created          | Done   | This file                                               |
+| 1   | Triage Dependabot alerts + PRs | Done   | 12 alerts -> 4 changes; 4 PRs triaged; config gap found |
+| 2   | Fix (deps + dependabot.yml)    | Done   | 2 commits on `fix/269-dependabot-security`              |
+| 3   | Code review                    | Done   | 1 finding raised and fixed (lockfile dev-flag churn)    |
+| 4   | Verify alerts cleared          | Done   | `npm audit --audit-level=high` = 0 in all 3 packages    |
+| 5   | PR opened                      | Done   | PR #446                                                 |
+| 6   | Merge gate                     | Done   | PR #446 squash-merged as 9f62ad04                       |
+| 7   | Merge companion Actions PRs    | Done   | #401, #400, #399 all squash-merged                      |
 
 ## Implementation notes
 

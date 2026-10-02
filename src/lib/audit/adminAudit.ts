@@ -3,6 +3,7 @@
  * Logs admin actions for compliance and security
  */
 
+import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 export interface AdminAuditLog {
@@ -24,7 +25,7 @@ export async function logAdminAction(
   targetType: 'provider' | 'user' | 'system',
   targetId: string,
   details: Record<string, unknown> = {},
-  metadata?: { ipAddress?: string; userAgent?: string }
+  metadata?: { ipAddress?: string; userAgent?: string },
 ): Promise<void> {
   try {
     const supabase = getSupabaseAdmin();
@@ -70,14 +71,8 @@ export async function logAdminAction(
  * Get client IP address from request headers
  */
 export function getClientIp(request: Request): string | undefined {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  
-  return realIp || undefined;
+  const ip = getTrustedClientIp(request.headers);
+  return ip === 'unknown' ? undefined : ip;
 }
 
 /**

@@ -6,7 +6,9 @@ module.exports = {
     'prettier --write',
     (files) => {
       const testFiles = files.filter(
-        (file) => file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__'),
+        (file) =>
+          !file.includes('/e2e/') &&
+          (file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__')),
       );
       if (testFiles.length > 0) {
         return 'npx vitest run ' + testFiles.join(' ');

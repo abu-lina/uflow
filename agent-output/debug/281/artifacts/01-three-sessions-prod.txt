@@ -1,0 +1,61 @@
+
+================ SESSION 1 (https://ummahflow.com) ================
+   nav#1> https://ummahflow.com/
+   nav#2> https://ummahflow.com/
+   console> [SW Cleanup] Starting service worker cleanup...
+   console> [SW Cleanup] No service workers found
+   sw-created> https://ummahflow.com/sw.js
+   mainFrameNavigations = 2  (>1 means a forced reload happened)
+   navigationType       = navigate
+   sessionStorage flag  = true
+   registrations        = [{"scope":"https://ummahflow.com/","active":"https://ummahflow.com/sw.js","activeState":"activated","installing":null,"waiting":null}]
+   controller           = https://ummahflow.com/sw.js
+   caches (2)        = ["start-url","workbox-precache-v2-https://ummahflow.com/"]
+
+================ SESSION 2 (https://ummahflow.com) ================
+   sw-created> https://ummahflow.com/sw.js
+   nav#1> https://ummahflow.com/
+   nav#2> https://ummahflow.com/
+   console> [SW Cleanup] Starting service worker cleanup...
+   console> [SW Cleanup] Found 1 service worker(s)
+   console> [SW Cleanup] Unregistering: https://ummahflow.com/sw.js
+   console> [SW Cleanup] All service workers unregistered
+   console> [SW Cleanup] Found 3 cache(s)
+   console> [SW Cleanup] Deleting cache: start-url
+   console> [SW Cleanup] Deleting cache: workbox-precache-v2-https://ummahflow.com/
+   console> [SW Cleanup] Deleting cache: static-resources
+   console> [SW Cleanup] All caches cleared
+   console> [SW Cleanup] Reloading page to apply changes...
+   nav#3> https://ummahflow.com/
+   sw-created> https://ummahflow.com/sw.js
+   nav#4> https://ummahflow.com/
+   mainFrameNavigations = 4  (>1 means a forced reload happened)
+   navigationType       = reload
+   sessionStorage flag  = true
+   registrations        = [{"scope":"https://ummahflow.com/","active":"https://ummahflow.com/sw.js","activeState":"activated","installing":null,"waiting":null}]
+   controller           = https://ummahflow.com/sw.js
+   caches (2)        = ["start-url","workbox-precache-v2-https://ummahflow.com/"]
+
+================ SESSION 3 (https://ummahflow.com) ================
+   sw-created> https://ummahflow.com/sw.js
+   nav#1> https://ummahflow.com/
+   nav#2> https://ummahflow.com/
+   console> [SW Cleanup] Starting service worker cleanup...
+   console> [SW Cleanup] Found 1 service worker(s)
+   console> [SW Cleanup] Unregistering: https://ummahflow.com/sw.js
+   console> [SW Cleanup] All service workers unregistered
+   console> [SW Cleanup] Found 3 cache(s)
+   console> [SW Cleanup] Deleting cache: start-url
+   console> [SW Cleanup] Deleting cache: workbox-precache-v2-https://ummahflow.com/
+   console> [SW Cleanup] Deleting cache: static-resources
+   console> [SW Cleanup] All caches cleared
+   console> [SW Cleanup] Reloading page to apply changes...
+   nav#3> https://ummahflow.com/
+   sw-created> https://ummahflow.com/sw.js
+   nav#4> https://ummahflow.com/
+   mainFrameNavigations = 4  (>1 means a forced reload happened)
+   navigationType       = reload
+   sessionStorage flag  = true
+   registrations        = [{"scope":"https://ummahflow.com/","active":"https://ummahflow.com/sw.js","activeState":"activated","installing":null,"waiting":null}]
+   controller           = https://ummahflow.com/sw.js
+   caches (2)        = ["start-url","workbox-precache-v2-https://ummahflow.com/"]
