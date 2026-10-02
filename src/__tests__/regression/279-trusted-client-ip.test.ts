@@ -38,7 +38,9 @@ describe('Request 279 — middleware rate-limit key trusts x-real-ip over spoofe
  * What changed is which requests it counts: files served out of `public/`
  * (`/images/**`, `/icons/**`, `/sw.js`, `/offline.html`) are now treated the
  * same way `_next/static` and `_next/image` already were by the matcher, i.e.
- * not counted at all.
+ * not counted at all. The exemption needs an exact known static file, or a
+ * static extension inside a known asset directory; extension alone let any
+ * route be suffixed to dodge the limiter (see FAKE_EXTENSION_ROUTES below).
  *
  * The reason the control still has to be proven is that this is a change to a
  * security control. So the first test here is the one that matters: app routes
@@ -55,8 +57,28 @@ const APP_ROUTES = ['/', '/food', '/about', '/city/berlin'];
 const STATIC_ASSETS = [
   '/sw.js',
   '/offline.html',
+  '/manifest.json',
+  '/favicon.ico',
   '/images/seals/halal.png',
   '/icons/icon-192x192.png',
+  '/leaflet/marker.png',
+];
+
+/**
+ * App routes with a static-looking extension glued on.
+ *
+ * Each of these reaches the app: `/p/[slug]` does a provider lookup before it
+ * 404s, so an unmetered request path here is a database request per hit. An
+ * extension-only predicate exempts every one of them, which is a rate-limit
+ * bypass available to anyone who can append `.json` to a URL. The fix is that
+ * an extension only counts INSIDE a known asset directory.
+ */
+const FAKE_EXTENSION_ROUTES = [
+  '/p/some-slug.json',
+  '/food.json',
+  '/city/berlin.png',
+  '/about.html',
+  '/create/listing.js',
 ];
 
 const RATE_LIMIT_MAX_REQUESTS = 100;
@@ -97,6 +119,32 @@ describe('Request 282 — static assets are exempt from the page rate limit', ()
     },
   );
 
+  it.each(FAKE_EXTENSION_ROUTES)(
+    '[control] still rate-limits %s, so a fake extension is not a free request path',
+    async (pathname) => {
+      const ip = `192.0.2.${FAKE_EXTENSION_ROUTES.indexOf(pathname) + 1}`;
+      const statuses: number[] = [];
+      for (let i = 0; i < RATE_LIMIT_MAX_REQUESTS + 20; i++) {
+        statuses.push(await drive(pathname, ip));
+      }
+
+      expect(statuses.filter((s) => s === 429).length).toBe(20);
+      expect(statuses[RATE_LIMIT_MAX_REQUESTS - 1]).not.toBe(429);
+      expect(statuses[RATE_LIMIT_MAX_REQUESTS]).toBe(429);
+    },
+  );
+
+  it('does not exempt an app route carrying a static-looking extension', () => {
+    // RED against the extension-only predicate: every one of these returns true
+    // there, because `/p/some-slug.json` ends in `.json` exactly like
+    // `/manifest.json` does. The directory requirement is what separates them.
+    for (const pathname of FAKE_EXTENSION_ROUTES) {
+      expect(isStaticAssetRequest(pathname), `${pathname} must not be treated as an asset`).toBe(
+        false,
+      );
+    }
+  });
+
   it.each(STATIC_ASSETS)('exempts the static asset %s well past the limit', async (pathname) => {
     const ip = '198.51.100.50';
     const statuses: number[] = [];
@@ -107,11 +155,11 @@ describe('Request 282 — static assets are exempt from the page rate limit', ()
     expect(statuses.filter((s) => s === 429)).toEqual([]);
   });
 
-  it('cannot shadow an app route, because it matches on file extension only', () => {
+  it('cannot shadow an app route: it needs a known file, or a directory AND an extension', () => {
     // `/images` and `/icons` are in this list on purpose: they are the directory
-    // prefixes a prefix-based rewrite of this predicate would use, and a future
-    // extensionless page at either path must stay rate-limited. This assertion
-    // is what goes RED against a `pathname.startsWith('/images')`-style version
+    // prefixes the predicate uses, and a future extensionless page at either
+    // path must stay rate-limited. This assertion is what goes RED if the
+    // extension half of the rule is dropped for a bare `startsWith('/images')`
     // (the app-route control above cannot catch that broadening, because
     // `/images` does not shadow `/`, `/food`, `/about` or `/city/berlin`).
     for (const pathname of [
