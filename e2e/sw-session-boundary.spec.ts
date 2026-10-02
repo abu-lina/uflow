@@ -25,6 +25,7 @@ import { expect, test } from './fixtures';
  * document reload happening.
  */
 
+// ~12x margin over the slowest measured forced reload; see runBrowserSession.
 const SESSION_SETTLE_MS = 6_000;
 const SW_WAIT_MS = 20_000;
 
@@ -37,7 +38,8 @@ interface SessionSnapshot {
 }
 
 async function probe(page: Page): Promise<Omit<SessionSnapshot, 'consoleLines' | 'documentLoads'>> {
-  // A forced reload mid-evaluate destroys the execution context; retry once.
+  // A forced reload mid-evaluate destroys the execution context; retry twice
+  // (three attempts total) before giving up.
   for (let attempt = 0; ; attempt++) {
     try {
       return await page.evaluate(async () => {
@@ -75,9 +77,11 @@ async function waitForServiceWorker(page: Page): Promise<void> {
 async function runBrowserSession(
   profileDir: string,
   baseURL: string,
-  // The middleware rate limiter buckets by x-forwarded-for and allows 30 API
-  // requests/min. One landing-page load spends a good part of that, so give
-  // every session its own bucket instead of sharing one across the test.
+  // The middleware rate limiter buckets by x-forwarded-for. These are page
+  // loads, and `src/middleware.ts:137`'s matcher excludes `/api`, so they hit
+  // the non-API branch at `src/middleware.ts:115`: 100 requests/min. One
+  // landing-page load spends a good part of that, so give every session its own
+  // bucket instead of sharing one across the test.
   clientIp: string,
 ): Promise<SessionSnapshot> {
   const context = await chromium.launchPersistentContext(profileDir, {
@@ -97,7 +101,14 @@ async function runBrowserSession(
 
     await page.goto('/', { waitUntil: 'load', timeout: 60_000 });
     await waitForServiceWorker(page);
-    // Give any forced reload room to land (it fired 8-480ms after first paint).
+    // Fixed settle window, deliberately. There is nothing to wait *for* here:
+    // the assertion is that no forced reload happens, and you cannot wait on the
+    // absence of an event. A reload landing after the window would make the spec
+    // pass for the wrong reason, so the window is sized off measured data: every
+    // observed reload fired 8-480ms after first paint (see the diagnosis table
+    // in agent-output/requests/281-sw-cleanup-unconditional.md, `/` unthrottled
+    // through `/about` deep link, slowest 476ms). 6s is ~12x the slowest
+    // observation, which covers it. Do not shorten it.
     await page.waitForTimeout(SESSION_SETTLE_MS);
 
     return { consoleLines, documentLoads, ...(await probe(page)) };
@@ -109,20 +120,39 @@ async function runBrowserSession(
 
 test.describe('service worker across a browser session boundary', () => {
   test('a returning session is not forced to reload', async ({ baseURL, request }, testInfo) => {
-    // Needs a real generated service worker, i.e. a production build with
-    // DISABLE_PWA unset/false. Under `next dev` the plugin is off and /sw.js
-    // 404s, so there would be nothing for a cleanup to find and the test would
-    // pass for the wrong reason.
+    // Needs a real generated service worker. `next.config.js:6` only disables
+    // the PWA plugin on DISABLE_PWA=true, so measured locally: `next dev`
+    // without that flag still writes a dev-stub /sw.js and this runs; with
+    // DISABLE_PWA=true nothing is generated, /sw.js 404s, there is nothing for a
+    // cleanup to find, and the spec would pass for the wrong reason. Hence the
+    // skip. That is a local-only courtesy: in CI the webServer is
+    // `npm run start` on a production build, so a non-200 is a broken setup, not
+    // a reason to skip. Asserting instead of skipping is what stops CI producing
+    // an assertion-free run that looks identical to a pass (a 429, a 5xx or a
+    // redirect all used to take the skip path).
     const swResponse = await request.get('/sw.js');
-    test.skip(
-      swResponse.status() !== 200,
-      '/sw.js is not served: needs a production build with the PWA plugin enabled',
-    );
+    if (process.env.CI) {
+      expect(
+        swResponse.status(),
+        'CI must serve a real /sw.js; this guard may never skip here',
+      ).toBe(200);
+    } else {
+      test.skip(
+        swResponse.status() !== 200,
+        '/sw.js is not served: needs a production build with the PWA plugin enabled',
+      );
+    }
 
     test.setTimeout(180_000);
     if (!baseURL) throw new Error('baseURL is not configured');
+    // 10.232., not 10.231.: `e2e/fixtures.ts:53` hands out
+    // `10.231.<parallelIndex * 8 + workerIndex + 1>.<name-hash>`, and with
+    // parallelIndex 0 the third octet collides with this one, so a fixture test
+    // whose hash lands on 1 or 2 would share a rate-limit bucket with a session
+    // here. A different /16 keeps the two allocators apart without touching
+    // fixtures.ts, which six other specs depend on.
     const ipForSession = (session: number): string =>
-      `10.231.${(testInfo.workerIndex + 1) % 256}.${session}`;
+      `10.232.${(testInfo.workerIndex + 1) % 256}.${session}`;
     const profileDir = mkdtempSync(join(tmpdir(), 'uflow-sw-session-'));
 
     try {
@@ -140,11 +170,23 @@ test.describe('service worker across a browser session boundary', () => {
         second.consoleLines.filter((line) => line.includes('[SW Cleanup]')),
         'no code may unregister workers and wipe caches on a session boundary',
       ).toEqual([]);
-      expect(second.navigationType, `console: ${second.consoleLines.join(' | ')}`).toBe('navigate');
-      expect(second.documentLoads, 'a forced reload shows up as a second document load').toBe(1);
+      // Every message carries the second session's console so a CI red is
+      // diagnosable from the log alone, without downloading the trace.
+      const consoleContext = `console: ${second.consoleLines.join(' | ')}`;
+      expect(second.navigationType, consoleContext).toBe('navigate');
+      expect(
+        second.documentLoads,
+        `a forced reload shows up as a second document load; ${consoleContext}`,
+      ).toBe(1);
       // The registration and the precache must survive the session boundary.
-      expect(second.registrations).toBeGreaterThan(0);
-      expect(second.cacheKeys.length).toBeGreaterThan(0);
+      expect(
+        second.registrations,
+        `the registration must survive the session boundary; ${consoleContext}`,
+      ).toBeGreaterThan(0);
+      expect(
+        second.cacheKeys.length,
+        `the precache must survive the session boundary; ${consoleContext}`,
+      ).toBeGreaterThan(0);
     } finally {
       rmSync(profileDir, { recursive: true, force: true });
     }
