@@ -26,11 +26,11 @@ Dependabot PR #276 proposed `actions/checkout` 4 -> 7.
 
 PR #276 was opened when every workflow was on `@v4`. `main` has moved substantially since:
 
-| Style on current main | Count |
-| --- | --- |
-| SHA-pinned `de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2` | 13 |
-| floating `@v6` | 4 |
-| floating `@v4` | 5 |
+| Style on current main                                          | Count |
+| -------------------------------------------------------------- | ----- |
+| SHA-pinned `de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2` | 13    |
+| floating `@v6`                                                 | 4     |
+| floating `@v4`                                                 | 5     |
 
 Total: 22 refs across 13 workflow files.
 
@@ -50,22 +50,22 @@ reality. Decision: close #276 and make a clean, complete change on current main.
 
 ## Decisions
 
-| # | Decision | Choice | Rationale |
-| --- | --- | --- | --- |
-| 1 | #276 disposition | Close, replace with fresh change | Stale diff, expired logs, missing a newer workflow file |
-| 2 | Target version | v7.0.1 | Latest; satisfies Dependabot; no applicable breaking change for this repo |
-| 3 | Pinning style | SHA-pin all 22 to `3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1` | Repo already SHA-pins the majority (13 refs) and runs a "Supply Chain IOC Scan" job. Ends the three-way style split |
+| #   | Decision         | Choice                                                                | Rationale                                                                                                           |
+| --- | ---------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 1   | #276 disposition | Close, replace with fresh change                                      | Stale diff, expired logs, missing a newer workflow file                                                             |
+| 2   | Target version   | v7.0.1                                                                | Latest; satisfies Dependabot; no applicable breaking change for this repo                                           |
+| 3   | Pinning style    | SHA-pin all 22 to `3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1` | Repo already SHA-pins the majority (13 refs) and runs a "Supply Chain IOC Scan" job. Ends the three-way style split |
 
 ## Phases
 
-| # | Phase | Status | Outcome |
-| --- | --- | --- | --- |
-| 0 | Tracking file created | Done | This file |
-| 1 | Triage #276 | Done | Stale; close and replace |
-| 2 | Implement pin normalization | Done | 22 refs across 14 files, commit 54ffb10a |
-| 3 | Code review | Done | No findings; diff is 22 one-line swaps, no collateral changes |
-| 4 | CI verification | Done | All 6 checks green on PR #456 |
-| 5 | PR, close #276, merge gate | Done | PR #456 merged as 58b1136b; #276 closed as superseded |
+| #   | Phase                       | Status | Outcome                                                       |
+| --- | --------------------------- | ------ | ------------------------------------------------------------- |
+| 0   | Tracking file created       | Done   | This file                                                     |
+| 1   | Triage #276                 | Done   | Stale; close and replace                                      |
+| 2   | Implement pin normalization | Done   | 22 refs across 14 files, commit 54ffb10a                      |
+| 3   | Code review                 | Done   | No findings; diff is 22 one-line swaps, no collateral changes |
+| 4   | CI verification             | Done   | All 6 checks green on PR #456                                 |
+| 5   | PR, close #276, merge gate  | Done   | PR #456 merged as 58b1136b; #276 closed as superseded         |
 
 ## Implementation notes
 

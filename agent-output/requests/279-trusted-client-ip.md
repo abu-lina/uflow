@@ -54,17 +54,17 @@ value first and the only trustworthy value last.
 
 ### Impact by call site
 
-| Site | Impact |
-| --- | --- |
-| `src/app/api/check-email-exists/route.ts:31` | The rate limit is the only throttle on **email enumeration**. The F-049-04 comment calls this endpoint enumeration-safe, but that mitigation leans on a bypassable limit |
-| `src/app/api/auth/reset-password/route.ts:30` | Password-reset abuse at unlimited rate |
-| `src/lib/audit/adminAudit.ts:76` | **Admin audit records an attacker-chosen IP.** Audit-trail integrity |
-| `src/middleware.ts:16` | Global limits (100/min pages, 30/min API) bypassable |
-| `src/lib/rate-limit.ts:159` | Same, and trusts the CF header first |
-| `src/utils/security.ts:646` | Same |
-| `src/app/api/waitlist/join/route.ts:13` | Same |
-| `src/app/api/confirm-email/route.ts:29` | Same |
-| `src/app/api/auth/magic-link-diagnostic/route.ts:53` | Diagnostic logging only; low impact but same flaw |
+| Site                                                 | Impact                                                                                                                                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/app/api/check-email-exists/route.ts:31`         | The rate limit is the only throttle on **email enumeration**. The F-049-04 comment calls this endpoint enumeration-safe, but that mitigation leans on a bypassable limit |
+| `src/app/api/auth/reset-password/route.ts:30`        | Password-reset abuse at unlimited rate                                                                                                                                   |
+| `src/lib/audit/adminAudit.ts:76`                     | **Admin audit records an attacker-chosen IP.** Audit-trail integrity                                                                                                     |
+| `src/middleware.ts:16`                               | Global limits (100/min pages, 30/min API) bypassable                                                                                                                     |
+| `src/lib/rate-limit.ts:159`                          | Same, and trusts the CF header first                                                                                                                                     |
+| `src/utils/security.ts:646`                          | Same                                                                                                                                                                     |
+| `src/app/api/waitlist/join/route.ts:13`              | Same                                                                                                                                                                     |
+| `src/app/api/confirm-email/route.ts:29`              | Same                                                                                                                                                                     |
+| `src/app/api/auth/magic-link-diagnostic/route.ts:53` | Diagnostic logging only; low impact but same flaw                                                                                                                        |
 
 Rotating one request header per request defeats all of it.
 
@@ -121,11 +121,11 @@ in CI, and for a single-element header the first and last entry are the same.
 
 Three PRs, all merged.
 
-| PR | Commit | Change |
-| --- | --- | --- |
+| PR   | Commit     | Change                                                                                                                                                                 |
+| ---- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | #480 | `cc25b25a` | nginx stops forwarding client-controlled IP headers: `X-Forwarded-For $remote_addr` (replace, not append) and `CF-Connecting-IP ""` on all 14 blocks in both templates |
-| #481 | `15d6f027` | UAT deploy actually applies the nginx config instead of silently skipping it |
-| #482 | `4976a3ba` | `getTrustedClientIp()` helper, all nine consumers routed through it, 9 new tests |
+| #481 | `15d6f027` | UAT deploy actually applies the nginx config instead of silently skipping it                                                                                           |
+| #482 | `4976a3ba` | `getTrustedClientIp()` helper, all nine consumers routed through it, 9 new tests                                                                                       |
 
 ### #481 was not planned, and was necessary
 

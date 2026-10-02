@@ -49,14 +49,14 @@ Local `supabase/config.toml` sets `[auth.email] enable_confirmations = false` an
 
 ### The cookie scheme is hybrid, and that is the real risk surface
 
-| Piece | Detail |
-| --- | --- |
-| `src/lib/supabase/server.ts` | `createServerClient` with `cookieOptions: { name: 'sb' }` (custom prefix) |
-| `src/lib/supabase/cookieAdapter.ts` | implements legacy `get`/`set`/`remove` **and** `getAll`; has **no `setAll`**; `set`/`remove` are no-ops |
-| `src/middleware.ts:78` | gates on `req.cookies.get('sb-access-token')`, a custom httpOnly cookie |
-| `src/app/api/auth/set/route.ts:12` | sets `sb-access-token` explicitly |
-| `src/app/api/auth/logout/route.ts:5` | clears it |
-| `src/lib/supabase/getUserFromCookie.ts:31` | documents a fallback chain: official SSR cookie first, then custom `sb-access-token` |
+| Piece                                      | Detail                                                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `src/lib/supabase/server.ts`               | `createServerClient` with `cookieOptions: { name: 'sb' }` (custom prefix)                               |
+| `src/lib/supabase/cookieAdapter.ts`        | implements legacy `get`/`set`/`remove` **and** `getAll`; has **no `setAll`**; `set`/`remove` are no-ops |
+| `src/middleware.ts:78`                     | gates on `req.cookies.get('sb-access-token')`, a custom httpOnly cookie                                 |
+| `src/app/api/auth/set/route.ts:12`         | sets `sb-access-token` explicitly                                                                       |
+| `src/app/api/auth/logout/route.ts:5`       | clears it                                                                                               |
+| `src/lib/supabase/getUserFromCookie.ts:31` | documents a fallback chain: official SSR cookie first, then custom `sb-access-token`                    |
 
 `@supabase/ssr` moved from `get`/`set`/`remove` to `getAll`/`setAll`. This adapter has
 no `setAll`, so the 0.12 upgrade lands squarely on it. That is precisely what this
@@ -128,11 +128,11 @@ than blocking the repo.
 
 ### Three pre-existing defects it found
 
-| Defect | Fix |
-| --- | --- |
-| CSP `connect-src` refused a local or self-hosted Supabase in production builds (only allowed `127.0.0.1` when `isDev`) | added the configured `NEXT_PUBLIC_SUPABASE_URL` in `next.config.js` |
-| First workflow draft passed placeholder `NEXT_PUBLIC_*` into the build, which Next inlines into the client bundle; the placeholder slipped past the guard at `src/lib/supabase/client.ts:44` because it is 41 chars and starts with `sb_` | export real local keys before `npm run build` |
-| `089_fix_search_food_concepts_junction.sql` and `089_add_food_category_american.sql` shared version `089`, breaking every from-scratch `supabase start` / `db reset` with SQLSTATE 23505 | renamed the later file to `136_` (filename only, migration is idempotent) |
+| Defect                                                                                                                                                                                                                                    | Fix                                                                       |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| CSP `connect-src` refused a local or self-hosted Supabase in production builds (only allowed `127.0.0.1` when `isDev`)                                                                                                                    | added the configured `NEXT_PUBLIC_SUPABASE_URL` in `next.config.js`       |
+| First workflow draft passed placeholder `NEXT_PUBLIC_*` into the build, which Next inlines into the client bundle; the placeholder slipped past the guard at `src/lib/supabase/client.ts:44` because it is 41 chars and starts with `sb_` | export real local keys before `npm run build`                             |
+| `089_fix_search_food_concepts_junction.sql` and `089_add_food_category_american.sql` shared version `089`, breaking every from-scratch `supabase start` / `db reset` with SQLSTATE 23505                                                  | renamed the later file to `136_` (filename only, migration is idempotent) |
 
 ### Correction to the `@supabase/ssr` risk ranking
 

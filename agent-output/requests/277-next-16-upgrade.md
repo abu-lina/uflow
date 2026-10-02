@@ -150,11 +150,11 @@ suite 6/6 including the new PWA spec, Snyk `1 security test has passed`.
 
 ### Three things this surfaced
 
-| Finding | Resolution |
-| --- | --- |
-| `next@16.3.6` carries CVE-2026-94483, a high-severity SSRF (CVSS 8.3) that `npm audit` and GHSA both missed | moved the target to 16.3.8 |
-| The production Docker build (`Dockerfile:56` -> `build:standalone`) still defaulted to Turbopack after the first pass, so the image would have shipped with no service worker while CI stayed green | `--webpack` on all seven call sites, plus an output guard |
-| A rate-limiter bypass was added to production middleware to stop the suite 429ing | rejected; replaced with a per-test synthetic `x-forwarded-for`, leaving `src/middleware.ts` at zero diff |
+| Finding                                                                                                                                                                                             | Resolution                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `next@16.3.6` carries CVE-2026-94483, a high-severity SSRF (CVSS 8.3) that `npm audit` and GHSA both missed                                                                                         | moved the target to 16.3.8                                                                               |
+| The production Docker build (`Dockerfile:56` -> `build:standalone`) still defaulted to Turbopack after the first pass, so the image would have shipped with no service worker while CI stayed green | `--webpack` on all seven call sites, plus an output guard                                                |
+| A rate-limiter bypass was added to production middleware to stop the suite 429ing                                                                                                                   | rejected; replaced with a per-test synthetic `x-forwarded-for`, leaving `src/middleware.ts` at zero diff |
 
 ### Follow-ups raised, not done here
 
