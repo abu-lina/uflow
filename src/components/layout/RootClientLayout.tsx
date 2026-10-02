@@ -238,15 +238,16 @@ function ServiceWorkerRegistration() {
 
     // Register only when nothing is registered yet. DO NOT DROP THIS CHECK.
     //
-    // `register()` is not free: every call runs an update check, which refetches
-    // /sw.js over the network. This effect runs on every mount of the root
-    // layout, so an unconditional register() adds one /sw.js request per page
-    // view for every real user. /sw.js is same-origin and matched by
-    // `src/middleware.ts`, which buckets non-API requests at 100 req/min per
-    // client IP, so the amplification spends a user's own rate-limit budget and
-    // eventually answers /sw.js with a 429, at which point registration fails
-    // (`A bad HTTP response code (429) was received when fetching the script`).
-    // It was dropped once during request 282 and CI caught exactly that.
+    // `register()` is not free: it fetches /sw.js (on a fresh client) or runs an
+    // update check (on a client that already has one), and this effect runs on
+    // every mount of the root layout. /sw.js is same-origin and matched by
+    // `src/middleware.ts`, so each of those fetches is charged to a 100 req/min
+    // bucket: in production the visitor's own, keyed off the `X-Real-IP` nginx
+    // sets on `location = /sw.js`; anywhere Next is reached without a proxy, the
+    // shared 'unknown' bucket, because a worker's script fetch carries none of
+    // the page's headers (measured in request 282). Either way, when the bucket
+    // runs out registration fails outright: `A bad HTTP response code (429) was
+    // received when fetching the script`.
     //
     // It costs nothing in update coverage. Request 281 measured this with a
     // local fixture that bumped /sw.js v1 -> v2 across four call-site arms: all
