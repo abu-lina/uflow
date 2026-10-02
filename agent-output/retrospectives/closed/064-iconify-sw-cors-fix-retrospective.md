@@ -24,19 +24,19 @@ Status: Processed
 
 ## Timeline Analysis
 
-| Phase          | Planned Duration | Actual Duration | Variance       | Notes                                                |
-| -------------- | ---------------- | --------------- | -------------- | ---------------------------------------------------- |
-| Planning       | N/A (inherited)  | N/A             | N/A            | Scope inherited from Plan 046 analysis               |
-| Analysis       | N/A (inherited)  | N/A             | N/A            | Root cause verified in Plan 046 session              |
-| Implementation | ~30 min          | ~30 min         | None           | Clean first commit (b791dc74)                        |
-| Code Review    | ~20 min          | ~40 min         | +20 min        | Working-tree divergence required 7 FIR restorations  |
-| QA (initial)   | ~20 min          | ~20 min         | None           | QA Failed — 2 findings (dirty tree + build evidence) |
-| Implementer re-work | ~15 min     | ~20 min         | +5 min         | Committed artifacts + gathered sw.js evidence        |
-| QA (re-run)    | ~10 min          | ~15 min         | +5 min         | Re-verified all gates, updated QA report             |
-| UAT            | ~15 min          | ~15 min         | None           | 5 scenarios, APPROVED FOR RELEASE                    |
-| DevOps Stage 1 | ~15 min          | ~20 min         | +5 min         | Lifecycle closure, CHANGELOG, version preflight      |
-| DevOps Stage 2 | ~10 min          | ~10 min         | None           | Push + tag + roadmap sync                            |
-| **Total**      | ~2.5 hr          | ~3.5 hr         | **+1 hr**      | Extra hour entirely from QA round-trip               |
+| Phase               | Planned Duration | Actual Duration | Variance  | Notes                                                |
+| ------------------- | ---------------- | --------------- | --------- | ---------------------------------------------------- |
+| Planning            | N/A (inherited)  | N/A             | N/A       | Scope inherited from Plan 046 analysis               |
+| Analysis            | N/A (inherited)  | N/A             | N/A       | Root cause verified in Plan 046 session              |
+| Implementation      | ~30 min          | ~30 min         | None      | Clean first commit (b791dc74)                        |
+| Code Review         | ~20 min          | ~40 min         | +20 min   | Working-tree divergence required 7 FIR restorations  |
+| QA (initial)        | ~20 min          | ~20 min         | None      | QA Failed — 2 findings (dirty tree + build evidence) |
+| Implementer re-work | ~15 min          | ~20 min         | +5 min    | Committed artifacts + gathered sw.js evidence        |
+| QA (re-run)         | ~10 min          | ~15 min         | +5 min    | Re-verified all gates, updated QA report             |
+| UAT                 | ~15 min          | ~15 min         | None      | 5 scenarios, APPROVED FOR RELEASE                    |
+| DevOps Stage 1      | ~15 min          | ~20 min         | +5 min    | Lifecycle closure, CHANGELOG, version preflight      |
+| DevOps Stage 2      | ~10 min          | ~10 min         | None      | Push + tag + roadmap sync                            |
+| **Total**           | ~2.5 hr          | ~3.5 hr         | **+1 hr** | Extra hour entirely from QA round-trip               |
 
 ## What Went Well (Process Focus)
 
@@ -91,18 +91,19 @@ Status: Processed
 **Total Handoffs**: 8 substantive
 **Handoff Chain**: orchestrator → implementer → code-reviewer → qa → implementer → qa → uat → devops
 
-| From Agent   | To Agent     | Artifact                              | What Requested              | Issues Identified                       |
-| ------------ | ------------ | ------------------------------------- | --------------------------- | --------------------------------------- |
-| Orchestrator | Implementer  | (verbal)                              | Execute Plan 064            | None                                    |
-| Implementer  | Code Reviewer| impl doc + commit b791dc74            | Review implementation       | Working tree divergence (HIGH)          |
-| Code Reviewer| QA           | code-review doc (APPROVED)            | Execute QA gates            | None                                    |
-| QA           | Implementer  | QA doc (QA Failed)                    | Resolve blockers            | Dirty tree (HIGH), build evidence (MED) |
-| Implementer  | QA           | impl doc updated + commits            | Re-run QA                   | None                                    |
-| QA           | UAT          | QA doc (QA Complete)                  | Validate value delivery     | None                                    |
-| UAT          | DevOps       | UAT doc (APPROVED FOR RELEASE)        | Execute release             | None                                    |
-| DevOps       | (complete)   | deployment doc + tag v0.9.9           | Released                    | None                                    |
+| From Agent    | To Agent      | Artifact                       | What Requested          | Issues Identified                       |
+| ------------- | ------------- | ------------------------------ | ----------------------- | --------------------------------------- |
+| Orchestrator  | Implementer   | (verbal)                       | Execute Plan 064        | None                                    |
+| Implementer   | Code Reviewer | impl doc + commit b791dc74     | Review implementation   | Working tree divergence (HIGH)          |
+| Code Reviewer | QA            | code-review doc (APPROVED)     | Execute QA gates        | None                                    |
+| QA            | Implementer   | QA doc (QA Failed)             | Resolve blockers        | Dirty tree (HIGH), build evidence (MED) |
+| Implementer   | QA            | impl doc updated + commits     | Re-run QA               | None                                    |
+| QA            | UAT           | QA doc (QA Complete)           | Validate value delivery | None                                    |
+| UAT           | DevOps        | UAT doc (APPROVED FOR RELEASE) | Execute release         | None                                    |
+| DevOps        | (complete)    | deployment doc + tag v0.9.9    | Released                | None                                    |
 
 **Handoff Quality Assessment**:
+
 - Were handoffs clear and complete? **Mostly yes** — each handoff included the relevant artifact and a clear next-step block. The one gap was the missing plan doc, which forced downstream agents to reconstruct scope.
 - Was context preserved across handoffs? **Yes** — despite NO-MEMORY-MODE in some phases, artifact references were consistent.
 - Were unnecessary handoffs made? **One** — the QA → Implementer → QA round-trip was caused by a process gap (B2), not by code quality issues. The actual code was correct from the first commit.
@@ -111,14 +112,15 @@ Status: Processed
 
 **Total Issues Tracked**: 4 (2 QA findings + 1 Code Review HIGH + 1 Code Review LOW)
 
-| Issue                                          | Artifact        | Resolution              | Escalated? | Time to Resolve |
-| ---------------------------------------------- | --------------- | ----------------------- | ---------- | --------------- |
-| Working tree silently reverted post-commit      | Code Review     | 7 FIR restorations      | No         | ~20 min         |
-| package-lock.json version not in commit         | Code Review LOW | Committed in 7ecc9d0f   | No         | ~5 min          |
-| Dirty working tree at QA                        | QA HIGH         | Committed in 7ecc9d0f   | No         | ~10 min         |
-| Build evidence incomplete (env-gated)           | QA MEDIUM       | sw.js content verified  | No         | ~15 min         |
+| Issue                                      | Artifact        | Resolution             | Escalated? | Time to Resolve |
+| ------------------------------------------ | --------------- | ---------------------- | ---------- | --------------- |
+| Working tree silently reverted post-commit | Code Review     | 7 FIR restorations     | No         | ~20 min         |
+| package-lock.json version not in commit    | Code Review LOW | Committed in 7ecc9d0f  | No         | ~5 min          |
+| Dirty working tree at QA                   | QA HIGH         | Committed in 7ecc9d0f  | No         | ~10 min         |
+| Build evidence incomplete (env-gated)      | QA MEDIUM       | sw.js content verified | No         | ~15 min         |
 
 **Issue Pattern Analysis**:
+
 - Most common issue type: **Uncommitted artifacts / working-tree state** (3 of 4 issues)
 - Were issues escalated appropriately? **Yes** — all resolved within the same pipeline without user intervention
 - Did early issues predict later problems? **Yes** — the Code Review HIGH (working-tree divergence) directly caused the QA HIGH (dirty tree). If the root cause (B1) had been prevented, B2 would not have occurred.
@@ -127,13 +129,13 @@ Status: Processed
 
 **Artifact Update Frequency**:
 
-| Artifact                     | Created | Updated | Reason for Updates                        |
-| ---------------------------- | ------- | ------- | ----------------------------------------- |
-| Implementation doc           | 1       | 2       | QA blocker resolution evidence added      |
-| Code Review doc              | 1       | 0       | —                                         |
-| QA doc                       | 1       | 1       | Re-run section with resolved findings     |
-| UAT doc                      | 1       | 0       | —                                         |
-| Deployment doc               | 1       | 1       | Stage 2 evidence + Released status        |
+| Artifact           | Created | Updated | Reason for Updates                    |
+| ------------------ | ------- | ------- | ------------------------------------- |
+| Implementation doc | 1       | 2       | QA blocker resolution evidence added  |
+| Code Review doc    | 1       | 0       | —                                     |
+| QA doc             | 1       | 1       | Re-run section with resolved findings |
+| UAT doc            | 1       | 0       | —                                     |
+| Deployment doc     | 1       | 1       | Stage 2 evidence + Released status    |
 
 ## Lessons Learned
 
@@ -165,22 +167,22 @@ Status: Processed
 
 ### Objective Achievement
 
-| Objective | Status | Evidence |
-|-----------|--------|----------|
+| Objective                                       | Status       | Evidence                                                     |
+| ----------------------------------------------- | ------------ | ------------------------------------------------------------ |
 | sw-push-handler.js served with no-cache headers | ✅ Delivered | nginx configs verified + sw.js precache + 7 regression tests |
-| Iconify API domains removed from frame-src | ✅ Delivered | next.config.js verified + 2 CSP regression tests |
-| No functional regression | ✅ Confirmed | Full suite 736/754 + tsc clean |
+| Iconify API domains removed from frame-src      | ✅ Delivered | next.config.js verified + 2 CSP regression tests             |
+| No functional regression                        | ✅ Confirmed | Full suite 736/754 + tsc clean                               |
 
 ### Cost Assessment
 
-| Metric | Value | Assessment |
-|--------|-------|------------|
-| Files changed (code) | 4 | Minimal |
-| Files changed (tests) | 2 | Proportional |
-| New dependencies | 0 | None |
-| Test count delta | +9 | Appropriate regression coverage |
-| Pipeline round-trips | 1 (QA re-run) | Process-caused, not code-caused |
-| Total elapsed | ~4 hours | Acceptable for single-day bugfix |
+| Metric                | Value         | Assessment                       |
+| --------------------- | ------------- | -------------------------------- |
+| Files changed (code)  | 4             | Minimal                          |
+| Files changed (tests) | 2             | Proportional                     |
+| New dependencies      | 0             | None                             |
+| Test count delta      | +9            | Appropriate regression coverage  |
+| Pipeline round-trips  | 1 (QA re-run) | Process-caused, not code-caused  |
+| Total elapsed         | ~4 hours      | Acceptable for single-day bugfix |
 
 ### Drift Timing
 
@@ -188,18 +190,65 @@ No drift detected. All phases executed within the original two-bug scope.
 
 ## Recommendations Summary
 
-| ID | Recommendation | Priority | Target Agent | Systemic? |
-|----|---------------|----------|-------------|-----------|
-| R1 | Mandatory post-commit `git status` check | HIGH | Implementer | YES (2nd occurrence) |
-| R2 | Pipeline artifact commit before QA handoff | HIGH | Code Reviewer / Pre-QA | YES (structural gap) |
-| R3 | Formal partial-build verification pattern | MEDIUM | QA / Implementer | YES (recurring DF-4) |
-| R4 | Standalone plan doc threshold guidance | LOW | Planner | NO (advisory) |
+| ID  | Recommendation                             | Priority | Target Agent           | Systemic?            |
+| --- | ------------------------------------------ | -------- | ---------------------- | -------------------- |
+| R1  | Mandatory post-commit `git status` check   | HIGH     | Implementer            | YES (2nd occurrence) |
+| R2  | Pipeline artifact commit before QA handoff | HIGH     | Code Reviewer / Pre-QA | YES (structural gap) |
+| R3  | Formal partial-build verification pattern  | MEDIUM   | QA / Implementer       | YES (recurring DF-4) |
+| R4  | Standalone plan doc threshold guidance     | LOW      | Planner                | NO (advisory)        |
 
 **Systemic findings requiring PI**: YES — R1 and R2 are repeating patterns with demonstrated pipeline cost. R3 is a recurring evidence negotiation.
 
 ## Changelog
 
-| Date (UTC) | Agent | Change |
-|---|---|---|
-| 2026-03-29T12:20Z | retrospective | Created retrospective document |
+| Date (UTC)        | Agent               | Change                                                    |
+| ----------------- | ------------------- | --------------------------------------------------------- |
+| 2026-03-29T12:20Z | retrospective       | Created retrospective document                            |
 | 2026-03-29T12:50Z | process-improvement | Processed retrospective into PI-068 (R1/R2/R3) and closed |
+
+---
+
+## Correction appended 2026-10-02 (request 282): the Firefox ETP attribution is unverified
+
+This document and the v0.9.10 hotfix it precedes attribute the Iconify failure to
+"Firefox with Enhanced Tracking Protection blocks the SW-context fetch at the network
+layer (status null)". **That mechanism was never verified, and the evidence now says it
+is wrong.** Nothing above is rewritten; this note is the correction.
+
+What was checked, during request 282
+(`agent-output/research/282-defaultcache-iconify.md`, section Q6):
+
+- Firefox ETP classifies by the Disconnect list. `services.json` (378 KB, fetched from
+  upstream) contains **0** matches for `iconify`, `unisvg` or `simplesvg`. EasyPrivacy
+  and EasyList: **0** each. ETP cannot block a domain that is on none of its lists.
+- A Playwright Firefox 155 reproduction served a page plus a classic service worker whose
+  `fetch` listener did `event.respondWith(fetch(event.request))` for
+  `api.iconify.design`, i.e. the exact NetworkOnly semantics reverted in v0.9.10. The
+  SW-context fetch returned **HTTP 200, type "cors"** with ETP off AND with ten strict ETP
+  prefs on. No `status null`, no `no-response :: error:{}`.
+
+**The fix was right; the explanation was not.** Removing the route is still correct and is
+still enforced. What is verified is narrower and sufficient: registering a route makes the
+service worker call `event.respondWith()` and re-issue the request from the service-worker
+context, and that re-issued request behaved differently enough to break icon loading.
+Registering no route means Serwist never calls `respondWith`, so the browser handles those
+requests natively.
+
+What actually caused the v0.9.9 regression is **unknown**. Candidates not investigated: a
+content blocker with a custom list; Firefox Total Cookie Protection / state partitioning
+interacting with CacheStorage; the `cors` vs `no-cors` mode of the re-issued Request clone;
+an Iconify-side rate limit; a differing `Origin` header from the SW context.
+
+Consequences, all applied in request 282:
+
+- The rule is now guarded by `scripts/verify-sw-no-cross-origin-routes.mjs`, which executes
+  the built `public/sw.js` and asserts `respondWith` is never called for the three origins.
+  That tests the property that is actually true.
+- No Firefox-ETP Playwright spec was written. It would pass whether or not the bug was
+  present, which is the "green check that proves nothing" failure mode.
+- The same correction is appended to retrospective 069 and applied in
+  `src/__tests__/config/pwa-config.test.ts` and `src/lib/pwa/runtimeCaching.ts`.
+
+| Date (UTC) | Agent       | Change                                                                    |
+| ---------- | ----------- | ------------------------------------------------------------------------- |
+| 2026-10-02 | request 282 | Appended correction: the Firefox ETP root-cause attribution is unverified |
