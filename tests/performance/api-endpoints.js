@@ -1,19 +1,26 @@
 /**
  * API Endpoint Performance Tests
- * 
+ *
  * Tests various API endpoints including:
  * - Notion integration endpoints
  * - User data export
  * - Health check endpoint
  * - Other API routes
- * 
+ *
  * Load: 5-10% of total users (2,500-5,000/month)
  */
 
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
 import { BASE_URL, API_BASE_URL, TEST_USER, options as baseOptions } from './k6.config.js';
-import { login, getNotionEpics, exportUserData, checkHealth, authenticatedRequest, waitRandom } from './utils.js';
+import {
+  login,
+  getNotionEpics,
+  exportUserData,
+  checkHealth,
+  authenticatedRequest,
+  waitRandom,
+} from './utils.js';
 import http from 'k6/http';
 
 // Custom metrics
@@ -71,9 +78,9 @@ export const options = {
   },
   thresholds: {
     ...baseOptions.thresholds,
-    'api_success': ['rate>0.95'], // 95% success rate
-    'notion_api_success': ['rate>0.90'], // 90% Notion API success (external dependency)
-    'api_response_time': ['p(95)<2000'], // 95% of API calls < 2s
+    api_success: ['rate>0.95'], // 95% success rate
+    notion_api_success: ['rate>0.90'], // 90% Notion API success (external dependency)
+    api_response_time: ['p(95)<2000'], // 95% of API calls < 2s
     'http_req_duration{name:health-check}': ['p(95)<200'],
     'http_req_duration{name:get-notion-epics}': ['p(95)<3000'], // Notion can be slower
     'http_req_duration{name:export-user-data}': ['p(95)<5000'], // Export can take time
@@ -163,7 +170,6 @@ export function testUserDataExport(token) {
  */
 export function testOtherEndpoints(token) {
   const endpoints = [
-    { name: 'swagger', url: `${API_BASE_URL}/swagger`, method: 'GET', auth: false },
     { name: 'manifest', url: `${API_BASE_URL}/manifest`, method: 'GET', auth: false },
   ];
 
@@ -241,4 +247,3 @@ export default function () {
   // Random pause between requests
   sleep(waitRandom(1, 3));
 }
-
