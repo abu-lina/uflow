@@ -17,13 +17,27 @@ Pure router. You classify the request, set up an isolated worktree, dispatch sub
 /orchestrator resume <ID>
 ```
 
-For resume: read `agent-output/requests/<ID>-*.md`, check the worktree (`git worktree list`), and pick up at the last recorded phase. If the worktree is gone, recreate it from the branch.
+For resume: read `agent-output/requests/<ID>-*.md`, check the worktree (`git worktree list`), and pick up at the last recorded phase. If the worktree is gone, recreate it from the branch. Re-run the tab rename (Step 1.3) so the tab matches the resumed request.
 
 ## Step 1: Setup
 
 1. Read `agent-output/.next-id`, increment, write back.
 2. Classify (see Step 2).
-3. Fetch latest main:
+3. Rename the terminal tab to `<ID>-<slug>` so parallel sessions are distinguishable:
+
+```bash
+printf '\033]0;%s\007' "<ID>-<slug>" > "/dev/$(ps -o tty= -p $PPID | tr -d ' ')" 2>/dev/null || true
+```
+
+This writes an OSC 0 title to the terminal the CLI is attached to. Devin CLI only sets a static `devin: <repo>` title at startup, so without this every tab looks identical. Requires `"terminal.integrated.tabs.title": "${sequence}"` in the editor's settings (already set for Devin Desktop); in other terminals it either works or is silently ignored.
+
+The tab label is separate from the **session** title shown by `devin ls` and `/resume`. The orchestrator can't set that one — slash commands are user-only. Include this line in the Step 1 gate message so the user can paste it:
+
+```
+/title <ID>-<slug>
+```
+
+4. Fetch latest main:
 
 ```bash
 git fetch origin main
@@ -36,7 +50,7 @@ If that fails (main is checked out), fall back to:
 git checkout main && git pull origin main --ff-only
 ```
 
-4. Create worktree:
+5. Create worktree:
 
 ```bash
 mkdir -p ../uflow-wt
@@ -45,7 +59,7 @@ BRANCH_PREFIX="<type>"   # feature | fix | refactor | cr | hotfix
 git worktree add "../uflow-wt/${SESSION_SLUG}" -b "${BRANCH_PREFIX}/${SESSION_SLUG}" main
 ```
 
-5. Create tracking file at `agent-output/requests/<ID>-<slug>.md` using [request-template.md](request-template.md).
+6. Create tracking file at `agent-output/requests/<ID>-<slug>.md` using [request-template.md](request-template.md).
 
 The tracking file lives in the canonical repo. All code changes happen in the worktree.
 
@@ -94,12 +108,12 @@ Multi-ticket: each ticket gets its own worktree. Fetch main before each. Work th
 Diagnose -> [Gate: confirm hypotheses] -> Fix -> Code Review -> Done
 ```
 
-| Phase           | Subagent                        | Skills                   | What it does                                                          |
-| --------------- | ------------------------------- | ------------------------ | --------------------------------------------------------------------- |
-| **Diagnose**    | Foreground (expensive)          | `diagnosing-bugs`        | Build feedback loop, reproduce, minimize, generate ranked hypotheses. |
-| **Fix**         | Background worker               | `diagnosing-bugs`, `tdd` | Instrument, fix with regression test, cleanup.                        |
-| **Code Review** | Foreground (expensive)          | `code-review`            | Two-axis review.                                                      |
-| **Done**        | (orchestrator)                  |                          | Update tracking file, capture learning.                               |
+| Phase           | Subagent               | Skills                   | What it does                                                          |
+| --------------- | ---------------------- | ------------------------ | --------------------------------------------------------------------- |
+| **Diagnose**    | Foreground (expensive) | `diagnosing-bugs`        | Build feedback loop, reproduce, minimize, generate ranked hypotheses. |
+| **Fix**         | Background worker      | `diagnosing-bugs`, `tdd` | Instrument, fix with regression test, cleanup.                        |
+| **Code Review** | Foreground (expensive) | `code-review`            | Two-axis review.                                                      |
+| **Done**        | (orchestrator)         |                          | Update tracking file, capture learning.                               |
 
 ---
 
@@ -109,12 +123,12 @@ Diagnose -> [Gate: confirm hypotheses] -> Fix -> Code Review -> Done
 Grill -> Implement -> Code Review -> Done
 ```
 
-| Phase           | Subagent       | Skills                        | What it does                                                          |
-| --------------- | -------------- | ----------------------------- | --------------------------------------------------------------------- |
+| Phase           | Subagent               | Skills                        | What it does                                                          |
+| --------------- | ---------------------- | ----------------------------- | --------------------------------------------------------------------- |
 | **Grill**       | Foreground (expensive) | `grilling`, `codebase-design` | Clarify scope, constraints, what must NOT change.                     |
 | **Implement**   | Background worker      | `tdd`                         | Characterization tests first, then refactor, verify tests still pass. |
 | **Code Review** | Foreground (expensive) | `code-review`                 | Review for behavior preservation, no scope creep.                     |
-| **Done**        | (orchestrator) |                               | Update tracking file, capture learning.                               |
+| **Done**        | (orchestrator)         |                               | Update tracking file, capture learning.                               |
 
 ---
 
@@ -124,12 +138,12 @@ Grill -> Implement -> Code Review -> Done
 Grill -> Implement -> Code Review -> Done
 ```
 
-| Phase           | Subagent       | Skills        | What it does                                             |
-| --------------- | -------------- | ------------- | -------------------------------------------------------- |
+| Phase           | Subagent               | Skills        | What it does                                             |
+| --------------- | ---------------------- | ------------- | -------------------------------------------------------- |
 | **Grill**       | Foreground (expensive) | `grilling`    | Pin down: what changes, what stays, acceptance criteria. |
 | **Implement**   | Background worker      | `tdd`         | Update existing tests, write new edge-case tests.        |
 | **Code Review** | Foreground (expensive) | `code-review` | Two-axis review.                                         |
-| **Done**        | (orchestrator) |               | Update tracking file, capture learning.                  |
+| **Done**        | (orchestrator)         |               | Update tracking file, capture learning.                  |
 
 ---
 
@@ -139,10 +153,10 @@ Grill -> Implement -> Code Review -> Done
 Fix -> Done
 ```
 
-| Phase    | Subagent       | Skills                   | What it does                                                        |
-| -------- | -------------- | ------------------------ | ------------------------------------------------------------------- |
+| Phase    | Subagent          | Skills                   | What it does                                                        |
+| -------- | ----------------- | ------------------------ | ------------------------------------------------------------------- |
 | **Fix**  | Background worker | `diagnosing-bugs`, `tdd` | Reproduce, regression test first, minimal fix, run test suite.      |
-| **Done** | (orchestrator) |                          | Update tracking file, capture learning. Push/deploy is user's call. |
+| **Done** | (orchestrator)    |                          | Update tracking file, capture learning. Push/deploy is user's call. |
 
 ---
 
@@ -154,11 +168,11 @@ Research -> Report -> Done
 
 No worktree needed.
 
-| Phase        | Subagent       | Skills     | What it does                                                             |
-| ------------ | -------------- | ---------- | ------------------------------------------------------------------------ |
+| Phase        | Subagent          | Skills     | What it does                                                             |
+| ------------ | ----------------- | ---------- | ------------------------------------------------------------------------ |
 | **Research** | Background worker | `research` | Investigate against primary sources, write findings to Markdown in repo. |
-| **Report**   | (orchestrator) |            | Present findings to user.                                                |
-| **Done**     | (orchestrator) |            | If actionable work surfaces, ask user to start a new request.            |
+| **Report**   | (orchestrator)    |            | Present findings to user.                                                |
+| **Done**     | (orchestrator)    |            | If actionable work surfaces, ask user to start a new request.            |
 
 ---
 
@@ -206,27 +220,27 @@ Use `is_background: false` for judgment phases (Grill, Diagnose, Code Review).
 
 Dispatch subagents at the cheapest tier that matches the phase's judgment requirements.
 
-| Tier | When to use | Subagent type |
-| --- | --- | --- |
-| **Foreground** | Phases requiring reasoning, user interaction, or quality gates | `is_background: false` |
-| **Background** | Execution phases following an existing spec | `is_background: true`, then `read_subagent` when done |
-| **None** | Orchestrator-only work (spec writing, tracking, tickets) | No subagent |
+| Tier           | When to use                                                    | Subagent type                                         |
+| -------------- | -------------------------------------------------------------- | ----------------------------------------------------- |
+| **Foreground** | Phases requiring reasoning, user interaction, or quality gates | `is_background: false`                                |
+| **Background** | Execution phases following an existing spec                    | `is_background: true`, then `read_subagent` when done |
+| **None**       | Orchestrator-only work (spec writing, tracking, tickets)       | No subagent                                           |
 
 ### Phase-to-tier mapping
 
-| Phase | Tier | Rationale |
-| --- | --- | --- |
-| Grill | Foreground | Needs user interaction, high judgment |
-| Diagnose | Foreground | Needs reasoning, hypothesis generation |
-| Code Review | Foreground | Quality gate, needs deep analysis |
-| Implement | Background | Follows spec, execution-heavy |
-| Fix | Background | Follows diagnosis, execution-heavy |
-| QA | Background | Runs test suite, verification |
-| Research | Background | Investigation, no user interaction needed |
-| Spec writing | None | Orchestrator writes directly |
-| Ticket writing | None | Orchestrator writes directly |
-| Done | None | Orchestrator updates tracking file |
-| Report | None | Orchestrator presents findings directly |
+| Phase          | Tier       | Rationale                                 |
+| -------------- | ---------- | ----------------------------------------- |
+| Grill          | Foreground | Needs user interaction, high judgment     |
+| Diagnose       | Foreground | Needs reasoning, hypothesis generation    |
+| Code Review    | Foreground | Quality gate, needs deep analysis         |
+| Implement      | Background | Follows spec, execution-heavy             |
+| Fix            | Background | Follows diagnosis, execution-heavy        |
+| QA             | Background | Runs test suite, verification             |
+| Research       | Background | Investigation, no user interaction needed |
+| Spec writing   | None       | Orchestrator writes directly              |
+| Ticket writing | None       | Orchestrator writes directly              |
+| Done           | None       | Orchestrator updates tracking file        |
+| Report         | None       | Orchestrator presents findings directly   |
 
 ## Push and PR
 
@@ -245,14 +259,15 @@ git worktree remove "../uflow-wt/<ID>-<slug>"
 
 1. **Fetch before branching.** Always `git fetch origin main && git branch -f main origin/main` before creating a worktree.
 2. **Worktree-first.** Create worktree and branch before any code changes.
-3. **Never invoke skills directly.** Dispatch a subagent that invokes the skill.
-4. **Never write code.** No `edit`, `write`, or `exec` on worktree files (except `git push` and `gh pr create`).
-5. **Never skip TDD.** Every implementation subagent invokes the `tdd` skill.
-6. **Gate between phases.** `ask_user_question` with summary of what was done and what's next.
-7. **Track everything.** Every phase outcome goes into the tracking file.
-8. **One request at a time.** New work goes under `## Follow-up requests` in the tracking file.
-9. **Verify DB schema from Supabase, not local files.** When touching data validation, enums, or constraints.
-10. **Capture learnings.** After review and test, append to `docs/ai/LEARNINGS.md`.
+3. **Name the tab.** Set the terminal tab to `<ID>-<slug>` in Step 1, and again on resume.
+4. **Never invoke skills directly.** Dispatch a subagent that invokes the skill.
+5. **Never write code.** No `edit`, `write`, or `exec` on worktree files (except `git push`, `gh pr create`, and the Step 1 tab rename).
+6. **Never skip TDD.** Every implementation subagent invokes the `tdd` skill.
+7. **Gate between phases.** `ask_user_question` with summary of what was done and what's next.
+8. **Track everything.** Every phase outcome goes into the tracking file.
+9. **One request at a time.** New work goes under `## Follow-up requests` in the tracking file.
+10. **Verify DB schema from Supabase, not local files.** When touching data validation, enums, or constraints.
+11. **Capture learnings.** After review and test, append to `docs/ai/LEARNINGS.md`.
 
 ## The orchestrator does NOT
 
@@ -265,6 +280,7 @@ git worktree remove "../uflow-wt/<ID>-<slug>"
 ## The orchestrator DOES
 
 - Allocate IDs
+- Rename the terminal tab to `<ID>-<slug>`
 - Fetch main, create worktrees
 - Write tracking files and ticket files
 - Dispatch subagents

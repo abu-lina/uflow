@@ -38,17 +38,17 @@ Flowbaby retrieval tools were not available through the active tool surface in t
 
 ## Timeline Analysis
 
-| Phase | Planned Duration | Actual Duration | Variance | Notes |
-| --- | --- | --- | --- | --- |
-| Planning | N/A (release-only hotfix chain) | N/A | N/A | No standalone 069 planning doc was created |
-| Analysis | ~15–30 min | ~20 min | In range | Generated `sw.js` inspection and Firefox error pattern led to the actual root cause |
-| Critique | Skipped | 0 | N/A | Reasonable for a narrow same-day hotfix |
-| Implementation | ~15 min | ~15 min | In range | Removed Iconify `NetworkOnly` route and updated regression tests |
-| QA | ~10–15 min | ~12 min | In range | Targeted config tests plus full suite passed cleanly |
-| UAT | ~15–30 min | ~20 min | In range | Live UAT confirmation came from the deployed site and user confirmation rather than a formal UAT artifact |
-| DevOps release prep | ~15 min | ~12 min active | Faster | Version bump + release metadata commit required because the merged hotfix itself still reported `0.9.9` |
-| DevOps deploy + verify | ~15–30 min | ~20 min | In range | Tag `v0.9.10`, successful `deploy-uat.yml`, and HTTP smoke checks on `/` and `/providers` |
-| **Total** | **~1.5–2.0h** | **~1h 45m** | **In range** | Fast recovery, but recovery was needed because the prior release missed live-browser behavior |
+| Phase                  | Planned Duration                | Actual Duration | Variance     | Notes                                                                                                     |
+| ---------------------- | ------------------------------- | --------------- | ------------ | --------------------------------------------------------------------------------------------------------- |
+| Planning               | N/A (release-only hotfix chain) | N/A             | N/A          | No standalone 069 planning doc was created                                                                |
+| Analysis               | ~15–30 min                      | ~20 min         | In range     | Generated `sw.js` inspection and Firefox error pattern led to the actual root cause                       |
+| Critique               | Skipped                         | 0               | N/A          | Reasonable for a narrow same-day hotfix                                                                   |
+| Implementation         | ~15 min                         | ~15 min         | In range     | Removed Iconify `NetworkOnly` route and updated regression tests                                          |
+| QA                     | ~10–15 min                      | ~12 min         | In range     | Targeted config tests plus full suite passed cleanly                                                      |
+| UAT                    | ~15–30 min                      | ~20 min         | In range     | Live UAT confirmation came from the deployed site and user confirmation rather than a formal UAT artifact |
+| DevOps release prep    | ~15 min                         | ~12 min active  | Faster       | Version bump + release metadata commit required because the merged hotfix itself still reported `0.9.9`   |
+| DevOps deploy + verify | ~15–30 min                      | ~20 min         | In range     | Tag `v0.9.10`, successful `deploy-uat.yml`, and HTTP smoke checks on `/` and `/providers`                 |
+| **Total**              | **~1.5–2.0h**                   | **~1h 45m**     | **In range** | Fast recovery, but recovery was needed because the prior release missed live-browser behavior             |
 
 ## What Went Well (Process Focus)
 
@@ -103,13 +103,13 @@ Flowbaby retrieval tools were not available through the active tool surface in t
 **Total Handoffs**: 5 substantive handoffs/release transitions reconstructed from artifacts
 **Handoff Chain**: released 064 chain -> user/UAT bug report -> implementer investigation/fix -> merged hotfix on `main` -> devops release metadata + tag -> retrospective
 
-| From Agent | To Agent | Artifact | What Requested | Issues Identified |
-| --- | --- | --- | --- | --- |
-| DevOps (064) | Released product state | [agent-output/deployment/064-stage1-v0.9.9.md](agent-output/deployment/064-stage1-v0.9.9.md) | Ship v0.9.9 | Runtime browser-path issue remained undetected |
-| User/UAT signal | Implementer | Console errors / live UAT observation | Diagnose Iconify failures still present on UAT | Firefox ETP-style `no-response` failures across all Iconify domains |
-| Implementer | Merged hotfix | Source change + updated tests | Remove explicit SW interception | Root cause corrected |
-| DevOps | Release metadata | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md) | Version-consistent release + tag | Release metadata lag required separate commit |
-| DevOps | Retrospective | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md) | Capture process lessons | Need stronger browser-backed gate for PWA/network fixes |
+| From Agent      | To Agent               | Artifact                                                                                     | What Requested                                 | Issues Identified                                                   |
+| --------------- | ---------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| DevOps (064)    | Released product state | [agent-output/deployment/064-stage1-v0.9.9.md](agent-output/deployment/064-stage1-v0.9.9.md) | Ship v0.9.9                                    | Runtime browser-path issue remained undetected                      |
+| User/UAT signal | Implementer            | Console errors / live UAT observation                                                        | Diagnose Iconify failures still present on UAT | Firefox ETP-style `no-response` failures across all Iconify domains |
+| Implementer     | Merged hotfix          | Source change + updated tests                                                                | Remove explicit SW interception                | Root cause corrected                                                |
+| DevOps          | Release metadata       | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md)                     | Version-consistent release + tag               | Release metadata lag required separate commit                       |
+| DevOps          | Retrospective          | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md)                     | Capture process lessons                        | Need stronger browser-backed gate for PWA/network fixes             |
 
 **Handoff Quality Assessment**:
 
@@ -121,13 +121,13 @@ Flowbaby retrieval tools were not available through the active tool surface in t
 
 **Total Issues Tracked**: 5 material process issues
 
-| Issue | Artifact | Resolution | Escalated? | Time to Resolve |
-| --- | --- | --- | --- | --- |
-| `NetworkOnly` workaround still broke Iconify requests under Firefox ETP | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md) | Removed explicit Iconify SW route | Yes | Same day |
-| Original chain validated build output but not live browser behavior | [agent-output/uat/closed/064-iconify-sw-cors-fix-uat.md](agent-output/uat/closed/064-iconify-sw-cors-fix-uat.md) | Resolved operationally by live UAT report + hotfix | Yes | Same day |
-| No standalone QA/UAT artifacts for hotfix chain 069 | Artifact gap across 069 | Not resolved in-chain | No | Open workflow gap |
-| Release metadata still at `0.9.9` after merged hotfix | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md) | Separate release metadata commit `82abc6d5` | No | ~15 min |
-| Follow-up docs-only main push caused an extra deploy cycle | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md) | Completed successfully, but not eliminated | No | ~15 min |
+| Issue                                                                   | Artifact                                                                                                         | Resolution                                         | Escalated? | Time to Resolve   |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ---------- | ----------------- |
+| `NetworkOnly` workaround still broke Iconify requests under Firefox ETP | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md)                                         | Removed explicit Iconify SW route                  | Yes        | Same day          |
+| Original chain validated build output but not live browser behavior     | [agent-output/uat/closed/064-iconify-sw-cors-fix-uat.md](agent-output/uat/closed/064-iconify-sw-cors-fix-uat.md) | Resolved operationally by live UAT report + hotfix | Yes        | Same day          |
+| No standalone QA/UAT artifacts for hotfix chain 069                     | Artifact gap across 069                                                                                          | Not resolved in-chain                              | No         | Open workflow gap |
+| Release metadata still at `0.9.9` after merged hotfix                   | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md)                                         | Separate release metadata commit `82abc6d5`        | No         | ~15 min           |
+| Follow-up docs-only main push caused an extra deploy cycle              | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md)                                         | Completed successfully, but not eliminated         | No         | ~15 min           |
 
 **Issue Pattern Analysis**:
 
@@ -139,13 +139,13 @@ Flowbaby retrieval tools were not available through the active tool surface in t
 
 **Artifact Update Frequency**:
 
-| Artifact | Created | Updated | Reason for Updates |
-| --- | ---: | ---: | --- |
-| [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md) | 1 | 1 | Initial release prep, then final release evidence |
-| [CHANGELOG.md](CHANGELOG.md) | 1 | 0 | Added `0.9.10` hotfix entry |
-| [agent-output/roadmap/product-roadmap.md](agent-output/roadmap/product-roadmap.md) | 1 | 0 | Synced current version to `v0.9.10` |
-| [package.json](package.json) | 1 | 0 | Version consistency for `0.9.10` |
-| `package-lock.json` | 1 | 0 | Version consistency for `0.9.10` |
+| Artifact                                                                           | Created | Updated | Reason for Updates                                |
+| ---------------------------------------------------------------------------------- | ------: | ------: | ------------------------------------------------- |
+| [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md)           |       1 |       1 | Initial release prep, then final release evidence |
+| [CHANGELOG.md](CHANGELOG.md)                                                       |       1 |       0 | Added `0.9.10` hotfix entry                       |
+| [agent-output/roadmap/product-roadmap.md](agent-output/roadmap/product-roadmap.md) |       1 |       0 | Synced current version to `v0.9.10`               |
+| [package.json](package.json)                                                       |       1 |       0 | Version consistency for `0.9.10`                  |
+| `package-lock.json`                                                                |       1 |       0 | Version consistency for `0.9.10`                  |
 
 **Change Pattern Analysis**:
 
@@ -178,21 +178,21 @@ Flowbaby retrieval tools were not available through the active tool surface in t
 
 ### Objective Achievement
 
-| Objective | Status | Evidence |
-| --- | --- | --- |
-| Remove the SW interception pattern that still broke Iconify requests on live UAT | ✅ Delivered | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md) |
-| Release a version-consistent hotfix as `v0.9.10` | ✅ Delivered | [CHANGELOG.md](CHANGELOG.md), [package.json](package.json), tag `v0.9.10` |
-| Confirm live UAT recovers on key routes | ✅ Delivered | `HTTP/2 200` on `/`; `/providers` smoke check passed |
+| Objective                                                                        | Status       | Evidence                                                                  |
+| -------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------- |
+| Remove the SW interception pattern that still broke Iconify requests on live UAT | ✅ Delivered | [agent-output/deployment/v0.9.10.md](agent-output/deployment/v0.9.10.md)  |
+| Release a version-consistent hotfix as `v0.9.10`                                 | ✅ Delivered | [CHANGELOG.md](CHANGELOG.md), [package.json](package.json), tag `v0.9.10` |
+| Confirm live UAT recovers on key routes                                          | ✅ Delivered | `HTTP/2 200` on `/`; `/providers` smoke check passed                      |
 
 ### Cost Assessment
 
-| Metric | Value | Assessment |
-| --- | --- | --- |
-| Runtime code files changed | 2 | Minimal |
-| Release metadata files changed | 5+ | Moderate, mostly bookkeeping |
-| New dependencies | 0 | None |
-| Extra deploy cycles | 1 additional docs-only cycle | Avoidable overhead |
-| Total hotfix elapsed | ~1h 45m | Good recovery speed |
+| Metric                         | Value                        | Assessment                   |
+| ------------------------------ | ---------------------------- | ---------------------------- |
+| Runtime code files changed     | 2                            | Minimal                      |
+| Release metadata files changed | 5+                           | Moderate, mostly bookkeeping |
+| New dependencies               | 0                            | None                         |
+| Extra deploy cycles            | 1 additional docs-only cycle | Avoidable overhead           |
+| Total hotfix elapsed           | ~1h 45m                      | Good recovery speed          |
 
 ### Drift Timing
 
@@ -201,18 +201,57 @@ Flowbaby retrieval tools were not available through the active tool surface in t
 
 ## Recommendations Summary
 
-| ID | Recommendation | Priority | Target Agent | Systemic? |
-| --- | --- | --- | --- | --- |
-| R1 | Browser-backed validation gate for PWA/network/privacy fixes | HIGH | QA / UAT / DevOps | YES |
-| R2 | Lightweight hotfix artifact minimum | HIGH | Orchestrator / QA / UAT / DevOps | YES |
-| R3 | Lock release metadata with hotfix promotion | MEDIUM | DevOps | YES |
-| R4 | Treat explicit Workbox route changes as behavior hypotheses until live-validated | MEDIUM | Implementer / QA / UAT | YES |
+| ID  | Recommendation                                                                   | Priority | Target Agent                     | Systemic? |
+| --- | -------------------------------------------------------------------------------- | -------- | -------------------------------- | --------- |
+| R1  | Browser-backed validation gate for PWA/network/privacy fixes                     | HIGH     | QA / UAT / DevOps                | YES       |
+| R2  | Lightweight hotfix artifact minimum                                              | HIGH     | Orchestrator / QA / UAT / DevOps | YES       |
+| R3  | Lock release metadata with hotfix promotion                                      | MEDIUM   | DevOps                           | YES       |
+| R4  | Treat explicit Workbox route changes as behavior hypotheses until live-validated | MEDIUM   | Implementer / QA / UAT           | YES       |
 
 **Systemic findings requiring PI**: YES — the main gap is release confidence for browser-specific PWA/network changes, plus a lighter but important gap around hotfix artifact completeness.
 
 ## Changelog
 
-| Date (UTC) | Agent | Change |
-| --- | --- | --- |
-| 2026-03-29T14:22Z | retrospective | Created retrospective document for the v0.9.10 Iconify hotfix release |
-| 2026-03-29T14:45Z | process-improvement | Document closed | Status: Processed |
+| Date (UTC)        | Agent               | Change                                                                |
+| ----------------- | ------------------- | --------------------------------------------------------------------- |
+| 2026-03-29T14:22Z | retrospective       | Created retrospective document for the v0.9.10 Iconify hotfix release |
+| 2026-03-29T14:45Z | process-improvement | Document closed                                                       | Status: Processed |
+
+---
+
+## Correction appended 2026-10-02 (request 282): the Firefox ETP attribution is unverified
+
+This retrospective repeatedly names "Firefox ETP" as the condition under which the explicit
+`NetworkOnly` route failed, and treats "we did not validate under Firefox ETP" as the
+systemic gap. **That attribution was never verified and the evidence now says it is wrong**,
+which changes the lesson. Nothing above is rewritten; this note is the correction.
+
+Evidence, from `agent-output/research/282-defaultcache-iconify.md` section Q6:
+
+- `api.iconify.design`, `api.unisvg.com` and `api.simplesvg.com` appear **0** times in
+  Disconnect's `services.json` (the list Firefox ETP classifies by), **0** times in
+  EasyPrivacy and **0** times in EasyList.
+- A Playwright Firefox 155 reproduction of the exact reverted semantics
+  (`event.respondWith(fetch(event.request))` for `api.iconify.design`) returned **HTTP 200,
+  type "cors"** both with ETP off and with ten strict ETP prefs on.
+
+Line 58 above records, as a thing that went well, that "the user-provided Firefox console
+evidence was incorporated directly into the diagnosis rather than treated as secondary
+noise". With hindsight that is the actual finding, inverted: the console evidence showed a
+real failure, but the _mechanism_ inferred from it was adopted without a check, written into
+four files, and then cited as settled for six months. The useful lesson is not "test under
+Firefox ETP". It is **a documented root cause can be folklore; the fix being right does not
+make the explanation right**, and an unverified mechanism should be labelled as such at the
+moment it is written down.
+
+The proposed remedy in this document (a Firefox-ETP e2e spec) was therefore **not
+implemented** in request 282. Such a spec would pass whether or not the bug was present. The
+guard that was implemented instead, `scripts/verify-sw-no-cross-origin-routes.mjs`, executes
+the built `public/sw.js` and asserts `event.respondWith` is never called for the three
+origins, which is the property that is actually verified.
+
+The no-route rule itself stands and is unchanged.
+
+| Date (UTC) | Agent       | Change                                                                                                                        |
+| ---------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-02 | request 282 | Appended correction: the Firefox ETP root-cause attribution is unverified; the proposed ETP spec was deliberately not written |

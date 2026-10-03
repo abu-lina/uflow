@@ -20,11 +20,33 @@ docs/
 .cursor/
 
 # Tests
+# Patterns must be path-anchored: a bare `__tests__` only matches a root-level
+# entry, so src/__tests__ (254 files) was still being copied into the build
+# context. Next 16 type-checks those files during `next build`, and they import
+# from scripts/ which IS ignored, so the image build failed with TS2307.
+# Colocated *.test.* files outside __tests__ must go too: the jest-dom type
+# augmentation lives in src/__tests__/jest-dom.d.ts, and with __tests__
+# excluded they fail type-check with TS2339.
 tests/
-__tests__
+**/__tests__
+**/__mocks__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+e2e/
+playwright.config.ts
+vitest.config.ts
 
 # Scripts
-scripts/
+# Only the PWA build chain ships into the context: build:standalone runs
+# `npm run build:sw` after `next build`, which is these three files in order.
+# `scripts/*` (not `scripts/`) so the exceptions can re-include single files;
+# matched subdirectories stay fully excluded.
+scripts/*
+!scripts/build-sw.js
+!scripts/verify-pwa-output.js
+!scripts/verify-sw-no-cross-origin-routes.mjs
 
 # Temporary files
 imports/lottie/.temp-gif-frames/

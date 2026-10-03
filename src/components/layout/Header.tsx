@@ -265,6 +265,7 @@ export function Header() {
                     <button
                       aria-label="Profil Dropdown öffnen"
                       className="flex items-center gap-0 rounded-full focus:outline-none"
+                      data-testid="profile-menu-trigger"
                       onClick={() => setDropdownOpen((open) => !open)}
                     >
                       <ProfileIcon className="shrink-0" isActive={dropdownOpen} />
@@ -286,6 +287,7 @@ export function Header() {
                         </button>
                         <button
                           className="block w-full px-4 py-2 text-left text-base text-danger hover:bg-neutral-50"
+                          data-testid="logout-button"
                           onClick={async () => {
                             setDropdownOpen(false);
                             await signOut();
