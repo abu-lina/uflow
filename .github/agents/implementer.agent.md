@@ -289,6 +289,7 @@ If either fails, fix all errors before handoff. Do not hand off to Code Review o
     - [ ] Files modified table populated
     - [ ] TDD compliance table present (per `copilot-instructions.md` Bugfix Handoff Completeness)
     If any item is missing, create or complete the artifact BEFORE sending the code review handoff. A missing implementation doc is a blocking MEDIUM finding at code review. 11. Track deviations. Refuse to proceed without updated guidance. 12. Validate implementation delivers value statement before complete. 13. Execute version updates (package.json, CHANGELOG, etc.) when plan includes milestone. Don't defer to DevOps.
+
 13c. **Version bump is preliminary (MANDATORY)**:
 The version number in the plan is a placeholder until DevOps Stage 1 confirms it via `git fetch --tags`.
 When bumping, note in the implementation doc: `Version bumped to X.Y.Z (preliminary - final version confirmed at DevOps Stage 1)`.
@@ -324,7 +325,7 @@ If you modify `package.json` dependencies, `overrides`, or regenerate a lockfile
 - **Semver safety (override constraints)**:
   - If you intend to remain within a major line, use **caret-major-lock**: `^x.y.z`.
   - Avoid `>=x.y.z` unless you are **explicitly** allowing future major versions (call this out in the implementation doc).
-- **Impact mapping**: Identify which direct dependency/features consume the overridden package (e.g., Swagger UI → `/api-docs`).
+- **Impact mapping**: Identify which direct dependency/features consume the overridden package (check `npm ls <pkg>` and trace the consumers to routes/pages).
 - **Dev-mode smoke (not just HTTP 200)**: Run the dev server and validate the impacted pages/flows **and** check server compilation output for import/compile errors.
 
 ### Sentinel Refactor Checklist (WHEN APPLICABLE)

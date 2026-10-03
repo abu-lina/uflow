@@ -28,8 +28,10 @@ broken in production during the live verification of that deploy.
 `GET https://ummahflow.com/api/swagger.json` returns **500**:
 
 ```json
-{"error":"Failed to generate API documentation",
- "details":"Cannot set properties of undefined (setting 'keepCstNodes')"}
+{
+  "error": "Failed to generate API documentation",
+  "details": "Cannot set properties of undefined (setting 'keepCstNodes')"
+}
 ```
 
 Confirmed by plain `curl`, with no service worker involved, so this is not
@@ -71,10 +73,10 @@ shipped three commits, one of which (#488, dependabot) bumped
 `next-swagger-doc` `^0.4.1 -> ^0.5.0`. That bump also moves the transitive
 `swagger-jsdoc`:
 
-| next-swagger-doc | swagger-jsdoc |
-| --- | --- |
-| 0.4.1 (previous prod) | 6.2.8 |
-| 0.5.0 (current prod)  | 6.3.0 |
+| next-swagger-doc      | swagger-jsdoc |
+| --------------------- | ------------- |
+| 0.4.1 (previous prod) | 6.2.8         |
+| 0.5.0 (current prod)  | 6.3.0         |
 
 The repo also carries a floating override `"js-yaml": ">=4.3.0"`
 (`package.json:169`), which is pre-existing and forces a js-yaml with no default
@@ -105,6 +107,7 @@ measurement. The decisive test is an A/B against `26b27db0`.
 ## Fix options to evaluate (do not pick before the diagnosis)
 
 Known dead ends from request 282's research, do not re-derive:
+
 - Pinning js-yaml to 4.1.0 restores the default export but reintroduces
   GHSA-mh29-5h37-fv8m plus 4 more advisories covering 4.0.0-4.3.1.
 - `turbopack.resolveAlias` to the CJS entry had no effect: the importers are
@@ -119,20 +122,22 @@ from 6 build scripts (request 282 follow-up 2).
 
 ## Phases
 
-| #   | Phase                 | Status  | Outcome   |
-| --- | --------------------- | ------- | --------- |
-| 0   | Tracking file created | Done    | This file |
-| 1   | Diagnose (start with the regression A/B) | Done | Not a regression. Broken since 2026-03-28 (`f37af618`, `"yaml": ">=2.8.3"` override). Two independent bugs, 4 ranked options |
-| 2   | Gate: confirm cause + pick a fix | Pending | Awaiting option choice (1-4) |
-| 3   | Fix                   | Pending |           |
-| 4   | Code Review           | Pending |           |
-| 5   | Done                  | Pending |           |
+| #   | Phase                                    | Status  | Outcome                                                                                                                      |
+| --- | ---------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 0   | Tracking file created                    | Done    | This file                                                                                                                    |
+| 1   | Diagnose (start with the regression A/B) | Done    | Not a regression. Broken since 2026-03-28 (`f37af618`, `"yaml": ">=2.8.3"` override). Two independent bugs, 4 ranked options |
+| 2   | Gate: confirm cause + pick a fix         | Done    | Option 3 chosen: delete `/api-docs` entirely                                                                                 |
+| 3   | Fix                                      | Done    | Page, route, rewrite, swagger.config.js and 3 deps deleted; both overrides left in place (still have consumers)              |
+| 4   | Code Review                              | Pending |                                                                                                                              |
+| 5   | Done                                     | Pending |                                                                                                                              |
 
 ## Decisions
 
-| #   | Decision | Choice | Rationale |
-| --- | -------- | ------ | --------- |
-| 1   | Settle the regression question before designing a fix | A/B against 26b27db0 first | Decides revert vs forward-fix, and prod is currently broken either way |
+| #   | Decision                                              | Choice                                | Rationale                                                                                                                                                                                                                                                                                                                                                          |
+| --- | ----------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Settle the regression question before designing a fix | A/B against 26b27db0 first            | Decides revert vs forward-fix, and prod is currently broken either way                                                                                                                                                                                                                                                                                             |
+| 2   | Fix approach                                          | Option 3: delete `/api-docs` entirely | Page broken ~6 months unnoticed, documents 5% of routes (3/59), publicly unauthenticated, leaks `error.message`, drags ~1.2MB deps + dompurify/immutable advisory surface. Deletion fixes both bugs, removes the leak, needs no 2022-era prerelease YAML parser, and unblocks `--webpack` removal most cleanly (verified: Turbopack production build now compiles) |
+| 3   | `overrides` entries `yaml >=2.8.3`, `js-yaml >=4.3.0` | Leave both untouched                  | Both still have consumers after swagger removal: `yaml@2.9.0` via lint-staged, postcss-load-config (tailwindcss), vite; `js-yaml@5.4.2` via @eslint/eslintrc. Removing an override with live consumers risks reintroducing whatever advisory `f37af618`/`bc03559a` answered                                                                                        |
 
 ## Diagnosis
 
@@ -229,6 +234,7 @@ experiment reverted afterwards):
 ```jsonc
 "overrides": { "yaml": ">=2.8.3", "swagger-jsdoc": { "yaml": "2.0.0-1" } }
 ```
+
 ```
 npm ls yaml -> swagger-jsdoc@6.3.0 overridden > yaml@2.0.0-1 overridden
 curl localhost/api/swagger.json -> 200, paths: ['/api/push/subscribe','/api/push/send','/api/health']
@@ -250,7 +256,7 @@ errors(12):
   - Transformer error: TypeError: Cannot read properties of undefined (reading 'indexOf')
 ```
 
-*This* one is the js-yaml default-export bug, and it is real:
+_This_ one is the js-yaml default-export bug, and it is real:
 
 ```
 node_modules/swagger-ui-react/swagger-ui-es-bundle-core.js:
@@ -281,14 +287,14 @@ with `js-yaml-real` aliased to the absolute path of
 `node_modules/js-yaml/dist/js-yaml.cjs.js`, which sidesteps the exports-map dead
 end from request 282 because webpack/Turbopack get a file path, not a subpath):
 
-| run | result |
-| --- | --- |
-| `next dev --webpack` + Playwright | `/api-docs` renders, **errors(0)** |
-| `next dev` (Turbopack) + Playwright | `/api-docs` renders, **errors(0)** |
-| `next build` (Turbopack) | **✓ Compiled successfully in 6.4s**, 121/121 pages |
-| `next build` (Turbopack), shim removed | **✗ Build error: 5× "Export default doesn't exist in target module"**, all in `swagger-client` / `swagger-ui-react` js-yaml imports |
-| `next build --webpack` | ✓ Compiled successfully, and the long-standing `Attempted import error: 'js-yaml' does not contain a default export` warning is **gone** |
-| `next start` (webpack prod build) | `/api/swagger.json` -> **200**; `/api-docs` renders, errors(0) |
+| run                                    | result                                                                                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `next dev --webpack` + Playwright      | `/api-docs` renders, **errors(0)**                                                                                                       |
+| `next dev` (Turbopack) + Playwright    | `/api-docs` renders, **errors(0)**                                                                                                       |
+| `next build` (Turbopack)               | **✓ Compiled successfully in 6.4s**, 121/121 pages                                                                                       |
+| `next build` (Turbopack), shim removed | **✗ Build error: 5× "Export default doesn't exist in target module"**, all in `swagger-client` / `swagger-ui-react` js-yaml imports      |
+| `next build --webpack`                 | ✓ Compiled successfully, and the long-standing `Attempted import error: 'js-yaml' does not contain a default export` warning is **gone** |
+| `next start` (webpack prod build)      | `/api/swagger.json` -> **200**; `/api-docs` renders, errors(0)                                                                           |
 
 So the Turbopack blocker recorded in request 282 is the js-yaml bug, it is
 fixable without a downgrade, and the fix is verified against a real Turbopack
@@ -333,13 +339,13 @@ From the GitHub advisory API directly:
 **VERIFIED** (lockfile resolution scanned across 54 commits that touched
 `package-lock.json`, plus the real-install A/B above):
 
-| when | commit | what changed | state of `/api-docs` |
-| --- | --- | --- | --- |
-| before 2026-03-28 | | `swagger-jsdoc/node_modules/yaml 2.0.0-1`, `js-yaml 4.1.1` | **worked** (server GREEN verified at `f37af618^`; client GREEN verified with js-yaml 4.1.1) |
-| 2026-03-28 | `f37af618` | `+ "yaml": ">=2.8.3"` override | **server 500 starts** |
-| 2026-06-18 | `fd7aa044` | js-yaml override `^4.1.1` -> `4.2.0` (Plan 189 dependabot) | **client render breaks too** |
-| 2026-08-02 | `bc03559a` | js-yaml override -> `>=4.3.0` (now resolves 5.4.2) | same, still broken |
-| 2026-10-02 | `b6337c31` (#488) | next-swagger-doc 0.4.1 -> 0.5.0 | **no change, already broken** |
+| when              | commit            | what changed                                               | state of `/api-docs`                                                                        |
+| ----------------- | ----------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| before 2026-03-28 |                   | `swagger-jsdoc/node_modules/yaml 2.0.0-1`, `js-yaml 4.1.1` | **worked** (server GREEN verified at `f37af618^`; client GREEN verified with js-yaml 4.1.1) |
+| 2026-03-28        | `f37af618`        | `+ "yaml": ">=2.8.3"` override                             | **server 500 starts**                                                                       |
+| 2026-06-18        | `fd7aa044`        | js-yaml override `^4.1.1` -> `4.2.0` (Plan 189 dependabot) | **client render breaks too**                                                                |
+| 2026-08-02        | `bc03559a`        | js-yaml override -> `>=4.3.0` (now resolves 5.4.2)         | same, still broken                                                                          |
+| 2026-10-02        | `b6337c31` (#488) | next-swagger-doc 0.4.1 -> 0.5.0                            | **no change, already broken**                                                               |
 
 Both breaks came from unbounded `>=` security overrides, not from feature work
 and not from dependabot bumps. The two QA/UAT records that "verified `/api-docs`"
@@ -355,10 +361,16 @@ Two commands, both seconds, both red-capable:
 ```js
 // repro283.mjs, run from the repo root with `node repro283.mjs`
 const { createSwaggerSpec } = await import('next-swagger-doc');
-try { createSwaggerSpec({ definition: { openapi: '3.0.0', info: { title: 't', version: '1' } },
-                          apiFolder: 'src/app/api' });
-      console.log('GREEN'); }
-catch (e) { console.log('RED:', e.message); process.exitCode = 1; }
+try {
+  createSwaggerSpec({
+    definition: { openapi: '3.0.0', info: { title: 't', version: '1' } },
+    apiFolder: 'src/app/api',
+  });
+  console.log('GREEN');
+} catch (e) {
+  console.log('RED:', e.message);
+  process.exitCode = 1;
+}
 ```
 
 and a Playwright page check that asserts `.swagger-ui` renders and the console
@@ -434,21 +446,113 @@ byte-for-byte equivalent for this bug.
   security-remediation commit; the specific advisory it was answering was not
   traced, so "can we drop the override entirely instead of scoping it" is open.
 - The first page load in dev reproducibly throws one `Invalid or unexpected
-  token` page error before the chunk finishes compiling; it disappears on the
+token` page error before the chunk finishes compiling; it disappears on the
   second load. Looks like a dev-compile artifact, unrelated, not investigated.
+
+## Implementation notes
+
+Branch `fix/283-api-docs-jsyaml`, commit on top of `2f70b94a`. The change is a
+pure deletion per the option-3 decision; no shim, no redirect, no scoped
+override.
+
+Deleted:
+
+- `src/app/api-docs/page.tsx` (the Swagger UI page, 53 lines)
+- `src/app/api/swagger/route.ts` (the spec route incl. the `details:
+error.message` leak, 65 lines)
+- `swagger.config.js` (orphaned next-swagger-doc config, 49 lines)
+- `next.config.js` `rewrites()` block (`/api/swagger.json` -> `/api/swagger`;
+  it was the only rewrite, so the whole block went)
+- `src/lib/middleware-utils.ts` `APP_ROUTES` entry `'/api-docs'`
+- `tests/performance/api-endpoints.js` `swagger` endpoint entry (asserted
+  200; would now fail on the correct 404)
+- `package.json` deps `next-swagger-doc`, `swagger-ui-react`,
+  `@types/swagger-ui-react` via `npm uninstall` (lockfile regenerated:
+  -2424 lines in the lockfile)
+
+Updated prose, not deleted:
+
+- `next.config.js` header comment: rewritten so it no longer claims
+  `--webpack` is blocked on swagger-client; the blocker is gone and removal
+  is deferred to its own request.
+- `docs/architecture/ARCHITECTURE_OVERVIEW.md`: dropped `api-docs/` from the
+  tree (fixed the `└──` marker), replaced the Swagger section with "The API
+  has no generated docs page" plus a pointer to the `@swagger` JSDoc blocks.
+- `.github/agents/implementer.agent.md`, `.github/agents/qa.agent.md`,
+  `.cursor/commands/code-review-results.md`: removed `/api-docs` /
+  `swagger-ui-react` examples that are now stale.
+
+Deliberately untouched (non-goals):
+
+- The `@swagger` JSDoc comment blocks in `src/app/api/health/route.ts`,
+  `src/app/api/push/send/route.ts`, `src/app/api/push/subscribe/route.ts`
+  (3 files, 4 blocks). They still document endpoints for humans; inert now
+  that no spec generator consumes them.
+- `--webpack` on all 7 scripts (`dev`, `build`, `build:raw`,
+  `build:standalone`, `build:production`, `analyze`, `build:local`).
+- Both `overrides` entries; see Decisions #3 for evidence.
+
+Stale references intentionally left (historical records, not functional):
+
+- `CHANGELOG.md` entries describing swagger-ui-react advisories/splitChunks.
+- `docs/reviews/PUSH_NOTIFICATIONS_IMPROVEMENTS.md:250` links to the deleted
+  `src/app/api-docs/page.tsx`; historical review doc, link now dangles.
+
+## QA results
+
+All run in the worktree on the final tree.
+
+| Gate               | Command                                                                                                | Result                                                                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clean install      | `npm ci`                                                                                               | OK                                                                                                                                                                                                                     |
+| Grep               | `grep -rni "api-docs\|swagger"` excluding node_modules/.next/.git/agent-output/docs/CHANGELOG/lockfile | Zero functional references; only `next.config.js` history comments and the 3 kept JSDoc files remain                                                                                                                   |
+| Build              | `npm run build` (webpack)                                                                              | `Compiled successfully`, **0** `Attempted import error` warnings (baseline: 5 js-yaml default-export warnings, one per swagger-client/swagger-ui-react import site — the same 5 sites that hard-error under Turbopack) |
+| Unit               | `npx vitest run`                                                                                       | **2715 passed, 24 skipped, 0 failed** (2739 total; baseline 2688, no specs were deleted — none targeted the page/route)                                                                                                |
+| Prod routes        | `npm run start` + `curl -i`                                                                            | `/api-docs` 404, `/api/swagger.json` 404, `/api/swagger` 404; `/api/health` 200, `/` 200                                                                                                                               |
+| E2E                | `CI=1 npx playwright test`                                                                             | **7 passed**. `sw-session-boundary` guard RAN for real: **13.8s** (not the ~57ms skip)                                                                                                                                 |
+| Turbopack evidence | `NODE_ENV=production npx next build` (no script change)                                                | `Compiled successfully in 5.2s`, zero `Export default doesn't exist` errors. `--webpack` removal confirmed unblocked                                                                                                   |
+| Docker             | `docker build --build-arg NEXT_PUBLIC_SUPABASE_URL/ANON_KEY -t uflow-283-test .`                       | Image builds (468MB); `public/sw.js` present inside image at **62,419 bytes** (baseline ~62,865; delta consistent with the deleted page's precache entries). Push handler and Iconify guards pass                      |
+
+Notes:
+
+- `npm run build`'s `prebuild` step regenerates `public/manifest.json` and
+  `scripts/generate-manifest.js:68` still emits a `/providers` shortcut that
+  `0fb4c1f4` renamed to `/food`. This makes the plan-228 regression test fail
+  on any build. **Pre-existing bug**, unrelated to this change; the committed
+  `manifest.json` was restored before commit. Logged as a follow-up.
+- First Playwright attempt showed 3 auth failures caused by building with the
+  remote `.env.local` baked into `NEXT_PUBLIC_*` while the suite injects local
+  Supabase keys at runtime. Rebuilding with local creds exported (as `e2e.yml`
+  does in CI) made the suite green. Environmental, not related to the diff.
 
 ## Follow-up requests
 
 _New work discovered during this request._
 
+- Remove `--webpack` from the 7 build/dev scripts; now verified unblocked
+  (Turbopack production build compiles clean).
+- The `@swagger`/`@openapi` JSDoc comment blocks in the 3 API route files no
+  longer feed any generator. Decide whether to keep them as human docs or
+  strip them.
+- `scripts/generate-manifest.js:68` emits `url: '/providers'` while the app
+  and the committed `public/manifest.json` use `/food` (plan 228). Any
+  `npm run build` regenerates the stale value and trips the plan-228
+  regression test. Fix the generator (and check whether prod has been
+  shipping the stale shortcut).
+- `overrides`: `"yaml": ">=2.8.3"` and `"js-yaml": ">=4.3.0"` still have
+  consumers (`lint-staged`, `postcss-load-config`, `vite`, `@eslint/eslintrc`)
+  and both are unbounded `>=` ranges banned by org guardrails. The unbounded
+  range is what caused this bug; narrowing needs its own request with the
+  original advisory (`f37af618`, `bc03559a`) identified first.
 - The 500 response body includes `details` with an internal error message.
-  Internal error details should not be returned to clients.
+  Internal error details should not be returned to clients. (Resolved by
+  deletion for this route; the pattern may exist elsewhere.)
 - `"js-yaml": ">=4.3.0"` is one of ten unbounded `>=` overrides
   (request 282 follow-up 7). The diagnosis makes this concrete: **two** of those
   unbounded overrides each broke a different half of `/api-docs`
   (`yaml >=2.8.3` on 2026-03-28, `js-yaml` widening on 2026-06-18), and npm
   silently dropped a nested pinned copy to satisfy the first one. Any policy work
-  here should require that an override which overrides a *pinned exact* transitive
+  here should require that an override which overrides a _pinned exact_ transitive
   dep (`"yaml": "2.0.0-1"`) be scoped to the dependent rather than applied globally.
 - QA/UAT asserting "page returns 200" is not evidence a page works.
   `/api-docs` has returned 200 throughout six months of being completely broken,

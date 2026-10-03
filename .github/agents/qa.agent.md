@@ -89,13 +89,20 @@ If manual mobile validation is deferred, QA MUST document: owner, rationale, sev
 QA MUST audit whether the test mock for the container respects the `isOpen` prop:
 
 **Failing pattern** (unconditional — masks idle-state bugs):
+
 ```tsx
 vi.mock('@/components/ui/ExpandSection', () => ({
-  ExpandSection: ({ title, children }) => <section><h3>{title}</h3><div>{children}</div></section>,
+  ExpandSection: ({ title, children }) => (
+    <section>
+      <h3>{title}</h3>
+      <div>{children}</div>
+    </section>
+  ),
 }));
 ```
 
 **Correct pattern** (conditional — gates children on isOpen):
+
 ```tsx
 vi.mock('@/components/ui/ExpandSection', () => ({
   ExpandSection: ({ title, isOpen, children }) => (
@@ -108,6 +115,7 @@ vi.mock('@/components/ui/ExpandSection', () => ({
 ```
 
 **If the test uses the unconditional pattern**:
+
 - Flag as QA finding (INFO/LOW) and document
 - Add at least one test asserting that children are hidden when `isOpen=false`
 - Tests using the unconditional mock cannot validate idle-state correctness — record this as a coverage limitation explicitly
@@ -130,11 +138,11 @@ vi.mock('@/components/ui/ExpandSection', () => ({
 
 ### Re-test Gates
 
-| Gate | Result | Evidence |
-|---|---|---|
-| npm run type-check | ✅ PASS | [output summary] |
-| npm test | ✅ PASS | [N tests, 0 failures] |
-| Delta lint | ✅ PASS | [evidence] |
+| Gate               | Result  | Evidence              |
+| ------------------ | ------- | --------------------- |
+| npm run type-check | ✅ PASS | [output summary]      |
+| npm test           | ✅ PASS | [N tests, 0 failures] |
+| Delta lint         | ✅ PASS | [evidence]            |
 
 ### Re-test Verdict
 
@@ -168,11 +176,12 @@ When `npm run build` fails due to missing environment variables required for pag
 
 If QA accepts this exception, QA MUST explicitly document it in the QA report (owner + rationale + evidence). This exception is NOT a general allowance to ship with failing builds.
 
-   **DF-3 resolution path**: When accepting this exception, QA SHOULD indicate the preferred resolution path in the QA report so DevOps can close it cleanly:
-   - **CI (preferred)**: "Build gate deferred to CI — PR must pass GitHub Actions build job before merge."
-   - **OR manual**: "Owner: [name]; Timeline: [date/trigger]; Evidence: `npm run build` exit 0 with real Supabase env."
+**DF-3 resolution path**: When accepting this exception, QA SHOULD indicate the preferred resolution path in the QA report so DevOps can close it cleanly:
 
-   Recording a resolution path here ensures the deferred gate has a named owner rather than silently remaining open.
+- **CI (preferred)**: "Build gate deferred to CI — PR must pass GitHub Actions build job before merge."
+- **OR manual**: "Owner: [name]; Timeline: [date/trigger]; Evidence: `npm run build` exit 0 with real Supabase env."
+
+Recording a resolution path here ensures the deferred gate has a named owner rather than silently remaining open.
 
 ### PWA / Service-Worker Runtime Validation Gate (MANDATORY when applicable)
 
@@ -205,7 +214,7 @@ If the chain is a compressed hotfix (especially when UAT is skipped), QA MUST st
 If the change is primarily dependency-related (e.g., `package.json` `overrides`, lockfile regen, transitive patching):
 
 - Run the usual automated gates (type-check, tests, build).
-- **Don’t rely on route HTTP status alone**. Validate any impacted dev-tool / secondary routes (example: `/api-docs`) and inspect dev server logs for:
+- **Don’t rely on route HTTP status alone**. Validate any impacted dev-tool / secondary routes end to end and inspect dev server logs for:
   - import errors (e.g., “Attempted import error …”)
   - compilation failures/warnings that indicate broken client bundles
 - If the overridden dependency is only used by a dev-only page/tool, QA still treats that as in-scope when it’s part of the repo’s workflow.

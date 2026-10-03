@@ -50,46 +50,46 @@ flowchart TB
     %% User Flow (HTTPS)
     User -->|"HTTPS Request"| Cloudflare
     PWA -->|"HTTPS Request"| Cloudflare
-    
+
     %% CDN & Security Flow
     Cloudflare -->|"HTTPS (Proxied)"| Nginx
     Cloudflare -.->|"Bot Verification"| Cloudflare
-    
+
     %% Infrastructure Flow
     Hetzner -->|"Hosts"| Nginx
     Nginx -->|"HTTP Proxy Pass\n(Port 3000)"| Docker
     Docker -->|"Runs"| NextApp
-    
+
     %% CI/CD Flow
     GitHub -->|"Push to main\nTriggers"| Actions
     Actions -->|"SCP Upload\nSSH Deploy"| Hetzner
     Actions -->|"Health Check"| HealthCheck
-    
+
     %% Application to Backend
     NextApp -->|"API Calls"| Auth
     NextApp -->|"SQL Queries"| Database
     NextApp -->|"File Uploads"| Storage
     NextApp -->|"Invoke"| Functions
     NextApp -->|"WebSocket"| Realtime
-    
+
     %% External Services
     NextApp -->|"Send Emails"| Resend
     NextApp -->|"Geocoding API"| Maps
-    
+
     %% Backend Internal Connections
     Auth -->|"Stores Sessions"| Database
     Functions -->|"Queries"| Database
     Functions -->|"Accesses"| Storage
     Realtime -->|"Subscribes to"| Database
     Storage -.->|"CDN Integration"| Cloudflare
-    
+
     %% Monitoring Connections
     NextApp -->|"Logs"| Logs
     NextApp -->|"Health Status"| HealthCheck
     Nginx -->|"Access Logs"| Logs
     Hetzner -->|"Resource Metrics"| Metrics
     Database -.->|"Backup Status"| Metrics
-    
+
     %% Backup Connections
     Database -.->|"Daily Backups"| Database
 
@@ -118,11 +118,13 @@ flowchart TB
 ### 1. Client Layer
 
 #### User / Browser
+
 - **Role**: End-user interface
 - **Technologies**: Modern browsers (Chrome, Firefox, Safari, Edge)
 - **Features**: Responsive design, accessibility support
 
 #### Progressive Web App (PWA)
+
 - **Role**: Offline-capable web application
 - **Technologies**: Service Workers, Web App Manifest
 - **Features**:
@@ -134,6 +136,7 @@ flowchart TB
 ### 2. CDN & Security Layer
 
 #### Cloudflare
+
 - **Role**: Global CDN, security, and performance optimization
 - **Services**:
   - **CDN**: Global content distribution, edge caching
@@ -151,6 +154,7 @@ flowchart TB
 ### 3. Hosting Infrastructure
 
 #### Hetzner Cloud
+
 - **Role**: Primary hosting provider
 - **Specifications**:
   - **Server Type**: CPX11 (2 vCPU, 2GB RAM, 40GB SSD)
@@ -164,6 +168,7 @@ flowchart TB
   - High performance
 
 #### Nginx Reverse Proxy
+
 - **Role**: Web server and reverse proxy
 - **Features**:
   - SSL/TLS termination at server (HTTPS from Cloudflare → HTTP to Docker)
@@ -176,6 +181,7 @@ flowchart TB
 - **Configuration**: `nginx-template.conf`
 
 #### Docker Container
+
 - **Role**: Application runtime environment
 - **Base Image**: `node:20-alpine`
 - **Build Strategy**: Multi-stage build with standalone output
@@ -186,6 +192,7 @@ flowchart TB
 ### 4. Application Layer
 
 #### Next.js 15 Application
+
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Key Features**:
@@ -202,11 +209,13 @@ flowchart TB
 ### 5. CI/CD Pipeline
 
 #### GitHub
+
 - **Role**: Source code repository
 - **Branch Strategy**: `main` branch for production
 - **Features**: Pull requests, code reviews, issue tracking
 
 #### GitHub Actions
+
 - **Role**: Automated CI/CD pipeline
 - **Workflows**:
   - **CI**: Lint, type-check, test on PRs (via separate workflow)
@@ -240,6 +249,7 @@ flowchart TB
 ### 6. Backend Services (Supabase)
 
 #### Authentication Service
+
 - **Role**: User authentication and authorization
 - **Features**:
   - Email/password authentication
@@ -255,6 +265,7 @@ flowchart TB
   - Disposable email blocking
 
 #### PostgreSQL Database
+
 - **Role**: Primary data storage
 - **Features**:
   - Relational data model
@@ -281,6 +292,7 @@ flowchart TB
 - **Migrations**: See [Database Migrations](#database-migrations) section
 
 #### File Storage
+
 - **Role**: Media and file storage
 - **Features**:
   - Public and private buckets
@@ -290,6 +302,7 @@ flowchart TB
 - **Use Cases**: Profile images, document uploads
 
 #### Edge Functions
+
 - **Role**: Serverless compute
 - **Features**:
   - Webhook handlers
@@ -298,6 +311,7 @@ flowchart TB
   - Integration with external APIs
 
 #### Realtime Subscriptions
+
 - **Role**: Real-time data synchronization
 - **Features**:
   - WebSocket connections
@@ -308,6 +322,7 @@ flowchart TB
 ### 7. External Services
 
 #### Resend
+
 - **Role**: Transactional email service
 - **Features**:
   - Email delivery
@@ -316,6 +331,7 @@ flowchart TB
 - **Use Cases**: Welcome emails, password resets, notifications
 
 #### OpenStreetMap / Nominatim
+
 - **Role**: Geocoding and location services
 - **Features**:
   - Address to coordinates
@@ -443,18 +459,21 @@ flowchart TB
 ### Database Optimization
 
 #### Full-Text Search
+
 - **Use Postgres `tsvector` with GIN indexes** for all search functionality
 - **Avoid ILIKE** for search queries - use database functions with `ts_rank` for relevance
 - **Language-aware**: Use German/English text search configurations
 - **Performance**: GIN indexes provide 10-100x faster searches than sequential scans
 
 #### Query Optimization
+
 - Indexed queries with proper query planning
 - Use `EXPLAIN ANALYZE` to identify slow queries
 - Connection pooling via Supabase
 - Efficient data models with proper relationships
 
 #### Caching Strategy
+
 - **Materialized views** for expensive aggregations (dashboard stats, counts by category)
 - **React Query** for client-side caching (5min stale, 30min GC)
 - **Service Worker** for offline caching (PWA)
@@ -462,6 +481,7 @@ flowchart TB
 - **No Redis needed** until scaling to multiple servers (>5,000 DAU)
 
 #### Background Jobs
+
 - Use a **jobs table pattern** in Postgres for background processing
 - Simple table with status, payload, timestamps
 - Cron job or Edge Function to process pending jobs
@@ -470,6 +490,7 @@ flowchart TB
 ## Scalability Considerations
 
 ### Current Setup Capacity
+
 - **Target**: 500-2,000 Daily Active Users (DAU)
 - **Server**: Single Hetzner CPX11 (2 vCPU, 2GB RAM, 40GB SSD)
 - **Estimated Capacity**:
@@ -480,13 +501,16 @@ flowchart TB
 - **CDN**: Cloudflare handles global distribution
 
 ### Performance Characteristics
+
 - **Response Time**: <200ms for most requests (with CDN)
 - **Database Queries**: <50ms average (indexed queries)
 - **Static Assets**: Served from Cloudflare edge (<50ms globally)
 - **API Routes**: <300ms average (including database queries)
 
 ### Scaling Triggers
+
 Monitor these metrics to determine when to scale:
+
 1. **CPU Usage**: Sustained >70% average
 2. **Memory Usage**: Sustained >80% average
 3. **Response Times**: P95 >500ms consistently
@@ -496,6 +520,7 @@ Monitor these metrics to determine when to scale:
 ### Scaling Options
 
 #### 1. Vertical Scaling (Easiest)
+
 - **Upgrade Server**: CPX11 → CPX21 (4 vCPU, 8GB RAM) → CPX31 (8 vCPU, 16GB RAM)
 - **Cost**: €4.15 → €8.30 → €16.60/month
 - **When**: Single server can handle load but needs more resources
@@ -503,11 +528,12 @@ Monitor these metrics to determine when to scale:
 - **Cons**: Single point of failure, limited scalability
 
 #### 2. Horizontal Scaling (Recommended for >5,000 DAU)
+
 - **Multiple Servers**: 2-3 Hetzner servers
-- **Load Balancer**: 
+- **Load Balancer**:
   - Option A: Cloudflare Load Balancing (managed)
   - Option B: Nginx load balancer on separate server
-- **Session Management**: 
+- **Session Management**:
   - Stateless sessions (JWT tokens) - already implemented
   - Or Redis for session storage
 - **Cost**: ~€12-20/month (2-3 servers)
@@ -516,6 +542,7 @@ Monitor these metrics to determine when to scale:
 - **Cons**: More complex, requires load balancer setup
 
 #### 3. Database Scaling
+
 - **Read Replicas**: Supabase supports read replicas
 - **Connection Pooling**: Already using Supabase connection pooling
 - **Query Optimization**: Index optimization, query caching
@@ -523,34 +550,36 @@ Monitor these metrics to determine when to scale:
 - **Cost**: Additional Supabase costs for replicas
 
 #### 4. Caching Layer
+
 - **Current**: In-memory rate limiting, React Query, Service Worker, CDN
 - **Materialized Views**: Use for expensive aggregations (dashboard stats)
 - **Redis**: Only consider when:
   - Scaling to multiple servers (need shared state)
   - Exceeding 5,000+ DAU
   - Need distributed session storage
-- **Implementation** (if needed): 
+- **Implementation** (if needed):
   - Redis on separate Hetzner server (€4/month)
   - Or managed Redis (Upstash, Redis Cloud)
-- **When NOT to add**: 
+- **When NOT to add**:
   - Single server setup (<5,000 DAU)
   - Can use Postgres materialized views instead
   - In-memory caching is sufficient
 
 ### Cost Projections
 
-| DAU | Setup | Monthly Cost | Notes |
-|-----|-------|--------------|-------|
-| 500-2,000 | Single CPX11 | ~€4 | Current setup |
-| 2,000-5,000 | CPX21 | ~€8 | Vertical scale |
-| 5,000-10,000 | 2x CPX11 + LB | ~€12 | Horizontal scale |
-| 10,000+ | 3x CPX21 + LB + Redis | ~€30 | Full scaling |
+| DAU          | Setup                 | Monthly Cost | Notes            |
+| ------------ | --------------------- | ------------ | ---------------- |
+| 500-2,000    | Single CPX11          | ~€4          | Current setup    |
+| 2,000-5,000  | CPX21                 | ~€8          | Vertical scale   |
+| 5,000-10,000 | 2x CPX11 + LB         | ~€12         | Horizontal scale |
+| 10,000+      | 3x CPX21 + LB + Redis | ~€30         | Full scaling     |
 
-*Note: Costs exclude Supabase, Cloudflare, and domain costs*
+_Note: Costs exclude Supabase, Cloudflare, and domain costs_
 
 ## Database Migrations
 
 ### Migration Strategy
+
 - **Location**: `supabase/migrations/` directory
 - **Format**: SQL files with numbered prefixes (e.g., `001_`, `002_`)
 - **Current Migrations**: 10 migration files covering:
@@ -563,7 +592,9 @@ Monitor these metrics to determine when to scale:
 ### Migration Workflow
 
 #### Development
+
 1. **Create Migration**:
+
    ```bash
    # Create new migration file
    touch supabase/migrations/011_new_feature.sql
@@ -578,20 +609,22 @@ Monitor these metrics to determine when to scale:
    ```bash
    # Via Supabase CLI (if configured)
    supabase db push
-   
+
    # Or manually via Supabase Dashboard SQL Editor
    ```
 
 #### Production Deployment
+
 1. **Review Migration**: Code review of migration SQL
 2. **Backup Database**: Create backup before applying (Supabase automatic)
-3. **Apply Migration**: 
+3. **Apply Migration**:
    - Via Supabase Dashboard → SQL Editor
    - Or via Supabase CLI in CI/CD (if configured)
 4. **Verify**: Check migration applied successfully
 5. **Monitor**: Watch for errors or performance issues
 
 ### Migration Best Practices
+
 - ✅ **Version Control**: All migrations in git
 - ✅ **Idempotent**: Migrations should be safe to run multiple times (use `IF NOT EXISTS`)
 - ✅ **Backward Compatible**: Avoid breaking changes when possible
@@ -600,17 +633,19 @@ Monitor these metrics to determine when to scale:
 - ✅ **Rollback Plan**: Document rollback procedure for each migration
 
 ### Rollback Strategy
+
 - **Automatic Backups**: Supabase creates automatic backups before migrations
-- **Manual Rollback**: 
+- **Manual Rollback**:
   1. Restore from Supabase backup
   2. Or create reverse migration SQL
   3. Apply reverse migration via SQL Editor
-- **Data Migration Rollback**: 
+- **Data Migration Rollback**:
   - For data migrations, create backup of affected tables
   - Document data transformation steps
   - Test rollback procedure in staging
 
 ### Migration Files Structure
+
 ```
 supabase/migrations/
 ├── 001_create_offers_and_needs_tables.sql
@@ -630,6 +665,7 @@ supabase/migrations/
 ### Backup Strategy
 
 #### Supabase Automatic Backups
+
 - **Frequency**: Daily automatic backups
 - **Retention**: 7 days (Supabase free tier) or 30 days (paid tier)
 - **Type**: Point-in-time recovery (PITR) available on paid plans
@@ -637,8 +673,9 @@ supabase/migrations/
 - **Access**: Via Supabase Dashboard → Database → Backups
 
 #### Manual Backups
+
 - **When**: Before major migrations or deployments
-- **Method**: 
+- **Method**:
   1. Supabase Dashboard → Database → Backups → Create Backup
   2. Or via Supabase CLI: `supabase db dump`
 - **Storage**: Download and store securely (encrypted)
@@ -647,7 +684,8 @@ supabase/migrations/
 ### Disaster Recovery Procedures
 
 #### Database Corruption or Data Loss
-1. **Identify Issue**: 
+
+1. **Identify Issue**:
    - Check error logs
    - Verify data integrity
    - Identify affected tables/records
@@ -658,6 +696,7 @@ supabase/migrations/
    - Estimate recovery time
 
 3. **Recovery Steps**:
+
    ```
    a. Stop application (prevent further data corruption)
    b. Access Supabase Dashboard → Database → Backups
@@ -675,24 +714,28 @@ supabase/migrations/
    - Update backup strategy if needed
 
 #### Complete Server Failure
+
 1. **Database**: Restore from Supabase backup (database is separate from server)
-2. **Application**: 
+2. **Application**:
    - Redeploy from GitHub (code is in version control)
    - Restore environment variables from GitHub Secrets
    - Restart Docker container
 3. **Recovery Time**: ~30-60 minutes (assuming Hetzner server replacement)
 
 #### Partial Data Recovery
+
 - **Supabase Point-in-Time Recovery**: Available on paid plans
 - **Selective Restore**: Restore specific tables from backup
 - **Data Export**: Regular exports of critical data (JSON/CSV)
 
 ### Backup Verification
+
 - **Monthly**: Test restore procedure in staging environment
 - **Quarterly**: Full disaster recovery drill
 - **Documentation**: Keep recovery procedures up-to-date
 
 ### Recovery Time Objectives (RTO) & Recovery Point Objectives (RPO)
+
 - **RTO**: 1 hour (time to restore service)
 - **RPO**: 24 hours (maximum acceptable data loss)
 - **Current Setup**: Meets RTO/RPO with Supabase automatic backups
@@ -702,31 +745,33 @@ supabase/migrations/
 ### Application Rollback
 
 #### Automated Rollback (GitHub Actions)
+
 Currently not automated. Manual process:
 
-1. **Identify Issue**: 
+1. **Identify Issue**:
    - Health check fails
    - Error logs show critical errors
    - User reports indicate problems
 
 2. **Quick Rollback** (via SSH):
+
    ```bash
    # SSH into Hetzner server
    ssh root@your-server-ip
-   
+
    # Stop current container
    docker stop uflow-app
    docker rm uflow-app
-   
+
    # Load previous Docker image (if saved)
    docker load < /tmp/uflow-previous.tar.gz
-   
+
    # Start previous version
    docker run -d -p 3000:3000 \
      -e NEXT_PUBLIC_SUPABASE_URL="..." \
      # ... other env vars ...
      --name uflow-app uflow:previous
-   
+
    # Verify health
    curl http://localhost:3000/api/health
    ```
@@ -739,6 +784,7 @@ Currently not automated. Manual process:
    ```
 
 #### Rollback Best Practices
+
 - ✅ **Keep Previous Image**: Save previous Docker image before deployment
 - ✅ **Version Tagging**: Tag Docker images with version numbers
 - ✅ **Health Checks**: Automated health checks prevent bad deployments
@@ -748,7 +794,9 @@ Currently not automated. Manual process:
 ### Database Migration Rollback
 
 #### Schema Rollback
+
 1. **Create Reverse Migration**:
+
    ```sql
    -- Example: Rollback of adding a column
    ALTER TABLE providers DROP COLUMN IF EXISTS new_column;
@@ -763,25 +811,27 @@ Currently not automated. Manual process:
    - Faster but loses any data changes since migration
 
 #### Data Migration Rollback
+
 1. **Backup Affected Data**: Before data migration, export affected tables
 2. **Document Changes**: Keep log of data transformations
-3. **Reverse Process**: 
+3. **Reverse Process**:
    - Restore from backup
    - Or manually reverse data transformations
    - Verify data integrity
 
 ### Rollback Decision Matrix
 
-| Issue Type | Rollback Method | Time | Data Loss Risk |
-|------------|----------------|------|----------------|
-| Application bug | Git revert + redeploy | 10-15 min | None |
-| Critical error | Docker image rollback | 5-10 min | None |
-| Database schema issue | Reverse migration | 15-30 min | Low |
-| Data corruption | Database restore | 30-60 min | Up to 24h |
+| Issue Type            | Rollback Method       | Time      | Data Loss Risk |
+| --------------------- | --------------------- | --------- | -------------- |
+| Application bug       | Git revert + redeploy | 10-15 min | None           |
+| Critical error        | Docker image rollback | 5-10 min  | None           |
+| Database schema issue | Reverse migration     | 15-30 min | Low            |
+| Data corruption       | Database restore      | 30-60 min | Up to 24h      |
 
 ## Monitoring & Observability
 
 ### Health Checks
+
 - **Endpoint**: `/api/health`
 - **Current Implementation**: Basic health check that returns:
   - Application status (`healthy`/`unhealthy`)
@@ -790,12 +840,13 @@ Currently not automated. Manual process:
   - Environment (production/development)
   - Application version
 - **Note**: Currently does not verify database connectivity or external service dependencies
-- **Monitoring**: 
+- **Monitoring**:
   - Automated checks via GitHub Actions during deployment
   - Health check endpoint accessible at `/api/health` for external monitoring tools
 - **Future Enhancement**: Consider adding dependency checks (database, external APIs)
 
 ### Logging
+
 - **Application Logs**: Docker container stdout/stderr
   - Access via: `docker logs uflow-app`
   - Log retention: Managed by Docker (default rotation)
@@ -810,6 +861,7 @@ Currently not automated. Manual process:
   - Application performance logging
 
 ### Error Tracking
+
 - **Current State**: Not implemented
 - **Recommended Solutions**:
   - **Sentry**: Application error tracking and performance monitoring
@@ -818,7 +870,8 @@ Currently not automated. Manual process:
 - **Implementation Priority**: High (critical for production debugging)
 
 ### Metrics & Performance Monitoring
-- **Server Metrics**: 
+
+- **Server Metrics**:
   - CPU, RAM, Disk usage (via Hetzner Cloud Console)
   - Network traffic
 - **Application Metrics**:
@@ -833,6 +886,7 @@ Currently not automated. Manual process:
 - **Current State**: Basic server metrics available via Hetzner dashboard
 
 ### Alerting
+
 - **Current State**: Manual monitoring
 - **Recommended Setup**:
   - Health check alerts (UptimeRobot/BetterStack)
@@ -844,14 +898,18 @@ Currently not automated. Manual process:
 ## Environment Variables & Secrets Management
 
 ### Public Variables (Client-Side)
+
 These are exposed to the browser and included in the client bundle:
+
 - `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key (safe to expose)
 - `NEXT_PUBLIC_SITE_URL` - Application URL
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY` - Cloudflare Turnstile site key
 
 ### Server-Only Variables
+
 These are never exposed to the client and only available in server-side code:
+
 - `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (full database access)
 - `TURNSTILE_SECRET_KEY` - Cloudflare Turnstile secret key
 - `RESEND_API_KEY` - Resend email service API key
@@ -860,18 +918,21 @@ These are never exposed to the client and only available in server-side code:
 ### Secrets Management in Production (Hetzner)
 
 #### Current Implementation
+
 - **Storage**: Environment variables passed directly to Docker container via `docker run -e`
 - **Source**: GitHub Secrets (accessed during CI/CD)
 - **Deployment**: Secrets injected during container startup
 - **Security**: Secrets stored in GitHub repository secrets, never committed to code
 
 #### Secrets Flow
+
 ```
-GitHub Secrets → GitHub Actions → Docker Build Args (public only) → 
+GitHub Secrets → GitHub Actions → Docker Build Args (public only) →
 Docker Container Environment Variables (all secrets)
 ```
 
 #### Best Practices
+
 - ✅ Secrets stored in GitHub repository secrets
 - ✅ Never committed to version control
 - ✅ Passed securely via GitHub Actions
@@ -879,6 +940,7 @@ Docker Container Environment Variables (all secrets)
 - ⚠️ **Current Limitation**: No secret rotation automation
 
 #### Recommended Improvements
+
 1. **Secret Rotation**:
    - Implement automated secret rotation schedule
    - Document rotation procedures
@@ -900,6 +962,7 @@ Docker Container Environment Variables (all secrets)
    - Document environment-specific configurations
 
 ### Local Development
+
 - **File**: `.env.local` (gitignored)
 - **Template**: `env.template` (committed, no secrets)
 - **Required Variables**: See `env.template` for complete list
@@ -907,6 +970,7 @@ Docker Container Environment Variables (all secrets)
 ## Best Practices
 
 ### Code Organization
+
 - ✅ Feature-based folder structure
 - ✅ Separation of concerns
 - ✅ Reusable components
@@ -914,6 +978,7 @@ Docker Container Environment Variables (all secrets)
 - ✅ Consistent naming conventions
 
 ### Deployment
+
 - ✅ Automated CI/CD pipeline
 - ✅ Health checks before deployment
 - ✅ Zero-downtime deployments
@@ -921,6 +986,7 @@ Docker Container Environment Variables (all secrets)
 - ✅ Environment variable management
 
 ### Security
+
 - ✅ Defense in depth
 - ✅ Regular security updates
 - ✅ Secure secrets management
@@ -928,6 +994,7 @@ Docker Container Environment Variables (all secrets)
 - ✅ Output escaping
 
 ### Performance
+
 - ✅ Static generation where possible
 - ✅ Image optimization
 - ✅ Code splitting
@@ -936,21 +1003,21 @@ Docker Container Environment Variables (all secrets)
 
 ## Technology Stack Summary
 
-| Layer | Technology | Version | Notes |
-|-------|-----------|---------|-------|
-| **Frontend** | Next.js | 15.5.2 | App Router, Server Components |
-| **Language** | TypeScript | 5.5.4 | Full type safety |
-| **Styling** | Tailwind CSS | 3.4.1 | Utility-first CSS |
-| **Backend** | Supabase | Latest | Auth, Database, Storage, Functions |
-| **Database** | PostgreSQL | (via Supabase) | Full-text search (tsvector), Materialized views |
-| **Search** | Postgres tsvector | Native | GIN indexes, ts_rank for relevance |
-| **Hosting** | Hetzner Cloud | Ubuntu 22.04 | EU-based, cost-effective |
-| **Container** | Docker | Node 20 Alpine | Standalone builds |
-| **Web Server** | Nginx | Latest | Reverse proxy, SSL termination |
-| **CDN/Security** | Cloudflare | Latest | DDoS protection, edge caching |
-| **CI/CD** | GitHub Actions | Latest | Automated deployment |
-| **Email** | Resend | Latest | Transactional emails |
-| **Testing** | Vitest | 3.1.2 | Unit and integration tests |
+| Layer            | Technology        | Version        | Notes                                           |
+| ---------------- | ----------------- | -------------- | ----------------------------------------------- |
+| **Frontend**     | Next.js           | 15.5.2         | App Router, Server Components                   |
+| **Language**     | TypeScript        | 5.5.4          | Full type safety                                |
+| **Styling**      | Tailwind CSS      | 3.4.1          | Utility-first CSS                               |
+| **Backend**      | Supabase          | Latest         | Auth, Database, Storage, Functions              |
+| **Database**     | PostgreSQL        | (via Supabase) | Full-text search (tsvector), Materialized views |
+| **Search**       | Postgres tsvector | Native         | GIN indexes, ts_rank for relevance              |
+| **Hosting**      | Hetzner Cloud     | Ubuntu 22.04   | EU-based, cost-effective                        |
+| **Container**    | Docker            | Node 20 Alpine | Standalone builds                               |
+| **Web Server**   | Nginx             | Latest         | Reverse proxy, SSL termination                  |
+| **CDN/Security** | Cloudflare        | Latest         | DDoS protection, edge caching                   |
+| **CI/CD**        | GitHub Actions    | Latest         | Automated deployment                            |
+| **Email**        | Resend            | Latest         | Transactional emails                            |
+| **Testing**      | Vitest            | 3.1.2          | Unit and integration tests                      |
 
 ### Stack Philosophy
 
@@ -994,8 +1061,7 @@ src/
 ├── app/                    # Next.js App Router
 │   ├── (public)/          # Public-facing routes
 │   ├── (dashboard)/       # Authenticated/protected routes
-│   ├── api/               # API route handlers (server-only)
-│   └── api-docs/          # API documentation (Swagger)
+│   └── api/               # API route handlers (server-only)
 │
 ├── components/            # Pure, reusable UI components
 │   ├── ui/               # Atomic design: buttons, inputs, etc.
@@ -1017,6 +1083,7 @@ src/
 ```
 
 ### Key Principles
+
 - **Feature-based**: Related code grouped by feature
 - **Separation of Concerns**: Clear boundaries between layers
 - **Reusability**: Shared components in `components/`, utilities in `utils/`
@@ -1026,17 +1093,20 @@ src/
 ### Directory Purposes
 
 #### `app/`
+
 - Next.js App Router pages and layouts
 - API routes (server-side only)
 - Route groups for organization
 
 #### `components/`
+
 - **`ui/`**: Small atomic components (Button, Input, Card)
 - **`common/`**: Generic reusable components
 - **`shared/`**: Larger shared UI blocks
 - **`layout/`**: Layout components (Header, Footer, PageLayout)
 
 #### `features/`
+
 - Feature-specific modules combining:
   - UI components
   - Custom hooks
@@ -1044,17 +1114,20 @@ src/
   - Types
 
 #### `services/`
+
 - External API clients
 - Supabase service wrappers
 - Third-party integrations
 
 #### `lib/`
+
 - Supabase client initialization
 - PWA configuration
 - Database helpers
 - General utilities
 
 #### `utils/`
+
 - Pure utility functions
 - Error handling helpers
 - Validation functions
@@ -1065,17 +1138,19 @@ src/
 ### Disaster Recovery Plan
 
 #### Scenario 1: Complete Server Failure
+
 **Recovery Steps**:
+
 1. **Assess**: Determine scope of failure (hardware, network, etc.)
 2. **Notify**: Alert team and stakeholders
-3. **Infrastructure**: 
+3. **Infrastructure**:
    - Create new Hetzner server
    - Restore from server snapshot (if available)
    - Or set up fresh server and redeploy
-4. **Application**: 
+4. **Application**:
    - Redeploy from GitHub (code is version controlled)
    - Restore environment variables from GitHub Secrets
-5. **Database**: 
+5. **Database**:
    - Database is on Supabase (separate from server)
    - Verify database connectivity
    - Restore from backup if needed
@@ -1084,10 +1159,12 @@ src/
 8. **Recovery Time**: 1-2 hours
 
 #### Scenario 2: Database Corruption
+
 **Recovery Steps**:
+
 1. **Isolate**: Stop application to prevent further corruption
 2. **Assess**: Identify affected tables/data
-3. **Restore**: 
+3. **Restore**:
    - Access Supabase Dashboard → Backups
    - Select backup from before corruption
    - Restore database
@@ -1097,11 +1174,13 @@ src/
 7. **Recovery Time**: 30-60 minutes
 
 #### Scenario 3: Security Breach
+
 **Recovery Steps**:
+
 1. **Contain**: Isolate affected systems
 2. **Assess**: Determine scope of breach
 3. **Notify**: Alert security team and stakeholders
-4. **Mitigate**: 
+4. **Mitigate**:
    - Rotate all secrets and API keys
    - Revoke compromised credentials
    - Patch vulnerabilities
@@ -1114,26 +1193,31 @@ src/
 #### Severity Levels
 
 **Critical (P1)** - Service completely down
+
 - Response Time: Immediate
 - Escalation: On-call engineer + team lead
 - Communication: Status page, team chat
 
 **High (P2)** - Major functionality broken
+
 - Response Time: < 1 hour
 - Escalation: On-call engineer
 - Communication: Team chat
 
 **Medium (P3)** - Minor issues, workarounds available
+
 - Response Time: < 4 hours
 - Escalation: Next business day
 - Communication: Issue tracker
 
 **Low (P4)** - Cosmetic issues, feature requests
+
 - Response Time: Next sprint
 - Escalation: Product backlog
 - Communication: Issue tracker
 
 #### Incident Response Workflow
+
 1. **Detection**: Automated alerts or user reports
 2. **Triage**: Assess severity and impact
 3. **Communication**: Update status page, notify team
@@ -1145,25 +1229,28 @@ src/
 ## Compliance & Data Residency
 
 ### GDPR Compliance
-- **Data Location**: 
+
+- **Data Location**:
   - Application: Hetzner Cloud (Germany/EU)
   - Database: Supabase (EU region)
   - CDN: Cloudflare (global, EU data centers)
-- **Data Processing**: 
+- **Data Processing**:
   - User consent for data collection
   - Right to access, rectification, erasure
   - Data portability
-- **Security**: 
+- **Security**:
   - Encryption in transit (HTTPS/TLS)
   - Encryption at rest (Supabase)
   - Access controls (RLS policies)
 
 ### Data Residency
+
 - **Primary**: EU (Germany)
 - **Backup**: Managed by Supabase (EU region)
 - **CDN**: Global distribution, EU data centers prioritized
 
 ### Compliance Checklist
+
 - ✅ Data stored in EU
 - ✅ HTTPS/TLS encryption
 - ✅ Access controls (RLS)
@@ -1177,25 +1264,27 @@ src/
 
 ### Current Infrastructure Costs (Monthly)
 
-| Service | Plan | Monthly Cost | Notes |
-|---------|------|--------------|-------|
-| **Hetzner Cloud** | CPX11 | ~€4.15 | 2 vCPU, 2GB RAM, 40GB SSD |
-| **Supabase** | Free/Pro | €0-25 | Database, Auth, Storage (usage-based) |
-| **Cloudflare** | Free | €0 | CDN, DDoS protection, SSL |
-| **Resend** | Free/Pro | €0-20 | Email service (usage-based) |
-| **Domain** | - | ~€10/year | ~€0.83/month |
-| **Total** | - | **~€5-50/month** | Varies with usage |
+| Service           | Plan     | Monthly Cost     | Notes                                 |
+| ----------------- | -------- | ---------------- | ------------------------------------- |
+| **Hetzner Cloud** | CPX11    | ~€4.15           | 2 vCPU, 2GB RAM, 40GB SSD             |
+| **Supabase**      | Free/Pro | €0-25            | Database, Auth, Storage (usage-based) |
+| **Cloudflare**    | Free     | €0               | CDN, DDoS protection, SSL             |
+| **Resend**        | Free/Pro | €0-20            | Email service (usage-based)           |
+| **Domain**        | -        | ~€10/year        | ~€0.83/month                          |
+| **Total**         | -        | **~€5-50/month** | Varies with usage                     |
 
 ### Cost Breakdown by Component
 
 #### Hosting (Hetzner)
+
 - **Base**: €4.15/month (CPX11)
-- **Scaling**: 
+- **Scaling**:
   - CPX21 (4 vCPU, 8GB): €8.30/month
   - CPX31 (8 vCPU, 16GB): €16.60/month
 
 #### Database (Supabase)
-- **Free Tier**: 
+
+- **Free Tier**:
   - 500MB database
   - 1GB file storage
   - 50,000 monthly active users
@@ -1206,19 +1295,22 @@ src/
   - Daily backups (30-day retention)
 
 #### CDN & Security (Cloudflare)
-- **Free Tier**: 
+
+- **Free Tier**:
   - Unlimited bandwidth
   - DDoS protection
   - SSL certificates
   - Basic analytics
 
 #### Email (Resend)
+
 - **Free Tier**: 3,000 emails/month
 - **Pro Tier**: €20/month
   - 50,000 emails/month
   - Advanced features
 
 ### Cost Optimization Strategies
+
 1. **Right-Sizing**: Monitor usage, scale down if over-provisioned
 2. **Caching**: Reduce database queries (already implemented)
 3. **CDN**: Leverage Cloudflare caching (already implemented)
@@ -1227,36 +1319,30 @@ src/
 
 ### Future Cost Projections
 
-| DAU | Infrastructure | Database | Total | Notes |
-|-----|---------------|----------|-------|-------|
-| 500-2,000 | €4 | €0-25 | €5-30 | Current |
-| 2,000-5,000 | €8 | €25 | €33 | Vertical scale |
-| 5,000-10,000 | €12 | €25 | €37 | Horizontal scale |
-| 10,000+ | €30 | €25 | €55 | Full scaling |
+| DAU          | Infrastructure | Database | Total | Notes            |
+| ------------ | -------------- | -------- | ----- | ---------------- |
+| 500-2,000    | €4             | €0-25    | €5-30 | Current          |
+| 2,000-5,000  | €8             | €25      | €33   | Vertical scale   |
+| 5,000-10,000 | €12            | €25      | €37   | Horizontal scale |
+| 10,000+      | €30            | €25      | €55   | Full scaling     |
 
-*All costs in EUR. Excludes domain and one-time costs.*
+_All costs in EUR. Excludes domain and one-time costs._
 
 ## API Documentation
 
-### Swagger/OpenAPI Documentation
-- **Endpoint**: `/api-docs`
-- **Format**: OpenAPI 3.0
-- **Access**: Public (read-only)
-- **Features**:
-  - Interactive API explorer
-  - Request/response examples
-  - Authentication documentation
-  - Health check endpoint documentation
+The API has no generated docs page. Several route handlers carry `@swagger`
+JSDoc comment blocks that document their endpoints for readers of the code.
 
 ### API Endpoints
+
 - **Health Check**: `GET /api/health`
 - **Authentication**: `POST /api/auth/signup`, `POST /api/auth/login`
 - **Providers**: Various provider-related endpoints
-- **See**: `/api-docs` for complete API documentation
 
 ## Performance Benchmarks
 
 ### Current Performance Metrics
+
 - **Page Load Time**: <2s (First Contentful Paint)
 - **Time to Interactive**: <3s
 - **API Response Time**: <300ms (P95)
@@ -1264,12 +1350,13 @@ src/
 - **Static Asset Delivery**: <50ms (via Cloudflare CDN)
 
 ### Performance Targets
+
 - **Page Load**: <1.5s (target)
 - **API Response**: <200ms (target)
 - **Database Queries**: <30ms (target)
 
 ### Monitoring
+
 - **Tools**: Browser DevTools, Lighthouse, WebPageTest
 - **Frequency**: Weekly performance audits
 - **Optimization**: Continuous improvement based on metrics
-
