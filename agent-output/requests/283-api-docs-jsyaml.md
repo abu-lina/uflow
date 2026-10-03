@@ -525,6 +525,41 @@ Notes:
   Supabase keys at runtime. Rebuilding with local creds exported (as `e2e.yml`
   does in CI) made the suite green. Environmental, not related to the diff.
 
+### Post-merge re-verification (main `64b12cab` + `9f226c0b` merged in)
+
+PR #495 went CONFLICTING when three dependabot PRs landed on main
+(`#491` jsdom 27.0.1 -> 30.1.1, `#493` dotenv 16.6.1 -> 18.0.4, `#494`
+react-window + types). GitHub created no workflow runs while conflicting, so
+all prior CI signal was stale. Resolved by merge, not rebase (branch is pushed):
+
+- `package.json`: took main's side wholesale, re-removed the three swagger
+  deps. `agent-output/.next-id` and `docs/ai/LEARNINGS.md` merged cleanly.
+- `package-lock.json`: took `origin/main` wholesale, then `npm install`
+  regenerated it against the resolved manifest. 0 swagger refs remain.
+- `overrides` untouched: `"yaml": ">=2.8.3"`, `"js-yaml": ">=4.3.0"`.
+- Second merge (`9f226c0b`, better-sqlite3 under `tools/memory-backend`)
+  landed clean; pushed as `63821343`. PR is MERGEABLE and CI finally runs.
+
+| Gate          | Command                                                            | Result                                                                                                                                                                                          |
+| ------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Clean install | `npm ci` (post-merge lockfile)                                     | OK, 887 packages                                                                                                                                                                                |
+| Dep absence   | `npm ls next-swagger-doc swagger-ui-react @types/swagger-ui-react` | `(empty)` — all three absent                                                                                                                                                                    |
+| Dep versions  | `npm ls jsdom react-window dotenv`                                 | jsdom **30.1.1** (deduped under vitest too), react-window 2.3.3, dotenv 18.0.4 — all main's versions                                                                                            |
+| Build         | `npm run build`                                                    | `Compiled successfully in 22.3s`, **0** `Attempted import error`                                                                                                                                |
+| Unit          | `npx vitest run`                                                   | **2715 passed, 24 skipped, 0 failed** — identical to pre-merge baseline; jsdom 30 broke nothing                                                                                                 |
+| Prod routes   | `npm run start` + `curl`                                           | `/api-docs` 404, `/api/swagger.json` 404, `/` 200                                                                                                                                               |
+| E2E           | `CI=1 npx playwright test`                                         | **7 passed** after rebuilding with local Supabase creds exported (same `.env.local` -> UAT gotcha as above; `NEXT_PUBLIC_*` is baked at build time). `sw-session-boundary` guard RAN: **14.2s** |
+
+Notes from the merge verification:
+
+- First `npx vitest run` after `npm run build` showed 1 failure
+  (`plan228 manifest.json shortcut uses /food`) — the `generate-manifest.js`
+  staleness already logged in Follow-ups, tripped by build-order artifact
+  regeneration, not by any of main's bumps. Restoring the committed manifest
+  and re-running gave the clean 2715/24/0.
+- Nothing from main's three bumps broke: no jsdom, dotenv, or react-window
+  regression anywhere in build, unit, or e2e.
+
 ## Follow-up requests
 
 _New work discovered during this request._
