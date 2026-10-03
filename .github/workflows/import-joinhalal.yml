@@ -64,7 +64,7 @@ on:
 
 jobs:
   run:
-    name: "${{ inputs.operation }} (${{ inputs.mode }})"
+    name: '${{ inputs.operation }} (${{ inputs.mode }})'
     runs-on: ubuntu-latest
 
     steps:

@@ -141,13 +141,10 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
   return (
     <div className="page-background h-screen-fix relative flex flex-col">
-      {/* Dev-only: ensure no service worker interferes with HMR/chunks (only on localhost) */}
-      {process.env.NODE_ENV === 'development' &&
-        typeof window !== 'undefined' &&
-        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
-          <DevServiceWorkerReset />
-        )}
-      {/* Auto-register service worker for PWA */}
+      {/* Registers the service worker. Since request 282 this is the ONLY
+          registration path: @ducanh2912/next-pwa's `register: true` injected a
+          client-side registration, and @serwist/next's configurator mode injects
+          nothing into the client bundle at all. */}
       <ServiceWorkerRegistration />
       {/* Mobile Header - Above all content, edge-to-edge */}
       {isLandingPage && (
@@ -215,60 +212,64 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   );
 }
 
-function DevServiceWorkerReset() {
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .getRegistrations()
-        .then((regs) => Promise.all(regs.map((r) => r.unregister())))
-        .catch(() => {});
-      // Clear any runtime caches created by SW
-      if ('caches' in window) {
-        caches
-          .keys()
-          .then((keys) => keys.forEach((k) => caches.delete(k)))
-          .catch(() => {});
-      }
-    }
-  }, []);
-  return null;
-}
+// There is deliberately no DevServiceWorkerReset any more.
+//
+// It used to unregister every service worker and delete every cache on mount in
+// development, to stop a stale worker interfering with HMR. Registration is now
+// gated on NODE_ENV === 'production', so `next dev` never holds a worker and
+// there is nothing left for it to clean. Keeping it would repeat the mistake
+// request 281 was written about: a blind unregister-and-wipe remediation that
+// outlived its cause.
 
 function ServiceWorkerRegistration() {
   useEffect(() => {
-    // Register service worker if:
-    // 1. We're in a browser environment
-    // 2. Service workers are supported
-    // 3. We're not on localhost (PWA should be disabled for local dev)
-    if (
-      typeof window !== 'undefined' &&
-      'serviceWorker' in navigator &&
-      !window.location.hostname.includes('localhost') &&
-      !window.location.hostname.includes('127.0.0.1')
-    ) {
-      // Check if already registered
-      navigator.serviceWorker
-        .getRegistrations()
-        .then((registrations) => {
-          if (registrations.length === 0) {
-            // Register service worker
-            navigator.serviceWorker
-              .register('/sw.js')
-              .then(() => {
-                // Service worker registered successfully
-              })
-              .catch((error) => {
-                // Log errors in all environments for debugging
-                console.error('❌ Service Worker registration failed:', error);
-                // Could integrate with error monitoring service here
-              });
-          }
-        })
-        .catch((error) => {
-          // Handle errors when checking registrations
-          console.error('❌ Failed to check service worker registrations:', error);
-        });
-    }
+    // Gated on NODE_ENV, not on hostname.
+    //
+    // The old gate was `hostname is not localhost/127.0.0.1`, which looked
+    // equivalent but is not: `next start` on a local production build serves
+    // 127.0.0.1, so a hostname gate means the generated public/sw.js can only
+    // ever be exercised in Docker or on UAT. e2e/sw-session-boundary.spec.ts
+    // (the request 281 regression guard) runs a production build against
+    // 127.0.0.1 and asserts `registrations > 0` as its precondition, so a
+    // hostname gate would make it fail outright. NODE_ENV keeps `next dev`
+    // worker-free while letting local production builds register.
+    if (process.env.NODE_ENV !== 'production') return;
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    // Register only when nothing is registered yet. DO NOT DROP THIS CHECK.
+    //
+    // `register()` is not free: it fetches /sw.js (on a fresh client) or runs an
+    // update check (on a client that already has one), and this effect runs on
+    // every mount of the root layout. One unnecessary HTTP request per mount, of
+    // a ~67 KB file, for every visitor.
+    //
+    // It used to be worse than that, and the history matters because it is what
+    // the 429 in request 282's CI log was: /sw.js is same-origin and matched by
+    // `src/middleware.ts`, so each fetch was charged to a 100 req/min bucket.
+    // Worse, a worker's script fetch carries none of the page's headers
+    // (measured in 282), so without a proxy setting `X-Real-IP` it landed in the
+    // shared 'unknown' bucket, and when that ran out registration failed
+    // outright: `A bad HTTP response code (429) was received when fetching the
+    // script`. `/sw.js` is now exempt from that bucket, since `src/middleware.ts`
+    // skips static-asset paths, so this call site can no longer 429. The guard
+    // stays on the remaining merit: it is a request that buys nothing.
+    //
+    // It costs nothing in update coverage. Request 281 measured this with a
+    // local fixture that bumped /sw.js v1 -> v2 across four call-site arms: all
+    // four picked up v2, including the arm that never calls register() again,
+    // because the browser soft-updates an in-scope worker on navigation. The
+    // byte-comparison update path does not depend on this call site.
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => {
+        if (registrations.length > 0) return;
+        return navigator.serviceWorker.register('/sw.js').then(() => undefined);
+      })
+      .catch((error) => {
+        // Logged in all environments: a failure here means no push notifications
+        // and no offline fallback, with no other symptom.
+        console.error('❌ Service Worker registration failed:', error);
+      });
   }, []);
   return null;
 }

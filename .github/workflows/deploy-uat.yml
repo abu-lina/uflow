@@ -265,11 +265,29 @@ jobs:
             echo "✅ UAT container swap complete"
 
             echo "🔧 Updating Nginx for UAT..."
-            if [ -f "/tmp/nginx-uat-template.conf" ]; then
-                cp /tmp/nginx-uat-template.conf /etc/nginx/sites-available/uat-ummahflow
-                ln -sf /etc/nginx/sites-available/uat-ummahflow /etc/nginx/sites-enabled/uat-ummahflow
+            # scp-action v1.0.0 preserves the relative source path, so the file
+            # lands at /tmp/deploy/nginx/... not /tmp/. deploy-hetzner.yml was
+            # already fixed for this; UAT was not, so it silently skipped the
+            # update and nginx changes never applied.
+            # The upload step is conditional on the template having changed, so
+            # a missing file is only an error when an update was expected.
+            NGINX_CHANGED="${{ steps.nginx-check.outputs.changed }}"
+            if [ -f /tmp/nginx-uat-template.conf ]; then
+                CONFIG_SRC=/tmp/nginx-uat-template.conf
+            elif [ -f /tmp/deploy/nginx/nginx-uat-template.conf ]; then
+                CONFIG_SRC=/tmp/deploy/nginx/nginx-uat-template.conf
             else
-                echo "⚠️ nginx-uat-template.conf not found, skipping Nginx update"
+                CONFIG_SRC=""
+            fi
+            if [ -n "$CONFIG_SRC" ]; then
+                echo "   using $CONFIG_SRC"
+                cp "$CONFIG_SRC" /etc/nginx/sites-available/uat-ummahflow
+                ln -sf /etc/nginx/sites-available/uat-ummahflow /etc/nginx/sites-enabled/uat-ummahflow
+            elif [ "$NGINX_CHANGED" = "true" ]; then
+                echo "❌ nginx-uat-template.conf changed but was not uploaded (checked /tmp/ and /tmp/deploy/nginx/)"
+                exit 1
+            else
+                echo "ℹ️ nginx template unchanged; leaving existing config in place"
             fi
 
             echo "🧪 Testing Nginx config..."

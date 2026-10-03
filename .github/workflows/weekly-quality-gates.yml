@@ -18,7 +18,7 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -33,7 +33,10 @@ jobs:
         run: npm ci --prefer-offline
 
       - name: Build application
-        run: npx next build
+        # `npm run build:sw` because npm lifecycle hooks (`postbuild`) do not
+        # fire for `npx next build`; it builds the worker and runs all three
+        # guards. See .github/workflows/ci.yml's Build application step.
+        run: npx next build --webpack && npm run build:sw
 
       - name: Start application
         run: npx next start &
@@ -84,7 +87,7 @@ jobs:
     name: Deep Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -115,22 +118,22 @@ jobs:
         run: |
           echo "## 🔒 Security Analysis" > security-report.md
           echo "" >> security-report.md
-          
+
           # Check for potential issues
           echo "### Security Checks:" >> security-report.md
-          
+
           if grep -r "password.*=.*['\"]" src/ 2>/dev/null | grep -v node_modules | grep -v ".git"; then
             echo "⚠️ Potential hardcoded passwords found" >> security-report.md
           else
             echo "✅ No hardcoded passwords" >> security-report.md
           fi
-          
+
           if grep -r "eval(" src/ 2>/dev/null | grep -v node_modules | grep -v ".git"; then
             echo "⚠️ eval() usage detected" >> security-report.md
           else
             echo "✅ No eval() usage" >> security-report.md
           fi
-          
+
           if grep -r "dangerouslySetInnerHTML" src/ 2>/dev/null | grep -v node_modules | grep -v ".git"; then
             echo "⚠️ dangerouslySetInnerHTML usage detected" >> security-report.md
           else
@@ -151,7 +154,7 @@ jobs:
     name: Dependency Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 8
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -190,7 +193,7 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -206,7 +209,11 @@ jobs:
 
       - name: Build and analyze
         run: |
-          npx next build
+          npx next build --webpack
+          # `npm run build:sw` because npm lifecycle hooks (`postbuild`) do not
+          # fire for `npx next build`; it builds the worker and runs all three
+          # guards.
+          npm run build:sw
           echo "## 📦 Bundle Size Analysis" > bundle-report.md
           echo "" >> bundle-report.md
           du -sh .next >> bundle-report.md
@@ -228,7 +235,7 @@ jobs:
     needs: [lighthouse-audit, security-scan, dependency-check, bundle-analysis]
     if: always()
     timeout-minutes: 3
-    
+
     steps:
       - name: Generate report
         run: |
