@@ -137,9 +137,12 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
     optimizePackageImports: ['motion', 'lucide-react', 'lottie-react', 'sonner', '@iconify/react'],
-    // webpack-only, and since request 282 the only script still passing
-    // `--webpack` is `analyze`. Harmless under Turbopack (ignored), so it is
-    // left in place for that one path rather than deleted.
+    // webpack-only. All 7 build scripts still pass `--webpack` today: request
+    // 282 decoupled the PWA from the bundler but could not drop the flag,
+    // because swagger-ui-react hard-errored under Turbopack. Request 283 deleted
+    // that blocker, so once the removal lands `analyze` will be the only script
+    // that still needs the flag (@next/bundle-analyzer is a webpack plugin).
+    // Harmless under Turbopack (ignored), so it stays for that path.
     webpackBuildWorker: true,
   },
 
