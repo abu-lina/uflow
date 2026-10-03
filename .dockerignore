@@ -39,11 +39,14 @@ playwright.config.ts
 vitest.config.ts
 
 # Scripts
-# Only the PWA build guard ships into the context: build:standalone invokes
-# it after `next build`. `scripts/*` (not `scripts/`) so the exception can
-# re-include a single file; matched subdirectories stay fully excluded.
+# Only the PWA build chain ships into the context: build:standalone runs
+# `npm run build:sw` after `next build`, which is these three files in order.
+# `scripts/*` (not `scripts/`) so the exceptions can re-include single files;
+# matched subdirectories stay fully excluded.
 scripts/*
+!scripts/build-sw.js
 !scripts/verify-pwa-output.js
+!scripts/verify-sw-no-cross-origin-routes.mjs
 
 # Temporary files
 imports/lottie/.temp-gif-frames/

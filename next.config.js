@@ -1,78 +1,34 @@
-const withPWA = require('@ducanh2912/next-pwa').default({
-  dest: 'public',
-  register: true,
-  // Disable PWA based on explicit environment variable
-  // Set DISABLE_PWA=true for local development, false for UAT/production
-  disable: process.env.DISABLE_PWA === 'true',
-  // Don't fail on missing precache files
-  fallbacks: {
-    document: '/offline.html',
-  },
-  // Workbox options — MUST be nested here for @ducanh2912/next-pwa@10.x.
-  // In v10 the library changed its API: workbox-specific options (runtimeCaching,
-  // importScripts, exclude, skipWaiting) must live inside workboxOptions: { ... }.
-  // Placing them at the top level (the pre-v10 / shadowwalker shape) causes them to
-  // be silently ignored, which activates the built-in default cache.  The default
-  // cache includes a `!sameOrigin` NetworkFirst catch-all that intercepts Iconify
-  // CDN API requests; combined with the fallbacks.document handlerDidError callback,
-  // this returns Response.error() for all generic fetch requests, producing the
-  // "CORS request did not succeed (status null)" errors on /providers/[id].
-  // See: agent-output/analysis/closed/046-iconify-pwa-analysis.md
-  workboxOptions: {
-    skipWaiting: true,
-    // Import custom push notification handler into the generated service worker
-    importScripts: ['/sw-push-handler.js'],
-    // Exclude files that may not exist in standalone builds from precaching
-    exclude: [/app-build-manifest\.json$/, /middleware-manifest\.json$/],
-    runtimeCaching: [
-      // NOTE: No explicit route for the Iconify CDN APIs
-      // (api.iconify.design, api.unisvg.com, api.simplesvg.com).
-      //
-      // Previously a NetworkOnly route was registered here as a safety net.
-      // That caused a new failure: Workbox intercepts the request and re-issues
-      // fetch() from the service-worker context.  In Firefox with Enhanced Tracking
-      // Protection (or any browser extension that classifies CDN domains as
-      // trackers), that SW-context fetch is blocked at the network layer (status
-      // null), producing "no-response :: error:{}" even though the same request
-      // succeeds when the browser makes it directly.
-      //
-      // The NetworkOnly route is unnecessary because the fix that actually solved
-      // the original issue was correctly nesting workboxOptions (above), which
-      // eliminated the default !sameOrigin NetworkFirst catch-all that was
-      // intercepting Iconify requests.  Without a registered route, Workbox does
-      // NOT intercept these requests at all — the browser handles them natively,
-      // bypassing any SW-context network restriction.
-      //
-      // See: agent-output/analysis/closed/046-iconify-pwa-analysis.md
-      //      agent-output/retrospectives/closed/064-iconify-sw-cors-fix-retrospective.md
-
-      // Cross-origin image assets (e.g. Supabase Storage provider photos).
-      // Do NOT add Supabase API calls here — only static image assets.
-      {
-        urlPattern: /^https:\/\/[^/]*\.supabase\.co\/.*\.(?:png|jpg|jpeg|svg|gif)(\?.*)?$/,
-        handler: 'CacheFirst',
-        options: {
-          cacheName: 'images-cache',
-          expiration: {
-            maxEntries: 100,
-            maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-          },
-        },
-      },
-      {
-        urlPattern: /^https:\/\/.*\.(?:js|css)$/,
-        handler: 'StaleWhileRevalidate',
-        options: {
-          cacheName: 'static-resources',
-          expiration: {
-            maxEntries: 100,
-            maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
-          },
-        },
-      },
-    ],
-  },
-});
+// The PWA is no longer configured here.
+//
+// @ducanh2912/next-pwa (abandoned; last published 2024-09-18) generated the
+// service worker through webpack, which is what pinned every build script to
+// `next build --webpack`. It was replaced by @serwist/next in configurator mode,
+// which is a separate `serwist build` step rather than a Next.js plugin:
+//
+//   serwist.config.mjs                  @serwist/cli options (swSrc, swDest, globs)
+//   src/lib/pwa/sw.ts                   the worker itself (skipWaiting, fallbacks)
+//   src/lib/pwa/runtimeCaching.ts       the two runtime caching rules, and why
+//                                       there is deliberately no Iconify route
+//   scripts/build-sw.js                 runs it, and implements DISABLE_PWA
+//
+// `runtimeCaching.ts` carries the Iconify constraint and its post-mortem
+// references; read it before touching the worker.
+//
+// The service worker no longer depends on the bundler at all: `serwist build`
+// reads .next/ and public/ off disk, so webpack vs Turbopack is now irrelevant
+// to whether public/sw.js is emitted.
+//
+// `--webpack` is therefore NO LONGER needed for the PWA, but it is still on the
+// build scripts for an unrelated reason that request 282 uncovered and did not
+// fix: swagger-client@3.38.2 (via swagger-ui-react@5.33.0, reached from
+// src/app/api-docs/page.tsx) does `import jsYaml from 'js-yaml'`, and js-yaml
+// removed its ESM default export in 4.2.0 while swagger-client still declares
+// `^4.3.2`. webpack tolerates that and silently yields `undefined`; Turbopack
+// hard-errors with "Export default doesn't exist in target module" and the build
+// fails. Removing `--webpack` is blocked on that, not on anything here.
+//
+// See: agent-output/requests/282-serwist-migration.md
+//      agent-output/research/282-defaultcache-iconify.md
 
 const isDev = process.env.NODE_ENV === 'development';
 // Only enable standalone when explicitly building for Docker
@@ -179,19 +135,27 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
     optimizePackageImports: ['motion', 'lucide-react', 'lottie-react', 'sonner', '@iconify/react'],
-    // Preload critical chunks
+    // webpack-only, and since request 282 the only script still passing
+    // `--webpack` is `analyze`. Harmless under Turbopack (ignored), so it is
+    // left in place for that one path rather than deleted.
     webpackBuildWorker: true,
   },
 
-  // Turbopack configuration (migrated from experimental.turbo)
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
+  // Deliberately empty, and deliberately present.
+  //
+  // Empty: there used to be a `rules['*.svg']` entry pointing at
+  // `@svgr/webpack`, which is NOT in package.json. It never fired because every
+  // build ran webpack; with `--webpack` off (request 282) Turbopack would have
+  // tried to resolve that loader for real. Nothing imports an .svg as a
+  // component here — every SVG is referenced by URL through next/image or
+  // inlined as JSX (src/components/ui/Ornament.tsx) — so the rule was removed
+  // rather than the dependency added.
+  //
+  // Present: Next 16 hard-errors on a Turbopack build that finds a `webpack()`
+  // config and no `turbopack` config ("This may be a mistake"). An empty object
+  // is the documented way to say the config was reviewed, and it is needed the
+  // moment any script stops passing `--webpack`.
+  turbopack: {},
 
   // Image optimization
   images: {
@@ -419,7 +383,9 @@ const nextConfig = {
 };
 
 // Only load bundle analyzer when explicitly enabled (saves 5-15s per build)
+// Note: @next/bundle-analyzer is a webpack plugin, so `npm run analyze` is the
+// one script that must keep `next build --webpack`.
 module.exports =
   process.env.ANALYZE === 'true'
-    ? require('@next/bundle-analyzer')({ enabled: true })(withPWA(nextConfig))
-    : withPWA(nextConfig);
+    ? require('@next/bundle-analyzer')({ enabled: true })(nextConfig)
+    : nextConfig;

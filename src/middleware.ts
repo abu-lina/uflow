@@ -15,6 +15,52 @@ export function getRateLimitKey(req: NextRequest): string {
   return getTrustedClientIp(req.headers);
 }
 
+// Static assets are exempt from the page rate limit for the same reason
+// `_next/static` and `_next/image` are excluded from the matcher below: they are
+// immutable files with no auth, no database access and no side effects, and in
+// production Cloudflare serves them with `public, max-age=31536000, immutable`.
+//
+// Rate-limiting them is what broke PWA install (request 282): a service worker
+// precache fetches dozens in one burst, the tail gets 429s, and Serwist rejects
+// the install event on any non-OK precache response, so the worker never
+// activates. No offline page, no push.
+//
+// The rule is: an EXACT known static file, or a static extension INSIDE a known
+// asset directory. Both halves are load-bearing.
+//
+// Extension alone is not enough, and that was a real bypass: the predicate runs
+// on every path, so `/p/anything.json`, `/food.json`, `/city/berlin.png` and
+// `/about.html` would all be exempt while still reaching the app. `/p/[slug]`
+// does a provider lookup before it 404s, so that is an unmetered database
+// request per hit, available to anyone who can append `.json` to a URL.
+//
+// Equally, do NOT drop the extension test and match on the directory prefix
+// alone: `startsWith('/images')` would also exempt a future extensionless
+// `/images` page. A request must satisfy both to skip the limiter.
+const STATIC_ASSET_PATHNAME =
+  /\.(?:css|js|mjs|map|json|webmanifest|html|txt|xml|png|jpe?g|gif|svg|webp|avif|ico|bmp|woff2?|ttf|otf|eot|mp4|webm|wasm)$/i;
+
+// Exact root-level static files served from public/.
+const STATIC_ASSET_FILES = new Set([
+  '/clear-storage.html',
+  '/favicon.ico',
+  '/manifest.json',
+  '/offline.html',
+  '/sw.js',
+  '/sw.js.map',
+]);
+
+// Asset directories under public/. A request must ALSO carry a static file
+// extension to be exempt, so `/images` (a hypothetical future page) is still
+// rate-limited while `/images/seals/halal.png` is not.
+const STATIC_ASSET_DIRS = ['/animations/', '/icons/', '/images/', '/leaflet/', '/screenshots/'];
+
+export function isStaticAssetRequest(pathname: string): boolean {
+  if (STATIC_ASSET_FILES.has(pathname)) return true;
+  if (!STATIC_ASSET_PATHNAME.test(pathname)) return false;
+  return STATIC_ASSET_DIRS.some((dir) => pathname.startsWith(dir));
+}
+
 function checkRateLimit(
   key: string,
   maxRequests: number,
@@ -111,7 +157,7 @@ export async function middleware(req: NextRequest) {
     response.headers.set('X-RateLimit-Limit', String(API_RATE_LIMIT_MAX_REQUESTS));
     response.headers.set('X-RateLimit-Remaining', String(rateLimit.remaining));
     response.headers.set('X-RateLimit-Reset', String(rateLimit.resetTime));
-  } else {
+  } else if (!isStaticAssetRequest(pathname)) {
     // Rate limiting for regular routes (less strict)
     const key = getRateLimitKey(req);
     const rateLimit = checkRateLimit(key, RATE_LIMIT_MAX_REQUESTS);
