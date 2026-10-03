@@ -530,15 +530,33 @@ Notes:
 _New work discovered during this request._
 
 - Remove `--webpack` from the 7 build/dev scripts; now verified unblocked
-  (Turbopack production build compiles clean).
+  (Turbopack production build compiles clean). Two things that request must
+  handle, found while reviewing this one:
+  - `next.config.js:254` `webpack(config, ...)` sets
+    `config.watchOptions.ignored` to skip `docs/archive/**`. Turbopack ignores
+    the `webpack()` function entirely, so that exclusion silently stops
+    applying the moment a script drops the flag. Port it to `turbopack: {}`
+    (currently deliberately empty) or accept the regression knowingly.
+  - `analyze` must KEEP `--webpack`: `@next/bundle-analyzer` is a webpack
+    plugin. So the removal is 6 of 7 scripts, not all 7.
 - The `@swagger`/`@openapi` JSDoc comment blocks in the 3 API route files no
   longer feed any generator. Decide whether to keep them as human docs or
   strip them.
 - `scripts/generate-manifest.js:68` emits `url: '/providers'` while the app
   and the committed `public/manifest.json` use `/food` (plan 228). Any
   `npm run build` regenerates the stale value and trips the plan-228
-  regression test. Fix the generator (and check whether prod has been
-  shipping the stale shortcut).
+  regression test. Fix the generator.
+  **Latent, not live:** measured against production on 2026-10-03,
+  `https://ummahflow.com/manifest.json` serves `url: "/food"` for the browse
+  shortcut, so the generator is not in the production build path and prod has
+  never shipped the stale value. `/providers` also still returns 308, so even
+  the stale shortcut would have redirected. Severity is low.
+- `next.config.js:260-263` explains that a custom `splitChunks` config was
+  removed because it pulled `swagger-ui-react`'s ~1.2MB tree into the shared
+  bundle (First Load JS 350kB -> 687kB). That rationale is now history: the
+  package is gone. The comment is still true in past tense, but it reads as an
+  invitation to re-add custom `splitChunks` now that the named culprit is gone.
+  Re-measure First Load JS before anyone acts on it.
 - `overrides`: `"yaml": ">=2.8.3"` and `"js-yaml": ">=4.3.0"` still have
   consumers (`lint-staged`, `postcss-load-config`, `vite`, `@eslint/eslintrc`)
   and both are unbounded `>=` ranges banned by org guardrails. The unbounded
