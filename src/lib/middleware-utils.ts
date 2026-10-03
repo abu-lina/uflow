@@ -22,7 +22,6 @@ const APP_ROUTES = [
   '/privacy-policy',
   '/create-quick',
   '/manual-user',
-  '/api-docs',
 ];
 
 /**

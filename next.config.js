@@ -18,16 +18,18 @@
 // reads .next/ and public/ off disk, so webpack vs Turbopack is now irrelevant
 // to whether public/sw.js is emitted.
 //
-// `--webpack` is therefore NO LONGER needed for the PWA, but it is still on the
-// build scripts for an unrelated reason that request 282 uncovered and did not
-// fix: swagger-client@3.38.2 (via swagger-ui-react@5.33.0, reached from
-// src/app/api-docs/page.tsx) does `import jsYaml from 'js-yaml'`, and js-yaml
-// removed its ESM default export in 4.2.0 while swagger-client still declares
-// `^4.3.2`. webpack tolerates that and silently yields `undefined`; Turbopack
-// hard-errors with "Export default doesn't exist in target module" and the build
-// fails. Removing `--webpack` is blocked on that, not on anything here.
+// `--webpack` is therefore NO LONGER needed for the PWA. It was also masking a
+// second blocker request 282 uncovered: swagger-client (via swagger-ui-react,
+// reached from the deleted src/app/api-docs/page.tsx) did
+// `import jsYaml from 'js-yaml'`, and js-yaml removed its ESM default export in
+// 4.2.0. webpack tolerated that and silently yielded `undefined`; Turbopack
+// hard-errored with "Export default doesn't exist in target module". Request 283
+// deleted `/api-docs` and the swagger deps entirely, so that blocker is gone and
+// `--webpack` removal is unblocked; it stays on the scripts until its own
+// follow-up request lands.
 //
 // See: agent-output/requests/282-serwist-migration.md
+//      agent-output/requests/283-api-docs-jsyaml.md
 //      agent-output/research/282-defaultcache-iconify.md
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -135,9 +137,12 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
     optimizePackageImports: ['motion', 'lucide-react', 'lottie-react', 'sonner', '@iconify/react'],
-    // webpack-only, and since request 282 the only script still passing
-    // `--webpack` is `analyze`. Harmless under Turbopack (ignored), so it is
-    // left in place for that one path rather than deleted.
+    // webpack-only. All 7 build scripts still pass `--webpack` today: request
+    // 282 decoupled the PWA from the bundler but could not drop the flag,
+    // because swagger-ui-react hard-errored under Turbopack. Request 283 deleted
+    // that blocker, so once the removal lands `analyze` will be the only script
+    // that still needs the flag (@next/bundle-analyzer is a webpack plugin).
+    // Harmless under Turbopack (ignored), so it stays for that path.
     webpackBuildWorker: true,
   },
 
@@ -367,16 +372,6 @@ const nextConfig = {
         source: '/providers/:id',
         destination: '/p/:id',
         permanent: true,
-      },
-    ];
-  },
-
-  // Rewrites for Swagger
-  async rewrites() {
-    return [
-      {
-        source: '/api/swagger.json',
-        destination: '/api/swagger',
       },
     ];
   },
