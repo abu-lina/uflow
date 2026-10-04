@@ -41,15 +41,19 @@ Capture `N` from the returned URL. Issue body template:
 
 ```markdown
 ## What
+
 <the user's verbatim request>
 
 ## Why
+
 <one or two lines, drawn only from what the user said>
 
 ## Acceptance criteria
+
 TBD, pending the Grill phase.
 
 ## Classification
+
 - Type: <type>
 - Flow: <phase chain>
 - Confidence: <high|medium|low>
@@ -57,14 +61,14 @@ TBD, pending the Grill phase.
 
 Type to label map:
 
-| Flow type | Label | Branch prefix |
-|---|---|---|
-| feature | `type:feature` | `feature/` |
-| bug | `type:bugfix` | `fix/` |
-| refactor | `type:refactor` | `refactor/` |
-| change-request | `type:change-request` | `cr/` |
-| hotfix | `type:hotfix` | `hotfix/` |
-| exploration | `question` | none, no worktree |
+| Flow type      | Label                 | Branch prefix     |
+| -------------- | --------------------- | ----------------- |
+| feature        | `type:feature`        | `feature/`        |
+| bug            | `type:bugfix`         | `fix/`            |
+| refactor       | `type:refactor`       | `refactor/`       |
+| change-request | `type:change-request` | `cr/`             |
+| hotfix         | `type:hotfix`         | `hotfix/`         |
+| exploration    | `question`            | none, no worktree |
 
 3. Rename the terminal tab to `N-<slug>` so parallel sessions are distinguishable:
 
@@ -133,20 +137,21 @@ These hold for every flow:
 
 - Every worker finishes its phase by posting exactly one issue comment whose first line is `### Phase: <Name> — Done` (or `— Blocked` when the phase could not complete), via `gh issue comment N --body-file <path>`. Never inline a multi-line body with `--body`. Workers must not write request state to disk; the issue is the state store.
 
-| Phase | Comment contains |
-|---|---|
-| Grill | Decisions, open questions, the acceptance criteria to paste into the issue body |
-| Spec | The spec |
-| Diagnose | Reproduction, ranked hypotheses, the discriminating evidence for the chosen one |
-| Implement / Fix | Branch, commit SHAs, files changed, tests added, test command output |
-| Code Review | Findings by severity, on both the Standards and Spec axes |
-| QA | Commands run, acceptance criteria checked off, failures |
-| PR body | Drafted per the `pr` skill, as the final comment |
+| Phase           | Comment contains                                                                                                 |
+| --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Grill           | Decisions, open questions, the acceptance criteria to paste into the issue body                                  |
+| Spec            | The spec                                                                                                         |
+| Diagnose        | Reproduction, ranked hypotheses, the discriminating evidence for the chosen one                                  |
+| Implement / Fix | Branch, commit SHAs, files changed, tests added, test command output                                             |
+| Code Review     | Findings by severity, on both the Standards and Spec axes                                                        |
+| QA              | Commands run, acceptance criteria checked off, failures                                                          |
+| PR body         | Drafted per the `pr` skill, as the final comment. The body follows the header line raw, with no outer code fence |
+
 - Judgment phases (Grill, Diagnose, Spec, Tickets, Code Review) run foreground (`is_background: false`); execution phases (Implement, Fix, QA, Research) run background (`is_background: true`). The model is pinned in the worker profile, so there is no cheaper tier to pick.
 - Except in exploration, the last dispatched worker appends a learning entry to `docs/ai/LEARNINGS.md` as part of its brief.
 - Name skills in a brief by their bare name only (`tdd`, `to-spec`). Workers cannot invoke skills; they read the SKILL.md off disk, per "Following a skill" in their profile. Never put a plugin cache path in a brief.
 - Name `ponytail` in a brief only when the flow is `hotfix`, or when the diagnosed change touches a single file. Never otherwise, and never as a rule: an always-on "laziest solution" rule cannot distinguish a one-line fix from a feature, and "trivial one-liners need no test" contradicts rule 9's mandatory `tdd`.
-- Except in exploration, the last dispatched worker also drafts the PR body, following the `pr` skill, as a final issue comment headed `### Phase: PR body — Done`.
+- Except in exploration, the last dispatched worker also drafts the PR body, following the `pr` skill, as a final issue comment headed `### Phase: PR body — Done`. The `pr` skill prints its template inside a fenced `markdown` block; that fence is the skill's own formatting and must never be reproduced in the comment. The comment carries the body raw so it can go to `gh pr create --body` unaltered.
 
 Every dispatch brief MUST include:
 
@@ -203,12 +208,12 @@ Hard rules that keep this session under 100k:
 
 - The orchestrator never reads source files. (Rule 7.)
 - The orchestrator never reads a full phase comment. It gates on the worker's 25-line report.
-- At the gate after **Spec** and the gate after **Implement**, offer: *"State is on #N. For a fresh context, open a new tab and run `/orchestrator resume N`."* The user may decline and continue.
+- At the gate after **Spec** and the gate after **Implement**, offer: _"State is on #N. For a fresh context, open a new tab and run `/orchestrator resume N`."_ The user may decline and continue.
 - One request per session. A follow-up becomes its own issue, not a section in this one.
 
 ## Push and PR
 
-After all phases pass, push and create the PR. The PR body was drafted by the last worker as the `### Phase: PR body — Done` issue comment; pass it through. Do not write the body yourself.
+After all phases pass, push and create the PR. The PR body was drafted by the last worker as the `### Phase: PR body — Done` issue comment; pass everything after that header line through verbatim. Do not write the body yourself. If the comment arrives wrapped in an outer code fence, that is a defect in the worker's output and would render the whole description as one code block: drop the wrapper, flag it at the gate, and change nothing else in the body.
 
 ```bash
 cd ../uflow-wt/N-<slug> && git push -u origin <branch>
