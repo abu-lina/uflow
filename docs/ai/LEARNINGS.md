@@ -977,3 +977,15 @@ Short log of learnings from plan → build → review → test loops. Append one
   - Re-run the measurement when picking up handed-off work rather than trusting the handoff's record of it. Three findings this session contradicted a handoff written hours earlier by its own author.
   - Put a negative control in any permission test. A probe that only confirms success cannot tell "the grant worked" from "no grant was ever needed", which is the precise ambiguity that produced 284's inverted diagnosis.
 - **Task/PR**: Request 284, follows up 284b
+
+### 284d - A CI step set to continue-on-error is a gate that was never built
+
+- **Date**: 2026-10-04
+- **Context**: `.github/workflows/ci.yml` ran `npm run lint` with `continue-on-error: true`. Lint failures printed red and the pipeline carried on, so the step reported a status without gating anything. It was set once during a transition and left for months while 86 ESLint errors accumulated. PR #346 was opened in August to remove that one line, then sat CONFLICTING for a month; by the time it was rebased, 85 of its 86 fixes had landed independently through other PRs and the single line was all that remained novel. Separately, `npm run lint` is `eslint .`, which exits 0 at any warning count, so removing `continue-on-error` makes the step block on errors while leaving 131 warnings invisible and free to grow.
+- **Learning**: A step with `continue-on-error: true` is not a weak gate, it is no gate, and it decays in a particular way: the thing it was meant to guard accumulates at full speed while a green check says otherwise. Two properties make it worse than having no step at all. It occupies the slot where a real gate would go, so nobody notices the absence, and it teaches reviewers to read the job name instead of the result. The same blindness repeats one level down: `eslint .` exits 0 on any number of warnings, so even a blocking lint step gates nothing until `--max-warnings` pins the count.
+- **Change to prevent repeat**:
+  - Give any `continue-on-error: true` an explicit removal condition recorded in `agent-output/`, and treat a missing condition as the finding. A transition with no deadline is a permanent state.
+  - Pin the warning count with `--max-warnings <current>` whenever a lint step becomes blocking, and lower it as the backlog clears. A blocking step with an unbounded warning budget gates errors only.
+  - Prove a new gate bites before merging it. Run the check one unit stricter than the pin and confirm it fails. A passing run on its own cannot tell a working gate from a flag the runner silently swallowed.
+- **Task/PR**: Request 284, PRs #497 and #500. Supersedes the entry carried on `fix/pipeline-hardening` (#346), which recorded a `varsIgnorePattern` addition that was subsequently reverted.
+
