@@ -11,7 +11,6 @@ Scripts here are invoked via `npm run`, `npx tsx`, or directly in the terminal. 
 - Deployment/setup shell scripts (`deploy.sh`, `setup-*.sh`)
 - One-off data generation or transformation utilities (`generate-fake-providers.ts`, `transformSvg.ts`)
 - CI/CD helpers (`verify-*.sh`)
-- Notion/Jira/Sprint tooling (`plan-sprint.ts`, etc.)
 
 ## What does NOT belong here
 

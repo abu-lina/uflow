@@ -6,7 +6,7 @@ Templates for security assessment documentation.
 
 ## File Naming Convention
 
-`agent-output/security/NNN-[topic]-security-[type].md`
+`agent-output/_archive/security/NNN-[topic]-security-[type].md`
 
 Types:
 - `architecture-security` — Architectural security review

@@ -1,0 +1,11 @@
+{
+  "read_config_from": {
+    "cursor": false,
+    "claude": false,
+    "copilot": false,
+    "windsurf": false,
+    "opencode": false,
+    "zed": false,
+    "agents_standard": true
+  }
+}

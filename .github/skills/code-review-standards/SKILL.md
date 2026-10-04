@@ -79,13 +79,13 @@ When documenting findings, use this format:
 
 ## Code Review Document Template
 
-Create in `agent-output/code-review/` matching plan name:
+Create in `agent-output/_archive/code-review/` matching plan name:
 
 ```markdown
 # Code Review: [Plan Name]
 
-**Plan Reference**: `agent-output/planning/[plan-name].md`
-**Implementation Reference**: `agent-output/implementation/[plan-name]-implementation.md`
+**Plan Reference**: `agent-output/_archive/planning/[plan-name].md`
+**Implementation Reference**: `agent-output/_archive/implementation/[plan-name]-implementation.md`
 **Date**: [date]
 **Reviewer**: Code Reviewer
 
@@ -97,7 +97,7 @@ Create in `agent-output/code-review/` matching plan name:
 
 ## Architecture Alignment
 
-**System Architecture Reference**: `agent-output/architecture/system-architecture.md`
+**System Architecture Reference**: `docs/architecture/system-architecture.md`
 **Alignment Status**: ALIGNED / MINOR_DEVIATIONS / MAJOR_DEVIATIONS
 
 [Assessment of how implementation aligns with architectural decisions]

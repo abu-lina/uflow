@@ -162,11 +162,11 @@ When a Muslim needs anything—a halal restaurant, an Islamic school, a trusted 
 
 - **045-OA-1**: Live UAT browser validation — direct URL nav, SPA A→B nav, Arabic no-category browse, page-2 pagination under category filter (Owner: QA Lead — post-deploy)
 - **045-OA-3**: E2E browser tests for category filter — direct URL nav + SPA nav + back-button (Owner: QA/Implementer — next sprint)
-- **053-OA-1**: Live staging import validation for corrected JoinHalal parser + offer auto-creation before first corrected production import run (Owner: DevOps / Operator — evidence in `agent-output/planning/053-open-actions.md`)
-- **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/planning/054-open-actions.md`)
-- **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/planning/055-open-actions.md`)
-- **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject during a future admin moderation UX touch (Owner: Implementer / future sprint — evidence in `agent-output/planning/060-open-actions.md`)
-- **123-DF-1**: Real-device PWA validation post v0.12.8 deploy — login on mobile PWA → profile icon → /profile renders without redirect (Owner: User/DevOps — evidence in `agent-output/planning/123-navbar-auth-state-open-actions.md`)
+- **053-OA-1**: Live staging import validation for corrected JoinHalal parser + offer auto-creation before first corrected production import run (Owner: DevOps / Operator — evidence in `agent-output/_archive/planning/053-open-actions.md`)
+- **054-OA-1**: Staging write validation for corrected JoinHalal candidate filtering and non-zero failure signaling before first production promotion of v0.8.15 (Owner: DevOps / Operator — evidence in `agent-output/_archive/planning/054-open-actions.md`)
+- **055-DF-1**: Live RPC verification via `pg_get_functiondef` before first production `--write` using v0.8.15 (Owner: DevOps — evidence in `agent-output/_archive/planning/055-open-actions.md`)
+- **060-OA-1**: Clear `admin_edit_*_${providerId}` draft-state keys on save/approve/reject during a future admin moderation UX touch (Owner: Implementer / future sprint — evidence in `agent-output/_archive/planning/060-open-actions.md`)
+- **123-DF-1**: Real-device PWA validation post v0.12.8 deploy — login on mobile PWA → profile icon → /profile renders without redirect (Owner: User/DevOps — evidence in `agent-output/_archive/planning/123-navbar-auth-state-open-actions.md`)
 
 ✅ **045-OA-2** closed: flatted HIGH (GHSA-25h7-pfq9-p65f) fixed in v0.8.5
 ✅ **Dependabot HIGH advisories resolved**: Plan 127 (v0.12.10) — `npm audit --audit-level=high` exits 0; 2 moderate postcss residual accepted (build-time only)

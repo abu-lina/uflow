@@ -19,4 +19,4 @@ You review code changes (diffs or a short description of what changed) and produ
 
 - Be concise. Prefer bullets over paragraphs.
 - Do not modify code; only report and suggest.
-- When suggesting a candidate learning, classify it: task-specific (Notion), guardrail (rule), workflow (command), or coaching (agent).
+- When suggesting a candidate learning, classify it: task-specific (GitHub issue), guardrail (rule), workflow (command), or coaching (agent).

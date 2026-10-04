@@ -40,7 +40,7 @@ These statuses trigger document closure (move to `closed/`):
 
 ### The `.next-id` File
 
-Location: `agent-output/.next-id`
+Location: `agent-output/_archive/.next-id`
 
 Contents: Single integer (e.g., `081`)
 
@@ -113,7 +113,7 @@ When referencing a closed document from another document, use relative paths:
 
 Before starting work, each agent MUST:
 
-1. Scan their exclusive domain (e.g., `agent-output/qa/`) excluding `closed/`
+1. Scan their exclusive domain (e.g., `agent-output/_archive/qa/`) excluding `closed/`
 2. Identify any document with terminal Status
 3. Move orphaned documents to `closed/`
 4. Log: "Found orphaned document [name] with Status [status], moved to closed/"
@@ -154,13 +154,13 @@ Roadmap agent performs comprehensive sweep when reviewing roadmap:
 
 ```bash
 # Read current ID
-NEXT_ID=$(cat agent-output/.next-id)
+NEXT_ID=$(cat agent-output/_archive/.next-id)
 # Verify the ID is unused across agent-output/, including closed/
 while find agent-output/ -name "${NEXT_ID}-*" -type f 2>/dev/null | grep -q .; do
   NEXT_ID=$((NEXT_ID + 1))
 done
 # Increment for next use
-echo $((NEXT_ID + 1)) > agent-output/.next-id
+echo $((NEXT_ID + 1)) > agent-output/_archive/.next-id
 # Use $NEXT_ID as your document ID
 ```
 

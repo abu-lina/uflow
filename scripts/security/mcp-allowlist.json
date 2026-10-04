@@ -6,11 +6,6 @@
   "allowlist": {
     "urls": [
       {
-        "pattern": "https://mcp.notion.com/",
-        "description": "Notion official MCP server",
-        "matchType": "prefix"
-      },
-      {
         "pattern": "https://mcp.supabase.com/",
         "description": "Supabase official MCP server (includes project refs)",
         "matchType": "prefix"

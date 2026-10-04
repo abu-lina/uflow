@@ -69,7 +69,7 @@ These agents integrate with **Flowbaby** for cross-session memory. Install the [
 3. **Optional: Set up document lifecycle** - Create `.next-id` file for unified numbering:
    ```bash
    mkdir -p agent-output
-   echo "1" > agent-output/.next-id
+   echo "1" > agent-output/_archive/.next-id
    ```
 4. **Optional: Install Flowbaby** - For enhanced cross-session memory
 

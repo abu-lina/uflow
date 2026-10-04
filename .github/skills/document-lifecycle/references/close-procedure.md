@@ -60,7 +60,7 @@ mv agent-output/<domain>/NNN-name.md agent-output/<domain>/closed/
 
 Report in your response:
 
-> Closed document `080-feature-name.md` (Status: Committed) → moved to `agent-output/planning/closed/`
+> Closed document `080-feature-name.md` (Status: Committed) → moved to `agent-output/_archive/planning/closed/`
 
 ---
 
