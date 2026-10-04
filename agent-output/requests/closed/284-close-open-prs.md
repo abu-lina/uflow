@@ -2,11 +2,12 @@
 ID: 284
 Origin: 284
 UUID: CDF341BE-6AA8-445A-ACAD-EA9EEAF87715
-Status: Active
+Status: Released
 Type: change-request
-Branch: fix/orchestrator-router-enforcement
-Worktree: ../uflow-wt/284-close-open-prs
+Branch: main (merged via PRs #496, #497, #498, #499, #500)
+Worktree: removed 2026-10-04
 Created: 2026-10-03T20:58:39Z
+Closed: 2026-10-04T06:50:04Z
 ---
 
 # Request 284: Close open PRs, dependabot noise, and the orchestrator dispatch failure
@@ -277,3 +278,49 @@ skill's deny has removed this session's `edit` and `write` tools.
 
 Captured in `docs/ai/LEARNINGS.md` as the request 284 entry: "Probe the
 permission before dispatching the worker".
+
+## Outcome (2026-10-04), SUPERSEDES "Next steps, in order", "Blocked / not done", "Still not done" and "Learnings" above
+
+All work shipped. The sections listed above were written mid-flight and describe work that has since completed; they are kept as the record of how the request unfolded, not as current state.
+
+### Merged
+
+| PR   | What                                                                                 |
+| ---- | ------------------------------------------------------------------------------------ |
+| #496 | Orchestrator: disclose flows, add worker profiles, delete the frontmatter deny fence |
+| #497 | Make ESLint a real CI gate (removes `continue-on-error: true`), supersedes #346      |
+| #498 | Disable dependabot rebase strategy                                                   |
+| #499 | Wire the existing `i18n:check` into CI                                               |
+| #500 | Ratchet ESLint warnings at 131                                                       |
+
+### Closed without merging
+
+- **#346**: its two test failures were never caused by the PR. Measured at `e09539c4`, pure `main` as of the failing CI run with zero PR content, the same two assertions failed. The bug was in `main` and one of the 115 commits since fixed it. 85 of its 86 lint fixes had landed independently; the remaining line shipped as #497.
+- **#371**: rebasing onto `main` produced zero commits, tree byte-identical to `9f2116e4`. All eleven commits had landed via #365, #366, #376, #417 and #419. Its ~2,200-line `de.ts`/`en.ts` diff was a quote-style format conversion that `main` performed independently, not content. Retitled before closing, because the original title described only the one-line OOM fix.
+
+### Dependabot, the original question
+
+Measured, not estimated: 480 of 2728 workflow runs (17.6%), 264 of them in the first four days of October against 97 for all of September. Each PR event fires three workflows, and dependabot force-pushed a rebase onto every open PR whenever `main` moved. The `tailwindcss-4.3.3` branch alone carried 14 distinct head SHAs, so one bump cost 39 runs. Addressed by #498.
+
+### Verification of the dispatch fix
+
+The fix was reasoned but never demonstrated when this document was last updated. It has since been demonstrated. With the frontmatter block removed, a background `subagent_general` dispatched after invoking the skill survives, writes and reports, and the router keeps its own `edit` and `write` tools. A negative control established that writes beneath the workspace root are ungated regardless, which rules out a scope grant as the explanation for the pass.
+
+### Learnings, corrected
+
+Entry 284 ("Probe the permission before dispatching the worker") is **superseded** and its central heuristic is wrong. Current entries in `docs/ai/LEARNINGS.md`:
+
+- **284b**: a deny rule that reports itself as a missing scope
+- **284c**: the corrections list missed the instruction the correction invalidated
+- **284d**: a CI step set to continue-on-error is a gate that was never built
+
+### Left open deliberately
+
+- Branch `fix/orchestrator-router-enforcement` still holds the only copy of `agent-output/debug/281/`, 14 request-281 investigation artifacts. It is kept alive until those are rescued into `main` or knowingly dropped.
+- Three environment findings from the retrospective are outside this repo: the broad `Exec` grants that make the project allow-list decorative, the absence of any way to inspect effective permissions, and the unidentified source of the regenerating malformed `Write()` entry.
+
+## Changelog
+
+| Date       | Agent | Action          | Status           |
+| ---------- | ----- | --------------- | ---------------- |
+| 2026-10-04 | Devin | Document closed | Status: Released |
