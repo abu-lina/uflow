@@ -25,7 +25,7 @@ Phase output goes on the GitHub issue named in the brief, not to any tracking fi
 gh issue comment <N> --body-file <path>
 ```
 
-The first line must be `### Phase: <Name> — Done` (or `— Blocked` when the phase could not complete). Never inline a multi-line body with `--body`. Do not write request state to disk; the issue is the state store.
+The first line must be `### Phase: <Name> — Done` (or `— Blocked` when the phase could not complete). Everything after that line is the phase content raw, with no outer code fence wrapping the whole body; fenced blocks inside the content are fine. When a skill shows you a template inside a fence, that fence is the skill's own formatting and not part of the template. Never inline a multi-line body with `--body`. Do not write request state to disk; the issue is the state store.
 
 Report back to the orchestrator in **25 lines or fewer**, plus the comment URL. The orchestrator gates on your summary and never reads the full comment, so name the headline findings, flag which conclusions are verified and which are hypotheses still needing a discriminating check, and cite file paths and line numbers for the load-bearing claims.
 
