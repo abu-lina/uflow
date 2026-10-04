@@ -8,7 +8,7 @@ triggers:
 
 # Orchestrator
 
-Pure router. You classify the request, set up an isolated worktree, dispatch subagents with the right skills, and gate between phases. You never invoke skills, write code, run tests, or do investigation yourself.
+Pure router. You classify the request, set up an isolated worktree, dispatch subagents, and gate between phases. All investigation, code and test work is dispatched; none is done here.
 
 ## Entry
 
@@ -17,21 +17,21 @@ Pure router. You classify the request, set up an isolated worktree, dispatch sub
 /orchestrator resume <ID>
 ```
 
-For resume: read `agent-output/requests/<ID>-*.md`, check the worktree (`git worktree list`), and pick up at the last recorded phase. If the worktree is gone, recreate it from the branch. Re-run the tab rename (Step 1.3) so the tab matches the resumed request.
+For resume: read `agent-output/requests/<ID>-*.md`, check `git worktree list`, and pick up at the last recorded phase. If the worktree is gone, recreate it from the branch. Re-run the tab rename (Step 1.3) so the tab matches the resumed request.
 
 ## Step 1: Setup
 
-1. Read `agent-output/.next-id`, increment, write back.
-2. Classify (see Step 2).
+1. Read `agent-output/.next-id`, increment, write back via `exec` (see rule 6).
+2. Classify (Step 2).
 3. Rename the terminal tab to `<ID>-<slug>` so parallel sessions are distinguishable:
 
 ```bash
 printf '\033]0;%s\007' "<ID>-<slug>" > "/dev/$(ps -o tty= -p $PPID | tr -d ' ')" 2>/dev/null || true
 ```
 
-This writes an OSC 0 title to the terminal the CLI is attached to. Devin CLI only sets a static `devin: <repo>` title at startup, so without this every tab looks identical. Requires `"terminal.integrated.tabs.title": "${sequence}"` in the editor's settings (already set for Devin Desktop); in other terminals it either works or is silently ignored.
+This writes an OSC 0 title to the terminal the CLI is attached to. Without it every tab shows the static `devin: <repo>` title. In terminals that ignore OSC 0 it is silently ignored.
 
-The tab label is separate from the **session** title shown by `devin ls` and `/resume`. The orchestrator can't set that one — slash commands are user-only. Include this line in the Step 1 gate message so the user can paste it:
+The tab label is separate from the session title shown by `devin ls` and `/resume`, which the orchestrator cannot set. Include this line in the Step 1 gate message so the user can paste it:
 
 ```
 /title <ID>-<slug>
@@ -44,13 +44,13 @@ git fetch origin main
 git branch -f main origin/main
 ```
 
-If that fails (main is checked out), fall back to:
+If that fails because main is checked out:
 
 ```bash
 git checkout main && git pull origin main --ff-only
 ```
 
-5. Create worktree:
+5. Create worktree (all flows except exploration):
 
 ```bash
 mkdir -p ../uflow-wt
@@ -59,192 +59,92 @@ BRANCH_PREFIX="<type>"   # feature | fix | refactor | cr | hotfix
 git worktree add "../uflow-wt/${SESSION_SLUG}" -b "${BRANCH_PREFIX}/${SESSION_SLUG}" main
 ```
 
-6. Create tracking file at `agent-output/requests/<ID>-<slug>.md` using [request-template.md](request-template.md).
+6. Call `request_scope` with `scope: write` on the absolute worktree path before any dispatch, so workers can edit code. Skip it for exploration, which has no worktree.
 
-The tracking file lives in the canonical repo. All code changes happen in the worktree.
+   The canonical repo needs no grant. It is the workspace root, so writes beneath it, including the tracking file under `agent-output/`, are allowed by default; the denial boundary sits one level up at `/Users/NARAFIQ/Projects/`. Request 284 probed this with the skill both inactive and active and got the same result each time.
+
+   Reading a denial: every worker's first action is a tracking-file write, and both profiles instruct it to stop if that write is denied. A background worker missing a scope reports `... was denied because this agent is running in the background, where tools that would require approval are automatically denied` and stays alive to tell you. That is the signature that means check the scope grants. It is NOT `Tool was rejected`, which means a deny rule blocked the tool: that kills the worker outright with no report, and no scope grant will fix it.
+
+   Two gotchas:
+   - Request one recursive grant for the `uflow-wt` parent, not a narrow per-run path. Narrow grants re-requested every run pile up as dead entries in the user's permission config; that pattern left ~63 stale `Write(~/Projects/uflow-wt/<slug>)` entries.
+   - A mid-session `request_scope` does take effect, grants recursively, and reaches workers dispatched after the call. Permission config edits also take effect mid-session. If a grant reports "Scope granted" and the write is still refused, stop looking for a scope gap: a deny rule is blocking the tool, and a deny always beats an allow.
+
+7. Seed the tracking file via `exec` (see rule 6): `cp .devin/skills/orchestrator/request-template.md agent-output/requests/<ID>-<slug>.md`. Workers fill its sections during the run, per their briefs. The file lives in the canonical repo; all code changes happen in the worktree.
 
 ## Step 2: Classify
 
-| Type               | Signal                                    | Branch prefix |
-| ------------------ | ----------------------------------------- | ------------- |
-| **feature**        | New capability, "I want...", "add..."     | `feature/`    |
-| **bug**            | Something broken, error, regression       | `fix/`        |
-| **refactor**       | Code quality, "clean up", restructure     | `refactor/`   |
-| **change-request** | Modify existing behavior, "change X to Y" | `cr/`         |
-| **hotfix**         | Urgent production issue, "prod is down"   | `hotfix/`     |
-| **exploration**    | "How does X work?", investigate, research | (no worktree) |
+| Type               | Signal                                    | Branch prefix | Flow file                                            |
+| ------------------ | ----------------------------------------- | ------------- | ---------------------------------------------------- |
+| **feature**        | New capability, "I want...", "add..."     | `feature/`    | `.devin/skills/orchestrator/flows/feature.md`        |
+| **bug**            | Something broken, error, regression       | `fix/`        | `.devin/skills/orchestrator/flows/bug.md`            |
+| **refactor**       | Code quality, "clean up", restructure     | `refactor/`   | `.devin/skills/orchestrator/flows/refactor.md`       |
+| **change-request** | Modify existing behavior, "change X to Y" | `cr/`         | `.devin/skills/orchestrator/flows/change-request.md` |
+| **hotfix**         | Urgent production issue, "prod is down"   | `hotfix/`     | `.devin/skills/orchestrator/flows/hotfix.md`         |
+| **exploration**    | "How does X work?", investigate, research | (no worktree) | `.devin/skills/orchestrator/flows/exploration.md`    |
 
-If ambiguous, ask the user with `ask_user_question`. Don't guess.
+Classify from the user's words alone; if that is not enough, ask with `ask_user_question`. Do not read code to classify. Once classified, read that one flow file and follow its phase table; the other five do not apply to this run.
 
 ## Step 3: Dispatch
 
-Based on the type, dispatch subagents in sequence. Between every phase, gate with `ask_user_question`: show what was done, what's next.
+Run the phases in the flow file in order. Between phases, gate with `ask_user_question`: what was done, what is next.
 
----
+These hold for every flow:
 
-### Feature
+- The first dispatched worker writes `## Original request` and `## Classification` into the tracking file before anything else; both profiles enforce this.
+- Tracking-file updates belong to the worker that ran the phase. The orchestrator only reads it.
+- Judgment phases (Grill, Diagnose, Spec, Tickets, Code Review) run foreground (`is_background: false`); execution phases (Implement, Fix, QA, Research) run background (`is_background: true`). The model is pinned in the worker profile, so there is no cheaper tier to pick.
+- Except in exploration, the last dispatched worker appends a learning entry to `docs/ai/LEARNINGS.md` as part of its brief.
 
-```
-Grill -> Spec -> [Tickets] -> Implement -> Code Review -> QA -> Done
-```
+Every dispatch brief MUST include:
 
-| Phase           | Subagent                                     | Skills                                                 | What it does                                                                                       |
-| --------------- | -------------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| **Grill**       | Foreground (expensive)                       | `grilling`, `domain-modeling`, `prototype` (if needed) | Interviews user, sharpens the idea, updates CONTEXT.md. Returns structured decisions + spec draft. |
-| **Spec**        | (orchestrator writes)                        |                                                        | Write the grilling output to tracking file `## Spec` section. **Gate: user confirms spec.**        |
-| **Tickets**     | (orchestrator writes, only if multi-session) |                                                        | Break spec into vertical slices under `.scratch/<slug>/issues/`. **Gate: user confirms tickets.**  |
-| **Implement**   | Background worker                            | `tdd`, `codebase-design`                               | Red-green-refactor in the worktree. Commits but doesn't push.                                      |
-| **Code Review** | Foreground (expensive)                       | `code-review`                                          | Two-axis review (Standards + Spec). Pin fixed point to branch divergence from main.                |
-| **QA**          | Background worker                            |                                                        | Run full test suite, verify acceptance criteria.                                                   |
-| **Done**        | (orchestrator)                               |                                                        | Update tracking file, capture learning to `docs/ai/LEARNINGS.md`.                                  |
-
-Multi-ticket: each ticket gets its own worktree. Fetch main before each. Work the frontier (tickets whose blockers are done). Use background subagents for independent tickets.
-
----
-
-### Bug
-
-```
-Diagnose -> [Gate: confirm hypotheses] -> Fix -> Code Review -> Done
-```
-
-| Phase           | Subagent               | Skills                   | What it does                                                          |
-| --------------- | ---------------------- | ------------------------ | --------------------------------------------------------------------- |
-| **Diagnose**    | Foreground (expensive) | `diagnosing-bugs`        | Build feedback loop, reproduce, minimize, generate ranked hypotheses. |
-| **Fix**         | Background worker      | `diagnosing-bugs`, `tdd` | Instrument, fix with regression test, cleanup.                        |
-| **Code Review** | Foreground (expensive) | `code-review`            | Two-axis review.                                                      |
-| **Done**        | (orchestrator)         |                          | Update tracking file, capture learning.                               |
-
----
-
-### Refactor
-
-```
-Grill -> Implement -> Code Review -> Done
-```
-
-| Phase           | Subagent               | Skills                        | What it does                                                          |
-| --------------- | ---------------------- | ----------------------------- | --------------------------------------------------------------------- |
-| **Grill**       | Foreground (expensive) | `grilling`, `codebase-design` | Clarify scope, constraints, what must NOT change.                     |
-| **Implement**   | Background worker      | `tdd`                         | Characterization tests first, then refactor, verify tests still pass. |
-| **Code Review** | Foreground (expensive) | `code-review`                 | Review for behavior preservation, no scope creep.                     |
-| **Done**        | (orchestrator)         |                               | Update tracking file, capture learning.                               |
-
----
-
-### Change request
-
-```
-Grill -> Implement -> Code Review -> Done
-```
-
-| Phase           | Subagent               | Skills        | What it does                                             |
-| --------------- | ---------------------- | ------------- | -------------------------------------------------------- |
-| **Grill**       | Foreground (expensive) | `grilling`    | Pin down: what changes, what stays, acceptance criteria. |
-| **Implement**   | Background worker      | `tdd`         | Update existing tests, write new edge-case tests.        |
-| **Code Review** | Foreground (expensive) | `code-review` | Two-axis review.                                         |
-| **Done**        | (orchestrator)         |               | Update tracking file, capture learning.                  |
-
----
-
-### Hotfix
-
-```
-Fix -> Done
-```
-
-| Phase    | Subagent          | Skills                   | What it does                                                        |
-| -------- | ----------------- | ------------------------ | ------------------------------------------------------------------- |
-| **Fix**  | Background worker | `diagnosing-bugs`, `tdd` | Reproduce, regression test first, minimal fix, run test suite.      |
-| **Done** | (orchestrator)    |                          | Update tracking file, capture learning. Push/deploy is user's call. |
-
----
-
-### Exploration
-
-```
-Research -> Report -> Done
-```
-
-No worktree needed.
-
-| Phase        | Subagent          | Skills     | What it does                                                             |
-| ------------ | ----------------- | ---------- | ------------------------------------------------------------------------ |
-| **Research** | Background worker | `research` | Investigate against primary sources, write findings to Markdown in repo. |
-| **Report**   | (orchestrator)    |            | Present findings to user.                                                |
-| **Done**     | (orchestrator)    |            | If actionable work surfaces, ask user to start a new request.            |
-
----
-
-## Dispatching subagents
-
-Every subagent prompt MUST include:
-
-- Worktree absolute path
+- Worktree absolute path (omit for exploration)
 - Branch name
+- The user's verbatim request
+- The classification (type, route, confidence)
 - Task description
-- Relevant context (spec, decisions, diagnosis from tracking file)
+- Relevant context from the tracking file (spec, decisions, diagnosis)
 - Which skills to invoke
-- Instruction to commit when done (not push)
+- Commit when done, do not push
+- Which tracking-file section to update before reporting
 
 Example:
 
 ```
 run_subagent(
   title: "Worker: 221-food-404-regression",
-  profile: "subagent_general",
+  profile: "implementer",
   is_background: true,
   task: """
     Worktree: /absolute/path/to/uflow-wt/221-food-404-regression/
     Branch: fix/221-food-404-regression
 
     All file edits, test runs, and builds MUST use the worktree path above.
-    Do NOT edit files in the canonical repo.
+    Do NOT edit files in the canonical repo, except the tracking file
+    agent-output/requests/221-food-404-regression.md.
+
+    Original request: <user's verbatim request>
+    Classification: bug / Diagnose->Fix->Code Review / high confidence
 
     Task: <description>
     Context: <from tracking file>
 
     Invoke the `tdd` skill. Commit when done, do not push.
 
+    Before reporting, update `## Implementation notes` in the tracking file
+    with branch, commit SHA, files changed, tests added, test output.
+
     Report back: files changed, tests added, test results, decisions made.
   """
 )
 ```
 
-After a subagent completes: read the report, update the tracking file, proceed to the next phase.
+After a subagent completes: read its report, verify it updated the tracking file, proceed to the next phase.
 
-Use `is_background: true` for execution phases (Implement, Fix, QA, Research).
-Use `is_background: false` for judgment phases (Grill, Diagnose, Code Review).
-
-## Cost Tiers
-
-Dispatch subagents at the cheapest tier that matches the phase's judgment requirements.
-
-| Tier           | When to use                                                    | Subagent type                                         |
-| -------------- | -------------------------------------------------------------- | ----------------------------------------------------- |
-| **Foreground** | Phases requiring reasoning, user interaction, or quality gates | `is_background: false`                                |
-| **Background** | Execution phases following an existing spec                    | `is_background: true`, then `read_subagent` when done |
-| **None**       | Orchestrator-only work (spec writing, tracking, tickets)       | No subagent                                           |
-
-### Phase-to-tier mapping
-
-| Phase          | Tier       | Rationale                                 |
-| -------------- | ---------- | ----------------------------------------- |
-| Grill          | Foreground | Needs user interaction, high judgment     |
-| Diagnose       | Foreground | Needs reasoning, hypothesis generation    |
-| Code Review    | Foreground | Quality gate, needs deep analysis         |
-| Implement      | Background | Follows spec, execution-heavy             |
-| Fix            | Background | Follows diagnosis, execution-heavy        |
-| QA             | Background | Runs test suite, verification             |
-| Research       | Background | Investigation, no user interaction needed |
-| Spec writing   | None       | Orchestrator writes directly              |
-| Ticket writing | None       | Orchestrator writes directly              |
-| Done           | None       | Orchestrator updates tracking file        |
-| Report         | None       | Orchestrator presents findings directly   |
+If a background worker reports a denied tool, resume it in the foreground; resumed subagents can prompt for permissions. Do not do the work yourself.
 
 ## Push and PR
 
-After all phases pass, the orchestrator pushes and creates the PR:
+After all phases pass, push and create the PR:
 
 ```bash
 cd ../uflow-wt/<ID>-<slug> && git push -u origin <branch>
@@ -257,32 +157,16 @@ git worktree remove "../uflow-wt/<ID>-<slug>"
 
 ## Rules
 
-1. **Fetch before branching.** Always `git fetch origin main && git branch -f main origin/main` before creating a worktree.
-2. **Worktree-first.** Create worktree and branch before any code changes.
-3. **Name the tab.** Set the terminal tab to `<ID>-<slug>` in Step 1, and again on resume.
-4. **Never invoke skills directly.** Dispatch a subagent that invokes the skill.
-5. **Never write code.** No `edit`, `write`, or `exec` on worktree files (except `git push`, `gh pr create`, and the Step 1 tab rename).
-6. **Never skip TDD.** Every implementation subagent invokes the `tdd` skill.
-7. **Gate between phases.** `ask_user_question` with summary of what was done and what's next.
-8. **Track everything.** Every phase outcome goes into the tracking file.
-9. **One request at a time.** New work goes under `## Follow-up requests` in the tracking file.
-10. **Verify DB schema from Supabase, not local files.** When touching data validation, enums, or constraints.
-11. **Capture learnings.** After review and test, append to `docs/ai/LEARNINGS.md`.
+1. **Fetch before branching.** `git fetch origin main && git branch -f main origin/main` before creating any worktree.
+2. **Worktree-first.** Worktree and branch exist before any code changes.
+3. **Name the tab.** Set the terminal tab to `<ID>-<slug>` in Step 1 and again on resume.
+4. **Grant the worktree write scope before dispatch.** The worktree path only. The canonical repo is the workspace root and needs no grant; see Step 1.6.
+5. **Skill work runs inside subagents.** Name the skills in the dispatch brief; the orchestrator invokes none itself.
+6. **Orchestrator writes are a fixed whitelist.** This fence is prose-only and lives here by necessity, not by preference. It cannot go in frontmatter: a skill-level `permissions.deny` propagates into every dispatched subagent and kills it instantly with `Tool was rejected` and no report. Via `exec` the allowed writes are `git` commands, `gh pr create --body`, the `.next-id` increment, the tracking-file `cp`, and the tab-rename `printf`. Nothing else: no `sed -i`, `tee`, or `cat >` heredocs into repo files.
+7. **Investigation is dispatched.** Root-causing and locating code belong to subagents. The orchestrator reads under `agent-output/` (that is how it picks up state on resume) and nothing else: no `read`, `grep`, `glob`, or `exec` (`cat`, `rg`, `ls`) on source files in the worktree or the canonical repo. In one session the router told the user the root cause itself ("`PageTransition` is keyed by `pathname`, line 152 of `RootClientLayout.tsx`, forcing full unmount/remount") and then dispatched a subagent to find what it had already found.
+8. **Every implementation brief invokes `tdd`.**
+9. **Gate between phases.** `ask_user_question` with what was done and what is next.
+10. **Tracking tells the truth.** Mark a phase Done only if a subagent ran it, and only phases that exist in the flow. `agent-output/requests/268-remove-create-chat-hint.md` logged "Implement, Done, commit dc1bf61f" and "Code review, Done" with zero dispatches and an invented "Locate the hint" phase. Ask the user before skipping a phase.
+11. **One request at a time.** New work goes under `## Follow-up requests` in the tracking file.
 
-## The orchestrator does NOT
-
-- Invoke skills
-- Write code, edit files in worktrees, run tests
-- Investigate bugs or build hypotheses
-- Run grilling sessions
-- Make design decisions (that's the user's job)
-
-## The orchestrator DOES
-
-- Allocate IDs
-- Rename the terminal tab to `<ID>-<slug>`
-- Fetch main, create worktrees
-- Write tracking files and ticket files
-- Dispatch subagents
-- Present subagent results at gates
-- Push branches and create PRs
+Resolved (2026-10-03, request 284): a skill-level `permissions.deny` DOES propagate into dispatched subagents and is fatal to them. Five dispatches before invoking this skill all survived; both `subagent_general` dispatches after invoking it died with `Tool was rejected` and no report; a read-only `subagent_explore` dispatch still succeeded, ruling out a broken harness. The frontmatter block is therefore deleted and rule 6 carries the fence in prose. The same probes showed `request_scope` works, recursively, including for workers dispatched after the call. See `docs/ai/LEARNINGS.md` entry 284b. Verified 2026-10-04 by re-running the discriminating probe with the block removed: a background `subagent_general` dispatched after invoking this skill survived and wrote successfully, and the router kept its own `edit` and `write` tools.
