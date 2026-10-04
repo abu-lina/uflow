@@ -72,6 +72,10 @@ _Filled after test suite run._
 - Coverage delta:
 - Regressions:
 
+## PR body
+
+_Drafted by the last worker, following the `pr` skill. The orchestrator passes this through to `gh pr create --body` verbatim._
+
 ## Follow-up requests
 
 _New work discovered during this request. Do not act on these; finish the current request first._
