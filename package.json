@@ -105,7 +105,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@eslint/eslintrc": "^3.3.7",
-    "@eslint/js": "^9.25.1",
+    "@eslint/js": "^10.0.1",
     "@next/bundle-analyzer": "^16.3.7",
     "@playwright/test": "^1.63.0",
     "@serwist/cli": "9.5.12",
