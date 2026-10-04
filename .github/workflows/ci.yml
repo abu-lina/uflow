@@ -45,7 +45,7 @@ jobs:
         run: npm ci --prefer-offline
 
       - name: Run ESLint
-        run: npm run lint
+        run: npm run lint -- --max-warnings 131
 
       - name: Run TypeScript type check
         run: npm run type-check
