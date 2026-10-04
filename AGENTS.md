@@ -41,7 +41,7 @@ Add this step to the Analyst phase when the bug touches data validation, enums, 
 
 ## Writing style (non-code)
 
-Applies to chat replies, docs, issues, PR descriptions, Notion notes. If it conflicts with a task requirement, follow the task requirement.
+Applies to chat replies, docs, issues, PR descriptions. If it conflicts with a task requirement, follow the task requirement.
 
 - Write like a human. Skip marketing fluff and corporate jargon.
 - Be direct. Don't soften with "I think," "maybe," or "could."
