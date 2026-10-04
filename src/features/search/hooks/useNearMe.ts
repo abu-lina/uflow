@@ -161,10 +161,7 @@ export function useNearMe({
     };
   }, [isActive, coords?.lat, coords?.lon, radiusKm, reviewStatus, fetchKey, urlSync]);
 
-  const results = useMemo(
-    () => filterOpenNow(rawResults, openNow),
-    [rawResults, openNow],
-  );
+  const results = useMemo(() => filterOpenNow(rawResults, openNow), [rawResults, openNow]);
 
   // Sync state to URL when urlSync is enabled. Guard against running on the
   // very first render when urlSync toggles from false to true to avoid
@@ -178,8 +175,17 @@ export function useNearMe({
     prevUrlSyncRef.current = urlSync;
 
     syncNearMeUrl(router, pathname, searchParams, isActive, coords, radiusKm, openNow);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlSync, isActive, coords?.lat, coords?.lon, radiusKm, openNow, router, pathname, searchParams]);
+  }, [
+    urlSync,
+    isActive,
+    coords?.lat,
+    coords?.lon,
+    radiusKm,
+    openNow,
+    router,
+    pathname,
+    searchParams,
+  ]);
 
   const isLoading = isActive && (!hasFetched || isFetching);
 
