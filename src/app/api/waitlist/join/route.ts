@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     const validation = waitlistSchema.safeParse(body);
 
     if (!validation.success) {
-      console.log('[Waitlist] Validation failed:', validation.error.errors);
+      console.log('[Waitlist] Validation failed:', validation.error.issues);
       return NextResponse.json<WaitlistResponse>(
         {
           data: null,

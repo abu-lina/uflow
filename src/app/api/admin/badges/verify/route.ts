@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { verifyBadge } from '@/services/badges';
+import { toValidationDetails } from '@/lib/validations/errors';
 import { z } from 'zod';
 
 // Request validation schema
@@ -18,13 +19,13 @@ export async function POST(request: NextRequest) {
   try {
     // 1. Authentication check
     const supabase = createSupabaseServerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Please log in' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized - Please log in' }, { status: 401 });
     }
 
     // 2. Admin authorization check
@@ -35,19 +36,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError || !userData) {
-      return NextResponse.json(
-        { error: 'Failed to verify user permissions' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to verify user permissions' }, { status: 500 });
     }
 
     const isAdmin = userData.role === 'admin';
 
     if (!isAdmin) {
-      return NextResponse.json(
-        { error: 'Forbidden - Admin access required' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
     // 3. Parse and validate request body
@@ -56,11 +51,11 @@ export async function POST(request: NextRequest) {
 
     if (!validation.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Validation failed',
-          details: validation.error.errors,
+          details: toValidationDetails(validation.error),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -83,25 +78,17 @@ export async function POST(request: NextRequest) {
       },
       error: null,
     });
-
   } catch (error) {
     console.error('[ADMIN BADGE VERIFY API] Error:', error);
-    
+
     // Handle specific error cases
     if (error instanceof Error) {
       // Badge not found
       if (error.message.includes('not found')) {
-        return NextResponse.json(
-          { error: 'Badge not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: 'Badge not found' }, { status: 404 });
       }
     }
 
-    return NextResponse.json(
-      { error: 'Failed to verify badge' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to verify badge' }, { status: 500 });
   }
 }
-
