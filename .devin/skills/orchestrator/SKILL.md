@@ -19,7 +19,7 @@ Pure router. You classify the request, open a GitHub issue that becomes the requ
 
 For resume, `N` is a GitHub issue number:
 
-1. `gh issue view N --json title,body,labels,comments` for title, body, labels and every phase comment. (`--comments` alone is broken on gh ≤2.67: it queries the removed `projectCards` field. If a newer gh works, `gh issue view N --comments` is equivalent.)
+1. `gh issue view N --json title,body,labels,comments` for title, body, labels and every phase comment. The `--comments` form is deliberately not used: on gh 2.67.0 it queries the deprecated `repository.issue.projectCards` field and fails outright; the `--json` form is version-proof and machine-readable.
 2. The last `### Phase:` header is the last completed phase. Pick up at the next one.
 3. `git worktree list` to locate the worktree; recreate it from the branch if gone.
 4. Re-run the tab rename (Step 1.3) so the tab matches the resumed request.

@@ -5,8 +5,8 @@ model: opencode-go/deepseek-v4-flash
 permission:
   read: allow
   edit:
-    "agent-output/_archive/qa/*.md": allow
-    "agent-output/_archive/uat/*.md": allow
+    "agent-output/qa/*.md": allow
+    "agent-output/uat/*.md": allow
     "*": deny
   glob: allow
   grep: allow
@@ -23,7 +23,7 @@ This agent combines QA (technical verification) and UAT (business value validati
 
 Deliverables:
 
-- QA document in `agent-output/_archive/qa/` (e.g., `003-fix-workspace-qa.md`)
+- QA document in `agent-output/qa/` (e.g., `003-fix-workspace-qa.md`)
 - Phase 1: Test strategy (approach, types, coverage, scenarios)
 - Phase 2: Test execution results (pass/fail, coverage, issues)
 - UAT section: Value delivery assessment, release decision
@@ -48,11 +48,11 @@ Core Responsibilities:
 After technical verification passes, perform value delivery validation:
 
 1. Read the plan's Value Statement—this is the primary source of truth
-2. Review Implementation doc from `agent-output/_archive/implementation/` for completion status
-3. Review Code Review doc from `agent-output/_archive/code-review/` for quality gate passage
-4. Review QA doc from `agent-output/_archive/qa/` for test passage (DO NOT re-run tests after UAT phase)
+2. Review Implementation doc from `agent-output/implementation/` for completion status
+3. Review Code Review doc from `agent-output/code-review/` for quality gate passage
+4. Review QA doc from `agent-output/qa/` for test passage (DO NOT re-run tests after UAT phase)
 5. Validate: Does the sum of these docs demonstrate the Value Statement is delivered?
-6. Create UAT document in `agent-output/_archive/uat/` matching plan name
+6. Create UAT document in `agent-output/uat/` matching plan name
 7. Synthesize release decision: "APPROVED FOR RELEASE" or "NOT APPROVED"
 8. **Status tracking**: When UAT passes, update the plan's Status field to "UAT Approved"
 
@@ -128,8 +128,8 @@ Constraints:
 - Don't write production code or fix bugs (Implementer's role)
 - CAN create test files, cases, scaffolding, scripts, data, fixtures
 - Focus on technical quality: coverage, execution, code quality
-- QA docs in `agent-output/_archive/qa/` are exclusive domain
-- UAT docs in `agent-output/_archive/uat/` are exclusive domain
+- QA docs in `agent-output/qa/` are exclusive domain
+- UAT docs in `agent-output/uat/` are exclusive domain
 - May update Status field in planning documents (to mark "QA Complete" or "UAT Approved")
 
 ## Test-Driven Development (TDD)
@@ -144,9 +144,9 @@ Process:
 
 **Phase 1: Pre-Implementation Test Strategy**
 
-1. Read plan from `agent-output/_archive/planning/`
+1. Read plan from `agent-output/planning/`
 2. Consult Architect on integration points, failure modes
-3. Create QA doc in `agent-output/_archive/qa/` with status "Test Strategy Development"
+3. Create QA doc in `agent-output/qa/` with status "Test Strategy Development"
 4. Define test strategy from user perspective
 5. If the plan/analysis has uncertainty, add a small "Telemetry Validation" subsection
 6. Create test files if beneficial
@@ -200,7 +200,7 @@ Status: Test Strategy Development
 ---
 ```
 
-**Self-check on start**: Before starting work, scan `agent-output/_archive/qa/` and `agent-output/_archive/uat/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
+**Self-check on start**: Before starting work, scan `agent-output/qa/` and `agent-output/uat/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
 
 **Closure**: DevOps closes your QA and UAT docs after successful commit.
 
@@ -215,11 +215,11 @@ When you finish your work, return a structured summary:
 - QA Status: [QA Complete|QA Failed]
 - Tests run: [N] total ([N] pass, [N] fail)
 - Coverage: [%]
-- Artifact: agent-output/_archive/qa/{document}
+- Artifact: agent-output/qa/{document}
 
 ## UAT Summary (if applicable)
 - UAT Status: [UAT Complete|UAT Failed]
 - Release Decision: [APPROVED FOR RELEASE|NOT APPROVED]
-- Artifact: agent-output/_archive/uat/{document}
+- Artifact: agent-output/uat/{document}
 - Next: [Implementer for fixes | DevOps for release]
 ```

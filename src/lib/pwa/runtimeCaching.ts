@@ -46,7 +46,7 @@ import {
  * on none of the lists ETP classifies by, and a Playwright Firefox 155
  * reproduction returned 200 with ETP both on and off. The *rule* below still
  * holds and is what is guarded; only the stated mechanism was folklore. See
- * agent-output/_archive/research/282-defaultcache-iconify.md.)
+ * agent-output/research/282-defaultcache-iconify.md.)
  *
  * The property the app depends on is narrow and testable: when no route
  * matches, Serwist never calls `event.respondWith()` at all
@@ -54,9 +54,9 @@ import {
  * requests natively. `scripts/verify-sw-no-cross-origin-routes.mjs` asserts
  * exactly that against the built `public/sw.js` on every build.
  *
- * See: agent-output/_archive/analysis/closed/046-iconify-pwa-analysis.md
- *      agent-output/_archive/retrospectives/closed/064-iconify-sw-cors-fix-retrospective.md
- *      agent-output/_archive/research/282-defaultcache-iconify.md
+ * See: agent-output/analysis/closed/046-iconify-pwa-analysis.md
+ *      agent-output/retrospectives/closed/064-iconify-sw-cors-fix-retrospective.md
+ *      agent-output/research/282-defaultcache-iconify.md
  *
  * Both RegExp matchers stay `^`-anchored on purpose. `RegExpRoute` only accepts
  * a cross-origin match when it starts at index 0, so dropping the `^` would

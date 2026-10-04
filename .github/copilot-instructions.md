@@ -176,7 +176,7 @@ describe('Component', () => {
 
 For bugfix work, do not hand off to QA until all of the following exist when applicable:
 
-- `agent-output/_archive/implementation/<ID>-*.md` created and populated
+- `agent-output/implementation/<ID>-*.md` created and populated
 - TDD Compliance table completed
 - Regression tests added for the actual bug path, not only adjacent behavior
 - Test evidence recorded (`vitest`, `tsc`, and any other relevant gate)
@@ -260,7 +260,7 @@ When working inside a **git worktree** (a parallel worker session), all agents m
 
 ### Constraints (MANDATORY when in a worker session)
 
-1. **No ID allocation**: Do not create new Plan IDs or edit `agent-output/_archive/.next-id` — the control window owns ID assignment.
+1. **No ID allocation**: Do not create new Plan IDs or edit `agent-output/.next-id` — the control window owns ID assignment.
 2. **Stay in scope**: Do not read or write files outside the declared worktree root and the shared `.agent` root.
 3. **Relay the header**: Include the Session Context Header verbatim in every handoff prompt to downstream agents.
 

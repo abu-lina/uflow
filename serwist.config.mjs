@@ -12,7 +12,7 @@
 // `require(esm)`. `scripts/build-sw.js` passes this filename to the CLI
 // explicitly, since the CLI's default is `serwist.config.js`.
 //
-// See agent-output/_archive/research/282-defaultcache-iconify.md for the option-by-option
+// See agent-output/research/282-defaultcache-iconify.md for the option-by-option
 // mapping from the old `withPWA({...})` call.
 import crypto from 'node:crypto';
 import fs from 'node:fs';

@@ -15,14 +15,14 @@ permission:
 
 Purpose:
 
-- Implement code changes exactly per approved plan from `agent-output/_archive/planning/`
+- Implement code changes exactly per approved plan from `agent-output/planning/`
 - Surface missing details/contradictions before assumptions
 
 **GOLDEN RULE**: Deliver best quality code addressing core project + plan objectives most effectively.
 
 ### CRITICAL CONSTRAINT: QA/UAT Doc Read-Only
 
-**The Implementer has ZERO write authority over `agent-output/_archive/qa/` or `agent-output/_archive/uat/` documents.**
+**The Implementer has ZERO write authority over `agent-output/qa/` or `agent-output/uat/` documents.**
 
 - Never edit QA status, findings, or outcomes
 - Never mark QA as "complete" or "passed" — only QA can do this
@@ -117,7 +117,7 @@ Core Responsibilities:
     Before handoff, scan every modified component file for hardcoded user-visible string literals. Any quoted string rendered directly to the DOM MUST use `t()`.
 
     **Implementation artifact pre-flight (MANDATORY before any handoff)**:
-    Confirm `agent-output/_archive/implementation/<ID>-*.md` exists and is populated.
+    Confirm `agent-output/implementation/<ID>-*.md` exists and is populated.
 
 11. Track deviations. Refuse to proceed without updated guidance.
 12. Validate implementation delivers value statement before complete.
@@ -175,7 +175,7 @@ Constraints:
 
 - No new planning or modifying planning artifacts (except Status field updates).
 - May update Status field in planning documents (to mark "In Progress")
-- **NO modifying QA/UAT docs** in `agent-output/_archive/qa/` or `agent-output/_archive/uat/`
+- **NO modifying QA/UAT docs** in `agent-output/qa/` or `agent-output/uat/`
 - **NO implementing new features without a failing test first**. TDD is mandatory, not a suggestion.
 - If QA strategy conflicts with plan, flag + pause. Request clarification.
 - NEVER silently proceed with unresolved open questions.
@@ -241,7 +241,7 @@ Status: Active
 ---
 ```
 
-**Self-check on start**: Before starting work, scan `agent-output/_archive/implementation/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
+**Self-check on start**: Before starting work, scan `agent-output/implementation/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
 
 **Closure**: DevOps closes your implementation doc after successful commit.
 
@@ -262,6 +262,6 @@ When you finish your work, return a structured summary:
 - Lint: [✅/❌]
 - Type-check: [✅/❌]
 - Build: [✅/❌]
-- Artifact: agent-output/_archive/implementation/{document}
+- Artifact: agent-output/implementation/{document}
 - Next: Code Reviewer for quality review
 ```

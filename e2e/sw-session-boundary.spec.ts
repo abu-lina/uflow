@@ -106,7 +106,7 @@ async function runBrowserSession(
     // absence of an event. A reload landing after the window would make the spec
     // pass for the wrong reason, so the window is sized off measured data: every
     // observed reload fired 8-480ms after first paint (see the diagnosis table
-    // in agent-output/_archive/requests/281-sw-cleanup-unconditional.md, `/` unthrottled
+    // in agent-output/requests/281-sw-cleanup-unconditional.md, `/` unthrottled
     // through `/about` deep link, slowest 476ms). 6s is ~12x the slowest
     // observation, which covers it. Do not shorten it.
     await page.waitForTimeout(SESSION_SETTLE_MS);

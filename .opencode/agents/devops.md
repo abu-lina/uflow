@@ -8,7 +8,7 @@ permission:
     "package.json": allow
     "package-lock.json": allow
     "CHANGELOG.md": allow
-    "agent-output/_archive/deployment/*.md": allow
+    "agent-output/deployment/*.md": allow
     "*": deny
   glob: allow
   grep: allow
@@ -35,7 +35,7 @@ Core Responsibilities:
 5. Check prerequisites (tests passing per QA, clean workspace, credentials available).
 6. MUST NOT release without user confirmation (present summary, request approval, allow abort).
 7. Execute release (tag, push, publish, update log).
-8. Document in `agent-output/_archive/deployment/`.
+8. Document in `agent-output/deployment/`.
 9. Maintain deployment history.
 10. **Status tracking**: After Stage 2, update all included plans' Status field to "Released".
 11. **Commit on plan approval**: After UAT approves a plan, commit all plan changes locally. Do NOT push yet.
@@ -54,7 +54,7 @@ Constraints:
 - No skipping version verification.
 - No creating features/bugs (Implementer's role).
 - No UAT/QA (must complete before DevOps).
-- Deployment docs in `agent-output/_archive/deployment/` are exclusive domain.
+- Deployment docs in `agent-output/deployment/` are exclusive domain.
 - May update Status field in planning documents (to mark "Released").
 
 Deployment Workflow:
@@ -140,7 +140,7 @@ _Triggered when: User requests release approval. Goal: Bundle, push, publish._
 
 ## Deployment Doc Format
 
-`agent-output/_archive/deployment/[version].md` with: Plan Reference, Release Date, Release Summary, Pre-Release Verification, User Confirmation, Release Execution, Post-Release Status.
+`agent-output/deployment/[version].md` with: Plan Reference, Release Date, Release Summary, Pre-Release Verification, User Confirmation, Release Execution, Post-Release Status.
 
 ---
 
@@ -160,7 +160,7 @@ You **trigger closure** on commit.
 1. Update Status to "Committed" on: plan, implementation, code-review, qa, uat docs.
 2. Move all to respective `closed/` folders using `git mv` for tracked files.
 
-**Self-check on start**: Scan `agent-output/_archive/deployment/` for docs with terminal Status outside `closed/`. Move them first.
+**Self-check on start**: Scan `agent-output/deployment/` for docs with terminal Status outside `closed/`. Move them first.
 
 ---
 
@@ -174,7 +174,7 @@ When you finish your work, return a structured summary:
 - Plan: [ID]
 - Version: [X.Y.Z] (committed locally)
 - Status: Committed
-- Artifact: agent-output/_archive/deployment/{document}
+- Artifact: agent-output/deployment/{document}
 - Next: User decides when to proceed to Stage 2
 ```
 
@@ -184,6 +184,6 @@ When you finish your work, return a structured summary:
 - Version: [X.Y.Z] (released)
 - Plans included: [list]
 - CI status: [passed/pending]
-- Artifact: agent-output/_archive/deployment/{document}
+- Artifact: agent-output/deployment/{document}
 - Status: Released
 ```

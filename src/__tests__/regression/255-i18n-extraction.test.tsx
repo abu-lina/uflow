@@ -8,7 +8,7 @@
  * - No hex colour literals in the touched pages.
  * - New keys exist in de/en; ar/tr/ur/ps carry the marked INTERIM German
  *   source pending human translation (see
- *   agent-output/_archive/requests/255-i18n-human-review.md).
+ *   agent-output/requests/255-i18n-human-review.md).
  */
 import { describe, it, expect } from 'vitest';
 import fs from 'fs';

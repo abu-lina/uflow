@@ -2,7 +2,7 @@
  * Issue 268 — the /create chooser drops the "Chat Assistant" hint.
  *
  * The hint linked to '/', a dead end (QA finding F10 in
- * agent-output/_archive/qa/251-frontend-review.md). The chat-assistant creation path
+ * agent-output/qa/251-frontend-review.md). The chat-assistant creation path
  * is not a real entry point, so the hint and its locale keys come out
  * entirely rather than being re-pointed.
  */

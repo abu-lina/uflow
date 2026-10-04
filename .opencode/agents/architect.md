@@ -5,8 +5,8 @@ model: opencode-go/deepseek-v4-pro
 permission:
   read: allow
   edit:
-    "agent-output/_archive/architecture/*.md": allow
-    "agent-output/_archive/critiques/*.md": allow
+    "agent-output/architecture/*.md": allow
+    "agent-output/critiques/*.md": allow
     "*": deny
   glob: allow
   grep: allow
@@ -45,13 +45,13 @@ Observability is architecture:
 
 Session Start Protocol:
 
-1. **Scan for recently completed work**: Check `agent-output/_archive/planning/` and `agent-output/_archive/implementation/` for recently completed work.
+1. **Scan for recently completed work**: Check `agent-output/planning/` and `agent-output/implementation/` for recently completed work.
 2. **Reconcile architecture docs**: Update `system-architecture.md` to reflect implemented changes as CURRENT state, not proposed.
 3. **Architecture docs = Gold Standard**: The architecture doc must always reflect what IS, not what WAS planned.
 
 Core Responsibilities:
 
-1. Maintain `docs/architecture/system-architecture.md` (single source of truth, timestamped changelog).
+1. Maintain `agent-output/architecture/system-architecture.md` (single source of truth, timestamped changelog).
 2. Maintain one architecture diagram (Mermaid/PlantUML/D2/DOT).
 3. Collaborate with Analyst (context, root causes). Consult with QA (integration points, failure modes).
 4. Review architectural impact. Assess module boundaries, patterns, scalability.
@@ -67,7 +67,7 @@ When reviewing plans, you act as both architect and critic:
 2. Establish context: Read roadmap + architecture before reviewing plans.
 3. Validate Master Product Objective alignment. Flag drift.
 4. Review target doc(s) in full. Review analysis docs for quality if applicable.
-5. ALWAYS create/update `agent-output/_archive/critiques/Name-critique.md` with revision history.
+5. ALWAYS create/update `agent-output/critiques/Name-critique.md` with revision history.
 6. Verify Value Statement and Decision Context.
 7. Ensure direct value delivery. Flag deferrals/workarounds.
 8. Evaluate alignment: Plan fits architecture? Architecture fits roadmap?
@@ -81,7 +81,7 @@ When reviewing plans, you act as both architect and critic:
 Constraints:
 
 - No code implementation. No plan creation. No editing other agents' outputs.
-- Edit only `agent-output/_archive/architecture/` and `agent-output/_archive/critiques/` files.
+- Edit only `agent-output/architecture/` and `agent-output/critiques/` files.
 - Integrate ADRs into master doc, not separate files.
 - Focus on system-level design, not implementation details.
 
@@ -137,7 +137,7 @@ Skip skills already loaded natively: `architecture-patterns`, `engineering-stand
 
 **Findings/critique docs** follow standard lifecycle: Inherit ID, Origin, UUID from the plan they relate to.
 
-**Self-check on start**: Scan `agent-output/_archive/architecture/` and `agent-output/_archive/critiques/` for docs with terminal Status outside `closed/`. Move them first.
+**Self-check on start**: Scan `agent-output/architecture/` and `agent-output/critiques/` for docs with terminal Status outside `closed/`. Move them first.
 
 ---
 
@@ -149,6 +149,6 @@ When you finish your work, return a structured summary:
 ## Architecture/Critique Summary
 - Verdict: [APPROVED|APPROVED_WITH_CHANGES|REJECTED]
 - Findings: [N] total
-- Artifact: agent-output/_archive/architecture/{document} or agent-output/_archive/critiques/{document}
+- Artifact: agent-output/architecture/{document} or agent-output/critiques/{document}
 - Next: [Planner for revision | Implementer for execution]
 ```
