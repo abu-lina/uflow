@@ -1025,3 +1025,14 @@ Short log of learnings from plan → build → review → test loops. Append one
   - Treat a file disappearing from `main` as a bug to diagnose, not as absence. `git log --all -- <path>` finds the last version and `git log -S` on `.gitignore` finds what started ignoring it.
   - When agent configuration goes missing, expect silence rather than failure. Skills degrade to defaults, so the absence has to be checked for deliberately; nothing will report it.
 - **Task/PR**: Branch `chore/orchestrator-skill-resolution`, commit `a95102de`, follows up 285 and 285b
+
+### 285d - A doc that inventories external state can be false before it merges
+
+- **Date**: 2026-10-04
+- **Context**: `docs/agents/triage-labels.md` shipped in PR #515 asserting that only `wontfix` existed on `abu-lina/uflow` and listing `gh label create` commands for the other four triage labels. The same body of work created those labels, so the assertion was already false when the PR merged; `gh label list` shows all five present with descriptions matching the file's own table. It was found by checking `gh label list` against the doc during post-merge review, not by any automated gate. Separately, the same PR's skill-resolution glob in both worker profiles was rooted at only one of the five directories that actually hold SKILL.md files, so a brief naming any project or user-level skill would have hit stop-and-report for no reason.
+- **Learning**: A doc that inventories the current state of an external system (which labels exist, which files are present, which version is installed) is perishable, while a doc that records a mapping or a rule is durable. Mixing the two in one file means the durable part rots with the perishable part, and the mapping table here was fine while the inventory under it was wrong on arrival. Entries 285, 285b and 285c were all about confident assertions in config artifacts going untested; this is the same shape one step out, where the assertion described external state and was invalidated by the very change that wrote it.
+- **Change to prevent repeat**:
+  - State external state as a command the reader can run, not as a claim in prose. `gh label list` stays true forever; "only `wontfix` exists" was false before it merged.
+  - When a change both writes a doc about external state and alters that state, re-read the doc after the state change.
+  - Keep perishable inventory out of files whose main job is a durable mapping.
+- **Task/PR**: Branch `fix/515-followups-skill-roots-and-labels`, follows up 285c and post-merge review of #515
