@@ -36,7 +36,7 @@ export function randomSleep(min = 1, max = 3) {
 export function authenticatedRequest(method, url, token, body = null, params = {}) {
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
   };
 
   const options = {
@@ -153,7 +153,7 @@ export function getProviders(params = {}) {
   }
   const queryString = queryParts.join('&');
   const url = `${BASE_URL}/providers${queryString ? `?${queryString}` : ''}`;
-  
+
   const response = http.get(url, {
     tags: { name: 'get-providers' },
   });
@@ -178,7 +178,7 @@ export function searchProviders(query, params = {}) {
   }
   const queryString = queryParts.join('&');
   const url = `${BASE_URL}/providers${queryString ? `?${queryString}` : ''}`;
-  
+
   const response = http.get(url, {
     tags: { name: 'search-providers' },
   });
@@ -194,7 +194,7 @@ export function searchProviders(query, params = {}) {
  */
 export function getProviderDetails(providerId) {
   const url = `${BASE_URL}/providers/${providerId}`;
-  
+
   const response = http.get(url, {
     tags: { name: 'get-provider-details' },
   });
@@ -218,7 +218,7 @@ export function getPendingProviders(token, params = {}) {
   }
   const queryString = queryParts.join('&');
   const url = `${API_BASE_URL}/admin/pending-providers${queryString ? `?${queryString}` : ''}`;
-  
+
   return authenticatedRequest('GET', url, token, null, {
     tags: { name: 'get-pending-providers' },
   });
@@ -234,28 +234,9 @@ export function reviewProvider(token, providerId, action, comment = '') {
     action, // 'approve' or 'reject'
     comment,
   };
-  
+
   return authenticatedRequest('PATCH', url, token, body, {
     tags: { name: 'review-provider' },
-  });
-}
-
-/**
- * Get Notion epics
- */
-export function getNotionEpics(token, params = {}) {
-  // Build query string manually (k6 doesn't support URLSearchParams)
-  const queryParts = [];
-  for (const key in params) {
-    if (params.hasOwnProperty(key)) {
-      queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`);
-    }
-  }
-  const queryString = queryParts.join('&');
-  const url = `${API_BASE_URL}/notion/get-epics${queryString ? `?${queryString}` : ''}`;
-  
-  return authenticatedRequest('GET', url, token, null, {
-    tags: { name: 'get-notion-epics' },
   });
 }
 
@@ -264,7 +245,7 @@ export function getNotionEpics(token, params = {}) {
  */
 export function exportUserData(token) {
   const url = `${API_BASE_URL}/user/export-data`;
-  
+
   return authenticatedRequest('GET', url, token, null, {
     tags: { name: 'export-user-data' },
   });
@@ -289,7 +270,7 @@ export function checkResponseStructure(response, expectedFields = []) {
   try {
     const data = JSON.parse(response.body);
     return check(data, {
-      'has expected fields': () => expectedFields.every(field => field in data),
+      'has expected fields': () => expectedFields.every((field) => field in data),
     });
   } catch (e) {
     return false;
@@ -303,4 +284,3 @@ export function waitRandom(minSeconds, maxSeconds) {
   const waitTime = Math.random() * (maxSeconds - minSeconds) + minSeconds;
   return waitTime;
 }
-
