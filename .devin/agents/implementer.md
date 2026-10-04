@@ -27,6 +27,17 @@ gh issue comment <N> --body-file <path>
 
 The first line must be `### Phase: <Name> — Done` (or `— Blocked` when the phase could not complete). Everything after that line is the phase content raw, with no outer code fence wrapping the whole body; fenced blocks inside the content are fine. When a skill shows you a template inside a fence, that fence is the skill's own formatting and not part of the template. Never inline a multi-line body with `--body`. Do not write request state to disk; the issue is the state store.
 
+Directly under the header line, open the body with a state block copied from your brief, then the phase content:
+
+```markdown
+- Issue: #N
+- Worktree: <absolute path>
+- Branch: <branch>
+- Flow: <type> / <phase chain>
+```
+
+This block is what lets the orchestrator clear its context at a gate and rebuild the whole run from your comment alone. Omit a line only when the brief gave you no value for it.
+
 Report back to the orchestrator in **25 lines or fewer**, plus the comment URL: files changed, tests added, test results, decisions made, and anything that contradicted the brief. The orchestrator gates on your summary and never reads the full comment.
 
 If a tool call is denied, stop and report the denial, quoting the exact error text. Do not work around it.

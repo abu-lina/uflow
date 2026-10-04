@@ -136,6 +136,16 @@ Run the phases in the flow file in order. Between phases, gate with `ask_user_qu
 These hold for every flow:
 
 - Every worker finishes its phase by posting exactly one issue comment whose first line is `### Phase: <Name> — Done` (or `— Blocked` when the phase could not complete), via `gh issue comment N --body-file <path>`. Never inline a multi-line body with `--body`. Workers must not write request state to disk; the issue is the state store.
+- Directly under that header line, every comment carries a state block, so one comment is enough to rebuild the run after a clear:
+
+  ```markdown
+  - Issue: #N
+  - Worktree: <absolute path>
+  - Branch: <branch>
+  - Flow: <type> / <phase chain>
+  ```
+
+  The phase content follows it. Exploration omits the worktree and branch lines, having neither. Require this block in the brief; it is what makes clearing at a gate free rather than lossy.
 
 | Phase           | Comment contains                                                                                                 |
 | --------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -204,12 +214,21 @@ If a background worker reports a denied tool, resume it in the foreground; resum
 
 ## Context budget
 
-Hard rules that keep this session under 100k:
+The budget is 100k, and the mechanism is **clear and resume at phase boundaries**, not compaction. A token threshold fires wherever the turn happens to land, which is mid-phase most of the time, and a mid-phase summary flattens the decision the next phase was going to build on.
+
+Clearing costs this session nothing, because the router holds no state of its own. Every phase comment is a primary source written by the worker that did the work, so `/orchestrator resume N` rehydrates from the originals. Compaction would replace them with a summary of this router's own chatter, which is strictly worse. That is why the answer to a long session here is to enrich the issue and clear, never to compact.
+
+Hard rules:
 
 - The orchestrator never reads source files. (Rule 7.)
 - The orchestrator never reads a full phase comment. It gates on the worker's 25-line report.
-- At the gate after **Spec** and the gate after **Implement**, offer: _"State is on #N. For a fresh context, open a new tab and run `/orchestrator resume N`."_ The user may decline and continue.
+- **At every gate**, close the gate message with: _"State is on #N. To clear this context, open a new tab and run `/orchestrator resume N`."_ The user may decline and continue; offer it again at the next gate.
+- After a resume or a compaction, re-read state with `gh issue view N --json title,body,labels,comments` before the next dispatch or gate. Never dispatch on recalled state: rule 11 needs the phase headers themselves.
 - One request per session. A follow-up becomes its own issue, not a section in this one.
+
+Workers are capped by **scope**, not tokens: one phase, one brief, one ticket. Do not try to cap a worker's context. An implementer compacted mid-TDD is exactly the failure this budget exists to avoid, and 100k sits well inside the window where the model still reasons sharply.
+
+No compaction threshold is configured, and none should be. The rules above keep this session an order of magnitude below the limit, so the only route to 90k is breaking rule 7 or 8, and a threshold would quietly compact over that rather than surface it. See the Context budget section of `AGENTS.md` for the per-launch flag and why it stays off.
 
 ## Push and PR
 
@@ -238,6 +257,7 @@ git worktree remove "../uflow-wt/N-<slug>"
 10. **Gate between phases.** `ask_user_question` with what was done and what is next.
 11. **Phase headers tell the truth.** Treat a phase as Done only if a subagent ran it and posted its comment, and only phases that exist in the flow. Ask the user before skipping a phase.
 12. **One request at a time.** A follow-up becomes its own issue.
+13. **Clear, do not compact.** At a phase boundary the move is to clear and `/orchestrator resume N`, offered at every gate. Compaction is not a state transfer: after one, re-read the issue before the next dispatch or gate. Phase state comes from `gh issue view N`, never from recall. See Context budget.
 
 ---
 
