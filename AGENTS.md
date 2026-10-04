@@ -22,6 +22,22 @@ After each build chunk: review, then test, then capture one learning.
 
 Create a feature branch before any code changes, at the Implementer handoff, not at DevOps time. The orchestrator creates `<prefix>/<N>-<slug>` from the latest `main` during Step 1 setup, all code commits go onto it, and the DevOps phase only pushes remaining commits and creates the PR. This gives CI visibility during implementation and surfaces pre-existing failures early.
 
+## Context budget
+
+Agent sessions target 100k tokens. The mechanism is clearing at phase boundaries, not compaction. Request state lives on the GitHub issue, so `/orchestrator resume N` rebuilds a session from the workers' own phase comments rather than from a lossy summary of the previous session. The orchestrator skill's "Context budget" section carries the rules; every phase comment opens with a state block (issue, worktree, branch, flow) so one comment is enough to rebuild the run.
+
+No token threshold is set, deliberately. One fires mid-phase, where a summary flattens the reasoning the next phase was going to build on, and 100k sits inside the window where models still reason sharply. A router that follows the rules above never approaches the limit in the first place: it reads no source files, no full phase comments, and gates on 25-line reports. The only way it reaches 90k is by breaking those rules, and a threshold would hide that rather than surface it.
+
+The knob exists if a session ever proves otherwise. Per launch, never exported globally, since a global setting would also throttle ordinary coding sessions that legitimately hold far more:
+
+```bash
+devin --compaction-thresholds 90000,90000,100000
+```
+
+That starts a summary at 90k and blocks inference at 100k until it lands, against a default derived from the model's context window. `--sidekick-compaction-thresholds` does the same for the Fusion sidekick chain, and `DEVIN_COMPACTION_THRESHOLDS` is the env form. All are hidden from `--help` and undocumented; verified present in CLI 3000.11.3. There is no project-config equivalent, so none of this can be committed: the `agent` config block is user-only, including `agent.compaction_threshold_tokens`, which moves the compaction point earlier but sets no ceiling.
+
+Do not cap worker subagents. They are capped by scope, one phase per brief. Whether the thresholds even reach `run_subagent` workers is undocumented.
+
 ## Verify DB schema from Supabase, not local files
 
 When an investigation or fix depends on database schema — enum values, column types, constraints, RPC signatures — verify against the actual Supabase database, not local type definitions or migration files.
