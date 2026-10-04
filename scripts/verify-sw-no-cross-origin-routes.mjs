@@ -30,13 +30,13 @@
 // EasyPrivacy and EasyList), and a Firefox 155 reproduction returned 200 with ETP
 // both on and off. Such a spec would pass whether or not the bug was present.
 //
-// Ported from agent-output/research/282-sandbox-probe.reference.mjs, which was
+// Ported from agent-output/_archive/research/282-sandbox-probe.reference.mjs, which was
 // validated against three real builds (hand-ported / defaultCache /
 // explicit-Iconify-route) and separated them cleanly.
 //
-// See: agent-output/analysis/closed/046-iconify-pwa-analysis.md
-//      agent-output/retrospectives/closed/064-iconify-sw-cors-fix-retrospective.md
-//      agent-output/research/282-defaultcache-iconify.md
+// See: agent-output/_archive/analysis/closed/046-iconify-pwa-analysis.md
+//      agent-output/_archive/retrospectives/closed/064-iconify-sw-cors-fix-retrospective.md
+//      agent-output/_archive/research/282-defaultcache-iconify.md
 
 /* global console, URL, Request, Response, Headers, setTimeout, clearTimeout */
 
@@ -283,7 +283,7 @@ if (intercepted.length > 0) {
   console.error('     That was tried in release v0.9.9 and made things worse.');
   console.error('  3. A matcher lost its `^` anchor, or a `!sameOrigin` matcher was added.');
   console.error('');
-  console.error('See agent-output/research/282-defaultcache-iconify.md.');
+  console.error('See agent-output/_archive/research/282-defaultcache-iconify.md.');
   process.exit(1);
 }
 

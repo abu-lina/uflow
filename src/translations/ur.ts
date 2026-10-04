@@ -1221,7 +1221,7 @@ export const ur = {
     mapViewLabel: 'نقشہ',
   },
   // Plan 255 INTERIM (#415): German source text, NOT a translation.
-  // Pending human review — see agent-output/requests/255-i18n-human-review.md.
+  // Pending human review — see agent-output/_archive/requests/255-i18n-human-review.md.
   halal: {
     attestation: {
       sectionTitle: 'Halal Compliance',

@@ -4,7 +4,7 @@
  * for full design system parity with provider detail pages (Plan 082: M3/D4).
  *
  * DO NOT DELETE until a full import-site audit confirms no other components reference this.
- * Tracked in agent-output/planning/082-open-actions.md.
+ * Tracked in agent-output/_archive/planning/082-open-actions.md.
  */
 import React, { useState, useEffect } from 'react';
 

@@ -5,7 +5,7 @@ model: opencode-go/deepseek-v4-flash
 permission:
   read: allow
   edit:
-    "agent-output/.next-id": allow
+    "agent-output/_archive/.next-id": allow
     "*": deny
   bash: ask
   task:
@@ -95,7 +95,7 @@ For each phase, construct a delegation prompt that includes:
 1. **Context**: Task description, plan ID, pipeline phase
 2. **Workflow Card**: Current pipeline status
 3. **Skills to load**: List with paths (e.g., `Load skill 'analysis-methodology' from '.opencode/skills/analysis-methodology/SKILL.md'`)
-4. **Artifact paths**: Where to read/write (e.g., `agent-output/analysis/`)
+4. **Artifact paths**: Where to read/write (e.g., `agent-output/_archive/analysis/`)
 5. **Gate condition**: What the next gate requires
 
 Example delegation prompt structure:
@@ -111,10 +111,10 @@ Skills to load:
 - Load skill 'analysis-methodology' from '.opencode/skills/analysis-methodology/SKILL.md'
 
 Artifacts:
-- Read: agent-output/planning/{plan-doc}
-- Write: agent-output/analysis/{analysis-doc}
+- Read: agent-output/_archive/planning/{plan-doc}
+- Write: agent-output/_archive/analysis/{analysis-doc}
 
-Gate for next phase: Analysis doc must exist in agent-output/analysis/
+Gate for next phase: Analysis doc must exist in agent-output/_archive/analysis/
 ```
 
 After the subagent returns its summary, read the artifact file to validate the gate condition before proceeding.
@@ -126,8 +126,8 @@ After the subagent returns its summary, read the artifact file to validate the g
 | Transition | Gate Condition | Check Method |
 |-----------|----------------|--------------|
 | → Analyst | Task classified, skills selected | Workflow Card exists |
-| Analyst → Planner | Analysis doc exists in `agent-output/analysis/` | Read directory / file |
-| Planner → Architect | Plan doc exists in `agent-output/planning/` | Read directory / file |
+| Analyst → Planner | Analysis doc exists in `agent-output/_archive/analysis/` | Read directory / file |
+| Planner → Architect | Plan doc exists in `agent-output/_archive/planning/` | Read directory / file |
 | Architect → Implementer | No blocking architectural concerns | Read architecture/critique doc verdict |
 | Implementer → Code Reviewer | Implementation doc exists with TDD compliance | Read implementation doc |
 | Code Reviewer → QA | Review verdict: APPROVED | Read code review doc |
@@ -148,11 +148,11 @@ After the subagent returns its summary, read the artifact file to validate the g
 
 The orchestrator manages document IDs. When starting a new pipeline:
 
-1. Read `agent-output/.next-id` (create with `1` if missing)
+1. Read `agent-output/_archive/.next-id` (create with `1` if missing)
 2. Verify ID is unused: `find agent-output/ -name "${ID}-*" -type f 2>/dev/null`
 3. If matches exist, increment and re-check
 4. Pass the ID to the first subagent in the delegation prompt
-5. Increment `.next-id`: `echo $((ID + 1)) > agent-output/.next-id`
+5. Increment `.next-id`: `echo $((ID + 1)) > agent-output/_archive/.next-id`
 
 All subagents in the same chain inherit this ID.
 

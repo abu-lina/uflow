@@ -28,9 +28,9 @@
 // `--webpack` removal is unblocked; it stays on the scripts until its own
 // follow-up request lands.
 //
-// See: agent-output/requests/282-serwist-migration.md
-//      agent-output/requests/283-api-docs-jsyaml.md
-//      agent-output/research/282-defaultcache-iconify.md
+// See: agent-output/_archive/requests/282-serwist-migration.md
+//      agent-output/_archive/requests/283-api-docs-jsyaml.md
+//      agent-output/_archive/research/282-defaultcache-iconify.md
 
 const isDev = process.env.NODE_ENV === 'development';
 // Only enable standalone when explicitly building for Docker

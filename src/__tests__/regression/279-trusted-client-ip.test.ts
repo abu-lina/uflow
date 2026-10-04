@@ -47,7 +47,7 @@ describe('Request 279 — middleware rate-limit key trusts x-real-ip over spoofe
  * are still rate-limited, from the same synthetic IP, with the same ceiling.
  * It was shown RED against a build whose predicate was broadened to
  * `pathname.startsWith('/images') || ...`-style prefixes (see
- * agent-output/requests/282-serwist-migration.md).
+ * agent-output/_archive/requests/282-serwist-migration.md).
  *
  * The limiter store in src/middleware.ts is module-level and shared across
  * these tests, so every test uses its own synthetic IP and no test relies on

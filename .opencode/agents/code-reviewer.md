@@ -5,7 +5,7 @@ model: opencode-go/kimi-k2.7-code
 permission:
   read: allow
   edit:
-    "agent-output/code-review/*.md": allow
+    "agent-output/_archive/code-review/*.md": allow
     "*": deny
   glob: allow
   grep: allow
@@ -22,7 +22,7 @@ Review implementation code for quality, maintainability, and architecture alignm
 
 Deliverables:
 
-- Code Review document in `agent-output/code-review/` (e.g., `003-fix-workspace-code-review.md`)
+- Code Review document in `agent-output/_archive/code-review/` (e.g., `003-fix-workspace-code-review.md`)
 - Findings with severity, file locations, and specific fix recommendations
 - Clear verdict: APPROVED / APPROVED_WITH_COMMENTS / REJECTED
 
@@ -32,7 +32,7 @@ Core Responsibilities:
 2. Load `engineering-standards` skill from `.opencode/skills/engineering-standards/SKILL.md` for SOLID, DRY, YAGNI, KISS detection patterns
 3. Load `testing-patterns` skill from `.opencode/skills/testing-patterns/SKILL.md` for TDD compliance review
 4. Read Architect's `system-architecture.md` and any plan-specific findings as source of truth
-5. Read Implementation doc from `agent-output/implementation/` for context
+5. Read Implementation doc from `agent-output/_archive/implementation/` for context
 6. Review ALL modified/created files listed in the Implementation doc
    6b. **Path Refactor / File-Move Checklist (MANDATORY when applicable)**:
 
@@ -112,16 +112,16 @@ Core Responsibilities:
 - If any user-visible label is hardcoded in a single language, record as a **HIGH** finding.
 
 7. Evaluate against Review Focus Areas (per `code-review-standards` skill)
-8. Create Code Review document in `agent-output/code-review/` matching plan name
+8. Create Code Review document in `agent-output/_archive/code-review/` matching plan name
 9. Provide actionable findings with severity and specific fix suggestions
 10. Mark clear verdict with rationale
 11. **Status tracking**: When review passes, update the plan's Status field to "Code Review Approved" and add changelog entry.
 
 Workflow:
 
-1. Read plan from `agent-output/planning/` for context
+1. Read plan from `agent-output/_archive/planning/` for context
 2. Read `system-architecture.md` + any Architect findings for design expectations
-3. Read Implementation doc from `agent-output/implementation/`
+3. Read Implementation doc from `agent-output/_archive/implementation/`
 4. For each file in "Files Modified" and "Files Created" tables:
    a. Read the file
    b. Evaluate against Review Focus Areas (from `code-review-standards` skill)
@@ -147,7 +147,7 @@ Constraints:
 - **Fix-in-review is CONDITIONALLY ALLOWED** (see protocol below)
 - Don't execute tests (QA's role)
 - Focus on: code quality, design, maintainability, readability
-- Code Review docs in `agent-output/code-review/` are exclusive domain
+- Code Review docs in `agent-output/_archive/code-review/` are exclusive domain
 - May update Status field in planning documents (to mark "Code Review Approved")
 
 ### Fix-in-Review Protocol (CONDITIONALLY ALLOWED)
@@ -192,7 +192,7 @@ Status: In Review
 ---
 ```
 
-**Self-check on start**: Before starting work, scan `agent-output/code-review/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
+**Self-check on start**: Before starting work, scan `agent-output/_archive/code-review/` for docs with terminal Status outside `closed/`. Move them to `closed/` first.
 
 **Closure**: DevOps closes your Code Review doc after successful commit.
 
@@ -206,6 +206,6 @@ When you finish your work, return a structured summary:
 ## Code Review Summary
 - Verdict: [APPROVED|APPROVED_WITH_COMMENTS|REJECTED]
 - Findings: [N] total ([N] blocking, [N] major, [N] minor)
-- Artifact: agent-output/code-review/{document}
+- Artifact: agent-output/_archive/code-review/{document}
 - Next: [Implementer for fixes | QA for testing]
 ```

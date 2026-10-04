@@ -21,7 +21,7 @@
             "memory-contract"
           ],
           "catalogSkills": ["concise-planning", "plan-writing", "planning-with-files"],
-          "gate": "Plan document exists in agent-output/planning/",
+          "gate": "Plan document exists in agent-output/_archive/planning/",
           "notes": "Begin with Value Statement. Reference roadmap epic. Identify target release version. MUST hand off to Critic before implementation."
         },
         {
@@ -31,7 +31,7 @@
           "goal": "Convert technical unknowns to knowns via research, POCs, and code-level investigation.",
           "uflowSkills": ["analysis-methodology", "document-lifecycle", "memory-contract"],
           "catalogSkills": ["systematic-debugging"],
-          "gate": "Analysis document exists in agent-output/analysis/ with confidence levels assigned",
+          "gate": "Analysis document exists in agent-output/_archive/analysis/ with confidence levels assigned",
           "notes": "Only invoked if Planner identifies REQUIRES ANALYSIS items. Skip if no unknowns. Determinations over hypotheses."
         },
         {
@@ -80,7 +80,7 @@
           ],
           "catalogSkills": ["senior-fullstack", "lint-and-validate", "git-pushing"],
           "gate": "Implementation doc exists with TDD compliance table; all tests green",
-          "notes": "TDD is MANDATORY. Write failing test BEFORE implementation. Never edit agent-output/qa/ documents. Task-specific catalog skills auto-detected."
+          "notes": "TDD is MANDATORY. Write failing test BEFORE implementation. Never edit agent-output/_archive/qa/ documents. Task-specific catalog skills auto-detected."
         },
         {
           "order": 6,
@@ -161,7 +161,7 @@
           "goal": "Create focused fix plan based on root cause analysis.",
           "uflowSkills": ["document-lifecycle", "memory-contract"],
           "catalogSkills": ["concise-planning"],
-          "gate": "Fix plan exists in agent-output/planning/",
+          "gate": "Fix plan exists in agent-output/_archive/planning/",
           "notes": "Small scope — single bug fix. Skip Critic for clear-cut fixes."
         },
         {
@@ -242,7 +242,7 @@
           "goal": "Break refactor into safe, incremental steps with rollback points.",
           "uflowSkills": ["engineering-standards", "document-lifecycle", "memory-contract"],
           "catalogSkills": ["concise-planning"],
-          "gate": "Refactor plan exists in agent-output/planning/",
+          "gate": "Refactor plan exists in agent-output/_archive/planning/",
           "notes": "Focus on preserving behavior while improving structure. Identify test coverage needed."
         },
         {
@@ -420,7 +420,7 @@
           "goal": "Review code, dependencies, and architecture for security vulnerabilities.",
           "uflowSkills": ["security-patterns", "document-lifecycle", "memory-contract"],
           "catalogSkills": [],
-          "gate": "Security audit report complete in agent-output/security/",
+          "gate": "Security audit report complete in agent-output/_archive/security/",
           "notes": "Review mode depends on scope: Full 5-Phase Audit, Targeted Code Review, Dependency-Only, or Pre-Production Gate."
         },
         {

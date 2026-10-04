@@ -29,7 +29,7 @@
  * classifies by (0 matches in Disconnect's services.json, EasyPrivacy and
  * EasyList), and a Playwright Firefox 155 reproduction of the exact NetworkOnly
  * semantics returned HTTP 200 with ETP both on and off. The fix was right; the
- * explanation was not. See agent-output/research/282-defaultcache-iconify.md.
+ * explanation was not. See agent-output/_archive/research/282-defaultcache-iconify.md.
  *
  * That is also why there is no ETP Playwright spec: it would pass whether or
  * not the bug was present.

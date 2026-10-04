@@ -11,7 +11,7 @@ describe('Plan 095 migration 069 contract', () => {
     .find((candidate) => existsSync(candidate));
   const adrPath = path.resolve(
     process.cwd(),
-    'agent-output/architecture/095-unified-catalog-adr.md',
+    'agent-output/_archive/architecture/095-unified-catalog-adr.md',
   );
 
   it('creates migration 069 and ADR-095 with required schema contracts', () => {

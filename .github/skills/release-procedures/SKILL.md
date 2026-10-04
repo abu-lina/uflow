@@ -185,8 +185,8 @@ All notable changes to this project will be documented in this file.
 
 | Check | Command/Action | Fail Response |
 |-------|----------------|---------------|
-| UAT Status | Read `agent-output/uat/` | STOP if not "APPROVED FOR RELEASE" |
-| QA Status | Read `agent-output/qa/` | STOP if not "QA Complete" |
+| UAT Status | Read `agent-output/_archive/uat/` | STOP if not "APPROVED FOR RELEASE" |
+| QA Status | Read `agent-output/_archive/qa/` | STOP if not "QA Complete" |
 | Version Match | Compare all version files | STOP and fix |
 | Tests Pass | Run test suite | STOP and fix |
 | Clean Workspace | `git status` | Commit or stash |
@@ -243,7 +243,7 @@ git push origin v1.2.3
 - Track which plans are committed for current release
 - Coordinate with Roadmap agent to maintain release→plan mappings
 - Never push without explicit release approval
-- Document in `agent-output/deployment/`
+- Document in `agent-output/_archive/deployment/`
 
 ### Implementer Agent
 - Update `package.json` version during milestones
