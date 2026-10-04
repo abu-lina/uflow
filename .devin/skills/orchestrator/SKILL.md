@@ -94,7 +94,7 @@ These hold for every flow:
 - Tracking-file updates belong to the worker that ran the phase. The orchestrator only reads it.
 - Judgment phases (Grill, Diagnose, Spec, Tickets, Code Review) run foreground (`is_background: false`); execution phases (Implement, Fix, QA, Research) run background (`is_background: true`). The model is pinned in the worker profile, so there is no cheaper tier to pick.
 - Except in exploration, the last dispatched worker appends a learning entry to `docs/ai/LEARNINGS.md` as part of its brief.
-- Name skills in a brief by their bare name only (`tdd`, `to-spec`). Workers resolve them, by the `skill` tool when reachable and by reading the SKILL.md off disk when not. Never put a plugin cache path in a brief.
+- Name skills in a brief by their bare name only (`tdd`, `to-spec`). Workers cannot invoke skills; they read the SKILL.md off disk, per "Following a skill" in their profile. Never put a plugin cache path in a brief.
 - Except in exploration, the last dispatched worker also drafts the PR body into `## PR body` in the tracking file, following the `pr` skill.
 
 Every dispatch brief MUST include:
@@ -105,7 +105,7 @@ Every dispatch brief MUST include:
 - The classification (type, route, confidence)
 - Task description
 - Relevant context from the tracking file (spec, decisions, diagnosis)
-- Which skills to invoke
+- Which skills to name
 - Commit when done, do not push
 - Which tracking-file section to update before reporting
 
@@ -130,7 +130,7 @@ run_subagent(
     Task: <description>
     Context: <from tracking file>
 
-    Invoke the `tdd` skill. Commit when done, do not push.
+    Follow the `tdd` skill. Commit when done, do not push.
 
     Before reporting, update `## Implementation notes` in the tracking file
     with branch, commit SHA, files changed, tests added, test output.
@@ -166,11 +166,11 @@ git worktree remove "../uflow-wt/<ID>-<slug>"
 5. **Skill work runs inside subagents.** Name the skills in the dispatch brief; the orchestrator invokes none itself.
 6. **Orchestrator writes are a fixed whitelist.** This fence is prose-only and lives here by necessity, not by preference. It cannot go in frontmatter: a skill-level `permissions.deny` propagates into every dispatched subagent and kills it instantly with `Tool was rejected` and no report. Via `exec` the allowed writes are `git` commands, `gh pr create --body`, the `.next-id` increment, the tracking-file `cp`, and the tab-rename `printf`. Nothing else: no `sed -i`, `tee`, or `cat >` heredocs into repo files.
 7. **Investigation is dispatched.** Root-causing and locating code belong to subagents. The orchestrator reads under `agent-output/` (that is how it picks up state on resume) and nothing else: no `read`, `grep`, `glob`, or `exec` (`cat`, `rg`, `ls`) on source files in the worktree or the canonical repo. In one session the router told the user the root cause itself ("`PageTransition` is keyed by `pathname`, line 152 of `RootClientLayout.tsx`, forcing full unmount/remount") and then dispatched a subagent to find what it had already found.
-8. **Every implementation brief invokes `tdd`.**
+8. **Every implementation brief names `tdd`.**
 9. **Gate between phases.** `ask_user_question` with what was done and what is next.
 10. **Tracking tells the truth.** Mark a phase Done only if a subagent ran it, and only phases that exist in the flow. `agent-output/requests/268-remove-create-chat-hint.md` logged "Implement, Done, commit dc1bf61f" and "Code review, Done" with zero dispatches and an invented "Locate the hint" phase. Ask the user before skipping a phase.
 11. **One request at a time.** New work goes under `## Follow-up requests` in the tracking file.
 
 Resolved (2026-10-03, request 284): a skill-level `permissions.deny` DOES propagate into dispatched subagents and is fatal to them. Five dispatches before invoking this skill all survived; both `subagent_general` dispatches after invoking it died with `Tool was rejected` and no report; a read-only `subagent_explore` dispatch still succeeded, ruling out a broken harness. The frontmatter block is therefore deleted and rule 6 carries the fence in prose. The same probes showed `request_scope` works, recursively, including for workers dispatched after the call. See `docs/ai/LEARNINGS.md` entry 284b. Verified 2026-10-04 by re-running the discriminating probe with the block removed: a background `subagent_general` dispatched after invoking this skill survived and wrote successfully, and the router kept its own `edit` and `write` tools.
 
-Resolved (2026-10-04): worker profiles' `allowed-tools` is a true restriction, so until `skill` was added to it, dispatched workers had exactly `edit, exec, find_file_by_name, grep, read, write` and no `skill` tool: every "invoke the X skill" line in every brief was a silent no-op. Subagent profiles are frozen at session start; removing `write`/`edit`/`exec` from `analyst.md` mid-session left a freshly dispatched analyst still holding all three, so profile edits need a CLI restart before they can be tested. Whether `skill` is a grantable `allowed-tools` name is still UNVERIFIED and needs a post-restart probe; if it turns out not to be grantable, the fallback is to drop `allowed-tools` from the profiles entirely (it defaults to all tools) and keep the analyst's read-only-source constraint in prose. 16 of 27 mattpocock skills are `disable-model-invocation: true` and can never be reached by the `skill` tool; the on-disk read path in each profile's "Following a skill" section is the only route to those.
+Resolved (2026-10-04): subagents have NO `skill` tool, so no dispatched worker can invoke a skill, ever. A worker profile's `allowed-tools` is a true restriction, but `skill` is not a grantable name: a fresh `devin -p` process reading an `analyst.md` that listed `- skill` still produced a subagent with exactly `edit, exec, find_file_by_name, grep, read, write`. Deleting `allowed-tools` entirely does not help either: the same probe then returned all 22 tools (`web_search`, `webfetch`, `mcp_*`, `todo_write`, `request_scope`, and the rest) and `skill` was still absent, alongside the documented omissions of `run_subagent` and `ask_user_question`. Until this was found, every "invoke the X skill" line in every brief was a silent no-op. The only route from a skill to a worker is the on-disk read in each profile's "Following a skill" section; that is also the only route to the 16 of 27 mattpocock skills that set `disable-model-invocation: true`. Two notes for anyone re-testing this: subagent profiles are frozen at session start, so profile edits cannot be tested in the session that makes them, and `devin -p` spawns a fresh process that reloads them, which is faster and less ambiguous than restarting the CLI.
