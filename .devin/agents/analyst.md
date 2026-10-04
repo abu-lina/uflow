@@ -31,6 +31,14 @@ If a tool call is denied, stop and report the denial, quoting the exact error te
 
 Skills named in your brief are not invocable. Subagents have no `skill` tool, whatever the profile grants, so reading the skill off disk is the only route.
 
-Find it with `find_file_by_name` using the pattern `**/<name>/SKILL.md` rooted at `/Users/NARAFIQ/.local/share/devin/cli/plugins/cache/`, then `read` the match and follow it as if it had been injected into your prompt. Resolve by glob every time; never hardcode a plugin version into the path.
+Find it with `find_file_by_name` using the pattern `**/<name>/SKILL.md`, trying these roots in order and stopping at the first that matches:
 
-If a name does not resolve to exactly one file, stop and report that. Do not improvise a substitute and do not proceed without the skill.
+1. `/Users/NARAFIQ/Projects/uflow/.devin/skills/`
+2. `/Users/NARAFIQ/Projects/uflow/.github/skills/`
+3. `/Users/NARAFIQ/.local/share/devin/cli/plugins/cache/`
+4. `/Users/NARAFIQ/.cursor/skills/`
+5. `/Users/NARAFIQ/.agents/skills/`
+
+Project roots come first so a repo-local skill wins over a global one of the same name. Resolve by glob every time; never hardcode a plugin version into the path.
+
+If one root yields several matches, prefer the one under that root's own `skills/` directory: a path like `.openclaw/skills/<name>/SKILL.md` is a vendored mirror of it. If that still leaves more than one match, or if no root matches at all, stop and report. Do not improvise a substitute and do not proceed without the skill.

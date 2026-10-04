@@ -14,15 +14,14 @@ When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the 
 
 Edit the right-hand column to match whatever vocabulary you actually use.
 
-## Labels not yet created in this repo
+## Relationship to the `type:*` labels
 
-Only `wontfix` currently exists on `abu-lina/uflow`. The other four need creating before `/triage` can apply them:
+These five are a triage _state_ axis, orthogonal to the repo's existing `type:*` labels (`type:bugfix`, `type:feature`, `type:hotfix`, `type:refactor`, `type:security`, `type:verification`), so they do not duplicate them.
+
+All five exist on `abu-lina/uflow`. Confirm that before relying on it, rather than trusting this line:
 
 ```bash
-gh label create needs-triage    --description "Maintainer needs to evaluate this issue"
-gh label create needs-info      --description "Waiting on reporter for more information"
-gh label create ready-for-agent --description "Fully specified, ready for an AFK agent"
-gh label create ready-for-human --description "Requires human implementation"
+gh label list --limit 100 --json name --jq '.[].name'
 ```
 
-These are a triage _state_ axis and are orthogonal to the repo's existing `type:*` labels (`type:bugfix`, `type:feature`, `type:hotfix`, `type:refactor`, `type:security`, `type:verification`), so they do not duplicate them.
+If one is missing, create it with the meaning from the table above: `gh label create <name> --description "<meaning>"`.
