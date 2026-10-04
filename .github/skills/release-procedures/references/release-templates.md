@@ -2,12 +2,12 @@
 
 ## Deployment Document Template
 
-Use in `agent-output/deployment/[version].md`:
+Use in `agent-output/_archive/deployment/[version].md`:
 
 ```markdown
 # Deployment Report: v[X.Y.Z]
 
-**Plan Reference**: `agent-output/planning/[plan-name].md`
+**Plan Reference**: `agent-output/_archive/planning/[plan-name].md`
 **Release Date**: [YYYY-MM-DD]
 **Deployed By**: DevOps Agent
 

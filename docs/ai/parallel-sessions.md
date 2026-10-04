@@ -68,8 +68,8 @@ Use this if you want to run the bootstrap steps yourself instead of having Orche
 
 ```bash
 # In the canonical uflow checkout (control window)
-NEXT_ID=$(cat agent-output/.next-id)
-echo $((NEXT_ID + 1)) > agent-output/.next-id
+NEXT_ID=$(cat agent-output/_archive/.next-id)
+echo $((NEXT_ID + 1)) > agent-output/_archive/.next-id
 echo "Allocated Plan ID: $NEXT_ID"
 ```
 
@@ -114,7 +114,7 @@ Workspace: <worktree root> + <shared .agent root>
 Branch: session/<plan-id>-<topic>
 Artifacts: agent-output/<domain>/<plan-id>-...
 Scope: Do not read/write outside this worktree and referenced artifacts.
-Lifecycle: Do not allocate new IDs or update agent-output/.next-id outside the control window.
+Lifecycle: Do not allocate new IDs or update agent-output/_archive/.next-id outside the control window.
 ```
 
 Recommended first worker prompt:
@@ -126,7 +126,7 @@ Workspace: <worktree root> + <shared .agent root>
 Branch: session/<plan-id>-<topic>
 Artifacts: agent-output/<domain>/<plan-id>-...
 Scope: Do not read/write outside this worktree and referenced artifacts.
-Lifecycle: Do not allocate new IDs or update agent-output/.next-id outside the control window.
+Lifecycle: Do not allocate new IDs or update agent-output/_archive/.next-id outside the control window.
 
 Use Orchestrator to continue this stream.
 Task: <what this session should do>

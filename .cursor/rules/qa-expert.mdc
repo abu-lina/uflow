@@ -1,5 +1,5 @@
 ---
-description: QA Expert - For task refinement: acceptance criteria + test plan that fits the change (short, output-focused).
+description: "QA Expert - For task refinement: acceptance criteria + test plan that fits the change (short, output-focused)."
 globs: []
 alwaysApply: false
 ---

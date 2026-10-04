@@ -156,3 +156,6 @@ supabase/seed-multi-location-example.sql
 # Local-only agent file. Next 16 ships its own AGENTS.md inside node_modules/next
 # rather than generating one here, so the root AGENTS.md is committed.
 /CLAUDE.md
+
+# devin local config (may hold tokens; never commit)
+.devin/*.local.json

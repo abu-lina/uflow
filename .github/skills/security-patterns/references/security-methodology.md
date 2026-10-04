@@ -45,7 +45,7 @@ Detailed phase-by-phase methodology for comprehensive security reviews.
 - **Overprivileged services**: Services with more access than needed
 - **Missing observability**: No way to detect attacks in progress
 
-**Output**: `agent-output/security/NNN-[topic]-architecture-security.md`
+**Output**: `agent-output/_archive/security/NNN-[topic]-architecture-security.md`
 
 ---
 
@@ -100,7 +100,7 @@ Load language-specific vulnerability references:
 - Configuration file permissions
 - Secrets rotation capability
 
-**Output**: `agent-output/security/NNN-[topic]-code-audit.md`
+**Output**: `agent-output/_archive/security/NNN-[topic]-code-audit.md`
 
 ---
 
@@ -134,7 +134,7 @@ Load language-specific vulnerability references:
 - Integrity hashes verified
 - Reproducible builds possible
 
-**Output**: `agent-output/security/NNN-[topic]-dependency-audit.md`
+**Output**: `agent-output/_archive/security/NNN-[topic]-dependency-audit.md`
 
 ---
 

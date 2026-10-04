@@ -138,12 +138,12 @@ Document findings consistently:
 - Focus on plan quality, not implementation details
 - Value statement assessment is mandatory first step
 - Reference Planner constraints when reviewing
-- Create critique in `agent-output/critiques/`
+- Create critique in `agent-output/_archive/critiques/`
 
 ### For Security Agent
 - Focus on OWASP Top 10 and injection patterns
 - Reference `security-patterns` skill for detection
-- Create audit in `agent-output/security/`
+- Create audit in `agent-output/_archive/security/`
 - Use CVSS-aligned severity
 
 ### For Architect Agent
