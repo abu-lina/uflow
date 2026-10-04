@@ -51,6 +51,9 @@ jobs:
       - name: Run TypeScript type check
         run: npm run type-check
 
+      - name: Check i18n locale completeness
+        run: npm run i18n:check
+
   # Unit and integration tests
   test:
     name: Run Tests
