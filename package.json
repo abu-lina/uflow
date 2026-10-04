@@ -106,7 +106,7 @@
     "@electric-sql/pglite": "^0.5.8",
     "@eslint/eslintrc": "^3.3.7",
     "@eslint/js": "^9.25.1",
-    "@next/bundle-analyzer": "^16.3.7",
+    "@next/bundle-analyzer": "^16.3.8",
     "@playwright/test": "^1.63.0",
     "@serwist/cli": "9.5.12",
     "@supabase/supabase-js": "^2.117.2",
@@ -124,10 +124,10 @@
     "@typescript-eslint/eslint-plugin": "^8.70.1",
     "@typescript-eslint/parser": "^8.33.0",
     "@vitejs/plugin-react": "^4.4.1",
-    "@vitest/coverage-v8": "5.0.2",
+    "@vitest/coverage-v8": "5.0.3",
     "autoprefixer": "^10.6.1",
     "critters": "^0.0.25",
-    "dotenv": "^18.0.4",
+    "dotenv": "^18.0.5",
     "eslint": "^9.27.0",
     "eslint-config-next": "16.3.8",
     "eslint-config-prettier": "^9.1.0",
@@ -149,7 +149,7 @@
     "typescript": "5.5.4",
     "vite": "7.3.5",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "5.0.2"
+    "vitest": "5.0.3"
   },
   "overrides": {
     "next": {
