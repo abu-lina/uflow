@@ -62,8 +62,6 @@ function makeRecommendationRequest() {
   });
 }
 
-vi.unmock('zod');
-
 describe('Plan 264 provider recommendation authentication', () => {
   beforeEach(() => {
     vi.resetModules();

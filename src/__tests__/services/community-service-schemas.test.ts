@@ -7,11 +7,7 @@
  * (undefined) until implemented.
  */
 
-import { describe, it, expect, vi } from 'vitest';
-
-// The global setup.ts mocks 'zod' with a minimal stub that lacks uuid/url/enum etc.
-// Restore the real module for schema validation tests.
-vi.unmock('zod');
+import { describe, it, expect } from 'vitest';
 
 // Import after mocks — new exports don't exist yet
 import {

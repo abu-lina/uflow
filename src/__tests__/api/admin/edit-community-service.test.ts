@@ -63,7 +63,7 @@ const mockGetUser = getUserFromCookie as ReturnType<typeof vi.fn>;
 const mockIsAdmin = isAdminOrModerator as ReturnType<typeof vi.fn>;
 const mockUpdate = updateCommunityServiceFields as ReturnType<typeof vi.fn>;
 
-const VALID_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+const VALID_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 const adminUser = { id: 'admin-id', email: 'admin@test.com' };
 
 function makeRequest(body: Record<string, unknown>) {

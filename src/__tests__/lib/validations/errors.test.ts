@@ -36,4 +36,18 @@ describe('toValidationDetails', () => {
     const detail = toValidationDetails(result.error)[0];
     expect(Object.keys(detail).sort()).toEqual(['message', 'path']);
   });
+
+  it('stringifies symbol path segments instead of throwing', () => {
+    const schema = z.string().refine(() => false, {
+      message: 'symbol path issue',
+      path: [Symbol('token')],
+    });
+    const result = schema.safeParse('x');
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(toValidationDetails(result.error)).toEqual([
+      { path: 'Symbol(token)', message: 'symbol path issue' },
+    ]);
+  });
 });

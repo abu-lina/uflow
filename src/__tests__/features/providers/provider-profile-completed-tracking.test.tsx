@@ -19,8 +19,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// The global setup mocks zod; the forms now import the real submission schemas.
-vi.unmock('zod');
 import { screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { render } from '../../utils/test-utils';
 import React from 'react';

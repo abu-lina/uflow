@@ -27,8 +27,6 @@ import type { ProviderFormData } from '@/providers/form-provider';
 const ROOT = resolve(__dirname, '../../../');
 const readSrc = (p: string) => readFileSync(resolve(ROOT, p), 'utf-8');
 
-vi.unmock('zod');
-
 // ── Supabase mock for createProviderOrService (cert upload boundary) ─────────
 
 const mockProviderInsert = vi.fn();
