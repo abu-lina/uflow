@@ -51,6 +51,23 @@ function stubSupabase(handlers: {
   });
 }
 
+/**
+ * A fetch that simulates a hung connection: it never settles on its own and
+ * rejects only when the caller's AbortSignal fires. Without an
+ * `AbortSignal.timeout` on the lookup this deadlocks the guard — that stall is
+ * the bug the timeout test pins down.
+ */
+function hungFetch(onAbort: () => void) {
+  return vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+    return new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => {
+        onAbort();
+        reject(new DOMException('The operation was aborted.', 'AbortError'));
+      });
+    });
+  });
+}
+
 describe('issue 533 — route guard', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -187,6 +204,53 @@ describe('issue 533 — route guard', () => {
       await expect(shouldServeFoodNotFound('/food/berlin')).resolves.toBe(false);
     });
 
+    it('fails open on a PostgREST HTTP error: a 5xx must not 404 valid cities', async () => {
+      // A 500/503 from Supabase is "could not determine", not "no cities
+      // exist". Mapping it to an empty slug set 404'd every valid
+      // /food/<city> for the duration of the outage.
+      vi.stubGlobal(
+        'fetch',
+        stubSupabase({
+          cities: () => jsonResponse({ message: 'upstream down' }, 503),
+          providers: () => jsonResponse({ message: 'upstream down' }, 503),
+        }),
+      );
+      const { shouldServeFoodNotFound } = await import('@/lib/route-guard');
+      await expect(shouldServeFoodNotFound('/food/berlin')).resolves.toBe(false);
+    });
+
+    it('does not cache a failed city lookup: the next request retries and sees recovery', async () => {
+      // The degraded answer used to enter the 5-minute cache, so the 404s
+      // outlived the outage. A failed lookup must leave no cache entry.
+      let citiesDown = true;
+      const fetchSpy = stubSupabase({
+        cities: () =>
+          citiesDown
+            ? jsonResponse({ message: 'upstream down' }, 503)
+            : jsonResponse([{ city_name: 'Berlin' }]),
+      });
+      vi.stubGlobal('fetch', fetchSpy);
+      const { shouldServeFoodNotFound } = await import('@/lib/route-guard');
+
+      // During the outage: fail open, and crucially leave nothing cached.
+      await expect(shouldServeFoodNotFound('/food/berlin')).resolves.toBe(false);
+      citiesDown = false;
+      // One retry per request, exactly: nothing was cached, nothing extra runs.
+      await expect(shouldServeFoodNotFound('/food/berlin')).resolves.toBe(false);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('fails open when the lookup stalls past the timeout instead of hanging the request', async () => {
+      let aborted = false;
+      vi.stubGlobal(
+        'fetch',
+        hungFetch(() => (aborted = true)),
+      );
+      const { shouldServeFoodNotFound } = await import('@/lib/route-guard');
+      await expect(shouldServeFoodNotFound('/food/berlin')).resolves.toBe(false);
+      expect(aborted).toBe(true);
+    }, 10_000);
+
     it('ignores non-food routes without hitting the network', async () => {
       const fetchSpy = vi.fn();
       vi.stubGlobal('fetch', fetchSpy);
@@ -252,15 +316,31 @@ describe('issue 533 — route guard', () => {
       await expect(shouldServeProviderNotFound(`/p/${uuid}`)).resolves.toBe(false);
     });
 
-    it('forwards the caller access token so RLS sees what the page sees', async () => {
+    it('fails open when the lookup stalls past the timeout instead of hanging the request', async () => {
+      let aborted = false;
+      vi.stubGlobal(
+        'fetch',
+        hungFetch(() => (aborted = true)),
+      );
+      const { shouldServeProviderNotFound } = await import('@/lib/route-guard');
+      await expect(shouldServeProviderNotFound(`/p/${uuid}`)).resolves.toBe(false);
+      expect(aborted).toBe(true);
+    }, 10_000);
+
+    it('queries PostgREST as anon, matching exactly the rows the page sees', async () => {
+      // The page's createSupabaseServerClient reads the `sb-auth-token`
+      // cookie, which nothing writes (auth uses `sb-access-token`), so the
+      // page runs anon for every caller. Forwarding a caller token here
+      // would let the guard see MORE rows than the page renders — passing an
+      // unapproved /p/<id> whose page then soft-404s.
       const fetchSpy = stubSupabase({ providers: () => jsonResponse([]) });
       vi.stubGlobal('fetch', fetchSpy);
       const { shouldServeProviderNotFound } = await import('@/lib/route-guard');
-      await shouldServeProviderNotFound(`/p/${uuid}`, 'user-access-token');
+      await shouldServeProviderNotFound(`/p/${uuid}`);
 
       const init = fetchSpy.mock.calls[0][1];
       const headers = new Headers(init?.headers);
-      expect(headers.get('Authorization')).toBe('Bearer user-access-token');
+      expect(headers.get('Authorization')).toBe(`Bearer ${ANON_KEY}`);
     });
 
     it('ignores non-/p routes without hitting the network', async () => {
@@ -329,7 +409,7 @@ describe('issue 533 — route guard', () => {
       expect(res?.status).toBe(200);
     });
 
-    it('forwards the session access token to the guard', async () => {
+    it('calls the guard with the pathname only — lookups run anon like the page', async () => {
       const guard = vi.fn(async () => false);
       vi.doMock('@/lib/route-guard', () => ({ shouldServeNotFound: guard }));
       const { middleware } = await import('@/middleware');
@@ -342,7 +422,7 @@ describe('issue 533 — route guard', () => {
         },
       });
       await middleware(req);
-      expect(guard).toHaveBeenCalledWith('/p/abc', 'session-jwt');
+      expect(guard).toHaveBeenCalledWith('/p/abc');
     });
   });
 });

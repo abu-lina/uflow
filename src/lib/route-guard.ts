@@ -31,13 +31,22 @@ import { slugify } from '@/lib/slugify';
 /** How long a slug list stays cached in the middleware isolate. */
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+/**
+ * Upper bound for one PostgREST lookup. The guard sits in the request path,
+ * so a hung connection must fail open fast rather than stall the page load.
+ * 1.5s is ~30x the measured warm median (~50ms) — generous enough that a
+ * slow-but-alive Supabase still answers, tight enough to not be felt as a
+ * stall on top of normal render time.
+ */
+const LOOKUP_TIMEOUT_MS = 1500;
+
 interface CacheEntry<T> {
   value: T;
   expiresAt: number;
 }
 
-const slugSetCache = new Map<string, CacheEntry<Set<string> | null>>();
-const categoryCache = new Map<string, CacheEntry<boolean | null>>();
+const slugSetCache = new Map<string, CacheEntry<Set<string>>>();
+const categoryCache = new Map<string, CacheEntry<boolean>>();
 
 function readCache<T>(cache: Map<string, CacheEntry<T>>, key: string): T | undefined {
   const hit = cache.get(key);
@@ -71,30 +80,57 @@ function supabaseEnv(): { url: string; key: string } | null {
  * Fetch a PostgREST path. Returns `null` when the request could not be made
  * at all (missing env, network failure); callers treat that as "could not
  * determine" and must fail open.
+ *
+ * Always anon. The pages this guard protects run anon for every caller:
+ * `createSupabaseServerClient()` reads the `sb-auth-token` cookie, which no
+ * code path writes (auth flows through the custom `sb-access-token` cookie
+ * instead, and the browser uses a plain `createClient`). Forwarding a caller
+ * token here would make the guard see MORE rows than the page renders —
+ * an owner opening their own unapproved `/p/<id>` would pass the guard and
+ * then hit the page's `notFound()`, reproducing the soft-404 this module
+ * exists to kill.
  */
-async function postgrestFetch(path: string, accessToken?: string): Promise<Response | null> {
+async function postgrestFetch(path: string): Promise<Response | null> {
   const env = supabaseEnv();
   if (!env) return null;
 
   return fetch(`${env.url}/rest/v1/${path}`, {
     headers: {
       apikey: env.key,
-      // The caller's session token when we have one, so row-level security
-      // sees the same rows the page's server client would (e.g. a provider
-      // owner opening their own not-yet-approved listing).
-      Authorization: `Bearer ${accessToken ?? env.key}`,
+      Authorization: `Bearer ${env.key}`,
       accept: 'application/json',
     },
+    signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
   });
 }
 
+interface PostgrestResult<T> {
+  rows: T[];
+  /**
+   * True when `rows` was derived from a non-OK response rather than a real
+   * query result. Only reachable via `errorAsEmpty`. A degraded answer may be
+   * returned but must never be cached — it would outlive the fault.
+   */
+  degraded: boolean;
+}
+
 /**
- * `null` means "could not determine" (network failure) — callers must fail open.
- * A completed-but-failed query returns `[]`: for the food lookups that is the
- * same signal the page's service layer gets (it swallows the error and returns
- * null, which makes the page call notFound()), so we agree.
+ * `null` means "could not determine" — missing env, network failure, abort
+ * timeout, or a non-OK PostgREST response. Callers must fail open and must
+ * NOT cache the result: a guard that cannot reach the database lets the
+ * request through, and a cached "unknown" would pin a dependency blip into
+ * the 5-minute TTL.
+ *
+ * `errorAsEmpty` opts into the opposite mapping for lookups whose page-side
+ * service swallows query errors into `notFound()` (`getCategoryBySlug`
+ * does): an HTTP error then means "not found" instead of "unknown", so the
+ * status code and the rendered body still agree. The result is flagged
+ * `degraded` so the caller can return it without caching it.
  */
-async function postgrest<T>(path: string): Promise<T[] | null> {
+async function postgrest<T>(
+  path: string,
+  opts?: { errorAsEmpty?: boolean },
+): Promise<PostgrestResult<T> | null> {
   let res: Response | null;
   try {
     res = await postgrestFetch(path);
@@ -102,19 +138,20 @@ async function postgrest<T>(path: string): Promise<T[] | null> {
     return null;
   }
   if (!res) return null;
-  if (!res.ok) return [];
+  if (!res.ok) return opts?.errorAsEmpty ? { rows: [], degraded: true } : null;
 
-  return (await res.json()) as T[];
+  return { rows: (await res.json()) as T[], degraded: false };
 }
 
 async function citySlugsFromCitiesTable(): Promise<Set<string> | null> {
   const cached = readCache(slugSetCache, 'cities');
   if (cached !== undefined) return cached;
 
-  const rows = await postgrest<{ city_name: string }>('cities?select=city_name&limit=500');
-  if (rows === null) return writeCache(slugSetCache, 'cities', null);
+  const result = await postgrest<{ city_name: string }>('cities?select=city_name&limit=500');
+  // "Unknown" is never written to the cache — the next request retries.
+  if (result === null) return null;
 
-  const slugs = new Set(rows.map((row) => slugify(row.city_name)));
+  const slugs = new Set(result.rows.map((row) => slugify(row.city_name)));
   return writeCache(slugSetCache, 'cities', slugs);
 }
 
@@ -122,13 +159,13 @@ async function citySlugsFromProviders(): Promise<Set<string> | null> {
   const cached = readCache(slugSetCache, 'providers');
   if (cached !== undefined) return cached;
 
-  const rows = await postgrest<{ address_city: string | null }>(
+  const result = await postgrest<{ address_city: string | null }>(
     'providers?select=address_city&review_status=eq.approved&address_city=not.is.null',
   );
-  if (rows === null) return writeCache(slugSetCache, 'providers', null);
+  if (result === null) return null;
 
   const slugs = new Set(
-    rows
+    result.rows
       .map((row) => row.address_city)
       .filter((city): city is string => Boolean(city))
       .map(slugify),
@@ -151,13 +188,19 @@ async function isKnownFoodCategorySlug(categorySlug: string): Promise<boolean | 
   const cached = readCache(categoryCache, categorySlug);
   if (cached !== undefined) return cached;
 
-  const rows = await postgrest<{ category_id: string }>(
+  const result = await postgrest<{ category_id: string }>(
     `categories?select=category_id&slug=eq.${encodeURIComponent(categorySlug)}` +
       '&applicable_section=in.(food,all)&limit=1',
+    // getCategoryBySlug swallows query errors into notFound(), so an HTTP
+    // error here means "not found" — matching the body the page renders.
+    { errorAsEmpty: true },
   );
-  if (rows === null) return writeCache(categoryCache, categorySlug, null);
+  if (result === null) return null;
+  // A degraded not-found (HTTP error, not a real empty result) is returned
+  // but not cached: it must not outlive the fault that produced it.
+  if (result.degraded) return false;
 
-  return writeCache(categoryCache, categorySlug, rows.length > 0);
+  return writeCache(categoryCache, categorySlug, result.rows.length > 0);
 }
 
 export interface FoodRouteParams {
@@ -208,11 +251,15 @@ export function parseProviderRoute(pathname: string): ProviderRouteParams | null
  * on any error other than PGRST116, so a failed query means the page renders
  * an error, not the not-found UI.
  */
-async function providerExists(providerId: string, accessToken?: string): Promise<boolean | null> {
-  const res = await postgrestFetch(
-    `providers?select=provider_id&provider_id=eq.${encodeURIComponent(providerId)}&limit=1`,
-    accessToken,
-  );
+async function providerExists(providerId: string): Promise<boolean | null> {
+  let res: Response | null;
+  try {
+    res = await postgrestFetch(
+      `providers?select=provider_id&provider_id=eq.${encodeURIComponent(providerId)}&limit=1`,
+    );
+  } catch {
+    return null;
+  }
   if (!res || !res.ok) return null;
   const rows = (await res.json()) as { provider_id: string }[];
   return rows.length > 0;
@@ -247,15 +294,12 @@ export async function shouldServeFoodNotFound(pathname: string): Promise<boolean
  * True when `/p/<id>` should be answered with a 404 status. Fails open so a
  * Supabase blip cannot 404 a working provider page.
  */
-export async function shouldServeProviderNotFound(
-  pathname: string,
-  accessToken?: string,
-): Promise<boolean> {
+export async function shouldServeProviderNotFound(pathname: string): Promise<boolean> {
   const route = parseProviderRoute(pathname);
   if (!route) return false;
 
   try {
-    const exists = await providerExists(route.providerId, accessToken);
+    const exists = await providerExists(route.providerId);
     if (exists === null) return false;
     return !exists;
   } catch {
@@ -267,10 +311,7 @@ export async function shouldServeProviderNotFound(
  * Single entry point for middleware: true when this pathname should be
  * answered with a 404 status regardless of what the streamed body renders.
  */
-export async function shouldServeNotFound(
-  pathname: string,
-  accessToken?: string,
-): Promise<boolean> {
+export async function shouldServeNotFound(pathname: string): Promise<boolean> {
   if (await shouldServeFoodNotFound(pathname)) return true;
-  return shouldServeProviderNotFound(pathname, accessToken);
+  return shouldServeProviderNotFound(pathname);
 }

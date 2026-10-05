@@ -188,7 +188,13 @@ export async function middleware(req: NextRequest) {
   // Rewriting to the same URL keeps the render identical while pinning the
   // status to 404. This runs AFTER rate limiting so the /p lookup (one
   // PostgREST roundtrip, uncached) stays metered.
-  if (await shouldServeNotFound(pathname, accessToken)) {
+  //
+  // The lookups run anon on purpose: the pages they protect run anon for
+  // every caller (nothing writes the `sb-auth-token` cookie their SSR client
+  // reads), so forwarding the caller's `sb-access-token` would let the guard
+  // see MORE rows than the page renders — an unapproved `/p/<id>` would pass
+  // the guard and then soft-404 in the page anyway.
+  if (await shouldServeNotFound(pathname)) {
     return NextResponse.rewrite(req.nextUrl, { status: 404 });
   }
 
