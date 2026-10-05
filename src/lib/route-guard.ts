@@ -16,10 +16,16 @@
  * route (so the existing not-found UI still shows) while forcing the status
  * code.
  *
- * The checks below deliberately mirror `findCityBySlug` (src/lib/city-slug.ts),
+ * The checks below mirror `findCityBySlug` (src/lib/city-slug.ts),
  * `getCategoryBySlug` (src/services/categories.ts) and `getProviderById`
- * (src/services/providers/crud.ts), including their error handling, so the
- * status code can never disagree with the rendered body.
+ * (src/services/providers/crud.ts) on RESULTS — the same slug sets, the same
+ * id existence check. They deliberately diverge on ERRORS: a lookup that
+ * cannot be completed (non-OK response, timeout, network failure) means
+ * "could not determine" and lets the request through, so during a Supabase
+ * outage the status (200) intentionally disagrees with the body (the page's
+ * soft-404 render). That disagreement is the trade, on purpose: a soft 404
+ * is a cosmetic bug, while a hard 404 invented from a dependency blip turns
+ * it into a site-wide outage. Do not "restore consistency" here.
  *
  * This module is edge-runtime safe: it talks to PostgREST over `fetch` rather
  * than importing `@supabase/supabase-js`, which would bloat the middleware
@@ -193,6 +199,15 @@ async function isKnownFoodCategorySlug(categorySlug: string): Promise<boolean | 
       '&applicable_section=in.(food,all)&limit=1',
     // getCategoryBySlug swallows query errors into notFound(), so an HTTP
     // error here means "not found" — matching the body the page renders.
+    // That mapping is load-bearing only because of a schema gap, not a
+    // permanent design choice: `categories.slug` does not exist in this
+    // database today (PostgREST answers 400 42703), so getCategoryBySlug
+    // returns null for every slug and every category page genuinely renders
+    // not-found. Failing open here would restore soft-404s on every
+    // category URL. The degraded answer is returned but never cached, so it
+    // cannot outlive the fault. When #246's `slug` column lands, remove
+    // `errorAsEmpty`: from then on a categories 5xx is "could not
+    // determine" and must fail open like the city lookups.
     { errorAsEmpty: true },
   );
   if (result === null) return null;
