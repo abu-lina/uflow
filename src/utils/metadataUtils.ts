@@ -19,7 +19,8 @@ const localeMap: Record<ServerLanguage, string> = {
 const metadataContent: Record<ServerLanguage, { title: string; description: string }> = {
   de: {
     title: 'Ummah Flow',
-    description: 'Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet',
+    description:
+      'Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet',
   },
   en: {
     title: 'Ummah Flow',
@@ -91,12 +92,24 @@ export function generateLocalizedMetadata(language: ServerLanguage, siteUrl: str
       description: content.description,
       images: ['/icons/icon-512x512.png'],
     },
+    // Issue 533 — deliberately no `index`/`follow` in the robots metadata.
+    //
+    // This metadata comes from the ROOT layout, so it applies to every
+    // response including not-found renders. On a notFound() response Next
+    // injects `<meta name="robots" content="noindex">`, which used to sit next
+    // to an unconditional `index, follow` tag from here — contradictory
+    // instructions on the same page (measured on /p/<unknown-id>: HTTP 200,
+    // not-found body, `index, follow`). Omitting index/follow is equivalent
+    // for real pages (that is the crawler default) and leaves not-found
+    // responses with noindex only. Routes that need a non-default rule set
+    // `robots` in their own `generateMetadata`.
+    //
+    // The googleBot block stays because its directives are NOT crawler
+    // defaults — dropping max-image-preview/max-snippet/max-video-preview
+    // would shrink Google's previews site-wide. They carry no index/follow
+    // instruction, so they cannot contradict the injected noindex.
     robots: {
-      index: true,
-      follow: true,
       googleBot: {
-        index: true,
-        follow: true,
         'max-video-preview': -1,
         'max-image-preview': 'large',
         'max-snippet': -1,
@@ -137,4 +150,3 @@ export function generateLocalizedMetadata(language: ServerLanguage, siteUrl: str
     },
   };
 }
-

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { shouldRedirectToWaitlist } from '@/lib/middleware-utils';
+import { shouldServeNotFound } from '@/lib/route-guard';
 import { getTrustedClientIp } from '@/lib/security/clientIp';
 
 // Simple in-memory rate limiting store (for production, use Redis or similar)
@@ -173,6 +174,28 @@ export async function middleware(req: NextRequest) {
         },
       );
     }
+  }
+
+  // Issue 533 — unknown /food/[city], /food/[city]/[category] and /p/[id]
+  // segments must answer with a real 404 status, not 200 with a 404 body.
+  //
+  // The page components still call notFound() (that is what renders the
+  // not-found UI), but by the time they run the shell has already been
+  // flushed and the status line is on the wire: these routes are dynamically
+  // rendered and sit under the root app/loading.tsx plus segment loading.tsx
+  // boundaries, so Next cannot revise the status.
+  //
+  // Rewriting to the same URL keeps the render identical while pinning the
+  // status to 404. This runs AFTER rate limiting so the /p lookup (one
+  // PostgREST roundtrip, uncached) stays metered.
+  //
+  // The lookups run anon on purpose: the pages they protect run anon for
+  // every caller (nothing writes the `sb-auth-token` cookie their SSR client
+  // reads), so forwarding the caller's `sb-access-token` would let the guard
+  // see MORE rows than the page renders — an unapproved `/p/<id>` would pass
+  // the guard and then soft-404 in the page anyway.
+  if (await shouldServeNotFound(pathname)) {
+    return NextResponse.rewrite(req.nextUrl, { status: 404 });
   }
 
   return NextResponse.next();
