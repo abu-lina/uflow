@@ -14,9 +14,7 @@ export const providerReviewUpdateSchema = z
   .object({
     providerId: z.string().uuid('Invalid provider ID format'),
     reviewStatus: z.enum(['approved', 'rejected', 'needs_revision'], {
-      errorMap: () => ({
-        message: 'reviewStatus must be one of: approved, rejected, needs_revision',
-      }),
+      error: 'reviewStatus must be one of: approved, rejected, needs_revision',
     }),
     reviewFeedback: z.string().max(5000).optional().nullable(),
     expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
@@ -165,9 +163,7 @@ export const communityServiceReviewUpdateSchema = z
   .object({
     communityServiceId: z.string().uuid('Invalid community service ID format'),
     reviewStatus: z.enum(['approved', 'rejected', 'needs_revision'], {
-      errorMap: () => ({
-        message: 'reviewStatus must be one of: approved, rejected, needs_revision',
-      }),
+      error: 'reviewStatus must be one of: approved, rejected, needs_revision',
     }),
     reviewFeedback: z.string().max(5000).optional().nullable(),
     expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),

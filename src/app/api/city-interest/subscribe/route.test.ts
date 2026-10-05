@@ -17,8 +17,6 @@ vi.mock('@/lib/rate-limit', () => ({
   getClientIdentifier: vi.fn(() => '127.0.0.1'),
 }));
 
-vi.unmock('zod');
-
 describe('/api/city-interest/subscribe', () => {
   beforeEach(async () => {
     vi.resetModules();
@@ -220,6 +218,21 @@ describe('/api/city-interest/subscribe', () => {
 
       expect(response.status).toBe(400);
       expect(data.error).toBeDefined();
+    });
+
+    it('returns the zod v4 default message for a missing cityName', async () => {
+      const request = new NextRequest('http://localhost:3000/api/city-interest/subscribe', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'user@example.com' }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        error: 'Invalid input: expected string, received undefined',
+      });
     });
 
     it('[post-fix PASSES] should trim and limit cityName to 100 chars', async () => {

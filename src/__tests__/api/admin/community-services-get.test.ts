@@ -32,7 +32,7 @@ const mockGetUser = getUserFromCookie as ReturnType<typeof vi.fn>;
 const mockIsAdmin = isAdminOrModerator as ReturnType<typeof vi.fn>;
 const mockGetCS = getCommunityServiceForAdmin as ReturnType<typeof vi.fn>;
 
-const VALID_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+const VALID_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 const adminUser = { id: 'admin-id', email: 'admin@test.com' };
 
 function makeRequest(id: string) {
@@ -59,7 +59,9 @@ describe('GET /api/admin/community-services/[id]', () => {
   });
 
   it('returns 400 for invalid UUID', async () => {
-    const res = await GET(makeRequest('not-a-uuid'), { params: Promise.resolve({ id: 'not-a-uuid' }) });
+    const res = await GET(makeRequest('not-a-uuid'), {
+      params: Promise.resolve({ id: 'not-a-uuid' }),
+    });
     expect(res.status).toBe(400);
   });
 

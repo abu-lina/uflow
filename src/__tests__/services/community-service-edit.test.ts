@@ -33,8 +33,8 @@ import {
   type AdminCommunityServiceEditData,
 } from '@/services/admin/communityServiceEdit';
 
-const VALID_CS_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
-const VALID_ADMIN_ID = 'ffffffff-1111-2222-3333-444444444444';
+const VALID_CS_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+const VALID_ADMIN_ID = 'ffffffff-1111-2222-8333-444444444444';
 
 describe('getCommunityServiceForAdmin', () => {
   beforeEach(() => {
@@ -128,7 +128,10 @@ describe('updateCommunityServiceFields', () => {
     const editData: AdminCommunityServiceEditData = { serviceName: 'Test' };
     await updateCommunityServiceFields(VALID_CS_ID, editData, VALID_ADMIN_ID);
 
-    const updateArg = (mockUpdate as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<string, unknown>;
+    const updateArg = (mockUpdate as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     expect(updateArg).toHaveProperty('updated_at');
   });
 
@@ -146,7 +149,10 @@ describe('updateCommunityServiceFields', () => {
     };
     await updateCommunityServiceFields(VALID_CS_ID, editData, VALID_ADMIN_ID);
 
-    const updateArg = (mockUpdate as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<string, unknown>;
+    const updateArg = (mockUpdate as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     expect(Array.isArray(updateArg.provider_images)).toBe(true);
   });
 
@@ -155,7 +161,7 @@ describe('updateCommunityServiceFields', () => {
 
     const editData: AdminCommunityServiceEditData = { serviceName: 'Test' };
     await expect(
-      updateCommunityServiceFields(VALID_CS_ID, editData, VALID_ADMIN_ID)
+      updateCommunityServiceFields(VALID_CS_ID, editData, VALID_ADMIN_ID),
     ).rejects.toThrow('Community service not found');
   });
 
@@ -164,7 +170,7 @@ describe('updateCommunityServiceFields', () => {
 
     const editData: AdminCommunityServiceEditData = { serviceName: 'Test' };
     await expect(
-      updateCommunityServiceFields(VALID_CS_ID, editData, VALID_ADMIN_ID)
+      updateCommunityServiceFields(VALID_CS_ID, editData, VALID_ADMIN_ID),
     ).rejects.toThrow('Update failed');
   });
 });
@@ -203,8 +209,8 @@ describe('updateCommunityServiceReview', () => {
         VALID_CS_ID,
         'approved',
         null,
-        '2026-01-01T00:00:00.000Z' // expectedUpdatedAt provided → conflict detection active
-      )
+        '2026-01-01T00:00:00.000Z', // expectedUpdatedAt provided → conflict detection active
+      ),
     ).rejects.toThrow('CONFLICT:');
   });
 
@@ -212,7 +218,7 @@ describe('updateCommunityServiceReview', () => {
     mockSelect.mockResolvedValue({ data: [], error: null });
 
     await expect(
-      updateCommunityServiceReview(VALID_CS_ID, 'approved', null, undefined)
+      updateCommunityServiceReview(VALID_CS_ID, 'approved', null, undefined),
     ).rejects.toThrow('Community service not found');
   });
 });

@@ -16,8 +16,6 @@ import { render, screen } from '@testing-library/react';
 import fs from 'fs';
 import path from 'path';
 
-vi.unmock('zod');
-
 vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
 }));

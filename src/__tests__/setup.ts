@@ -54,38 +54,6 @@ vi.mock('sonner', () => ({
   }),
 }));
 
-// Mock zod
-const mockParse = vi.fn().mockReturnValue({
-  email: 'test@example.com',
-  password: 'password123',
-});
-
-const mockString = () => ({
-  email: () => ({
-    min: () => ({
-      parse: mockParse,
-    }),
-  }),
-});
-
-const mockObject = () => ({
-  shape: {
-    email: { parse: mockParse },
-    password: { parse: mockParse },
-  },
-  parse: mockParse,
-});
-
-vi.mock('zod', () => ({
-  z: {
-    object: mockObject,
-    string: mockString,
-    ZodError: class extends Error {
-      errors = [{ path: [], message: 'Mock error' }];
-    },
-  },
-}));
-
 // Mock supabase client
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
@@ -133,7 +101,8 @@ vi.mock('@iconify/react', () => ({
 vi.mock('@/components/ui/skeleton/Skeleton', () => ({
   Skeleton: ({ children, className }: { children?: React.ReactNode; className?: string }) =>
     React.createElement('div', { className, 'data-testid': 'skeleton' }, children),
-  FormSkeleton: () => React.createElement('div', { 'data-testid': 'form-skeleton' }, React.createElement('div')),
+  FormSkeleton: () =>
+    React.createElement('div', { 'data-testid': 'form-skeleton' }, React.createElement('div')),
   default: ({ children, className }: { children?: React.ReactNode; className?: string }) =>
     React.createElement('div', { className, 'data-testid': 'skeleton' }, children),
 }));

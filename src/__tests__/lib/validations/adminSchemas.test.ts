@@ -4,9 +4,7 @@
  * Covers: providerEditUpdateSchema — new fields for Plan 145
  */
 
-import { describe, it, expect, vi } from 'vitest';
-
-vi.unmock('zod');
+import { describe, it, expect } from 'vitest';
 
 import { providerEditUpdateSchema } from '@/lib/validations/adminSchemas';
 
@@ -90,9 +88,7 @@ describe('providerEditUpdateSchema — Plan 145 new fields', () => {
   it('rejects invalid deliveryLink platform', () => {
     const result = providerEditUpdateSchema.safeParse({
       ...base,
-      deliveryLinks: [
-        { platform: 'deliveroo', platform_url: 'https://x.com', is_active: true },
-      ],
+      deliveryLinks: [{ platform: 'deliveroo', platform_url: 'https://x.com', is_active: true }],
     });
     expect(result.success).toBe(false);
   });
@@ -100,9 +96,7 @@ describe('providerEditUpdateSchema — Plan 145 new fields', () => {
   it('rejects deliveryLink with invalid URL', () => {
     const result = providerEditUpdateSchema.safeParse({
       ...base,
-      deliveryLinks: [
-        { platform: 'wolt', platform_url: 'not-a-url', is_active: true },
-      ],
+      deliveryLinks: [{ platform: 'wolt', platform_url: 'not-a-url', is_active: true }],
     });
     expect(result.success).toBe(false);
   });
@@ -110,9 +104,7 @@ describe('providerEditUpdateSchema — Plan 145 new fields', () => {
   it('rejects menuItem with empty name_de', () => {
     const result = providerEditUpdateSchema.safeParse({
       ...base,
-      menuItems: [
-        { name_de: '', price_cents: 500, sort_order: 0, is_available: true },
-      ],
+      menuItems: [{ name_de: '', price_cents: 500, sort_order: 0, is_available: true }],
     });
     expect(result.success).toBe(false);
   });
@@ -120,9 +112,7 @@ describe('providerEditUpdateSchema — Plan 145 new fields', () => {
   it('rejects menuItem with negative price_cents', () => {
     const result = providerEditUpdateSchema.safeParse({
       ...base,
-      menuItems: [
-        { name_de: 'Item', price_cents: -1, sort_order: 0, is_available: true },
-      ],
+      menuItems: [{ name_de: 'Item', price_cents: -1, sort_order: 0, is_available: true }],
     });
     expect(result.success).toBe(false);
   });

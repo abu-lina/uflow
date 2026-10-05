@@ -31,9 +31,6 @@ import {
 import { HalalAttestationFields } from '@/components/shared/HalalAttestationFields';
 import type { ProviderFormData } from '@/providers/form-provider';
 
-// The global setup mocks zod for auth-form tests; use the real schemas here.
-vi.unmock('zod');
-
 vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({ t: (key: string) => key, language: 'en' }),
 }));

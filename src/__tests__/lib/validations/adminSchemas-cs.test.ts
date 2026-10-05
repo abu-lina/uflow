@@ -7,10 +7,7 @@
  * Covers: communityServiceEditUpdateSchema, communityServiceReviewUpdateSchema
  */
 
-import { describe, it, expect, vi } from 'vitest';
-
-// Undo the global zod mock from setup.ts so real Zod validator runs
-vi.unmock('zod');
+import { describe, it, expect } from 'vitest';
 
 import {
   communityServiceEditUpdateSchema,
@@ -174,7 +171,7 @@ describe('communityServiceReviewUpdateSchema', () => {
     });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0].message).toContain(
-      'reviewStatus must be one of: approved, rejected, needs_revision'
+      'reviewStatus must be one of: approved, rejected, needs_revision',
     );
   });
 

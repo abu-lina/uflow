@@ -32,9 +32,6 @@ import type { ProviderEditFormData } from '@/features/providers/pages/ProviderEd
 const ROOT = resolve(__dirname, '../../../');
 const readSrc = (p: string) => readFileSync(resolve(ROOT, p), 'utf-8');
 
-// The global setup mocks zod for auth-form tests; use the real schemas here.
-vi.unmock('zod');
-
 // ── Supabase mock (same harness as the C2 round-trip suite) ──────────────────
 
 const mockProviderInsert = vi.fn();

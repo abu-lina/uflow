@@ -152,8 +152,6 @@ function mockSession(userId: string | null) {
   return userId ? { id: userId, email: 'user@example.com' } : null;
 }
 
-vi.unmock('zod');
-
 describe('/api/providers POST', () => {
   beforeEach(async () => {
     vi.resetModules();

@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Global setup mocks zod — restore the real implementation for this test suite
-vi.unmock('zod');
-
 // Mock dependencies before imports
 vi.mock('@/lib/supabase/getUserFromCookie', () => ({
   getUserFromCookie: vi.fn(),

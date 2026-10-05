@@ -7,11 +7,7 @@
  * (undefined) until implemented.
  */
 
-import { describe, it, expect, vi } from 'vitest';
-
-// The global setup.ts mocks 'zod' with a minimal stub that lacks uuid/url/enum etc.
-// Restore the real module for schema validation tests.
-vi.unmock('zod');
+import { describe, it, expect } from 'vitest';
 
 // Import after mocks — new exports don't exist yet
 import {
@@ -19,7 +15,9 @@ import {
   communityServiceReviewUpdateSchema,
 } from '@/lib/validations/adminSchemas';
 
-const VALID_CS_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+// RFC 4122-valid UUID — zod v4 enforces the version (1-8) and variant (8-b)
+// nibbles that v3's loose regex ignored.
+const VALID_CS_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 
 describe('communityServiceEditUpdateSchema', () => {
   it('accepts minimal valid payload (only communityServiceId)', () => {
@@ -31,7 +29,7 @@ describe('communityServiceEditUpdateSchema', () => {
 
   it('rejects invalid UUID for communityServiceId', () => {
     expect(() =>
-      communityServiceEditUpdateSchema.parse({ communityServiceId: 'not-a-uuid' })
+      communityServiceEditUpdateSchema.parse({ communityServiceId: 'not-a-uuid' }),
     ).toThrow();
   });
 
@@ -48,7 +46,7 @@ describe('communityServiceEditUpdateSchema', () => {
       communityServiceEditUpdateSchema.parse({
         communityServiceId: VALID_CS_ID,
         communityServiceImages: '{"urls":["https://example.com/img.jpg"]}',
-      })
+      }),
     ).toThrow();
   });
 
@@ -57,7 +55,7 @@ describe('communityServiceEditUpdateSchema', () => {
       communityServiceId: VALID_CS_ID,
       serviceName: 'Test Service',
       serviceDescription: 'A great service',
-      categoryId: 'bbbbbbbb-cccc-dddd-eeee-ffffffffffff',
+      categoryId: 'bbbbbbbb-cccc-4ddd-8eee-ffffffffffff',
       addressStreet: 'Hauptstraße 1',
       addressZip: '10115',
       addressCity: 'Berlin',
@@ -78,7 +76,7 @@ describe('communityServiceEditUpdateSchema', () => {
       communityServiceEditUpdateSchema.parse({
         communityServiceId: VALID_CS_ID,
         contactEmail: 'not-an-email',
-      })
+      }),
     ).toThrow();
   });
 
@@ -87,7 +85,7 @@ describe('communityServiceEditUpdateSchema', () => {
       communityServiceEditUpdateSchema.parse({
         communityServiceId: VALID_CS_ID,
         socialWebsite: 'not-a-url',
-      })
+      }),
     ).toThrow();
   });
 });
@@ -116,7 +114,7 @@ describe('communityServiceReviewUpdateSchema', () => {
       communityServiceReviewUpdateSchema.parse({
         communityServiceId: VALID_CS_ID,
         reviewStatus: 'rejected',
-      })
+      }),
     ).toThrow();
   });
 
@@ -125,7 +123,7 @@ describe('communityServiceReviewUpdateSchema', () => {
       communityServiceReviewUpdateSchema.parse({
         communityServiceId: VALID_CS_ID,
         reviewStatus: 'invalid_status',
-      })
+      }),
     ).toThrow();
   });
 
