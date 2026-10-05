@@ -2,7 +2,11 @@ import { defineConfig, devices } from '@playwright/test';
 
 import { resolveSupabaseEnv } from './e2e/fixtures';
 
-const baseURL = 'http://127.0.0.1:3000';
+// Override with PLAYWRIGHT_BASE_URL to point the suite at a server on a
+// non-default port (e.g. when :3000 is held by another worktree's server).
+// When set, start that server yourself — webServer still spawns `dev`/`start`
+// on the default port if nothing answers at baseURL.
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000';
 
 const supabase = resolveSupabaseEnv();
 
