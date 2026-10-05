@@ -240,8 +240,40 @@ cd ../uflow-wt/N-<slug> && git push -u origin <branch>
 
 ```bash
 gh pr create --title "<title>" --body "<the PR body comment, verbatim>"
-git worktree remove "../uflow-wt/N-<slug>"
 ```
+
+The worktree stays. Review feedback lands as more commits on the same branch, so nothing is removed at this point.
+
+## Cleanup
+
+Cleanup runs after the PR merges, not after it is created. Until then the worktree and branch are live: review feedback lands as more commits pushed from the worktree.
+
+Verify the merge before deleting anything. Never delete on the assumption a merge happened:
+
+```bash
+gh pr view <PR> --json state,mergeCommit
+```
+
+Then check the worktree for untracked files and unpushed commits, since `git worktree remove --force` discards them silently. Anything worth keeping, in practice artifacts under `agent-output/artifacts/`, gets copied into the canonical repo first. This bit us once: `533-status-loop.sh` could not be committed because of the lint-staged `*.sh` bug (#538), so removing the worktree would have destroyed the only copy.
+
+Also kill any dev server the run left listening on a port. An orphan outlives its worktree: after #533 merged, a node process was still on :3000 from a worktree that no longer existed.
+
+Then tear down, in order:
+
+```bash
+git worktree remove "../uflow-wt/N-<slug>"
+git worktree prune
+git fetch origin main --prune
+git branch -f main origin/main
+git branch -D <branch>
+git push origin --delete <branch>
+```
+
+A branch that existed only to carry work now merged gets deleted too, local and remote. `fix/245-category-pages-broken` stayed alive for months purely because it held the only copy of that fix.
+
+Confirm the end state: `git worktree list` and `git branch -vv` show the worktree and branch gone, and the issue auto-closed via `Fixes #N`.
+
+Deleting branches and worktrees is destructive, so confirm with the user before doing it, per the destructive-operations rule. Merged-branch cleanup is the expected default, not a surprise.
 
 ## Rules
 
@@ -258,6 +290,7 @@ git worktree remove "../uflow-wt/N-<slug>"
 11. **Phase headers tell the truth.** Treat a phase as Done only if a subagent ran it and posted its comment, and only phases that exist in the flow. Ask the user before skipping a phase.
 12. **One request at a time.** A follow-up becomes its own issue.
 13. **Clear, do not compact.** At a phase boundary the move is to clear and `/orchestrator resume N`, offered at every gate. Compaction is not a state transfer: after one, re-read the issue before the next dispatch or gate. Phase state comes from `gh issue view N`, never from recall. See Context budget.
+14. **Clean up after merge.** The request is not done when the PR merges; it is done when the worktree is removed and the branch is deleted locally and on origin. Verify the merge and rescue untracked artifacts out of the worktree first. See Cleanup.
 
 ---
 

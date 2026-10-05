@@ -22,6 +22,10 @@ After each build chunk: review, then test, then capture one learning.
 
 Create a feature branch before any code changes, at the Implementer handoff, not at DevOps time. The orchestrator creates `<prefix>/<N>-<slug>` from the latest `main` during Step 1 setup, all code commits go onto it, and the DevOps phase only pushes remaining commits and creates the PR. This gives CI visibility during implementation and surfaces pre-existing failures early.
 
+## Branch cleanup after merge
+
+Branches and worktrees are cleaned up once the PR merges, not left behind. Verify the merge before deleting anything, and rescue untracked artifacts out of the worktree before removing it. Delete the branch locally and on origin, and kill any dev server the run left listening on a port. The exact sequence is in the Cleanup section of `.devin/skills/orchestrator/SKILL.md`.
+
 ## Context budget
 
 Agent sessions target 100k tokens. The mechanism is clearing at phase boundaries, not compaction. Request state lives on the GitHub issue, so `/orchestrator resume N` rebuilds a session from the workers' own phase comments rather than from a lossy summary of the previous session. The orchestrator skill's "Context budget" section carries the rules; every phase comment opens with a state block (issue, worktree, branch, flow) so one comment is enough to rebuild the run.
