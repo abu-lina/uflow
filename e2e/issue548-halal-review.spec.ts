@@ -192,30 +192,49 @@ test.describe('issue 548 — halal check approve/reject', () => {
     expect(page.url()).toContain('/food');
   });
 
-  test('AC 11: two PATCHes with the same expectedUpdatedAt -> 200 then 409', async ({ page }) => {
+  test('AC 11: two concurrent reviews, different payloads -> first wins, second 409s', async ({
+    page,
+  }) => {
     const providerId = await seedPendingProvider();
     const { updated_at } = await providerRow(providerId);
     await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD);
 
-    const payload = {
+    // Different reasons per request so the surviving row demonstrably
+    // belongs to exactly one winner — identical payloads could not prove
+    // the loser did not silently overwrite.
+    const base = {
       providerId,
       reviewStatus: 'rejected',
-      reviewFeedback: 'not halal-verifiable',
       expectedUpdatedAt: updated_at,
       halal: { noAlcohol: false, noPork: false, noGambling: false },
     };
-    const first = await page.request.patch('/api/admin/review-provider', { data: payload });
+    const first = await page.request.patch('/api/admin/review-provider', {
+      data: { ...base, reviewFeedback: 'first reviewer: not halal-verifiable' },
+    });
     expect(first.status()).toBe(200);
 
-    const second = await page.request.patch('/api/admin/review-provider', { data: payload });
+    const second = await page.request.patch('/api/admin/review-provider', {
+      data: { ...base, reviewFeedback: 'second reviewer: duplicate listing' },
+    });
     expect(second.status()).toBe(409);
 
-    expect((await providerRow(providerId)).review_status).toBe('rejected');
+    const row = await providerRow(providerId);
+    expect(row.review_status).toBe('rejected');
+    expect(row.review_feedback).toBe('first reviewer: not halal-verifiable');
   });
 
-  test('AC 1 negative: approve with one "not sure" -> 422, both rows byte-identical', async ({
+  test('AC 1 pre-flight: approve with one "not sure" -> 422 before the RPC, rows unchanged', async ({
     page,
   }) => {
+    // This exercises the TypeScript pre-flight gate at route.ts:136-155,
+    // which returns 422 before updateProviderReview is ever called (the
+    // sibling unit test admin-review-provider-halal-payload.test.ts
+    // asserts mockReview is not reached for the same input). "Both rows
+    // byte-identical" here proves the pre-flight wrote nothing — it is
+    // NOT the atomicity assertion. True in-transaction rollback is proven
+    // by the PGlite test at
+    // src/__tests__/migrations/138-issue548-review-audit.test.ts
+    // ("rolls back BOTH writes") and by the direct-RPC case below.
     const providerId = await seedPendingProvider();
     const beforeProvider = await providerRow(providerId);
     const beforeFood = await foodRow(providerId);
@@ -233,9 +252,41 @@ test.describe('issue 548 — halal check approve/reject', () => {
     const body = await res.json();
     expect(body.unanswered).toContain('no_gambling');
 
-    // Atomicity: the answers did not persist without the status change.
+    // The answers did not persist without the status change.
     expect(await providerRow(providerId)).toEqual(beforeProvider);
     expect(await foodRow(providerId)).toEqual(beforeFood);
+  });
+
+  test('AC 1 atomicity in-transaction: omitting p_halal fires the gate inside the RPC and rolls back', async () => {
+    // Through PATCH this path can never reach the function: with `halal`
+    // absent the route's pre-flight reads the same all-false stored row
+    // and 422s first. The in-transaction gate (migration 138, step 2)
+    // can only fire via a direct RPC call or a pre-flight/RPC race, so
+    // this calls admin_review_provider over PostgREST with p_halal
+    // omitted — the function re-reads the stored all-false row, raises
+    // HALAL_GATE and must roll back the status write it would have made.
+    // Same assertion against real Postgres:
+    // src/__tests__/migrations/138-issue548-review-audit.test.ts
+    const providerId = await seedPendingProvider();
+
+    const { error } = await admin.rpc('admin_review_provider', {
+      p_provider_id: providerId,
+      p_review_status: 'approved',
+      p_review_feedback: null,
+      p_reviewer_id: adminUserId,
+      // p_halal deliberately omitted
+      p_expected_updated_at: null,
+    });
+    expect(error).not.toBeNull();
+    expect(error?.message ?? '').toContain('HALAL_GATE');
+
+    const row = await providerRow(providerId);
+    expect(row.review_status).toBe('pending');
+    expect(row.reviewed_by).toBeNull();
+    const food = await foodRow(providerId);
+    expect(food.no_alcohol).toBe(false);
+    expect(food.no_pork).toBe(false);
+    expect(food.no_gambling).toBe(false);
   });
 
   test('AC 1–4: admin approves in the browser, answers persist atomically', async ({ page }) => {
