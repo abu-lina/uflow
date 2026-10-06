@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Dev server for the issue #126 repro loop. No real Supabase: the Playwright
+# script stubs every /auth/v1 and /rest/v1 call, so these values only have to
+# pass src/lib/supabase/client.ts's format validation.
+cd /Users/NARAFIQ/Projects/uflow-wt/126-profile-menu-mobile
+export NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
+export NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1mYWtlLWZvci10ZXN0aW5nIiwicm9sZSI6ImFub24iLCJyZWYiOiJsb2NhbGhvc3QiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.FAKE-SIGNATURE-FOR-TESTING-ONLY
+export SUPABASE_SERVICE_ROLE_KEY=FAKE-SERVICE-ROLE-KEY-FOR-TESTING
+exec npx next dev -p 3100
