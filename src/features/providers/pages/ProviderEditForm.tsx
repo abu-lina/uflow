@@ -97,7 +97,9 @@ export interface ProviderEditFormData {
   makesDonations: boolean;
   hasParking: boolean;
   economicSolidarity: boolean;
-  reviewStatus?: string;
+  // #548: reviewStatus removed — it was dead state (never rendered, never in
+  // the PATCH body) and keeping it would invite a second status write path.
+  // Review status is set only via PATCH /api/admin/review-provider.
 }
 
 export function ProviderEditForm({
@@ -176,7 +178,6 @@ export function ProviderEditForm({
     noAlcohol: (ext?.no_alcohol as boolean | null) ?? null,
     noPork: (ext?.no_pork as boolean | null) ?? null,
     noGambling: (ext?.no_gambling as boolean | null) ?? null,
-    reviewStatus: provider.review_status || 'pending',
     muslimOwned: (providerAny.muslim_owned as boolean) ?? false,
     hasPrayerSpace: (providerAny.has_prayer_space as boolean) ?? false,
     familyFriendly: (providerAny.family_friendly as boolean) ?? false,
@@ -270,7 +271,6 @@ export function ProviderEditForm({
           noAlcohol: 'noAlcohol' in parsed ? parsed.noAlcohol : prev.noAlcohol,
           noPork: 'noPork' in parsed ? parsed.noPork : prev.noPork,
           noGambling: 'noGambling' in parsed ? parsed.noGambling : prev.noGambling,
-          reviewStatus: parsed.reviewStatus ?? prev.reviewStatus,
         }));
       } catch {
         /* ignore */
@@ -306,7 +306,6 @@ export function ProviderEditForm({
           instagram: parsed.instagram || prev.instagram,
           email: parsed.email || prev.email,
           phone: parsed.phone || prev.phone,
-          reviewStatus: parsed.reviewStatus || prev.reviewStatus,
         }));
         // Guard: if isOnlineBusiness contradicts populated address data, reset
         if (
@@ -345,7 +344,6 @@ export function ProviderEditForm({
       instagram: formData.instagram,
       email: formData.email,
       phone: formData.phone,
-      reviewStatus: formData.reviewStatus,
     };
     localStorage.setItem(`${pfx}edit_inline_${pid}`, JSON.stringify(inlineData));
   }, [enableLocalStorage, localStoragePrefix, provider.provider_id, formData]);

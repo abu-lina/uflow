@@ -787,3 +787,88 @@ describe('ProviderEditForm clears localStorage drafts after save', () => {
     }
   });
 });
+
+describe('ProviderEditForm reviewStatus dead path (#548, AC 18)', () => {
+  const pid = baseProvider.provider_id;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+
+    mockCategoriesOrder.mockResolvedValue({ data: [], error: null });
+    mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
+
+    mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
+    mockProviderCommunityServicesSelect.mockReturnValue({
+      eq: mockProviderCommunityServicesSelectEq,
+    });
+  });
+
+  it('submitted form data carries no reviewStatus — status is set by the review endpoint only', async () => {
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        onSubmitForm={onSubmitForm}
+        provider={{ ...baseProvider, review_status: 'pending' } as Provider}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onSubmitForm).toHaveBeenCalled();
+    });
+
+    const submitted = onSubmitForm.mock.calls[0][0] as Record<string, unknown>;
+    expect('reviewStatus' in submitted).toBe(false);
+  });
+
+  it('a seeded reviewStatus in the halal draft does not re-enter form state', () => {
+    // Pre-cleanup drafts may still contain the dead key — it must be ignored
+    // rather than rehydrated, or the draft would resurrect the second write
+    // path this issue removed.
+    localStorage.setItem(
+      `admin_edit_halal_${pid}`,
+      JSON.stringify({ noAlcohol: true, reviewStatus: 'approved' }),
+    );
+
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={baseProvider}
+        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
+      />,
+    );
+
+    // Navigate away to a sub-page — this flushes the inline draft to
+    // localStorage, which is the exact payload shape we can inspect.
+    fireEvent.click(screen.getByText('Halal Check'));
+
+    const stored = localStorage.getItem(`admin_edit_inline_${pid}`);
+    expect(stored).not.toBeNull();
+    const parsed = JSON.parse(stored as string) as Record<string, unknown>;
+    expect('reviewStatus' in parsed).toBe(false);
+  });
+
+  it('the inline draft payload never contains reviewStatus', () => {
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        provider={{ ...baseProvider, review_status: 'rejected' } as Provider}
+        subPageBaseUrl={`/dashboard/providers/${pid}/edit`}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Halal Check'));
+
+    const parsed = JSON.parse(localStorage.getItem(`admin_edit_inline_${pid}`) as string) as Record<
+      string,
+      unknown
+    >;
+    expect('reviewStatus' in parsed).toBe(false);
+  });
+});

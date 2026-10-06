@@ -9,11 +9,11 @@ import { cn } from '@/lib/utils';
 
 /**
  * Reusable Footer Action Component
- * 
+ *
  * Two variants:
  * 1. Single action button (48px height)
  * 2. Two buttons: one action button + one secondary action button (48px x 48px)
- * 
+ *
  * Features:
  * - Fixed position at bottom with proper safe area handling
  * - Consistent styling with backdrop blur
@@ -33,6 +33,14 @@ interface FooterActionButton {
   'aria-label'?: string;
 }
 
+/**
+ * Total height the fixed footer bar occupies above the safe-area inset:
+ * pt-4 (16px) + 48px button + pb-4 (16px) = 80px. Exported so a bar that
+ * must sit directly above the footer (EditSubPageLayout's reviewFooter)
+ * anchors on the same number instead of re-deriving the arithmetic.
+ */
+export const FOOTER_ACTION_HEIGHT_PX = 80;
+
 interface FooterSecondaryButton {
   icon: React.ReactNode | string;
   onClick: () => void;
@@ -46,18 +54,18 @@ interface FooterActionProps {
    * Variant 1: Single action button
    */
   actionButton?: FooterActionButton;
-  
+
   /**
    * Variant 2: Primary action button + secondary action button
    */
   primaryButton?: FooterActionButton;
   secondaryButton?: FooterSecondaryButton;
-  
+
   /**
    * Custom className for the footer container
    */
   className?: string;
-  
+
   /**
    * Custom className for the content wrapper
    */
@@ -66,7 +74,7 @@ interface FooterActionProps {
 
 /**
  * FooterAction Component
- * 
+ *
  * @example
  * ```tsx
  * // Variant 1: Single button
@@ -77,7 +85,7 @@ interface FooterActionProps {
  *     variant: 'primary',
  *   }}
  * />
- * 
+ *
  * // Variant 2: Two buttons
  * <FooterAction
  *   primaryButton={{
@@ -102,18 +110,20 @@ export function FooterAction({
 }: FooterActionProps) {
   // Validate props: must have either actionButton OR (primaryButton + secondaryButton)
   if (!actionButton && (!primaryButton || !secondaryButton)) {
-    console.warn('FooterAction: Must provide either actionButton or both primaryButton and secondaryButton');
+    console.warn(
+      'FooterAction: Must provide either actionButton or both primaryButton and secondaryButton',
+    );
     return null;
   }
 
   // Render icon helper - supports both ReactNode and Iconify string
   const renderIcon = (icon: React.ReactNode | string | undefined) => {
     if (!icon) return null;
-    
+
     if (typeof icon === 'string') {
       return <Icon aria-hidden="true" className="h-6 w-6" icon={icon} />;
     }
-    
+
     return icon;
   };
 
@@ -125,22 +135,26 @@ export function FooterAction({
         <footer
           className={cn(
             'fixed bottom-0 left-0 right-0 z-[60] w-full border-t border-border/30',
-            className
+            className,
           )}
           style={{
             // Solid opaque background - matches page gradient exactly (SSOT: MobileFooterBar)
-            background: 'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
+            background:
+              'linear-gradient(to bottom, rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
             pointerEvents: 'auto',
           }}
         >
-          <div className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+          <div
+            className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+            style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+          >
             <Button
               fullWidth
               aria-label={actionButton['aria-label'] || actionButton.label}
-              className="!h-[48px] !min-h-[48px] !max-h-[48px] relative z-[60] pointer-events-auto"
+              className="pointer-events-auto relative z-[60] !h-[48px] !max-h-[48px] !min-h-[48px]"
               disabled={actionButton.disabled}
               icon={actionButton.icon}
               id={`footer-action-button-${actionButton.label.replace(/\s+/g, '-').toLowerCase()}`}
@@ -157,13 +171,13 @@ export function FooterAction({
         </footer>
       );
     }
-    
+
     // Default: leading icon or no icon
     return (
       <footer
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px] border-t border-border/30',
-          className
+          'fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]',
+          className,
         )}
         style={{
           background: 'linear-gradient(to bottom, #f5f5f5 0%, #fbfbfb 100%)',
@@ -172,11 +186,14 @@ export function FooterAction({
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <div
+          className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
           <Button
             fullWidth
             aria-label={actionButton['aria-label'] || actionButton.label}
-            className="!h-[48px] !min-h-[48px] !max-h-[48px] relative z-[60] pointer-events-auto"
+            className="pointer-events-auto relative z-[60] !h-[48px] !max-h-[48px] !min-h-[48px]"
             disabled={actionButton.disabled}
             icon={actionButton.icon}
             id={`footer-action-button-${actionButton.label.replace(/\s+/g, '-').toLowerCase()}`}
@@ -199,8 +216,8 @@ export function FooterAction({
     return (
       <footer
         className={cn(
-          'fixed bottom-0 left-0 right-0 z-50 w-full bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px] border-t border-border/30',
-          className
+          'fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]',
+          className,
         )}
         style={{
           background: 'linear-gradient(to bottom, #f5f5f5 0%, #fbfbfb 100%)',
@@ -209,11 +226,14 @@ export function FooterAction({
           boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div className={cn('flex w-full gap-3.5 px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)} style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        <div
+          className={cn('flex w-full gap-3.5 px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
           {/* Primary Action Button - Full width (flex-1), 48px height */}
           <Button
             aria-label={primaryButton['aria-label'] || primaryButton.label}
-            className="flex-1 !h-[48px] !min-h-[48px] !max-h-[48px]"
+            className="!h-[48px] !max-h-[48px] !min-h-[48px] flex-1"
             disabled={primaryButton.disabled}
             icon={primaryButton.icon}
             loading={primaryButton.loading}
@@ -229,7 +249,7 @@ export function FooterAction({
           {/* Secondary Action Button - 48px x 48px (1:1 ratio) */}
           <IconButton
             aria-label={secondaryButton['aria-label']}
-            className="!h-[48px] !w-[48px] !min-h-[48px] !min-w-[48px] !max-h-[48px] !max-w-[48px] flex-shrink-0"
+            className="!h-[48px] !max-h-[48px] !min-h-[48px] !w-[48px] !min-w-[48px] !max-w-[48px] flex-shrink-0"
             disabled={secondaryButton.disabled}
             icon={renderIcon(secondaryButton.icon)}
             loading={secondaryButton.loading}
@@ -244,4 +264,3 @@ export function FooterAction({
 
   return null;
 }
-

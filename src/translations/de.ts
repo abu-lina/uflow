@@ -1231,19 +1231,21 @@ export const de = {
   // #415: tri-state halal attestation (yes/no/not sure -> true/false/NULL)
   halal: {
     attestation: {
+      // #548: affirmative phrasing — a negated label plus a negated question
+      // made "Ja" mean compliant, a double negative admins kept misreading.
       sectionTitle: 'Halal Compliance',
       recommendDescription: 'Was weißt du über diesen Anbieter?',
       noAlcohol: {
-        label: 'Kein Alkohol',
-        desc: 'Wird kein Alkohol verarbeitet, verkauft oder angeboten?',
+        label: 'Alkoholfrei',
+        desc: 'Ist dieser Betrieb vollständig alkoholfrei?',
       },
       noPork: {
-        label: 'Kein verbotenes Fleisch',
-        desc: 'Wird kein Schweinefleisch oder anderes verbotenes Fleisch verarbeitet, verkauft oder angeboten?',
+        label: 'Nur erlaubtes Fleisch',
+        desc: 'Ist das Fleisch hier durchgehend halal, also ohne Schweinefleisch oder anderes verbotenes Fleisch?',
       },
       noGambling: {
-        label: 'Kein Glücksspiel',
-        desc: 'Werden keine Glücksspiele oder Wetten angeboten?',
+        label: 'Ohne Glücksspiel',
+        desc: 'Ist dieser Betrieb frei von Glücksspiel und Wetten?',
       },
       answer: {
         yes: 'Ja',
@@ -1320,10 +1322,29 @@ export const de = {
       silver: 'Silber',
       bronze: 'Bronze',
     },
-    autoApprovedTitle: 'Auto-Approved',
-    autoApprovedDesc: 'Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.',
-    autoRejectedTitle: 'Auto-Rejected',
+    // #548: nothing is "auto" any more — these panels preview the verdict
+    // the review footer will act on.
+    autoApprovedTitle: 'Genehmigungsbereit',
+    autoApprovedDesc:
+      'Alle Bezeugungsfragen sind bestätigt. Du kannst diesen Eintrag unten genehmigen.',
+    autoRejectedTitle: 'Nicht genehmigungsbereit',
     autoRejectedDesc:
-      'Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.',
+      'Nicht alle Bezeugungsfragen sind bestätigt. Korrigiere die Antworten oben und genehmige, oder lehne mit Begründung ab.',
+    review: {
+      approve: 'Genehmigen',
+      reject: 'Ablehnen',
+      approved: 'Genehmigt und veröffentlicht.',
+      rejected: 'Abgelehnt.',
+      gateBlocked: 'Noch nicht genehmigungsfähig: die Halal-Antworten sind nicht alle bestätigt.',
+      conflict: 'Ein anderer Reviewer hat diesen Eintrag geändert. Neu laden und erneut prüfen.',
+      decidedNotice:
+        'Dieser Eintrag ist bereits {{status}}. Hier ist keine Statusaktion verfügbar.',
+      // Localized status labels interpolated into decidedNotice (AC 14):
+      // the raw enum must never leak into a translated sentence.
+      status: {
+        rejected: 'abgelehnt',
+        removedByOwner: 'vom Inhaber entfernt',
+      },
+    },
   },
 } as const;

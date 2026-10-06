@@ -1217,33 +1217,34 @@ export const ps = {
     listViewLabel: 'لیست',
     mapViewLabel: 'نقشه',
   },
-  // Plan 255 INTERIM (#415): German source text, NOT a translation.
-  // Pending human review — see agent-output/requests/255-i18n-human-review.md.
+  // #548: attestation block translated (affirmative phrasing). Only
+  // halal.admin.{declaredNotHalal,attestationIncomplete,adminOnly} still hold
+  // INTERIM German — that is #415's debt, pending human review.
   halal: {
     attestation: {
-      sectionTitle: 'Halal Compliance',
-      recommendDescription: 'Was weißt du über diesen Anbieter?',
+      sectionTitle: 'حلال سره سمون',
+      recommendDescription: 'تاسو د دې دوکان په اړه څه پوهېږئ؟',
       noAlcohol: {
-        label: 'Kein Alkohol',
-        desc: 'Wird kein Alkohol verarbeitet, verkauft oder angeboten?',
+        label: 'الکول نه لري',
+        desc: 'ایا دا دوکان بشپړ ډول له الکولو پاک دی؟',
       },
       noPork: {
-        label: 'Kein verbotenes Fleisch',
-        desc: 'Wird kein Schweinefleisch oder anderes verbotenes Fleisch verarbeitet, verkauft oder angeboten?',
+        label: 'یوازې حلاله غوښه',
+        desc: 'ایا دلته ټوله غوښه حلاله ده، یعنې د خوګ غوښه یا بله حرامه غوښه نشته؟',
       },
       noGambling: {
-        label: 'Kein Glücksspiel',
-        desc: 'Werden keine Glücksspiele oder Wetten angeboten?',
+        label: 'جواري نه لري',
+        desc: 'ایا دا دوکان له جواري او شرطونو پاک دی؟',
       },
       answer: {
-        yes: 'Ja',
-        no: 'Nein',
-        notSure: 'Nicht sicher',
+        yes: 'هو',
+        no: 'نه',
+        notSure: 'ډاډه نه یم',
       },
     },
     admin: {
-      declaredNonCompliant: 'Als nicht konform angegeben',
-      unanswered: 'Nicht beantwortet',
+      declaredNonCompliant: 'د نه سمون په توګه ثبت شوی',
+      unanswered: 'ځواب نه دی شوی',
       // INTERIM de (#415): pending human translation
       declaredNotHalal: 'Nicht halal',
       attestationIncomplete: 'Halal-Angaben unvollständig',
@@ -1308,10 +1309,25 @@ export const ps = {
       silver: 'Silber',
       bronze: 'Bronze',
     },
-    autoApprovedTitle: 'Auto-Approved',
-    autoApprovedDesc: 'Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.',
-    autoRejectedTitle: 'Auto-Rejected',
+    // #548: nothing is "auto" any more — these panels preview the verdict
+    // the review footer will act on.
+    autoApprovedTitle: 'د تصویب لپاره چمتو',
+    autoApprovedDesc: 'ټولې تصدیقي پوښتنې تایید شوې دي. تاسو کولی شئ دا ثبت لاندې تصویب کړئ.',
+    autoRejectedTitle: 'د تصویب لپاره چمتو نه دی',
     autoRejectedDesc:
-      'Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.',
+      'ټولې تصدیقي پوښتنې تایید شوې نه دي. پورته ځوابونه سم کړئ او تصویب یې کړئ، یا له دلیل سره رد کړئ.',
+    review: {
+      approve: 'تصویب',
+      reject: 'رد',
+      approved: 'تصویب او خپور شو.',
+      rejected: 'رد شو.',
+      gateBlocked: 'لا تصویب نشي: د حلال ټول ځوابونه تصدیق شوي نه دي.',
+      conflict: 'بل کتونکي دا رستوران بدل کړ. بیا یې پورته کړئ او وګورئ.',
+      decidedNotice: 'دا رستوران لا دمخه {{status}} دی. دلته د حالت کومه کړنه نشته.',
+      status: {
+        rejected: 'رد شوی',
+        removedByOwner: 'خاوند یې لرې کړی',
+      },
+    },
   },
 } as const;

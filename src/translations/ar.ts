@@ -1201,33 +1201,34 @@ export const ar = {
     listViewLabel: 'قائمة',
     mapViewLabel: 'خريطة',
   },
-  // Plan 255 INTERIM (#415): German source text, NOT a translation.
-  // Pending human review — see agent-output/requests/255-i18n-human-review.md.
+  // #548: attestation block translated (affirmative phrasing). Only
+  // halal.admin.{declaredNotHalal,attestationIncomplete,adminOnly} still hold
+  // INTERIM German — that is #415's debt, pending human review.
   halal: {
     attestation: {
-      sectionTitle: 'Halal Compliance',
-      recommendDescription: 'Was weißt du über diesen Anbieter?',
+      sectionTitle: 'الالتزام بالحلال',
+      recommendDescription: 'ما الذي تعرفه عن هذا المكان؟',
       noAlcohol: {
-        label: 'Kein Alkohol',
-        desc: 'Wird kein Alkohol verarbeitet, verkauft oder angeboten?',
+        label: 'خالٍ من الكحول',
+        desc: 'هل هذا المكان خالٍ تمامًا من الكحول؟',
       },
       noPork: {
-        label: 'Kein verbotenes Fleisch',
-        desc: 'Wird kein Schweinefleisch oder anderes verbotenes Fleisch verarbeitet, verkauft oder angeboten?',
+        label: 'لحم حلال فقط',
+        desc: 'هل كل اللحوم هنا حلال، بدون لحم خنزير أو أي لحم محرّم آخر؟',
       },
       noGambling: {
-        label: 'Kein Glücksspiel',
-        desc: 'Werden keine Glücksspiele oder Wetten angeboten?',
+        label: 'خالٍ من الميسر',
+        desc: 'هل هذا المكان خالٍ من الميسر والمراهنات؟',
       },
       answer: {
-        yes: 'Ja',
-        no: 'Nein',
-        notSure: 'Nicht sicher',
+        yes: 'نعم',
+        no: 'لا',
+        notSure: 'غير متأكد',
       },
     },
     admin: {
-      declaredNonCompliant: 'Als nicht konform angegeben',
-      unanswered: 'Nicht beantwortet',
+      declaredNonCompliant: 'مُدرج كغير مطابق',
+      unanswered: 'بدون إجابة',
       // INTERIM de (#415): pending human translation
       declaredNotHalal: 'Nicht halal',
       attestationIncomplete: 'Halal-Angaben unvollständig',
@@ -1292,10 +1293,25 @@ export const ar = {
       silver: 'Silber',
       bronze: 'Bronze',
     },
-    autoApprovedTitle: 'Auto-Approved',
-    autoApprovedDesc: 'Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.',
-    autoRejectedTitle: 'Auto-Rejected',
+    // #548: nothing is "auto" any more — these panels preview the verdict
+    // the review footer will act on.
+    autoApprovedTitle: 'جاهز للموافقة',
+    autoApprovedDesc: 'تم تأكيد جميع أسئلة التوثيق الثلاثة. يمكنك الموافقة على هذا الإدخال أدناه.',
+    autoRejectedTitle: 'غير جاهز للموافقة',
     autoRejectedDesc:
-      'Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.',
+      'لم تُؤكَّد جميع أسئلة التوثيق. صحّح الإجابات أعلاه ثم وافق، أو ارفض مع ذكر السبب.',
+    review: {
+      approve: 'موافقة',
+      reject: 'رفض',
+      approved: 'تمت الموافقة والنشر.',
+      rejected: 'تم الرفض.',
+      gateBlocked: 'لا يمكن الموافقة بعد: لم تُؤكَّد جميع أجوبة الحلال.',
+      conflict: 'قام مُراجع آخر بتغيير هذا المطعم. أعد التحميل وتحقق مرة أخرى.',
+      decidedNotice: 'هذا المطعم بالفعل {{status}}. لا يتوفر أي إجراء للحالة هنا.',
+      status: {
+        rejected: 'مرفوض',
+        removedByOwner: 'أزاله المالك',
+      },
+    },
   },
 } as const;
