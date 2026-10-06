@@ -3,8 +3,14 @@ import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudit';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { providerReviewUpdateSchema } from '@/lib/validations/adminSchemas';
-import { updateProviderReview } from '@/services/admin/providers';
-import { checkHalalAttestation } from '@/services/admin/halal-gate';
+import { updateProviderReview, REVIEW_RPC_UNAVAILABLE_MESSAGE } from '@/services/admin/providers';
+import {
+  checkHalalAttestation,
+  classifyAttestation,
+  getHalalAttestationValues,
+  type HalalAttestationCheckResult,
+  type HalalAttestationValueMap,
+} from '@/services/admin/halal-gate';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
@@ -98,10 +104,39 @@ export async function PATCH(request: Request) {
 
     // Halal attestation gate: block approval when attestations are incomplete
     if (validatedData.reviewStatus === 'approved') {
-      const attestation = await checkHalalAttestation(validatedData.providerId);
+      let attestation:
+        HalalAttestationCheckResult | Omit<HalalAttestationCheckResult, 'sourceTable'>;
+      if (validatedData.halal) {
+        // #548: 0 of the stored rows pass the gate today (import defaults),
+        // so the gate must run on the answers the admin just submitted,
+        // overlaid on the stored row key by key — an explicit null ("not
+        // sure") wins over the stored value.
+        const stored = await getHalalAttestationValues(validatedData.providerId);
+        if (!stored.sourceTable) {
+          attestation = {
+            allAttested: true,
+            missing: [],
+            missingLabels: [],
+            denied: [],
+            deniedLabels: [],
+            unanswered: [],
+            unansweredLabels: [],
+          };
+        } else {
+          const merged: HalalAttestationValueMap = { ...(stored.values ?? {}) };
+          const submitted = validatedData.halal;
+          if ('noAlcohol' in submitted) merged.no_alcohol = submitted.noAlcohol;
+          if ('noPork' in submitted) merged.no_pork = submitted.noPork;
+          if ('noGambling' in submitted) merged.no_gambling = submitted.noGambling;
+          attestation = classifyAttestation(merged);
+        }
+      } else {
+        attestation = await checkHalalAttestation(validatedData.providerId);
+      }
       if (!attestation.allAttested) {
         // Distinguish "submitter said no" from "not answered" so reviewers can
-        // triage differently (#415).
+        // triage differently (#415). The denied/unanswered field names let the
+        // UI render the verdict in the admin's locale (#548).
         const detailParts: string[] = [];
         if (attestation.deniedLabels.length > 0) {
           detailParts.push(`Declared non-compliant: ${attestation.deniedLabels.join(', ')}`);
@@ -112,6 +147,8 @@ export async function PATCH(request: Request) {
         return NextResponse.json(
           {
             error: `Cannot approve: halal attestation incomplete. ${detailParts.join('. ')}`,
+            denied: attestation.denied,
+            unanswered: attestation.unanswered,
           },
           { status: 422 },
         );
@@ -119,12 +156,16 @@ export async function PATCH(request: Request) {
     }
 
     // Update provider review using service layer
-    // Sanitization is handled by the service (single boundary)
+    // Sanitization is handled by the service (single boundary).
+    // The submitted halal answers travel in the same request so the review
+    // endpoint remains the only status write path (#548).
     const updatedProvider = await updateProviderReview(
       validatedData.providerId,
       validatedData.reviewStatus,
       validatedData.reviewFeedback ?? null,
       validatedData.expectedUpdatedAt,
+      user.id,
+      validatedData.halal,
     );
 
     // Log admin action for audit
@@ -153,11 +194,55 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
+    // Deploy-ordering guard (#548): migration 138 creates the RPC that is now
+    // the only review write path. If this code ships ahead of it, fail loudly:
+    // log the diagnosis server-side and return a safe client message, never a
+    // raw PostgREST error.
+    if (error instanceof Error && error.message.startsWith('MISCONFIGURED:')) {
+      logger.error(
+        'review-provider unavailable: admin_review_provider RPC missing, migration 138 not applied',
+        error,
+        {},
+        getRequestMetadata(request),
+      );
+      return NextResponse.json({ error: REVIEW_RPC_UNAVAILABLE_MESSAGE }, { status: 500 });
+    }
+
+    // Provider missing — the pre-flight and the RPC both raise NOT_FOUND:
+    // before any write. Kept distinct from CONFLICT: so a nonexistent id is a
+    // 404, not a concurrency conflict (#548 review).
+    if (error instanceof Error && error.message.startsWith('NOT_FOUND:')) {
+      return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
+    }
+
+    // The RPC re-asserts the reviewer role inside the transaction
+    // (defence in depth — the function runs as service_role, bypassing
+    // RLS). Reaching this means the earlier check was bypassed.
+    if (error instanceof Error && error.message.startsWith('FORBIDDEN:')) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin or Moderator access required' },
+        { status: 403 },
+      );
+    }
+
     // Handle concurrency conflict
     if (error instanceof Error && error.message.startsWith('CONFLICT:')) {
       return NextResponse.json(
         { error: 'This provider was modified by another reviewer. Please refresh and try again.' },
         { status: 409 },
+      );
+    }
+
+    // The RPC re-asserts the halal gate inside the transaction (defence in
+    // depth / race with another writer); surface it as the same 422 shape.
+    if (error instanceof Error && error.message.startsWith('HALAL_GATE:')) {
+      return NextResponse.json(
+        {
+          error: `Cannot approve: halal attestation incomplete. ${error.message
+            .slice('HALAL_GATE:'.length)
+            .trim()}`,
+        },
+        { status: 422 },
       );
     }
 

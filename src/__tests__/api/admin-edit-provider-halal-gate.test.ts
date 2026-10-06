@@ -106,10 +106,23 @@ describe('PATCH /api/admin/edit-provider — halal attestation gate', () => {
       'rejected',
       expect.stringContaining('Kein Alkohol'),
       '2025-01-01T00:00:00Z',
+      'admin-id',
     );
 
     const json = await res.json();
     expect(json.data.review_status).toBe('rejected');
+  });
+
+  it('auto-reject stamps the acting admin as reviewer (AC 7: reviewed_by non-null)', async () => {
+    mockHalalCheck.mockResolvedValueOnce(allAttested).mockResolvedValueOnce(notAttested);
+
+    await PATCH(makeRequest({ providerId: validId, noAlcohol: false }));
+
+    // reviewerId is the 5th positional arg; it becomes p_reviewer_id and
+    // lands in reviewed_by. A NULL reviewer would break AC 7 on this path.
+    const call = mockReview.mock.calls[0];
+    expect(call[4]).toBe('admin-id');
+    expect(call[4]).not.toBeNull();
   });
 
   it('does NOT auto-approve when attestation becomes complete', async () => {
@@ -201,6 +214,7 @@ describe('PATCH /api/admin/edit-provider — halal attestation gate', () => {
       'rejected',
       expect.any(String),
       '2025-01-01T00:00:00Z', // expectedUpdatedAt from updatedProvider
+      'admin-id',
     );
   });
 
@@ -221,6 +235,7 @@ describe('PATCH /api/admin/edit-provider — halal attestation gate', () => {
       'rejected',
       'Halal-Attestierung unvollständig: Kein Alkohol, Kein verbotenes Fleisch, Kein Glücksspiel',
       expect.any(String),
+      'admin-id',
     );
   });
 });

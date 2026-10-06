@@ -24,6 +24,10 @@ export const HALAL_FIELD_LABELS: Record<string, string> = {
   no_gambling: 'Kein Glücksspiel',
 };
 
+export type HalalAttestationField = (typeof HALAL_ATTESTATION_FIELDS)[number];
+
+export type HalalAttestationValueMap = Partial<Record<HalalAttestationField, boolean | null>>;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface HalalAttestationCheckResult {
@@ -47,71 +51,19 @@ export interface HalalAttestationCheckResult {
 // ─── Service Functions ────────────────────────────────────────────────────────
 
 /**
- * Check that all halal attestation questions are affirmed for a provider.
- * Reads from the food_providers or store_providers extension table based
- * on the provider's listing_type.
- *
- * Returns which attestations are missing so the reviewer can take action.
+ * Pure classifier for the halal attestation gate (#548).
+ * true = compliant, false = denied, null/absent = unanswered.
+ * Approval requires all three fields to be true.
  */
-export async function checkHalalAttestation(
-  providerId: string,
-): Promise<HalalAttestationCheckResult> {
-  const supabase = getSupabaseAdmin();
-
-  // First, determine the provider's listing type
-  const { data: provider, error: providerError } = await supabase
-    .from('providers')
-    .select('listing_type')
-    .eq('provider_id', providerId)
-    .single();
-
-  if (providerError || !provider) {
-    throw new Error(`Failed to fetch provider: ${providerError?.message ?? 'Not found'}`);
-  }
-
-  // Only food and store providers have attestation data
-  if (provider.listing_type !== 'food' && provider.listing_type !== 'store') {
-    return {
-      allAttested: true,
-      missing: [],
-      missingLabels: [],
-      denied: [],
-      deniedLabels: [],
-      unanswered: [],
-      unansweredLabels: [],
-      sourceTable: null,
-    };
-  }
-
-  const extTable = provider.listing_type === 'food' ? 'food_providers' : 'store_providers';
-
-  const { data: extData, error: extError } = await supabase
-    .from(extTable)
-    .select(HALAL_ATTESTATION_FIELDS.join(', '))
-    .eq('provider_id', providerId)
-    .single();
-
-  if (extError) {
-    // No extension row exists — attestations are not yet answered
-    return {
-      allAttested: false,
-      missing: [...HALAL_ATTESTATION_FIELDS],
-      missingLabels: HALAL_ATTESTATION_FIELDS.map((f) => HALAL_FIELD_LABELS[f]),
-      denied: [],
-      deniedLabels: [],
-      unanswered: [...HALAL_ATTESTATION_FIELDS],
-      unansweredLabels: HALAL_ATTESTATION_FIELDS.map((f) => HALAL_FIELD_LABELS[f]),
-      sourceTable: extTable,
-    };
-  }
-
+export function classifyAttestation(
+  values: HalalAttestationValueMap,
+): Omit<HalalAttestationCheckResult, 'sourceTable'> {
   const denied: string[] = [];
   const unanswered: string[] = [];
-  const row = extData as unknown as Record<string, boolean | null>;
   for (const field of HALAL_ATTESTATION_FIELDS) {
-    if (row[field] === false) {
+    if (values[field] === false) {
       denied.push(field);
-    } else if (row[field] == null) {
+    } else if (values[field] == null) {
       unanswered.push(field);
     }
   }
@@ -125,6 +77,92 @@ export async function checkHalalAttestation(
     deniedLabels: denied.map((f) => HALAL_FIELD_LABELS[f]),
     unanswered,
     unansweredLabels: unanswered.map((f) => HALAL_FIELD_LABELS[f]),
-    sourceTable: extTable,
   };
+}
+
+export interface StoredHalalAttestation {
+  /** Which extension table holds the answers, or null for non-food/store providers */
+  sourceTable: 'food_providers' | 'store_providers' | null;
+  /** Stored answers; null when the extension row does not exist yet */
+  values: Record<HalalAttestationField, boolean | null> | null;
+}
+
+/**
+ * Read the stored attestation row for a provider (#548).
+ * Used by the review endpoint to overlay the answers the admin just
+ * submitted onto the stored values before gating the approval.
+ */
+export async function getHalalAttestationValues(
+  providerId: string,
+): Promise<StoredHalalAttestation> {
+  const supabase = getSupabaseAdmin();
+
+  // First, determine the provider's listing type. maybeSingle() keeps a
+  // missing row distinct from a real query error: a nonexistent provider
+  // raises the NOT_FOUND: signal the review route maps to 404, instead of
+  // 500ing ahead of the RPC's own NOT_FOUND check (#548 rework item 6).
+  const { data: provider, error: providerError } = await supabase
+    .from('providers')
+    .select('listing_type')
+    .eq('provider_id', providerId)
+    .maybeSingle();
+
+  if (providerError) {
+    throw new Error(`Failed to fetch provider: ${providerError.message}`);
+  }
+  if (!provider) {
+    throw new Error('NOT_FOUND: Provider not found');
+  }
+
+  // Only food and store providers have attestation data
+  if (provider.listing_type !== 'food' && provider.listing_type !== 'store') {
+    return { sourceTable: null, values: null };
+  }
+
+  const extTable = provider.listing_type === 'food' ? 'food_providers' : 'store_providers';
+
+  const { data: extData, error: extError } = await supabase
+    .from(extTable)
+    .select(HALAL_ATTESTATION_FIELDS.join(', '))
+    .eq('provider_id', providerId)
+    .single();
+
+  if (extError || !extData) {
+    return { sourceTable: extTable, values: null };
+  }
+
+  return {
+    sourceTable: extTable,
+    values: extData as unknown as Record<HalalAttestationField, boolean | null>,
+  };
+}
+
+/**
+ * Check that all halal attestation questions are affirmed for a provider.
+ * Reads from the food_providers or store_providers extension table based
+ * on the provider's listing_type.
+ *
+ * Returns which attestations are missing so the reviewer can take action.
+ */
+export async function checkHalalAttestation(
+  providerId: string,
+): Promise<HalalAttestationCheckResult> {
+  const { sourceTable, values } = await getHalalAttestationValues(providerId);
+
+  // Only food and store providers have attestation data
+  if (!sourceTable) {
+    return {
+      allAttested: true,
+      missing: [],
+      missingLabels: [],
+      denied: [],
+      deniedLabels: [],
+      unanswered: [],
+      unansweredLabels: [],
+      sourceTable: null,
+    };
+  }
+
+  // A missing extension row classifies as all-unanswered.
+  return { ...classifyAttestation(values ?? {}), sourceTable };
 }

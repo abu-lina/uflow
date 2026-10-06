@@ -4,22 +4,22 @@ import typography from '@tailwindcss/typography';
 
 /**
  * Tailwind CSS Configuration
- * 
+ *
  * Best Practices Applied:
  * - Minimal safelist (only dynamic classes)
  * - Semantic color tokens reference base palettes
  * - Organized sections with clear comments
  * - Design tokens for consistency
  * - Tailwind 4 compatible structure
- * 
+ *
  * Naming Conventions:
  * ===================
- * 
+ *
  * 1. Base Color Palettes (Descriptive Names)
  *    - Use descriptive palette names: `cod-gray`, `breaker-bay`
  *    - Follow Tailwind 4 structure: 50-950 shades
  *    - Purpose: Raw color values, rarely used directly
- * 
+ *
  * 2. Semantic Color Tokens (Purpose-Based)
  *    - Use purpose-based names: `primary`, `content`, `background`, `border`, `neutral`
  *    - Variants: `DEFAULT`, `light`, `dark`, `muted`, `soft`
@@ -30,18 +30,18 @@ import typography from '@tailwindcss/typography';
  *      * `background` - Page/component backgrounds
  *      * `border` - Border colors
  *      * `neutral` - Neutral/muted UI elements
- * 
+ *
  * 3. Status Colors (Semantic)
  *    - Use semantic names: `success`, `warning`, `danger`, `info`
  *    - Consistent variants: `DEFAULT`, `light`, `dark`, `soft`
  *    - Purpose: Communicate state/status
- * 
+ *
  * 4. Legacy Colors (Deprecated)
  *    - Marked with `@deprecated` comments
  *    - Maintained for backward compatibility
  *    - Migration path documented in comments
  *    - Examples: `mint` → use `primary`, `grey` → use `neutral`
- * 
+ *
  * Best Practices:
  * - Always prefer semantic tokens over base palettes
  * - Use `content.heading` for headings/icons, not `cod-gray-950`
@@ -113,13 +113,13 @@ const config: Config = {
       fontSize: {
         // Minor Third scale (1.2 ratio) - base = 16px
         // 11 → 13 → 16 → 19 → 23 → 27 → 33 → 40 → 48
-        xs: ['0.694rem', { lineHeight: '1rem' }],      // 11px / 16px
-        sm: ['0.833rem', { lineHeight: '1.25rem' }],  // 13px / 20px
-        base: ['1rem', { lineHeight: '1.5rem' }],     // 16px / 24px (base)
-        lg: ['1.2rem', { lineHeight: '1.625rem' }],   // 19px / 26px
-        xl: ['1.44rem', { lineHeight: '1.875rem' }],  // 23px / 30px
+        xs: ['0.694rem', { lineHeight: '1rem' }], // 11px / 16px
+        sm: ['0.833rem', { lineHeight: '1.25rem' }], // 13px / 20px
+        base: ['1rem', { lineHeight: '1.5rem' }], // 16px / 24px (base)
+        lg: ['1.2rem', { lineHeight: '1.625rem' }], // 19px / 26px
+        xl: ['1.44rem', { lineHeight: '1.875rem' }], // 23px / 30px
         '2xl': ['1.728rem', { lineHeight: '2.125rem' }], // 27px / 34px
-        '3xl': ['2.074rem', { lineHeight: '2.25rem' }],  // 33px / 36px (tighter)
+        '3xl': ['2.074rem', { lineHeight: '2.25rem' }], // 33px / 36px (tighter)
         '4xl': ['2.488rem', { lineHeight: '2.625rem' }], // 40px / 42px (tighter)
         '5xl': ['2.986rem', { lineHeight: '3.125rem' }], // 48px / 50px (tighter)
       },
@@ -300,7 +300,7 @@ const config: Config = {
         // Base Color Palettes (Raw — prefer semantic tokens above)
         // ============================================
         'silver-tree': {
-          '50':  '#f3faf7',
+          '50': '#f3faf7',
           '100': '#d8efe5',
           '200': '#b2ddcb',
           '300': '#7bc1a7',
@@ -313,8 +313,8 @@ const config: Config = {
           '950': '#0f241f',
         },
 
-        'glacier': {
-          '50':  '#f2f7f9',
+        glacier: {
+          '50': '#f2f7f9',
           '100': '#ddebf0',
           '200': '#bfd9e2',
           '300': '#79aec3',
@@ -328,7 +328,7 @@ const config: Config = {
         },
 
         'new-york-pink': {
-          '50':  '#fcf4f4',
+          '50': '#fcf4f4',
           '100': '#fae6e6',
           '200': '#f7d1d1',
           '300': '#f0b1b1',
@@ -342,7 +342,7 @@ const config: Config = {
         },
 
         'rob-roy': {
-          '50':  '#fdf9ef',
+          '50': '#fdf9ef',
           '100': '#fbf1d9',
           '200': '#f7dfb1',
           '300': '#f0c375',
@@ -385,13 +385,24 @@ const config: Config = {
       },
 
       // ============================================
+      // Shadows
+      // ============================================
+      boxShadow: {
+        // Upward shadow for bars sitting at or above the fixed bottom
+        // footer (FooterAction, EditSubPageLayout's reviewFooter bar).
+        'footer-bar': '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
+      },
+
+      // ============================================
       // Background Images
       // ============================================
       backgroundImage: {
         'uflow-light': 'linear-gradient(180deg, #F5F5F5 0%, #FBFBFB 100%)',
         'gold-gradient': 'linear-gradient(90deg, #D2B581 4.35%, #E5D1A0 52.17%, #AF8650 100%)',
-        'gold-gradient-light': 'linear-gradient(90deg, #F3E7D0 4.35%, #E5D1A0 52.17%, #EEE3D6 100%)',
-        'gold-gradient-radial': 'radial-gradient(47.83% 95.65% at 52.17% 47.83%, #D2B581 0%, #E5D1A0 50%, #D2B581 100%)',
+        'gold-gradient-light':
+          'linear-gradient(90deg, #F3E7D0 4.35%, #E5D1A0 52.17%, #EEE3D6 100%)',
+        'gold-gradient-radial':
+          'radial-gradient(47.83% 95.65% at 52.17% 47.83%, #D2B581 0%, #E5D1A0 50%, #D2B581 100%)',
       },
 
       // ============================================

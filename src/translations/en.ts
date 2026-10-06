@@ -1212,19 +1212,20 @@ export const en = {
   // #415: tri-state halal attestation (yes/no/not sure -> true/false/NULL)
   halal: {
     attestation: {
+      // #548: affirmative phrasing — ask about compliance, not violation.
       sectionTitle: 'Halal compliance',
       recommendDescription: 'What do you know about this provider?',
       noAlcohol: {
-        label: 'No alcohol',
-        desc: 'Is no alcohol processed, sold or offered?',
+        label: 'Alcohol-free',
+        desc: 'Is this business completely alcohol-free?',
       },
       noPork: {
-        label: 'No prohibited meat',
-        desc: 'Is no pork or other prohibited meat processed, sold or offered?',
+        label: 'Halal meat only',
+        desc: 'Is all the meat here halal, with no pork or other prohibited meat?',
       },
       noGambling: {
-        label: 'No gambling',
-        desc: 'Are no gambling or betting services offered?',
+        label: 'Gambling-free',
+        desc: 'Is this business free of gambling and betting?',
       },
       answer: {
         yes: 'Yes',
@@ -1300,10 +1301,27 @@ export const en = {
       silver: 'Silver',
       bronze: 'Bronze',
     },
-    autoApprovedTitle: 'Auto-Approved',
-    autoApprovedDesc: 'All attestation criteria met. The entry is pre-approved.',
-    autoRejectedTitle: 'Auto-Rejected',
+    // #548: nothing is "auto" any more — these panels preview the verdict
+    // the review footer will act on.
+    autoApprovedTitle: 'Ready to approve',
+    autoApprovedDesc: 'All attestation questions are confirmed. You can approve this entry below.',
+    autoRejectedTitle: 'Not ready to approve',
     autoRejectedDesc:
-      'Not all criteria met. The entry is pre-rejected. You can override this on the edit page.',
+      'Not all attestation questions are confirmed. Fix the answers above and approve, or reject with a reason.',
+    review: {
+      approve: 'Approve',
+      reject: 'Reject',
+      approved: 'Approved and published.',
+      rejected: 'Rejected.',
+      gateBlocked: 'Cannot approve yet: the halal answers are not all confirmed.',
+      conflict: 'Another reviewer changed this restaurant. Reload and check again.',
+      decidedNotice: 'This restaurant is already {{status}}. No status action is available here.',
+      // Localized status labels interpolated into decidedNotice (AC 14):
+      // the raw enum must never leak into a translated sentence.
+      status: {
+        rejected: 'rejected',
+        removedByOwner: 'removed by its owner',
+      },
+    },
   },
 } as const;

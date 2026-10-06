@@ -236,13 +236,18 @@ describe('C2: tri-state attestation round-trip (AC6.2)', () => {
 
 // ── Halal gate mock helpers ──────────────────────────────────────────────────
 
-function mockGateProvider(listingType: string, extRow: Record<string, unknown> | null) {
+function mockGateProvider(listingType: string | null, extRow: Record<string, unknown> | null) {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === 'providers') {
       return {
         select: () => ({
           eq: () => ({
-            single: async () => ({ data: { listing_type: listingType }, error: null }),
+            // #548: the gate reads the provider row via maybeSingle so a
+            // missing provider is NOT_FOUND, not a 500.
+            maybeSingle: async () =>
+              listingType === null
+                ? { data: null, error: null }
+                : { data: { listing_type: listingType }, error: null },
           }),
         }),
       };

@@ -1220,33 +1220,34 @@ export const ur = {
     listViewLabel: 'فہرست',
     mapViewLabel: 'نقشہ',
   },
-  // Plan 255 INTERIM (#415): German source text, NOT a translation.
-  // Pending human review — see agent-output/requests/255-i18n-human-review.md.
+  // #548: attestation block translated (affirmative phrasing). Only
+  // halal.admin.{declaredNotHalal,attestationIncomplete,adminOnly} still hold
+  // INTERIM German — that is #415's debt, pending human review.
   halal: {
     attestation: {
-      sectionTitle: 'Halal Compliance',
-      recommendDescription: 'Was weißt du über diesen Anbieter?',
+      sectionTitle: 'حلال معیار',
+      recommendDescription: 'آپ اس کاروبار کے بارے میں کیا جانتے ہیں؟',
       noAlcohol: {
-        label: 'Kein Alkohol',
-        desc: 'Wird kein Alkohol verarbeitet, verkauft oder angeboten?',
+        label: 'الکحل سے پاک',
+        desc: 'کیا یہ کاروبار مکمل طور پر الکحل سے پاک ہے؟',
       },
       noPork: {
-        label: 'Kein verbotenes Fleisch',
-        desc: 'Wird kein Schweinefleisch oder anderes verbotenes Fleisch verarbeitet, verkauft oder angeboten?',
+        label: 'صرف حلال گوشت',
+        desc: 'کیا یہاں کا تمام گوشت حلال ہے، یعنی سور کا گوشت یا کوئی اور حرام گوشت نہیں؟',
       },
       noGambling: {
-        label: 'Kein Glücksspiel',
-        desc: 'Werden keine Glücksspiele oder Wetten angeboten?',
+        label: 'جوئے سے پاک',
+        desc: 'کیا یہ کاروبار جوئے اور سٹے بازی سے پاک ہے؟',
       },
       answer: {
-        yes: 'Ja',
-        no: 'Nein',
-        notSure: 'Nicht sicher',
+        yes: 'ہاں',
+        no: 'نہیں',
+        notSure: 'یقین نہیں',
       },
     },
     admin: {
-      declaredNonCompliant: 'Als nicht konform angegeben',
-      unanswered: 'Nicht beantwortet',
+      declaredNonCompliant: 'غیر مطابق قرار دیا گیا',
+      unanswered: 'جواب نہیں دیا گیا',
       // INTERIM de (#415): pending human translation
       declaredNotHalal: 'Nicht halal',
       attestationIncomplete: 'Halal-Angaben unvollständig',
@@ -1311,10 +1312,26 @@ export const ur = {
       silver: 'Silber',
       bronze: 'Bronze',
     },
-    autoApprovedTitle: 'Auto-Approved',
-    autoApprovedDesc: 'Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.',
-    autoRejectedTitle: 'Auto-Rejected',
+    // #548: nothing is "auto" any more — these panels preview the verdict
+    // the review footer will act on.
+    autoApprovedTitle: 'منظوری کے لیے تیار',
+    autoApprovedDesc:
+      'تمام تصدیقی سوالات کی تصدیق ہو گئی ہے۔ آپ نیچے سے اس اندراج کی منظوری دے سکتے ہیں۔',
+    autoRejectedTitle: 'منظوری کے لیے تیار نہیں',
     autoRejectedDesc:
-      'Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.',
+      'تمام تصدیقی سوالات کی تصدیق نہیں ہوئی۔ اوپر جوابات درست کر کے منظور کریں یا وجہ دے کر مسترد کریں۔',
+    review: {
+      approve: 'منظور کریں',
+      reject: 'مسترد کریں',
+      approved: 'منظور اور شائع کر دیا گیا۔',
+      rejected: 'مسترد کر دیا گیا۔',
+      gateBlocked: 'ابھی منظوری ممکن نہیں: حلال جوابات مکمل طور پر تصدیق شدہ نہیں۔',
+      conflict: 'کسی دوسرے جائزہ کار نے یہ ریستوران تبدیل کر دیا۔ دوبارہ لوڈ کر کے جانچیں۔',
+      decidedNotice: 'یہ ریستوران پہلے ہی {{status}} ہے۔ یہاں کوئی حیثیت کی کارروائی دستیاب نہیں۔',
+      status: {
+        rejected: 'مسترد',
+        removedByOwner: 'مالک نے ہٹا دیا',
+      },
+    },
   },
 } as const;

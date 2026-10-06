@@ -18,6 +18,19 @@ export const providerReviewUpdateSchema = z
     }),
     reviewFeedback: z.string().max(5000).optional().nullable(),
     expectedUpdatedAt: z.string().datetime({ offset: true }).optional(),
+    // #548: the halal check page submits the answers it is showing so one
+    // request persists them together with the status change. Tri-state:
+    // an explicit null ("not sure") must survive validation.
+    halal: z
+      .object({
+        noAlcohol: z.boolean().nullable().optional(),
+        noPork: z.boolean().nullable().optional(),
+        noGambling: z.boolean().nullable().optional(),
+        verificationMethod: z.enum(['online', 'onsite']).nullable().optional(),
+        hasCertificate: z.boolean().optional(),
+        certificateUrl: z.string().url().max(2000).nullable().optional(),
+      })
+      .optional(),
   })
   .refine(
     (data) => {
