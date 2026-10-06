@@ -9,14 +9,13 @@ import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { IconWithTitle } from '@/components/ui/IconWithTitle';
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { isProviderUuid } from '@/lib/route-guard';
 
 // Issue 547 — post-submit landing for quick create. The flow used to push
 // straight to /p/<id>, which 404'd because the new row is pending review and
 // invisible to the public. This screen confirms the submission instead and
 // links to the provider page (which renders for its creator) and to the
 // user's submissions.
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function SubmittedPageContent() {
   const router = useRouter();
@@ -25,7 +24,7 @@ function SubmittedPageContent() {
 
   // Only forward a well-formed provider id into the preview link.
   const providerId = searchParams.get('provider');
-  const listingHref = providerId && UUID_RE.test(providerId) ? `/p/${providerId}` : null;
+  const listingHref = providerId && isProviderUuid(providerId) ? `/p/${providerId}` : null;
 
   return (
     <PageLayout hasBackground={false} maxWidth="full">

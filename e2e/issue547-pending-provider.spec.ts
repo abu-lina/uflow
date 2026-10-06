@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Page } from '@playwright/test';
 
@@ -16,10 +18,18 @@ import { expect, test, resolveSupabaseEnv, TEST_EMAIL, TEST_PASSWORD } from './f
  *
  * Requires migration 137 (provider_route_visibility) on the target project:
  * the local `supabase start` stack applies it automatically.
+ *
+ * This spec creates a real auth user, so it must never run against PROD:
+ * `resolveSupabaseEnv()` prefers env vars, and one run with PROD
+ * credentials exported would leave a permanent account behind.
  */
 
-const UNRELATED_EMAIL = 'e2e-unrelated@uflow.test';
-const UNRELATED_PASSWORD = 'e2e-unrelated-pw-547';
+const PROD_PROJECT_REF = 'rdtdtcfntopcxcigkqoq';
+
+// Generated per run — no credential, real or placeholder, lives in the
+// repo. A leaked leftover from an interrupted run is also impossible to
+// correlate back to this spec.
+const UNRELATED_EMAIL = `e2e-unrelated-${randomUUID()}@uflow.test`;
 
 async function login(page: Page, email: string, password: string): Promise<void> {
   await page.goto('/login', { waitUntil: 'load' });
@@ -27,6 +37,18 @@ async function login(page: Page, email: string, password: string): Promise<void>
   await page.locator('input[type="password"]').fill(password);
   await page.locator('button[type="submit"]').click();
   await page.waitForURL((url) => url.pathname !== '/login', { timeout: 15_000 });
+}
+
+function assertNotProduction(apiUrl: string): void {
+  const projectRef = new URL(apiUrl).hostname.split('.')[0];
+  if (projectRef === PROD_PROJECT_REF) {
+    throw new Error(
+      `Refusing to run: resolved Supabase URL is PROD (${PROD_PROJECT_REF}). ` +
+        `This spec creates a real auth user and a real provider row. ` +
+        `Point NEXT_PUBLIC_SUPABASE_URL at DEV or run the local stack. ` +
+        `Note that uat.ummahflow.com ships the PROD project too.`,
+    );
+  }
 }
 
 async function userIdByEmail(admin: SupabaseClient, email: string): Promise<string> {
@@ -39,26 +61,27 @@ async function userIdByEmail(admin: SupabaseClient, email: string): Promise<stri
 
 test.describe('issue 547 — pending provider visibility', () => {
   let admin: SupabaseClient;
-  let providerId: string;
+  let providerId: string | undefined;
+  let unrelatedUserId: string | undefined;
+  let unrelatedPassword: string;
 
   test.beforeAll(async () => {
     const { apiUrl, serviceRoleKey } = resolveSupabaseEnv();
+    assertNotProduction(apiUrl);
     admin = createClient(apiUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // A second smoke user for the "unrelated signed-in user" case.
-    const { error: userError } = await admin.auth.admin.createUser({
+    // A second user for the "unrelated signed-in user" case, with a per-run
+    // password so nothing with a repo-known credential can outlive the run.
+    unrelatedPassword = `e2e-${randomUUID()}`;
+    const { data: created, error: userError } = await admin.auth.admin.createUser({
       email: UNRELATED_EMAIL,
-      password: UNRELATED_PASSWORD,
+      password: unrelatedPassword,
       email_confirm: true,
     });
-    if (
-      userError &&
-      !/already (been )?registered|already exists|duplicate/i.test(userError.message)
-    ) {
-      throw userError;
-    }
+    if (userError) throw userError;
+    unrelatedUserId = created.user.id;
 
     const creatorId = await userIdByEmail(admin, TEST_EMAIL);
     const { data, error } = await admin
@@ -68,8 +91,11 @@ test.describe('issue 547 — pending provider visibility', () => {
         address_city: 'Berlin',
         show_address: true,
         review_status: 'pending',
+        // Production shape: all 1,127 real pending rows have
+        // provider_owner_id NULL and identify their creator only through
+        // user_created_id — exercise that clause, not the other one.
         user_created_id: creatorId,
-        provider_owner_id: creatorId,
+        provider_owner_id: null,
       })
       .select('provider_id')
       .single();
@@ -78,8 +104,13 @@ test.describe('issue 547 — pending provider visibility', () => {
   });
 
   test.afterAll(async () => {
+    // Runs even when a test body fails: leave no rows and no accounts.
     if (admin && providerId) {
       await admin.from('providers').delete().eq('provider_id', providerId);
+    }
+    if (admin && unrelatedUserId) {
+      const { error } = await admin.auth.admin.deleteUser(unrelatedUserId);
+      if (error) throw error;
     }
   });
 
@@ -91,7 +122,7 @@ test.describe('issue 547 — pending provider visibility', () => {
   });
 
   test('an unrelated signed-in user gets a real 404', async ({ page }) => {
-    await login(page, UNRELATED_EMAIL, UNRELATED_PASSWORD);
+    await login(page, UNRELATED_EMAIL, unrelatedPassword);
     const res = await page.goto(`/p/${providerId}`, { waitUntil: 'domcontentloaded' });
     expect(res?.status()).toBe(404);
   });

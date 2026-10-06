@@ -83,23 +83,24 @@ function supabaseEnv(): { url: string; key: string } | null {
 }
 
 /**
- * Fetch a PostgREST path. Returns `null` when the request could not be made
- * at all (missing env, network failure); callers treat that as "could not
- * determine" and must fail open.
+ * Fetch a PostgREST path AS ANON. Returns `null` when the request could not
+ * be made at all (missing env, network failure); callers treat that as
+ * "could not determine" and must fail open.
  *
- * `accessToken` is the caller's session token (the custom httpOnly
- * `sb-access-token` cookie — the @supabase/ssr cookie the SSR client reads
- * is never written). When set, the request runs as the caller, so RLS and
- * `auth.uid()` resolve to them. Omit it and the request runs as anon.
+ * There is deliberately no caller-token parameter: these lookups are the
+ * guard's existence checks and must stay unconditionally anon so a forged
+ * `sb-access-token` cookie can never widen what the guard sees. The one
+ * caller-aware lookup (`provider_route_visibility` below) carries the token
+ * itself.
  */
-async function postgrestFetch(path: string, accessToken?: string): Promise<Response | null> {
+async function postgrestFetch(path: string): Promise<Response | null> {
   const env = supabaseEnv();
   if (!env) return null;
 
   return fetch(`${env.url}/rest/v1/${path}`, {
     headers: {
       apikey: env.key,
-      Authorization: `Bearer ${accessToken ?? env.key}`,
+      Authorization: `Bearer ${env.key}`,
       accept: 'application/json',
     },
     signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
@@ -255,6 +256,11 @@ export function parseProviderRoute(pathname: string): ProviderRouteParams | null
 /** UUID shape for `/p/<id>`. Anything else 404s without a database round trip. */
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** The single definition of "UUID-shaped provider id"; every consumer imports this. */
+export function isProviderUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
+
 /**
  * Per-id existence check for `/p/[id]`, run as anon. Anon RLS on
  * `providers` exposes exactly the `review_status='approved'` rows, so a
@@ -314,6 +320,26 @@ export async function shouldServeFoodNotFound(pathname: string): Promise<boolean
 type RouteVisibility = 'visible' | 'hidden' | 'absent';
 
 /**
+ * Outcome of the caller-aware visibility RPC:
+ *
+ * - `answered`: the RPC returned a real tri-state answer.
+ * - `rejected`: PostgREST refused the call outright — a definitive answer,
+ *   not a transient fault. Two shapes, both meaning "not visible":
+ *   the RPC does not exist (404 PGRST202: migration 137 is not applied yet)
+ *   or the bearer JWT was rejected (401: forged, expired or malformed —
+ *   `sb-access-token` is client-settable). In both cases the caller can see
+ *   no more than anon, and the anon fast path has already determined the
+ *   row is not publicly visible, so the guard maps this to 404. Treating a
+ *   missing RPC as "could not determine" instead would fail open into a
+ *   soft 404 for every signed-in caller on every non-approved provider —
+ *   exactly the pre-migration deployment state.
+ * - `unknown`: genuinely transient — network error, timeout, 5xx, or a
+ *   body that is not one of the three known strings. Only this fails open.
+ */
+type RouteVisibilityResult =
+  { state: 'answered'; answer: RouteVisibility } | { state: 'rejected' } | { state: 'unknown' };
+
+/**
  * Caller-aware visibility for `/p/[id]`, via the `provider_route_visibility`
  * RPC (migration 137). The RPC is `security definer` and returns one of
  * 'visible' | 'hidden' | 'absent' — never row data — applying the same
@@ -323,17 +349,13 @@ type RouteVisibility = 'visible' | 'hidden' | 'absent';
  * The caller's access token becomes the request bearer, so `auth.uid()`
  * inside the RPC resolves to the caller: a creator or admin gets 'visible'
  * for a pending/rejected row, everyone else gets 'hidden'.
- *
- * `null` means "could not determine" — missing env, network failure,
- * timeout, a non-OK response, or a body that is not one of the three known
- * strings. Callers must fail open.
  */
 async function providerRouteVisibility(
   providerId: string,
   accessToken: string,
-): Promise<RouteVisibility | null> {
+): Promise<RouteVisibilityResult> {
   const env = supabaseEnv();
-  if (!env) return null;
+  if (!env) return { state: 'unknown' };
 
   let res: Response;
   try {
@@ -349,16 +371,27 @@ async function providerRouteVisibility(
       signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
     });
   } catch {
-    return null;
+    return { state: 'unknown' };
   }
-  if (!res.ok) return null;
+
+  if (!res.ok) {
+    // A definitive refusal — any 4xx — is deployment state or an auth
+    // rejection, never a transient blip: the missing RPC (404 PGRST202), a
+    // forged/expired JWT (401), a missing EXECUTE grant (403). Retrying
+    // changes nothing and failing open turns the page into a soft 404, so
+    // the request 404s like the same call does for an anon caller. Only a
+    // 5xx-class failure means "could not determine" and may fail open.
+    return res.status < 500 ? { state: 'rejected' } : { state: 'unknown' };
+  }
 
   try {
     const value: unknown = await res.json();
-    if (value === 'visible' || value === 'hidden' || value === 'absent') return value;
-    return null;
+    if (value === 'visible' || value === 'hidden' || value === 'absent') {
+      return { state: 'answered', answer: value };
+    }
+    return { state: 'unknown' };
   } catch {
-    return null;
+    return { state: 'unknown' };
   }
 }
 
@@ -374,9 +407,11 @@ async function providerRouteVisibility(
  *      hidden-from-public are the same answer for an anonymous caller.
  *   4. Anon finds nothing but a session exists -> the visibility RPC decides:
  *      'hidden' and 'absent' are a 404 indistinguishable from a nonexistent
- *      id; 'visible' passes.
- *
- * Fails open so a Supabase blip cannot 404 a working provider page.
+ *      id; 'visible' passes. A definitive refusal of the call itself —
+ *      the RPC not existing yet (404 PGRST202) or the JWT being rejected
+ *      (401/403) — is also a 404, because the caller can then see no more
+ *      than anon did. Only a transient failure (network, timeout, 5xx)
+ *      fails open so a Supabase blip cannot 404 a working provider page.
  */
 export async function shouldServeProviderNotFound(
   pathname: string,
@@ -384,7 +419,7 @@ export async function shouldServeProviderNotFound(
 ): Promise<boolean> {
   const route = parseProviderRoute(pathname);
   if (!route) return false;
-  if (!UUID_RE.test(route.providerId)) return true;
+  if (!isProviderUuid(route.providerId)) return true;
 
   try {
     const exists = await providerExists(route.providerId);
@@ -394,8 +429,9 @@ export async function shouldServeProviderNotFound(
     if (!callerAccessToken) return true; // anon sees approved rows only
 
     const visibility = await providerRouteVisibility(route.providerId, callerAccessToken);
-    if (visibility === null) return false; // could not determine — fail open
-    return visibility !== 'visible';
+    if (visibility.state === 'unknown') return false; // transient — fail open
+    if (visibility.state === 'rejected') return true; // no better answer than anon's
+    return visibility.answer !== 'visible';
   } catch {
     return false;
   }

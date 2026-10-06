@@ -193,16 +193,13 @@ export async function middleware(req: NextRequest) {
   // the provider SELECT policy (via provider_is_visible) lets a creator or
   // admin see non-approved rows, while everyone else gets a 404
   // indistinguishable from a nonexistent id. The caller's `sb-access-token`
-  // — the custom cookie this app's auth actually writes — is forwarded so
-  // the guard's visibility RPC resolves auth.uid() to the caller. It is only
-  // forwarded on a UUID-shaped /p path: every other route's answer is
-  // caller-independent, and /p/<junk> 404s without a lookup, so the token
-  // can change nothing there.
-  const providerUuidPath =
-    /^\/p\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pathname);
-  const notFound = providerUuidPath
-    ? await shouldServeNotFound(pathname, accessToken)
-    : await shouldServeNotFound(pathname);
+  // — the custom cookie this app's auth actually writes — is forwarded on
+  // every route; the guard itself decides where it matters. It only ever
+  // reaches PostgREST as the bearer on the provider_route_visibility RPC,
+  // which fires solely for UUID-shaped /p paths after the anon select
+  // missed: every other route's answer is caller-independent, and /p/<junk>
+  // 404s without a lookup, so the token can change nothing there.
+  const notFound = await shouldServeNotFound(pathname, accessToken);
   if (notFound) {
     return NextResponse.rewrite(req.nextUrl, { status: 404 });
   }
