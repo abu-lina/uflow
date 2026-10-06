@@ -47,9 +47,9 @@ System architecture, design decisions, and database documentation:
 
 UI/UX design system, components, and styling guidelines:
 
-- **COLOR\_*.md** - Color palette, state mapping, structure
-- **BUTTON\_*.md** - Button component design and refactoring
-- **ICON\_*.md** - Icon standardization and usage standards
+- `COLOR_*.md` - Color palette, state mapping, structure
+- `BUTTON_*.md` - Button component design and refactoring
+- `ICON_*.md` - Icon standardization and usage standards
 - **COMPONENT_NAMING_COMPARISON.md** - Component naming conventions
 - **SIGNUP_FLOW_DESIGN.md** - Signup flow design documentation
 - **TAILWIND_CONFIG_OPTIMIZATION.md** - Tailwind configuration
@@ -63,7 +63,7 @@ UI/UX design system, components, and styling guidelines:
 
 Feature documentation and specifications:
 
-- **QUICK_CREATE\_*.md** - Quick create feature documentation
+- `QUICK_CREATE_*.md` - Quick create feature documentation
 - **OFFERS_NEEDS_MATCHING_FEATURE.md** - Matching feature specification
 - **UNIFIED_CREATION_IMPLEMENTATION.md** - Unified creation flow
 - **CATEGORIZATION_MAPPING.md** - Category mapping documentation
@@ -138,11 +138,11 @@ Bug fixes, solutions, troubleshooting guides, and action items:
 
 ### Troubleshooting
 
-- **CONNECTIVITY\_*.md** - Connectivity status and troubleshooting
-- **MIME\_*.md** - MIME type diagnostics and resolutions
-- **SUPABASE_FIX\_*.md** - Supabase-related fixes and diagnostics
-- **HETZNER\_*.md** - Hetzner server information and verification
-- **UAT\_*.md** - UAT environment troubleshooting
+- `CONNECTIVITY_*.md` - Connectivity status and troubleshooting
+- `MIME_*.md` - MIME type diagnostics and resolutions
+- `SUPABASE_FIX_*.md` - Supabase-related fixes and diagnostics
+- `HETZNER_*.md` - Hetzner server information and verification
+- `UAT_*.md` - UAT environment troubleshooting
 
 ### Action Items
 
@@ -158,10 +158,10 @@ Bug fixes, solutions, troubleshooting guides, and action items:
 
 Code reviews, security reviews, and architecture reviews:
 
-- _*BACKEND_REVIEW*.md_* - Backend code reviews
-- _*FRONTEND_REVIEW*.md_* - Frontend code reviews
-- _*UX_UI_REVIEW*.md_* - UX/UI design reviews
-- _*SECURITY_REVIEW*.md_* - Security reviews
+- `BACKEND_REVIEW*.md` - Backend code reviews
+- `FRONTEND_REVIEW*.md` - Frontend code reviews
+- `UX_UI_REVIEW*.md` - UX/UI design reviews
+- `SECURITY_REVIEW*.md` - Security reviews
 - **BEST_PRACTICES_REVIEW.md** - Best practices review
 - **CODE_REVIEW_CLIENT_PROVIDERS.md** - Client providers review
 - **COMPLIANCE_REVIEW.md** - Compliance review
@@ -176,7 +176,7 @@ Code reviews, security reviews, and architecture reviews:
 Performance analysis, optimization, and testing:
 
 - **PERFORMANCE_ISSUES_ANALYSIS.md** - Performance issues analysis
-- **PERFORMANCE_FIX\_*.md** - Performance fix documentation
+- `PERFORMANCE_FIX_*.md` - Performance fix documentation
 - **PERFORMANCE_TESTING.md** - Performance testing guide
 - **PERFORMANCE_OPTIMIZATION_SUMMARY.md** - Optimization summary
 - **PERFORMANCE_TEST_NEXT_STEPS.md** - Next steps for performance testing

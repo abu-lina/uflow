@@ -16,10 +16,13 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}🔍 Identifying MCP Supabase Project${NC}"
 echo ""
 
+# The project ref the dev-supabase MCP server is configured for.
+# This script never verifies a live connection; it only compares your
+# env files against this configured ref.
 MCP_PROJECT_REF="qrekonfhaenjdnjhwdum"
 MCP_PROJECT_URL="https://${MCP_PROJECT_REF}.supabase.co"
 
-echo -e "${CYAN}MCP Supabase is connected to:${NC}"
+echo -e "${CYAN}Configured MCP project ref (not verified live):${NC}"
 echo -e "  ${GREEN}Project URL: ${MCP_PROJECT_URL}${NC}"
 echo -e "  ${GREEN}Project Ref: ${MCP_PROJECT_REF}${NC}"
 echo ""
@@ -97,17 +100,17 @@ echo ""
 
 # Determine which project
 if [ "$MATCHES_LOCAL" = true ]; then
-    echo -e "${GREEN}✅ MCP is connected to your DEV/LOCAL project${NC}"
+    echo -e "${GREEN}✅ Your .env.local matches the configured MCP project ref${NC}"
     echo ""
     echo "This means:"
-    echo "  • MCP is pointing to your development database"
+    echo "  • .env.local and the MCP configuration point at the same project"
 elif [ "$MATCHES_UAT" = true ] || [ "$MATCHES_PROD" = true ]; then
-    echo -e "${GREEN}✅ MCP is connected to your UAT/PROD project${NC}"
+    echo -e "${GREEN}✅ Your UAT/PROD env file matches the configured MCP project ref${NC}"
     echo ""
     echo "This means:"
-    echo "  • MCP is pointing to your UAT/Production database"
+    echo "  • your UAT/PROD env and the MCP configuration point at the same project"
 else
-    echo -e "${YELLOW}⚠️  Cannot determine which project MCP is connected to${NC}"
+    echo -e "${YELLOW}⚠️  No .env file matches the configured MCP project ref${NC}"
     echo ""
     echo "No .env file points at the MCP project ref (${MCP_PROJECT_REF})."
     echo ""
