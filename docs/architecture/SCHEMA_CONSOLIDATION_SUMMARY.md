@@ -1,5 +1,11 @@
 # Schema Consolidation Summary
 
+> **Superseded: historical record, not instructions.**
+>
+> This document describes the artifact `sql/queries/supabase-schema-consolidated.sql` as it was at the time of writing: a hand-merged snapshot containing 14 `CREATE TABLE` statements. Those counts describe that file only, not any live Supabase project.
+>
+> The provisioning path described below ("paste the consolidated schema into the UAT SQL Editor") was replaced by **ADR-114** (see `docs/architecture/system-architecture.md`): the live UAT/Prod project (`rdtdtcfntopcxcigkqoq`) is the canonical schema source, and new environments are provisioned from a `pg_dump` baseline of it. Do **not** run the consolidated file against any existing project; it predates most of the current schema.
+
 ## Overview
 
 Created a consolidated database schema file (`sql/queries/supabase-schema-consolidated.sql`) that combines the base schema and all migrations, with all duplicates and conflicts resolved.
@@ -7,6 +13,7 @@ Created a consolidated database schema file (`sql/queries/supabase-schema-consol
 ## What Was Consolidated
 
 ### Files Combined
+
 - `sql/queries/supabase-schema.sql` (base schema)
 - `supabase/migrations/archive/000_create_offers_needs_tables.sql`
 - `supabase/migrations/archive/001_create_offers_and_needs_tables.sql`
@@ -24,6 +31,7 @@ Created a consolidated database schema file (`sql/queries/supabase-schema-consol
 ## Duplicates Removed
 
 ### Index Duplicates
+
 1. **`idx_providers_category_id`**
    - Base schema: Simple index
    - Migration 011: Partial index with WHERE clause
@@ -51,6 +59,7 @@ Created a consolidated database schema file (`sql/queries/supabase-schema-consol
    - **Resolution**: Kept one
 
 ### Table Creation Conflicts
+
 1. **`offers` and `needs` tables**
    - Migration 000: Creates tables with `category_id` and `created_by`
    - Migration 001: Assumes tables exist, adds constraints
@@ -59,12 +68,14 @@ Created a consolidated database schema file (`sql/queries/supabase-schema-consol
    - **Resolution**: Created tables once with all columns in consolidated schema
 
 ### Column Addition Conflicts
+
 1. **`providers.offers_ids` and `providers.needs_ids`**
    - Migration 001: Adds columns
    - add-offers-needs-columns.sql: Also adds columns
    - **Resolution**: Added once in consolidated providers table definition
 
 ### RLS Policy Conflicts
+
 1. **Offers/Needs policies**
    - Migration 001: Creates basic policies
    - Migration 004: Updates DELETE policy
@@ -72,7 +83,9 @@ Created a consolidated database schema file (`sql/queries/supabase-schema-consol
 
 ## Final Schema Statistics
 
-- **14 tables** (all from base + migrations)
+Counts below describe the consolidated file, not any live project (as of writing):
+
+- **14 `CREATE TABLE` statements** (all from base + migrations)
 - **57 indexes** (duplicates removed, best versions used)
 - **49 RLS policies** (final versions)
 - **21 functions** (all helper functions included)
@@ -95,9 +108,11 @@ Created a consolidated database schema file (`sql/queries/supabase-schema-consol
 13. consent_logs
 14. admin_audit_logs
 
-## Usage
+## Usage (historical)
 
-### For UAT Setup
+### For UAT Setup (superseded by ADR-114)
+
+The steps below are kept as a record of the original approach. **Do not follow them.** UAT already exists and holds the real data; provisioning new environments now goes through the ADR-114 `pg_dump` baseline.
 
 1. Go to UAT Supabase Dashboard → SQL Editor
 2. Copy contents of `sql/queries/supabase-schema-consolidated.sql`
@@ -114,16 +129,18 @@ Created a consolidated database schema file (`sql/queries/supabase-schema-consol
 
 ## Verification
 
-After running the consolidated schema, verify with:
+After running the consolidated schema, the original verification was:
 
 ```sql
 -- Check all tables exist
-SELECT table_name 
-FROM information_schema.tables 
+SELECT table_name
+FROM information_schema.tables
 WHERE table_schema = 'public'
 ORDER BY table_name;
 
--- Should return 14 tables
+-- Originally expected one row per CREATE TABLE in the consolidated
+-- file (14 at the time of writing). This expectation is obsolete:
+-- live projects have since grown well beyond that snapshot.
 ```
 
 ## Notes
@@ -131,4 +148,4 @@ ORDER BY table_name;
 - The consolidated schema uses `IF NOT EXISTS` for tables and `DROP IF EXISTS` for triggers/policies to make it safe to run multiple times
 - All indexes use `IF NOT EXISTS` to avoid conflicts
 - Seed data uses `ON CONFLICT DO NOTHING` to avoid duplicates
-- The schema is production-ready and can be used for any new database setup
+- At the time of writing the file was intended as a ready-to-run setup for new databases; that role is now filled by the ADR-114 baseline, so treat the file as reference only
