@@ -327,12 +327,12 @@ describe('issue 533 — route guard', () => {
       expect(aborted).toBe(true);
     }, 10_000);
 
-    it('queries PostgREST as anon, matching exactly the rows the page sees', async () => {
-      // The page's createSupabaseServerClient reads the `sb-auth-token`
-      // cookie, which nothing writes (auth uses `sb-access-token`), so the
-      // page runs anon for every caller. Forwarding a caller token here
-      // would let the guard see MORE rows than the page renders — passing an
-      // unapproved /p/<id> whose page then soft-404s.
+    it('queries PostgREST as anon on the existence fast path', async () => {
+      // The existence select must stay unconditionally anon: anon RLS
+      // exposes exactly the approved rows, so a hit means "visible to
+      // everyone" and a miss hands off to the caller-aware
+      // provider_route_visibility RPC (migration 137). Forwarding a caller
+      // token here would let a forged cookie widen the fast path.
       const fetchSpy = stubSupabase({ providers: () => jsonResponse([]) });
       vi.stubGlobal('fetch', fetchSpy);
       const { shouldServeProviderNotFound } = await import('@/lib/route-guard');
@@ -409,7 +409,11 @@ describe('issue 533 — route guard', () => {
       expect(res?.status).toBe(200);
     });
 
-    it('calls the guard with the pathname only — lookups run anon like the page', async () => {
+    it('forwards the sb-access-token cookie to the guard, which decides where it matters', async () => {
+      // Issue 547 rework: middleware no longer pre-filters by path shape —
+      // the guard re-validates UUID-ness itself, so the token is passed
+      // unconditionally and only ever reaches PostgREST on the
+      // provider_route_visibility RPC for UUID-shaped /p paths.
       const guard = vi.fn(async () => false);
       vi.doMock('@/lib/route-guard', () => ({ shouldServeNotFound: guard }));
       const { middleware } = await import('@/middleware');
@@ -422,7 +426,7 @@ describe('issue 533 — route guard', () => {
         },
       });
       await middleware(req);
-      expect(guard).toHaveBeenCalledWith('/p/abc');
+      expect(guard).toHaveBeenCalledWith('/p/abc', 'session-jwt');
     });
   });
 });

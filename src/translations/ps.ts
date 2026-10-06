@@ -1259,6 +1259,14 @@ export const ps = {
       'Vorläufiges Siegel: Es wird erst öffentlich angezeigt, wenn die Einreichung geprüft wurde.',
     pendingBadge: 'Wird geprüft',
     submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
+    rejectedBanner:
+      'Diese Einreichung wurde abgelehnt. Sie ist nur für dich und Moderator:innen sichtbar.',
+    // Issue 547: post-submit status screen for quick create
+    submittedTitle: 'Einreichung erhalten',
+    submittedBody:
+      'Dein Eintrag wartet auf Prüfung. Er wird öffentlich, sobald er freigegeben ist — bis dahin siehst nur du ihn.',
+    submittedViewListing: 'Eintrag ansehen',
+    submittedViewProfile: 'Meine Einreichungen',
   },
   createPage: {
     quickImportTitle: 'Quick Import (Beta)',

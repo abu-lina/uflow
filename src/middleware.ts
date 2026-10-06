@@ -189,12 +189,18 @@ export async function middleware(req: NextRequest) {
   // status to 404. This runs AFTER rate limiting so the /p lookup (one
   // PostgREST roundtrip, uncached) stays metered.
   //
-  // The lookups run anon on purpose: the pages they protect run anon for
-  // every caller (nothing writes the `sb-auth-token` cookie their SSR client
-  // reads), so forwarding the caller's `sb-access-token` would let the guard
-  // see MORE rows than the page renders — an unapproved `/p/<id>` would pass
-  // the guard and then soft-404 in the page anyway.
-  if (await shouldServeNotFound(pathname)) {
+  // Issue 547 — /p/<uuid> is the one route whose 404 depends on who asks:
+  // the provider SELECT policy (via provider_is_visible) lets a creator or
+  // admin see non-approved rows, while everyone else gets a 404
+  // indistinguishable from a nonexistent id. The caller's `sb-access-token`
+  // — the custom cookie this app's auth actually writes — is forwarded on
+  // every route; the guard itself decides where it matters. It only ever
+  // reaches PostgREST as the bearer on the provider_route_visibility RPC,
+  // which fires solely for UUID-shaped /p paths after the anon select
+  // missed: every other route's answer is caller-independent, and /p/<junk>
+  // 404s without a lookup, so the token can change nothing there.
+  const notFound = await shouldServeNotFound(pathname, accessToken);
+  if (notFound) {
     return NextResponse.rewrite(req.nextUrl, { status: 404 });
   }
 
