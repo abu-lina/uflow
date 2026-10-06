@@ -87,6 +87,7 @@ const config: Config = {
     'h-bottom-spacing-12',
     'h-bottom-spacing-16',
     'h-bottom-spacing-subpage',
+    'h-bottom-spacing-subpage-review',
   ],
 
   theme: {
@@ -173,6 +174,10 @@ const config: Config = {
         'bottom-spacing-12': 'calc(48px + 1rem + max(12px, env(safe-area-inset-bottom)))',
         'bottom-spacing-16': 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))',
         'bottom-spacing-subpage': 'calc(80px + 1rem + max(12px, env(safe-area-inset-bottom)))',
+        // #548: subpage footer with a review row above the action row:
+        // pt-4 (16) + 48px row + gap-3 (12) + 48px row + pb-4 (16) = 140px.
+        'bottom-spacing-subpage-review':
+          'calc(140px + 1rem + max(12px, env(safe-area-inset-bottom)))',
 
         // Icon sizes (Material Symbols - standardized)
         'icon-xs': '16px',

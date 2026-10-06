@@ -29,17 +29,9 @@ interface FooterActionButton {
   disabled?: boolean;
   loading?: boolean;
   loadingText?: string;
-  variant?: 'primary' | 'success' | 'danger';
+  variant?: 'primary' | 'secondary' | 'success' | 'danger';
   'aria-label'?: string;
 }
-
-/**
- * Total height the fixed footer bar occupies above the safe-area inset:
- * pt-4 (16px) + 48px button + pb-4 (16px) = 80px. Exported so a bar that
- * must sit directly above the footer (EditSubPageLayout's reviewFooter)
- * anchors on the same number instead of re-deriving the arithmetic.
- */
-export const FOOTER_ACTION_HEIGHT_PX = 80;
 
 interface FooterSecondaryButton {
   icon: React.ReactNode | string;
@@ -60,6 +52,15 @@ interface FooterActionProps {
    */
   primaryButton?: FooterActionButton;
   secondaryButton?: FooterSecondaryButton;
+
+  /**
+   * #548: optional row rendered above the button row inside the same bar —
+   * one border, one shadow, one backdrop-filter. EditSubPageLayout passes
+   * its reviewFooter (approve/reject pair) here instead of stacking a
+   * second fixed bar. Height is content-driven; layouts that use it must
+   * reserve space (h-bottom-spacing-subpage-review).
+   */
+  topRow?: React.ReactNode;
 
   /**
    * Custom className for the footer container
@@ -105,6 +106,7 @@ export function FooterAction({
   actionButton,
   primaryButton,
   secondaryButton,
+  topRow,
   className = '',
   contentClassName = '',
 }: FooterActionProps) {
@@ -148,9 +150,13 @@ export function FooterAction({
           }}
         >
           <div
-            className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+            className={cn(
+              'flex w-full flex-col gap-3 px-6 pt-4 sm:mx-auto sm:max-w-2xl',
+              contentClassName,
+            )}
             style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
           >
+            {topRow}
             <Button
               fullWidth
               aria-label={actionButton['aria-label'] || actionButton.label}
@@ -187,9 +193,13 @@ export function FooterAction({
         }}
       >
         <div
-          className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+          className={cn(
+            'flex w-full flex-col gap-3 px-6 pt-4 sm:mx-auto sm:max-w-2xl',
+            contentClassName,
+          )}
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
+          {topRow}
           <Button
             fullWidth
             aria-label={actionButton['aria-label'] || actionButton.label}
@@ -227,36 +237,44 @@ export function FooterAction({
         }}
       >
         <div
-          className={cn('flex w-full gap-3.5 px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+          className={cn(
+            'flex w-full flex-col gap-3 px-6 pt-4 sm:mx-auto sm:max-w-2xl',
+            contentClassName,
+          )}
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
-          {/* Primary Action Button - Full width (flex-1), 48px height */}
-          <Button
-            aria-label={primaryButton['aria-label'] || primaryButton.label}
-            className="!h-[48px] !max-h-[48px] !min-h-[48px] flex-1"
-            disabled={primaryButton.disabled}
-            icon={primaryButton.icon}
-            loading={primaryButton.loading}
-            loadingText={primaryButton.loadingText}
-            size="default"
-            trailingIcon={primaryButton.trailingIcon}
-            variant={primaryButton.variant || 'primary'}
-            onClick={primaryButton.onClick}
-          >
-            {primaryButton.label}
-          </Button>
+          {/* #548: optional row above the action row (review approve/reject),
+              inside the same bar — one border, one shadow, one blur. */}
+          {topRow}
+          <div className="flex w-full gap-3.5">
+            {/* Primary Action Button - Full width (flex-1), 48px height */}
+            <Button
+              aria-label={primaryButton['aria-label'] || primaryButton.label}
+              className="!h-[48px] !max-h-[48px] !min-h-[48px] flex-1"
+              disabled={primaryButton.disabled}
+              icon={primaryButton.icon}
+              loading={primaryButton.loading}
+              loadingText={primaryButton.loadingText}
+              size="default"
+              trailingIcon={primaryButton.trailingIcon}
+              variant={primaryButton.variant || 'primary'}
+              onClick={primaryButton.onClick}
+            >
+              {primaryButton.label}
+            </Button>
 
-          {/* Secondary Action Button - 48px x 48px (1:1 ratio) */}
-          <IconButton
-            aria-label={secondaryButton['aria-label']}
-            className="!h-[48px] !max-h-[48px] !min-h-[48px] !w-[48px] !min-w-[48px] !max-w-[48px] flex-shrink-0"
-            disabled={secondaryButton.disabled}
-            icon={renderIcon(secondaryButton.icon)}
-            loading={secondaryButton.loading}
-            size="lg"
-            variant="secondary"
-            onClick={secondaryButton.onClick}
-          />
+            {/* Secondary Action Button - 48px x 48px (1:1 ratio) */}
+            <IconButton
+              aria-label={secondaryButton['aria-label']}
+              className="!h-[48px] !max-h-[48px] !min-h-[48px] !w-[48px] !min-w-[48px] !max-w-[48px] flex-shrink-0"
+              disabled={secondaryButton.disabled}
+              icon={renderIcon(secondaryButton.icon)}
+              loading={secondaryButton.loading}
+              size="lg"
+              variant="secondary"
+              onClick={secondaryButton.onClick}
+            />
+          </div>
         </div>
       </footer>
     );

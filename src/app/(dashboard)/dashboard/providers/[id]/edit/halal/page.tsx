@@ -11,6 +11,8 @@ import {
   HalalAttestationFields,
   type HalalAttestationField,
 } from '@/components/shared/HalalAttestationFields';
+import { Button } from '@/components/ui/Button';
+import { ApproveModal } from '@/features/admin/components/ApproveModal';
 import { RejectModal } from '@/features/admin/components/RejectModal';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { validateCertificateFile } from '@/lib/validations/certificate';
@@ -147,6 +149,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   // and supplies expectedUpdatedAt for optimistic concurrency.
   const [providerMeta, setProviderMeta] = useState<ProviderMeta | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [gateError, setGateError] = useState<GateError | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -374,6 +377,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
         toast.error(t('adminHalalEdit.review.gateBlocked'));
       } finally {
         setReviewing(false);
+        setApproveModalOpen(false);
         setRejectModalOpen(false);
       }
     },
@@ -381,8 +385,16 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   );
 
   // Footer state machine (D6): pending/needs_revision -> both actions;
-  // approved -> approve hidden, reject still offered; rejected/
-  // removed_by_owner -> no status action, just the notice.
+  // approved -> approve stays mounted but disabled (unmounting it let reject
+  // slide into the slot a finger had just tapped); rejected/removed_by_owner
+  // -> no status action, just the notice.
+  //
+  // The pair is uflow's own approve/reject treatment (ProviderCard): the
+  // shared Button, variant primary/danger, 48px, mdi:check/mdi:close. Both
+  // block on `reviewing` AND `isUploading` — a certificate upload must not
+  // leave a destructive control live. Approve opens ApproveModal rather
+  // than firing: it publishes publicly and irreversibly, so the guard sits
+  // on the irreversible action, mirroring RejectModal on the reversible one.
   const reviewFooter = (() => {
     if (!providerMeta) return undefined;
     const status = providerMeta.reviewStatus;
@@ -397,24 +409,35 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     }
     return (
       <div className="flex gap-2">
-        {status !== 'approved' && (
-          <button
-            className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
-            disabled={reviewing || isUploading}
-            type="button"
-            onClick={() => handleReview('approved')}
-          >
-            {reviewing ? '…' : t('adminHalalEdit.review.approve')}
-          </button>
-        )}
-        <button
-          className="flex-1 rounded-xl bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-          disabled={reviewing}
-          type="button"
+        <Button
+          aria-label={t('adminHalalEdit.review.approve')}
+          className="h-12 flex-1 items-center justify-center gap-1.5"
+          disabled={status === 'approved' || isUploading}
+          icon={
+            <div className="flex items-center">
+              <Icon height={16} icon="mdi:check" width={16} />
+            </div>
+          }
+          loading={reviewing}
+          variant="primary"
+          onClick={() => setApproveModalOpen(true)}
+        >
+          {t('adminHalalEdit.review.approve')}
+        </Button>
+        <Button
+          aria-label={t('adminHalalEdit.review.reject')}
+          className="h-12 flex-1 items-center justify-center gap-1.5"
+          disabled={reviewing || isUploading}
+          icon={
+            <div className="flex items-center">
+              <Icon height={16} icon="mdi:close" width={16} />
+            </div>
+          }
+          variant="danger"
           onClick={() => setRejectModalOpen(true)}
         >
           {t('adminHalalEdit.review.reject')}
-        </button>
+        </Button>
       </div>
     );
   })();
@@ -422,6 +445,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   return (
     <EditSubPageLayout
       primaryButton={{
+        // #548: Approve is the page's consequential action; saving a local
+        // draft is demoted to the secondary variant so it cannot dominate.
+        variant: 'secondary',
         label: isUploading ? t('adminHalalEdit.uploading') : t('common.save'),
         icon: isUploading ? undefined : 'material-symbols:save-outline',
         onClick: handleSave,
@@ -774,6 +800,15 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
         providerName={providerMeta?.providerName ?? ''}
         onClose={() => setRejectModalOpen(false)}
         onConfirm={(feedback) => handleReview('rejected', feedback)}
+      />
+
+      {/* Approval publishes publicly and irreversibly — it gets the guard. */}
+      <ApproveModal
+        isLoading={reviewing}
+        isOpen={approveModalOpen}
+        providerName={providerMeta?.providerName ?? ''}
+        onClose={() => setApproveModalOpen(false)}
+        onConfirm={() => handleReview('approved')}
       />
     </EditSubPageLayout>
   );

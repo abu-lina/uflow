@@ -1,16 +1,19 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const { mockPush, mockBack, mockToast, mockInvalidateQueries, VALID_ID } = vi.hoisted(() => ({
-  mockPush: vi.fn(),
-  mockBack: vi.fn(),
-  mockToast: { success: vi.fn(), error: vi.fn() },
-  mockInvalidateQueries: vi.fn(),
-  VALID_ID: '123e4567-e89b-12d3-a456-426614174000',
-}));
+const { mockPush, mockBack, mockToast, mockInvalidateQueries, mockUpload, VALID_ID } = vi.hoisted(
+  () => ({
+    mockPush: vi.fn(),
+    mockBack: vi.fn(),
+    mockToast: { success: vi.fn(), error: vi.fn() },
+    mockInvalidateQueries: vi.fn(),
+    mockUpload: vi.fn(),
+    VALID_ID: '123e4567-e89b-12d3-a456-426614174000',
+  }),
+);
 
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal();
@@ -49,6 +52,17 @@ vi.mock('@/components/layout/PageHeader', () => ({
 
 vi.mock('@/components/layout/HeaderSpacer', () => ({
   HeaderSpacer: () => <div />,
+}));
+
+vi.mock('@/lib/supabase/client', () => ({
+  supabase: {
+    storage: {
+      from: () => ({
+        upload: mockUpload,
+        getPublicUrl: () => ({ data: { publicUrl: 'https://cdn.test/cert.pdf' } }),
+      }),
+    },
+  },
 }));
 
 const mockFetch = vi.fn();
@@ -115,11 +129,23 @@ function renderPage() {
 
 const STORAGE_KEY = `admin_edit_halal_${VALID_ID}`;
 
+// Approve is guarded by ApproveModal (#548 design fixes): open it and confirm.
+async function confirmApprove() {
+  const dialog = await screen.findByRole('dialog');
+  fireEvent.click(
+    await screen.findByRole('button', {
+      name: 'adminHalalEdit.review.approveConfirm.confirm',
+    }),
+  );
+  return dialog;
+}
+
 describe('EditHalalPage — admin review footer (#548)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
     mockRequests();
+    mockUpload.mockResolvedValue({ error: null });
   });
 
   it('renders approve and reject actions for a pending provider', async () => {
@@ -154,7 +180,9 @@ describe('EditHalalPage — admin review footer (#548)', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('hides approve but still offers reject for an approved provider', async () => {
+  it('keeps the approve slot rendered but disabled for an approved provider (no destructive reflow)', async () => {
+    // Design fix: unmounting approve let reject slide left into the slot a
+    // finger had just tapped. The slot stays; the button is disabled.
     mockRequests({ review_status: 'approved' });
     renderPage();
 
@@ -163,12 +191,37 @@ describe('EditHalalPage — admin review footer (#548)', () => {
         screen.getByRole('button', { name: 'adminHalalEdit.review.reject' }),
       ).toBeInTheDocument();
     });
-    expect(
-      screen.queryByRole('button', { name: 'adminHalalEdit.review.approve' }),
-    ).not.toBeInTheDocument();
+    const approve = screen.getByRole('button', { name: 'adminHalalEdit.review.approve' });
+    expect(approve).toBeInTheDocument();
+    expect(approve).toBeDisabled();
   });
 
-  it('approve submits the full halal payload, clears the draft, redirects to the pending list (AC 2, 7, 11)', async () => {
+  it('approve does not PATCH until the confirmation modal is confirmed; cancel aborts (AC 1)', async () => {
+    renderPage();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }),
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }));
+
+    // The modal is up, naming the consequence, and nothing has been sent.
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByText(/adminHalalEdit\.review\.approveConfirm\.body/)).toBeInTheDocument();
+    expect(patchCalls()).toHaveLength(0);
+
+    // Cancelling closes the dialog and leaves the row untouched.
+    fireEvent.click(screen.getByRole('button', { name: 'common.cancel' }));
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(patchCalls()).toHaveLength(0);
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('approve submits the full halal payload after confirmation, clears the draft, redirects (AC 2, 7, 11)', async () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -188,6 +241,7 @@ describe('EditHalalPage — admin review footer (#548)', () => {
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }));
+    await confirmApprove();
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/food?status=pending');
@@ -218,6 +272,7 @@ describe('EditHalalPage — admin review footer (#548)', () => {
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }));
+    await confirmApprove();
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/stores?status=pending');
@@ -244,6 +299,7 @@ describe('EditHalalPage — admin review footer (#548)', () => {
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }));
+    await confirmApprove();
 
     await waitFor(() => {
       expect(screen.getAllByText('halal.admin.declaredNonCompliant:')[0]).toBeInTheDocument();
@@ -270,11 +326,75 @@ describe('EditHalalPage — admin review footer (#548)', () => {
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }));
+    await confirmApprove();
 
     await waitFor(() => {
       expect(mockToast.error).toHaveBeenCalledWith('adminHalalEdit.review.conflict');
     });
     expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it('reject stays disabled while a certificate upload is in flight on the save path', async () => {
+    // Design fix: Reject used to gate only on `reviewing`, so it stayed live
+    // during a certificate upload triggered by Save. The upload must block
+    // both review actions.
+    let resolveUpload: ((v: { error: null }) => void) | undefined;
+    mockUpload.mockReturnValue(
+      new Promise((resolve) => {
+        resolveUpload = resolve;
+      }),
+    );
+    const { container } = renderPage();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'adminHalalEdit.review.reject' }),
+      ).toBeInTheDocument();
+    });
+
+    // The file input only mounts once the certificate toggle is on.
+    const toggle = container.querySelector('button.w-11');
+    expect(toggle).not.toBeNull();
+    fireEvent.click(toggle as Element);
+
+    const fileInput = document.querySelector('input[type="file"]');
+    expect(fileInput).not.toBeNull();
+    fireEvent.change(fileInput as Element, {
+      target: { files: [new File(['x'], 'cert.pdf', { type: 'application/pdf' })] },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'common.save' }));
+
+    await waitFor(() => {
+      expect(mockUpload).toHaveBeenCalled();
+    });
+    expect(screen.getByRole('button', { name: 'adminHalalEdit.review.reject' })).toBeDisabled();
+
+    await act(async () => {
+      resolveUpload?.({ error: null });
+    });
+    await waitFor(() => {
+      expect(mockBack).toHaveBeenCalled();
+    });
+  });
+
+  it('renders the review actions inside the single footer bar, not a second stacked bar', async () => {
+    const { container } = renderPage();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }),
+      ).toBeInTheDocument();
+    });
+
+    // One footer element owns one border/shadow/backdrop-filter; the review
+    // pair renders inside it instead of a second fixed bar above.
+    const footers = container.querySelectorAll('footer');
+    expect(footers.length).toBe(1);
+    const approve = screen.getByRole('button', { name: 'adminHalalEdit.review.approve' });
+    const save = screen.getByRole('button', { name: 'common.save' });
+    expect(approve.closest('footer')).toBe(footers[0]);
+    expect(save.closest('footer')).toBe(footers[0]);
   });
 
   it('reject opens RejectModal, keeps confirm disabled until a reason is typed, then submits (AC 6)', async () => {
