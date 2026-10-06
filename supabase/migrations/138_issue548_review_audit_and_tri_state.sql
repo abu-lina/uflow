@@ -82,6 +82,26 @@ BEGIN
   FROM public.providers p
   WHERE p.provider_id = p_provider_id;
 
+  -- Not found is not a conflict: raise before any write so a missing
+  -- provider maps to 404, and 409 stays reserved for a genuine
+  -- expected_updated_at mismatch (#548 review).
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'NOT_FOUND: Provider % does not exist', p_provider_id;
+  END IF;
+
+  -- Defence in depth: the route enforces admin/moderator, but this
+  -- function runs SECURITY DEFINER granted to service_role, which
+  -- bypasses RLS entirely. Re-assert the reviewer's role here so a
+  -- caller that reaches the RPC without the route's check cannot stamp
+  -- a decision as a plain user or owner (#548 review).
+  IF p_reviewer_id IS NULL OR NOT EXISTS (
+    SELECT 1 FROM public.users u
+    WHERE u.user_id = p_reviewer_id
+      AND u.role IN ('admin', 'moderator')
+  ) THEN
+    RAISE EXCEPTION 'FORBIDDEN: reviewer % is not an admin or moderator', p_reviewer_id;
+  END IF;
+
   -- 1) Persist the submitted halal answers (key-presence semantics).
   IF v_listing_type IN ('food', 'store') AND p_halal IS NOT NULL THEN
     IF v_listing_type = 'food' THEN
@@ -206,7 +226,9 @@ BEGIN
     IF p_expected_updated_at IS NOT NULL THEN
       RAISE EXCEPTION 'CONFLICT: Provider was modified by another reviewer. Please refresh and try again.';
     ELSE
-      RAISE EXCEPTION 'Provider not found';
+      -- Unreachable once the existence check above ran, unless the row
+      -- was deleted inside the transaction. Keep the signal distinct.
+      RAISE EXCEPTION 'NOT_FOUND: Provider % does not exist', p_provider_id;
     END IF;
   END IF;
 
@@ -219,7 +241,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz) IS
-  'Issue #548: one atomic review decision — persists submitted halal answers (key-presence, NULL round-trips), re-asserts the halal gate on post-write values for approvals, then sets review_status + reviewed_by/reviewed_at. Raises CONFLICT: on expected_updated_at mismatch, HALAL_GATE: on failed attestation.';
+  'Issue #548: one atomic review decision — persists submitted halal answers (key-presence, NULL round-trips), re-asserts the halal gate on post-write values for approvals, then sets review_status + reviewed_by/reviewed_at. Raises NOT_FOUND: for a missing provider, FORBIDDEN: when p_reviewer_id is not an admin/moderator user, CONFLICT: on expected_updated_at mismatch, HALAL_GATE: on failed attestation.';
 
 REVOKE ALL ON FUNCTION public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz) TO service_role;

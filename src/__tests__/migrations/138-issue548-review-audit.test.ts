@@ -22,7 +22,7 @@ const SCHEMA = `
   CREATE TYPE public.review_status AS ENUM
     ('pending','approved','rejected','needs_revision','removed_by_owner');
   CREATE TYPE public.listing_type_enum AS ENUM ('food','store','ummah');
-  CREATE TYPE public.user_role AS ENUM ('user','admin','moderator');
+  CREATE TYPE public.user_role AS ENUM ('user','owner','admin','moderator');
   CREATE TABLE public.users (
     user_id uuid PRIMARY KEY,
     email text,
@@ -64,6 +64,8 @@ const SCHEMA = `
 `;
 
 const ADMIN = '22222222-2222-2222-2222-222222222222';
+const PLAIN_USER = '33333333-3333-3333-3333-333333333333';
+const OWNER_USER = '44444444-4444-4444-4444-444444444444';
 const PROVIDER = 'aaaaaaaa-0000-0000-0000-000000000548';
 const STORE_PROVIDER = 'bbbbbbbb-0000-0000-0000-000000000548';
 
@@ -76,6 +78,7 @@ async function reviewRpc(
     halal?: string | null;
     expected?: string | null;
     providerId?: string;
+    reviewer?: string;
   } = {},
 ) {
   const status = opts.status ?? 'approved';
@@ -91,7 +94,7 @@ async function reviewRpc(
        '${opts.providerId ?? PROVIDER}'::uuid,
        '${status}'::public.review_status,
        ${feedback},
-       '${ADMIN}'::uuid,
+       '${opts.reviewer ?? ADMIN}'::uuid,
        ${halal},
        ${expected})`,
   );
@@ -129,7 +132,9 @@ beforeAll(async () => {
   db = new PGlite();
   await db.exec(SCHEMA);
   await db.exec(`INSERT INTO public.users (user_id, email, role) VALUES
-    ('${ADMIN}', 'admin@test.local', 'admin')`);
+    ('${ADMIN}', 'admin@test.local', 'admin'),
+    ('${PLAIN_USER}', 'user@test.local', 'user'),
+    ('${OWNER_USER}', 'owner@test.local', 'owner')`);
   await db.exec(`INSERT INTO public.providers
       (provider_id, provider_name, listing_type, review_status, updated_at)
     VALUES
@@ -319,6 +324,37 @@ describe('admin_review_provider RPC', () => {
     await expect(reviewRpc({ providerId: id })).rejects.toThrow(/HALAL_GATE/);
     const p = await providerRow(id);
     expect(p.review_status).toBe('pending');
+  });
+
+  it('reports a nonexistent provider as NOT_FOUND, not CONFLICT (#548 review)', async () => {
+    // Not-found is not a concurrency conflict: even with an
+    // expected_updated_at supplied, a missing provider must not surface
+    // as "another reviewer changed this".
+    const missing = '99999999-0000-0000-0000-000000000548';
+    await expect(
+      reviewRpc({ providerId: missing, expected: '2025-01-01T00:00:00Z' }),
+    ).rejects.toThrow(/NOT_FOUND/);
+    await expect(reviewRpc({ providerId: missing })).rejects.toThrow(/NOT_FOUND/);
+  });
+
+  it('refuses a reviewer whose users.role is user or owner (defence in depth)', async () => {
+    // The route checks isAdminOrModerator, but the RPC runs SECURITY
+    // DEFINER under the service role (RLS bypassed), so the role check is
+    // re-asserted inside the function. A non-admin reviewer id must not
+    // write a status change even if a caller reaches the RPC directly.
+    const id = 'd0d0d0d0-0000-0000-0000-000000000548';
+    await db.exec(
+      `INSERT INTO public.providers (provider_id, provider_name, listing_type)
+       VALUES ('${id}', 'Forbidden', 'food')`,
+    );
+    for (const reviewer of [PLAIN_USER, OWNER_USER]) {
+      await expect(
+        reviewRpc({ providerId: id, status: 'rejected', feedback: 'r', reviewer }),
+      ).rejects.toThrow(/FORBIDDEN/);
+    }
+    const p = await providerRow(id);
+    expect(p.review_status).toBe('pending');
+    expect(p.reviewed_by).toBeNull();
   });
 
   it('approves a non-food provider without attestation data', async () => {

@@ -160,14 +160,14 @@ export async function updateProviderReview(
 
   if (error) {
     const message = error.message ?? '';
-    // Preserve the error contract: CONFLICT: -> 409, HALAL_GATE: -> 422.
-    const conflictAt = message.indexOf('CONFLICT:');
-    if (conflictAt >= 0) {
-      throw new Error(message.slice(conflictAt));
-    }
-    const gateAt = message.indexOf('HALAL_GATE:');
-    if (gateAt >= 0) {
-      throw new Error(message.slice(gateAt));
+    // Preserve the error contract so the route can map each signal:
+    // CONFLICT: -> 409, HALAL_GATE: -> 422, NOT_FOUND: -> 404,
+    // FORBIDDEN: -> 403.
+    for (const prefix of ['CONFLICT:', 'HALAL_GATE:', 'NOT_FOUND:', 'FORBIDDEN:']) {
+      const at = message.indexOf(prefix);
+      if (at >= 0) {
+        throw new Error(message.slice(at));
+      }
     }
     throw new Error(`Failed to update provider review: ${message}`);
   }
@@ -175,7 +175,7 @@ export async function updateProviderReview(
   if (!data) {
     // The RPC either returns the updated row or raises; a null result means
     // the provider doesn't exist (defensive — the RPC raises first).
-    throw new Error('Provider not found');
+    throw new Error('NOT_FOUND: Provider not found');
   }
 
   return data as Provider;

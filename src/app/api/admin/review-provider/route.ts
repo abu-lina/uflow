@@ -194,6 +194,23 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
+    // Provider missing — the RPC raises NOT_FOUND: before any write.
+    // Kept distinct from CONFLICT: so a nonexistent id is a 404, not a
+    // concurrency conflict (#548 review).
+    if (error instanceof Error && error.message.startsWith('NOT_FOUND:')) {
+      return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
+    }
+
+    // The RPC re-asserts the reviewer role inside the transaction
+    // (defence in depth — the function runs as service_role, bypassing
+    // RLS). Reaching this means the earlier check was bypassed.
+    if (error instanceof Error && error.message.startsWith('FORBIDDEN:')) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin or Moderator access required' },
+        { status: 403 },
+      );
+    }
+
     // Handle concurrency conflict
     if (error instanceof Error && error.message.startsWith('CONFLICT:')) {
       return NextResponse.json(

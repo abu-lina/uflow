@@ -257,6 +257,32 @@ describe('PATCH /api/admin/review-provider — submitted halal payload', () => {
     expect(res.status).toBe(422);
   });
 
+  it('maps an RPC NOT_FOUND error to 404, not 409', async () => {
+    // A provider that does not exist is not a concurrency conflict (#548
+    // review): the RPC raises NOT_FOUND: and the route maps it to 404.
+    mockReview.mockRejectedValue(new Error('NOT_FOUND: Provider does not exist'));
+
+    const res = await PATCH(
+      makeRequest({
+        providerId: validId,
+        reviewStatus: 'rejected',
+        reviewFeedback: 'gone',
+      }),
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  it('maps an RPC FORBIDDEN error to 403', async () => {
+    mockReview.mockRejectedValue(new Error('FORBIDDEN: reviewer is not an admin or moderator'));
+
+    const res = await PATCH(
+      makeRequest({ providerId: validId, reviewStatus: 'approved', halal: ALL_TRUE_HALAL }),
+    );
+
+    expect(res.status).toBe(403);
+  });
+
   it('returns 401 without a session and never reaches the write', async () => {
     mockGetUser.mockResolvedValue(null);
 

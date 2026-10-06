@@ -122,6 +122,29 @@ describe('updateProviderReview — admin_review_provider RPC', () => {
     await expect(updateProviderReview(PROVIDER_ID, 'approved')).rejects.toThrow(/^HALAL_GATE:/);
   });
 
+  it('rethrows NOT_FOUND errors with the NOT_FOUND: prefix for the 404 mapping', async () => {
+    // Not-found is not a conflict: it must not surface as 409 (#548 review).
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        message: 'NOT_FOUND: Provider 123e4567-e89b-12d3-a456-426614174000 does not exist',
+      },
+    });
+
+    await expect(updateProviderReview(PROVIDER_ID, 'approved', null, 'stale-ts')).rejects.toThrow(
+      /^NOT_FOUND:/,
+    );
+  });
+
+  it('rethrows FORBIDDEN errors with the FORBIDDEN: prefix for the 403 mapping', async () => {
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'FORBIDDEN: reviewer abc is not an admin or moderator' },
+    });
+
+    await expect(updateProviderReview(PROVIDER_ID, 'approved')).rejects.toThrow(/^FORBIDDEN:/);
+  });
+
   it('wraps other RPC failures in the existing message shape', async () => {
     mockRpc.mockResolvedValue({
       data: null,
