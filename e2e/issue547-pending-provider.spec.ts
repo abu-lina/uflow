@@ -3,7 +3,14 @@ import { randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Page } from '@playwright/test';
 
-import { expect, test, resolveSupabaseEnv, TEST_EMAIL, TEST_PASSWORD } from './fixtures';
+import {
+  expect,
+  test,
+  resolveSupabaseEnv,
+  TEST_EMAIL,
+  TEST_PASSWORD,
+  type SupabaseEnv,
+} from './fixtures';
 
 /**
  * Issue 547 — a pending provider used to answer 404 for EVERY caller,
@@ -31,12 +38,32 @@ const PROD_PROJECT_REF = 'rdtdtcfntopcxcigkqoq';
 // correlate back to this spec.
 const UNRELATED_EMAIL = `e2e-unrelated-${randomUUID()}@uflow.test`;
 
-async function login(page: Page, email: string, password: string): Promise<void> {
-  await page.goto('/login', { waitUntil: 'load' });
-  await page.locator('input[type="email"]').fill(email);
-  await page.locator('input[type="password"]').fill(password);
-  await page.locator('button[type="submit"]').click();
-  await page.waitForURL((url) => url.pathname !== '/login', { timeout: 15_000 });
+// Resolved in beforeAll; module scope because signIn() is a module helper.
+let env: SupabaseEnv;
+
+// Sign in through the auth API and write the session into this browser
+// context via /api/auth/set — the exact endpoint AuthSyncer calls after UI
+// login. The middleware guard and the SSR fetch both key off the resulting
+// httpOnly `sb-access-token` cookie, so this exercises the real cookie
+// contract while skipping the login form, whose client-side hydration
+// timing is irrelevant to what these specs assert on the wire (and races
+// in dev mode: a pre-hydration submit degrades to a native GET on /login).
+async function signIn(page: Page, email: string, password: string): Promise<void> {
+  const tokenRes = await page
+    .context()
+    .request.post(`${env.apiUrl}/auth/v1/token?grant_type=password`, {
+      headers: { apikey: env.anonKey, 'Content-Type': 'application/json' },
+      data: { email, password },
+    });
+  expect(tokenRes.ok(), `sign-in for ${email}`).toBe(true);
+  const { access_token, refresh_token } = (await tokenRes.json()) as {
+    access_token: string;
+    refresh_token: string;
+  };
+  const setRes = await page.context().request.post('/api/auth/set', {
+    data: { access_token, refresh_token },
+  });
+  expect(setRes.ok(), 'cookie write via /api/auth/set').toBe(true);
 }
 
 function assertNotProduction(apiUrl: string): void {
@@ -66,9 +93,9 @@ test.describe('issue 547 — pending provider visibility', () => {
   let unrelatedPassword: string;
 
   test.beforeAll(async () => {
-    const { apiUrl, serviceRoleKey } = resolveSupabaseEnv();
-    assertNotProduction(apiUrl);
-    admin = createClient(apiUrl, serviceRoleKey, {
+    env = resolveSupabaseEnv();
+    assertNotProduction(env.apiUrl);
+    admin = createClient(env.apiUrl, env.serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
@@ -88,6 +115,9 @@ test.describe('issue 547 — pending provider visibility', () => {
       .from('providers')
       .insert({
         provider_name: 'E2E Pending Provider 547',
+        // NOT NULL with no default (verified against the live schema). The
+        // provider from the original bug report is a food listing.
+        listing_type: 'food',
         address_city: 'Berlin',
         show_address: true,
         review_status: 'pending',
@@ -122,18 +152,20 @@ test.describe('issue 547 — pending provider visibility', () => {
   });
 
   test('an unrelated signed-in user gets a real 404', async ({ page }) => {
-    await login(page, UNRELATED_EMAIL, unrelatedPassword);
+    await signIn(page, UNRELATED_EMAIL, unrelatedPassword);
     const res = await page.goto(`/p/${providerId}`, { waitUntil: 'domcontentloaded' });
     expect(res?.status()).toBe(404);
   });
 
   test('the creator gets 200 with a review-state banner', async ({ page }) => {
-    await login(page, TEST_EMAIL, TEST_PASSWORD);
+    await signIn(page, TEST_EMAIL, TEST_PASSWORD);
     const res = await page.goto(`/p/${providerId}`, { waitUntil: 'domcontentloaded' });
     expect(res?.status()).toBe(200);
-    await expect(page.getByText(/awaiting.*review|awaiting a manual review/i).first()).toBeVisible({
-      timeout: 15_000,
-    });
+    // The banner is t('submissionStatus.awaitingReview'); the default locale
+    // is German, so match both strings the key resolves to.
+    await expect(
+      page.getByText(/awaiting a manual review|wartet auf eine manuelle prüfung/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
     // Non-approved pages must stay out of the index.
     const html = await page.content();
     expect(html).not.toContain('content="index, follow"');
