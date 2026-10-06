@@ -1328,6 +1328,12 @@ export const ps = {
         rejected: 'رد شوی',
         removedByOwner: 'خاوند یې لرې کړی',
       },
+      approveConfirm: {
+        title: 'تصویب او خپرول؟',
+        body: 'د {{name}} تصویب رستوران سمدستي او په ښکاره خپروي او د بډایه کولو بهیر پیلوي.',
+        confirm: 'تصویب او خپرول',
+        confirming: 'تصویبېږي…',
+      },
     },
   },
 } as const;

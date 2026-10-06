@@ -1329,6 +1329,12 @@ export const tr = {
         rejected: 'reddedildi',
         removedByOwner: 'sahibi tarafından kaldırıldı',
       },
+      approveConfirm: {
+        title: 'Onayla ve yayınla?',
+        body: '{{name}} onaylandığında restoran anında ve herkese açık yayınlanır ve zenginleştirme başlar.',
+        confirm: 'Onayla ve yayınla',
+        confirming: 'Onaylanıyor…',
+      },
     },
   },
 } as const;

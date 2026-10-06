@@ -1312,6 +1312,12 @@ export const ar = {
         rejected: 'مرفوض',
         removedByOwner: 'أزاله المالك',
       },
+      approveConfirm: {
+        title: 'الموافقة والنشر؟',
+        body: 'الموافقة على {{name}} تنشر المطعم للعامة فورًا وتبدأ الإثراء.',
+        confirm: 'موافقة ونشر',
+        confirming: 'جارٍ الموافقة…',
+      },
     },
   },
 } as const;

@@ -1322,6 +1322,14 @@ export const en = {
         rejected: 'rejected',
         removedByOwner: 'removed by its owner',
       },
+      // ApproveModal (#548): the confirmation names the consequence —
+      // public, immediate publication plus enrichment.
+      approveConfirm: {
+        title: 'Approve and publish?',
+        body: 'Approving {{name}} publishes the restaurant publicly and immediately, and triggers enrichment.',
+        confirm: 'Approve and publish',
+        confirming: 'Approving…',
+      },
     },
   },
 } as const;

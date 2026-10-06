@@ -63,6 +63,12 @@ const REVIEW_KEYS = [
   'adminHalalEdit.review.decidedNotice',
   'adminHalalEdit.review.status.rejected',
   'adminHalalEdit.review.status.removedByOwner',
+  // ApproveModal (#548 design fixes): the confirmation copy names the
+  // consequence in every catalogue, never German source text.
+  'adminHalalEdit.review.approveConfirm.title',
+  'adminHalalEdit.review.approveConfirm.body',
+  'adminHalalEdit.review.approveConfirm.confirm',
+  'adminHalalEdit.review.approveConfirm.confirming',
 ];
 
 const ALL_KEYS = [...ATTESTATION_KEYS, ...GROUP_KEYS, ...VERDICT_KEYS, ...REVIEW_KEYS];

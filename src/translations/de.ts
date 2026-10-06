@@ -1345,6 +1345,14 @@ export const de = {
         rejected: 'abgelehnt',
         removedByOwner: 'vom Inhaber entfernt',
       },
+      // ApproveModal (#548): die Bestätigung benennt die Konsequenz —
+      // sofortige öffentliche Veröffentlichung plus Anreicherung.
+      approveConfirm: {
+        title: 'Genehmigen und veröffentlichen?',
+        body: 'Die Genehmigung veröffentlicht {{name}} sofort und öffentlich und startet die Anreicherung.',
+        confirm: 'Genehmigen und veröffentlichen',
+        confirming: 'Wird genehmigt…',
+      },
     },
   },
 } as const;
