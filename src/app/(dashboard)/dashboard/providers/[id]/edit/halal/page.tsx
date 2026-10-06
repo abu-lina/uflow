@@ -27,6 +27,14 @@ const FIELD_TO_LABELKEY: Record<HalalAttestationField, string> = {
   no_gambling: 'halal.attestation.noGambling.label',
 };
 
+// #548 review: the decided notice interpolates the status label — it must
+// be the localized label key, never the raw enum (an English token inside
+// ar/tr/ur/ps RTL sentences was the leak).
+const STATUS_TO_LABELKEY: Record<string, string> = {
+  rejected: 'adminHalalEdit.review.status.rejected',
+  removed_by_owner: 'adminHalalEdit.review.status.removedByOwner',
+};
+
 interface HalalData {
   // Tri-state (#415): true=yes, false=submitter said no, null=not sure.
   // NULL must round-trip as NULL or "unknown" silently becomes "declared no".
@@ -381,7 +389,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     if (status === 'rejected' || status === 'removed_by_owner') {
       return (
         <p className="py-1 text-center text-xs text-content-muted">
-          {t('adminHalalEdit.review.decidedNotice', { status })}
+          {t('adminHalalEdit.review.decidedNotice', {
+            status: t(STATUS_TO_LABELKEY[status] ?? status),
+          })}
         </p>
       );
     }

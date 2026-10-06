@@ -142,7 +142,10 @@ describe('EditHalalPage — admin review footer (#548)', () => {
     await waitFor(() => {
       expect(screen.getByText(/adminHalalEdit\.review\.decidedNotice/)).toBeInTheDocument();
     });
-    expect(screen.getByText(/rejected/)).toBeInTheDocument();
+    // AC 14: the interpolated status is the localized label key, not the
+    // raw enum — "...ist bereits rejected" was the defect this replaces.
+    expect(screen.getByText(/adminHalalEdit\.review\.status\.rejected/)).toBeInTheDocument();
+    expect(screen.queryByText(/"status":\s*"rejected"/)).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'adminHalalEdit.review.approve' }),
     ).not.toBeInTheDocument();

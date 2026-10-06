@@ -1339,6 +1339,12 @@ export const de = {
       conflict: 'Ein anderer Reviewer hat diesen Eintrag geändert. Neu laden und erneut prüfen.',
       decidedNotice:
         'Dieser Eintrag ist bereits {{status}}. Hier ist keine Statusaktion verfügbar.',
+      // Localized status labels interpolated into decidedNotice (AC 14):
+      // the raw enum must never leak into a translated sentence.
+      status: {
+        rejected: 'abgelehnt',
+        removedByOwner: 'vom Inhaber entfernt',
+      },
     },
   },
 } as const;

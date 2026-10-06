@@ -61,6 +61,8 @@ const REVIEW_KEYS = [
   'adminHalalEdit.review.gateBlocked',
   'adminHalalEdit.review.conflict',
   'adminHalalEdit.review.decidedNotice',
+  'adminHalalEdit.review.status.rejected',
+  'adminHalalEdit.review.status.removedByOwner',
 ];
 
 const ALL_KEYS = [...ATTESTATION_KEYS, ...GROUP_KEYS, ...VERDICT_KEYS, ...REVIEW_KEYS];

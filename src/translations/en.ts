@@ -1316,6 +1316,12 @@ export const en = {
       gateBlocked: 'Cannot approve yet: the halal answers are not all confirmed.',
       conflict: 'Another reviewer changed this restaurant. Reload and check again.',
       decidedNotice: 'This restaurant is already {{status}}. No status action is available here.',
+      // Localized status labels interpolated into decidedNotice (AC 14):
+      // the raw enum must never leak into a translated sentence.
+      status: {
+        rejected: 'rejected',
+        removedByOwner: 'removed by its owner',
+      },
     },
   },
 } as const;
