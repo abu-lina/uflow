@@ -104,9 +104,12 @@ const nextConfig = {
   // Allow dev server to accept requests from:
   // - LAN IP (iPhone on same WiFi); update IP if your Mac's address changes.
   // - ngrok (tunnel URL on phone / office networks that block direct LAN).
+  // - 127.0.0.1: Playwright's default baseURL; without it the dev server
+  //   blocks cross-origin dev resources and pages never hydrate in tests.
   ...(isDev
     ? {
         allowedDevOrigins: [
+          '127.0.0.1',
           'http://192.168.178.48:3000',
           'https://*.ngrok-free.app',
           'https://*.ngrok.io',
