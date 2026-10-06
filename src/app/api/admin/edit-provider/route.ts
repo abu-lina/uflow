@@ -101,13 +101,16 @@ export async function PATCH(request: Request) {
       // Only act when the attestation state actually changed
       if (attestationBefore && attestationBefore.allAttested !== attestationAfter.allAttested) {
         if (!attestationAfter.allAttested) {
-          // Attestation broke: auto-reject
+          // Attestation broke: auto-reject. The acting admin is the
+          // reviewer here too (AC 7) — a NULL reviewed_by on a decided row
+          // loses who made the call.
           const feedback = `Halal-Attestierung unvollständig: ${attestationAfter.missingLabels.join(', ')}`;
           await updateProviderReview(
             providerId,
             'rejected',
             feedback,
             updatedProvider.updated_at as string | undefined,
+            user.id,
           );
           updatedProvider.review_status = 'rejected';
 
