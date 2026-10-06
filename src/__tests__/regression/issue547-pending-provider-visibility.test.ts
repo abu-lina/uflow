@@ -54,8 +54,8 @@ function jsonResponse(body: unknown, status = 200) {
 interface RpcInvocation {
   auth: string | null;
   id: string | undefined;
-  /** The tri-state string the stub returned. Undefined when the RPC never ran. */
-  answer: 'visible' | 'hidden' | 'absent';
+  /** The tri-state string the stub returned. Undefined when the RPC never ran or answered an error status. */
+  answer: 'visible' | 'hidden' | 'absent' | undefined;
 }
 
 /**
@@ -73,11 +73,14 @@ interface RpcInvocation {
  *   while migration 137 is unapplied.
  * - `rpcUnauthorized`: PostgREST answers 401 — a forged or expired bearer JWT.
  * - `rpcThrows`: the fetch itself rejects — a transient network failure.
+ * - `rpcErrorStatus`: PostgREST answers that status verbatim — used for the
+ *   transient-but-<500 statuses (408 request timeout, 429 rate limit).
  */
 function stubSupabase(opts?: {
   rpcMissing?: boolean;
   rpcUnauthorized?: boolean;
   rpcThrows?: boolean;
+  rpcErrorStatus?: number;
 }) {
   const rpcCalls: RpcInvocation[] = [];
   const fetchSpy = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -101,6 +104,16 @@ function stubSupabase(opts?: {
       const auth = new Headers(init?.headers).get('Authorization');
       const body = JSON.parse(String(init?.body)) as { p_provider_id?: string };
       const id = body.p_provider_id;
+
+      if (opts?.rpcErrorStatus !== undefined) {
+        // Record the call so the test can prove the RPC actually ran, then
+        // answer the status: the guard must classify from the code alone.
+        rpcCalls.push({ auth, id, answer: undefined });
+        return jsonResponse(
+          { code: 'PGRST000', message: `upstream status ${opts.rpcErrorStatus}` },
+          opts.rpcErrorStatus,
+        );
+      }
 
       let answer: RpcInvocation['answer'];
       if (id === ABSENT_ID) answer = 'absent';
@@ -286,6 +299,27 @@ describe('issue 547 — /p/<id> visibility by caller', () => {
     vi.stubGlobal('fetch', fetchSpy);
     const res = await runMiddleware(`/p/${PENDING_ID}`, `sb-access-token=${CREATOR_TOKEN}`);
     expectPassThrough(res);
+  });
+
+  it('still fails open when the RPC answers 429: a rate limit is transient, not a refusal', async () => {
+    // 429 is <500 but transient by definition — Supabase rate-limiting an
+    // admin review queue must not 404 the page; that is exactly what the
+    // fail-open branch exists for.
+    const { fetchSpy, rpcCalls } = stubSupabase({ rpcErrorStatus: 429 });
+    vi.stubGlobal('fetch', fetchSpy);
+    const res = await runMiddleware(`/p/${PENDING_ID}`, `sb-access-token=${ADMIN_TOKEN}`);
+    expectPassThrough(res);
+    // The pass-through must come after the RPC actually ran and answered
+    // 429 — not from the call never reaching the RPC branch.
+    expect(rpcCalls).toEqual([{ auth: `Bearer ${ADMIN_TOKEN}`, id: PENDING_ID }]);
+  });
+
+  it('still fails open when the RPC answers 408: a request timeout is transient, not a refusal', async () => {
+    const { fetchSpy, rpcCalls } = stubSupabase({ rpcErrorStatus: 408 });
+    vi.stubGlobal('fetch', fetchSpy);
+    const res = await runMiddleware(`/p/${PENDING_ID}`, `sb-access-token=${CREATOR_TOKEN}`);
+    expectPassThrough(res);
+    expect(rpcCalls).toEqual([{ auth: `Bearer ${CREATOR_TOKEN}`, id: PENDING_ID }]);
   });
 
   it('sends the caller token as the RPC bearer so auth.uid() resolves', async () => {

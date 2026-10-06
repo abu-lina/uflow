@@ -375,7 +375,12 @@ async function providerRouteVisibility(
   }
 
   if (!res.ok) {
-    // A definitive refusal — any 4xx — is deployment state or an auth
+    // A rate limit (429) or request timeout (408) is transient despite being
+    // <500 — retrying can succeed, so these fail open like a 5xx or a
+    // thrown fetch. Treating them as refusals lets a Supabase rate limit
+    // 404 every pending provider page a signed-in caller opens.
+    if (res.status === 408 || res.status === 429) return { state: 'unknown' };
+    // A definitive refusal — any other 4xx — is deployment state or an auth
     // rejection, never a transient blip: the missing RPC (404 PGRST202), a
     // forged/expired JWT (401), a missing EXECUTE grant (403). Retrying
     // changes nothing and failing open turns the page into a soft 404, so
