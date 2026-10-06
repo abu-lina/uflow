@@ -100,63 +100,85 @@ export async function getPendingProviders(
 }
 
 /**
+ * Halal answers submitted from the admin halal check page (#548).
+ * CamelCase here; translated to the extension-table column names for the
+ * RPC. Key PRESENCE is meaningful: an absent key leaves the stored column
+ * untouched, an explicit null stores NULL ("not sure").
+ */
+export interface HalalReviewAnswers {
+  noAlcohol?: boolean | null;
+  noPork?: boolean | null;
+  noGambling?: boolean | null;
+  verificationMethod?: 'online' | 'onsite' | null;
+  hasCertificate?: boolean;
+  certificateUrl?: string | null;
+}
+
+/**
  * Update provider review status with optional optimistic concurrency check.
  * When expectedUpdatedAt is provided, the update only succeeds if the provider's
  * updated_at still matches, preventing silent overwrites by concurrent admins.
+ *
+ * #548: routes through the admin_review_provider RPC so the submitted halal
+ * answers and the status change commit in one transaction, and so
+ * reviewed_by / reviewed_at are recorded on every decision.
  */
 export async function updateProviderReview(
   providerId: string,
   reviewStatus: 'approved' | 'rejected' | 'needs_revision',
   reviewFeedback?: string | null,
   expectedUpdatedAt?: string,
+  reviewerId?: string,
+  halal?: HalalReviewAnswers,
 ): Promise<Provider> {
   const supabase = getSupabaseAdmin();
 
-  const updateData: {
-    review_status: string;
-    review_feedback?: string | null;
-    updated_at: string;
-  } = {
-    review_status: reviewStatus,
-    updated_at: new Date().toISOString(),
-  };
+  // camelCase -> extension-table column names, key-presence preserved so an
+  // explicit null is stored as NULL and an absent key does not clobber.
+  let halalPayload: Record<string, unknown> | null = null;
+  if (halal) {
+    halalPayload = {};
+    if ('noAlcohol' in halal) halalPayload.no_alcohol = halal.noAlcohol;
+    if ('noPork' in halal) halalPayload.no_pork = halal.noPork;
+    if ('noGambling' in halal) halalPayload.no_gambling = halal.noGambling;
+    if ('verificationMethod' in halal) {
+      halalPayload.verification_method = halal.verificationMethod;
+    }
+    if ('hasCertificate' in halal) halalPayload.has_certificate = halal.hasCertificate;
+    if ('certificateUrl' in halal) halalPayload.certificate_url = halal.certificateUrl;
+  }
 
-  if (reviewFeedback !== undefined) {
+  const { data, error } = await supabase.rpc('admin_review_provider', {
+    p_provider_id: providerId,
+    p_review_status: reviewStatus,
     // Sanitize feedback text to prevent XSS (defense in depth)
-    updateData.review_feedback = reviewFeedback ? sanitizeTextInput(reviewFeedback) : null;
-  }
-
-  let query = supabase.from('providers').update(updateData).eq('provider_id', providerId);
-
-  // Optimistic concurrency: only update if updated_at hasn't changed
-  if (expectedUpdatedAt) {
-    query = query.eq('updated_at', expectedUpdatedAt);
-  }
-
-  // Use array select instead of .single() to avoid PostgREST PGRST106
-  // ("Cannot coerce the result to a single JSON object") which is thrown
-  // when the RETURNING clause produces 0 rows (e.g. wrong UUID type passed,
-  // or row already deleted). provider_id is UNIQUE so at most one row matches.
-  const { data: rows, error } = await query.select();
+    p_review_feedback: reviewFeedback ? sanitizeTextInput(reviewFeedback) : null,
+    p_reviewer_id: reviewerId ?? null,
+    p_halal: halalPayload,
+    p_expected_updated_at: expectedUpdatedAt ?? null,
+  });
 
   if (error) {
-    throw new Error(`Failed to update provider review: ${error.message}`);
+    const message = error.message ?? '';
+    // Preserve the error contract: CONFLICT: -> 409, HALAL_GATE: -> 422.
+    const conflictAt = message.indexOf('CONFLICT:');
+    if (conflictAt >= 0) {
+      throw new Error(message.slice(conflictAt));
+    }
+    const gateAt = message.indexOf('HALAL_GATE:');
+    if (gateAt >= 0) {
+      throw new Error(message.slice(gateAt));
+    }
+    throw new Error(`Failed to update provider review: ${message}`);
   }
 
-  const data = (rows as Provider[] | null)?.[0] ?? null;
-
   if (!data) {
-    // 0 rows updated — either the provider doesn't exist or (when expectedUpdatedAt
-    // was provided) another admin already changed it since the page was loaded.
-    if (expectedUpdatedAt) {
-      throw new Error(
-        'CONFLICT: Provider was modified by another reviewer. Please refresh and try again.',
-      );
-    }
+    // The RPC either returns the updated row or raises; a null result means
+    // the provider doesn't exist (defensive — the RPC raises first).
     throw new Error('Provider not found');
   }
 
-  return data;
+  return data as Provider;
 }
 
 /**
