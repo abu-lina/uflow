@@ -31,6 +31,13 @@ let env: SupabaseEnv;
 
 // Same cookie contract as issue547: real session tokens written through
 // /api/auth/set, which is what AuthSyncer calls after UI login.
+//
+// The cookies are also placed explicitly: `npm run start` (production, what
+// CI's E2E Smoke job runs) marks them `Secure`, and Playwright's request
+// context will not forward a Secure cookie over plain http — while Chromium
+// exempts loopback and sends it anyway. That asymmetry made page.request
+// calls 401 only in production mode. A non-Secure copy keeps both clients
+// consistent; the assertions exercise the app, not the cookie flag.
 async function signIn(page: Page, email: string, password: string): Promise<void> {
   const tokenRes = await page
     .context()
@@ -47,6 +54,22 @@ async function signIn(page: Page, email: string, password: string): Promise<void
     data: { access_token, refresh_token },
   });
   expect(setRes.ok(), 'cookie write via /api/auth/set').toBe(true);
+  await page.context().addCookies([
+    {
+      name: 'sb-access-token',
+      value: access_token,
+      url: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000',
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+    {
+      name: 'sb-refresh-token',
+      value: refresh_token,
+      url: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000',
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+  ]);
 }
 
 function assertNotProduction(apiUrl: string): void {
