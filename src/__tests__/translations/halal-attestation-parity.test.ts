@@ -69,6 +69,8 @@ const REVIEW_KEYS = [
   'adminHalalEdit.review.approveConfirm.body',
   'adminHalalEdit.review.approveConfirm.confirm',
   'adminHalalEdit.review.approveConfirm.confirming',
+  // Evidence rework: the footer names a failed meta fetch in every locale.
+  'adminHalalEdit.review.loadFailed',
 ];
 
 const ALL_KEYS = [...ATTESTATION_KEYS, ...GROUP_KEYS, ...VERDICT_KEYS, ...REVIEW_KEYS];

@@ -1316,6 +1316,9 @@ export const en = {
       gateBlocked: 'Cannot approve yet: the halal answers are not all confirmed.',
       conflict: 'Another reviewer changed this restaurant. Reload and check again.',
       decidedNotice: 'This restaurant is already {{status}}. No status action is available here.',
+      // The meta fetch failed, so the review row cannot render. Named in the
+      // footer, not silent — a save-only bar on a pending row looked healthy.
+      loadFailed: 'Could not load this entry — review actions unavailable. Reload to retry.',
       // Localized status labels interpolated into decidedNotice (AC 14):
       // the raw enum must never leak into a translated sentence.
       status: {

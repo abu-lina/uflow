@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { mdiCheck, mdiClose } from '@/lib/icons';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
@@ -608,7 +609,7 @@ export const ProviderCard = React.memo(
                           disabled={isReviewing}
                           icon={
                             <div className="flex items-center">
-                              <Icon height={16} icon="mdi:check" width={16} />
+                              <Icon height={16} icon={mdiCheck} width={16} />
                             </div>
                           }
                           variant="primary"
@@ -625,7 +626,7 @@ export const ProviderCard = React.memo(
                           disabled={isReviewing}
                           icon={
                             <div className="flex items-center">
-                              <Icon height={16} icon="mdi:close" width={16} />
+                              <Icon height={16} icon={mdiClose} width={16} />
                             </div>
                           }
                           variant="danger"

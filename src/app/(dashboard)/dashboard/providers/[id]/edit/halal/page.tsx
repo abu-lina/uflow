@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { ApproveModal } from '@/features/admin/components/ApproveModal';
 import { RejectModal } from '@/features/admin/components/RejectModal';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { mdiCheck, mdiClose } from '@/lib/icons';
 import { validateCertificateFile } from '@/lib/validations/certificate';
 
 const FIELD_TO_CAMEL = {
@@ -148,6 +149,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   // #548: provider row meta drives the review footer (status-gated actions)
   // and supplies expectedUpdatedAt for optimistic concurrency.
   const [providerMeta, setProviderMeta] = useState<ProviderMeta | null>(null);
+  // A failed meta fetch used to leave a healthy-looking page whose footer
+  // silently had no review actions (evidence rework item 2).
+  const [metaLoadFailed, setMetaLoadFailed] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -166,10 +170,11 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     // Always fetch: provider meta (review_status, updated_at) drives the
     // review footer even when a localStorage draft supplies the answers.
     fetch(`/api/admin/providers/${id}`)
-      .then((res) => res.json())
-      .then((json) => {
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`provider meta ${res.status}`);
+        const json = await res.json();
         const p = json.data;
-        if (!p) return;
+        if (!p) throw new Error('provider meta empty');
         setProviderMeta({
           providerName: p.provider_name ?? '',
           reviewStatus: p.review_status ?? null,
@@ -203,7 +208,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           });
         }
       })
-      .catch(() => {});
+      .catch(() => setMetaLoadFailed(true));
   }, [STORAGE_KEY, id]);
 
   const setAttestation = (field: HalalAttestationField, value: boolean | null) => {
@@ -396,6 +401,15 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   // than firing: it publishes publicly and irreversibly, so the guard sits
   // on the irreversible action, mirroring RejectModal on the reversible one.
   const reviewFooter = (() => {
+    // Meta fetch failed: say so where the actions would be instead of
+    // silently rendering a save-only footer on a reviewable row.
+    if (metaLoadFailed) {
+      return (
+        <p className="py-1 text-center text-xs text-danger">
+          {t('adminHalalEdit.review.loadFailed')}
+        </p>
+      );
+    }
     if (!providerMeta) return undefined;
     const status = providerMeta.reviewStatus;
     if (status === 'rejected' || status === 'removed_by_owner') {
@@ -415,7 +429,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           disabled={status === 'approved' || isUploading}
           icon={
             <div className="flex items-center">
-              <Icon height={16} icon="mdi:check" width={16} />
+              <Icon height={16} icon={mdiCheck} width={16} />
             </div>
           }
           loading={reviewing}
@@ -430,7 +444,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           disabled={reviewing || isUploading}
           icon={
             <div className="flex items-center">
-              <Icon height={16} icon="mdi:close" width={16} />
+              <Icon height={16} icon={mdiClose} width={16} />
             </div>
           }
           variant="danger"

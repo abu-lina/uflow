@@ -1339,6 +1339,10 @@ export const de = {
       conflict: 'Ein anderer Reviewer hat diesen Eintrag geändert. Neu laden und erneut prüfen.',
       decidedNotice:
         'Dieser Eintrag ist bereits {{status}}. Hier ist keine Statusaktion verfügbar.',
+      // Der Meta-Fetch schlug fehl, die Review-Zeile kann nicht rendern —
+      // im Footer benennen statt schweigen.
+      loadFailed:
+        'Eintrag konnte nicht geladen werden — Prüfaktionen nicht verfügbar. Neu laden und erneut versuchen.',
       // Localized status labels interpolated into decidedNotice (AC 14):
       // the raw enum must never leak into a translated sentence.
       status: {

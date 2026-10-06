@@ -1325,6 +1325,8 @@ export const tr = {
       gateBlocked: 'Henüz onaylanamaz: helal yanıtlarının tamamı onaylı değil.',
       conflict: 'Başka bir denetçi bu restoranı değiştirdi. Sayfayı yenileyip tekrar kontrol et.',
       decidedNotice: 'Bu kayıt zaten {{status}}. Burada durum işlemi yok.',
+      loadFailed:
+        'Kayıt yüklenemedi — inceleme işlemleri kullanılamıyor. Yeniden yükleyip tekrar dene.',
       status: {
         rejected: 'reddedildi',
         removedByOwner: 'sahibi tarafından kaldırıldı',

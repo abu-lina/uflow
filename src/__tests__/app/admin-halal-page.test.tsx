@@ -4,16 +4,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const { mockPush, mockBack, mockToast, mockInvalidateQueries, mockUpload, VALID_ID } = vi.hoisted(
-  () => ({
-    mockPush: vi.fn(),
-    mockBack: vi.fn(),
-    mockToast: { success: vi.fn(), error: vi.fn() },
-    mockInvalidateQueries: vi.fn(),
-    mockUpload: vi.fn(),
-    VALID_ID: '123e4567-e89b-12d3-a456-426614174000',
-  }),
-);
+const {
+  mockPush,
+  mockBack,
+  mockToast,
+  mockInvalidateQueries,
+  mockUpload,
+  capturedIcons,
+  VALID_ID,
+} = vi.hoisted(() => ({
+  mockPush: vi.fn(),
+  mockBack: vi.fn(),
+  mockToast: { success: vi.fn(), error: vi.fn() },
+  mockInvalidateQueries: vi.fn(),
+  mockUpload: vi.fn(),
+  capturedIcons: [] as unknown[],
+  VALID_ID: '123e4567-e89b-12d3-a456-426614174000',
+}));
 
 vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal();
@@ -28,7 +35,10 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@iconify/react', () => ({
-  Icon: () => <span data-testid="icon" />,
+  Icon: (props: { icon: unknown }) => {
+    capturedIcons.push(props.icon);
+    return <span data-testid="icon" />;
+  },
 }));
 
 vi.mock('sonner', () => ({
@@ -143,6 +153,7 @@ async function confirmApprove() {
 describe('EditHalalPage — admin review footer (#548)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    capturedIcons.length = 0;
     localStorage.clear();
     mockRequests();
     mockUpload.mockResolvedValue({ error: null });
@@ -172,6 +183,27 @@ describe('EditHalalPage — admin review footer (#548)', () => {
     // raw enum — "...ist bereits rejected" was the defect this replaces.
     expect(screen.getByText(/adminHalalEdit\.review\.status\.rejected/)).toBeInTheDocument();
     expect(screen.queryByText(/"status":\s*"rejected"/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'adminHalalEdit.review.approve' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'adminHalalEdit.review.reject' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('surfaces a failed provider-meta fetch instead of silently dropping review actions', async () => {
+    // Evidence rework item 2: when /api/admin/providers/[id] fails (401/403/
+    // 500), providerMeta stayed null and the footer rendered save+close with
+    // no review row and no signal — an admin on a pending provider saw a
+    // page that looked healthy but could not act. The failure must be said.
+    mockFetch.mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 })),
+    );
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('adminHalalEdit.review.loadFailed')).toBeInTheDocument();
+    });
     expect(
       screen.queryByRole('button', { name: 'adminHalalEdit.review.approve' }),
     ).not.toBeInTheDocument();
@@ -395,6 +427,27 @@ describe('EditHalalPage — admin review footer (#548)', () => {
     const save = screen.getByRole('button', { name: 'common.save' });
     expect(approve.closest('footer')).toBe(footers[0]);
     expect(save.closest('footer')).toBe(footers[0]);
+  });
+
+  it('passes bundled icon data, not remote icon names, to the review buttons', async () => {
+    // Evidence rework item 3: 'mdi:check'/'mdi:close' string names made
+    // @iconify/react fetch the glyph from api.iconify.design — first paint
+    // had no icon, then the label shifted when it landed (and never landed
+    // offline). Passing IconifyIcon objects renders the svg with no fetch.
+    renderPage();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }),
+      ).toBeInTheDocument();
+    });
+
+    const dataIcons = capturedIcons.filter(
+      (icon) => typeof icon === 'object' && icon !== null && 'body' in icon,
+    );
+    expect(dataIcons.length).toBeGreaterThanOrEqual(2);
+    expect(capturedIcons).not.toContain('mdi:check');
+    expect(capturedIcons).not.toContain('mdi:close');
   });
 
   it('reject opens RejectModal, keeps confirm disabled until a reason is typed, then submits (AC 6)', async () => {
