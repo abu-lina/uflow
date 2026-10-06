@@ -109,8 +109,11 @@ test.describe('PWA install prompt (mobile)', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' });
 
     // The prompt fires 3s after load on iOS / installable devices.
-    const prompt = page.getByRole('dialog', {
-      name: /installationsanleitung öffnen|app installieren/i,
+    // Non-modal nudge: role=region, named by its own heading ("Installiere
+    // U-Flow") via aria-labelledby — a dialog that is never focused is
+    // announced to nobody.
+    const prompt = page.getByRole('region', {
+      name: /installiere u-flow/i,
     });
     await expect(prompt).toBeVisible({ timeout: 15_000 });
 

@@ -109,9 +109,9 @@ export function PWAInstallPrompt({
     // height token + safe-area bottom + the original 1rem gap; on md+ the
     // footer is hidden and the card sits at bottom-4 as before.
     <div
-      aria-label={isIOS ? 'Installationsanleitung öffnen' : 'App installieren'}
-      className="animate-fadeIn fixed bottom-[calc(var(--mobile-nav-height)_+_max(12px,env(safe-area-inset-bottom))_+_1rem)] left-4 right-4 z-[70] mx-auto max-w-md cursor-pointer rounded-2xl bg-white p-4 shadow-lg transition-transform hover:scale-105 active:scale-95 sm:left-8 sm:right-8 md:bottom-4"
-      role="dialog"
+      aria-labelledby="pwa-install-prompt-title"
+      className="animate-fadeIn fixed bottom-[calc(var(--mobile-nav-height)_+_max(12px,env(safe-area-inset-bottom))_+_1rem)] left-4 right-4 z-[70] mx-auto max-w-md cursor-pointer rounded-2xl border border-border bg-white p-4 shadow-lg transition-transform hover:scale-105 active:scale-95 sm:left-8 sm:right-8 md:bottom-4"
+      role="region"
       tabIndex={0}
       onClick={handlePromptClick}
     >
@@ -129,7 +129,10 @@ export function PWAInstallPrompt({
               width={32}
             />
           </div>
-          <span className="font-inter-tight text-lg font-semibold text-content">
+          <span
+            className="font-inter-tight text-lg font-semibold text-content"
+            id="pwa-install-prompt-title"
+          >
             Installiere U-Flow
           </span>
         </div>
