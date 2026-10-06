@@ -55,7 +55,9 @@ fi
 echo -e "${CYAN}Environment File Status:${NC}"
 echo ""
 
-if [[ "$LOCAL_URL" == *"your-"* ]] || [ -z "$LOCAL_URL" ]; then
+if [ ! -f .env.local ]; then
+    echo -e "  ${YELLOW}.env.local:${NC} File not found"
+elif [[ "$LOCAL_URL" == *"your-"* ]] || [ -z "$LOCAL_URL" ]; then
     echo -e "  ${YELLOW}.env.local:${NC} Has placeholder values (needs to be filled)"
 else
     if [ "$MATCHES_LOCAL" = true ]; then
@@ -65,7 +67,9 @@ else
     fi
 fi
 
-if [[ "$UAT_URL" == *"your-"* ]] || [ -z "$UAT_URL" ]; then
+if [ ! -f .env.uat ]; then
+    echo -e "  ${YELLOW}.env.uat:${NC} File not found"
+elif [[ "$UAT_URL" == *"your-"* ]] || [ -z "$UAT_URL" ]; then
     echo -e "  ${YELLOW}.env.uat:${NC} Has placeholder values (needs to be filled)"
 else
     if [ "$MATCHES_UAT" = true ]; then
@@ -75,7 +79,9 @@ else
     fi
 fi
 
-if [[ "$PROD_URL" == *"your-"* ]] || [ -z "$PROD_URL" ]; then
+if [ ! -f .env.production ]; then
+    echo -e "  ${YELLOW}.env.production:${NC} File not found"
+elif [[ "$PROD_URL" == *"your-"* ]] || [ -z "$PROD_URL" ]; then
     echo -e "  ${YELLOW}.env.production:${NC} Has placeholder values (needs to be filled)"
 else
     if [ "$MATCHES_PROD" = true ]; then
@@ -95,19 +101,15 @@ if [ "$MATCHES_LOCAL" = true ]; then
     echo ""
     echo "This means:"
     echo "  • MCP is pointing to your development database"
-    echo "  • Schema is already applied ✅"
-    echo "  • You can use MCP to set up UAT project next"
 elif [ "$MATCHES_UAT" = true ] || [ "$MATCHES_PROD" = true ]; then
     echo -e "${GREEN}✅ MCP is connected to your UAT/PROD project${NC}"
     echo ""
     echo "This means:"
     echo "  • MCP is pointing to your UAT/Production database"
-    echo "  • Schema is already applied ✅"
-    echo "  • You can use MCP to set up DEV project next"
 else
     echo -e "${YELLOW}⚠️  Cannot determine which project MCP is connected to${NC}"
     echo ""
-    echo "Your .env files have placeholder values."
+    echo "No .env file points at the MCP project ref (${MCP_PROJECT_REF})."
     echo ""
     echo -e "${CYAN}To identify the project:${NC}"
     echo "1. Go to Supabase Dashboard: https://supabase.com/dashboard"
@@ -121,25 +123,9 @@ fi
 echo ""
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-echo -e "${CYAN}Database Status:${NC}"
-echo "  • 14 tables present ✅"
-echo "  • 10 categories inserted ✅"
-echo "  • 10 offers inserted ✅"
-echo "  • 10 needs inserted ✅"
-echo "  • 1 provider inserted ✅"
-echo ""
 echo -e "${CYAN}Next Steps:${NC}"
-if [ "$MATCHES_LOCAL" = true ]; then
-    echo "  1. Set up UAT project (switch MCP or apply schema manually)"
-    echo "  2. Update .env.uat with UAT project credentials"
-elif [ "$MATCHES_UAT" = true ] || [ "$MATCHES_PROD" = true ]; then
-    echo "  1. Set up DEV project (create new or switch MCP)"
-    echo "  2. Update .env.local with DEV project credentials"
-else
-    echo "  1. Fill in .env files with actual project credentials"
-    echo "  2. Identify which project MCP is connected to"
-    echo "  3. Set up the other project"
-fi
+echo "  1. Verify both Supabase projects: ./scripts/verify-both-projects.sh"
+echo "  2. Verify environment files:      ./scripts/verify-environments.sh"
 
 
 
