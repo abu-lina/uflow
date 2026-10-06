@@ -2,6 +2,7 @@
 
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from '@iconify/react';
 import { toast } from 'sonner';
 
@@ -10,15 +11,21 @@ import {
   HalalAttestationFields,
   type HalalAttestationField,
 } from '@/components/shared/HalalAttestationFields';
+import { RejectModal } from '@/features/admin/components/RejectModal';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { validateCertificateFile } from '@/lib/validations/certificate';
-import type { DerivedReviewStatus } from '@/utils/halal-derivation';
 
 const FIELD_TO_CAMEL = {
   no_alcohol: 'noAlcohol',
   no_pork: 'noPork',
   no_gambling: 'noGambling',
 } as const;
+
+const FIELD_TO_LABELKEY: Record<HalalAttestationField, string> = {
+  no_alcohol: 'halal.attestation.noAlcohol.label',
+  no_pork: 'halal.attestation.noPork.label',
+  no_gambling: 'halal.attestation.noGambling.label',
+};
 
 interface HalalData {
   // Tri-state (#415): true=yes, false=submitter said no, null=not sure.
@@ -30,7 +37,60 @@ interface HalalData {
   hasCertificate: boolean;
   certificateUrl: string | null;
   certificateFile: File | null;
-  reviewStatus?: DerivedReviewStatus;
+}
+
+interface ProviderMeta {
+  providerName: string;
+  reviewStatus: string | null;
+  updatedAt: string | null;
+  listingType: string | null;
+}
+
+interface GateError {
+  denied: HalalAttestationField[];
+  unanswered: HalalAttestationField[];
+}
+
+/** #548: shared "denied vs unanswered" group list for the red verdict panels
+    — a null ("not sure") is not a denial, so admins triage the two groups
+    differently (#415). Same rendering for the live local verdict and for the
+    server's 422 arrays. */
+function AttestationFailureGroups({
+  denied,
+  unanswered,
+  t,
+}: {
+  denied: HalalAttestationField[];
+  unanswered: HalalAttestationField[];
+  t: (key: string) => string;
+}) {
+  const groups = [
+    { fields: denied, groupKey: 'halal.admin.declaredNonCompliant' },
+    { fields: unanswered, groupKey: 'halal.admin.unanswered' },
+  ] as const;
+  return (
+    <>
+      {groups.map(
+        ({ fields, groupKey }) =>
+          fields.length > 0 && (
+            <div key={groupKey} className="mt-1 flex flex-col gap-1">
+              <span className="text-xs font-semibold text-red-700">{t(groupKey)}:</span>
+              <ul className="flex flex-col gap-1">
+                {fields.map((field) => (
+                  <li key={field} className="flex items-center gap-1.5 text-xs text-red-700">
+                    <Icon
+                      className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
+                      icon="material-symbols:close-small"
+                    />
+                    {t(FIELD_TO_LABELKEY[field])}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ),
+      )}
+    </>
+  );
 }
 
 function getDerivedTier(data: HalalData): { labelKey: string; color: string } | null {
@@ -59,6 +119,7 @@ function getDerivedTier(data: HalalData): { labelKey: string; color: string } | 
 export default function EditHalalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const STORAGE_KEY = `admin_edit_halal_${id}`;
@@ -74,6 +135,12 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   });
 
   const [isUploading, setIsUploading] = useState(false);
+  // #548: provider row meta drives the review footer (status-gated actions)
+  // and supplies expectedUpdatedAt for optimistic concurrency.
+  const [providerMeta, setProviderMeta] = useState<ProviderMeta | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [gateError, setGateError] = useState<GateError | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     attestation: true,
     verification: true,
@@ -85,22 +152,33 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as HalalData;
-        setData({ ...parsed, certificateFile: null });
-        return;
-      } catch {
-        /* ignore */
-      }
-    }
-
+    // Always fetch: provider meta (review_status, updated_at) drives the
+    // review footer even when a localStorage draft supplies the answers.
     fetch(`/api/admin/providers/${id}`)
       .then((res) => res.json())
       .then((json) => {
-        const fp = json.data?.food_providers;
-        const sp = json.data?.store_providers;
+        const p = json.data;
+        if (!p) return;
+        setProviderMeta({
+          providerName: p.provider_name ?? '',
+          reviewStatus: p.review_status ?? null,
+          updatedAt: p.updated_at ?? null,
+          listingType: p.listing_type ?? null,
+        });
+
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as HalalData;
+            setData({ ...parsed, certificateFile: null });
+            return;
+          } catch {
+            /* ignore */
+          }
+        }
+
+        const fp = p.food_providers;
+        const sp = p.store_providers;
         const extData = fp || sp;
         if (extData) {
           setData({
@@ -168,35 +246,38 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   const derivedTier = getDerivedTier(data);
   const allAttested = data.noAlcohol && data.noPork && data.noGambling;
 
-  const handleSave = useCallback(async () => {
-    let certUrl = data.certificateUrl;
-    if (data.certificateFile) {
-      setIsUploading(true);
-      try {
-        const fileExt = data.certificateFile.name.split('.').pop();
-        const filePath = `certificates/${id}-${Date.now()}.${fileExt}`;
-        const supabase = (await import('@/lib/supabase/client')).supabase;
-        const { error: uploadError } = await supabase.storage
-          .from('provider-certificates')
-          .upload(filePath, data.certificateFile);
-        if (!uploadError) {
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from('provider-certificates').getPublicUrl(filePath);
-          certUrl = publicUrl;
-        } else {
-          console.error('Certificate upload error:', uploadError);
-        }
-      } catch (e) {
-        console.error('Certificate upload failed:', e);
+  // Upload a staged certificate file, returning the URL to persist. Shared
+  // by Save (draft) and the review actions (#548) so neither path drops a
+  // staged upload.
+  const uploadCertificate = useCallback(async (): Promise<string | null> => {
+    if (!data.certificateFile) return data.certificateUrl;
+    setIsUploading(true);
+    try {
+      const fileExt = data.certificateFile.name.split('.').pop();
+      const filePath = `certificates/${id}-${Date.now()}.${fileExt}`;
+      const supabase = (await import('@/lib/supabase/client')).supabase;
+      const { error: uploadError } = await supabase.storage
+        .from('provider-certificates')
+        .upload(filePath, data.certificateFile);
+      if (!uploadError) {
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('provider-certificates').getPublicUrl(filePath);
+        return publicUrl;
       }
+      console.error('Certificate upload error:', uploadError);
+      return data.certificateUrl;
+    } catch (e) {
+      console.error('Certificate upload failed:', e);
+      return data.certificateUrl;
+    } finally {
       setIsUploading(false);
     }
+  }, [data.certificateFile, data.certificateUrl, id]);
 
-    // Do NOT store reviewStatus in localStorage — the admin chooses review
-    // status explicitly via the Reject/Approve buttons on the main edit page.
+  const handleSave = useCallback(async () => {
+    const certUrl = await uploadCertificate();
     const saveData: HalalData = { ...data, certificateUrl: certUrl, certificateFile: null };
-    delete saveData.reviewStatus;
     // Mark as reviewed: set verification_method to 'online' so the edit form
     // can distinguish "never reviewed" (null) from "reviewed, not halal" (online + no attestation).
     if (!saveData.verificationMethod) {
@@ -204,7 +285,129 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
     router.back();
-  }, [data, id, STORAGE_KEY, router]);
+  }, [data, STORAGE_KEY, router, uploadCertificate]);
+
+  // #548: approve/reject straight from this page. Both actions submit the
+  // page's full halal payload (three answers + verification method +
+  // certificate flag and URL) so the admin's whole screen persists through
+  // the single status write path — PATCH /api/admin/review-provider.
+  const handleReview = useCallback(
+    async (reviewStatus: 'approved' | 'rejected', feedback?: string) => {
+      setReviewing(true);
+      setGateError(null);
+      try {
+        const certUrl = await uploadCertificate();
+        const res = await fetch('/api/admin/review-provider', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            providerId: id,
+            reviewStatus,
+            reviewFeedback: feedback ?? undefined,
+            expectedUpdatedAt: providerMeta?.updatedAt ?? undefined,
+            halal: {
+              noAlcohol: data.noAlcohol,
+              noPork: data.noPork,
+              noGambling: data.noGambling,
+              // Same convention as Save: 'online' marks the row as reviewed
+              // when the admin never picked a method.
+              verificationMethod: data.verificationMethod ?? 'online',
+              hasCertificate: data.hasCertificate,
+              certificateUrl: certUrl,
+            },
+          }),
+        });
+
+        if (res.status === 422) {
+          // Gate verdict: render the server's denied/unanswered arrays so
+          // server and client agree on which answers block approval (D7).
+          const json = (await res.json().catch(() => ({}))) as {
+            denied?: string[];
+            unanswered?: string[];
+          };
+          setGateError({
+            denied: (json.denied ?? []) as HalalAttestationField[],
+            unanswered: (json.unanswered ?? []) as HalalAttestationField[],
+          });
+          toast.error(t('adminHalalEdit.review.gateBlocked'));
+          return;
+        }
+        if (res.status === 409) {
+          // Another reviewer changed the row — no silent retry (D7).
+          toast.error(t('adminHalalEdit.review.conflict'));
+          return;
+        }
+        if (!res.ok) {
+          const json = (await res.json().catch(() => ({}))) as { error?: string };
+          toast.error(json.error || t('adminHalalEdit.review.gateBlocked'));
+          return;
+        }
+
+        // Load-bearing, not tidiness: ProviderEditForm rehydrates this key,
+        // so a leftover draft would later flush through /api/admin/edit-
+        // provider over the values just committed here.
+        localStorage.removeItem(STORAGE_KEY);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['providers'] }),
+          queryClient.invalidateQueries({ queryKey: ['provider', id] }),
+          queryClient.invalidateQueries({ queryKey: ['admin-pending-providers'] }),
+        ]);
+        toast.success(
+          t(
+            reviewStatus === 'approved'
+              ? 'adminHalalEdit.review.approved'
+              : 'adminHalalEdit.review.rejected',
+          ),
+        );
+        router.push(
+          providerMeta?.listingType === 'store' ? '/stores?status=pending' : '/food?status=pending',
+        );
+      } catch {
+        toast.error(t('adminHalalEdit.review.gateBlocked'));
+      } finally {
+        setReviewing(false);
+        setRejectModalOpen(false);
+      }
+    },
+    [data, id, providerMeta, queryClient, router, t, uploadCertificate, STORAGE_KEY],
+  );
+
+  // Footer state machine (D6): pending/needs_revision -> both actions;
+  // approved -> approve hidden, reject still offered; rejected/
+  // removed_by_owner -> no status action, just the notice.
+  const reviewFooter = (() => {
+    if (!providerMeta) return undefined;
+    const status = providerMeta.reviewStatus;
+    if (status === 'rejected' || status === 'removed_by_owner') {
+      return (
+        <p className="py-1 text-center text-xs text-content-muted">
+          {t('adminHalalEdit.review.decidedNotice', { status })}
+        </p>
+      );
+    }
+    return (
+      <div className="flex gap-2">
+        {status !== 'approved' && (
+          <button
+            className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
+            disabled={reviewing || isUploading}
+            type="button"
+            onClick={() => handleReview('approved')}
+          >
+            {reviewing ? '…' : t('adminHalalEdit.review.approve')}
+          </button>
+        )}
+        <button
+          className="flex-1 rounded-xl bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          disabled={reviewing}
+          type="button"
+          onClick={() => setRejectModalOpen(true)}
+        >
+          {t('adminHalalEdit.review.reject')}
+        </button>
+      </div>
+    );
+  })();
 
   return (
     <EditSubPageLayout
@@ -215,6 +418,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
         disabled: isUploading,
         loading: isUploading,
       }}
+      reviewFooter={reviewFooter}
       title={t('adminHalalEdit.title')}
     >
       <div className="flex flex-col gap-6">
@@ -242,6 +446,9 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
               </p>
 
               <HalalAttestationFields
+                invalidFields={
+                  gateError ? [...gateError.denied, ...gateError.unanswered] : undefined
+                }
                 values={{
                   no_alcohol: data.noAlcohol,
                   no_pork: data.noPork,
@@ -250,6 +457,30 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                 variant="neutral"
                 onChange={setAttestation}
               />
+
+              {/* #548: the server gate's verdict, rendered under the answers
+                  it judged. With 805 pending rows and 0 currently passing,
+                  this is the message an admin meets most — not a toast. */}
+              {gateError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <Icon
+                      className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600"
+                      icon="material-symbols:cancel-outline"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <p className="text-sm font-semibold text-red-800">
+                        {t('adminHalalEdit.review.gateBlocked')}
+                      </p>
+                      <AttestationFailureGroups
+                        denied={gateError.denied}
+                        t={t}
+                        unanswered={gateError.unanswered}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {!allAttested && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
@@ -507,72 +738,33 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                 </p>
                 {/* B2 (#415): a "not sure" (null) is not a denial — list the two
                     groups separately so admins triage them differently. */}
-                {(
-                  [
-                    {
-                      rows: [
-                        {
-                          failed: data.noAlcohol === false,
-                          labelKey: 'halal.attestation.noAlcohol.label',
-                        },
-                        {
-                          failed: data.noPork === false,
-                          labelKey: 'halal.attestation.noPork.label',
-                        },
-                        {
-                          failed: data.noGambling === false,
-                          labelKey: 'halal.attestation.noGambling.label',
-                        },
-                      ],
-                      groupKey: 'halal.admin.declaredNonCompliant',
-                    },
-                    {
-                      rows: [
-                        {
-                          failed: data.noAlcohol === null,
-                          labelKey: 'halal.attestation.noAlcohol.label',
-                        },
-                        {
-                          failed: data.noPork === null,
-                          labelKey: 'halal.attestation.noPork.label',
-                        },
-                        {
-                          failed: data.noGambling === null,
-                          labelKey: 'halal.attestation.noGambling.label',
-                        },
-                      ],
-                      groupKey: 'halal.admin.unanswered',
-                    },
-                  ] as const
-                ).map(
-                  ({ rows, groupKey }) =>
-                    rows.some((r) => r.failed) && (
-                      <div key={groupKey} className="mt-1 flex flex-col gap-1">
-                        <span className="text-xs font-semibold text-red-700">{t(groupKey)}:</span>
-                        <ul className="flex flex-col gap-1">
-                          {rows
-                            .filter((r) => r.failed)
-                            .map((r) => (
-                              <li
-                                key={r.labelKey}
-                                className="flex items-center gap-1.5 text-xs text-red-700"
-                              >
-                                <Icon
-                                  className="h-3.5 w-3.5 flex-shrink-0 text-red-500"
-                                  icon="material-symbols:close-small"
-                                />
-                                {t(r.labelKey)}
-                              </li>
-                            ))}
-                        </ul>
-                      </div>
-                    ),
-                )}
+                <AttestationFailureGroups
+                  denied={
+                    (['no_alcohol', 'no_pork', 'no_gambling'] as const).filter(
+                      (f) => data[FIELD_TO_CAMEL[f]] === false,
+                    ) as HalalAttestationField[]
+                  }
+                  t={t}
+                  unanswered={
+                    (['no_alcohol', 'no_pork', 'no_gambling'] as const).filter(
+                      (f) => data[FIELD_TO_CAMEL[f]] === null,
+                    ) as HalalAttestationField[]
+                  }
+                />
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Rejection requires a reason (Plan 059/062) */}
+      <RejectModal
+        isLoading={reviewing}
+        isOpen={rejectModalOpen}
+        providerName={providerMeta?.providerName ?? ''}
+        onClose={() => setRejectModalOpen(false)}
+        onConfirm={(feedback) => handleReview('rejected', feedback)}
+      />
     </EditSubPageLayout>
   );
 }

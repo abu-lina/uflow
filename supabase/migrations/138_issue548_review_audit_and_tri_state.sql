@@ -93,7 +93,9 @@ BEGIN
         CASE WHEN p_halal ? 'no_alcohol'  THEN (p_halal->>'no_alcohol')::boolean  ELSE NULL END,
         CASE WHEN p_halal ? 'no_pork'     THEN (p_halal->>'no_pork')::boolean     ELSE NULL END,
         CASE WHEN p_halal ? 'no_gambling' THEN (p_halal->>'no_gambling')::boolean ELSE NULL END,
-        NULLIF(p_halal->>'verification_method', ''),
+        -- verification_method is NOT NULL: keep migration 131's 'online'
+        -- fallback on INSERT so a missing answer cannot violate it.
+        COALESCE(NULLIF(p_halal->>'verification_method', ''), 'online'),
         COALESCE((p_halal->>'has_certificate')::boolean, false),
         NULLIF(p_halal->>'certificate_url', ''),
         now()
@@ -127,7 +129,7 @@ BEGIN
         CASE WHEN p_halal ? 'no_alcohol'  THEN (p_halal->>'no_alcohol')::boolean  ELSE NULL END,
         CASE WHEN p_halal ? 'no_pork'     THEN (p_halal->>'no_pork')::boolean     ELSE NULL END,
         CASE WHEN p_halal ? 'no_gambling' THEN (p_halal->>'no_gambling')::boolean ELSE NULL END,
-        NULLIF(p_halal->>'verification_method', ''),
+        COALESCE(NULLIF(p_halal->>'verification_method', ''), 'online'),
         COALESCE((p_halal->>'has_certificate')::boolean, false),
         NULLIF(p_halal->>'certificate_url', ''),
         now()

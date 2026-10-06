@@ -1218,33 +1218,34 @@ export const tr = {
     listViewLabel: 'Liste',
     mapViewLabel: 'Harita',
   },
-  // Plan 255 INTERIM (#415): German source text, NOT a translation.
-  // Pending human review — see agent-output/requests/255-i18n-human-review.md.
+  // #548: attestation block translated (affirmative phrasing). Only
+  // halal.admin.{declaredNotHalal,attestationIncomplete,adminOnly} still hold
+  // INTERIM German — that is #415's debt, pending human review.
   halal: {
     attestation: {
-      sectionTitle: 'Halal Compliance',
-      recommendDescription: 'Was weißt du über diesen Anbieter?',
+      sectionTitle: 'Helal uygunluğu',
+      recommendDescription: 'Bu işletme hakkında ne biliyorsun?',
       noAlcohol: {
-        label: 'Kein Alkohol',
-        desc: 'Wird kein Alkohol verarbeitet, verkauft oder angeboten?',
+        label: 'Alkolsüz',
+        desc: 'Bu işletme tamamen alkolsüz mü?',
       },
       noPork: {
-        label: 'Kein verbotenes Fleisch',
-        desc: 'Wird kein Schweinefleisch oder anderes verbotenes Fleisch verarbeitet, verkauft oder angeboten?',
+        label: 'Yalnızca helal et',
+        desc: 'Buradaki tüm etler helal mi, yani domuz eti veya başka haram et yok mu?',
       },
       noGambling: {
-        label: 'Kein Glücksspiel',
-        desc: 'Werden keine Glücksspiele oder Wetten angeboten?',
+        label: 'Kumarsız',
+        desc: 'Bu işletme kumar ve bahisten tamamen uzak mı?',
       },
       answer: {
-        yes: 'Ja',
-        no: 'Nein',
-        notSure: 'Nicht sicher',
+        yes: 'Evet',
+        no: 'Hayır',
+        notSure: 'Emin değilim',
       },
     },
     admin: {
-      declaredNonCompliant: 'Als nicht konform angegeben',
-      unanswered: 'Nicht beantwortet',
+      declaredNonCompliant: 'Uygun değil olarak işaretlendi',
+      unanswered: 'Yanıtlanmadı',
       // INTERIM de (#415): pending human translation
       declaredNotHalal: 'Nicht halal',
       attestationIncomplete: 'Halal-Angaben unvollständig',
@@ -1309,10 +1310,21 @@ export const tr = {
       silver: 'Silber',
       bronze: 'Bronze',
     },
-    autoApprovedTitle: 'Auto-Approved',
-    autoApprovedDesc: 'Alle Bezeugungskriterien erfüllt. Der Eintrag wird vorab genehmigt.',
-    autoRejectedTitle: 'Auto-Rejected',
+    // #548: nothing is "auto" any more — these panels preview the verdict
+    // the review footer will act on.
+    autoApprovedTitle: 'Onaya hazır',
+    autoApprovedDesc: 'Tüm onay soruları doğrulandı. Bu kaydı aşağıdan onaylayabilirsin.',
+    autoRejectedTitle: 'Onaya hazır değil',
     autoRejectedDesc:
-      'Nicht alle Kriterien erfüllt. Der Eintrag wird vorab abgelehnt. Du kannst dies auf der Bearbeitungsseite überschreiben.',
+      'Onay sorularının tamamı doğrulanmadı. Yukarıdaki yanıtları düzeltip onayla ya da gerekçeyle reddet.',
+    review: {
+      approve: 'Onayla',
+      reject: 'Reddet',
+      approved: 'Onaylandı ve yayınlandı.',
+      rejected: 'Reddedildi.',
+      gateBlocked: 'Henüz onaylanamaz: helal yanıtlarının tamamı onaylı değil.',
+      conflict: 'Başka bir denetçi bu restoranı değiştirdi. Sayfayı yenileyip tekrar kontrol et.',
+      decidedNotice: 'Bu kayıt zaten {{status}}. Burada durum işlemi yok.',
+    },
   },
 } as const;

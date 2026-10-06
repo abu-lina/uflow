@@ -30,6 +30,11 @@ interface HalalAttestationFieldsProps {
    * Defaults to 'neutral'.
    */
   variant?: 'oath' | 'neutral';
+  /**
+   * Issue 548: fields the server-side halal gate flagged (denied or unanswered).
+   * Their radiogroups get aria-invalid so the admin sees the fix target.
+   */
+  invalidFields?: HalalAttestationField[];
 }
 
 const FIELDS: Array<{ key: HalalAttestationField; labelKey: string; descKey: string }> = [
@@ -66,6 +71,7 @@ export function HalalAttestationFields({
   values,
   onChange,
   variant = 'neutral',
+  invalidFields = [],
 }: HalalAttestationFieldsProps) {
   const { t } = useLanguage();
   const options = variant === 'oath' ? OPTIONS.filter((o) => o.value !== null) : OPTIONS;
@@ -81,7 +87,11 @@ export function HalalAttestationFields({
             <span className="text-sm font-semibold text-content-heading">{t(item.labelKey)}</span>
             <span className="text-xs leading-relaxed text-content-muted">{t(item.descKey)}</span>
           </div>
-          <div className="flex gap-2" role="radiogroup">
+          <div
+            aria-invalid={invalidFields.includes(item.key) || undefined}
+            className="flex gap-2"
+            role="radiogroup"
+          >
             {options.map((opt) => {
               const selected = values[item.key] === opt.value;
               return (
