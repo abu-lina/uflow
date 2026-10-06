@@ -111,8 +111,9 @@ function ReviewPageContent() {
       // Show success message
       toast.success('Business created successfully!');
 
-      // Redirect to provider page
-      router.push(`/p/${createdProvider.provider_id}`);
+      // Issue 547 — don't land on /p/<id>: the row is pending review and the
+      // public route 404s for anyone but its creator. Go to the status page.
+      router.push(`/create-quick/submitted?provider=${createdProvider.provider_id}`);
     } catch (error) {
       console.error('Error creating provider:', error);
       toast.error('Failed to create business. Please try again.');

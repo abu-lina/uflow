@@ -1251,6 +1251,13 @@ export const en = {
       'Provisional seal: it only becomes public once the submission has been reviewed.',
     pendingBadge: 'Under review',
     submittedToast: 'Submitted! Your entry is now awaiting review.',
+    rejectedBanner: 'This submission was rejected. It is only visible to you and moderators.',
+    // Issue 547: post-submit status screen for quick create
+    submittedTitle: 'Submission received',
+    submittedBody:
+      'Your business is awaiting review. It goes public once approved — until then only you can see it.',
+    submittedViewListing: 'Preview your listing',
+    submittedViewProfile: 'My submissions',
   },
   // Plan 255 C6 (#415): /create chooser extras
   createPage: {

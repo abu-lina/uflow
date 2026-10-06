@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic';
 
 import { useProvider } from '@/hooks/useProvider';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import type { CommunityService } from '@/services/communityServices';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
@@ -58,6 +59,7 @@ export function ProviderDetailPageClient({
 }: ProviderDetailPageClientProps) {
   const router = useRouter();
   const { isAdmin } = useIsAdmin();
+  const { t } = useLanguage();
   const {
     data: provider,
     isLoading,
@@ -141,10 +143,24 @@ export function ProviderDetailPageClient({
     return notFound();
   }
 
+  // Issue 547 — a non-approved row only reaches this point for its creator,
+  // owner or an admin; say why the page is up so it doesn't read as live.
+  const reviewBanner =
+    provider.review_status && provider.review_status !== 'approved' ? (
+      <div className="sticky top-0 z-50 border-b border-amber-200 bg-amber-50 px-6 py-3">
+        <p className="mx-auto max-w-4xl text-sm font-medium text-amber-900">
+          {provider.review_status === 'rejected'
+            ? t('submissionStatus.rejectedBanner')
+            : t('submissionStatus.awaitingReview')}
+        </p>
+      </div>
+    ) : null;
+
   // Mobile: SSR-rendered full page, CSS-hidden on desktop
   // Desktop: client-only modal, JS-gated to prevent portal escape on mobile
   return (
     <>
+      {reviewBanner}
       <div className="md:hidden">
         <ProviderDetailPageComponent
           customActionButtons={
