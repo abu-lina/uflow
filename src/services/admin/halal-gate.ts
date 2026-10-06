@@ -97,15 +97,21 @@ export async function getHalalAttestationValues(
 ): Promise<StoredHalalAttestation> {
   const supabase = getSupabaseAdmin();
 
-  // First, determine the provider's listing type
+  // First, determine the provider's listing type. maybeSingle() keeps a
+  // missing row distinct from a real query error: a nonexistent provider
+  // raises the NOT_FOUND: signal the review route maps to 404, instead of
+  // 500ing ahead of the RPC's own NOT_FOUND check (#548 rework item 6).
   const { data: provider, error: providerError } = await supabase
     .from('providers')
     .select('listing_type')
     .eq('provider_id', providerId)
-    .single();
+    .maybeSingle();
 
-  if (providerError || !provider) {
-    throw new Error(`Failed to fetch provider: ${providerError?.message ?? 'Not found'}`);
+  if (providerError) {
+    throw new Error(`Failed to fetch provider: ${providerError.message}`);
+  }
+  if (!provider) {
+    throw new Error('NOT_FOUND: Provider not found');
   }
 
   // Only food and store providers have attestation data

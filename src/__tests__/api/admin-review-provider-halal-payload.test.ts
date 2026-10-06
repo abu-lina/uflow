@@ -7,9 +7,13 @@ vi.mock('@/lib/supabase/getUserFromCookie', () => ({
 vi.mock('@/lib/auth/roles', () => ({
   isAdminOrModerator: vi.fn(),
 }));
-vi.mock('@/services/admin/providers', () => ({
-  updateProviderReview: vi.fn(),
-}));
+vi.mock('@/services/admin/providers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/services/admin/providers')>();
+  return {
+    ...actual,
+    updateProviderReview: vi.fn(),
+  };
+});
 vi.mock('@/services/admin/halal-gate', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/admin/halal-gate')>();
   return {
@@ -39,6 +43,7 @@ import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { updateProviderReview } from '@/services/admin/providers';
 import { checkHalalAttestation, getHalalAttestationValues } from '@/services/admin/halal-gate';
+import { logger } from '@/lib/logging/structuredLogger';
 
 const mockGetUser = getUserFromCookie as ReturnType<typeof vi.fn>;
 const mockIsAdmin = isAdminOrModerator as ReturnType<typeof vi.fn>;
@@ -271,6 +276,64 @@ describe('PATCH /api/admin/review-provider — submitted halal payload', () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  it('returns 404, not 500, when the provider does not exist (approve + halal pre-flight)', async () => {
+    // The pre-flight stored-values read must surface the same NOT_FOUND
+    // signal the RPC raises — before this fix a nonexistent id 500'd here,
+    // ahead of the RPC (#548 rework item 6).
+    mockStoredValues.mockRejectedValue(new Error('NOT_FOUND: Provider not found'));
+
+    const res = await PATCH(
+      makeRequest({ providerId: validId, reviewStatus: 'approved', halal: ALL_TRUE_HALAL }),
+    );
+
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json.error).toBe('Provider not found');
+    expect(mockReview).not.toHaveBeenCalled();
+  });
+
+  it('returns 404, not 500, when the provider does not exist (approve without halal)', async () => {
+    mockHalalCheck.mockRejectedValue(new Error('NOT_FOUND: Provider not found'));
+
+    const res = await PATCH(makeRequest({ providerId: validId, reviewStatus: 'approved' }));
+
+    expect(res.status).toBe(404);
+    const json = await res.json();
+    expect(json.error).toBe('Provider not found');
+    expect(mockReview).not.toHaveBeenCalled();
+  });
+
+  it('fails fast with a safe message when migration 138 is not applied', async () => {
+    // Deploy-ordering guard (#548): the admin_review_provider RPC is the only
+    // review write path, so a missing function must surface as an explicit
+    // misconfiguration, not an opaque PostgREST error.
+    mockReview.mockRejectedValue(
+      new Error(
+        'MISCONFIGURED: admin_review_provider RPC is not available; migration 138 has not been applied to this environment',
+      ),
+    );
+
+    const res = await PATCH(
+      makeRequest({ providerId: validId, reviewStatus: 'rejected', reviewFeedback: 'reason' }),
+    );
+
+    expect(res.status).toBe(500);
+    const json = await res.json();
+    expect(json.error).toContain('misconfigured');
+    expect(json.error).toContain('migration 138');
+    // No Postgres/PostgREST internals leak to the client.
+    expect(json.error).not.toContain('PGRST202');
+    expect(json.error).not.toContain('schema cache');
+    expect(json.error).not.toContain('admin_review_provider');
+    // The diagnosis is logged server-side.
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('migration 138'),
+      expect.any(Error),
+      expect.anything(),
+      expect.anything(),
+    );
   });
 
   it('maps an RPC FORBIDDEN error to 403', async () => {

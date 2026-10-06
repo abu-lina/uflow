@@ -145,6 +145,49 @@ describe('updateProviderReview — admin_review_provider RPC', () => {
     await expect(updateProviderReview(PROVIDER_ID, 'approved')).rejects.toThrow(/^FORBIDDEN:/);
   });
 
+  it('fails fast with a MISCONFIGURED signal when the RPC is missing from the schema cache', async () => {
+    // Deploy-ordering guard (#548): migration 138 creates
+    // admin_review_provider, which is now the ONLY review write path (halal
+    // footer, provider-list buttons, edit-provider auto-reject). If code
+    // ships ahead of the migration, PostgREST answers PGRST202 — surface an
+    // explicit, self-diagnosing signal instead of an opaque PostgREST error.
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: 'PGRST202',
+        message:
+          'Could not find the function public.admin_review_provider(p_expected_updated_at, p_halal, p_provider_id, p_review_feedback, p_review_status, p_reviewer_id) in the schema cache',
+        details: null,
+        hint: null,
+      },
+    });
+
+    await expect(updateProviderReview(PROVIDER_ID, 'approved')).rejects.toThrow(/^MISCONFIGURED:/);
+    await expect(updateProviderReview(PROVIDER_ID, 'approved')).rejects.toThrow(/migration 138/);
+    // The diagnosis is logged server-side with the PostgREST detail.
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('admin_review_provider'),
+      expect.objectContaining({ code: 'PGRST202' }),
+    );
+    consoleSpy.mockRestore();
+  });
+
+  it('also fails fast on a raw undefined_function (42883) error', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: '42883',
+        message: 'function public.admin_review_provider(...) does not exist',
+      },
+    });
+
+    await expect(updateProviderReview(PROVIDER_ID, 'approved')).rejects.toThrow(
+      /^MISCONFIGURED:.*migration 138/,
+    );
+  });
+
   it('wraps other RPC failures in the existing message shape', async () => {
     mockRpc.mockResolvedValue({
       data: null,

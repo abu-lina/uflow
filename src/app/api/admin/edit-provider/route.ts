@@ -5,7 +5,7 @@ import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { providerEditUpdateSchema } from '@/lib/validations/adminSchemas';
 import { updateProviderFields } from '@/services/admin/providerEdit';
 import { checkHalalAttestation } from '@/services/admin/halal-gate';
-import { updateProviderReview } from '@/services/admin/providers';
+import { updateProviderReview, REVIEW_RPC_UNAVAILABLE_MESSAGE } from '@/services/admin/providers';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
@@ -162,6 +162,25 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
+    // Deploy-ordering guard (#548): the auto-reject above calls
+    // admin_review_provider, which migration 138 creates. Fail loudly with a
+    // logged diagnosis and a safe client message if the code ships first.
+    if (error instanceof Error && error.message.startsWith('MISCONFIGURED:')) {
+      logger.error(
+        'edit-provider auto-reject unavailable: admin_review_provider RPC missing, migration 138 not applied',
+        error,
+        {},
+        getRequestMetadata(request),
+      );
+      return NextResponse.json({ error: REVIEW_RPC_UNAVAILABLE_MESSAGE }, { status: 500 });
+    }
+
+    // Provider missing — checkHalalAttestation raises NOT_FOUND: for a
+    // nonexistent id (#548). Same contract as review-provider.
+    if (error instanceof Error && error.message.startsWith('NOT_FOUND:')) {
+      return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
+    }
+
     // Handle concurrency conflict
     if (error instanceof Error && error.message.startsWith('CONFLICT:')) {
       return NextResponse.json(

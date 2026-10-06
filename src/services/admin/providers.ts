@@ -115,6 +115,28 @@ export interface HalalReviewAnswers {
 }
 
 /**
+ * Client-facing message when the admin_review_provider RPC is absent
+ * (#548 deploy-ordering guard). Names our own migration so the failure is
+ * self-diagnosing, but leaks no Postgres/PostgREST internals.
+ */
+export const REVIEW_RPC_UNAVAILABLE_MESSAGE =
+  'Provider review is temporarily unavailable: the deployment is misconfigured and database migration 138 is still pending. Please contact the platform team.';
+
+/**
+ * True when PostgREST/Postgres reports the admin_review_provider function as
+ * undefined: PGRST202 = function not in the schema cache (the usual signal
+ * when migration 138 has not been applied), 42883 = undefined_function if the
+ * call ever reaches Postgres directly, plus a message fallback for drift.
+ */
+function isMissingReviewRpcError(error: { code?: string; message?: string }): boolean {
+  return (
+    error.code === 'PGRST202' ||
+    error.code === '42883' ||
+    (error.message ?? '').includes('Could not find the function')
+  );
+}
+
+/**
  * Update provider review status with optional optimistic concurrency check.
  * When expectedUpdatedAt is provided, the update only succeeds if the provider's
  * updated_at still matches, preventing silent overwrites by concurrent admins.
@@ -160,6 +182,20 @@ export async function updateProviderReview(
 
   if (error) {
     const message = error.message ?? '';
+    // Deploy-ordering guard (#548): migration 138 creates this RPC, and it is
+    // the only review write path (halal footer, provider-list buttons,
+    // edit-provider auto-reject). If the code ships ahead of the migration,
+    // fail fast with an explicit signal instead of an opaque PostgREST error;
+    // the route maps MISCONFIGURED: to a safe client message.
+    if (isMissingReviewRpcError(error)) {
+      console.error(
+        '[review] admin_review_provider RPC unavailable — migration 138 (138_issue548_review_audit_and_tri_state) not applied to this environment',
+        { code: error.code, message: error.message, details: error.details, hint: error.hint },
+      );
+      throw new Error(
+        'MISCONFIGURED: admin_review_provider RPC is not available; migration 138 has not been applied to this environment',
+      );
+    }
     // Preserve the error contract so the route can map each signal:
     // CONFLICT: -> 409, HALAL_GATE: -> 422, NOT_FOUND: -> 404,
     // FORBIDDEN: -> 403.

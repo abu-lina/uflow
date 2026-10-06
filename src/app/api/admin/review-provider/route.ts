@@ -3,7 +3,7 @@ import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudit';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
 import { providerReviewUpdateSchema } from '@/lib/validations/adminSchemas';
-import { updateProviderReview } from '@/services/admin/providers';
+import { updateProviderReview, REVIEW_RPC_UNAVAILABLE_MESSAGE } from '@/services/admin/providers';
 import {
   checkHalalAttestation,
   classifyAttestation,
@@ -194,9 +194,23 @@ export async function PATCH(request: Request) {
       },
     });
   } catch (error) {
-    // Provider missing — the RPC raises NOT_FOUND: before any write.
-    // Kept distinct from CONFLICT: so a nonexistent id is a 404, not a
-    // concurrency conflict (#548 review).
+    // Deploy-ordering guard (#548): migration 138 creates the RPC that is now
+    // the only review write path. If this code ships ahead of it, fail loudly:
+    // log the diagnosis server-side and return a safe client message, never a
+    // raw PostgREST error.
+    if (error instanceof Error && error.message.startsWith('MISCONFIGURED:')) {
+      logger.error(
+        'review-provider unavailable: admin_review_provider RPC missing, migration 138 not applied',
+        error,
+        {},
+        getRequestMetadata(request),
+      );
+      return NextResponse.json({ error: REVIEW_RPC_UNAVAILABLE_MESSAGE }, { status: 500 });
+    }
+
+    // Provider missing — the pre-flight and the RPC both raise NOT_FOUND:
+    // before any write. Kept distinct from CONFLICT: so a nonexistent id is a
+    // 404, not a concurrency conflict (#548 review).
     if (error instanceof Error && error.message.startsWith('NOT_FOUND:')) {
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
