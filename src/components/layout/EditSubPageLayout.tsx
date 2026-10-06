@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { FooterAction } from '@/components/ui/FooterAction';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 interface EditSubPageLayoutProps {
   /** Page title shown in the mobile PageHeader */
@@ -55,11 +56,13 @@ export function EditSubPageLayout({
   reviewFooter,
 }: EditSubPageLayoutProps) {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const secondary = secondaryButton ?? {
     icon: 'material-symbols:close',
     onClick: () => router.back(),
-    'aria-label': 'Close',
+    // #548: localized — the default was hardcoded 'Close' on every locale.
+    'aria-label': t('common.close'),
   };
 
   // With a review row the footer is ~140px + safe-area tall instead of 80px,

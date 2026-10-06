@@ -1260,38 +1260,40 @@ export const ar = {
     quickImportButton: 'Quick Import ausprobieren',
   },
   createHalal: {
+    // INTERIM de (#415): create-wizard strings, pending human translation.
+    // The keys below them DO render on the admin halal check page and are
+    // translated (#548).
     stepTitle: 'Halal',
     title: 'Halal Compliance',
     attestationIntro:
       'Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder anbietest?',
-    verificationTitle: 'Verifizierungsmethode',
-    verificationDesc: 'Wie wurde die Halal-Konformität überprüft?',
-    methodOnline: 'Online',
-    methodOnlineDesc: 'Online überprüft (Menü, Website, Selbstauskunft)',
-    methodOnsite: 'Vor Ort',
-    methodOnsiteDesc: 'Vor Ort besucht und überprüft',
-    certificateTitle: 'Halal-Zertifikat',
-    certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
-    certificateUpload: 'Zertifikat hochladen',
-    // INTERIM de (#415): pending human translation
-    certificateInvalidType: 'Ungültiger Dateityp. Bitte lade ein Bild oder eine PDF-Datei hoch.',
-    certificateTooLarge: 'Datei zu groß. Das Zertifikat darf maximal 5 MB groß sein.',
+    verificationTitle: 'طريقة التحقق',
+    verificationDesc: 'كيف تم التحقق من الالتزام بالحلال؟',
+    methodOnline: 'عبر الإنترنت',
+    methodOnlineDesc: 'تم التحقق عبر الإنترنت (القائمة، الموقع الإلكتروني، إقرار ذاتي)',
+    methodOnsite: 'في الموقع',
+    methodOnsiteDesc: 'تمت الزيارة والتحقق في الموقع',
+    certificateTitle: 'شهادة حلال',
+    certificateDesc: 'حمّل شهادة حلال صالحة (اختياري)',
+    certificateUpload: 'تحميل الشهادة',
+    certificateInvalidType: 'نوع الملف غير صالح. يرجى تحميل صورة أو ملف PDF.',
+    certificateTooLarge: 'الملف كبير جدًا. يجب ألا يتجاوز حجم الشهادة 5 ميغابايت.',
   },
-  // Plan 255 INTERIM (#415): German source text, NOT a translation.
+  // #548: fully translated — the halal check admin page renders this block
+  // in every locale, so INTERIM German is no longer acceptable here.
   adminHalalEdit: {
-    title: 'Halal Check',
-    uploading: 'Wird hochgeladen...',
-    attestationWarning:
-      'Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.',
-    existingCertificate: 'Vorhandenes Zertifikat',
-    viewCertificate: 'Zertifikat anzeigen',
+    title: 'فحص الحلال',
+    uploading: 'جارٍ التحميل…',
+    attestationWarning: 'يجب تأكيد أسئلة التوثيق الثلاثة كلها قبل الموافقة على الإدخال.',
+    existingCertificate: 'الشهادة الموجودة',
+    viewCertificate: 'عرض الشهادة',
     derivedTierInfo:
-      'Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.',
-    derivedTierLabel: 'Abgeleitetes Level',
+      'يُشتق مستوى الحلال تلقائيًا من طريقة التحقق: عبر الإنترنت = برونزي، في الموقع = فضي، مع شهادة = ذهبي.',
+    derivedTierLabel: 'المستوى المشتق',
     tier: {
-      gold: 'Gold',
-      silver: 'Silber',
-      bronze: 'Bronze',
+      gold: 'ذهبي',
+      silver: 'فضي',
+      bronze: 'برونزي',
     },
     // #548: nothing is "auto" any more — these panels preview the verdict
     // the review footer will act on.
@@ -1319,6 +1321,14 @@ export const ar = {
         body: 'الموافقة على {{name}} تنشر المطعم للعامة فورًا وتبدأ الإثراء.',
         confirm: 'موافقة ونشر',
         confirming: 'جارٍ الموافقة…',
+      },
+      rejectConfirm: {
+        title: 'رفض الإدخال؟',
+        body: 'هل تريد بالتأكيد رفض {{name}}؟',
+        reasonLabel: 'سبب الرفض',
+        reasonPlaceholder: 'يرجى ذكر سبب رفض هذا الإدخال…',
+        confirm: 'تأكيد الرفض',
+        confirming: 'جارٍ الرفض…',
       },
     },
   },

@@ -463,7 +463,11 @@ describe('EditHalalPage — admin review footer (#548)', () => {
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toBeInTheDocument();
 
-    const confirmButton = screen.getByRole('button', { name: /confirm.*reject/i });
+    // Keyed copy (#548 locale fix): the modal now renders catalogue keys,
+    // same convention as the review buttons above.
+    const confirmButton = screen.getByRole('button', {
+      name: 'adminHalalEdit.review.rejectConfirm.confirm',
+    });
     expect(confirmButton).toBeDisabled();
 
     fireEvent.change(screen.getByRole('textbox'), {

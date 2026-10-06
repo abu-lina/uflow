@@ -4,9 +4,22 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 import { RejectModal } from '../RejectModal';
 
+// #548 locale fix: the modal's copy is keyed now (hardcoded English used
+// to leak onto RTL surfaces). Same key-echoing t() as ApproveModal.test:
+// assertions pin WHICH key renders; catalogue text is covered by
+// halal-attestation-parity.test.ts.
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({
+    t: (key: string, vars?: Record<string, unknown>) =>
+      vars ? `${key} ${JSON.stringify(vars)}` : key,
+  }),
+}));
+
+const K = 'adminHalalEdit.review.rejectConfirm';
+
 /**
  * Tests for RejectModal component (Plan 059/062)
- * 
+ *
  * Modal/popover for rejecting a provider with REQUIRED feedback
  * Plan 059/062: Rejection requires a non-empty feedback reason
  */
@@ -25,10 +38,10 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
-    expect(screen.getByText(/reject.*provider/i)).toBeInTheDocument();
+    expect(screen.getByText(`${K}.title`)).toBeInTheDocument();
   });
 
   it('should not render when closed', () => {
@@ -38,10 +51,10 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
-    expect(screen.queryByText(/reject.*provider/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(`${K}.title`)).not.toBeInTheDocument();
   });
 
   it('should show the provider name', () => {
@@ -51,7 +64,7 @@ describe('RejectModal', () => {
         providerName="Amazing Bakery"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     expect(screen.getByText(/Amazing Bakery/i)).toBeInTheDocument();
@@ -64,7 +77,7 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const textarea = screen.getByRole('textbox');
@@ -80,12 +93,12 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
-    const confirmButton = screen.getByRole('button', { name: /confirm.*reject/i });
+    const confirmButton = screen.getByRole('button', { name: `${K}.confirm` });
     expect(confirmButton).toBeDisabled();
-    
+
     // Clicking disabled button should not call onConfirm
     fireEvent.click(confirmButton);
     expect(mockOnConfirm).not.toHaveBeenCalled();
@@ -98,18 +111,18 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const textarea = screen.getByRole('textbox');
-    const confirmButton = screen.getByRole('button', { name: /confirm.*reject/i });
-    
+    const confirmButton = screen.getByRole('button', { name: `${K}.confirm` });
+
     // Initially disabled
     expect(confirmButton).toBeDisabled();
-    
+
     // Enter valid feedback
     fireEvent.change(textarea, { target: { value: 'Does not meet community guidelines' } });
-    
+
     // Should now be enabled
     expect(confirmButton).not.toBeDisabled();
   });
@@ -121,15 +134,15 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const textarea = screen.getByRole('textbox');
-    const confirmButton = screen.getByRole('button', { name: /confirm.*reject/i });
-    
+    const confirmButton = screen.getByRole('button', { name: `${K}.confirm` });
+
     // Enter whitespace-only feedback
     fireEvent.change(textarea, { target: { value: '   \n\t  ' } });
-    
+
     // Should still be disabled
     expect(confirmButton).toBeDisabled();
   });
@@ -141,13 +154,13 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const textarea = screen.getByRole('textbox');
     fireEvent.change(textarea, { target: { value: 'Does not meet community guidelines' } });
 
-    const confirmButton = screen.getByRole('button', { name: /confirm.*reject/i });
+    const confirmButton = screen.getByRole('button', { name: `${K}.confirm` });
     fireEvent.click(confirmButton);
 
     expect(mockOnConfirm).toHaveBeenCalledWith('Does not meet community guidelines');
@@ -160,10 +173,10 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
-    const cancelButton = screen.getByRole('button', { name: /cancel/i });
+    const cancelButton = screen.getByRole('button', { name: 'common.cancel' });
     fireEvent.click(cancelButton);
 
     expect(mockOnClose).toHaveBeenCalled();
@@ -176,7 +189,7 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -191,7 +204,7 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const dialog = screen.getByRole('dialog');
@@ -206,11 +219,11 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
-    // Should show "Rejection Reason" label with required indicator
-    expect(screen.getByText(/rejection reason/i)).toBeInTheDocument();
+    // Localized label key + required indicator
+    expect(screen.getByText(`${K}.reasonLabel`, { exact: false })).toBeInTheDocument();
     expect(screen.getByText('*')).toBeInTheDocument();
   });
 
@@ -222,10 +235,10 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
-    const confirmButton = screen.getByRole('button', { name: /confirm.*reject|rejecting/i });
+    const confirmButton = screen.getByRole('button', { name: `${K}.confirming` });
     expect(confirmButton).toBeDisabled();
   });
 
@@ -236,7 +249,7 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     // Type some feedback
@@ -251,7 +264,7 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     // Reopen modal
@@ -261,7 +274,7 @@ describe('RejectModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     // Textarea should be empty

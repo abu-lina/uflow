@@ -41,6 +41,13 @@ const LANGUAGE_MAPPING: Record<string, Language> = {
 // Valid language codes
 const VALID_LANGUAGES: readonly Language[] = LANGUAGES;
 
+// Locales whose document direction is RTL.
+const RTL_LANGUAGES: readonly Language[] = ['ar', 'ur', 'ps'];
+
+// U+2066 FIRST STRONG ISOLATE … U+2069 POP DIRECTIONAL ISOLATE.
+const FSI = '\u2066';
+const PDI = '\u2069';
+
 // Check if a language code is valid
 function isValidLanguage(lang: string | null): lang is Language {
   return lang !== null && VALID_LANGUAGES.includes(lang as Language);
@@ -191,7 +198,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       return;
     }
 
-    document.documentElement.dir = ['ar', 'ur', 'ps'].includes(language) ? 'rtl' : 'ltr';
+    document.documentElement.dir = RTL_LANGUAGES.includes(language) ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
   }, [language]);
 
@@ -216,8 +223,19 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
       // Replace variables in the format {{variableName}}
       if (variables) {
+        // #548: in RTL locales, interpolated values (Latin-script provider
+        // names, numbers, URLs) are wrapped in Unicode bidi isolation.
+        // Without it, a weak-direction value inside an RTL sentence lets
+        // surrounding punctuation reorder — the trailing '.' rendered at
+        // the start of the line on the halal check page. FSI/PDI are
+        // invisible format characters; LTR output stays byte-identical so
+        // existing text and aria-label assertions are untouched.
+        const isolate = RTL_LANGUAGES.includes(language);
         for (const [varName, varValue] of Object.entries(variables)) {
-          result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), String(varValue));
+          const text = isolate ? `${FSI}${String(varValue)}${PDI}` : String(varValue);
+          // Function replacer: a literal '$' in the value must not be
+          // treated as a replacement pattern.
+          result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), () => text);
         }
       }
 

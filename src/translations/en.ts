@@ -1333,6 +1333,17 @@ export const en = {
         confirm: 'Approve and publish',
         confirming: 'Approving…',
       },
+      // RejectModal (#548 locale fix): the shared rejection dialog kept
+      // hardcoded English — it now sits next to approveConfirm so the
+      // pair reads as one system in every catalogue.
+      rejectConfirm: {
+        title: 'Reject provider?',
+        body: 'Are you sure you want to reject {{name}}?',
+        reasonLabel: 'Rejection reason',
+        reasonPlaceholder: 'Please provide a reason for rejecting this provider…',
+        confirm: 'Confirm rejection',
+        confirming: 'Rejecting…',
+      },
     },
   },
 } as const;

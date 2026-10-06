@@ -1357,6 +1357,16 @@ export const de = {
         confirm: 'Genehmigen und veröffentlichen',
         confirming: 'Wird genehmigt…',
       },
+      // RejectModal (#548 Locale-Fix): der Ablehnungsdialog war hartcodiert
+      // englisch — jetzt neben approveConfirm, damit das Paar ein System bleibt.
+      rejectConfirm: {
+        title: 'Eintrag ablehnen?',
+        body: 'Möchtest du {{name}} wirklich ablehnen?',
+        reasonLabel: 'Ablehnungsgrund',
+        reasonPlaceholder: 'Bitte gib einen Grund für die Ablehnung dieses Eintrags an…',
+        confirm: 'Ablehnung bestätigen',
+        confirming: 'Wird abgelehnt…',
+      },
     },
   },
 } as const;

@@ -8,14 +8,17 @@ import { ur } from '@/translations/ur';
 import { ps } from '@/translations/ps';
 
 /**
- * #548: parity for every catalogue key this issue touches.
+ * #548: parity for every catalogue key the halal check admin page renders.
  *
  * - The nine attestation keys, the two group headers, the four rewritten
- *   auto* verdict strings and the new adminHalalEdit.review.* keys exist in
- *   all six catalogues with no orphan.
- * - No ar/tr/ur/ps value may hold German source text (AC 14, 15). Proxied by
- *   "not identical to the de value" — a real translation is never byte-equal
- *   to German for these phrases.
+ *   auto* verdict strings, the adminHalalEdit.review.* keys and every
+ *   createHalal/adminHalalEdit/common key the page can paint (including
+ *   both modals and the toast/error states) exist in all six catalogues.
+ * - No ar/tr/ur/ps value may hold untranslated source text (AC 14, 15).
+ *   Proxied by "not identical to the de/en value" — a real translation of
+ *   these phrases is never byte-equal to German or English. That gate is
+ *   what would have caught the half-German ar page: every key existed, so
+ *   the old key-existence parity passed.
  */
 
 const CATALOGS = { en, de, ar, tr, ur, ps } as const;
@@ -69,11 +72,60 @@ const REVIEW_KEYS = [
   'adminHalalEdit.review.approveConfirm.body',
   'adminHalalEdit.review.approveConfirm.confirm',
   'adminHalalEdit.review.approveConfirm.confirming',
+  // RejectModal (#548 locale fix): its copy was hardcoded English, which
+  // leaked onto every locale. Now keyed like ApproveModal.
+  'adminHalalEdit.review.rejectConfirm.title',
+  'adminHalalEdit.review.rejectConfirm.body',
+  'adminHalalEdit.review.rejectConfirm.reasonLabel',
+  'adminHalalEdit.review.rejectConfirm.reasonPlaceholder',
+  'adminHalalEdit.review.rejectConfirm.confirm',
+  'adminHalalEdit.review.rejectConfirm.confirming',
   // Evidence rework: the footer names a failed meta fetch in every locale.
   'adminHalalEdit.review.loadFailed',
 ];
 
-const ALL_KEYS = [...ATTESTATION_KEYS, ...GROUP_KEYS, ...VERDICT_KEYS, ...REVIEW_KEYS];
+/**
+ * #548 locale fix: every remaining string the halal check admin page
+ * renders — section headings, verification-method radios, certificate
+ * section, derived-tier explainer, warning banner, toasts and footer
+ * labels. These were the "Plan 255 INTERIM" German strings that the
+ * attestation-only key set missed: the keys existed, so parity passed
+ * while the ar page rendered a half-German surface.
+ */
+const PAGE_KEYS = [
+  'common.save',
+  'common.cancel',
+  'common.close',
+  'adminHalalEdit.title',
+  'adminHalalEdit.uploading',
+  'adminHalalEdit.attestationWarning',
+  'adminHalalEdit.existingCertificate',
+  'adminHalalEdit.viewCertificate',
+  'adminHalalEdit.derivedTierInfo',
+  'adminHalalEdit.derivedTierLabel',
+  'adminHalalEdit.tier.gold',
+  'adminHalalEdit.tier.silver',
+  'adminHalalEdit.tier.bronze',
+  'createHalal.verificationTitle',
+  'createHalal.verificationDesc',
+  'createHalal.methodOnline',
+  'createHalal.methodOnlineDesc',
+  'createHalal.methodOnsite',
+  'createHalal.methodOnsiteDesc',
+  'createHalal.certificateTitle',
+  'createHalal.certificateDesc',
+  'createHalal.certificateUpload',
+  'createHalal.certificateInvalidType',
+  'createHalal.certificateTooLarge',
+];
+
+const ALL_KEYS = [
+  ...ATTESTATION_KEYS,
+  ...GROUP_KEYS,
+  ...VERDICT_KEYS,
+  ...REVIEW_KEYS,
+  ...PAGE_KEYS,
+];
 
 describe('halal attestation parity (#548)', () => {
   it.each(ALL_KEYS)('%s exists as a non-empty string in all six catalogues', (key) => {
@@ -84,13 +136,34 @@ describe('halal attestation parity (#548)', () => {
     }
   });
 
-  it.each(ALL_KEYS)('%s does not hold German source text in ar/tr/ur/ps', (key) => {
+  it.each(ALL_KEYS)('%s does not hold German or English source text in ar/tr/ur/ps', (key) => {
     const deValue = getPath(de, key);
+    const enValue = getPath(en, key);
     for (const locale of GATED) {
       const value = getPath(CATALOGS[locale], key);
       expect(value, `${locale} ${key} equals de`).not.toBe(deValue);
+      expect(value, `${locale} ${key} equals en`).not.toBe(enValue);
     }
   });
+
+  // Interpolated placeholders are part of the contract: a catalogue that
+  // drops {{name}}/{{status}} silently renders the raw token or a broken
+  // sentence, and the bidi isolation in t() keys off the {{}} syntax.
+  const INTERPOLATED_KEYS: Array<[string, string]> = [
+    ['adminHalalEdit.review.decidedNotice', '{{status}}'],
+    ['adminHalalEdit.review.approveConfirm.body', '{{name}}'],
+    ['adminHalalEdit.review.rejectConfirm.body', '{{name}}'],
+  ];
+
+  it.each(INTERPOLATED_KEYS)(
+    '%s keeps the %s placeholder in all six catalogues',
+    (key, placeholder) => {
+      for (const [locale, catalog] of Object.entries(CATALOGS)) {
+        const value = getPath(catalog, key);
+        expect(String(value), `${locale} ${key}`).toContain(placeholder);
+      }
+    },
+  );
 
   it('no catalogue carries an orphan key under halal.attestation', () => {
     const enBlock = en.halal.attestation;

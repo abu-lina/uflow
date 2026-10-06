@@ -688,10 +688,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                       <div className="flex items-center gap-3">
                         <Icon className="h-6 w-6 text-primary" icon="mdi:file-document-outline" />
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-[#272727]">
+                          {/* dir=auto: a Latin filename in an RTL card stays
+                              a single LTR run (dot-separated parts cannot
+                              reorder) while the flex row keeps RTL layout. */}
+                          <span className="text-sm font-medium text-[#272727]" dir="auto">
                             {data.certificateFile.name}
                           </span>
-                          <span className="text-xs text-[#7A7A7A]">
+                          <span className="text-xs text-[#7A7A7A]" dir="auto">
                             {(data.certificateFile.size / 1024).toFixed(1)} KB
                           </span>
                         </div>
