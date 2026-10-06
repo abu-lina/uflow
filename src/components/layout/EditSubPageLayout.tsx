@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
-import { FooterAction } from '@/components/ui/FooterAction';
+import { FooterAction, FOOTER_ACTION_HEIGHT_PX } from '@/components/ui/FooterAction';
 
 interface EditSubPageLayoutProps {
   /** Page title shown in the mobile PageHeader */
@@ -69,15 +69,14 @@ export function EditSubPageLayout({
         <div className="w-full sm:mx-auto sm:max-w-2xl">{children}</div>
       </main>
       {reviewFooter && primaryButton && (
-        // FooterAction is fixed bottom-0 with pt-4 + 48px button + 16px +
-        // safe-area bottom padding = 80px + safe-area total. This bar anchors
-        // exactly that high so it sits directly above the footer.
+        // Anchor exactly on top of FooterAction: its occupied height is
+        // exported by the component itself, plus the device safe-area
+        // inset it pads for. bg-uflow-light + shadow-footer-bar are the
+        // same tokens the footer bar uses.
         <div
-          className="fixed inset-x-0 z-50 border-t border-border/30"
+          className="fixed inset-x-0 z-50 border-t border-border/30 bg-uflow-light shadow-footer-bar"
           style={{
-            bottom: 'calc(80px + env(safe-area-inset-bottom))',
-            background: 'linear-gradient(to bottom, #f5f5f5 0%, #fbfbfb 100%)',
-            boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.04), 0 -1px 2px rgba(0, 0, 0, 0.06)',
+            bottom: `calc(${FOOTER_ACTION_HEIGHT_PX}px + env(safe-area-inset-bottom))`,
           }}
         >
           <div className="w-full px-6 py-2 sm:mx-auto sm:max-w-2xl">{reviewFooter}</div>
