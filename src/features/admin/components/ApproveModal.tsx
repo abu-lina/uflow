@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useCallback, useId } from 'react';
+import { useEffect, useCallback, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface ApproveModalProps {
   /** Whether the modal is open */
@@ -37,6 +38,13 @@ export function ApproveModal({
 }: ApproveModalProps) {
   const { t } = useLanguage();
   const titleId = useId();
+  const descId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // #562: this dialog is the only guard on an irreversible public publish.
+  // Focus enters it on open, Tab cannot leave it, and closing returns focus
+  // to the trigger — an unfocused barrier is not a barrier for AT users.
+  useFocusTrap(dialogRef, isOpen);
 
   // Handle Escape key
   useEffect(() => {
@@ -71,19 +79,22 @@ export function ApproveModal({
           onClick={handleBackdropClick}
         >
           <motion.div
+            ref={dialogRef}
             animate={{ opacity: 1, scale: 1 }}
+            aria-describedby={descId}
             aria-labelledby={titleId}
             aria-modal="true"
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
             exit={{ opacity: 0, scale: 0.95 }}
             initial={{ opacity: 0, scale: 0.95 }}
             role="dialog"
+            tabIndex={-1}
           >
             <h2 className="mb-2 text-lg font-semibold text-content-heading" id={titleId}>
               {t('adminHalalEdit.review.approveConfirm.title')}
             </h2>
 
-            <p className="mb-4 text-sm text-content">
+            <p className="mb-4 text-sm text-content" id={descId}>
               {t('adminHalalEdit.review.approveConfirm.body', { name: providerName })}
             </p>
 

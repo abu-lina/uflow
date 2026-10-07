@@ -2,12 +2,14 @@
 
 import { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { materialSymbolsClose } from '@/lib/icons';
 
 interface EditSubPageLayoutProps {
   /** Page title shown in the mobile PageHeader */
@@ -17,7 +19,7 @@ interface EditSubPageLayoutProps {
   /** Primary (save) button config. Omit to hide the footer entirely. */
   primaryButton?: {
     label: string;
-    icon?: string;
+    icon?: ReactNode | string;
     onClick: () => void;
     disabled?: boolean;
     loading?: boolean;
@@ -26,7 +28,7 @@ interface EditSubPageLayoutProps {
   };
   /** Override the default back/close secondary button */
   secondaryButton?: {
-    icon: string;
+    icon: ReactNode | string;
     onClick: () => void;
     'aria-label': string;
   };
@@ -59,16 +61,26 @@ export function EditSubPageLayout({
   const { t } = useLanguage();
 
   const secondary = secondaryButton ?? {
-    icon: 'material-symbols:close',
+    // #562: bundled glyph — the string name raced api.iconify.design on the
+    // same bar that already carries bundled approve/reject icons.
+    icon: (
+      <Icon
+        aria-hidden="true"
+        className="pointer-events-none h-5 w-5 text-content-heading"
+        icon={materialSymbolsClose}
+      />
+    ),
     onClick: () => router.back(),
     // #548: localized — the default was hardcoded 'Close' on every locale.
     'aria-label': t('common.close'),
   };
 
-  // With a review row the footer is ~140px + safe-area tall instead of 80px,
-  // so the scroll area must reserve that much more space — otherwise the
-  // last content slides under the fixed bar (design review finding 13,
-  // worsened variant). h-bottom-spacing-subpage-review encodes the height.
+  // With a review row the footer is taller than the plain 80px subpage bar
+  // and its height is variable (the row wraps in de/tr), so the scroll area
+  // must reserve the measured height — otherwise the last content slides
+  // under the fixed bar (design review finding 13, worsened variant; #562
+  // made it self-correcting). h-bottom-spacing-subpage-review derives from
+  // the --footer-action-height that FooterAction publishes.
   const showReviewFooter = Boolean(reviewFooter && primaryButton);
 
   return (

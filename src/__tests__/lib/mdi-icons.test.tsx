@@ -8,7 +8,14 @@ vi.unmock('@iconify/react');
 
 import { Icon } from '@iconify/react';
 
-import { mdiCheck, mdiClose } from '@/lib/icons';
+import {
+  mdiCheck,
+  mdiClose,
+  mdiFileDocumentOutline,
+  mdiStar,
+  materialSymbolsClose,
+  materialSymbolsSaveOutline,
+} from '@/lib/icons';
 
 /**
  * #548 evidence rework, item 3: the review buttons passed 'mdi:check' /
@@ -46,5 +53,43 @@ describe('bundled mdi icons (#548 evidence rework)', () => {
     expect(mdiClose.body).toContain('M19 6.41L17.59 5L12 10.59');
     expect(mdiCheck.width).toBe(24);
     expect(mdiClose.width).toBe(24);
+  });
+
+  it('carries the real glyphs for the #562 converted sites (verified against api.iconify.design)', () => {
+    // mdi.json?icons=star,file-document-outline and
+    // material-symbols.json?icons=save-outline,close — the remaining
+    // string-name call sites on the halal review surfaces.
+    expect(mdiStar.body).toContain('M12 17.27L18.18 21');
+    expect(mdiFileDocumentOutline.body).toContain('M6 2a2 2 0 0 0-2 2v16');
+    expect(materialSymbolsSaveOutline.body).toContain('M21 7v12q0 .825');
+    expect(materialSymbolsClose.body).toContain('M6.4 19L5 17.6l5.6-5.6');
+    for (const icon of [
+      mdiStar,
+      mdiFileDocumentOutline,
+      materialSymbolsSaveOutline,
+      materialSymbolsClose,
+    ]) {
+      expect(icon.width).toBe(24);
+      expect(icon.height).toBe(24);
+    }
+  });
+
+  it('renders the #562 glyph set with fetch made unreachable', async () => {
+    const fetchStub = vi.fn().mockRejectedValue(new Error('network is off'));
+    vi.stubGlobal('fetch', fetchStub);
+
+    render(
+      <>
+        <Icon height={12} icon={mdiStar} width={12} />
+        <Icon height={24} icon={mdiFileDocumentOutline} width={24} />
+        <Icon height={24} icon={materialSymbolsSaveOutline} width={24} />
+        <Icon height={24} icon={materialSymbolsClose} width={24} />
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('svg').length).toBe(4);
+    });
+    expect(fetchStub).not.toHaveBeenCalled();
   });
 });

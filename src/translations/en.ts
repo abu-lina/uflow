@@ -1319,6 +1319,9 @@ export const en = {
       // The meta fetch failed, so the review row cannot render. Named in the
       // footer, not silent — a save-only bar on a pending row looked healthy.
       loadFailed: 'Could not load this entry — review actions unavailable. Reload to retry.',
+      // #562: 401/403 — the session expired or the account is not an admin.
+      // Reloading cannot fix that; the instruction is to sign in again.
+      loadFailedAuth: 'Your session cannot review this entry. Sign in again, then retry.',
       // Localized status labels interpolated into decidedNotice (AC 14):
       // the raw enum must never leak into a translated sentence.
       status: {

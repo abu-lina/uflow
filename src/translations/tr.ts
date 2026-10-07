@@ -1329,6 +1329,10 @@ export const tr = {
       decidedNotice: 'Bu kayıt zaten {{status}}. Burada durum işlemi yok.',
       loadFailed:
         'Kayıt yüklenemedi — inceleme işlemleri kullanılamıyor. Yeniden yükleyip tekrar dene.',
+      // #562: 401/403 — oturumun süresi doldu ya da hesap yönetici değil;
+      // yeniden yüklemek bunu düzeltmez, tekrar giriş gerekir.
+      loadFailedAuth:
+        'Oturumun bu kaydı incelemeye yetkili değil. Tekrar giriş yapıp yeniden dene.',
       status: {
         rejected: 'reddedildi',
         removedByOwner: 'sahibi tarafından kaldırıldı',

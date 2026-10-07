@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
+import { useState } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 import { RejectModal } from '../RejectModal';
 
@@ -279,5 +280,87 @@ describe('RejectModal', () => {
 
     // Textarea should be empty
     expect(screen.getByRole('textbox')).toHaveValue('');
+  });
+
+  // #562 Code Review 2: same focus gap as ApproveModal — no initial focus,
+  // no trap, no restore, no aria-describedby. The pair must behave as one
+  // system.
+  describe('focus management (#562)', () => {
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            open reject
+          </button>
+          <RejectModal
+            isOpen={open}
+            providerName="Test Provider"
+            onClose={() => setOpen(false)}
+            onConfirm={mockOnConfirm}
+          />
+        </>
+      );
+    }
+
+    it('describes the dialog via aria-describedby', () => {
+      render(
+        <RejectModal
+          isOpen={true}
+          providerName="Test Provider"
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+        />,
+      );
+
+      const dialog = screen.getByRole('dialog');
+      const descId = dialog.getAttribute('aria-describedby');
+      expect(descId).toBeTruthy();
+      expect(document.getElementById(descId as string)).toHaveTextContent(/rejectConfirm\.body/);
+    });
+
+    it('moves focus into the dialog on open — the textarea, so the required reason is reachable', async () => {
+      render(<Harness />);
+      const trigger = screen.getByRole('button', { name: 'open reject' });
+      trigger.focus();
+      fireEvent.click(trigger);
+
+      const dialog = await screen.findByRole('dialog');
+      await waitFor(() => {
+        expect(dialog.contains(document.activeElement)).toBe(true);
+      });
+      expect(document.activeElement).toBe(screen.getByRole('textbox'));
+    });
+
+    it('traps Tab inside the dialog', async () => {
+      render(<Harness />);
+      fireEvent.click(screen.getByRole('button', { name: 'open reject' }));
+      await screen.findByRole('dialog');
+
+      const textarea = screen.getByRole('textbox');
+      const cancel = screen.getByRole('button', { name: 'common.cancel' });
+      // Confirm is disabled with empty feedback, so the tab order is
+      // textarea -> cancel and cancel is the trap's last control.
+      cancel.focus();
+      fireEvent.keyDown(cancel, { key: 'Tab' });
+      expect(document.activeElement).toBe(textarea);
+
+      fireEvent.keyDown(textarea, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(cancel);
+    });
+
+    it('Escape closes and focus returns to the trigger', async () => {
+      render(<Harness />);
+      const trigger = screen.getByRole('button', { name: 'open reject' });
+      trigger.focus();
+      fireEvent.click(trigger);
+      await screen.findByRole('dialog');
+
+      fireEvent.keyDown(document, { key: 'Escape' });
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+      expect(document.activeElement).toBe(trigger);
+    });
   });
 });

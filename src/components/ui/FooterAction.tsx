@@ -110,6 +110,33 @@ export function FooterAction({
   className = '',
   contentClassName = '',
 }: FooterActionProps) {
+  const footerRef = React.useRef<HTMLElement | null>(null);
+  const hasTopRow = topRow != null;
+
+  // #562: with a topRow the bar's height is variable — the review row is
+  // free-form content that wraps to two lines in de/tr, so the fixed 140px
+  // spacer token under-reserves and content slides under the bar. Publish
+  // the measured height the way Header publishes --desktop-header-height;
+  // the subpage-review spacer token derives from it with a 140px fallback
+  // for pre-measure and no-JS.
+  React.useEffect(() => {
+    const el = footerRef.current;
+    if (!hasTopRow || !el || typeof ResizeObserver === 'undefined') return;
+    const publish = () => {
+      const height = Math.ceil(el.getBoundingClientRect().height);
+      if (height > 0) {
+        document.documentElement.style.setProperty('--footer-action-height', `${height}px`);
+      }
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty('--footer-action-height');
+    };
+  }, [hasTopRow]);
+
   // Validate props: must have either actionButton OR (primaryButton + secondaryButton)
   if (!actionButton && (!primaryButton || !secondaryButton)) {
     console.warn(
@@ -135,6 +162,7 @@ export function FooterAction({
     if (actionButton.trailingIcon) {
       return (
         <footer
+          ref={footerRef}
           className={cn(
             'fixed bottom-0 left-0 right-0 z-[60] w-full border-t border-border/30',
             className,
@@ -181,6 +209,7 @@ export function FooterAction({
     // Default: leading icon or no icon
     return (
       <footer
+        ref={footerRef}
         className={cn(
           'fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]',
           className,
@@ -225,6 +254,7 @@ export function FooterAction({
   if (primaryButton && secondaryButton) {
     return (
       <footer
+        ref={footerRef}
         className={cn(
           'fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]',
           className,

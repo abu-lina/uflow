@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { mdiCheck, mdiClose } from '@/lib/icons';
+import { mdiCheck, mdiClose, mdiStar } from '@/lib/icons';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
@@ -589,7 +589,7 @@ export const ProviderCard = React.memo(
                               key={i}
                               className="text-amber-500"
                               height={12}
-                              icon="mdi:star"
+                              icon={mdiStar}
                               width={12}
                             />
                           ))}

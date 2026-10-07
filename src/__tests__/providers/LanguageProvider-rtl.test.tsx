@@ -81,4 +81,45 @@ describe('LanguageProvider bidi isolation (#548)', () => {
       expect(text).not.toContain(FSI);
     });
   });
+
+  // #562 Code Review 2: the bidi hunk also swapped a string replacement for
+  // a function replacer. String replacement interprets $-tokens in the
+  // value — '$&' expanded to the matched '{{name}}', '$$' collapsed to '$',
+  // '$1' resolved capture references. The function replacer renders them
+  // literally. That is a real fix (prices, '$'-prefixed IDs) and it changes
+  // LTR output too, so it is pinned on both directions.
+  it('renders $-tokens in an interpolated value literally in an LTR locale', async () => {
+    localStorage.setItem('preferred-language', 'de');
+
+    render(
+      <LanguageProvider>
+        <InterpolationProbe providerName="$& $1 $$" />
+      </LanguageProvider>,
+    );
+
+    await waitFor(() => {
+      const text = screen.getByTestId('probe').textContent ?? '';
+      // Literal tokens — under the old string replacer this produced
+      // "{{name}} $1 $" instead.
+      expect(text).toContain('$& $1 $$');
+      expect(text).not.toContain('{{name}}');
+    });
+  });
+
+  it('renders $-tokens literally inside the bidi isolation in an RTL locale', async () => {
+    await loadTranslations('ar');
+    localStorage.setItem('preferred-language', 'ar');
+
+    render(
+      <LanguageProvider>
+        <InterpolationProbe providerName="$& $1 $$" />
+      </LanguageProvider>,
+    );
+
+    await waitFor(() => {
+      const text = screen.getByTestId('probe').textContent ?? '';
+      expect(text).toContain(FSI + '$& $1 $$' + PDI);
+      expect(text).not.toContain('{{name}}');
+    });
+  });
 });

@@ -174,10 +174,14 @@ const config: Config = {
         'bottom-spacing-12': 'calc(48px + 1rem + max(12px, env(safe-area-inset-bottom)))',
         'bottom-spacing-16': 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))',
         'bottom-spacing-subpage': 'calc(80px + 1rem + max(12px, env(safe-area-inset-bottom)))',
-        // #548: subpage footer with a review row above the action row:
-        // pt-4 (16) + 48px row + gap-3 (12) + 48px row + pb-4 (16) = 140px.
+        // #548: subpage footer with a review row above the action row. The
+        // bar's height is variable — the review row is free-form content
+        // that wraps to two lines in de/tr — so the token derives from the
+        // measured --footer-action-height that FooterAction publishes via
+        // ResizeObserver (#562). 140px is only the pre-measure fallback
+        // (pt-4 16 + 48 + gap-3 12 + 48 + pb-4 16, before RO lands).
         'bottom-spacing-subpage-review':
-          'calc(140px + 1rem + max(12px, env(safe-area-inset-bottom)))',
+          'calc(var(--footer-action-height, 140px) + 1rem + max(12px, env(safe-area-inset-bottom)))',
 
         // Icon sizes (Material Symbols - standardized)
         'icon-xs': '16px',

@@ -228,13 +228,17 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         // Without it, a weak-direction value inside an RTL sentence lets
         // surrounding punctuation reorder — the trailing '.' rendered at
         // the start of the line on the halal check page. FSI/PDI are
-        // invisible format characters; LTR output stays byte-identical so
-        // existing text and aria-label assertions are untouched.
+        // invisible format characters; LTR output is unaffected.
         const isolate = RTL_LANGUAGES.includes(language);
         for (const [varName, varValue] of Object.entries(variables)) {
           const text = isolate ? `${FSI}${String(varValue)}${PDI}` : String(varValue);
-          // Function replacer: a literal '$' in the value must not be
-          // treated as a replacement pattern.
+          // Function replacer, not a replacement string: a literal '$' in
+          // the value must not act as a replacement pattern. This CHANGES
+          // output for values containing $-tokens — a string replacer would
+          // expand '$&' to the matched '{{name}}', collapse '$$' to '$' and
+          // substitute '$1' capture references; the function replacer
+          // renders all of them literally. That is a deliberate fix
+          // (prices, '$'-prefixed IDs), covered in LanguageProvider-rtl.
           result = result.replace(new RegExp(`\\{\\{${varName}\\}\\}`, 'g'), () => text);
         }
       }

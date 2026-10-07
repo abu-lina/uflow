@@ -1343,6 +1343,10 @@ export const de = {
       // im Footer benennen statt schweigen.
       loadFailed:
         'Eintrag konnte nicht geladen werden — Prüfaktionen nicht verfügbar. Neu laden und erneut versuchen.',
+      // #562: 401/403 — Sitzung abgelaufen oder kein Admin-Konto; ein
+      // Reload kann das nicht reparieren, also neu anmelden.
+      loadFailedAuth:
+        'Deine Sitzung darf diesen Eintrag nicht prüfen. Melde dich erneut an und versuche es dann noch einmal.',
       // Localized status labels interpolated into decidedNotice (AC 14):
       // the raw enum must never leak into a translated sentence.
       status: {

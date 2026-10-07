@@ -82,6 +82,9 @@ const REVIEW_KEYS = [
   'adminHalalEdit.review.rejectConfirm.confirming',
   // Evidence rework: the footer names a failed meta fetch in every locale.
   'adminHalalEdit.review.loadFailed',
+  // #562 Code Review 2: a 401/403 needs a different instruction than a
+  // network failure — reload cannot fix an expired session.
+  'adminHalalEdit.review.loadFailedAuth',
 ];
 
 /**

@@ -192,12 +192,14 @@ describe('EditHalalPage — admin review footer (#548)', () => {
   });
 
   it('surfaces a failed provider-meta fetch instead of silently dropping review actions', async () => {
-    // Evidence rework item 2: when /api/admin/providers/[id] fails (401/403/
-    // 500), providerMeta stayed null and the footer rendered save+close with
-    // no review row and no signal — an admin on a pending provider saw a
-    // page that looked healthy but could not act. The failure must be said.
+    // Evidence rework item 2: when /api/admin/providers/[id] fails (500,
+    // network), providerMeta stayed null and the footer rendered save+close
+    // with no review row and no signal — an admin on a pending provider saw
+    // a page that looked healthy but could not act. The failure must be said.
     mockFetch.mockImplementation(() =>
-      Promise.resolve(new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 })),
+      Promise.resolve(
+        new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 }),
+      ),
     );
     renderPage();
 
@@ -210,6 +212,70 @@ describe('EditHalalPage — admin review footer (#548)', () => {
     expect(
       screen.queryByRole('button', { name: 'adminHalalEdit.review.reject' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('tells a 401/403 to sign in again — reloading cannot fix an expired session (#562)', async () => {
+    // Code Review 2 finding 5a: 403 and a network failure used to land in
+    // the same catch behind the same "reload to retry" copy. Reloading a
+    // dead session just fails again; the copy must say re-authenticate.
+    mockFetch.mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 })),
+    );
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('adminHalalEdit.review.loadFailedAuth')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('adminHalalEdit.review.loadFailed')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'adminHalalEdit.review.approve' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('logs a failed meta fetch instead of swallowing it (#562)', async () => {
+    // Code Review 2 finding 5b: both failure paths were silent — a systemic
+    // 500 on the meta endpoint would be invisible in logs. The client must
+    // at least console.error; the user-facing copy stays a generic key with
+    // no status codes or internals (org guardrail on client-facing detail).
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetch.mockRejectedValue(new TypeError('fetch failed'));
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('adminHalalEdit.review.loadFailed')).toBeInTheDocument();
+    });
+    expect(
+      errSpy.mock.calls.some((call) => String(call[0]).includes('provider meta')),
+      'expected a logged provider-meta failure',
+    ).toBe(true);
+    errSpy.mockRestore();
+  });
+
+  it('a storage failure after meta loads does not hide the review actions (#562)', async () => {
+    // Code Review 2 finding 5c: the catch wrapped the whole handler, so a
+    // throw AFTER setProviderMeta (Safari private mode denies localStorage)
+    // rendered loadFailed over healthy data and hid the review actions —
+    // the exact failure the silent-loss commit was written to eliminate.
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => {
+      if (key === STORAGE_KEY) throw new DOMException('storage denied', 'SecurityError');
+      return null;
+    });
+    try {
+      renderPage();
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }),
+        ).toBeInTheDocument();
+      });
+      expect(
+        screen.getByRole('button', { name: 'adminHalalEdit.review.reject' }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/loadFailed/)).not.toBeInTheDocument();
+    } finally {
+      // A failure here must not leak the throwing stub into later tests.
+      getItem.mockRestore();
+    }
   });
 
   it('keeps the approve slot rendered but disabled for an approved provider (no destructive reflow)', async () => {
@@ -410,6 +476,75 @@ describe('EditHalalPage — admin review footer (#548)', () => {
     });
   });
 
+  it('derives the review-row spacer from the measured footer height, not a hardcoded 140px (#562)', async () => {
+    // Code Review 2: subpage-review hardcoded 140px for variable content —
+    // the review row wraps to two lines in de/tr, and a wrapped row exceeds
+    // 140px so the last content slides back under the fixed bar. Same
+    // pattern as Header's --desktop-header-height: FooterAction publishes
+    // its measured height and the spacer token derives from it.
+    const gcr = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        const h = this.tagName === 'FOOTER' ? 200 : 0;
+        return {
+          height: h,
+          width: 0,
+          top: 0,
+          bottom: h,
+          left: 0,
+          right: 0,
+          x: 0,
+          y: 0,
+          toJSON: () => ({}),
+        } as DOMRect;
+      });
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        private cb: ResizeObserverCallback;
+        constructor(cb: ResizeObserverCallback) {
+          this.cb = cb;
+        }
+        observe(_el: Element) {
+          this.cb([] as unknown as ResizeObserverEntry[], this as unknown as ResizeObserver);
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    try {
+      const { container } = renderPage();
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }),
+        ).toBeInTheDocument();
+      });
+      await waitFor(() => {
+        // A wrapped two-line review row is 200px here — the spacer must
+        // track the measurement, not the token's old literal.
+        expect(document.documentElement.style.getPropertyValue('--footer-action-height')).toBe(
+          '200px',
+        );
+      });
+      expect(container.querySelector('.h-bottom-spacing-subpage-review')).not.toBeNull();
+
+      // And the token itself derives from the published measurement —
+      // 140px survives only as the pre-measure fallback.
+      const tailwindSource = readFileSync(
+        path.join(__dirname, '../../../tailwind.config.ts'),
+        'utf-8',
+      );
+      expect(tailwindSource).toMatch(
+        /bottom-spacing-subpage-review['"]?:\s*'calc\(var\(--footer-action-height/,
+      );
+    } finally {
+      gcr.mockRestore();
+      vi.unstubAllGlobals();
+      document.documentElement.style.removeProperty('--footer-action-height');
+    }
+  });
+
   it('renders the review actions inside the single footer bar, not a second stacked bar', async () => {
     const { container } = renderPage();
 
@@ -448,6 +583,45 @@ describe('EditHalalPage — admin review footer (#548)', () => {
     expect(dataIcons.length).toBeGreaterThanOrEqual(2);
     expect(capturedIcons).not.toContain('mdi:check');
     expect(capturedIcons).not.toContain('mdi:close');
+  });
+
+  it('uses bundled icon data on every glyph this surface owns (#562)', async () => {
+    // Code Review 2: the icon fix left three string-name sites on the same
+    // surfaces — the certificate file glyph (mdi:file-document-outline) and
+    // the footer's own save/close glyphs (material-symbols:save-outline,
+    // material-symbols:close). Those still race the Iconify API while the
+    // approve/reject glyphs on the same bar do not.
+    const { container } = renderPage();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: 'adminHalalEdit.review.approve' }),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: 'common.save' })).toBeInTheDocument();
+
+    expect(capturedIcons).not.toContain('mdi:file-document-outline');
+    expect(capturedIcons).not.toContain('material-symbols:save-outline');
+    expect(capturedIcons).not.toContain('material-symbols:close');
+
+    // And the bundled objects actually render on those spots: stage a
+    // certificate file so the document glyph mounts, and check the footer
+    // buttons carry icon content (the mocked Icon renders a span).
+    const toggle = container.querySelector('button.w-11');
+    expect(toggle).not.toBeNull();
+    fireEvent.click(toggle as Element);
+    const fileInput = document.querySelector('input[type="file"]');
+    fireEvent.change(fileInput as Element, {
+      target: { files: [new File(['x'], 'cert.pdf', { type: 'application/pdf' })] },
+    });
+    await waitFor(() => {
+      expect(screen.getByText('cert.pdf')).toBeInTheDocument();
+    });
+    const dataIcons = capturedIcons.filter(
+      (icon) => typeof icon === 'object' && icon !== null && 'body' in icon,
+    );
+    // approve + reject + certificate document glyph + save + close
+    expect(dataIcons.length).toBeGreaterThanOrEqual(5);
   });
 
   it('reject opens RejectModal, keeps confirm disabled until a reason is typed, then submits (AC 6)', async () => {

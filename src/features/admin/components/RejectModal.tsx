@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useId } from 'react';
+import { useState, useEffect, useCallback, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { useLanguage } from '@/providers/LanguageProvider';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface RejectModalProps {
   /** Whether the modal is open */
@@ -44,6 +45,13 @@ export function RejectModal({
   const [feedback, setFeedback] = useState('');
   const { t } = useLanguage();
   const titleId = useId();
+  const descId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // #562: same focus contract as ApproveModal — focus lands in the dialog
+  // (the required-reason textarea, the first focusable), Tab is trapped,
+  // and closing restores focus to the trigger.
+  useFocusTrap(dialogRef, isOpen);
 
   // Reset feedback when modal closes
   useEffect(() => {
@@ -95,19 +103,22 @@ export function RejectModal({
           onClick={handleBackdropClick}
         >
           <motion.div
+            ref={dialogRef}
             animate={{ opacity: 1, scale: 1 }}
+            aria-describedby={descId}
             aria-labelledby={titleId}
             aria-modal="true"
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
             exit={{ opacity: 0, scale: 0.95 }}
             initial={{ opacity: 0, scale: 0.95 }}
             role="dialog"
+            tabIndex={-1}
           >
             <h2 className="mb-2 text-lg font-semibold text-content-heading" id={titleId}>
               {t('adminHalalEdit.review.rejectConfirm.title')}
             </h2>
 
-            <p className="mb-4 text-sm text-content">
+            <p className="mb-4 text-sm text-content" id={descId}>
               {t('adminHalalEdit.review.rejectConfirm.body', { name: providerName })}
             </p>
 
