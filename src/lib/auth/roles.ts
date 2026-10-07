@@ -10,7 +10,7 @@ export type UserRole = 'user' | 'owner' | 'admin' | 'moderator';
 export async function getUserRole(userId: string): Promise<UserRole> {
   // Use admin client to bypass RLS
   const supabase = getSupabaseAdmin();
-  
+
   // First, try to get all rows to see if there are duplicates
   const { data: allRows, error: queryError } = await supabase
     .from('users')
@@ -29,11 +29,13 @@ export async function getUserRole(userId: string): Promise<UserRole> {
   // If we found rows, return the role from the first one
   if (allRows && allRows.length > 0) {
     const role = (allRows[0].role as UserRole) || 'user';
-    
+
     if (allRows.length > 1) {
-      console.warn(`[getUserRole] Found ${allRows.length} rows for user ${userId}. This should not happen! Using first row.`);
+      console.warn(
+        `[getUserRole] Found ${allRows.length} rows for user ${userId}. This should not happen! Using first row.`,
+      );
     }
-    
+
     return role;
   }
 
@@ -91,25 +93,15 @@ export async function isAdminOrModerator(userId: string): Promise<boolean> {
 /**
  * Check if user has required role
  */
-export async function hasRole(userId: string, requiredRole: UserRole | UserRole[]): Promise<boolean> {
+export async function hasRole(
+  userId: string,
+  requiredRole: UserRole | UserRole[],
+): Promise<boolean> {
   const userRole = await getUserRole(userId);
-  
+
   if (Array.isArray(requiredRole)) {
     return requiredRole.includes(userRole);
   }
-  
+
   return userRole === requiredRole;
 }
-
-/**
- * Get user role from auth user metadata (fallback)
- * This checks user_metadata.role as a fallback if database lookup fails
- */
-export function getRoleFromMetadata(user: { user_metadata?: { role?: string } }): UserRole {
-  const role = user.user_metadata?.role;
-  if (role && ['user', 'owner', 'admin', 'moderator'].includes(role)) {
-    return role as UserRole;
-  }
-  return 'user';
-}
-
