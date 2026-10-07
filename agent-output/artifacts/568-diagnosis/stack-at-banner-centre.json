@@ -1,0 +1,13 @@
+[
+  "DIV.fixed inset-0 z-0 bg-black/40 backdrop-blur-sm [z=0, pos=fixed]",
+  "DIV.fixed inset-0 z-[999999] flex items-center justify-center transition-o [z=999999, pos=fixed]",
+  "P.mx-auto max-w-4xl text-sm font-medium text-amber-900 [z=auto, pos=static]",
+  "DIV.sticky top-0 z-50 border-b border-amber-200 bg-amber-50 px-6 py-3 [z=50, pos=sticky]",
+  "NAV.flex w-full flex-col items-center gap-4 py-2 [z=auto, pos=static]",
+  "HEADER.header-gradient fixed left-0 right-0 top-0 z-50 w-full pt-[calc(env(sa [z=50, pos=fixed]",
+  "DIV.relative flex flex-1 flex-col [z=auto, pos=relative]",
+  "MAIN.flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-none [z=auto, pos=static]",
+  "DIV.page-background h-screen-fix relative flex flex-col [z=auto, pos=relative]",
+  "BODY.relative m-0 min-h-screen w-full max-w-[100vw] overflow-x-hidden p-0 _ [z=auto, pos=relative]",
+  "HTML. [z=auto, pos=static]"
+]
