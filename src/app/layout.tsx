@@ -5,6 +5,7 @@ import Script from 'next/script';
 import { Header } from '@/components/layout/Header';
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
 import { ClientProviders } from '@/components/layout/ClientProviders';
+import { getInitialAuth } from '@/lib/auth/initial-auth';
 import { generateLocalizedMetadata } from '@/utils/metadataUtils';
 import '@/styles/globals.css';
 import '@/styles/toast-custom.css';
@@ -35,7 +36,12 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  // Resolve identity + role server-side so first paint already carries the
+  // authoritative public.users role (#567). The client must not decide admin
+  // visibility off the self-writable user_metadata.role JWT claim.
+  const { user: initialUser, role: initialRole } = await getInitialAuth();
+
   const themeScript = `
     (function() {
       try {
@@ -70,7 +76,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
             strategy="afterInteractive"
           />
         )}
-        <ClientProviders initialUser={null}>
+        <ClientProviders initialRole={initialRole} initialUser={initialUser}>
           {/* Desktop header only */}
           <div className="hidden md:block">
             <Header />
