@@ -47,19 +47,31 @@ export function AuthProvider({
   // or a different account signed in while the query was in flight).
   const userIdRef = useRef<string | null>(initialUser?.id ?? null);
 
+  // Key the effect on the id, not the object: initialUser is a fresh object
+  // on every RSC render, and depending on it would re-subscribe on every
+  // router.refresh() for no reason.
+  const initialUserId = initialUser?.id ?? null;
+
   useEffect(() => {
     let mounted = true;
+    let roleFetchTimer: ReturnType<typeof setTimeout> | undefined;
 
     // Reads the caller's own public.users row. The browser client carries the
     // session JWT, so the "users can view their own profile" RLS policy is
     // what authorizes this read — same row the server gates consult.
     const fetchRole = async (userId: string) => {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('users')
           .select('role')
           .eq('user_id', userId)
           .maybeSingle();
+        if (error) {
+          // Still fails closed to 'user' below, but make the demotion
+          // diagnosable: RLS denials, expired tokens and PostgREST 5xx
+          // land here as returned errors, not as throws.
+          console.warn('[fetchRole] role lookup failed:', error.message);
+        }
         if (mounted && userIdRef.current === userId) {
           const rowRole = data?.role;
           setRole(
@@ -69,8 +81,10 @@ export function AuthProvider({
           );
         }
       } catch {
-        // Transient lookup failure — keep the current role rather than
-        // flashing admin chrome off and on.
+        // Only a thrown lookup (network down, client threw) keeps the
+        // current role rather than flashing admin chrome off and on. A
+        // returned PostgREST error takes the path above and resolves to
+        // 'user'.
       }
     };
 
@@ -85,13 +99,13 @@ export function AuthProvider({
         // Defer the read so it runs after supabase-js finishes emitting the
         // auth event; calling back into the client inside the callback can
         // deadlock on its internal auth lock.
-        setTimeout(() => {
+        roleFetchTimer = setTimeout(() => {
           void fetchRole(nextUser.id);
         }, 0);
       }
     };
 
-    if (initialUser === null) {
+    if (initialUserId === null) {
       const initializeAuth = async () => {
         try {
           const {
@@ -143,9 +157,10 @@ export function AuthProvider({
 
     return () => {
       mounted = false;
+      clearTimeout(roleFetchTimer);
       subscription.unsubscribe();
     };
-  }, [initialUser]);
+  }, [initialUserId]);
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();

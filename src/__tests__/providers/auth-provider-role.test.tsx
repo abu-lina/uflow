@@ -186,6 +186,10 @@ describe('AuthProvider role handling (#567)', () => {
         }),
     );
     emitAuth('SIGNED_IN', makeSession(user));
+    // The fetch is deferred through setTimeout(0), so wait until it has
+    // actually started; before this, resolveRole was still the no-op above
+    // when called, which left the userIdRef stale-guard unexercised.
+    await vi.waitFor(() => expect(mocks.maybeSingle).toHaveBeenCalled());
     // Sign out before the fetch resolves
     emitAuth('SIGNED_OUT', null);
 
@@ -195,5 +199,59 @@ describe('AuthProvider role handling (#567)', () => {
     });
 
     expect(result.current.isAdmin).toBe(false);
+  });
+
+  it('drops a role response for the previous user when a different account signs in', async () => {
+    const userA = makeUser('u-first');
+    const userB = makeUser('u-second');
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
+    });
+
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // A signs in; its role query stays pending
+    let resolveA: (v: { data: { role: string } | null; error: null }) => void = () => {};
+    mocks.maybeSingle.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveA = resolve;
+        }),
+    );
+    emitAuth('SIGNED_IN', makeSession(userA));
+    await vi.waitFor(() => expect(mocks.maybeSingle).toHaveBeenCalledTimes(1));
+
+    // B signs in before A's query resolves; B's fetch answers 'user'
+    emitAuth('SIGNED_IN', makeSession(userB));
+    await vi.waitFor(() => expect(result.current.role).toBe('user'));
+
+    // A's slow response arrives last and must be dropped by the stale-guard
+    await act(async () => {
+      resolveA({ data: { role: 'admin' }, error: null });
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    expect(result.current.role).toBe('user');
+    expect(result.current.user?.id).toBe('u-second');
+  });
+
+  it('logs the PostgREST error and still fails closed when the role query returns one', async () => {
+    const user = makeUser('u-rls');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mocks.maybeSingle.mockResolvedValue({ data: null, error: { message: 'row level security' } });
+
+    const { result } = renderHook(() => useIsAdmin(), {
+      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
+    });
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    emitAuth('SIGNED_IN', makeSession(user));
+
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith('[fetchRole] role lookup failed:', 'row level security'),
+    );
+    // Fail-closed: a returned error resolves to 'user', never 'admin'
+    expect(result.current.isAdmin).toBe(false);
+    warn.mockRestore();
   });
 });
