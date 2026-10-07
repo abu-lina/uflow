@@ -46,6 +46,14 @@ interface ProviderDetailModalProps {
   onBookmarkChange?: (providerId: string, isBookmarked: boolean) => void;
   initialCommunityServices?: CommunityService[];
   customActionButtons?: React.ReactNode;
+  /**
+   * Issue 568 — review-status banner for non-approved providers. Rendered
+   * inside the modal's own scroll container because on desktop /p/[id] IS this
+   * modal (z-[999999] portal): a page-level banner paints underneath it on an
+   * otherwise empty page. Sticky in the caller's markup keeps it pinned at the
+   * top of the card while the content scrolls.
+   */
+  reviewBanner?: React.ReactNode;
 }
 
 export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
@@ -54,6 +62,7 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
   onBookmarkChange,
   initialCommunityServices,
   customActionButtons,
+  reviewBanner,
 }) => {
   const HALAL_POPUP_VIEW_COUNT_KEY = 'uf_halal_popup_view_count';
   const HALAL_POPUP_MAX_VIEWS = 10;
@@ -398,6 +407,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
         title={communityServices[0]?.community_service_name || provider.provider_name}
         onClose={onClose}
       >
+        {/* Issue 568 — review banner lives inside the modal, first in the
+            scroll container so it can never be covered by this dialog. When it
+            is present it carries the card's top rounding, so the panels keep
+            only their bottom corners. */}
+        {reviewBanner}
         <section
           aria-busy={isLoading}
           aria-label={t('providerDetail.container.ariaProviderDetails')}
@@ -412,7 +426,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             {!isLoading && t('providerDetail.container.ariaProviderDetailsLoaded')}
           </div>
           {/* Left Section */}
-          <div className="absolute left-0 top-0 inline-flex h-[900px] w-[704px] flex-col items-start justify-start gap-8 rounded-l-[48px] bg-white py-10 pl-12 pr-4">
+          <div
+            className={`absolute left-0 top-0 inline-flex h-[900px] w-[704px] flex-col items-start justify-start gap-8 bg-white py-10 pl-12 pr-4 ${
+              reviewBanner ? 'rounded-bl-[48px]' : 'rounded-l-[48px]'
+            }`}
+          >
             {/* Title & Subtitle */}
             <div className="flex flex-col items-start justify-start gap-2 self-stretch">
               <div className="inline-flex items-center justify-start gap-8 self-stretch">
@@ -590,7 +608,11 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
             </div>
           </div>
           {/* Right Section */}
-          <div className="absolute left-[704px] top-0 inline-flex h-[900px] w-[496px] flex-col items-start justify-start gap-4 overflow-y-auto rounded-r-[48px] bg-white py-36 pl-4 pr-12">
+          <div
+            className={`absolute left-[704px] top-0 inline-flex h-[900px] w-[496px] flex-col items-start justify-start gap-4 overflow-y-auto bg-white py-36 pl-4 pr-12 ${
+              reviewBanner ? 'rounded-br-[48px]' : 'rounded-r-[48px]'
+            }`}
+          >
             {/* Header row: admin action buttons + close button */}
             <div className="absolute right-12 top-9 flex items-center gap-2">
               {customActionButtons && (
