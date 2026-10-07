@@ -102,6 +102,13 @@ interface FooterActionProps {
  * />
  * ```
  */
+// #562: mounted topRow publishers, element -> last measured height. The
+// property lives on documentElement, so it has no owner: an unconditional
+// removeProperty on unmount would delete a value a still-mounted consumer
+// depends on. On unmount a consumer removes only its own entry; survivors
+// keep the property, republished at the most recently measured height.
+const footerHeightPublishers = new Map<Element, number>();
+
 export function FooterAction({
   actionButton,
   primaryButton,
@@ -113,18 +120,24 @@ export function FooterAction({
   const footerRef = React.useRef<HTMLElement | null>(null);
   const hasTopRow = topRow != null;
 
-  // #562: with a topRow the bar's height is variable — the review row is
-  // free-form content that wraps to two lines in de/tr, so the fixed 140px
-  // spacer token under-reserves and content slides under the bar. Publish
-  // the measured height the way Header publishes --desktop-header-height;
-  // the subpage-review spacer token derives from it with a 140px fallback
-  // for pre-measure and no-JS.
+  // #562: with a topRow the bar's height is variable. The review slot is
+  // free-form: its pending state is a fixed 48px approve/reject pair, but
+  // the loadFailed/decidedNotice paragraphs wrap past that (QA measured 3
+  // lines = 56px in de, a 149px bar against the 140px token), so a fixed
+  // spacer under-reserves and content slides under the bar. Publish the
+  // measured height the way Header publishes --desktop-header-height; the
+  // subpage-review spacer token derives from it with a 140px fallback for
+  // pre-measure and no-JS.
   React.useEffect(() => {
     const el = footerRef.current;
     if (!hasTopRow || !el || typeof ResizeObserver === 'undefined') return;
     const publish = () => {
       const height = Math.ceil(el.getBoundingClientRect().height);
       if (height > 0) {
+        // delete+set keeps insertion order equal to publish recency, so
+        // the map's last value is the most recently measured survivor.
+        footerHeightPublishers.delete(el);
+        footerHeightPublishers.set(el, height);
         document.documentElement.style.setProperty('--footer-action-height', `${height}px`);
       }
     };
@@ -133,7 +146,18 @@ export function FooterAction({
     ro.observe(el);
     return () => {
       ro.disconnect();
-      document.documentElement.style.removeProperty('--footer-action-height');
+      footerHeightPublishers.delete(el);
+      // Iteration order is publish recency (delete+set on write), so the
+      // last value seen here is the most recently measured survivor.
+      let lastSurvivor = 0;
+      footerHeightPublishers.forEach((height) => {
+        lastSurvivor = height;
+      });
+      if (lastSurvivor === 0) {
+        document.documentElement.style.removeProperty('--footer-action-height');
+      } else {
+        document.documentElement.style.setProperty('--footer-action-height', `${lastSurvivor}px`);
+      }
     };
   }, [hasTopRow]);
 

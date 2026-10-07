@@ -478,10 +478,11 @@ describe('EditHalalPage — admin review footer (#548)', () => {
 
   it('derives the review-row spacer from the measured footer height, not a hardcoded 140px (#562)', async () => {
     // Code Review 2: subpage-review hardcoded 140px for variable content —
-    // the review row wraps to two lines in de/tr, and a wrapped row exceeds
-    // 140px so the last content slides back under the fixed bar. Same
-    // pattern as Header's --desktop-header-height: FooterAction publishes
-    // its measured height and the spacer token derives from it.
+    // the slot's notice paragraphs (loadFailed, decidedNotice) wrap past
+    // the fixed 48px button pair, so the bar exceeds 140px and the last
+    // content slides back under it. Same pattern as Header's
+    // --desktop-header-height: FooterAction publishes its measured height
+    // and the spacer token derives from it.
     const gcr = vi
       .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
       .mockImplementation(function (this: HTMLElement) {
@@ -521,8 +522,8 @@ describe('EditHalalPage — admin review footer (#548)', () => {
         ).toBeInTheDocument();
       });
       await waitFor(() => {
-        // A wrapped two-line review row is 200px here — the spacer must
-        // track the measurement, not the token's old literal.
+        // An over-token footer is 200px here — the spacer must track the
+        // measurement, not the token's old literal.
         expect(document.documentElement.style.getPropertyValue('--footer-action-height')).toBe(
           '200px',
         );

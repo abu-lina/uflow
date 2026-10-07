@@ -76,11 +76,13 @@ export function EditSubPageLayout({
   };
 
   // With a review row the footer is taller than the plain 80px subpage bar
-  // and its height is variable (the row wraps in de/tr), so the scroll area
-  // must reserve the measured height — otherwise the last content slides
-  // under the fixed bar (design review finding 13, worsened variant; #562
-  // made it self-correcting). h-bottom-spacing-subpage-review derives from
-  // the --footer-action-height that FooterAction publishes.
+  // and its height is variable: the pending approve/reject pair is a fixed
+  // 48px, but the slot's notice paragraphs (loadFailed, decidedNotice) are
+  // free-form and wrap past it, so the scroll area must reserve the
+  // measured height — otherwise the last content slides under the fixed
+  // bar (design review finding 13, worsened variant; #562 made it
+  // self-correcting). h-bottom-spacing-subpage-review derives from the
+  // --footer-action-height that FooterAction publishes.
   const showReviewFooter = Boolean(reviewFooter && primaryButton);
 
   return (
