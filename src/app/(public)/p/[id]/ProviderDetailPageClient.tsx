@@ -145,14 +145,23 @@ export function ProviderDetailPageClient({
 
   // Issue 547 — a non-approved row only reaches this point for its creator,
   // owner or an admin; say why the page is up so it doesn't read as live.
-  const reviewBanner =
+  const reviewBannerText =
+    provider.review_status === 'rejected'
+      ? t('submissionStatus.rejectedBanner')
+      : t('submissionStatus.awaitingReview');
+
+  // Issue 568 — on desktop /p/[id] IS the modal: it portals to body at
+  // z-[999999], so a page-level banner renders underneath it on an otherwise
+  // empty page. Mobile keeps the banner as a page-level sticky bar inside the
+  // md:hidden branch; desktop gets the same amber bar as a prop and renders
+  // it inside the modal's own scroll container (sticky keeps it pinned at the
+  // top while the card scrolls).
+  const renderReviewBanner = (className: string) =>
     provider.review_status && provider.review_status !== 'approved' ? (
-      <div className="sticky top-0 z-50 border-b border-amber-200 bg-amber-50 px-6 py-3">
-        <p className="mx-auto max-w-4xl text-sm font-medium text-amber-900">
-          {provider.review_status === 'rejected'
-            ? t('submissionStatus.rejectedBanner')
-            : t('submissionStatus.awaitingReview')}
-        </p>
+      <div
+        className={`sticky top-0 z-50 border-b border-amber-200 bg-amber-50 px-6 py-3 ${className}`}
+      >
+        <p className="mx-auto max-w-4xl text-sm font-medium text-amber-900">{reviewBannerText}</p>
       </div>
     ) : null;
 
@@ -160,8 +169,8 @@ export function ProviderDetailPageClient({
   // Desktop: client-only modal, JS-gated to prevent portal escape on mobile
   return (
     <>
-      {reviewBanner}
       <div className="md:hidden">
+        {renderReviewBanner('')}
         <ProviderDetailPageComponent
           customActionButtons={
             isAdmin ? (
@@ -181,6 +190,7 @@ export function ProviderDetailPageClient({
           }
           initialCommunityServices={initialCommunityServices}
           provider={provider}
+          reviewBanner={renderReviewBanner('w-[1200px] rounded-t-[48px]')}
           onClose={handleModalClose}
         />
       )}

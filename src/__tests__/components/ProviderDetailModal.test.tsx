@@ -906,4 +906,39 @@ describe('ProviderDetailModal Component', () => {
       expect(headerRow?.className).not.toContain('bottom-24');
     });
   });
+
+  describe('Issue 568: review banner placement', () => {
+    // The defect was structural, not numeric: a page-level banner at z-50 can
+    // never beat this dialog's z-[999999] portal. The fix is that the banner
+    // is rendered inside the modal's scroll container; this asserts that seam
+    // — the prop exists, renders, and lands inside modal-content.
+    it('renders reviewBanner inside the modal content [post-fix PASSES]', () => {
+      render(
+        <ProviderDetailModal
+          provider={mockProvider}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+          reviewBanner={<div data-testid="review-banner">Awaiting review</div>}
+        />,
+      );
+
+      const banner = screen.getByTestId('review-banner');
+      expect(banner).toBeInTheDocument();
+      expect(screen.getByTestId('modal-content').contains(banner)).toBe(true);
+      // The banner is the first thing in the scroll container, above the card.
+      expect(screen.getByTestId('modal-content').firstElementChild).toBe(banner);
+    });
+
+    it('renders no banner markup when reviewBanner is not passed [regression]', () => {
+      render(
+        <ProviderDetailModal
+          provider={mockProvider}
+          onBookmarkChange={mockOnBookmarkChange}
+          onClose={mockOnClose}
+        />,
+      );
+
+      expect(screen.queryByTestId('review-banner')).not.toBeInTheDocument();
+    });
+  });
 });
