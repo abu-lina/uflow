@@ -15,10 +15,12 @@ import { SplashProvider } from '@/providers/splash-provider';
 import { LanguageProvider } from '@/providers/LanguageProvider';
 import { LanguageUpdater } from '@/components/layout/LanguageUpdater';
 import type { User } from '@supabase/supabase-js';
+import type { UserRole } from '@/lib/auth/roles';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
   initialUser: User | null;
+  initialRole?: UserRole | null;
 }
 
 const TOASTER_TOP_OFFSET = 'calc(env(safe-area-inset-top) + 16px)';
@@ -52,7 +54,11 @@ function getQueryClient() {
   }
 }
 
-export function ClientProviders({ children, initialUser }: ClientProvidersProps) {
+export function ClientProviders({
+  children,
+  initialRole = null,
+  initialUser,
+}: ClientProvidersProps) {
   // Use useState with lazy initialization to ensure QueryClient is only created once
   const [queryClient] = useState(() => getQueryClient());
 
@@ -61,7 +67,7 @@ export function ClientProviders({ children, initialUser }: ClientProvidersProps)
       <ThemeProvider defaultTheme="default">
         <LanguageProvider>
           <LanguageUpdater />
-          <AuthProvider initialUser={initialUser}>
+          <AuthProvider initialRole={initialRole} initialUser={initialUser}>
             <AuthSyncer />
             <FormProvider>
               <SplashProvider>
