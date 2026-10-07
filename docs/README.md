@@ -47,9 +47,9 @@ System architecture, design decisions, and database documentation:
 
 UI/UX design system, components, and styling guidelines:
 
-- **COLOR_*.md** - Color palette, state mapping, structure
-- **BUTTON_*.md** - Button component design and refactoring
-- **ICON_*.md** - Icon standardization and usage standards
+- `COLOR_*.md` - Color palette, state mapping, structure
+- `BUTTON_*.md` - Button component design and refactoring
+- `ICON_*.md` - Icon standardization and usage standards
 - **COMPONENT_NAMING_COMPARISON.md** - Component naming conventions
 - **SIGNUP_FLOW_DESIGN.md** - Signup flow design documentation
 - **TAILWIND_CONFIG_OPTIMIZATION.md** - Tailwind configuration
@@ -63,7 +63,7 @@ UI/UX design system, components, and styling guidelines:
 
 Feature documentation and specifications:
 
-- **QUICK_CREATE_*.md** - Quick create feature documentation
+- `QUICK_CREATE_*.md` - Quick create feature documentation
 - **OFFERS_NEEDS_MATCHING_FEATURE.md** - Matching feature specification
 - **UNIFIED_CREATION_IMPLEMENTATION.md** - Unified creation flow
 - **CATEGORIZATION_MAPPING.md** - Category mapping documentation
@@ -104,12 +104,14 @@ Essential deployment documentation:
 Setup guides, configuration, and best practices:
 
 ### Security Guides
+
 - **SECURITY_OVERVIEW.md** - Complete security overview (Overall Grade: A)
 - **CSP_BEST_PRACTICES.md** - Content Security Policy best practices
 - **SIGNUP_SECURITY_IMPLEMENTATION.md** - Bot protection and signup security
 - **SIGNUP_SECURITY_BEST_PRACTICES_REVIEW.md** - Security assessment
 
 ### Setup and Configuration Guides
+
 - **SUPABASE_SETUP_GUIDE.md** - Supabase configuration
 - **UAT_SETUP_GUIDE.md** - UAT environment setup
 - **ENVIRONMENT_SETUP_QUICK_START.md** - Quick environment setup
@@ -128,19 +130,22 @@ Setup guides, configuration, and best practices:
 Bug fixes, solutions, troubleshooting guides, and action items:
 
 ### Fixes
+
 - **FIX_LOGIN_AFTER_EMAIL_CONFIRMATION.md** - Email confirmation login issue
 - **FIX_406_EMAIL_CONFIRMATION.md** - 406 error fix
 - **BUILD_FIXES_SUMMARY.md** - Build linting error fixes
 - **FIXES_SUMMARY_SECURITY.md** - Security fixes summary
 
 ### Troubleshooting
-- **CONNECTIVITY_*.md** - Connectivity status and troubleshooting
-- **MIME_*.md** - MIME type diagnostics and resolutions
-- **SUPABASE_FIX_*.md** - Supabase-related fixes and diagnostics
-- **HETZNER_*.md** - Hetzner server information and verification
-- **UAT_*.md** - UAT environment troubleshooting
+
+- `CONNECTIVITY_*.md` - Connectivity status and troubleshooting
+- `MIME_*.md` - MIME type diagnostics and resolutions
+- `SUPABASE_FIX_*.md` - Supabase-related fixes and diagnostics
+- `HETZNER_*.md` - Hetzner server information and verification
+- `UAT_*.md` - UAT environment troubleshooting
 
 ### Action Items
+
 - **ACTION_ITEMS.md** - Current action items and tasks
 - **PURGE_CLOUDFLARE_NOW.md** - Cloudflare cache purging
 - **CLEAR_BROWSER_CACHE.md** - Browser cache clearing instructions
@@ -153,10 +158,10 @@ Bug fixes, solutions, troubleshooting guides, and action items:
 
 Code reviews, security reviews, and architecture reviews:
 
-- **BACKEND_REVIEW*.md** - Backend code reviews
-- **FRONTEND_REVIEW*.md** - Frontend code reviews
-- **UX_UI_REVIEW*.md** - UX/UI design reviews
-- **SECURITY_REVIEW*.md** - Security reviews
+- `BACKEND_REVIEW*.md` - Backend code reviews
+- `FRONTEND_REVIEW*.md` - Frontend code reviews
+- `UX_UI_REVIEW*.md` - UX/UI design reviews
+- `SECURITY_REVIEW*.md` - Security reviews
 - **BEST_PRACTICES_REVIEW.md** - Best practices review
 - **CODE_REVIEW_CLIENT_PROVIDERS.md** - Client providers review
 - **COMPLIANCE_REVIEW.md** - Compliance review
@@ -171,7 +176,7 @@ Code reviews, security reviews, and architecture reviews:
 Performance analysis, optimization, and testing:
 
 - **PERFORMANCE_ISSUES_ANALYSIS.md** - Performance issues analysis
-- **PERFORMANCE_FIX_*.md** - Performance fix documentation
+- `PERFORMANCE_FIX_*.md` - Performance fix documentation
 - **PERFORMANCE_TESTING.md** - Performance testing guide
 - **PERFORMANCE_OPTIMIZATION_SUMMARY.md** - Optimization summary
 - **PERFORMANCE_TEST_NEXT_STEPS.md** - Next steps for performance testing
@@ -189,7 +194,6 @@ Project summaries, status reports, and progress tracking:
 
 - **CLEANUP_SUMMARY.md** - Project cleanup summary
 - **SECURITY_SUMMARY.md** - Security summary
-- **ENVIRONMENT_STATUS.md** - Environment status
 - **REFACTOR_PROGRESS.md** - Refactoring progress
 - **epic-descriptions.md** - Epic descriptions
 - **notion-prioritization.md** - Notion prioritization
@@ -216,6 +220,7 @@ Historical documentation, old implementations, and archived reference material:
 **Location:** `../sql/` and `../scripts/`
 
 ### SQL Files
+
 ```
 sql/
 ├── migrations/      # Database migrations
@@ -224,6 +229,7 @@ sql/
 ```
 
 ### Scripts
+
 ```
 scripts/
 ├── deploy-*.sh     # Deployment scripts
@@ -236,22 +242,26 @@ scripts/
 ## 🎯 Quick Start
 
 ### New Developer Setup
+
 1. Read `guides/ENVIRONMENT_SETUP_QUICK_START.md`
 2. Review `guides/SUPABASE_SETUP_GUIDE.md`
 3. Check `deployment/GITHUB_SECRETS_CHECKLIST.md` for required secrets
 4. Review `guides/BEST_PRACTICE_*.md` files
 
 ### Understanding the System
+
 1. Start with `architecture/ARCHITECTURE_OVERVIEW.md`
 2. Review `design/` for UI/UX guidelines
 3. Check `features/` for feature specifications
 
 ### Debugging Issues
+
 1. Check `fixes/` for known issues
 2. Use SQL queries in `../sql/debug/` to investigate
 3. Refer to `troubleshooting/` guides
 
 ### Deploying
+
 1. Follow `deployment/HETZNER_DEPLOYMENT_STEPS.md`
 2. Ensure GitHub secrets are configured
 3. Push to main branch for auto-deployment
@@ -301,24 +311,29 @@ ls docs/fixes/
 ## ✨ Most Important Documents
 
 ### For End Users
+
 1. **USER_GUIDE.md** - Complete guide for using Ummah Flow (seekers and providers)
 
 ### For New Developers
+
 1. `guides/ENVIRONMENT_SETUP_QUICK_START.md`
 2. `architecture/ARCHITECTURE_OVERVIEW.md`
 3. `guides/SUPABASE_SETUP_GUIDE.md`
 
 ### For Deployment
+
 1. `deployment/GITHUB_SECRETS_CHECKLIST.md`
 2. `deployment/HETZNER_DEPLOYMENT_STEPS.md`
 3. `deployment/DOCKER_SECURITY_BEST_PRACTICES.md`
 
 ### For Development
+
 1. `guides/SUPABASE_SETUP_GUIDE.md`
 2. `guides/BEST_PRACTICE_EMAIL_SETUP.md`
 3. `guides/AUTH_HOOKS_SUMMARY.md`
 
 ### For Troubleshooting
+
 1. `fixes/FIX_LOGIN_AFTER_EMAIL_CONFIRMATION.md`
 2. `troubleshooting/VAPID_SETUP.md`
 3. `fixes/BUILD_FIXES_SUMMARY.md`

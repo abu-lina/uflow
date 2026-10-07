@@ -46,9 +46,6 @@ module.exports = {
   // Documentation
   'README.md': ['prettier --write'],
 
-  // Shell scripts
-  '*.sh': ['prettier --write'],
-
   // TypeScript declaration files
   '*.d.ts': ['prettier --write'],
 
