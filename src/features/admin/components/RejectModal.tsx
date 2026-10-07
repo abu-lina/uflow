@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useId } from 'react';
+import { useState, useEffect, useCallback, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+
+import { useLanguage } from '@/providers/LanguageProvider';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 
 interface RejectModalProps {
   /** Whether the modal is open */
@@ -18,15 +21,19 @@ interface RejectModalProps {
 
 /**
  * Modal for rejecting a provider with required feedback (Plan 059/062)
- * 
+ *
  * Shows a compact modal/popover with:
  * - Provider name
  * - Required feedback textarea (rejection reason)
  * - Cancel and Confirm Rejection buttons
  * Dismisses on Escape or outside click
- * 
+ *
  * Plan 059/062: Rejection requires a non-empty feedback reason.
  * Confirm button is disabled until valid feedback is entered.
+ *
+ * #548 locale fix: the copy was hardcoded English and leaked onto RTL
+ * surfaces. It now reads from adminHalalEdit.review.rejectConfirm — the
+ * interpolated provider name is bidi-isolated by t() in RTL locales.
  */
 export function RejectModal({
   isOpen,
@@ -36,7 +43,15 @@ export function RejectModal({
   onConfirm,
 }: RejectModalProps) {
   const [feedback, setFeedback] = useState('');
+  const { t } = useLanguage();
   const titleId = useId();
+  const descId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // #562: same focus contract as ApproveModal — focus lands in the dialog
+  // (the required-reason textarea, the first focusable), Tab is trapped,
+  // and closing restores focus to the trigger.
+  useFocusTrap(dialogRef, isOpen);
 
   // Reset feedback when modal closes
   useEffect(() => {
@@ -67,11 +82,14 @@ export function RejectModal({
     }
   }, [feedback, isValidFeedback, onConfirm]);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  }, [onClose]);
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   return (
     <AnimatePresence>
@@ -85,34 +103,35 @@ export function RejectModal({
           onClick={handleBackdropClick}
         >
           <motion.div
+            ref={dialogRef}
             animate={{ opacity: 1, scale: 1 }}
+            aria-describedby={descId}
             aria-labelledby={titleId}
             aria-modal="true"
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
             exit={{ opacity: 0, scale: 0.95 }}
             initial={{ opacity: 0, scale: 0.95 }}
             role="dialog"
+            tabIndex={-1}
           >
-            <h2
-              className="mb-2 text-lg font-semibold text-content-heading"
-              id={titleId}
-            >
-              Reject Provider
+            <h2 className="mb-2 text-lg font-semibold text-content-heading" id={titleId}>
+              {t('adminHalalEdit.review.rejectConfirm.title')}
             </h2>
-            
-            <p className="mb-4 text-sm text-content">
-              Are you sure you want to reject <strong>{providerName}</strong>?
+
+            <p className="mb-4 text-sm text-content" id={descId}>
+              {t('adminHalalEdit.review.rejectConfirm.body', { name: providerName })}
             </p>
 
             <label className="mb-4 block">
               <span className="mb-1 block text-sm font-medium text-content">
-                Rejection Reason <span className="text-danger">*</span>
+                {t('adminHalalEdit.review.rejectConfirm.reasonLabel')}{' '}
+                <span className="text-danger">*</span>
               </span>
               <textarea
                 aria-required="true"
                 className="w-full rounded-lg border border-neutral-200 p-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 disabled={isLoading}
-                placeholder="Please provide a reason for rejecting this provider..."
+                placeholder={t('adminHalalEdit.review.rejectConfirm.reasonPlaceholder')}
                 rows={3}
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
@@ -126,7 +145,7 @@ export function RejectModal({
                 type="button"
                 onClick={onClose}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 className="flex-1 rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-dark focus:outline-none focus:ring-2 focus:ring-danger/20 disabled:cursor-not-allowed disabled:opacity-50"
@@ -134,7 +153,9 @@ export function RejectModal({
                 type="button"
                 onClick={handleConfirm}
               >
-                {isLoading ? 'Rejecting...' : 'Confirm Rejection'}
+                {isLoading
+                  ? t('adminHalalEdit.review.rejectConfirm.confirming')
+                  : t('adminHalalEdit.review.rejectConfirm.confirm')}
               </button>
             </div>
           </motion.div>

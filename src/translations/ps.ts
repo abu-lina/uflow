@@ -1276,38 +1276,40 @@ export const ps = {
     quickImportButton: 'Quick Import ausprobieren',
   },
   createHalal: {
+    // INTERIM de (#415): create-wizard strings, pending human translation.
+    // The keys below them DO render on the admin halal check page and are
+    // translated (#548).
     stepTitle: 'Halal',
     title: 'Halal Compliance',
     attestationIntro:
       'Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder anbietest?',
-    verificationTitle: 'Verifizierungsmethode',
-    verificationDesc: 'Wie wurde die Halal-Konformität überprüft?',
-    methodOnline: 'Online',
-    methodOnlineDesc: 'Online überprüft (Menü, Website, Selbstauskunft)',
-    methodOnsite: 'Vor Ort',
-    methodOnsiteDesc: 'Vor Ort besucht und überprüft',
-    certificateTitle: 'Halal-Zertifikat',
-    certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
-    certificateUpload: 'Zertifikat hochladen',
-    // INTERIM de (#415): pending human translation
-    certificateInvalidType: 'Ungültiger Dateityp. Bitte lade ein Bild oder eine PDF-Datei hoch.',
-    certificateTooLarge: 'Datei zu groß. Das Zertifikat darf maximal 5 MB groß sein.',
+    verificationTitle: 'د تایید طریقه',
+    verificationDesc: 'د حلال مطابقت څنګه تایید شو؟',
+    methodOnline: 'آنلاین',
+    methodOnlineDesc: 'آنلاین تایید شوی (مینیو، ویبپاڼه، ځان بیاني)',
+    methodOnsite: 'په ځای کې',
+    methodOnsiteDesc: 'په ځای کې لیدنه او تایید شوې',
+    certificateTitle: 'د حلال سند',
+    certificateDesc: 'د حلال باوري سند پورته کړئ (اختیاري)',
+    certificateUpload: 'سند پورته کړئ',
+    certificateInvalidType: 'د فایل بڼه سم نه ده. مهرباني وکړئ انځور یا PDF فایل پورته کړئ.',
+    certificateTooLarge: 'فایل ډېر لوی دی. سند باید له 5 MB نه زیات نه وي.',
   },
-  // Plan 255 INTERIM (#415): German source text, NOT a translation.
+  // #548: fully translated — the halal check admin page renders this block
+  // in every locale, so INTERIM German is no longer acceptable here.
   adminHalalEdit: {
-    title: 'Halal Check',
-    uploading: 'Wird hochgeladen...',
-    attestationWarning:
-      'Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.',
-    existingCertificate: 'Vorhandenes Zertifikat',
-    viewCertificate: 'Zertifikat anzeigen',
+    title: 'د حلال کتنه',
+    uploading: 'پورته کېږي…',
+    attestationWarning: 'د انډول د تصویب نه مخکې ټولې درې تصدیقي پوښتنې باید تایید شوې وي.',
+    existingCertificate: 'موجود سند',
+    viewCertificate: 'سند وګورئ',
     derivedTierInfo:
-      'Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.',
-    derivedTierLabel: 'Abgeleitetes Level',
+      'د حلال کچه د تایید له طریقې څخه په اوتومات ډول اخیستل کېږي: آنلاین = برنزي، په ځای کې = سپین زري، له سند سره = زرین.',
+    derivedTierLabel: 'اخیستل شوې کچه',
     tier: {
-      gold: 'Gold',
-      silver: 'Silber',
-      bronze: 'Bronze',
+      gold: 'زرین',
+      silver: 'سپین زري',
+      bronze: 'برنزي',
     },
     // #548: nothing is "auto" any more — these panels preview the verdict
     // the review footer will act on.
@@ -1324,9 +1326,27 @@ export const ps = {
       gateBlocked: 'لا تصویب نشي: د حلال ټول ځوابونه تصدیق شوي نه دي.',
       conflict: 'بل کتونکي دا رستوران بدل کړ. بیا یې پورته کړئ او وګورئ.',
       decidedNotice: 'دا رستوران لا دمخه {{status}} دی. دلته د حالت کومه کړنه نشته.',
+      loadFailed: 'دا انډول ونه لوستل — د کتنې کړنې شتون نلري. بیا یې پورته کړئ.',
+      // #562: 401/403 — ناسته پای ته رسېدلې یا حساب اداره کوونکی نه دی؛
+      // بیا پورته کول دا نه ښه کوي، بیا ننوځئ.
+      loadFailedAuth: 'ستا ناسته د دې انډول کتنې اجازه نه لري. بیا ننوځئ او بیا هڅه وکړئ.',
       status: {
         rejected: 'رد شوی',
         removedByOwner: 'خاوند یې لرې کړی',
+      },
+      approveConfirm: {
+        title: 'تصویب او خپرول؟',
+        body: 'د {{name}} تصویب رستوران سمدستي او په ښکاره خپروي او د بډایه کولو بهیر پیلوي.',
+        confirm: 'تصویب او خپرول',
+        confirming: 'تصویبېږي…',
+      },
+      rejectConfirm: {
+        title: 'انډول رد کړئ؟',
+        body: 'ایا تاسو ډاډه یاست چې {{name}} رد کړئ؟',
+        reasonLabel: 'د ردولو دلیل',
+        reasonPlaceholder: 'مهرباني وکړئ د دې انډول د ردولو دلیل ولیکئ…',
+        confirm: 'ردول تایید کړئ',
+        confirming: 'ردېږي…',
       },
     },
   },

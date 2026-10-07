@@ -1279,38 +1279,40 @@ export const ur = {
     quickImportButton: 'Quick Import ausprobieren',
   },
   createHalal: {
+    // INTERIM de (#415): create-wizard strings, pending human translation.
+    // The keys below them DO render on the admin halal check page and are
+    // translated (#548).
     stepTitle: 'Halal',
     title: 'Halal Compliance',
     attestationIntro:
       'Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder anbietest?',
-    verificationTitle: 'Verifizierungsmethode',
-    verificationDesc: 'Wie wurde die Halal-Konformität überprüft?',
-    methodOnline: 'Online',
-    methodOnlineDesc: 'Online überprüft (Menü, Website, Selbstauskunft)',
-    methodOnsite: 'Vor Ort',
-    methodOnsiteDesc: 'Vor Ort besucht und überprüft',
-    certificateTitle: 'Halal-Zertifikat',
-    certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
-    certificateUpload: 'Zertifikat hochladen',
-    // INTERIM de (#415): pending human translation
-    certificateInvalidType: 'Ungültiger Dateityp. Bitte lade ein Bild oder eine PDF-Datei hoch.',
-    certificateTooLarge: 'Datei zu groß. Das Zertifikat darf maximal 5 MB groß sein.',
+    verificationTitle: 'تصديق کا طریقہ',
+    verificationDesc: 'حلال معیار کی تصدیق کیسے ہوئی؟',
+    methodOnline: 'آن لائن',
+    methodOnlineDesc: 'آن لائن تصدیق شدہ (مینیو، ویب سائٹ، خود بیانی)',
+    methodOnsite: 'مقام پر',
+    methodOnsiteDesc: 'مقام پر جا کر تصدیق کی گئی',
+    certificateTitle: 'حلال سرٹیفکیٹ',
+    certificateDesc: 'درست حلال سرٹیفکیٹ اپ لوڈ کریں (اختیاری)',
+    certificateUpload: 'سرٹیفکیٹ اپ لوڈ کریں',
+    certificateInvalidType: 'فائل کی قسم درست نہیں۔ براہ کرم تصویر یا PDF فائل اپ لوڈ کریں۔',
+    certificateTooLarge: 'فائل بہت بڑی ہے۔ سرٹیفکیٹ زیادہ سے زیادہ 5 MB ہو سکتا ہے۔',
   },
-  // Plan 255 INTERIM (#415): German source text, NOT a translation.
+  // #548: fully translated — the halal check admin page renders this block
+  // in every locale, so INTERIM German is no longer acceptable here.
   adminHalalEdit: {
-    title: 'Halal Check',
-    uploading: 'Wird hochgeladen...',
-    attestationWarning:
-      'Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.',
-    existingCertificate: 'Vorhandenes Zertifikat',
-    viewCertificate: 'Zertifikat anzeigen',
+    title: 'حلال جانچ',
+    uploading: 'اپ لوڈ ہو رہا ہے…',
+    attestationWarning: 'اندراج کی منظوری سے پہلے تینوں تصدیقی سوالات کی تصدیق ضروری ہے۔',
+    existingCertificate: 'موجودہ سرٹیفکیٹ',
+    viewCertificate: 'سرٹیفکیٹ دیکھیں',
     derivedTierInfo:
-      'Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.',
-    derivedTierLabel: 'Abgeleitetes Level',
+      'حلال درجہ تصدیق کے طریقے سے خودکار طور پر اخذ ہوتا ہے: آن لائن = کانسی، مقام پر = چاندی، سرٹیفکیٹ کے ساتھ = سنہری۔',
+    derivedTierLabel: 'اخذ شدہ درجہ',
     tier: {
-      gold: 'Gold',
-      silver: 'Silber',
-      bronze: 'Bronze',
+      gold: 'سنہری',
+      silver: 'چاندی',
+      bronze: 'کانسی',
     },
     // #548: nothing is "auto" any more — these panels preview the verdict
     // the review footer will act on.
@@ -1328,9 +1330,29 @@ export const ur = {
       gateBlocked: 'ابھی منظوری ممکن نہیں: حلال جوابات مکمل طور پر تصدیق شدہ نہیں۔',
       conflict: 'کسی دوسرے جائزہ کار نے یہ ریستوران تبدیل کر دیا۔ دوبارہ لوڈ کر کے جانچیں۔',
       decidedNotice: 'یہ ریستوران پہلے ہی {{status}} ہے۔ یہاں کوئی حیثیت کی کارروائی دستیاب نہیں۔',
+      loadFailed:
+        'یہ اندراج لوڈ نہیں ہو سکا — جائزہ کارروائیاں دستیاب نہیں۔ دوبارہ لوڈ کر کے کوشش کریں۔',
+      // #562: 401/403 — سیشن ختم ہو گیا یا اکاؤنٹ ایڈمن نہیں؛ دوبارہ لوڈ
+      // کرنے سے یہ درست نہیں ہوتا، دوبارہ سائن ان کریں۔
+      loadFailedAuth:
+        'آپ کا سیشن اس اندراج کا جائزہ نہیں لے سکتا۔ دوبارہ سائن ان کریں، پھر کوشش کریں۔',
       status: {
         rejected: 'مسترد',
         removedByOwner: 'مالک نے ہٹا دیا',
+      },
+      approveConfirm: {
+        title: 'منظور کریں اور شائع کریں؟',
+        body: '{{name}} کی منظوری ریستوران کو فوراً اور عوامی طور پر شائع کرتی ہے اور اینرچمنٹ شروع کرتی ہے۔',
+        confirm: 'منظور کریں اور شائع کریں',
+        confirming: 'منظور ہو رہا ہے…',
+      },
+      rejectConfirm: {
+        title: 'اندراج مسترد کریں؟',
+        body: 'کیا آپ واقعی {{name}} کو مسترد کرنا چاہتے ہیں؟',
+        reasonLabel: 'مسترد کرنے کی وجہ',
+        reasonPlaceholder: 'براہ کرم اس اندراج کو مسترد کرنے کی وجہ لکھیں…',
+        confirm: 'مسترد کرنے کی تصدیق کریں',
+        confirming: 'مسترد کیا جا رہا ہے…',
       },
     },
   },

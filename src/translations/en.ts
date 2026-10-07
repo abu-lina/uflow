@@ -1316,11 +1316,36 @@ export const en = {
       gateBlocked: 'Cannot approve yet: the halal answers are not all confirmed.',
       conflict: 'Another reviewer changed this restaurant. Reload and check again.',
       decidedNotice: 'This restaurant is already {{status}}. No status action is available here.',
+      // The meta fetch failed, so the review row cannot render. Named in the
+      // footer, not silent — a save-only bar on a pending row looked healthy.
+      loadFailed: 'Could not load this entry — review actions unavailable. Reload to retry.',
+      // #562: 401/403 — the session expired or the account is not an admin.
+      // Reloading cannot fix that; the instruction is to sign in again.
+      loadFailedAuth: 'Your session cannot review this entry. Sign in again, then retry.',
       // Localized status labels interpolated into decidedNotice (AC 14):
       // the raw enum must never leak into a translated sentence.
       status: {
         rejected: 'rejected',
         removedByOwner: 'removed by its owner',
+      },
+      // ApproveModal (#548): the confirmation names the consequence —
+      // public, immediate publication plus enrichment.
+      approveConfirm: {
+        title: 'Approve and publish?',
+        body: 'Approving {{name}} publishes the restaurant publicly and immediately, and triggers enrichment.',
+        confirm: 'Approve and publish',
+        confirming: 'Approving…',
+      },
+      // RejectModal (#548 locale fix): the shared rejection dialog kept
+      // hardcoded English — it now sits next to approveConfirm so the
+      // pair reads as one system in every catalogue.
+      rejectConfirm: {
+        title: 'Reject provider?',
+        body: 'Are you sure you want to reject {{name}}?',
+        reasonLabel: 'Rejection reason',
+        reasonPlaceholder: 'Please provide a reason for rejecting this provider…',
+        confirm: 'Confirm rejection',
+        confirming: 'Rejecting…',
       },
     },
   },

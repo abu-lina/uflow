@@ -1339,11 +1339,37 @@ export const de = {
       conflict: 'Ein anderer Reviewer hat diesen Eintrag geändert. Neu laden und erneut prüfen.',
       decidedNotice:
         'Dieser Eintrag ist bereits {{status}}. Hier ist keine Statusaktion verfügbar.',
+      // Der Meta-Fetch schlug fehl, die Review-Zeile kann nicht rendern —
+      // im Footer benennen statt schweigen.
+      loadFailed:
+        'Eintrag konnte nicht geladen werden — Prüfaktionen nicht verfügbar. Neu laden und erneut versuchen.',
+      // #562: 401/403 — Sitzung abgelaufen oder kein Admin-Konto; ein
+      // Reload kann das nicht reparieren, also neu anmelden.
+      loadFailedAuth:
+        'Deine Sitzung darf diesen Eintrag nicht prüfen. Melde dich erneut an und versuche es dann noch einmal.',
       // Localized status labels interpolated into decidedNotice (AC 14):
       // the raw enum must never leak into a translated sentence.
       status: {
         rejected: 'abgelehnt',
         removedByOwner: 'vom Inhaber entfernt',
+      },
+      // ApproveModal (#548): die Bestätigung benennt die Konsequenz —
+      // sofortige öffentliche Veröffentlichung plus Anreicherung.
+      approveConfirm: {
+        title: 'Genehmigen und veröffentlichen?',
+        body: 'Die Genehmigung veröffentlicht {{name}} sofort und öffentlich und startet die Anreicherung.',
+        confirm: 'Genehmigen und veröffentlichen',
+        confirming: 'Wird genehmigt…',
+      },
+      // RejectModal (#548 Locale-Fix): der Ablehnungsdialog war hartcodiert
+      // englisch — jetzt neben approveConfirm, damit das Paar ein System bleibt.
+      rejectConfirm: {
+        title: 'Eintrag ablehnen?',
+        body: 'Möchtest du {{name}} wirklich ablehnen?',
+        reasonLabel: 'Ablehnungsgrund',
+        reasonPlaceholder: 'Bitte gib einen Grund für die Ablehnung dieses Eintrags an…',
+        confirm: 'Ablehnung bestätigen',
+        confirming: 'Wird abgelehnt…',
       },
     },
   },

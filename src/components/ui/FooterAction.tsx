@@ -29,17 +29,9 @@ interface FooterActionButton {
   disabled?: boolean;
   loading?: boolean;
   loadingText?: string;
-  variant?: 'primary' | 'success' | 'danger';
+  variant?: 'primary' | 'secondary' | 'success' | 'danger';
   'aria-label'?: string;
 }
-
-/**
- * Total height the fixed footer bar occupies above the safe-area inset:
- * pt-4 (16px) + 48px button + pb-4 (16px) = 80px. Exported so a bar that
- * must sit directly above the footer (EditSubPageLayout's reviewFooter)
- * anchors on the same number instead of re-deriving the arithmetic.
- */
-export const FOOTER_ACTION_HEIGHT_PX = 80;
 
 interface FooterSecondaryButton {
   icon: React.ReactNode | string;
@@ -60,6 +52,15 @@ interface FooterActionProps {
    */
   primaryButton?: FooterActionButton;
   secondaryButton?: FooterSecondaryButton;
+
+  /**
+   * #548: optional row rendered above the button row inside the same bar —
+   * one border, one shadow, one backdrop-filter. EditSubPageLayout passes
+   * its reviewFooter (approve/reject pair) here instead of stacking a
+   * second fixed bar. Height is content-driven; layouts that use it must
+   * reserve space (h-bottom-spacing-subpage-review).
+   */
+  topRow?: React.ReactNode;
 
   /**
    * Custom className for the footer container
@@ -101,13 +102,65 @@ interface FooterActionProps {
  * />
  * ```
  */
+// #562: mounted topRow publishers, element -> last measured height. The
+// property lives on documentElement, so it has no owner: an unconditional
+// removeProperty on unmount would delete a value a still-mounted consumer
+// depends on. On unmount a consumer removes only its own entry; survivors
+// keep the property, republished at the most recently measured height.
+const footerHeightPublishers = new Map<Element, number>();
+
 export function FooterAction({
   actionButton,
   primaryButton,
   secondaryButton,
+  topRow,
   className = '',
   contentClassName = '',
 }: FooterActionProps) {
+  const footerRef = React.useRef<HTMLElement | null>(null);
+  const hasTopRow = topRow != null;
+
+  // #562: with a topRow the bar's height is variable. The review slot is
+  // free-form: its pending state is a fixed 48px approve/reject pair, but
+  // the loadFailed/decidedNotice paragraphs wrap past that (QA measured 3
+  // lines = 56px in de, a 149px bar against the 140px token), so a fixed
+  // spacer under-reserves and content slides under the bar. Publish the
+  // measured height the way Header publishes --desktop-header-height; the
+  // subpage-review spacer token derives from it with a 140px fallback for
+  // pre-measure and no-JS.
+  React.useEffect(() => {
+    const el = footerRef.current;
+    if (!hasTopRow || !el || typeof ResizeObserver === 'undefined') return;
+    const publish = () => {
+      const height = Math.ceil(el.getBoundingClientRect().height);
+      if (height > 0) {
+        // delete+set keeps insertion order equal to publish recency, so
+        // the map's last value is the most recently measured survivor.
+        footerHeightPublishers.delete(el);
+        footerHeightPublishers.set(el, height);
+        document.documentElement.style.setProperty('--footer-action-height', `${height}px`);
+      }
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      footerHeightPublishers.delete(el);
+      // Iteration order is publish recency (delete+set on write), so the
+      // last value seen here is the most recently measured survivor.
+      let lastSurvivor = 0;
+      footerHeightPublishers.forEach((height) => {
+        lastSurvivor = height;
+      });
+      if (lastSurvivor === 0) {
+        document.documentElement.style.removeProperty('--footer-action-height');
+      } else {
+        document.documentElement.style.setProperty('--footer-action-height', `${lastSurvivor}px`);
+      }
+    };
+  }, [hasTopRow]);
+
   // Validate props: must have either actionButton OR (primaryButton + secondaryButton)
   if (!actionButton && (!primaryButton || !secondaryButton)) {
     console.warn(
@@ -133,6 +186,7 @@ export function FooterAction({
     if (actionButton.trailingIcon) {
       return (
         <footer
+          ref={footerRef}
           className={cn(
             'fixed bottom-0 left-0 right-0 z-[60] w-full border-t border-border/30',
             className,
@@ -148,9 +202,13 @@ export function FooterAction({
           }}
         >
           <div
-            className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+            className={cn(
+              'flex w-full flex-col gap-3 px-6 pt-4 sm:mx-auto sm:max-w-2xl',
+              contentClassName,
+            )}
             style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
           >
+            {topRow}
             <Button
               fullWidth
               aria-label={actionButton['aria-label'] || actionButton.label}
@@ -175,6 +233,7 @@ export function FooterAction({
     // Default: leading icon or no icon
     return (
       <footer
+        ref={footerRef}
         className={cn(
           'fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]',
           className,
@@ -187,9 +246,13 @@ export function FooterAction({
         }}
       >
         <div
-          className={cn('flex w-full px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+          className={cn(
+            'flex w-full flex-col gap-3 px-6 pt-4 sm:mx-auto sm:max-w-2xl',
+            contentClassName,
+          )}
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
+          {topRow}
           <Button
             fullWidth
             aria-label={actionButton['aria-label'] || actionButton.label}
@@ -215,6 +278,7 @@ export function FooterAction({
   if (primaryButton && secondaryButton) {
     return (
       <footer
+        ref={footerRef}
         className={cn(
           'fixed bottom-0 left-0 right-0 z-50 w-full border-t border-border/30 bg-gradient-to-b from-neutral-50 to-neutral-50 backdrop-blur-[20px]',
           className,
@@ -227,36 +291,44 @@ export function FooterAction({
         }}
       >
         <div
-          className={cn('flex w-full gap-3.5 px-6 pt-4 sm:mx-auto sm:max-w-2xl', contentClassName)}
+          className={cn(
+            'flex w-full flex-col gap-3 px-6 pt-4 sm:mx-auto sm:max-w-2xl',
+            contentClassName,
+          )}
           style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
         >
-          {/* Primary Action Button - Full width (flex-1), 48px height */}
-          <Button
-            aria-label={primaryButton['aria-label'] || primaryButton.label}
-            className="!h-[48px] !max-h-[48px] !min-h-[48px] flex-1"
-            disabled={primaryButton.disabled}
-            icon={primaryButton.icon}
-            loading={primaryButton.loading}
-            loadingText={primaryButton.loadingText}
-            size="default"
-            trailingIcon={primaryButton.trailingIcon}
-            variant={primaryButton.variant || 'primary'}
-            onClick={primaryButton.onClick}
-          >
-            {primaryButton.label}
-          </Button>
+          {/* #548: optional row above the action row (review approve/reject),
+              inside the same bar — one border, one shadow, one blur. */}
+          {topRow}
+          <div className="flex w-full gap-3.5">
+            {/* Primary Action Button - Full width (flex-1), 48px height */}
+            <Button
+              aria-label={primaryButton['aria-label'] || primaryButton.label}
+              className="!h-[48px] !max-h-[48px] !min-h-[48px] flex-1"
+              disabled={primaryButton.disabled}
+              icon={primaryButton.icon}
+              loading={primaryButton.loading}
+              loadingText={primaryButton.loadingText}
+              size="default"
+              trailingIcon={primaryButton.trailingIcon}
+              variant={primaryButton.variant || 'primary'}
+              onClick={primaryButton.onClick}
+            >
+              {primaryButton.label}
+            </Button>
 
-          {/* Secondary Action Button - 48px x 48px (1:1 ratio) */}
-          <IconButton
-            aria-label={secondaryButton['aria-label']}
-            className="!h-[48px] !max-h-[48px] !min-h-[48px] !w-[48px] !min-w-[48px] !max-w-[48px] flex-shrink-0"
-            disabled={secondaryButton.disabled}
-            icon={renderIcon(secondaryButton.icon)}
-            loading={secondaryButton.loading}
-            size="lg"
-            variant="secondary"
-            onClick={secondaryButton.onClick}
-          />
+            {/* Secondary Action Button - 48px x 48px (1:1 ratio) */}
+            <IconButton
+              aria-label={secondaryButton['aria-label']}
+              className="!h-[48px] !max-h-[48px] !min-h-[48px] !w-[48px] !min-w-[48px] !max-w-[48px] flex-shrink-0"
+              disabled={secondaryButton.disabled}
+              icon={renderIcon(secondaryButton.icon)}
+              loading={secondaryButton.loading}
+              size="lg"
+              variant="secondary"
+              onClick={secondaryButton.onClick}
+            />
+          </div>
         </div>
       </footer>
     );

@@ -87,6 +87,7 @@ const config: Config = {
     'h-bottom-spacing-12',
     'h-bottom-spacing-16',
     'h-bottom-spacing-subpage',
+    'h-bottom-spacing-subpage-review',
   ],
 
   theme: {
@@ -173,6 +174,16 @@ const config: Config = {
         'bottom-spacing-12': 'calc(48px + 1rem + max(12px, env(safe-area-inset-bottom)))',
         'bottom-spacing-16': 'calc(64px + 1rem + max(12px, env(safe-area-inset-bottom)))',
         'bottom-spacing-subpage': 'calc(80px + 1rem + max(12px, env(safe-area-inset-bottom)))',
+        // #548: subpage footer with a review row above the action row. The
+        // row's pending state is a fixed 48px approve/reject pair that
+        // cannot wrap, but its loadFailed/decidedNotice paragraphs are
+        // free-form and wrap past that (measured 3 lines = 56px in de, a
+        // 149px bar) — so the token derives from the measured
+        // --footer-action-height that FooterAction publishes via
+        // ResizeObserver (#562). 140px is only the pre-measure fallback
+        // (pt-4 16 + 48 + gap-3 12 + 48 + pb-4 16, before RO lands).
+        'bottom-spacing-subpage-review':
+          'calc(var(--footer-action-height, 140px) + 1rem + max(12px, env(safe-area-inset-bottom)))',
 
         // Icon sizes (Material Symbols - standardized)
         'icon-xs': '16px',

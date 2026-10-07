@@ -335,6 +335,16 @@ test.describe('issue 548 — halal check approve/reject', () => {
 
     await approveButton.click();
 
+    // Approve publishes publicly and irreversibly, so it is gated on a
+    // confirmation that names the consequence — nothing is written until
+    // the admin confirms inside the dialog.
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible({ timeout: 15_000 });
+    await expect(dialog).toContainText(/veröffentlicht|publishes/i);
+    expect((await providerRow(providerId)).review_status).toBe('pending');
+
+    await dialog.getByRole('button', { name: /veröffentlichen|publish/i }).click();
+
     await page.waitForURL(/\/food\?status=pending/, { timeout: 15_000 });
 
     const row = await providerRow(providerId);

@@ -868,4 +868,34 @@ describe('ProviderCard Component', () => {
       expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
     });
   });
+
+  describe('Halal star badge icons (#562)', () => {
+    it('renders halal stars from bundled icon data, not a runtime-fetched mdi:star name', () => {
+      // Code Review 2: ProviderCard's star glyph was the third string-name
+      // site left on the halal-review surfaces. A string 'mdi:star' makes
+      // @iconify/react fetch from api.iconify.design at render; the bundled
+      // IconifyIcon object paints inline. The global mock stamps the raw
+      // icon prop into data-icon, so a surviving string name shows there.
+      const { container } = render(
+        <ProviderCard
+          {...mockProvider}
+          certificate_url={null}
+          has_certificate={false}
+          isBookmarked={false}
+          listing_type="food"
+          no_alcohol={true}
+          no_gambling={true}
+          no_pork={true}
+          verification_method="onsite"
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      // onsite + three attestations = 3 stars (computeHalalStars).
+      const badge = container.querySelector('[role="img"][title*="Halal"]');
+      expect(badge).not.toBeNull();
+      expect(badge?.querySelectorAll('[data-testid="iconify-mock"]').length).toBe(3);
+      expect(container.querySelector('[data-icon="mdi:star"]')).toBeNull();
+    });
+  });
 });

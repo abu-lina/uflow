@@ -1277,38 +1277,40 @@ export const tr = {
     quickImportButton: 'Quick Import ausprobieren',
   },
   createHalal: {
+    // INTERIM de (#415): create-wizard strings, pending human translation.
+    // The keys below them DO render on the admin halal check page and are
+    // translated (#548).
     stepTitle: 'Halal',
     title: 'Halal Compliance',
     attestationIntro:
       'Bezeugst du bei Allah, dass du die folgenden Dinge NICHT verarbeitest, verkaufst oder anbietest?',
-    verificationTitle: 'Verifizierungsmethode',
-    verificationDesc: 'Wie wurde die Halal-Konformität überprüft?',
-    methodOnline: 'Online',
-    methodOnlineDesc: 'Online überprüft (Menü, Website, Selbstauskunft)',
-    methodOnsite: 'Vor Ort',
-    methodOnsiteDesc: 'Vor Ort besucht und überprüft',
-    certificateTitle: 'Halal-Zertifikat',
-    certificateDesc: 'Lade ein gültiges Halal-Zertifikat hoch (optional)',
-    certificateUpload: 'Zertifikat hochladen',
-    // INTERIM de (#415): pending human translation
-    certificateInvalidType: 'Ungültiger Dateityp. Bitte lade ein Bild oder eine PDF-Datei hoch.',
-    certificateTooLarge: 'Datei zu groß. Das Zertifikat darf maximal 5 MB groß sein.',
+    verificationTitle: 'Doğrulama yöntemi',
+    verificationDesc: 'Helal uygunluğu nasıl doğrulandı?',
+    methodOnline: 'Çevrimiçi',
+    methodOnlineDesc: 'Çevrimiçi doğrulandı (menü, web sitesi, öz beyan)',
+    methodOnsite: 'Yerinde',
+    methodOnsiteDesc: 'Yerinde ziyaret edilip doğrulandı',
+    certificateTitle: 'Helal sertifikası',
+    certificateDesc: 'Geçerli bir helal sertifikası yükle (isteğe bağlı)',
+    certificateUpload: 'Sertifika yükle',
+    certificateInvalidType: 'Geçersiz dosya türü. Lütfen bir görsel veya PDF dosyası yükle.',
+    certificateTooLarge: 'Dosya çok büyük. Sertifika en fazla 5 MB olabilir.',
   },
-  // Plan 255 INTERIM (#415): German source text, NOT a translation.
+  // #548: fully translated — the halal check admin page renders this block
+  // in every locale, so INTERIM German is no longer acceptable here.
   adminHalalEdit: {
-    title: 'Halal Check',
-    uploading: 'Wird hochgeladen...',
-    attestationWarning:
-      'Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.',
-    existingCertificate: 'Vorhandenes Zertifikat',
-    viewCertificate: 'Zertifikat anzeigen',
+    title: 'Helal kontrolü',
+    uploading: 'Yükleniyor…',
+    attestationWarning: 'Kayıt onaylanmadan önce üç onay sorusunun da doğrulanması gerekir.',
+    existingCertificate: 'Mevcut sertifika',
+    viewCertificate: 'Sertifikayı görüntüle',
     derivedTierInfo:
-      'Das Halal-Level wird automatisch aus der Verifizierungsmethode abgeleitet: Online = Bronze, Vor Ort = Silber, Mit Zertifikat = Gold.',
-    derivedTierLabel: 'Abgeleitetes Level',
+      'Helal seviyesi, doğrulama yönteminden otomatik olarak türetilir: Çevrimiçi = Bronz, Yerinde = Gümüş, Sertifikalı = Altın.',
+    derivedTierLabel: 'Türetilen seviye',
     tier: {
-      gold: 'Gold',
-      silver: 'Silber',
-      bronze: 'Bronze',
+      gold: 'Altın',
+      silver: 'Gümüş',
+      bronze: 'Bronz',
     },
     // #548: nothing is "auto" any more — these panels preview the verdict
     // the review footer will act on.
@@ -1325,9 +1327,29 @@ export const tr = {
       gateBlocked: 'Henüz onaylanamaz: helal yanıtlarının tamamı onaylı değil.',
       conflict: 'Başka bir denetçi bu restoranı değiştirdi. Sayfayı yenileyip tekrar kontrol et.',
       decidedNotice: 'Bu kayıt zaten {{status}}. Burada durum işlemi yok.',
+      loadFailed:
+        'Kayıt yüklenemedi — inceleme işlemleri kullanılamıyor. Yeniden yükleyip tekrar dene.',
+      // #562: 401/403 — oturumun süresi doldu ya da hesap yönetici değil;
+      // yeniden yüklemek bunu düzeltmez, tekrar giriş gerekir.
+      loadFailedAuth:
+        'Oturumun bu kaydı incelemeye yetkili değil. Tekrar giriş yapıp yeniden dene.',
       status: {
         rejected: 'reddedildi',
         removedByOwner: 'sahibi tarafından kaldırıldı',
+      },
+      approveConfirm: {
+        title: 'Onayla ve yayınla?',
+        body: '{{name}} onaylandığında restoran anında ve herkese açık yayınlanır ve zenginleştirme başlar.',
+        confirm: 'Onayla ve yayınla',
+        confirming: 'Onaylanıyor…',
+      },
+      rejectConfirm: {
+        title: 'Kayıt reddedilsin mi?',
+        body: '{{name}} kaydını reddetmek istediğinden emin misin?',
+        reasonLabel: 'Ret gerekçesi',
+        reasonPlaceholder: 'Bu kaydı reddetme nedenini yaz…',
+        confirm: 'Reddi onayla',
+        confirming: 'Reddediliyor…',
       },
     },
   },

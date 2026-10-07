@@ -11,8 +11,16 @@ import {
   HalalAttestationFields,
   type HalalAttestationField,
 } from '@/components/shared/HalalAttestationFields';
+import { Button } from '@/components/ui/Button';
+import { ApproveModal } from '@/features/admin/components/ApproveModal';
 import { RejectModal } from '@/features/admin/components/RejectModal';
 import { useLanguage } from '@/providers/LanguageProvider';
+import {
+  mdiCheck,
+  mdiClose,
+  mdiFileDocumentOutline,
+  materialSymbolsSaveOutline,
+} from '@/lib/icons';
 import { validateCertificateFile } from '@/lib/validations/certificate';
 
 const FIELD_TO_CAMEL = {
@@ -52,6 +60,33 @@ interface ProviderMeta {
   reviewStatus: string | null;
   updatedAt: string | null;
   listingType: string | null;
+}
+
+/** GET /api/admin/providers/[id] payload fields this page consumes. */
+interface ProviderMetaPayload {
+  provider_name?: string | null;
+  review_status?: string | null;
+  updated_at?: string | null;
+  listing_type?: string | null;
+  food_providers?: HalalColumns | null;
+  store_providers?: HalalColumns | null;
+}
+
+interface HalalColumns {
+  no_alcohol?: boolean | null;
+  no_pork?: boolean | null;
+  no_gambling?: boolean | null;
+  verification_method?: 'online' | 'onsite' | null;
+  has_certificate?: boolean | null;
+  certificate_url?: string | null;
+}
+
+/** Carries the HTTP status out of the meta fetch so the failure UI can
+    split "your session cannot do this" (401/403) from "try again" (#562). */
+class MetaFetchError extends Error {
+  constructor(public status: number) {
+    super(`provider meta ${status}`);
+  }
 }
 
 interface GateError {
@@ -146,7 +181,13 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   // #548: provider row meta drives the review footer (status-gated actions)
   // and supplies expectedUpdatedAt for optimistic concurrency.
   const [providerMeta, setProviderMeta] = useState<ProviderMeta | null>(null);
+  // A failed meta fetch used to leave a healthy-looking page whose footer
+  // silently had no review actions (evidence rework item 2). #562 splits
+  // the failure: 'auth' (401/403 — reload cannot help, re-authenticate)
+  // versus 'generic' (network/5xx — reload may work).
+  const [metaFailure, setMetaFailure] = useState<'auth' | 'generic' | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [gateError, setGateError] = useState<GateError | null>(null);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
@@ -162,32 +203,56 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     // Always fetch: provider meta (review_status, updated_at) drives the
     // review footer even when a localStorage draft supplies the answers.
-    fetch(`/api/admin/providers/${id}`)
-      .then((res) => res.json())
-      .then((json) => {
-        const p = json.data;
-        if (!p) return;
-        setProviderMeta({
-          providerName: p.provider_name ?? '',
-          reviewStatus: p.review_status ?? null,
-          updatedAt: p.updated_at ?? null,
-          listingType: p.listing_type ?? null,
-        });
+    let cancelled = false;
+    (async () => {
+      // The failure boundary is the fetch + parse only (#562 Code Review
+      // 2): the catch used to wrap the whole handler, so a throw AFTER
+      // setProviderMeta — storage denied in private browsing — flipped
+      // metaFailure over healthy data and hid the review actions, the
+      // exact failure the silent-loss fix was written to eliminate.
+      let p: ProviderMetaPayload | null | undefined;
+      try {
+        const res = await fetch(`/api/admin/providers/${id}`);
+        if (!res.ok) throw new MetaFetchError(res.status);
+        const json = (await res.json()) as { data?: ProviderMetaPayload | null };
+        p = json.data;
+        if (!p) throw new Error('provider meta empty');
+      } catch (err) {
+        // Logged, never surfaced verbatim: the client sees a generic
+        // localized key — status codes and internals stay out of the
+        // user-facing message (org guardrail on client-facing detail).
+        const status = err instanceof MetaFetchError ? err.status : undefined;
+        console.error('[halal-edit] provider meta fetch failed:', status ?? err);
+        if (!cancelled) {
+          setMetaFailure(status === 401 || status === 403 ? 'auth' : 'generic');
+        }
+        return;
+      }
+      if (cancelled) return;
 
+      setProviderMeta({
+        providerName: p.provider_name ?? '',
+        reviewStatus: p.review_status ?? null,
+        updatedAt: p.updated_at ?? null,
+        listingType: p.listing_type ?? null,
+      });
+
+      // Draft hydration sits outside the meta failure path: a storage
+      // throw degrades to server values, not to the failure UI.
+      let draftApplied = false;
+      try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
-          try {
-            const parsed = JSON.parse(stored) as HalalData;
-            setData({ ...parsed, certificateFile: null });
-            return;
-          } catch {
-            /* ignore */
-          }
+          const parsed = JSON.parse(stored) as HalalData;
+          setData({ ...parsed, certificateFile: null });
+          draftApplied = true;
         }
+      } catch {
+        /* storage unavailable or corrupt JSON — fall through to server data */
+      }
 
-        const fp = p.food_providers;
-        const sp = p.store_providers;
-        const extData = fp || sp;
+      if (!draftApplied) {
+        const extData = p.food_providers ?? p.store_providers;
         if (extData) {
           setData({
             noAlcohol: extData.no_alcohol ?? null,
@@ -199,8 +264,11 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
             certificateFile: null,
           });
         }
-      })
-      .catch(() => {});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [STORAGE_KEY, id]);
 
   const setAttestation = (field: HalalAttestationField, value: boolean | null) => {
@@ -374,6 +442,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
         toast.error(t('adminHalalEdit.review.gateBlocked'));
       } finally {
         setReviewing(false);
+        setApproveModalOpen(false);
         setRejectModalOpen(false);
       }
     },
@@ -381,9 +450,31 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   );
 
   // Footer state machine (D6): pending/needs_revision -> both actions;
-  // approved -> approve hidden, reject still offered; rejected/
-  // removed_by_owner -> no status action, just the notice.
+  // approved -> approve stays mounted but disabled (unmounting it let reject
+  // slide into the slot a finger had just tapped); rejected/removed_by_owner
+  // -> no status action, just the notice.
+  //
+  // The pair is uflow's own approve/reject treatment (ProviderCard): the
+  // shared Button, variant primary/danger, 48px, mdi:check/mdi:close. Both
+  // block on `reviewing` AND `isUploading` — a certificate upload must not
+  // leave a destructive control live. Approve opens ApproveModal rather
+  // than firing: it publishes publicly and irreversibly, so the guard sits
+  // on the irreversible action, mirroring RejectModal on the reversible one.
   const reviewFooter = (() => {
+    // Meta fetch failed: say so where the actions would be instead of
+    // silently rendering a save-only footer on a reviewable row. 401/403
+    // gets the re-auth copy — reload cannot renew an expired session.
+    if (metaFailure) {
+      return (
+        <p className="py-1 text-center text-xs text-danger">
+          {t(
+            metaFailure === 'auth'
+              ? 'adminHalalEdit.review.loadFailedAuth'
+              : 'adminHalalEdit.review.loadFailed',
+          )}
+        </p>
+      );
+    }
     if (!providerMeta) return undefined;
     const status = providerMeta.reviewStatus;
     if (status === 'rejected' || status === 'removed_by_owner') {
@@ -397,24 +488,35 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
     }
     return (
       <div className="flex gap-2">
-        {status !== 'approved' && (
-          <button
-            className="flex-1 rounded-xl bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
-            disabled={reviewing || isUploading}
-            type="button"
-            onClick={() => handleReview('approved')}
-          >
-            {reviewing ? '…' : t('adminHalalEdit.review.approve')}
-          </button>
-        )}
-        <button
-          className="flex-1 rounded-xl bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-          disabled={reviewing}
-          type="button"
+        <Button
+          aria-label={t('adminHalalEdit.review.approve')}
+          className="h-12 flex-1 items-center justify-center gap-1.5"
+          disabled={status === 'approved' || isUploading}
+          icon={
+            <div className="flex items-center">
+              <Icon height={16} icon={mdiCheck} width={16} />
+            </div>
+          }
+          loading={reviewing}
+          variant="primary"
+          onClick={() => setApproveModalOpen(true)}
+        >
+          {t('adminHalalEdit.review.approve')}
+        </Button>
+        <Button
+          aria-label={t('adminHalalEdit.review.reject')}
+          className="h-12 flex-1 items-center justify-center gap-1.5"
+          disabled={reviewing || isUploading}
+          icon={
+            <div className="flex items-center">
+              <Icon height={16} icon={mdiClose} width={16} />
+            </div>
+          }
+          variant="danger"
           onClick={() => setRejectModalOpen(true)}
         >
           {t('adminHalalEdit.review.reject')}
-        </button>
+        </Button>
       </div>
     );
   })();
@@ -422,8 +524,15 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
   return (
     <EditSubPageLayout
       primaryButton={{
+        // #548: Approve is the page's consequential action; saving a local
+        // draft is demoted to the secondary variant so it cannot dominate.
+        variant: 'secondary',
         label: isUploading ? t('adminHalalEdit.uploading') : t('common.save'),
-        icon: isUploading ? undefined : 'material-symbols:save-outline',
+        // #562: bundled glyph on the same bar as the bundled approve/reject
+        // icons — a string name would still race api.iconify.design.
+        icon: isUploading ? undefined : (
+          <Icon aria-hidden="true" className="h-6 w-6" icon={materialSymbolsSaveOutline} />
+        ),
         onClick: handleSave,
         disabled: isUploading,
         loading: isUploading,
@@ -646,12 +755,18 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
                   {data.certificateFile ? (
                     <div className="flex w-full items-center justify-between rounded-2xl border border-[#E5E5E5] bg-white px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <Icon className="h-6 w-6 text-primary" icon="mdi:file-document-outline" />
+                        {/* #562: bundled data, not a string name — a
+                            string makes @iconify/react fetch the glyph
+                            from api.iconify.design at render. */}
+                        <Icon className="h-6 w-6 text-primary" icon={mdiFileDocumentOutline} />
                         <div className="flex flex-col">
-                          <span className="text-sm font-medium text-[#272727]">
+                          {/* dir=auto: a Latin filename in an RTL card stays
+                              a single LTR run (dot-separated parts cannot
+                              reorder) while the flex row keeps RTL layout. */}
+                          <span className="text-sm font-medium text-[#272727]" dir="auto">
                             {data.certificateFile.name}
                           </span>
-                          <span className="text-xs text-[#7A7A7A]">
+                          <span className="text-xs text-[#7A7A7A]" dir="auto">
                             {(data.certificateFile.size / 1024).toFixed(1)} KB
                           </span>
                         </div>
@@ -774,6 +889,15 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
         providerName={providerMeta?.providerName ?? ''}
         onClose={() => setRejectModalOpen(false)}
         onConfirm={(feedback) => handleReview('rejected', feedback)}
+      />
+
+      {/* Approval publishes publicly and irreversibly — it gets the guard. */}
+      <ApproveModal
+        isLoading={reviewing}
+        isOpen={approveModalOpen}
+        providerName={providerMeta?.providerName ?? ''}
+        onClose={() => setApproveModalOpen(false)}
+        onConfirm={() => handleReview('approved')}
       />
     </EditSubPageLayout>
   );
