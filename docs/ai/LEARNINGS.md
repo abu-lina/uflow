@@ -1225,6 +1225,12 @@ Corrected (2026-10-05): the "no branch protection" claim above is stale. `main` 
 - **Change to prevent repeat**: When a bug is "permissions look right but behave wrong," enumerate every surface that reads the privilege before theorising about the store, with `grep -rn "user_metadata\|role" src/` as the opening move, not the closing one; a self-writable claim used for any visibility decision is a finding on its own even when it agrees with the DB today. Query the actual production or UAT row before writing a root cause, and mark the analysis Blocked rather than shipping a hypothesis when the environment is unreachable. For any test asserting "the stale/slow thing did not win," mutate the guard away and confirm the test goes red: with deferred work, a test that never resolves the promise it set up is indistinguishable from one that passes.
 - **Task/PR**: Branch `fix/567-admin-ui-not-visible`, issue #567
 
+### 2026-10-08 — A "desktop only" gap was two components rendering the same form (issue #565)
+
+- **Context**: User reported the forgot-password link missing "am PC". Not a breakpoint bug: the app has two parallel login surfaces, `LoginModal` (desktop header) and `LoginPageContent` (`/login`, reached from mobile), and only the page had the link.
+- **Learning**: When a user report names a device class, check for duplicated components per surface before suspecting CSS/media queries. The reset flow, route, and translation key all already existed; the only missing piece was one `LinkButton`. Worth noting the modal variant needs `onClose()` before `router.push`, or it stays mounted over the destination route.
+- **Change to prevent repeat**: For affordances duplicated across a modal/page pair, add a parity regression test that renders both surfaces and asserts the same link exists on each; that is what `issue-565-forgot-password-link.test.tsx` does.
+- **Task/PR**: Branch `fix/565-forgot-password-link`, issue #565
 ### 2026-10-08 — A "cut-off" sentence can be a data defect, not a layout clip (issue #566)
 
 - **Context**: A user reported the halal modal's last sentence "not complete" on mobile, which reads as a classic `line-clamp`/fixed-height bug. The rendered paragraph had no clamp and the dialog was auto-height: the German catalogue string itself ended on a bare participle ("Das Fleisch muss halal geschlachtet.") and had since PR #190.
