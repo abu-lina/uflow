@@ -583,6 +583,72 @@ describe('agent-dispatch.sh', () => {
     expect(fs.existsSync(lockDir())).toBe(false);
   });
 
+  it('traps INT and TERM for lock release, not only EXIT (spec: EXIT INT TERM)', () => {
+    // A trapped signal must still kill the run: a bare
+    // `trap release_lock EXIT INT TERM` releases the lock and then CONTINUES
+    // the script (bash 3.2 treats a caught TERM as handled, not fatal), which
+    // would dispatch windows after being told to die. The correct form exits
+    // on INT/TERM so the EXIT trap releases the lock.
+    const body = fs.readFileSync(DISPATCH, 'utf8');
+    const trapLines = body.split('\n').filter((l) => /^\s*trap\b/.test(l));
+    expect(trapLines.length).toBeGreaterThan(0);
+    const joined = trapLines.join('\n');
+    expect(/\bINT\b/.test(joined)).toBe(true);
+    expect(/\bTERM\b/.test(joined)).toBe(true);
+    // every INT/TERM trap must exit — a trap that only released the lock
+    // would leave the run continuing inside the critical section
+    for (const l of trapLines) {
+      if (/\b(INT|TERM)\b/.test(l)) expect(l).toMatch(/exit/);
+    }
+  });
+
+  it('SIGTERM mid-run kills the run and releases the lock', async () => {
+    const env = {
+      ...process.env,
+      ...sb.env,
+      MONITOR_NDJSON: path.join(FIXTURE_DIR, 'monitor-one-free-slot.ndjson'),
+      MONITOR_SLEEP: '2', // hold the critical section so the signal lands mid-run
+    };
+    const p = spawn(DISPATCH, ['--launch'], { env });
+    // wait until the lock is actually held before signalling
+    const deadline = Date.now() + 10_000;
+    while (!fs.existsSync(lockDir()) && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    expect(fs.existsSync(lockDir())).toBe(true);
+    p.kill('SIGTERM');
+    const code = await new Promise<number | null>((resolve) => p.on('close', (c) => resolve(c)));
+    // the signal must not be swallowed: no exit 0, and no launch after it
+    expect(code).not.toBe(0);
+    expect(sb.called('osascript')).toBe(false);
+    // a wedged lockdir would block the queue for the 300s stale window
+    expect(fs.existsSync(lockDir())).toBe(false);
+  }, 15_000);
+
+  it('SIGINT to the process group (Ctrl-C) kills the run and releases the lock', async () => {
+    const env = {
+      ...process.env,
+      ...sb.env,
+      MONITOR_NDJSON: path.join(FIXTURE_DIR, 'monitor-one-free-slot.ndjson'),
+      MONITOR_SLEEP: '2',
+    };
+    // detached: the dispatcher gets its own process group so we can signal it
+    // the way Ctrl-C does — every member, not just the shell's pid. A lone
+    // SIGINT to the bash pid leaves the monitor child alive, and bash then
+    // continues the script (its child was not killed by SIGINT).
+    const p = spawn(DISPATCH, ['--launch'], { env, detached: true });
+    const deadline = Date.now() + 10_000;
+    while (!fs.existsSync(lockDir()) && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 25));
+    }
+    expect(fs.existsSync(lockDir())).toBe(true);
+    process.kill(-(p.pid as number), 'SIGINT');
+    const code = await new Promise<number | null>((resolve) => p.on('close', (c) => resolve(c)));
+    expect(code).not.toBe(0);
+    expect(sb.called('osascript')).toBe(false);
+    expect(fs.existsSync(lockDir())).toBe(false);
+  }, 15_000);
+
   it('prints "monitor failed", exits 1 and still releases the lock', () => {
     const { stdout, status } = run(sb, [], {
       ...useMonitor(sb, 'monitor-one-free-slot.ndjson'),

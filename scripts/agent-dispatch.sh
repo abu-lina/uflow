@@ -222,10 +222,21 @@ write_lock_files() {
   printf '%s\n' "$NOW" > "$LOCK/started"
 }
 
+# The spec pins release on EXIT INT TERM. EXIT releases the lock; INT and
+# TERM exit (which fires the EXIT trap). A bare `trap release_lock EXIT INT
+# TERM` would be wrong: on bash 3.2 a trapped signal is handled, not fatal —
+# the trap would release the lock and then the run would CONTINUE its launch
+# loop, dropping the lock mid-critical-section and still opening windows.
+arm_lock_traps() {
+  trap release_lock EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+}
+
 acquire_lock() {
   if mkdir "$LOCK" 2>/dev/null; then
     write_lock_files
-    trap release_lock EXIT
+    arm_lock_traps
     return 0
   fi
   local lpid="" started="" dead=1 age
@@ -244,7 +255,7 @@ acquire_lock() {
     rm -rf "$LOCK"
     if mkdir "$LOCK" 2>/dev/null; then
       write_lock_files
-      trap release_lock EXIT
+      arm_lock_traps
       return 0
     fi
   fi
