@@ -94,6 +94,41 @@ describe('agent-dispatch.sh', () => {
     expect(run(sb, ['--disable', '--launch']).status).toBe(2);
   });
 
+  it('exits 2, not 1, when a flag is missing its argument', () => {
+    for (const flag of ['--max', '--max-per-hour', '--terminal', '--interval']) {
+      const { status, stderr } = run(sb, [flag]);
+      expect(status, `${flag} with no argument`).toBe(2);
+      expect(stderr, `${flag} with no argument`).toContain(flag);
+    }
+  });
+
+  it('exits 2 when a numeric flag gets a non-number', () => {
+    for (const flag of ['--max', '--max-per-hour', '--interval']) {
+      const { status, stderr } = run(sb, [flag, 'abc']);
+      expect(status, `${flag} abc`).toBe(2);
+      expect(stderr, `${flag} abc`).toContain(flag);
+    }
+  });
+
+  it('fails with a readable jq message when jq is not on PATH', () => {
+    const { status, stderr, stdout } = run(sb, ['--launch'], {
+      ...useMonitor(sb, 'monitor-one-free-slot.ndjson'),
+      JQ_BIN: '/nonexistent/jq-definitely-missing',
+    });
+    expect(status).toBe(1);
+    expect(stderr + stdout).toContain('jq');
+    expect(stderr + stdout).toMatch(/brew install jq/);
+    // the guard fires before the lock is taken
+    expect(fs.existsSync(lockDir())).toBe(false);
+  });
+
+  it('--print-plist still works when jq is missing (terminal modes need none)', () => {
+    const { status } = run(sb, ['--print-plist'], {
+      JQ_BIN: '/nonexistent/jq-definitely-missing',
+    });
+    expect(status).toBe(0);
+  });
+
   // --- dry run -------------------------------------------------------------
 
   it('with no flags prints the plan and launches nothing', () => {

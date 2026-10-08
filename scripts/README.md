@@ -22,6 +22,9 @@ Scripts here are invoked via `npm run`, `npx tsx`, or directly in the terminal. 
 
 Two tools for dispatching parallel orchestrator sessions without hand-work.
 
+Prerequisites: `git`, `gh`, and `jq` (`brew install jq`); `osascript` and
+`plutil` ship with macOS.
+
 `agent-monitor.sh` reports every in-flight request from durable state only
 (`git worktree list`, `git for-each-ref`/`rev-list`, `gh issue view --json
 comments`, `gh issue list`, `gh pr list` — never `devin list`, never process

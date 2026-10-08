@@ -72,10 +72,21 @@ set_mode() {
 while [ $# -gt 0 ]; do
   case "$1" in
     --launch) LAUNCH=1; shift ;;
-    --max) MAX="${2:?--max needs a number}"; shift 2 ;;
-    --max-per-hour) MAX_PER_HOUR="${2:?--max-per-hour needs a number}"; shift 2 ;;
-    --terminal) TERMINAL="${2:?--terminal needs an app}"; shift 2 ;;
-    --interval) INTERVAL="${2:?--interval needs seconds}"; shift 2 ;;
+    --max)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--max needs a number" >&2; exit 2; }
+      MAX="$2"; shift 2 ;;
+    --max-per-hour)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--max-per-hour needs a number" >&2; exit 2; }
+      MAX_PER_HOUR="$2"; shift 2 ;;
+    --terminal)
+      [ $# -ge 2 ] || { echo "--terminal needs an app" >&2; exit 2; }
+      TERMINAL="$2"; shift 2 ;;
+    --interval)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--interval needs seconds" >&2; exit 2; }
+      INTERVAL="$2"; shift 2 ;;
     --disable) set_mode disable; shift ;;
     --enable) set_mode enable; shift ;;
     --install) set_mode install; shift ;;
@@ -206,6 +217,14 @@ fi
 if [ -e "$STATE/DISABLED" ]; then
   echo "refusing to dispatch: disabled by $STATE/DISABLED"
   exit 0
+fi
+
+# Preflight: jq does all JSON work in the run below. Fail with a readable
+# message rather than a bare "jq: command not found" exit 127 inside a
+# launchd log nobody reads.
+if ! command -v "$JQ_BIN" >/dev/null 2>&1; then
+  echo "agent-dispatch.sh: jq is required but '$JQ_BIN' is not in PATH; install it with: brew install jq" >&2
+  exit 1
 fi
 
 # 2. The lock: mkdir is atomic on APFS; flock(1) does not exist on this
