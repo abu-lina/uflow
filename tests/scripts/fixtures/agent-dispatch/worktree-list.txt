@@ -1,0 +1,16 @@
+worktree /fake/uflow
+HEAD 0000000000000000000000000000000000000001
+branch refs/heads/main
+
+worktree /fake/uflow-wt/541-first
+HEAD 0000000000000000000000000000000000000002
+branch refs/heads/fix/541-first
+
+worktree /fake/uflow-wt/542-second
+HEAD 0000000000000000000000000000000000000003
+branch refs/heads/fix/542-second
+
+worktree /fake/uflow-wt/543-third
+HEAD 0000000000000000000000000000000000000004
+branch refs/heads/fix/543-third
+
