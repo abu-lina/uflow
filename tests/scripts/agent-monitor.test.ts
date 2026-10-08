@@ -237,6 +237,33 @@ describe('agent-monitor.sh', () => {
     expect(r).toMatchObject({ issue: 104, state: 'in-flight', occupies_slot: true });
   });
 
+  it('turns a ready-for-agent list entry into a ready record (committed issues-ready fixture)', () => {
+    // the fixture is the gh 'issue list --label ready-for-agent' answer
+    fs.copyFileSync(
+      path.join(FIXTURE_DIR, 'issues-ready.json'),
+      path.join(sb.fixtureDir, 'ready-agent.json'),
+    );
+    sb.writeFixture(
+      'worktree-list.txt',
+      `worktree /fake/uflow\nHEAD ${'0'.repeat(40)}\nbranch refs/heads/main\n\n`,
+    );
+    sb.writeFixture('refs.txt', 'main\norigin/main\n');
+    sb.writeFixture('ready-human.json', '[]');
+    sb.writeFixture('pr-list.json', '[]');
+    sb.writeFixture(
+      'issue-700.json',
+      JSON.stringify({
+        number: 700,
+        state: 'OPEN',
+        title: 'dispatchable work',
+        labels: [{ name: 'ready-for-agent' }],
+        comments: [],
+      }),
+    );
+    const [r] = jsonRecords();
+    expect(r).toMatchObject({ issue: 700, state: 'ready', occupies_slot: false });
+  });
+
   it('classifies ready: open, ready-for-agent, no worktree or branch', () => {
     seedScenario({
       issues: { 105: { state: 'OPEN', labels: ['ready-for-agent'], comments: [] } },

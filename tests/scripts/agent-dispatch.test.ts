@@ -744,6 +744,21 @@ describe('agent-dispatch.sh', () => {
       }
     });
 
+    it('every committed fixture is referenced by a test or a stub', () => {
+      // a fixture nobody loads drifts silently; commit only what the suite uses
+      const dir = FIXTURE_DIR;
+      const sources = [
+        path.join(__dirname, 'agent-dispatch.test.ts'),
+        path.join(__dirname, 'agent-monitor.test.ts'),
+        path.join(__dirname, 'helpers/shell-stubs.ts'),
+      ]
+        .map((f) => fs.readFileSync(f, 'utf8'))
+        .join('\n');
+      for (const f of fs.readdirSync(dir)) {
+        expect(sources, `unreferenced fixture: ${f}`).toContain(f);
+      }
+    });
+
     it('neither script executes launchctl and neither hardcodes the repo path', () => {
       for (const script of SCRIPTS) {
         const lines = fs.readFileSync(script, 'utf8').split('\n');
