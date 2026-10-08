@@ -146,6 +146,8 @@ const nextConfig = {
     // that still needs the flag (@next/bundle-analyzer is a webpack plugin).
     // Harmless under Turbopack (ignored), so it stays for that path.
     webpackBuildWorker: true,
+    // `optimizeCss` was removed as inert under App Router: byte-identical CSS
+    // output and a 45291-byte SSR response measured with the flag on and off (#554).
   },
 
   // Deliberately empty, and deliberately present.

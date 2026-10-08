@@ -28,6 +28,12 @@
  * vacuously and that is correct: a package that is not installed cannot be
  * vulnerable. Test 2 then becomes the only false-positive risk; removing the
  * override alongside the package means deleting that assertion too.
+ *
+ * Exit condition on a postcss major bump: `overrides` replaces a consumer's
+ * range rather than negotiating it, so the day postcss requires
+ * source-map-js@2.x this `^1.2.2` floor silently installs 1.x under a 2.x
+ * consumer — surfacing as a build-time TypeError, not an ERESOLVE at install.
+ * When that happens, remove the override (and test 2); do not widen the range.
  */
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
