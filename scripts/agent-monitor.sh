@@ -36,12 +36,24 @@ GH_REPO=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) JSON_OUT=1; shift ;;
-    --max) MAX="${2:?--max needs a number}"; shift 2 ;;
-    --repo) GH_REPO="${2:?--repo needs owner/name}"; shift 2 ;;
+    --max)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--max needs a number" >&2; exit 2; }
+      MAX="$2"; shift 2 ;;
+    --repo)
+      [ $# -ge 2 ] || { echo "--repo needs owner/name" >&2; exit 2; }
+      GH_REPO="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown flag: $1" >&2; exit 2 ;;
   esac
 done
+
+# jq does all JSON work; fail with a readable message rather than a bare
+# "jq: command not found" exit 127 inside a launchd log nobody reads.
+if ! command -v "$JQ_BIN" >/dev/null 2>&1; then
+  echo "agent-monitor.sh: jq is required but '$JQ_BIN' is not in PATH; install it with: brew install jq" >&2
+  exit 1
+fi
 
 run_gh() {
   if [ -n "$GH_REPO" ]; then

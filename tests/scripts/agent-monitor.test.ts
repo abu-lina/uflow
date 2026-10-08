@@ -20,17 +20,21 @@ function seedEmpty(sb: StubSandbox): void {
   sb.writeFixture('pr-list.json', '[]');
 }
 
-function run(sb: StubSandbox, args: string[] = []): { stdout: string; status: number } {
+function run(
+  sb: StubSandbox,
+  args: string[] = [],
+  extraEnv: Record<string, string> = {},
+): { stdout: string; stderr: string; status: number } {
   try {
     const stdout = execFileSync(MONITOR, args, {
-      env: { ...process.env, ...sb.env },
+      env: { ...process.env, ...sb.env, ...extraEnv },
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return { stdout, status: 0 };
+    return { stdout, stderr: '', status: 0 };
   } catch (e) {
-    const err = e as { status?: number; stdout?: string };
-    return { stdout: err.stdout ?? '', status: err.status ?? -1 };
+    const err = e as { status?: number; stdout?: string; stderr?: string };
+    return { stdout: err.stdout ?? '', stderr: err.stderr ?? '', status: err.status ?? -1 };
   }
 }
 
@@ -54,6 +58,32 @@ describe('agent-monitor.sh', () => {
   it('exits 2 on an unknown flag', () => {
     const { status } = run(sb, ['--bogus']);
     expect(status).toBe(2);
+  });
+
+  it('exits 2, not 1, when a flag is missing its argument', () => {
+    expect(run(sb, ['--max']).status).toBe(2);
+    expect(run(sb, ['--repo']).status).toBe(2);
+    const { stderr, status } = run(sb, ['--max']);
+    expect(stderr).toContain('--max');
+  });
+
+  it('exits 2 when --max is not a number', () => {
+    const { status, stderr } = run(sb, ['--max', 'abc']);
+    expect(status).toBe(2);
+    expect(stderr).toContain('--max');
+  });
+
+  it('fails with a readable jq message when jq is not on PATH', () => {
+    seedEmpty(sb);
+    const { status, stderr } = run(sb, [], { JQ_BIN: '/nonexistent/jq-definitely-missing' });
+    expect(status).toBe(1);
+    expect(stderr).toContain('jq');
+    expect(stderr).toMatch(/brew install jq/);
+  });
+
+  it('--help still exits 0 when jq is missing', () => {
+    const { status } = run(sb, ['--help'], { JQ_BIN: '/nonexistent/jq-definitely-missing' });
+    expect(status).toBe(0);
   });
 
   it('prints "no in-flight requests" and exits 0 when nothing is in flight', () => {
