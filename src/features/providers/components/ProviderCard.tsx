@@ -37,6 +37,9 @@ interface ProviderCardProps extends Omit<Provider, 'id'> {
   reviewStatus?: Provider['review_status'];
   /** Explicitly show a read-only review status label. */
   showReviewStatus?: boolean;
+  /** Suppress the bookmark button (admin filtered-status view hands this
+      corner to the status badge). Defaults to false so Save shows. */
+  hideBookmark?: boolean;
   /** Plan 196: distance from the user's location in km, for "near me" search results */
   distanceKm?: number;
 }
@@ -65,6 +68,7 @@ export const ProviderCard = React.memo(
         loading,
         reviewStatus,
         showReviewStatus = false,
+        hideBookmark = false,
         distanceKm,
         // Plan 089: Section classification fields for computed badges
         listing_type,
@@ -388,10 +392,11 @@ export const ProviderCard = React.memo(
                 </div>
               </div>
             )}
-            {/* #560: when the read-only status badge is up it owns the
-                top-right corner — suppress Save so it cannot paint over it
-                (the badge carries no z-index and the button is z-20). */}
-            {!showSkeleton && !hideActions && !(showReviewStatus && reviewStatus) && (
+            {/* #560: on admin filtered-status tabs the caller sets
+                hideBookmark so Save cannot paint over the status badge
+                (the badge carries no z-index and the button is z-20). On
+                the All tab both render, matching main. */}
+            {!showSkeleton && !hideActions && !hideBookmark && (
               <div className="absolute right-3 top-3 z-20">
                 <motion.button
                   aria-label={displayBookmarked ? t('providers.saved') : t('providers.save')}

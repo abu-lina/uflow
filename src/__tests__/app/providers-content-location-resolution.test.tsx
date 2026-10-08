@@ -326,9 +326,12 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
 
     expect(getSearchQueryOptions()?.queryKey[4]).toBe('all');
     expect(mockMapDiscovery).toHaveBeenCalledWith(null);
+    // All tab: no specific status filter, so hideBookmark stays false —
+    // badge and Save both render, matching main.
     expect(mockDiscoveryGrid).toHaveBeenCalledWith(
       expect.objectContaining({
         showReviewStatus: true,
+        hideBookmark: false,
         items: [expect.objectContaining({ review_status: 'rejected' })],
       }),
     );
@@ -347,10 +350,13 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     expect(mockMapDiscovery).toHaveBeenCalledWith('pending');
     // #560: moderation actions are gone, but an admin viewing a filtered
     // status list must still see the read-only badge — showReviewStatus is
-    // now the single derivation covering both old paths.
+    // now the single derivation covering both old paths. hideBookmark is
+    // isAdmin && !!status && section !== 'ummah' — the same expression main
+    // used for enableModeration — so a specific status tab suppresses Save.
     expect(mockDiscoveryGrid).toHaveBeenCalledWith(
       expect.objectContaining({
         showReviewStatus: true,
+        hideBookmark: true,
         items: [expect.objectContaining({ review_status: 'pending' })],
       }),
     );
@@ -386,7 +392,7 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     render(<ProvidersContent />);
 
     expect(mockDiscoveryGrid).toHaveBeenCalledWith(
-      expect.objectContaining({ showReviewStatus: false }),
+      expect.objectContaining({ showReviewStatus: false, hideBookmark: false }),
     );
   });
 
@@ -403,6 +409,7 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     expect(mockDiscoveryGrid).toHaveBeenCalledWith(
       expect.objectContaining({
         showReviewStatus: true,
+        hideBookmark: false,
         items: [expect.objectContaining({ review_status: 'rejected' })],
       }),
     );

@@ -67,6 +67,9 @@ interface DiscoveryResultsGridProps {
   onBookmarkChange?: (providerId: string, isBookmarked: boolean) => void;
   /** Enables read-only status labels. */
   showReviewStatus?: boolean;
+  /** Suppresses the bookmark button on every card (admin filtered-status
+      view hands the card's top-right corner to the status badge). */
+  hideBookmark?: boolean;
   /** Enables infinite scroll and requires hasNextPage/isFetchingNextPage/onLoadMore. */
   enableInfiniteScroll?: boolean;
   hasNextPage?: boolean;
@@ -132,6 +135,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   bookmarkedIds = [],
   onBookmarkChange,
   showReviewStatus = false,
+  hideBookmark = false,
   enableInfiniteScroll = false,
   hasNextPage = false,
   isFetchingNextPage = false,
@@ -277,6 +281,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
           >
             <ProviderCard
               {...itemToProviderCardProps(item)}
+              hideBookmark={hideBookmark}
               isBookmarked={enableBookmarks ? bookmarkedIds.includes(item.provider_id) : undefined}
               reviewStatus={showReviewStatus ? item.review_status : undefined}
               showReviewStatus={showReviewStatus}

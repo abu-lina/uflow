@@ -684,24 +684,50 @@ describe('ProviderCard Component', () => {
       expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
     });
 
-    it('suppresses the bookmark button while the review-status badge is showing (#560 H1)', () => {
-      // jsdom cannot see paint order, so "the badge is unobstructed" is
-      // unassertable. The checkable truth is that Save does not render at all
-      // while the badge owns the top-right corner — the badge condition and
-      // the Save-suppression condition are the same expression.
-      render(
-        <ProviderCard
-          {...mockProvider}
-          isBookmarked={false}
-          reviewStatus="pending"
-          showReviewStatus
-          onBookmarkChange={mockOnBookmarkChange}
-        />,
-      );
+    /**
+     * #560 H1 rework: Save is gated by `hideBookmark` (the caller's S flag,
+     * "a status filter is active"), independently of the badge which is
+     * gated by `showReviewStatus && reviewStatus` (A && rs). One condition
+     * must not stand in for the other — the matrix below covers all four
+     * combinations of S and rs for an admin on a non-ummah section (A = T).
+     * Props carry the resolved flags exactly as DiscoveryResultsGrid passes
+     * them: showReviewStatus = A, hideBookmark = A && S,
+     * reviewStatus = the row's status when A.
+     */
+    it.each([
+      // [label, hideBookmark (S), reviewStatus (rs), expectBadge, expectSave]
+      ['filtered tab, row has status (A && S && rs)', true, 'pending', true, false],
+      ['filtered tab, row missing status (A && S && !rs)', true, undefined, false, false],
+      ['All tab, row has status (A && !S && rs)', false, 'pending', true, true],
+      ['All tab, row missing status (A && !S && !rs)', false, undefined, false, true],
+    ] as const)(
+      '%s → badge %s, Save %s',
+      (_label, hideBookmark, reviewStatus, expectBadge, expectSave) => {
+        render(
+          <ProviderCard
+            {...mockProvider}
+            hideBookmark={hideBookmark}
+            isBookmarked={false}
+            reviewStatus={reviewStatus as 'pending' | undefined}
+            showReviewStatus
+            onBookmarkChange={mockOnBookmarkChange}
+          />,
+        );
 
-      expect(screen.getByText(/^pending$/i)).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
-    });
+        const badge = screen.queryByText(/^pending$/i);
+        const saveButton = screen.queryByRole('button', { name: /^save$/i });
+        if (expectBadge) {
+          expect(badge).toBeInTheDocument();
+        } else {
+          expect(badge).not.toBeInTheDocument();
+        }
+        if (expectSave) {
+          expect(saveButton).toBeInTheDocument();
+        } else {
+          expect(saveButton).not.toBeInTheDocument();
+        }
+      },
+    );
 
     it('keeps the bookmark button when no badge is showing', () => {
       // reviewStatus without the opt-in renders no badge, so Save stays.

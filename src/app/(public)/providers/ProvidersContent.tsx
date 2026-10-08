@@ -521,6 +521,12 @@ export function ProvidersContent({
   // `isAdmin && section !== 'ummah'` regardless of status filter.
   const showReviewStatus = isAdmin && section !== 'ummah';
 
+  // #560: suppress the card's Save button on the admin filtered-status tabs
+  // so it cannot paint over the status badge. This is exactly the expression
+  // main used for `enableModeration` (which folded into `mode` and thereby
+  // gated the same button): isAdmin && !!status && section !== 'ummah'.
+  const hideBookmark = isAdmin && !!status && section !== 'ummah';
+
   const renderContent = () => {
     // Plan 196: "Near me" takes over rendering entirely
     if (nearMe.isActive) {
@@ -556,6 +562,7 @@ export function ProvidersContent({
         errorTitle={t('providers.errorTitle')}
         hasNextPage={hasNextPage ?? false}
         headerOffset={headerHeight}
+        hideBookmark={hideBookmark}
         isFetchingNextPage={isFetchingNextPage}
         isLoading={isLoading}
         items={searchResults.map(adaptSearchResultToDiscoveryItem)}
