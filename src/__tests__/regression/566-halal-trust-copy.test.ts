@@ -22,8 +22,9 @@ import { ps } from '@/translations/ps';
  * Regression coverage:
  * - de: the description terminates the participle clause with its auxiliary
  *   verb (the reported symptom), not just string-equality to the new copy.
- * - de: the heading keeps the comma before "ob" and the body uses the
- *   accusative "keinen Alkohol" — both approved in the Diagnose phase.
+ * - de: the heading keeps the comma before "ob", spells the adjectival
+ *   "halal" lowercase per Duden, and the body uses the accusative
+ *   "keinen Alkohol" — all approved in the Diagnose phase / review.
  * - all six catalogues: the same keys exist as non-empty strings and end in
  *   sentence-terminating punctuation, so no locale can ship a truncated
  *   clause again.
@@ -76,6 +77,16 @@ describe('halal trust modal copy (#566)', () => {
     const title = String(getPath(de, 'providerDetail.halal.title'));
     expect(title).toContain('geprüft, ob');
     expect(title).not.toContain('geprüft ob');
+  });
+
+  it('de title spells the adjectival "halal" lowercase', () => {
+    // Duden: the adjective is lowercase; only nominal/compound uses
+    // (Halal-Zertifikat, Halal-Restaurant) take a capital. In
+    // "ob sie halal sind" it is adjectival, so "Halal" was wrong — and
+    // it also disagreed with the description's "halal geschlachtet".
+    const title = String(getPath(de, 'providerDetail.halal.title'));
+    expect(title).toContain('halal sind');
+    expect(title).not.toContain('Halal sind');
   });
 
   it('de description uses the accusative "keinen Alkohol" after "anbietet"', () => {

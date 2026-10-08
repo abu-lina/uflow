@@ -1162,7 +1162,7 @@ export const de = {
       nearby: 'Anbieter werden geladen...',
     },
     halal: {
-      title: 'Restaurants auf Ummah Flow werden geprüft, ob sie Halal sind',
+      title: 'Restaurants auf Ummah Flow werden geprüft, ob sie halal sind',
       description:
         'Ein Restaurant wird nur dann gelistet, wenn es keinen Alkohol, kein verbotenes Fleisch und kein Glücksspiel anbietet. Das Fleisch muss halal geschlachtet sein.',
       learnMore: 'Mehr erfahren',
