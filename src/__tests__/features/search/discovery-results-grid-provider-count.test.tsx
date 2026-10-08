@@ -185,13 +185,16 @@ describe('Plan 229 - Provider count display', () => {
 
     expect(mockProviderCard).toHaveBeenCalledWith(
       expect.objectContaining({
-        mode: 'bookmark',
         reviewStatus: 'pending',
         showReviewStatus: true,
-        onApprove: undefined,
-        onReject: undefined,
       }),
     );
+    // #560: no approve/reject wiring may reach the card.
+    const cardProps = mockProviderCard.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(cardProps).not.toHaveProperty('mode');
+    expect(cardProps).not.toHaveProperty('onApprove');
+    expect(cardProps).not.toHaveProperty('onReject');
+    expect(cardProps).not.toHaveProperty('isReviewing');
   });
 
   it('uses section-aware label for store section', () => {

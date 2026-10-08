@@ -33,9 +33,6 @@ import {
   AdminStatusFilter,
   type ReviewStatusFilter,
 } from '@/features/admin/components/AdminStatusFilter';
-import { toast } from 'sonner';
-import { useProviderReview } from '@/features/admin/hooks/useProviderReview';
-import { RejectModal } from '@/features/admin/components/RejectModal';
 import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 
 import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
@@ -117,19 +114,6 @@ export function ProvidersContent({
   const searchParams = useSearchParams();
   const [isMounted, setIsMounted] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
-
-  // Plan 058: Provider review hook and modal state for admin moderation
-  const {
-    approveProvider,
-    rejectProvider,
-    isLoading: isReviewLoading,
-    reviewingProviderId,
-  } = useProviderReview();
-  const [rejectModalState, setRejectModalState] = useState<{
-    isOpen: boolean;
-    providerId: string | null;
-    providerName: string;
-  }>({ isOpen: false, providerId: null, providerName: '' });
 
   useEffect(() => {
     setIsMounted(true);
@@ -432,56 +416,6 @@ export function ProvidersContent({
     [pathname, router],
   );
 
-  // Plan 058: Handle admin approve action
-  const handleApprove = useCallback(
-    async (providerId: string) => {
-      try {
-        await approveProvider(providerId);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'Failed to approve provider. Please try again.';
-        console.error('[handleApprove] Failed to approve provider:', message);
-        toast.error(message);
-      }
-    },
-    [approveProvider],
-  );
-
-  // Plan 058: Handle admin reject action - open modal to collect feedback
-  const handleRejectClick = useCallback(
-    (providerId: string) => {
-      // Find provider name from search results for modal display
-      const provider = searchResults.find((r) => r.id === providerId);
-      setRejectModalState({
-        isOpen: true,
-        providerId,
-        providerName: provider?.name || 'Provider',
-      });
-    },
-    [searchResults],
-  );
-
-  // Plan 059/062: Handle reject confirmation from modal (feedback is now required)
-  const handleRejectConfirm = useCallback(
-    async (feedback: string) => {
-      if (rejectModalState.providerId) {
-        try {
-          await rejectProvider(rejectModalState.providerId, feedback);
-          setRejectModalState({ isOpen: false, providerId: null, providerName: '' });
-        } catch (err) {
-          console.error('[handleRejectConfirm] Failed to reject provider:', err);
-          toast.error('Failed to reject provider. Please try again.');
-        }
-      }
-    },
-    [rejectModalState.providerId, rejectProvider],
-  );
-
-  // Plan 058: Handle reject modal close
-  const handleRejectModalClose = useCallback(() => {
-    setRejectModalState({ isOpen: false, providerId: null, providerName: '' });
-  }, []);
-
   // Sync location/category/query with search context - only when they actually change
   useEffect(() => {
     // Use resolved location as source of truth (defaultLocation > URL param > context > fallback)
@@ -579,8 +513,19 @@ export function ProvidersContent({
     };
   }
 
-  // Render content based on state
-  const enableModeration = isAdmin && !!status && section !== 'ummah';
+  // Render content based on state.
+  // #560: the list card no longer offers approve/reject (the halal check page
+  // is the only approval path). The read-only status badge still shows for
+  // admins in every case it did before: this is the union of the old
+  // `enableModeration || showReviewStatus` conditions, which reduced to
+  // `isAdmin && section !== 'ummah'` regardless of status filter.
+  const showReviewStatus = isAdmin && section !== 'ummah';
+
+  // #560: suppress the card's Save button on the admin filtered-status tabs
+  // so it cannot paint over the status badge. This is exactly the expression
+  // main used for `enableModeration` (which folded into `mode` and thereby
+  // gated the same button): isAdmin && !!status && section !== 'ummah'.
+  const hideBookmark = isAdmin && !!status && section !== 'ummah';
 
   const renderContent = () => {
     // Plan 196: "Near me" takes over rendering entirely
@@ -612,24 +557,21 @@ export function ProvidersContent({
         bookmarkedIds={bookmarkedProviderIds}
         emptyDescription={t('providers.noResultsDescription')}
         emptyTitle={t('providers.noResultsFound')}
-        enableModeration={enableModeration}
         error={error}
         errorDescription={t('providers.errorLoading')}
         errorTitle={t('providers.errorTitle')}
         hasNextPage={hasNextPage ?? false}
         headerOffset={headerHeight}
+        hideBookmark={hideBookmark}
         isFetchingNextPage={isFetchingNextPage}
         isLoading={isLoading}
         items={searchResults.map(adaptSearchResultToDiscoveryItem)}
         openNow={isOpenNow}
-        reviewingProviderId={reviewingProviderId}
         section={section}
-        showReviewStatus={!enableModeration && isAdmin && section !== 'ummah'}
+        showReviewStatus={showReviewStatus}
         totalCount={isOpenNow ? undefined : totalCount}
-        onApprove={handleApprove}
         onBookmarkChange={handleBookmarkChange}
         onLoadMore={fetchNextPage}
-        onReject={handleRejectClick}
         onRetry={() => refetch()}
       />
     );
@@ -683,14 +625,6 @@ export function ProvidersContent({
       {infoIconPortal}
       {languageSwitcherPortal}
       <LegalLinksModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} />
-      {/* Plan 058: Reject modal for admin provider review */}
-      <RejectModal
-        isLoading={isReviewLoading}
-        isOpen={rejectModalState.isOpen}
-        providerName={rejectModalState.providerName}
-        onClose={handleRejectModalClose}
-        onConfirm={handleRejectConfirm}
-      />
       {showGreeting ? (
         // Fixed greeting header for Stage 2 (matches DiscoveryHeader style)
         <header

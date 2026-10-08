@@ -36,7 +36,7 @@ describe('Plan 266 review: ProviderCard labels are translated', () => {
     localStorage.removeItem('preferred-language');
   });
 
-  it('[pre-fix FAILS] renders moderation, halal and location labels in German', async () => {
+  it('renders halal and location labels in German', async () => {
     render(
       <ProviderCard
         {...mockProviders[0]}
@@ -45,16 +45,12 @@ describe('Plan 266 review: ProviderCard labels are translated', () => {
         isBookmarked={false}
         listing_type="food"
         locations={[location('loc-1', 'Berlin'), location('loc-2', 'Hamburg')]}
-        mode="moderation"
         verification_method="onsite"
-        onApprove={() => {}}
         onBookmarkChange={() => {}}
-        onReject={() => {}}
       />,
     );
 
-    expect(await screen.findByRole('button', { name: 'Freigeben' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Ablehnen' })).toBeInTheDocument();
+    // #560 removed the approve/reject actions; halal and location labels stay.
     expect(screen.getByRole('img', { name: 'Halal-Stufe 4' })).toBeInTheDocument();
     expect(screen.getByText('2 Standorte')).toBeInTheDocument();
   });

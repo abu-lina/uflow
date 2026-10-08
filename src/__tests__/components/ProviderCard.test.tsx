@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ComponentType } from 'react';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { render } from '../utils/test-utils';
 import { ProviderCard } from '@/features/providers/components/ProviderCard';
@@ -637,21 +638,16 @@ describe('ProviderCard Component', () => {
   });
 
   /**
-   * Plan 058 M3: Admin Moderation Mode
+   * Review status badge + #560 no-approve/reject guarantee
    *
-   * ProviderCard supports a `mode` prop to switch between:
-   * - 'bookmark' (default): Shows Save/Saved button
-   * - 'moderation': Shows Approve/Reject buttons for admin review
+   * The list card no longer offers approve/reject (#560, Option 1): the halal
+   * check page is the only place an approval decision is made, because it is
+   * the only caller that sends the `halal` payload the endpoint requires.
+   * The read-only review-status badge survives via the `showReviewStatus`
+   * opt-in, which admins get from ProvidersContent.
    */
-  describe('Admin Moderation Mode (Plan 058)', () => {
-    const mockOnApprove = vi.fn();
-    const mockOnReject = vi.fn();
-
-    beforeEach(() => {
-      vi.clearAllMocks();
-    });
-
-    it('should render bookmark mode by default', () => {
+  describe('Review status badge (#560)', () => {
+    it('renders no approve/reject control on the list card', () => {
       render(
         <ProviderCard
           {...mockProvider}
@@ -660,95 +656,23 @@ describe('ProviderCard Component', () => {
         />,
       );
 
-      // Bookmark mode uses top-right heart overlay and hides bottom action row.
+      // Bookmark affordance stays, but no approval action ever renders.
       expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
       expect(screen.queryByText('Save')).not.toBeInTheDocument();
       expect(screen.queryByText('Saved')).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /website/i })).not.toBeInTheDocument();
-      // Should NOT show moderation buttons
       expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
     });
 
-    it('should show moderation buttons when mode is "moderation"', () => {
+    it('renders no approve/reject control for a pending provider in the admin context', () => {
+      // The admin list context post-#560: a pending provider carrying the
+      // read-only status badge. Even there, no one-click action may exist —
+      // this is the regression guard for the 422 bug.
       render(
         <ProviderCard
           {...mockProvider}
           isBookmarked={false}
-          mode="moderation"
-          onApprove={mockOnApprove}
-          onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
-        />,
-      );
-
-      // Should show Approve and Reject buttons
-      expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
-      // Should NOT show Save button
-      expect(screen.queryByText('Save')).not.toBeInTheDocument();
-      expect(screen.queryByText('Saved')).not.toBeInTheDocument();
-    });
-
-    it('should call onApprove when Approve button is clicked', () => {
-      render(
-        <ProviderCard
-          {...mockProvider}
-          isBookmarked={false}
-          mode="moderation"
-          onApprove={mockOnApprove}
-          onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
-        />,
-      );
-
-      const approveButton = screen.getByRole('button', { name: /approve/i });
-      fireEvent.click(approveButton);
-
-      expect(mockOnApprove).toHaveBeenCalledTimes(1);
-    });
-
-    it('should call onReject when Reject button is clicked', () => {
-      render(
-        <ProviderCard
-          {...mockProvider}
-          isBookmarked={false}
-          mode="moderation"
-          onApprove={mockOnApprove}
-          onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
-        />,
-      );
-
-      const rejectButton = screen.getByRole('button', { name: /reject/i });
-      fireEvent.click(rejectButton);
-
-      expect(mockOnReject).toHaveBeenCalledTimes(1);
-    });
-
-    it('should show review status badge when reviewStatus is provided', () => {
-      render(
-        <ProviderCard
-          {...mockProvider}
-          isBookmarked={false}
-          mode="moderation"
-          reviewStatus="pending"
-          onApprove={mockOnApprove}
-          onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
-        />,
-      );
-
-      // Should show a status indicator
-      expect(screen.getByText(/pending/i)).toBeInTheDocument();
-    });
-
-    it('[post-fix PASSES] shows an opted-in status label in bookmark mode without moderation actions', () => {
-      render(
-        <ProviderCard
-          {...mockProvider}
-          isBookmarked={false}
-          mode="bookmark"
           reviewStatus="pending"
           showReviewStatus
           onBookmarkChange={mockOnBookmarkChange}
@@ -760,12 +684,123 @@ describe('ProviderCard Component', () => {
       expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
     });
 
-    it('does not show review status in bookmark mode without the explicit opt-in', () => {
+    /**
+     * #560 H1 rework: Save is gated by `hideBookmark` (the caller's S flag,
+     * "a status filter is active"), independently of the badge which is
+     * gated by `showReviewStatus && reviewStatus` (A && rs). One condition
+     * must not stand in for the other — the matrix below covers all four
+     * combinations of S and rs for an admin on a non-ummah section (A = T).
+     * Props carry the resolved flags exactly as DiscoveryResultsGrid passes
+     * them: showReviewStatus = A, hideBookmark = A && S,
+     * reviewStatus = the row's status when A.
+     */
+    it.each([
+      // [label, hideBookmark (S), reviewStatus (rs), expectBadge, expectSave]
+      ['filtered tab, row has status (A && S && rs)', true, 'pending', true, false],
+      ['filtered tab, row missing status (A && S && !rs)', true, undefined, false, false],
+      ['All tab, row has status (A && !S && rs)', false, 'pending', true, true],
+      ['All tab, row missing status (A && !S && !rs)', false, undefined, false, true],
+    ] as const)(
+      '%s → badge %s, Save %s',
+      (_label, hideBookmark, reviewStatus, expectBadge, expectSave) => {
+        render(
+          <ProviderCard
+            {...mockProvider}
+            hideBookmark={hideBookmark}
+            isBookmarked={false}
+            reviewStatus={reviewStatus as 'pending' | undefined}
+            showReviewStatus
+            onBookmarkChange={mockOnBookmarkChange}
+          />,
+        );
+
+        const badge = screen.queryByText(/^pending$/i);
+        const saveButton = screen.queryByRole('button', { name: /^save$/i });
+        if (expectBadge) {
+          expect(badge).toBeInTheDocument();
+        } else {
+          expect(badge).not.toBeInTheDocument();
+        }
+        if (expectSave) {
+          expect(saveButton).toBeInTheDocument();
+        } else {
+          expect(saveButton).not.toBeInTheDocument();
+        }
+      },
+    );
+
+    it('keeps the bookmark button when no badge is showing', () => {
+      // reviewStatus without the opt-in renders no badge, so Save stays.
       render(
         <ProviderCard
           {...mockProvider}
           isBookmarked={false}
-          mode="bookmark"
+          reviewStatus="pending"
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      expect(screen.queryByText(/^pending$/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+    });
+
+    it('treats legacy moderation props as inert — no path to an approve/reject control survives', () => {
+      // Deliberately bypasses the type checker: if anyone reintroduces a
+      // `mode`/`onApprove`-style prop that renders a one-click approve
+      // (which would skip the halal payload and 422 again), this fails.
+      const LegacyCard = ProviderCard as unknown as ComponentType<Record<string, unknown>>;
+      render(
+        <LegacyCard
+          {...mockProvider}
+          isBookmarked={false}
+          isReviewing={false}
+          mode="moderation"
+          onApprove={vi.fn()}
+          onBookmarkChange={mockOnBookmarkChange}
+          onReject={vi.fn()}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
+    });
+
+    it('should show review status badge when reviewStatus is provided and status is opted in', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          reviewStatus="pending"
+          showReviewStatus
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      // Should show a status indicator
+      expect(screen.getByText(/pending/i)).toBeInTheDocument();
+    });
+
+    it('shows an opted-in status label without moderation actions', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          reviewStatus="pending"
+          showReviewStatus
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      expect(screen.getByText(/^pending$/i)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
+    });
+
+    it('does not show review status without the explicit opt-in', () => {
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
           reviewStatus="pending"
           onBookmarkChange={mockOnBookmarkChange}
         />,
@@ -779,11 +814,9 @@ describe('ProviderCard Component', () => {
         <ProviderCard
           {...mockProvider}
           isBookmarked={false}
-          mode="moderation"
           reviewStatus="approved"
-          onApprove={mockOnApprove}
+          showReviewStatus
           onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
         />,
       );
 
@@ -795,77 +828,13 @@ describe('ProviderCard Component', () => {
         <ProviderCard
           {...mockProvider}
           isBookmarked={false}
-          mode="moderation"
           reviewStatus="rejected"
-          onApprove={mockOnApprove}
+          showReviewStatus
           onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
         />,
       );
 
       expect(screen.getByText(/rejected/i)).toBeInTheDocument();
-    });
-
-    it('should disable buttons when isReviewing is true', () => {
-      render(
-        <ProviderCard
-          {...mockProvider}
-          isBookmarked={false}
-          isReviewing={true}
-          mode="moderation"
-          onApprove={mockOnApprove}
-          onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
-        />,
-      );
-
-      const approveButton = screen.getByRole('button', { name: /approve/i });
-      const rejectButton = screen.getByRole('button', { name: /reject/i });
-
-      expect(approveButton).toBeDisabled();
-      expect(rejectButton).toBeDisabled();
-    });
-
-    it('should not call callbacks when buttons are disabled', () => {
-      render(
-        <ProviderCard
-          {...mockProvider}
-          isBookmarked={false}
-          isReviewing={true}
-          mode="moderation"
-          onApprove={mockOnApprove}
-          onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
-        />,
-      );
-
-      const approveButton = screen.getByRole('button', { name: /approve/i });
-      fireEvent.click(approveButton);
-
-      expect(mockOnApprove).not.toHaveBeenCalled();
-    });
-
-    it('should have hidden class on moderation wrapper for mobile (Plan 188)', () => {
-      render(
-        <ProviderCard
-          {...mockProvider}
-          isBookmarked={false}
-          mode="moderation"
-          onApprove={mockOnApprove}
-          onBookmarkChange={mockOnBookmarkChange}
-          onReject={mockOnReject}
-        />,
-      );
-
-      const approveButton = screen.getByRole('button', { name: /approve/i });
-      const wrapperDiv = approveButton.parentElement;
-
-      // Wrapper should have 'hidden' (mobile hidden) and 'sm:flex' (desktop visible)
-      expect(wrapperDiv).toHaveClass('hidden');
-      expect(wrapperDiv).toHaveClass('sm:flex');
-      // Buttons are still in the DOM even when visually hidden
-      expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument();
     });
   });
 

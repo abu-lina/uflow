@@ -387,8 +387,6 @@ export const tr = {
     serves: 'Sunar',
     locationsCount: '{{count}} konum',
     halalLevel: 'Helal seviyesi {{level}}',
-    approve: 'Onayla',
-    reject: 'Reddet',
     online: 'Çevrimiçi',
     donations: 'Bağışlar',
     initiativesSupported: 'Desteklenen girişimler',

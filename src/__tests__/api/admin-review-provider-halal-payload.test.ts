@@ -178,7 +178,7 @@ describe('PATCH /api/admin/review-provider — submitted halal payload', () => {
     expect(json.unanswered).toEqual(['no_pork', 'no_gambling']);
   });
 
-  it('falls back to stored values when halal is omitted (provider list path)', async () => {
+  it('falls back to stored values when halal is omitted (no-payload caller)', async () => {
     mockHalalCheck.mockResolvedValue({
       allAttested: false,
       missing: ['no_alcohol'],

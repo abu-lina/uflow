@@ -389,8 +389,6 @@ export const ps = {
     serves: 'وړاندې کوي',
     locationsCount: '{{count}} ځایونه',
     halalLevel: 'د حلال کچه {{level}}',
-    approve: 'منظورول',
-    reject: 'ردول',
     online: 'آنلاین',
     donations: 'خیرات',
     initiativesSupported: 'ملاتړ شوي نوښتونه',
