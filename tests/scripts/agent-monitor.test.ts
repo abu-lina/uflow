@@ -86,6 +86,30 @@ describe('agent-monitor.sh', () => {
     expect(status).toBe(0);
   });
 
+  it('handles a worktree list larger than the pipe buffer (no head -1 SIGPIPE race)', () => {
+    // >64KB of worktree output defeats `| head -n 1` under pipefail: once head
+    // exits, the writer takes SIGPIPE and the pipeline fails. The derivation
+    // must drain the whole stream.
+    // pad records sit outside the uflow-wt parent so the candidate loop
+    // skips them by a pure string match — the point is output volume, not
+    // 4000 basename forks
+    const pad = Array.from(
+      { length: 4000 },
+      (_, i) => `worktree /fake/other-wt/pad-${i}\nHEAD ${String(i).padStart(40, '0')}\n\n`,
+    ).join('');
+    sb.writeFixture(
+      'worktree-list.txt',
+      `worktree /fake/uflow\nHEAD ${'0'.repeat(40)}\nbranch refs/heads/main\n\n${pad}`,
+    );
+    sb.writeFixture('refs.txt', 'main\norigin/main\n');
+    sb.writeFixture('ready-agent.json', '[]');
+    sb.writeFixture('ready-human.json', '[]');
+    sb.writeFixture('pr-list.json', '[]');
+    const { stdout, status } = run(sb);
+    expect(status).toBe(0);
+    expect(stdout.trim()).toBe('no in-flight requests');
+  });
+
   it('prints "no in-flight requests" and exits 0 when nothing is in flight', () => {
     seedEmpty(sb);
     const { stdout, status } = run(sb);

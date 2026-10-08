@@ -212,6 +212,23 @@ describe('agent-dispatch.sh', () => {
     expect(second.stdout).toContain(`nothing to remove at ${plistPath}`);
   });
 
+  it('derives REPO_DIR from a worktree list larger than the pipe buffer', () => {
+    // >64KB of worktree output defeats `| head -n 1` under pipefail: once head
+    // exits, the writer takes SIGPIPE and the pipeline fails. The derivation
+    // must drain the whole stream.
+    const pad = Array.from(
+      { length: 4000 },
+      (_, i) => `worktree /fake/uflow-wt/pad-${i}\nHEAD ${String(i).padStart(40, '0')}\n\n`,
+    ).join('');
+    fs.writeFileSync(
+      path.join(sb.fixtureDir, 'worktree-list.txt'),
+      `worktree /fake/uflow\nHEAD ${'0'.repeat(40)}\nbranch refs/heads/main\n\n${pad}`,
+    );
+    const { stdout, status } = run(sb, ['--print-plist']);
+    expect(status).toBe(0);
+    expect(stdout).toContain('/fake/uflow/scripts/agent-dispatch.sh');
+  });
+
   // --- selection: cap and skip reasons --------------------------------------
 
   function occupiedRecord(n: number): string {

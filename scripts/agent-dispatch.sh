@@ -116,7 +116,11 @@ repo_dir() {
     if [ -n "${UFLOW_REPO_DIR:-}" ]; then
       _repo_dir="$UFLOW_REPO_DIR"
     else
-      _repo_dir="$("$GIT_BIN" worktree list --porcelain | sed -n 's/^worktree //p' | head -n 1)"
+      # awk drains the whole stream (no early exit), so a large worktree list
+      # cannot SIGPIPE the writer the way `... | head -n 1` could under pipefail.
+      _repo_dir="$("$GIT_BIN" worktree list --porcelain | awk '
+        !seen && /^worktree / { sub(/^worktree /, ""); print; seen = 1 }
+      ')"
     fi
   fi
   printf '%s' "$_repo_dir"
