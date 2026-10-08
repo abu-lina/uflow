@@ -147,7 +147,6 @@ export const SearchResultsList = memo(function SearchResultsList({
                 isBookmarked={bookmarkedProviderIds.includes(result.id)}
                 loading={index < 4 ? 'eager' : 'lazy'}
                 priority={index < 4}
-                reviewStatus={result.review_status ?? undefined}
                 onBookmarkChange={(isBookmarked: boolean) =>
                   onBookmarkChange(result.id, isBookmarked)
                 }

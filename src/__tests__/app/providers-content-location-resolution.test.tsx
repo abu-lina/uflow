@@ -374,6 +374,22 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     expect(gridProps).not.toHaveProperty('reviewingProviderId');
   });
 
+  it('shows no review-status badge for ummah rows even with an admin status filter (entity safety, ex-CR-H2)', () => {
+    // The old vacuous mirror of the deleted cardMode ternary lived in
+    // plan089-cr-findings-regression.test.ts. The real invariant survives at
+    // this seam: community_service rows must never carry the admin badge or
+    // any review affordance. showReviewStatus must be false here.
+    mockIsAdmin.mockReturnValue({ isAdmin: true });
+    mockUseSearchParams.mockReturnValue(new URLSearchParams('section=ummah&q=Test&status=pending'));
+    mockSearchPage('pending');
+
+    render(<ProvidersContent />);
+
+    expect(mockDiscoveryGrid).toHaveBeenCalledWith(
+      expect.objectContaining({ showReviewStatus: false }),
+    );
+  });
+
   it('[post-fix PASSES] applies admin All status labels to the store section', () => {
     mockIsAdmin.mockReturnValue({ isAdmin: true });
     mockUseSearchParams.mockReturnValue(new URLSearchParams('section=store&q=Munchies'));

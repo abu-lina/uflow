@@ -7,11 +7,14 @@
  *   Post-fix code: const params = new URLSearchParams(window.location.search);
  *                  // existing params preserved, only q/category/location are updated
  *
- * CR-H2: cardMode is set globally by `isAdmin && status` without checking entity type.
- *   Pre-fix code:  const cardMode = isAdmin && status ? 'moderation' : 'bookmark';
- *                  // UMMAH section returns community_service rows, but moderation activates
- *   Post-fix code: const cardMode = isAdmin && status && section !== 'ummah' ? 'moderation' : 'bookmark';
- *                  // provider-only moderation actions are never shown for community_service rows
+ * #560: the CR-H2 describe was deleted. It only exercised local mirrors of a
+ *   `cardMode = ... ? 'moderation' : 'bookmark'` expression that no longer
+ *   exists — moderation mode is gone from ProvidersContent and ProviderCard.
+ *   The real invariant it guarded (no review affordance on ummah rows) is now
+ *   covered at the prop-capture seam in
+ *   src/__tests__/app/providers-content-location-resolution.test.tsx
+ *   ("shows no review-status badge for ummah rows even with an admin status
+ *   filter").
  *
  * TDD note: bugfix regression exception per Implementer mode — these are post-fix additions
  * for client-side state-management and entity-safety bugs. No new API surface. Pre-fix failure
@@ -19,7 +22,6 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { Section } from '@/providers/search-provider';
 
 // ============================================================================
 // CR-H1: handleSearchSubmit section param persistence
@@ -34,7 +36,12 @@ import type { Section } from '@/providers/search-provider';
 
 describe('CR-H1: handleSearchSubmit section param persistence', () => {
   /** Mirror the pre-fix expression from ProvidersContent.tsx handleSearchSubmit */
-  function buildParamsPrefixPath(existingSearch: string, query: string, category: string | null, location: string): string {
+  function buildParamsPrefixPath(
+    existingSearch: string,
+    query: string,
+    category: string | null,
+    location: string,
+  ): string {
     const params = new URLSearchParams(); // BUG: ignores existing params
     if (query) params.set('q', query);
     if (category) params.set('category', category);
@@ -43,7 +50,12 @@ describe('CR-H1: handleSearchSubmit section param persistence', () => {
   }
 
   /** Mirror the post-fix expression from ProvidersContent.tsx handleSearchSubmit */
-  function buildParamsPostfixPath(existingSearch: string, query: string, category: string | null, location: string): string {
+  function buildParamsPostfixPath(
+    existingSearch: string,
+    query: string,
+    category: string | null,
+    location: string,
+  ): string {
     const params = new URLSearchParams(existingSearch); // FIX: start from existing
     if (query) {
       params.set('q', query);
@@ -102,60 +114,5 @@ describe('CR-H1: handleSearchSubmit section param persistence', () => {
     const resultParams = new URLSearchParams(result);
     expect(resultParams.has('section')).toBe(false); // section not invented
     expect(resultParams.get('q')).toBe('pizza');
-  });
-});
-
-// ============================================================================
-// CR-H2: cardMode UMMAH entity safety
-// ============================================================================
-//
-// The bug path:
-//   Admin navigates to /providers?section=ummah&status=pending
-//   UMMAH route returns community_service rows (no listing_type, no provider_id useful for review)
-//   Pre-fix: cardMode = isAdmin && status ? 'moderation' : 'bookmark'
-//   Result: Approve/Reject buttons rendered for community_service rows → invalid moderation calls
-//
-//   Post-fix: cardMode = isAdmin && status && section !== 'ummah' ? 'moderation' : 'bookmark'
-//   Result: community_service rows always get bookmark mode; moderation only for food/business
-
-describe('CR-H2: cardMode ummah entity safety', () => {
-  type ReviewStatusFilter = 'approved' | 'pending' | 'rejected' | 'needs_revision' | null;
-
-  /** Mirror the pre-fix expression from ProvidersContent.tsx */
-  function resolveCardMode_prefixExpr(isAdmin: boolean, status: ReviewStatusFilter): 'moderation' | 'bookmark' {
-    return isAdmin && status ? 'moderation' : 'bookmark';
-  }
-
-  /** Mirror the post-fix expression from ProvidersContent.tsx */
-  function resolveCardMode_postfixExpr(isAdmin: boolean, status: ReviewStatusFilter, section: Section): 'moderation' | 'bookmark' {
-    return isAdmin && status && section !== 'ummah' ? 'moderation' : 'bookmark';
-  }
-
-  it('[pre-fix FAILS] pre-fix expression activates moderation in UMMAH section for admin', () => {
-    // Documents the bug: UMMAH section returns community_service rows, but moderation is enabled
-    expect(resolveCardMode_prefixExpr(true, 'pending')).toBe('moderation');
-  });
-
-  it('[post-fix PASSES] moderation disabled for ummah section regardless of admin+status', () => {
-    expect(resolveCardMode_postfixExpr(true, 'pending', 'ummah')).toBe('bookmark');
-  });
-
-  it('[post-fix PASSES] moderation still enabled for food section with admin+status', () => {
-    expect(resolveCardMode_postfixExpr(true, 'pending', 'food')).toBe('moderation');
-  });
-
-  it('[post-fix PASSES] moderation still enabled for business section with admin+status', () => {
-    expect(resolveCardMode_postfixExpr(true, 'pending', 'store')).toBe('moderation');
-  });
-
-  it('[post-fix PASSES] bookmark mode when status is null for all sections', () => {
-    expect(resolveCardMode_postfixExpr(true, null, 'food')).toBe('bookmark');
-    expect(resolveCardMode_postfixExpr(true, null, 'ummah')).toBe('bookmark');
-    expect(resolveCardMode_postfixExpr(true, null, 'store')).toBe('bookmark');
-  });
-
-  it('[post-fix PASSES] bookmark mode when not admin regardless of section', () => {
-    expect(resolveCardMode_postfixExpr(false, 'pending', 'ummah')).toBe('bookmark');
-    expect(resolveCardMode_postfixExpr(false, 'pending', 'food')).toBe('bookmark');
   });
 });

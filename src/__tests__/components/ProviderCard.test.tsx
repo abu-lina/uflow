@@ -684,6 +684,40 @@ describe('ProviderCard Component', () => {
       expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument();
     });
 
+    it('suppresses the bookmark button while the review-status badge is showing (#560 H1)', () => {
+      // jsdom cannot see paint order, so "the badge is unobstructed" is
+      // unassertable. The checkable truth is that Save does not render at all
+      // while the badge owns the top-right corner — the badge condition and
+      // the Save-suppression condition are the same expression.
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          reviewStatus="pending"
+          showReviewStatus
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      expect(screen.getByText(/^pending$/i)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
+    });
+
+    it('keeps the bookmark button when no badge is showing', () => {
+      // reviewStatus without the opt-in renders no badge, so Save stays.
+      render(
+        <ProviderCard
+          {...mockProvider}
+          isBookmarked={false}
+          reviewStatus="pending"
+          onBookmarkChange={mockOnBookmarkChange}
+        />,
+      );
+
+      expect(screen.queryByText(/^pending$/i)).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+    });
+
     it('treats legacy moderation props as inert — no path to an approve/reject control survives', () => {
       // Deliberately bypasses the type checker: if anyone reintroduces a
       // `mode`/`onApprove`-style prop that renders a one-click approve

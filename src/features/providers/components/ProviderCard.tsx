@@ -388,7 +388,10 @@ export const ProviderCard = React.memo(
                 </div>
               </div>
             )}
-            {!showSkeleton && !hideActions && (
+            {/* #560: when the read-only status badge is up it owns the
+                top-right corner — suppress Save so it cannot paint over it
+                (the badge carries no z-index and the button is z-20). */}
+            {!showSkeleton && !hideActions && !(showReviewStatus && reviewStatus) && (
               <div className="absolute right-3 top-3 z-20">
                 <motion.button
                   aria-label={displayBookmarked ? t('providers.saved') : t('providers.save')}
