@@ -168,21 +168,8 @@ vi.mock('@/hooks/useIsAdmin', () => ({
   useIsAdmin: () => mockIsAdmin(),
 }));
 
-vi.mock('@/features/admin/hooks/useProviderReview', () => ({
-  useProviderReview: () => ({
-    approveProvider: vi.fn(),
-    rejectProvider: vi.fn(),
-    isLoading: false,
-    reviewingProviderId: null,
-  }),
-}));
-
 vi.mock('@/features/admin/components/AdminStatusFilter', () => ({
   AdminStatusFilter: () => null,
-}));
-
-vi.mock('@/features/admin/components/RejectModal', () => ({
-  RejectModal: () => null,
 }));
 
 vi.mock('@/components/shared/LegalLinksModal', () => ({
@@ -310,7 +297,6 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     expect(mockMapDiscovery).toHaveBeenCalledWith(null);
     expect(mockDiscoveryGrid).toHaveBeenCalledWith(
       expect.objectContaining({
-        enableModeration: false,
         showReviewStatus: true,
         items: [expect.objectContaining({ review_status: 'pending' })],
       }),
@@ -342,14 +328,13 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     expect(mockMapDiscovery).toHaveBeenCalledWith(null);
     expect(mockDiscoveryGrid).toHaveBeenCalledWith(
       expect.objectContaining({
-        enableModeration: false,
         showReviewStatus: true,
         items: [expect.objectContaining({ review_status: 'rejected' })],
       }),
     );
   });
 
-  it('[post-fix PASSES] keeps a specific status tab actionable and sends it to the map', () => {
+  it('[post-fix PASSES] keeps a specific status tab filtered, sends it to the map, and still shows the read-only status badge (#560)', () => {
     mockIsAdmin.mockReturnValue({ isAdmin: true });
     mockUseSearchParams.mockReturnValue(
       new URLSearchParams('section=food&q=Munchies&status=pending'),
@@ -360,13 +345,33 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
 
     expect(getSearchQueryOptions()?.queryKey[4]).toBe('pending');
     expect(mockMapDiscovery).toHaveBeenCalledWith('pending');
+    // #560: moderation actions are gone, but an admin viewing a filtered
+    // status list must still see the read-only badge — showReviewStatus is
+    // now the single derivation covering both old paths.
     expect(mockDiscoveryGrid).toHaveBeenCalledWith(
       expect.objectContaining({
-        enableModeration: true,
-        showReviewStatus: false,
+        showReviewStatus: true,
         items: [expect.objectContaining({ review_status: 'pending' })],
       }),
     );
+  });
+
+  it('does not pass any approve/reject wiring to the results grid (#560)', () => {
+    mockIsAdmin.mockReturnValue({ isAdmin: true });
+    mockUseSearchParams.mockReturnValue(
+      new URLSearchParams('section=food&q=Munchies&status=pending'),
+    );
+    mockSearchPage('pending');
+
+    render(<ProvidersContent />);
+
+    // No path from the list to PATCH /api/admin/review-provider may survive:
+    // the grid must not receive any of the removed moderation props.
+    const gridProps = mockDiscoveryGrid.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(gridProps).not.toHaveProperty('enableModeration');
+    expect(gridProps).not.toHaveProperty('onApprove');
+    expect(gridProps).not.toHaveProperty('onReject');
+    expect(gridProps).not.toHaveProperty('reviewingProviderId');
   });
 
   it('[post-fix PASSES] applies admin All status labels to the store section', () => {
@@ -381,7 +386,6 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     expect(mockMapDiscovery).toHaveBeenCalledWith(null);
     expect(mockDiscoveryGrid).toHaveBeenCalledWith(
       expect.objectContaining({
-        enableModeration: false,
         showReviewStatus: true,
         items: [expect.objectContaining({ review_status: 'rejected' })],
       }),

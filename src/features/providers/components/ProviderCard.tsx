@@ -7,11 +7,10 @@ import { motion } from 'motion/react';
 import { Icon } from '@iconify/react';
 import { Dot } from 'lucide-react';
 
-import { Button } from '@/components/ui/Button';
 import { BadgeLabel } from '@/components/ui/BadgeLabel';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { mdiCheck, mdiClose, mdiStar } from '@/lib/icons';
+import { mdiStar } from '@/lib/icons';
 import { useOptimisticBookmark } from '@/hooks/useOptimisticBookmark';
 import type { Provider } from '@/services/providers';
 import { safeJsonParse } from '@/utils/json';
@@ -34,18 +33,10 @@ interface ProviderCardProps extends Omit<Provider, 'id'> {
   bookmarkableType?: 'provider';
   priority?: boolean;
   loading?: 'eager' | 'lazy';
-  /** Card mode: 'bookmark' (default) shows Save/Saved, 'moderation' shows Approve/Reject */
-  mode?: 'bookmark' | 'moderation';
-  /** Review status for moderation mode badge display */
+  /** Review status for the read-only status badge */
   reviewStatus?: Provider['review_status'];
-  /** Explicitly show a read-only review status label in bookmark mode. */
+  /** Explicitly show a read-only review status label. */
   showReviewStatus?: boolean;
-  /** Callback when admin approves the provider */
-  onApprove?: () => void;
-  /** Callback when admin rejects the provider */
-  onReject?: () => void;
-  /** Loading state for review actions */
-  isReviewing?: boolean;
   /** Plan 196: distance from the user's location in km, for "near me" search results */
   distanceKm?: number;
 }
@@ -72,13 +63,8 @@ export const ProviderCard = React.memo(
         bookmarkableType = 'provider',
         priority = false,
         loading,
-        // Plan 058: Moderation mode props
-        mode = 'bookmark',
         reviewStatus,
         showReviewStatus = false,
-        onApprove,
-        onReject,
-        isReviewing = false,
         distanceKm,
         // Plan 089: Section classification fields for computed badges
         listing_type,
@@ -382,8 +368,8 @@ export const ProviderCard = React.memo(
                 </div>
               </div>
             )}
-            {/* Plan 058: Review status badge for moderation mode */}
-            {!showSkeleton && (mode === 'moderation' || showReviewStatus) && reviewStatus && (
+            {/* Plan 058: read-only review status badge (admin list context) */}
+            {!showSkeleton && showReviewStatus && reviewStatus && (
               <div className="absolute right-3 top-3">
                 <div
                   className={`inline-flex h-6 items-center justify-center overflow-hidden rounded-[7.2px] border px-2 backdrop-blur-[1.50px] ${
@@ -402,7 +388,7 @@ export const ProviderCard = React.memo(
                 </div>
               </div>
             )}
-            {!showSkeleton && mode === 'bookmark' && !hideActions && (
+            {!showSkeleton && !hideActions && (
               <div className="absolute right-3 top-3 z-20">
                 <motion.button
                   aria-label={displayBookmarked ? t('providers.saved') : t('providers.save')}
@@ -598,49 +584,6 @@ export const ProviderCard = React.memo(
                     </div>
                   );
                 })()}
-                {!hideActions && (
-                  <div className="flex w-full gap-3.5">
-                    {/* Plan 058: Moderation Mode - Show Approve/Reject buttons for admin review */}
-                    {mode === 'moderation' ? (
-                      <div className="hidden w-full gap-2 sm:flex">
-                        <Button
-                          aria-label={t('providers.approve')}
-                          className="h-12 flex-1 items-center justify-center gap-1.5"
-                          disabled={isReviewing}
-                          icon={
-                            <div className="flex items-center">
-                              <Icon height={16} icon={mdiCheck} width={16} />
-                            </div>
-                          }
-                          variant="primary"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onApprove?.();
-                          }}
-                        >
-                          {t('providers.approve')}
-                        </Button>
-                        <Button
-                          aria-label={t('providers.reject')}
-                          className="h-12 flex-1 items-center justify-center gap-1.5"
-                          disabled={isReviewing}
-                          icon={
-                            <div className="flex items-center">
-                              <Icon height={16} icon={mdiClose} width={16} />
-                            </div>
-                          }
-                          variant="danger"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onReject?.();
-                          }}
-                        >
-                          {t('providers.reject')}
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
               </div>
             </div>
           )}

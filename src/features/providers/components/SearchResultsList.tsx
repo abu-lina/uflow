@@ -18,14 +18,6 @@ interface SearchResultsListProps {
   onLoadMore: () => void;
   error?: Error | null;
   onRetry?: () => void;
-  /** Plan 058: Card mode - 'bookmark' (default) or 'moderation' for admin review */
-  mode?: 'bookmark' | 'moderation';
-  /** Plan 058: Callback when admin approves a provider */
-  onApprove?: (providerId: string) => void;
-  /** Plan 058: Callback when admin rejects a provider */
-  onReject?: (providerId: string) => void;
-  /** Plan 058: ID of provider currently being reviewed (loading state) */
-  reviewingProviderId?: string | null;
 }
 
 export const SearchResultsList = memo(function SearchResultsList({
@@ -38,10 +30,6 @@ export const SearchResultsList = memo(function SearchResultsList({
   onLoadMore,
   error = null,
   onRetry,
-  mode = 'bookmark',
-  onApprove,
-  onReject,
-  reviewingProviderId,
 }: SearchResultsListProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const prefetchProvider = usePrefetchProvider();
@@ -157,16 +145,12 @@ export const SearchResultsList = memo(function SearchResultsList({
                 bookmarkableType={result.type}
                 hideWebsiteButton={true}
                 isBookmarked={bookmarkedProviderIds.includes(result.id)}
-                isReviewing={reviewingProviderId === result.id}
                 loading={index < 4 ? 'eager' : 'lazy'}
-                mode={mode}
                 priority={index < 4}
                 reviewStatus={result.review_status ?? undefined}
-                onApprove={() => onApprove?.(result.id)}
                 onBookmarkChange={(isBookmarked: boolean) =>
                   onBookmarkChange(result.id, isBookmarked)
                 }
-                onReject={() => onReject?.(result.id)}
               />
             </div>
           );
