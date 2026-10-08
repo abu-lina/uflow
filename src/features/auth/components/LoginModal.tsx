@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -19,6 +20,7 @@ interface LoginModalProps {
 
 export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -34,8 +36,11 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
     setError(null);
 
     try {
-      const { data, error: signInError } = await signInWithEmailConfirmation(formData.email, formData.password);
-      
+      const { data, error: signInError } = await signInWithEmailConfirmation(
+        formData.email,
+        formData.password,
+      );
+
       if (signInError) {
         if (signInError.message === 'EMAIL_NOT_CONFIRMED') {
           setError(t('login.emailNotConfirmed'));
@@ -97,7 +102,10 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
       }
 
       const { token } = await tokenResponse.json();
-      const siteUrl = (typeof window !== 'undefined' ? window.location.origin : '') || process.env.NEXT_PUBLIC_SITE_URL || '';
+      const siteUrl =
+        (typeof window !== 'undefined' ? window.location.origin : '') ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        '';
       const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(formData.email)}`;
 
       const emailResponse = await fetch('/api/send-auth-email', {
@@ -154,7 +162,7 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
           </div>
         </div>
         {/* Right Section */}
-        <div className="flex h-full w-[571px] flex-col justify-center rounded-tr-[48px] bg-white p-16 overflow-y-auto">
+        <div className="flex h-full w-[571px] flex-col justify-center overflow-y-auto rounded-tr-[48px] bg-white p-16">
           <div className="mb-8">
             <h1 className="font-inter-tight text-3xl font-semibold text-content-heading">
               {t('login.welcomeTitle')}
@@ -179,7 +187,9 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
                 disabled={isLoading}
                 label={t('login.passwordLabel')}
                 placeholder={t('login.passwordPlaceholder')}
-                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                rightIcon={
+                  showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />
+                }
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 variant="with-icon"
@@ -187,14 +197,11 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
                 onRightIconClick={() => setShowPassword(!showPassword)}
               />
             </FormInputGroup>
-            
+
             {error && (
               <div className="mt-2">
                 {isEmailConfirmationError ? (
-                  <EmailVerificationAlert
-                    message={error}
-                    onResend={handleResendConfirmation}
-                  />
+                  <EmailVerificationAlert message={error} onResend={handleResendConfirmation} />
                 ) : (
                   <div className="rounded-2xl border border-danger/20 bg-danger-soft p-4 shadow-sm">
                     <div className="flex items-start">
@@ -213,7 +220,7 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
             )}
 
             <button
-              className="mt-3 w-full rounded-2xl bg-primary py-4 text-base font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-3 w-full rounded-2xl bg-primary py-4 text-base font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading}
               type="submit"
             >
@@ -224,11 +231,17 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
             <p className="text-center text-[11px] leading-[13px] text-content-muted">
               {t('legal.privacyStatement')}
             </p>
+            <LinkButton
+              type="button"
+              onClick={() => {
+                onClose();
+                router.push('/forgot-password');
+              }}
+            >
+              {t('login.forgotPassword')}
+            </LinkButton>
             {onSwitchMode && (
-              <LinkButton
-                type="button"
-                onClick={onSwitchMode}
-              >
+              <LinkButton type="button" onClick={onSwitchMode}>
                 {t('login.noAccount')}
               </LinkButton>
             )}
@@ -258,6 +271,3 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
     </div>
   );
 }
-
-
-
