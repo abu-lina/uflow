@@ -2,12 +2,17 @@
 // Real local Supabase, real admin session: password grant -> cookies via
 // /api/auth/set (SSR) AND supabase-js session JSON in localStorage (client),
 // which is what AuthProvider/useIsAdmin actually read.
-import { createClient } from '/Users/NARAFIQ/Projects/uflow-wt/560-list-card-approve-removal/node_modules/@supabase/supabase-js/dist/index.mjs';
-import { chromium } from '/Users/NARAFIQ/Projects/uflow-wt/560-list-card-approve-removal/node_modules/playwright/index.mjs';
+import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
+// Keys come only from the repo's gitignored .env.local (three levels up from
+// agent-output/artifacts/560/). Nothing credential-shaped is hardcoded here.
+const repoRoot = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..', '..');
+const envPath = join(repoRoot, '.env.local');
 const env = Object.fromEntries(
-  readFileSync('/Users/NARAFIQ/Projects/uflow-wt/560-list-card-approve-removal/.env.local', 'utf8')
+  readFileSync(envPath, 'utf8')
     .split('\n').filter((l) => l && !l.startsWith('#') && l.includes('='))
     .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^["']|["']$/g, '')]; }),
 );
@@ -16,9 +21,30 @@ const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
 const BASE = 'http://localhost:3000';
 
-// Fresh admin user (reuse existing if it persists across runs).
+// S1 hard gate: this script mints an email-confirmed admin account with the
+// service-role key. It must never run against a remote project. Assert the
+// target is loopback before any client is constructed or request is made.
+const supabaseHost = new URL(apiUrl).hostname;
+if (!['localhost', '127.0.0.1', '::1'].includes(supabaseHost)) {
+  console.error(
+    `Refusing to run: NEXT_PUBLIC_SUPABASE_URL resolves to "${supabaseHost}", ` +
+      'not localhost/127.0.0.1. This script creates a real admin user via the ' +
+      'service-role key and is only safe against a local Supabase stack.',
+  );
+  process.exit(1);
+}
+
+const { createClient } = await import(
+  join(repoRoot, 'node_modules', '@supabase', 'supabase-js', 'dist', 'index.mjs')
+);
+const { chromium } = await import(
+  join(repoRoot, 'node_modules', 'playwright', 'index.mjs')
+);
+
+// Runtime-generated password, never persisted. Printed so a human can reuse
+// the session for manual inspection.
 const email = '560-shot-admin@uflow.test';
-const password = '560-shot-pw-fixed';
+const password = `560-shot-${randomBytes(24).toString('hex')}`;
 const admin = createClient(apiUrl, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
@@ -40,6 +66,7 @@ const { error: rErr } = await admin
   .upsert({ user_id: userId, email, role: 'admin' }, { onConflict: 'user_id' });
 if (rErr) throw rErr;
 console.log('admin user:', email, userId);
+console.log('admin password (this run only, not persisted):', password);
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: 'block' });
@@ -93,7 +120,10 @@ const shot = async (url, name) => {
     return { badges, saves, loggedIn };
   });
   console.log(`${name}:`, JSON.stringify(stats), page.url());
-  await page.screenshot({ path: `agent-output/artifacts/560/${name}.png`, fullPage: false });
+  await page.screenshot({
+    path: join(repoRoot, 'agent-output', 'artifacts', '560', `${name}.png`),
+    fullPage: false,
+  });
 };
 
 await shot(`${BASE}/food?status=pending`, '560-filtered-pending-badge-no-save');
