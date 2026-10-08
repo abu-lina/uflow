@@ -21,6 +21,7 @@ Scripts here are invoked via `npm run`, `npx tsx`, or directly in the terminal. 
 ## Agent dispatch
 
 Two tools for dispatching parallel orchestrator sessions without hand-work.
+**Both are macOS-only**: they depend on `osascript`, Terminal.app and launchd.
 
 Prerequisites: `git`, `gh`, and `jq` (`brew install jq`); `osascript` and
 `plutil` ship with macOS.

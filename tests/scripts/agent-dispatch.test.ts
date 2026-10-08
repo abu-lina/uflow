@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { parsePlistDict } from './helpers/plist';
 import {
   makeSandbox,
   monitorRecord,
@@ -151,22 +152,11 @@ describe('agent-dispatch.sh', () => {
 
   // --- plist modes ---------------------------------------------------------
 
-  function plistAsJson(plistXml: string, dir: string): Record<string, unknown> {
-    const plistPath = path.join(dir, 'agent.plist');
-    fs.writeFileSync(plistPath, plistXml);
-    const lint = spawnSync('plutil', ['-lint', plistPath], { encoding: 'utf8' });
-    expect(lint.status).toBe(0);
-    const conv = spawnSync('plutil', ['-convert', 'json', '-o', '-', plistPath], {
-      encoding: 'utf8',
-    });
-    expect(conv.status).toBe(0);
-    return JSON.parse(conv.stdout);
-  }
-
-  it('--print-plist passes plutil -lint and carries the pinned fields', () => {
+  it('--print-plist carries the pinned fields', () => {
     const { stdout, status } = run(sb, ['--print-plist']);
     expect(status).toBe(0);
-    const plist = plistAsJson(stdout, sb.dir);
+    // parsed in-process (helpers/plist.ts): this assertion is cross-platform
+    const plist = parsePlistDict(stdout);
     expect(plist.Label).toBe('com.uflow.agent-dispatch');
     expect(plist.StartInterval).toBe(600);
     expect(plist.RunAtLoad).toBe(false);
@@ -183,9 +173,31 @@ describe('agent-dispatch.sh', () => {
     expect(fs.readdirSync(sb.launchAgentsDir)).toEqual([]);
   });
 
+  // Platform gate, not a disabled test: plutil ships only with macOS, so the
+  // real-binary lint cannot run on the Ubuntu CI runner. The field
+  // assertions above and below parse the XML in-process and run everywhere.
+  it.skipIf(process.platform !== 'darwin')(
+    'plutil -lint accepts the --print-plist and --install output (macOS-only binary)',
+    () => {
+      const printed = run(sb, ['--print-plist']);
+      expect(printed.status).toBe(0);
+      const printedPath = path.join(sb.dir, 'printed.plist');
+      fs.writeFileSync(printedPath, printed.stdout);
+      const lintPrinted = spawnSync('plutil', ['-lint', printedPath], { encoding: 'utf8' });
+      expect(lintPrinted.status).toBe(0);
+
+      run(sb, ['--install']);
+      const installedPath = path.join(sb.launchAgentsDir, 'com.uflow.agent-dispatch.plist');
+      const lintInstalled = spawnSync('plutil', ['-lint', installedPath], {
+        encoding: 'utf8',
+      });
+      expect(lintInstalled.status).toBe(0);
+    },
+  );
+
   it('--interval overrides StartInterval', () => {
     const { stdout } = run(sb, ['--print-plist', '--interval', '900']);
-    expect(plistAsJson(stdout, sb.dir).StartInterval).toBe(900);
+    expect(parsePlistDict(stdout).StartInterval).toBe(900);
   });
 
   it('--install writes the plist and prints the manual bootstrap instructions', () => {
@@ -193,8 +205,10 @@ describe('agent-dispatch.sh', () => {
     expect(status).toBe(0);
     const plistPath = path.join(sb.launchAgentsDir, 'com.uflow.agent-dispatch.plist');
     expect(fs.existsSync(plistPath)).toBe(true);
-    const lint = spawnSync('plutil', ['-lint', plistPath], { encoding: 'utf8' });
-    expect(lint.status).toBe(0);
+    // written file is a real plist dict with the label launchd will register
+    expect(parsePlistDict(fs.readFileSync(plistPath, 'utf8')).Label).toBe(
+      'com.uflow.agent-dispatch',
+    );
     expect(stdout).toContain('The agent is NOT loaded');
     expect(stdout).toContain('launchctl bootstrap');
     expect(stdout).toContain('launchctl bootout');
