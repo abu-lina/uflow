@@ -85,6 +85,8 @@ Thumbs.db
 # Cache and Logs
 .cache
 *.log
+# agent-output/artifacts/ holds durable run evidence per AGENTS.md; keep its .log files tracked.
+!agent-output/artifacts/**/*.log
 logs
 *.log.*
 .eslintcache
