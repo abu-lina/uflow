@@ -1,0 +1,224 @@
+
+> ummah-flow@0.15.21 build:standalone
+> STANDALONE_BUILD=true NODE_ENV=production next build --webpack && npm run build:sw
+
+▲ Next.js 16.3.8 (webpack)
+✓ Running next.config.js took 18ms
+Warning: Custom Cache-Control headers detected for the following routes:
+  - /_next/static/:path*
+  - /_next/static/chunks/:path*.js
+  - /_next/static/css/:path*.css
+
+Setting a custom Cache-Control header can break Next.js development behavior.
+- Experiments (use with caution):
+  ✓ optimizeCss
+  · optimizePackageImports
+  ✓ scrollRestoration
+  ✓ webpackBuildWorker
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (113kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (268kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+✓ Compiled successfully in 10.7s
+  Running TypeScript ...
+  Finished TypeScript in 2.6s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/100) ...
+  Generating static pages using 11 workers (25/100) 
+  Generating static pages using 11 workers (50/100) 
+[City Selection] RPC error: {
+  message: "Error: Dynamic server usage: Route /city-selection couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  details: "Error: Dynamic server usage: Route /city-selection couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n" +
+    '    at C (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/7266.js:28:10475)\n' +
+    '    at n (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/5573.js:1:7431)\n' +
+    '    at Object.get (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/app/api/badges/entity/route.js:1:812)\n' +
+    '    at a (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/153.js:23:745)\n' +
+    '    at c (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/153.js:23:838)\n' +
+    '    at Object.getItem (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/153.js:23:4675)\n' +
+    '    at b5 (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/3151.js:11:42401)\n' +
+    '    at dj.__loadSession (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/3151.js:24:13351)\n' +
+    '    at dj._useSession (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/3151.js:24:13071)\n' +
+    '    at dj.getSession (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/3151.js:24:12142)\n' +
+    '    at async dk._getSessionToken (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/3151.js:24:64781)\n' +
+    '    at async /Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/3151.js:24:58130\n' +
+    '    at async J (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/3151.js:1:5533)\n' +
+    '    at async /Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/chunks/3151.js:1:7516\n' +
+    '    at async g (/Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/server/app/city-selection/page.js:1:1508)',
+  hint: '',
+  code: ''
+}
+  Generating static pages using 11 workers (75/100) 
+✓ Generating static pages using 11 workers (100/100) in 346ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /about
+├ ƒ /api/admin/badges/unverify
+├ ƒ /api/admin/badges/verify
+├ ƒ /api/admin/check-role
+├ ƒ /api/admin/community-services/[id]
+├ ƒ /api/admin/edit-community-service
+├ ƒ /api/admin/edit-provider
+├ ƒ /api/admin/enrichment/alcohol-conflicts
+├ ƒ /api/admin/enrichment/candidates
+├ ƒ /api/admin/import-joinhalal/dry-run
+├ ƒ /api/admin/needs
+├ ƒ /api/admin/offers
+├ ƒ /api/admin/providers/[id]
+├ ƒ /api/admin/providers/[id]/delivery-links
+├ ƒ /api/admin/providers/[id]/locations
+├ ƒ /api/admin/providers/[id]/menu
+├ ƒ /api/admin/refresh-session
+├ ƒ /api/admin/review-community-service
+├ ƒ /api/admin/review-provider
+├ ƒ /api/admin/set-role
+├ ƒ /api/admin/upload-certificate
+├ ƒ /api/admin/upload-image
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/magic-link
+├ ƒ /api/auth/magic-link-diagnostic
+├ ƒ /api/auth/magic-link-status
+├ ƒ /api/auth/reset-password
+├ ƒ /api/auth/set
+├ ƒ /api/auth/signup
+├ ƒ /api/auth/verify-magic-link
+├ ƒ /api/badges/[badgeId]/confirm
+├ ƒ /api/badges/[badgeId]/revoke
+├ ƒ /api/badges/entity
+├ ƒ /api/chat
+├ ƒ /api/chat/conversations
+├ ƒ /api/chat/conversations/[id]
+├ ƒ /api/check-email-exists
+├ ƒ /api/cities
+├ ƒ /api/city-interest/subscribe
+├ ƒ /api/confirm-email
+├ ƒ /api/generate-confirmation-token
+├ ƒ /api/health
+├ ƒ /api/instagram/scrape
+├ ƒ /api/manifest
+├ ƒ /api/outreach/action
+├ ƒ /api/outreach/claim
+├ ƒ /api/places/foursquare/search
+├ ƒ /api/providers
+├ ƒ /api/providers/search
+├ ƒ /api/push/send
+├ ƒ /api/push/subscribe
+├ ƒ /api/send-auth-email
+├ ƒ /api/user/export-data
+├ ƒ /api/waitlist/join
+├ ƒ /api/waitlist/status
+├ ƒ /api/waitlist/subscribe-city
+├ ƒ /api/waitlist/update
+├ ƒ /api/webhooks/enrich-provider
+├ ƒ /auth/callback
+├ ƒ /auth/confirm
+├ ƒ /chat
+├ ƒ /city-selection
+├ ● /city/[cityName]
+├ ƒ /community-services/[community_service_id]
+├ ƒ /create
+├ ƒ /create-quick
+├ ƒ /create-quick/review
+├ ƒ /create-quick/submitted
+├ ƒ /create/basics
+├ ƒ /create/basics/category
+├ ƒ /create/basics/needs
+├ ƒ /create/basics/offers
+├ ƒ /create/contact
+├ ƒ /create/halal
+├ ƒ /create/import-osm
+├ ƒ /create/location
+├ ƒ /create/media
+├ ƒ /create/media/images
+├ ƒ /create/media/social
+├ ƒ /create/recommend
+├ ƒ /create/recommend/category
+├ ƒ /create/recommend/offers
+├ ƒ /create/social-category
+├ ƒ /dashboard/community-services/[id]/edit
+├ ƒ /dashboard/community-services/[id]/edit/category
+├ ƒ /dashboard/community-services/[id]/edit/images
+├ ƒ /dashboard/community-services/[id]/edit/needs
+├ ƒ /dashboard/community-services/[id]/edit/offers
+├ ƒ /dashboard/enrichment
+├ ƒ /dashboard/import
+├ ƒ /dashboard/providers/[id]/edit
+├ ƒ /dashboard/providers/[id]/edit/category
+├ ƒ /dashboard/providers/[id]/edit/delivery
+├ ƒ /dashboard/providers/[id]/edit/enrichment
+├ ƒ /dashboard/providers/[id]/edit/halal
+├ ƒ /dashboard/providers/[id]/edit/hours
+├ ƒ /dashboard/providers/[id]/edit/images
+├ ƒ /dashboard/providers/[id]/edit/locations
+├ ƒ /dashboard/providers/[id]/edit/menu
+├ ƒ /dashboard/providers/[id]/edit/social
+├ ƒ /dashboard/providers/[id]/edit/values
+├ ƒ /food
+├ ƒ /food/[city]
+├ ƒ /food/[city]/[category]
+├ ƒ /forgot-password
+├ ƒ /impressum
+├ ƒ /login
+├ ƒ /manual-user
+├ ƒ /owner-decision
+├ ƒ /p/[id]
+├ ƒ /privacy-policy
+├ ƒ /profile
+├ ƒ /profile/delete
+├ ƒ /profile/edit
+├ ƒ /profile/providers/[provider_id]
+├ ƒ /profile/providers/[provider_id]/edit
+├ ƒ /profile/providers/[provider_id]/edit/category
+├ ƒ /profile/providers/[provider_id]/edit/images
+├ ƒ /profile/providers/[provider_id]/edit/needs
+├ ƒ /profile/providers/[provider_id]/edit/offers
+├ ƒ /profile/providers/[provider_id]/edit/social
+├ ƒ /pwa-start
+├ ƒ /reset-password
+├ ƒ /saved
+├ ƒ /search
+├ ƒ /signup
+├ ƒ /signup/check-email
+├ ƒ /stores
+├ ƒ /suchen
+├ ƒ /terms
+├ ƒ /ummah
+├ ƒ /waitlist
+└ ƒ /welcome
+
+
+ƒ Proxy (Middleware)
+
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> ummah-flow@0.15.21 build:sw
+> node scripts/build-sw.js && node scripts/verify-pwa-output.js && node scripts/verify-sw-no-cross-origin-routes.mjs
+
+✓ Running next.config.js took 32ms
+Using configuration from /Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/serwist.config.mjs.
+public/animations/maps.json is 2.22 MB, and won't be precached. Configure maximumFileSizeToCacheInBytes to change this limit.
+public/animations/add-button-transition.json is 9.82 MB, and won't be precached. Configure maximumFileSizeToCacheInBytes to change this limit.
+The service worker file was written to public/sw.js.
+The service worker will precache 285 URLs, totaling 14.5 MB.
+OK: public/sw.js generated and the push handler is bundled into it
+     markers found: "addEventListener(\"push\"", "showNotification", "UFLOW"
+  (control) https://ummahflow.com/offline.html INTERCEPTED, as it must be
+  (control) https://ummahflow.com/ INTERCEPTED for a document request, as it must be
+  (control) https://ummahflow.com/food INTERCEPTED for a document request, as it must be
+  api.iconify.design     not intercepted
+  api.unisvg.com         not intercepted
+  api.simplesvg.com      not intercepted
+OK: public/sw.js registers no route matching the Iconify CDN origins (1 fetch listener(s) inspected)
+EXIT=0

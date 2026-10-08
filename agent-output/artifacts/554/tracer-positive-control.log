@@ -1,0 +1,15 @@
+# Code Review phase — positive control for the module-load tracer (issue #554)
+# Question: does `seen: []` in runtime-module-trace-{ON,OFF}.log mean 'never loaded',
+# or 'hook broken / regex never matches'? Forcing a real load inside the standalone tree:
+# $ cd .next/standalone && node -r agent-output/artifacts/554/trace-smj.cjs -e "require('postcss'); require('source-map-js');"
+
+[DEBUG-smj1] tracer attached pid=23792 argv=
+[DEBUG-smj1] LOADED "source-map-js" <- /Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/standalone/node_modules/postcss/lib/input.js
+[DEBUG-smj1] LOADED "postcss" <- /Users/NARAFIQ/Projects/uflow-wt/554-source-map-js-runtime/.next/standalone/[eval]
+[DEBUG-smj1] seen: ["source-map-js","postcss"]
+
+# Result: the tracer DOES emit LOADED for both, and resolves source-map-js via
+# postcss/lib/input.js inside .next/standalone/node_modules. So the empty `seen: []`
+# dumps across 4 renders are a genuine negative, not a dead hook.
+# Caveat: Module._load hooks CJS only. Next 16 standalone server.js is CJS, so this
+# covers the realistic path, but an ESM-only import of source-map-js would be invisible.

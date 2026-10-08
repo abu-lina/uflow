@@ -1,0 +1,110 @@
+[DEBUG-smj1] tracer attached pid=84278 argv=/private/tmp/554-off/.next/standalone/server.js
+▲ Next.js 16.3.8
+- Local:         http://127.0.0.1:3998
+- Network:       http://127.0.0.1:3998
+✓ Ready in 0ms
+✓ Running next.config took 13ms
+{
+  event: 'auth_attempt',
+  result: 'ssr_miss',
+  reason: 'ssr_client_no_user'
+}
+{
+  event: 'auth_outcome',
+  result: 'no_user',
+  reason: 'no_access_token_cookie'
+}
+{
+  event: 'auth_attempt',
+  result: 'ssr_miss',
+  reason: 'ssr_client_no_user'
+}
+{
+  event: 'auth_outcome',
+  result: 'no_user',
+  reason: 'no_access_token_cookie'
+}
+{
+  event: 'auth_attempt',
+  result: 'ssr_miss',
+  reason: 'ssr_client_no_user'
+}
+{
+  event: 'auth_outcome',
+  result: 'no_user',
+  reason: 'no_access_token_cookie'
+}
+{
+  event: 'auth_attempt',
+  result: 'ssr_miss',
+  reason: 'ssr_client_no_user'
+}
+{
+  event: 'auth_outcome',
+  result: 'no_user',
+  reason: 'no_access_token_cookie'
+}
+{
+  event: 'auth_attempt',
+  result: 'ssr_miss',
+  reason: 'ssr_client_no_user'
+}
+{
+  event: 'auth_outcome',
+  result: 'no_user',
+  reason: 'no_access_token_cookie'
+}
+{
+  event: 'auth_attempt',
+  result: 'ssr_miss',
+  reason: 'ssr_client_no_user'
+}
+{
+  event: 'auth_outcome',
+  result: 'no_user',
+  reason: 'no_access_token_cookie'
+}
+{
+  event: 'auth_attempt',
+  result: 'ssr_miss',
+  reason: 'ssr_client_no_user'
+}
+{
+  event: 'auth_outcome',
+  result: 'no_user',
+  reason: 'no_access_token_cookie'
+}
+{
+  event: 'auth_attempt',
+  result: 'ssr_miss',
+  reason: 'ssr_client_no_user'
+}
+{
+  event: 'auth_outcome',
+  result: 'no_user',
+  reason: 'no_access_token_cookie'
+}
+[searchProvidersAndCommunityServices] Error: {
+  message: 'TypeError: fetch failed',
+  details: 'TypeError: fetch failed\n' +
+    '\n' +
+    'Caused by: Error: getaddrinfo ENOTFOUND fake-for-testing.supabase.co (ENOTFOUND)\n' +
+    'Error: getaddrinfo ENOTFOUND fake-for-testing.supabase.co\n' +
+    '    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)\n' +
+    '    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)',
+  hint: '',
+  code: ''
+}
+[DEBUG-smj1] seen: []
+[searchProvidersAndCommunityServices] Error: {
+  message: 'TypeError: fetch failed',
+  details: 'TypeError: fetch failed\n' +
+    '\n' +
+    'Caused by: Error: getaddrinfo ENOTFOUND fake-for-testing.supabase.co (ENOTFOUND)\n' +
+    'Error: getaddrinfo ENOTFOUND fake-for-testing.supabase.co\n' +
+    '    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)\n' +
+    '    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:130:17)',
+  hint: '',
+  code: ''
+}
+[DEBUG-smj1] seen: []
