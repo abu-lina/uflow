@@ -137,7 +137,6 @@ const nextConfig = {
     : {}),
 
   experimental: {
-    optimizeCss: true,
     scrollRestoration: true,
     optimizePackageImports: ['motion', 'lucide-react', 'lottie-react', 'sonner', '@iconify/react'],
     // webpack-only. All 7 build scripts still pass `--webpack` today: request
