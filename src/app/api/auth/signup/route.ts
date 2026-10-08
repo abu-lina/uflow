@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import {
-  checkRateLimit,
-  getClientIdentifier,
-} from '@/lib/rate-limit';
+import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import {
   getClientIP,
   checkIPBlocked,
@@ -20,11 +17,11 @@ import {
 function isTestMode(request: Request): boolean {
   const testApiKey = request.headers.get('x-test-api-key');
   const expectedKey = process.env.TEST_API_KEY;
-  
+
   if (testApiKey && expectedKey && testApiKey === expectedKey) {
     return true;
   }
-  
+
   // Also check NODE_ENV for test mode
   return process.env.NODE_ENV === 'test';
 }
@@ -32,21 +29,25 @@ function isTestMode(request: Request): boolean {
 export async function POST(request: Request) {
   const startTime = Date.now();
   const ip = getClientIP(request);
-  
+
   try {
     // Debug: Log header values
-    const testApiKeyHeader = request.headers.get('x-test-api-key') || request.headers.get('X-Test-API-Key');
+    const testApiKeyHeader =
+      request.headers.get('x-test-api-key') || request.headers.get('X-Test-API-Key');
     const expectedKey = process.env.TEST_API_KEY;
-    
+
     const isTest = isTestMode(request);
-    
+
     // Enhanced debug logging
     if (testApiKeyHeader) {
-      console.log('[SIGNUP API] Test API key header received:', testApiKeyHeader.substring(0, 10) + '...');
+      console.log(
+        '[SIGNUP API] Test API key header received:',
+        testApiKeyHeader.substring(0, 10) + '...',
+      );
       console.log('[SIGNUP API] Expected key set:', expectedKey ? 'YES' : 'NO');
       console.log('[SIGNUP API] Test mode active:', isTest);
     }
-    
+
     // 1. Check if IP is blocked (unless test mode)
     if (!isTest && checkIPBlocked(ip)) {
       console.log('[SIGNUP API] Blocked IP attempted signup:', ip, '(test mode:', isTest, ')');
@@ -54,53 +55,61 @@ export async function POST(request: Request) {
         console.error('[SIGNUP API] ⚠️ TEST_API_KEY not set in server environment!');
       }
       return NextResponse.json(
-        { error: 'Access temporarily restricted. Please try again later.' },
-        { status: 403 }
+        {
+          error: 'Access temporarily restricted. Please try again later.',
+          code: 'ACCESS_RESTRICTED',
+        },
+        { status: 403 },
       );
     }
-    
+
     // Log test mode status for debugging
     if (isTest) {
       console.log('[SIGNUP API] ✅ Test mode enabled, bypassing security checks for IP:', ip);
     } else if (testApiKeyHeader) {
-      console.warn('[SIGNUP API] ⚠️ Test API key provided but test mode not active. Check TEST_API_KEY env var.');
+      console.warn(
+        '[SIGNUP API] ⚠️ Test API key provided but test mode not active. Check TEST_API_KEY env var.',
+      );
     }
 
     // 2. Rate limiting: 3 signups per hour per IP (bypassed in test mode)
     const identifier = getClientIdentifier(request);
     const rateLimit = isTest ? 1000 : 3; // Much higher limit in test mode
     const rateLimitWindow = isTest ? 60 * 1000 : 60 * 60 * 1000; // 1 min in test, 1 hour in prod
-    
+
     if (!checkRateLimit(identifier, rateLimit, rateLimitWindow, 'signup')) {
       if (!isTest) {
         markSuspiciousIP(ip, 1); // Block for 1 hour
       }
       console.log('[SIGNUP API] Rate limit exceeded for IP:', ip);
       return NextResponse.json(
-        { error: 'Too many signup attempts. Please try again later.' },
-        { status: 429 }
+        { error: 'Too many signup attempts. Please try again later.', code: 'RATE_LIMIT_EXCEEDED' },
+        { status: 429 },
       );
     }
 
     const body = await request.json();
     const { email, password, language, honeypot, termsAccepted, privacyAccepted, emailOnly } = body;
-    
+
     // 3. Validate consent (GDPR requirement)
     if (termsAccepted !== true || privacyAccepted !== true) {
       console.error('[SIGNUP API] Consent not accepted:', { termsAccepted, privacyAccepted });
       return NextResponse.json(
-        { error: 'You must accept the Terms of Service and Privacy Policy to create an account' },
-        { status: 400 }
+        {
+          error: 'You must accept the Terms of Service and Privacy Policy to create an account',
+          code: 'CONSENT_REQUIRED',
+        },
+        { status: 400 },
       );
     }
-    
+
     // 4. Honeypot check (should be empty) - skip in test mode
     if (!isTest && honeypot && honeypot.trim() !== '') {
       markSuspiciousIP(ip, 24); // Block for 24 hours
       console.log('[SIGNUP API] Honeypot triggered for IP:', ip);
       return NextResponse.json(
-        { error: 'Invalid request' },
-        { status: 400 }
+        { error: 'Invalid request', code: 'INVALID_REQUEST' },
+        { status: 400 },
       );
     }
 
@@ -109,31 +118,28 @@ export async function POST(request: Request) {
       markSuspiciousIP(ip, 1);
       console.log('[SIGNUP API] Suspiciously fast request from IP:', ip);
     }
-    
+
     // 6. Validate input
     if (!email) {
       console.error('[SIGNUP API] Missing email');
-      return NextResponse.json(
-        { error: 'Missing email' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing email', code: 'EMAIL_REQUIRED' }, { status: 400 });
     }
 
     // For email-only signup (Stage 2), password is optional
     if (!emailOnly && !password) {
       console.error('[SIGNUP API] Missing password (required for password-based signup)');
       return NextResponse.json(
-        { error: 'Missing password' },
-        { status: 400 }
+        { error: 'Missing password', code: 'PASSWORD_REQUIRED' },
+        { status: 400 },
       );
     }
-    
+
     // 7. Email format validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       console.error('[SIGNUP API] Invalid email format:', email);
       return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
+        { error: 'Invalid email format', code: 'EMAIL_INVALID' },
+        { status: 400 },
       );
     }
 
@@ -141,55 +147,61 @@ export async function POST(request: Request) {
     if (isDisposableEmail(email)) {
       console.log('[SIGNUP API] Disposable email blocked:', email);
       return NextResponse.json(
-        { error: 'Disposable email addresses are not allowed' },
-        { status: 400 }
+        { error: 'Disposable email addresses are not allowed', code: 'EMAIL_DISPOSABLE' },
+        { status: 400 },
       );
     }
-    
+
     // 9. Enhanced password validation (only if password is provided)
     if (password) {
       const passwordValidation = validatePasswordComplexity(password);
       if (!passwordValidation.valid) {
         console.error('[SIGNUP API] Password validation failed:', passwordValidation.error);
         return NextResponse.json(
-          { error: passwordValidation.error || 'Password does not meet requirements' },
-          { status: 400 }
+          {
+            error: passwordValidation.error || 'Password does not meet requirements',
+            code: passwordValidation.code || 'PASSWORD_REQUIREMENTS_NOT_MET',
+          },
+          { status: 400 },
         );
       }
     }
-    
+
     console.log('[SIGNUP API] Received signup request:', { email, language });
-    
+
     // Check if user already exists
     console.log('[SIGNUP API] Checking if user exists...');
     const supabaseAdmin = getSupabaseAdmin();
-    const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    
+    const {
+      data: { users },
+      error: listError,
+    } = await supabaseAdmin.auth.admin.listUsers();
+
     if (listError) {
       console.error('[SIGNUP API] Error checking existing users:', listError);
       return NextResponse.json(
-        { error: 'Failed to check user existence' },
-        { status: 500 }
+        { error: 'Failed to check user existence', code: 'SIGNUP_FAILED' },
+        { status: 500 },
       );
     }
-    
-    if (users.some(u => u.email === email)) {
+
+    if (users.some((u) => u.email === email)) {
       console.log('[SIGNUP API] User already exists:', email);
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 409 }
+        { error: 'User with this email already exists', code: 'EMAIL_ALREADY_REGISTERED' },
+        { status: 409 },
       );
     }
-    
+
     // Create user via Admin API - NO auto-login!
     console.log('[SIGNUP API] Creating user with Admin API...');
     // In test mode, auto-confirm email for convenience
     const emailConfirm = isTest ? true : false;
-    
+
     // For email-only signup, generate a random password (user won't use it)
     // Supabase requires a password, but we'll use magic links for authentication
     const userPassword = password || crypto.randomBytes(32).toString('hex');
-    
+
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password: userPassword,
@@ -199,27 +211,29 @@ export async function POST(request: Request) {
         preferred_language: language || 'en',
         email_confirmed: emailConfirm,
         email_only_signup: emailOnly === true, // Track if user signed up without password
-      }
+      },
     });
-    
+
     if (error) {
+      // Never forward the Supabase error message to the client: it can
+      // contain table names, constraint names or other internals.
       console.error('[SIGNUP API] Error creating user:', error);
       return NextResponse.json(
-        { error: error.message || 'Failed to create user' },
-        { status: 500 }
+        { error: 'Failed to create user', code: 'SIGNUP_FAILED' },
+        { status: 500 },
       );
     }
-    
+
     if (!data.user) {
       console.error('[SIGNUP API] No user data returned');
       return NextResponse.json(
-        { error: 'Failed to create user' },
-        { status: 500 }
+        { error: 'Failed to create user', code: 'SIGNUP_FAILED' },
+        { status: 500 },
       );
     }
-    
+
     console.log('[SIGNUP API] ✅ User created successfully (no session):', email);
-    
+
     // Log consent to consent_logs table (GDPR requirement)
     const userAgent = request.headers.get('user-agent') || null;
     const consentLogs = [
@@ -251,12 +265,12 @@ export async function POST(request: Request) {
     } else {
       console.log('[SIGNUP API] ✅ Consent logged successfully');
     }
-    
+
     // Generate confirmation token
     console.log('[SIGNUP API] Generating confirmation token...');
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    
+
     const { error: tokenError } = await getSupabaseAdmin()
       .from('email_confirmation_tokens')
       .insert({
@@ -265,9 +279,9 @@ export async function POST(request: Request) {
         token,
         type: 'signup',
         expires_at: expiresAt.toISOString(),
-        used: false
+        used: false,
       });
-    
+
     if (tokenError) {
       console.error('[SIGNUP API] Error storing token:', tokenError);
       // User is created but token failed - should still return success
@@ -275,13 +289,13 @@ export async function POST(request: Request) {
     } else {
       console.log('[SIGNUP API] ✅ Token generated and stored');
     }
-    
+
     // Send confirmation email (skip in test mode)
     if (!isTest) {
       console.log('[SIGNUP API] Sending confirmation email...');
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
       const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(email)}`;
-      
+
       try {
         const emailResponse = await fetch(`${siteUrl}/api/send-auth-email`, {
           method: 'POST',
@@ -290,10 +304,10 @@ export async function POST(request: Request) {
             to: email,
             type: 'confirmSignup',
             language: language || 'en',
-            confirmationUrl
-          })
+            confirmationUrl,
+          }),
         });
-        
+
         if (emailResponse.ok) {
           console.log('[SIGNUP API] ✅ Confirmation email sent successfully');
         } else {
@@ -308,21 +322,19 @@ export async function POST(request: Request) {
     } else {
       console.log('[SIGNUP API] Skipping confirmation email in test mode');
     }
-    
+
     console.log('[SIGNUP API] Signup complete for:', email);
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       success: true,
       userId: data.user.id,
-      email: data.user.email
+      email: data.user.email,
     });
-    
   } catch (error) {
     console.error('[SIGNUP API] Unexpected error:', error);
     return NextResponse.json(
-      { error: 'An unexpected error occurred during signup' },
-      { status: 500 }
+      { error: 'An unexpected error occurred during signup', code: 'SIGNUP_FAILED' },
+      { status: 500 },
     );
   }
 }
-
