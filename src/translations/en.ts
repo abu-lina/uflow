@@ -388,8 +388,6 @@ export const en = {
     serves: 'Serves',
     locationsCount: '{{count}} locations',
     halalLevel: 'Halal level {{level}}',
-    approve: 'Approve',
-    reject: 'Reject',
     online: 'Online',
     donations: 'Donations',
     initiativesSupported: 'Initiatives supported',
