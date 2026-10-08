@@ -128,21 +128,8 @@ vi.mock('@/hooks/useIsAdmin', () => ({
   useIsAdmin: () => ({ isAdmin: false }),
 }));
 
-vi.mock('@/features/admin/hooks/useProviderReview', () => ({
-  useProviderReview: () => ({
-    approveProvider: vi.fn(),
-    rejectProvider: vi.fn(),
-    isLoading: false,
-    reviewingProviderId: null,
-  }),
-}));
-
 vi.mock('@/features/admin/components/AdminStatusFilter', () => ({
   AdminStatusFilter: () => <div />,
-}));
-
-vi.mock('@/features/admin/components/RejectModal', () => ({
-  RejectModal: () => null,
 }));
 
 vi.mock('@/components/shared/LegalLinksModal', () => ({
