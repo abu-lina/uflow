@@ -248,7 +248,11 @@ Then hand off to the next request. This is the chained trigger: it picks the nex
 cd ../uflow-wt/N-<slug> && ./scripts/agent-dispatch.sh --launch
 ```
 
-Run it without `--launch` first if you want to read the plan. The dispatcher is capped (`--max 4`), rate-limited (`--max-per-hour 3`) and locked, and it refuses anything that already has a worktree or branch, anything labeled `no-parallel`, and anything `stalled`. A line starting `refusing to dispatch` is the kill switch or a concurrent dispatch, not an error: quote it at the gate and stop. Never work around it by opening a session by hand. `scripts/agent-dispatch.sh --disable` stops all unattended launching.
+**Without `--launch` the script is a dry run. It prints what it would do and dispatches nothing.** `would launch #N` is a plan, not a launch; the handoff has not happened until a run prints `launched #N`. Reading the plan and then deciding for yourself is the failure this step exists to prevent, so if you run the dry form, the very next command is the `--launch` form.
+
+The dispatcher is capped (`--max 4`), rate-limited (`--max-per-hour 3`) and locked, and it refuses anything that already has a worktree or branch, anything labeled `no-parallel`, and anything `stalled`. A `skip #N` line is ordinary eligibility filtering. A line starting `refusing to dispatch` is the kill switch or a concurrent dispatch, not an error: quote it at the gate and stop. Never work around it by opening a session by hand. `scripts/agent-dispatch.sh --disable` stops all unattended launching.
+
+`no-parallel` is an unconditional refusal, not a wait-for-a-slot: the dispatcher skips those issues even at `0/4 slots`, by design, because they are repo-wide. They never start unattended, so an issue labeled `no-parallel` has to be raised with the user rather than left in the queue to be picked up.
 
 The worktree stays. Review feedback lands as more commits on the same branch, so nothing is removed at this point.
 
@@ -299,6 +303,8 @@ Deleting branches and worktrees is destructive, so confirm with the user before 
 12. **One request at a time.** A follow-up becomes its own issue.
 13. **Clear, do not compact.** At a phase boundary the move is to clear and `/orchestrator resume N`, offered at every gate. Compaction is not a state transfer: after one, re-read the issue before the next dispatch or gate. Phase state comes from `gh issue view N`, never from recall. See Context budget.
 14. **Clean up after merge.** The request is not done when the PR merges; it is done when the worktree is removed and the branch is deleted locally and on origin. Verify the merge and rescue untracked artifacts out of the worktree first. See Cleanup.
+15. **A mid-flow issue is resumed, not adopted.** If a request lands in a session that is already doing something else, or the issue already has a worktree, a branch or a `### Phase:` comment, it belongs in its own session: say so and have the user run `/orchestrator resume N` in a fresh tab. Continuing inline is how a router turns into a worker, and it does not announce itself: each individual step looks like helpfulness.
+16. **The handoff is a command, not a judgment.** `./scripts/agent-dispatch.sh --launch` after the PR, every time. The dispatcher already encodes the caps, the refusals and the kill switch, so there is nothing left to decide; reading its dry-run plan and acting on it yourself replaces a tested mechanism with an untested one. See Push and PR.
 
 ---
 
