@@ -1,0 +1,41 @@
+# Branch recovery manifest, 2026-10-05T06:22:47Z
+# Restore any branch with: git branch <name> <sha>
+# origin/main at time of cleanup: ce59b0f63c1616c0fb8479bc8d3f1ab8f034f8e6
+
+BRANCH                                             SHA          REMOTE_HEAD
+backup/wip-requests-and-learnings                  05e3c70a3b   0
+chore/280-serwist-readiness                        2fde4e89ca   1
+chore/284-close-tracking-doc                       694de13e54   1
+chore/context-budget                               332244150f   1
+chore/orchestrator-session-tab-naming              4a647d1cd7   1
+chore/orchestrator-skill-resolution                c52bc4aa00   1
+cr/229-desktop-search-chips-unify                  a729eb3bb2   1
+cr/283-food-multi-category                         26b27db0cf   0
+cr/orchestrator-context-budget                     aa5186dad7   1
+cr/pr-body-no-outer-fence                          5c8990258d   1
+docs/270-request-backlog                           884aa0d239   1
+feature/225-halal-discovery-pipeline               459e70b41b   1
+feature/255-create-recommend-menu                  64cc225554   1
+feature/255-create-recommend-menu-2                3a694a14bb   1
+feature/readable-urls                              3945e5a8c0   0
+fix/227-mobile-nav-icon-flash                      7ff27f6d25   1
+fix/227-revert-icon-sizes                          5c909563b1   1
+fix/229-oom-test-infinite-loop                     e3c322d52f   1
+fix/245-category-pages-broken                      aed6f4a195   1
+fix/264-admin-recommend-401                        ece90528f2   1
+fix/265-create-desktop-layout                      1e022fe56f   0
+fix/267-food-search-scope-mismatch                 fb8d0d61f8   0
+fix/281-sw-cleanup-unconditional                   d502028339   1
+fix/283-api-docs-jsyaml                            83163fd1ca   1
+fix/515-followups-skill-roots-and-labels           f901ecef81   1
+fix/orchestrator-router-enforcement                ce4a66c15a   1
+fix/pipeline-hardening                             ebbddad8f6   1
+fix/secret-redaction-key-migration                 292bd2eebf   1
+main                                               2e2ca8cfb6   1
+refactor/282-serwist-migration                     5e7eb82d9d   1
+refactor/517-po-first-pipeline                     c242ab8240   1
+refactor/519-devin-isolation                       dfb96dbdb4   1
+refactor/521-remove-notion                         a5e4981761   1
+refactor/527-zod-v4-migration                      ff7794b557   1
+refactor/consolidate-provider-data-access          c7cf683440   1
+release/v0.15.18                                   907450cc1b   1
