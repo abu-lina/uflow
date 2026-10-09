@@ -5,7 +5,7 @@
 # git rev-list, gh issue view --json comments, gh issue list and gh pr list.
 # Never calls devin, never inspects processes.
 #
-# Usage: agent-monitor.sh [--json] [--max N] [--repo <owner/name>]
+# Usage: agent-monitor.sh [--json] [--decisions] [--max N] [--repo <owner/name>]
 set -euo pipefail
 
 GIT_BIN="${GIT_BIN:-git}"
@@ -14,13 +14,15 @@ JQ_BIN="${JQ_BIN:-jq}"
 
 usage() {
   cat <<'EOF'
-Usage: agent-monitor.sh [--json] [--max N] [--repo <owner/name>]
+Usage: agent-monitor.sh [--json] [--decisions] [--max N] [--repo <owner/name>]
 
 Prints one line per in-flight request, worst-waste states first
 (cleanup-pending, stalled, awaiting-review, in-flight, ready, blocked-on-human),
 then an occupancy footer. Exits 0 with "no in-flight requests" when empty.
 
   --json               emit one NDJSON object per request instead of the table
+  --decisions          print the decision queue instead: every open needs-info
+                       issue with its question lines and URL. Writes nothing.
   --max N              slot total for the footer (default 4)
   --repo <owner/name>  passed through to gh as --repo (default: infer from cwd)
   -h, --help           this help
@@ -30,12 +32,14 @@ EOF
 }
 
 JSON_OUT=0
+DECISIONS=0
 MAX=4
 GH_REPO=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) JSON_OUT=1; shift ;;
+    --decisions) DECISIONS=1; shift ;;
     --max)
       [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
         || { echo "--max needs a number" >&2; exit 2; }
@@ -63,6 +67,39 @@ run_gh() {
   fi
 }
 
+# --- --decisions: the owner-facing question digest ---------------------------
+# A generated view over open needs-info issues, not a second state store: the
+# questions stay in each issue's own phase comments (authoritative) and this
+# only re-prints them for one sitting. Runs before any git work so it stays a
+# pure gh read and writes no file.
+if [ "$DECISIONS" = 1 ]; then
+  needs_info_json="$(run_gh issue list --state open --limit 100 --label needs-info \
+    --json number,title,url)"
+  if [ "$(printf '%s' "$needs_info_json" | "$JQ_BIN" 'length')" -eq 0 ]; then
+    echo "no open needs-info issues"
+    exit 0
+  fi
+  printf '%s' "$needs_info_json" \
+    | "$JQ_BIN" -r '.[] | "\(.number)\t\(.title)\t\(.url)"' \
+    | while IFS=$'\t' read -r dn dtitle durl; do
+        printf '#%s %s\n%s\n' "$dn" "$dtitle" "$durl"
+        issue_json="$(run_gh issue view "$dn" --json comments)"
+        # Question lines: the ❓/➡️ markers prep comments use, plus any line
+        # that ends in a literal question mark.
+        questions="$(printf '%s' "$issue_json" | "$JQ_BIN" -r '
+          [.comments[].body | split("\n")[]
+           | select(test("^\\s*(❓|➡️)") or test("\\?\\s*$"))]
+          | unique | .[]')"
+        if [ -n "$questions" ]; then
+          printf '%s\n' "$questions" | sed 's/^/  /'
+        else
+          echo "  (no question lines in its comments; read the issue)"
+        fi
+        echo
+      done
+  exit 0
+fi
+
 # Repo root: the main worktree (first record of `worktree list --porcelain`).
 # UFLOW_REPO_DIR overrides it; tests inject stub GIT_BIN so this stays hermetic.
 if [ -n "${UFLOW_REPO_DIR:-}" ]; then
@@ -87,9 +124,13 @@ refs="$("$GIT_BIN" -C "$REPO_DIR" for-each-ref --format='%(refname:short)' refs/
 # Open PRs once; matched to issues by headRefName.
 prs_json="$(run_gh pr list --state open --limit 100 --json number,headRefName)"
 
-# Open issues carrying either ready label.
+# Open issues carrying either ready label or a stage label. The stage axis is
+# what the dispatcher reads to pick a flow, so a stage label alone must be
+# enough to put the issue into the candidate set.
 ready_agent_json="$(run_gh issue list --state open --limit 100 --label ready-for-agent --json number)"
 ready_human_json="$(run_gh issue list --state open --limit 100 --label ready-for-human --json number)"
+stage_prep_json="$(run_gh issue list --state open --limit 100 --label stage:prep --json number)"
+stage_build_json="$(run_gh issue list --state open --limit 100 --label stage:build --json number)"
 
 # --- candidate set -------------------------------------------------------
 
@@ -127,13 +168,16 @@ while IFS= read -r ref; do
   fi
 done <<< "$refs"
 
-# candidates: union of worktree issues, ref issues and both ready lists
+# candidates: union of worktree issues, ref issues, both ready lists and both
+# stage lists
 candidates="$(
   {
     awk '{print $1}' <<< "$wt_pairs"
     awk '{print $1}' <<< "$branch_pairs"
     "$JQ_BIN" -r '.[].number' <<< "$ready_agent_json"
     "$JQ_BIN" -r '.[].number' <<< "$ready_human_json"
+    "$JQ_BIN" -r '.[].number' <<< "$stage_prep_json"
+    "$JQ_BIN" -r '.[].number' <<< "$stage_build_json"
   } | awk 'NF' | sort -un
 )"
 
@@ -196,13 +240,48 @@ while IFS= read -r n; do
   elif [ "$issue_state" = "OPEN" ] && [ "$has_tree_or_branch" = 1 ]; then
     state="in-flight"; rank=3
   elif [ "$issue_state" = "OPEN" ] && [ "$has_tree_or_branch" = 0 ] \
-       && printf '%s' "$labels_json" | "$JQ_BIN" -e 'index("ready-for-human")' >/dev/null; then
+       && printf '%s' "$labels_json" | "$JQ_BIN" -e \
+         'index("ready-for-human") or index("needs-info")' >/dev/null; then
+    # needs-info joins ready-for-human here: both mean the queue is parked on
+    # the owner. Checked before `ready` so a stage:prep issue that flipped to
+    # needs-info does not masquerade as dispatchable.
     state="blocked-on-human"; rank=5
   elif [ "$issue_state" = "OPEN" ] && [ "$has_tree_or_branch" = 0 ] \
-       && printf '%s' "$labels_json" | "$JQ_BIN" -e 'index("ready-for-agent")' >/dev/null; then
+       && printf '%s' "$labels_json" | "$JQ_BIN" -e \
+         'index("ready-for-agent") or index("stage:prep") or index("stage:build")' >/dev/null; then
     state="ready"; rank=4
   else
     continue # CLOSED with no worktree, or OPEN with neither label nor tree
+  fi
+
+  # The dispatch stage, straight from the stage axis. Ready records with no
+  # stage label are legal legacy state and dispatch as build work.
+  stage="$(printf '%s' "$labels_json" | "$JQ_BIN" -r '
+    if index("stage:prep") then "prep"
+    elif index("stage:build") then "build"
+    else "none" end')"
+
+  # GitHub blocking links, fetched only for the one state that consumes them:
+  # one extra gh call per ready record, not per candidate. Elements are issue
+  # objects; closed blockers are filtered out here so the record only ever
+  # carries live brakes. Any api or parse failure sets blocked_by_unknown —
+  # an unknown brake fails closed in the dispatcher, never open.
+  blocked_by_json="[]"
+  blocked_by_unknown=false
+  if [ "$state" = "ready" ]; then
+    api_raw=""
+    parsed=""
+    if api_raw="$(run_gh api \
+        "repos/{owner}/{repo}/issues/${n}/dependencies/blocked_by" 2>/dev/null)" \
+       && parsed="$(printf '%s' "$api_raw" | "$JQ_BIN" -c \
+          '[.[] | select((.state // "open") | ascii_downcase == "open") | .number | numbers]' \
+          2>/dev/null)" \
+       && [ "${parsed#[}" != "$parsed" ]; then
+      blocked_by_json="$parsed"
+    else
+      blocked_by_unknown=true
+      echo "agent-monitor: blocked_by check failed for #$n; treated as blocked" >&2
+    fi
   fi
 
   # slot rule: open issue, worktree present, no open PR on its branch
@@ -219,6 +298,9 @@ while IFS= read -r n; do
     --arg pr "$open_pr" \
     --argjson phases "$phases" \
     --argjson slot "$slot" \
+    --arg stage "$stage" \
+    --argjson blocked "$blocked_by_json" \
+    --argjson blocked_unknown "$blocked_by_unknown" \
     '{
       issue: .number,
       title: .title,
@@ -230,7 +312,10 @@ while IFS= read -r n; do
       commits_ahead: $ahead,
       pr: (if $pr == "" then null else ($pr | tonumber) end),
       phases: $phases,
-      occupies_slot: $slot
+      occupies_slot: $slot,
+      stage: $stage,
+      blocked_by: $blocked,
+      blocked_by_unknown: $blocked_unknown
     }')"
 
   records="${records}${rank} ${n} ${line}"$'\n'

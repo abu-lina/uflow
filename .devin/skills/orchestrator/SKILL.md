@@ -33,9 +33,11 @@ No local tracking file is read. The issue is the only state store, which is what
 
 ```bash
 gh issue create --title "<type>: <plain-language summary>" \
-  --label "<type-label>" --label "ready-for-agent" \
+  --label "<type-label>" --label "ready-for-agent" --label "stage:build" \
   --body-file <path>
 ```
+
+`ready-for-agent` is the dispatcher's gate and `stage:build` selects the implementation flow; an issue opened live already carries the user's spec in-session, so it skips `stage:prep`. Exploration issues get neither: they are never dispatched.
 
 Capture `N` from the returned URL. Issue body template:
 
@@ -97,7 +99,7 @@ If that fails because main is checked out:
 git checkout main && git pull origin main --ff-only
 ```
 
-5. Create worktree (all flows except exploration):
+5. Create worktree (all flows except exploration and `stage:prep` issues; prep is worktree-less like exploration, reading the canonical repo and writing only to the issue):
 
 ```bash
 mkdir -p ../uflow-wt
@@ -106,7 +108,7 @@ BRANCH_PREFIX="<type>"   # feature | fix | refactor | cr | hotfix
 git worktree add "../uflow-wt/${SESSION_SLUG}" -b "${BRANCH_PREFIX}/${SESSION_SLUG}" main
 ```
 
-6. Call `request_scope` with `scope: write` on `/Users/NARAFIQ/Projects/uflow-wt` (the recursive parent, never a per-run path) before any dispatch, so workers can edit code. Skip it for exploration, which has no worktree.
+6. Call `request_scope` with `scope: write` on `/Users/NARAFIQ/Projects/uflow-wt` (the recursive parent, never a per-run path) before any dispatch, so workers can edit code. Skip it for exploration and `stage:prep`, which have no worktree.
 
    The canonical repo needs no grant. It is the workspace root, so writes beneath it are allowed by default; the denial boundary sits one level up at `/Users/NARAFIQ/Projects/`.
 
@@ -116,7 +118,25 @@ git worktree add "../uflow-wt/${SESSION_SLUG}" -b "${BRANCH_PREFIX}/${SESSION_SL
    - Request one recursive grant for the `uflow-wt` parent, not a narrow per-run path. Narrow grants re-requested every run pile up as dead entries in the user's permission config; that pattern left ~63 stale `Write(~/Projects/uflow-wt/<slug>)` entries.
    - A mid-session `request_scope` does take effect, grants recursively, and reaches workers dispatched after the call. Permission config edits also take effect mid-session. If a grant reports "Scope granted" and the write is still refused, stop looking for a scope gap: a deny rule is blocking the tool, and a deny always beats an allow.
 
+7. For a dispatched session (the issue carried `ready-for-agent`), remove the gate label as soon as the worktree and branch exist:
+
+```bash
+gh issue edit N --remove-label ready-for-agent
+```
+
+The label means "an agent may pick this up"; a live worktree means one already has. Clearing it here is what stops a PR that closes unmerged from silently becoming re-dispatchable. The dispatcher's worktree/branch refusals stay as the second line of defence. A `stage:prep` session has no worktree, so its flow file clears the label on entry and re-adds it only if the issue hands straight to `stage:build`.
+
 ## Step 2: Classify
+
+The stage axis wins over the type table. When the session was opened by the dispatcher or resumed on an existing issue, read the issue's stage label first:
+
+| Stage label   | Flow                                                                                    |
+| ------------- | --------------------------------------------------------------------------------------- |
+| `stage:prep`  | `.devin/skills/orchestrator/flows/prep.md`: grill and spec the issue, write no code     |
+| `stage:build` | The type table below, starting at the implementable phase: the spec is already approved |
+| none          | The type table below, classified from the user's words                                  |
+
+`needs-triage` issues are swept by `.devin/skills/orchestrator/flows/triage.md`, which is human-initiated only: the dispatcher never launches it.
 
 | Type               | Signal                                    | Flow file                                            |
 | ------------------ | ----------------------------------------- | ---------------------------------------------------- |
@@ -145,7 +165,7 @@ These hold for every flow:
   - Flow: <type> / <phase chain>
   ```
 
-  The phase content follows it. Exploration omits the worktree and branch lines, having neither. Require this block in the brief; it is what makes clearing at a gate free rather than lossy.
+  The phase content follows it. Exploration and prep omit the worktree and branch lines, having neither. Require this block in the brief; it is what makes clearing at a gate free rather than lossy.
 
 | Phase           | Comment contains                                                                                                 |
 | --------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -166,8 +186,8 @@ These hold for every flow:
 Every dispatch brief MUST include:
 
 - Issue number `N` and its URL
-- Worktree absolute path (omit for exploration)
-- Branch name
+- Worktree absolute path (omit for exploration and prep, which have none)
+- Branch name (same omission)
 - The user's verbatim request
 - The classification (type, route, confidence)
 - Task description
@@ -250,9 +270,9 @@ cd ../uflow-wt/N-<slug> && ./scripts/agent-dispatch.sh --launch
 
 **Without `--launch` the script is a dry run. It prints what it would do and dispatches nothing.** `would launch #N` is a plan, not a launch; the handoff has not happened until a run prints `launched #N`. Reading the plan and then deciding for yourself is the failure this step exists to prevent, so if you run the dry form, the very next command is the `--launch` form.
 
-The dispatcher is capped (`--max 4`), rate-limited (`--max-per-hour 3`) and locked, and it refuses anything that already has a worktree or branch, anything labeled `no-parallel`, and anything `stalled`. A `skip #N` line is ordinary eligibility filtering. A line starting `refusing to dispatch` is the kill switch or a concurrent dispatch, not an error: quote it at the gate and stop. Never work around it by opening a session by hand. `scripts/agent-dispatch.sh --disable` stops all unattended launching.
+The dispatcher is capped (`--max 4` concurrency, `--max-per-hour 3` rolling, plus `--max-prep 1` and `--max-build 3` per-stage concurrency caps; a stage slot is held until the issue hits the stage's exit condition (`needs-info` or `stage:build` for prep, an open PR for build) and a prep marker also frees when its ledger line outlives `--prep-stale-hours`), locked, and it refuses anything that already has a worktree or branch, anything `stalled`, and anything with an open GitHub blocking link (`skip #N: blocked by #M`). A `skip #N` line is ordinary eligibility filtering. A line starting `refusing to dispatch` is the kill switch or a concurrent dispatch, not an error: quote it at the gate and stop. Never work around it by opening a session by hand. `scripts/agent-dispatch.sh --disable` stops all unattended launching.
 
-`no-parallel` is an unconditional refusal, not a wait-for-a-slot: the dispatcher skips those issues even at `0/4 slots`, by design, because they are repo-wide. They never start unattended, so an issue labeled `no-parallel` has to be raised with the user rather than left in the queue to be picked up.
+`no-parallel` issues get the serial slot: the dispatcher launches one only when `0` slots are occupied and no parallel work survived the same run's filter chain (`skip #N: serial, deferred while parallel work is queued` otherwise). That can leave a serial issue waiting indefinitely behind a busy queue, so the sanctioned escape hatch is `agent-dispatch.sh --launch --only N`: it still takes the lock, honours the kill switch, obeys dry-run-by-default and writes the ledger. Never open the session by hand instead.
 
 The worktree stays. Review feedback lands as more commits on the same branch, so nothing is removed at this point.
 
@@ -295,7 +315,7 @@ Deleting branches and worktrees is destructive, so confirm with the user before 
 4. **Name the tab.** Set the terminal tab to `N-<slug>` in Step 1 and again on resume.
 5. **Grant the worktree write scope before dispatch.** The `uflow-wt` parent only. The canonical repo is the workspace root and needs no grant; see Step 1.6.
 6. **Skill work runs inside subagents.** Name the skills in the dispatch brief; the orchestrator invokes none itself.
-7. **Orchestrator writes are a fixed whitelist.** This fence is prose-only and lives here by necessity, not by preference. It cannot go in frontmatter: a skill-level `permissions.deny` propagates into every dispatched subagent and kills it instantly with `Tool was rejected` and no report. Via `exec` the allowed writes are `git` commands, `gh` commands (`issue create`, `issue comment`, `pr create`), `gh label create` for a missing type label, and the tab-rename `printf`. Nothing else: no `sed -i`, `tee`, or `cat >` heredocs into repo files.
+7. **Orchestrator writes are a fixed whitelist.** This fence is prose-only and lives here by necessity, not by preference. It cannot go in frontmatter: a skill-level `permissions.deny` propagates into every dispatched subagent and kills it instantly with `Tool was rejected` and no report. Via `exec` the allowed writes are `git` commands, `gh` commands (`issue create`, `issue comment`, `pr create`), `gh issue edit --add-label` and `gh issue edit --remove-label` (label changes only, no `--body` or other `issue edit` flags), `gh label create` for exactly the labels this pipeline can need at issue time (`stage:prep`, `stage:build`, `learning-pending`, or a missing `type:*` label), and the tab-rename `printf`. Nothing else: no `sed -i`, `tee`, or `cat >` heredocs into repo files.
 8. **Investigation is dispatched.** Root-causing and locating code belong to subagents. The orchestrator reads nothing in the worktree or the canonical repo: no `read`, `grep`, `glob`, or `exec` (`cat`, `rg`, `ls`) on source files. In one session the router told the user the root cause itself ("`PageTransition` is keyed by `pathname`, line 152 of `RootClientLayout.tsx`, forcing full unmount/remount") and then dispatched a subagent to find what it had already found.
 9. **Every implementation brief names `tdd`.**
 10. **Gate between phases.** `ask_user_question` with what was done and what is next.

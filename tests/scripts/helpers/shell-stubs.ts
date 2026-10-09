@@ -69,6 +69,14 @@ const GH_STUB = `#!/usr/bin/env bash
 printf '%s\\n' "$*" >> "$STUB_LOG_DIR/gh.log"
 args="$*"
 case "$args" in
+  *"api"*"dependencies/blocked_by"*)
+    n=$(printf '%s' "$args" | sed -n 's|.*issues/\\([0-9][0-9]*\\)/dependencies/blocked_by.*|\\1|p')
+    if [ -f "$FIXTURE_DIR/blocked-by-$n.fail" ]; then
+      echo "gh: api call failed (stubbed)" >&2
+      exit 1
+    fi
+    cat "$FIXTURE_DIR/blocked-by-$n.json" 2>/dev/null || echo '[]'
+    ;;
   *"issue view"*)
     n=$(printf '%s' "$args" | sed -n 's/.*issue view \\([0-9][0-9]*\\).*/\\1/p')
     if [ -f "$FIXTURE_DIR/issue-$n.json" ]; then
@@ -83,6 +91,15 @@ case "$args" in
     ;;
   *"issue list"*"ready-for-human"*)
     cat "$FIXTURE_DIR/ready-human.json" 2>/dev/null || echo '[]'
+    ;;
+  *"issue list"*"needs-info"*)
+    cat "$FIXTURE_DIR/needs-info.json" 2>/dev/null || echo '[]'
+    ;;
+  *"issue list"*"stage:prep"*)
+    cat "$FIXTURE_DIR/stage-prep.json" 2>/dev/null || echo '[]'
+    ;;
+  *"issue list"*"stage:build"*)
+    cat "$FIXTURE_DIR/stage-build.json" 2>/dev/null || echo '[]'
     ;;
   *"pr list"*)
     cat "$FIXTURE_DIR/pr-list.json" 2>/dev/null || echo '[]'
@@ -179,7 +196,9 @@ export function removeSandbox(sb: StubSandbox): void {
   fs.rmSync(sb.dir, { recursive: true, force: true });
 }
 
-/** Build one monitor NDJSON record; every field must be given explicitly. */
+/** Build one monitor NDJSON record; every field must be given explicitly.
+ *  `stage`/`blocked_by` are optional so callers can pin legacy records that
+ *  predate the stage axis — the dispatcher treats a missing stage as `none`. */
 export function monitorRecord(r: {
   issue: number;
   title: string;
@@ -192,6 +211,9 @@ export function monitorRecord(r: {
   pr: number | null;
   phases: number;
   occupies_slot: boolean;
+  stage?: 'prep' | 'build' | 'none';
+  blocked_by?: number[];
+  blocked_by_unknown?: boolean;
 }): string {
   return JSON.stringify(r);
 }

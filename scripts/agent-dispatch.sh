@@ -25,11 +25,15 @@ DISPATCH_LOG="${UFLOW_DISPATCH_LOG:-$HOME/Library/Logs/uflow-agent-dispatch.log}
 PLIST_PATH="$LAUNCHAGENTS_DIR/com.uflow.agent-dispatch.plist"
 LOCK="$STATE/dispatch.lock"
 LEDGER="$STATE/launches.log"
+# The ledger doubles as the prep occupancy marker, so its retention bounds
+# --prep-stale-hours too: no marker older than this survives the prune below.
+LEDGER_RETENTION_SECONDS=86400
 NOW="${UFLOW_NOW:-$(date +%s)}"
 
 usage() {
   cat <<'EOF'
-Usage: agent-dispatch.sh [--launch] [--max N] [--max-per-hour N] [--terminal APP]
+Usage: agent-dispatch.sh [--launch] [--max N] [--max-per-hour N]
+       [--max-prep N] [--max-build N] [--only N] [--terminal APP]
        agent-dispatch.sh --disable | --enable
        agent-dispatch.sh --install | --uninstall | --print-plist [--interval N]
 
@@ -39,6 +43,18 @@ launches nothing.
   --launch            actually open one Terminal.app window per selection
   --max N             concurrency cap counted by the slot rule (default 4)
   --max-per-hour N    rolling-hour launch ceiling (default 3)
+  --max-prep N        stage:prep concurrency cap (default 1); a prep slot is
+                      held by a live ledger marker, so this is deliberately
+                      tight
+  --max-build N       stage:build concurrency cap (default 3); a build slot is
+                      held until a PR exists for the branch
+  --prep-stale-hours N  age past which a prep ledger marker counts as a dead
+                      session and frees its slot (default 6; clamped to the
+                      ledger retention window, which prunes older markers
+                      anyway)
+  --only N            consider only issue N; every check, refusal, cap and the
+                      dry-run default still apply. The sanctioned way to force
+                      a no-parallel issue past a busy queue.
   --terminal APP      terminal app to launch into; only "terminal" is accepted
   --disable           create the DISABLED sentinel; stop all unattended launching
   --enable            remove the DISABLED sentinel
@@ -57,6 +73,10 @@ EOF
 LAUNCH=0
 MAX=4
 MAX_PER_HOUR=3
+MAX_PREP=1
+MAX_BUILD=3
+PREP_STALE_HOURS=6
+ONLY=""
 TERMINAL="terminal"
 INTERVAL=600
 MODE=""
@@ -80,6 +100,22 @@ while [ $# -gt 0 ]; do
       [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
         || { echo "--max-per-hour needs a number" >&2; exit 2; }
       MAX_PER_HOUR="$2"; shift 2 ;;
+    --max-prep)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--max-prep needs a number" >&2; exit 2; }
+      MAX_PREP="$2"; shift 2 ;;
+    --max-build)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--max-build needs a number" >&2; exit 2; }
+      MAX_BUILD="$2"; shift 2 ;;
+    --prep-stale-hours)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--prep-stale-hours needs a number" >&2; exit 2; }
+      PREP_STALE_HOURS="$2"; shift 2 ;;
+    --only)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--only needs an issue number" >&2; exit 2; }
+      ONLY="$2"; shift 2 ;;
     --terminal)
       [ $# -ge 2 ] || { echo "--terminal needs an app" >&2; exit 2; }
       TERMINAL="$2"; shift 2 ;;
@@ -105,6 +141,10 @@ fi
 # Terminal modes never take the lock, never call the monitor, never launch.
 if [ -n "$MODE" ] && [ "$LAUNCH" = 1 ]; then
   echo "--$MODE cannot be combined with --launch" >&2
+  exit 2
+fi
+if [ -n "$MODE" ] && [ -n "$ONLY" ]; then
+  echo "--only cannot be combined with --$MODE" >&2
   exit 2
 fi
 
@@ -291,13 +331,20 @@ if ! acquire_lock; then
   exit 0
 fi
 
-# 3. Prune: launchers older than 7 days, ledger lines older than 24h.
+# 3. Prune: launchers older than 7 days, ledger lines older than
+# LEDGER_RETENTION_SECONDS. That prune is why --prep-stale-hours has a
+# ceiling: a wider window could never see a marker anyway, so clamp rather
+# than silently accept a value that behaves as the retention.
+if [ "$PREP_STALE_HOURS" -gt $((LEDGER_RETENTION_SECONDS / 3600)) ]; then
+  echo "agent-dispatch.sh: --prep-stale-hours $PREP_STALE_HOURS exceeds the ledger retention of $((LEDGER_RETENTION_SECONDS / 3600))h; clamped to $((LEDGER_RETENTION_SECONDS / 3600))" >&2
+  PREP_STALE_HOURS=$((LEDGER_RETENTION_SECONDS / 3600))
+fi
 mkdir -p "$STATE/launchers"
 chmod 700 "$STATE/launchers" 2>/dev/null || true
 find "$STATE/launchers" -name 'issue-*.sh' -type f -mmin +10080 -delete 2>/dev/null || true
 if [ -f "$LEDGER" ]; then
   _ledger_tmp="$LEDGER.tmp.$$"
-  awk -v cutoff="$((NOW - 86400))" '$1 ~ /^[0-9]+$/ && $1 > cutoff' "$LEDGER" > "$_ledger_tmp"
+  awk -v cutoff="$((NOW - LEDGER_RETENTION_SECONDS))" '$1 ~ /^[0-9]+$/ && $1 > cutoff' "$LEDGER" > "$_ledger_tmp"
   mv "$_ledger_tmp" "$LEDGER"
 fi
 
@@ -315,11 +362,55 @@ fi
 occupied="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '[.[] | select(.occupies_slot == true)] | length')"
 echo "occupied $occupied/$MAX slots"
 
+# 5b. Per-stage occupancy. Build work holds its slot while the issue is open,
+# has a worktree or branch and has no PR yet — the monitor's own
+# awaiting-review derivation. Stalled records are excluded: the filter chain
+# refuses to dispatch them, so they must not burn build concurrency.
+occ_build="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '
+  [.[] | select((.stage // "none") != "prep" and .issue_state == "OPEN"
+               and .state != "stalled"
+               and (.worktree != null or .branch != null)
+               and .pr == null)] | length')"
+
+# Prep is a worktree-less stage, so worktree existence cannot be its marker;
+# the launch ledger is. A "<epoch> <issue> prep" line inside PREP_STALE_HOURS
+# marks a live prep session while the monitor still reports the issue open,
+# stage:prep and not yet needs-info. The marker frees on its own exits
+# (needs-info hand-back, the stage:build flip, a closed issue) or goes stale
+# when the session died — the self-healing half of the mechanism.
+prep_live=""
+if [ -f "$LEDGER" ]; then
+  prep_live="$(awk -v cutoff="$((NOW - PREP_STALE_HOURS * 3600))" \
+    '$1 ~ /^[0-9]+$/ && $1 > cutoff && $3 == "prep" { print $2 }' "$LEDGER" \
+    | sort -u)"
+fi
+if [ -n "$prep_live" ]; then
+  live_json="$(printf '%s\n' "$prep_live" | awk 'NF' | "$JQ_BIN" -R -s \
+    'split("\n") | map(select(length > 0) | tonumber)')"
+  occ_prep="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s --argjson live "$live_json" '
+    [.[] | select(.issue_state == "OPEN" and .stage == "prep"
+                 and (.labels | index("needs-info") == null)
+                 and (. as $r | $live | index($r.issue) != null))] | length')"
+else
+  occ_prep=0
+fi
+
 # 6. Candidates: every record in issue order gets a verdict. `stalled` is
 # always reported; `ready` records run the filter chain in order.
 sorted_records="$(printf '%s' "$monitor_out" | "$JQ_BIN" -c -s 'sort_by(.issue)[]')"
 
+# --only narrows the run to one issue. The filter chain, caps, serial rule and
+# every refusal below still apply to it; it is a selector, not an override.
+if [ -n "$ONLY" ]; then
+  sorted_records="$(printf '%s' "$sorted_records" | "$JQ_BIN" -c \
+    --argjson n "$ONLY" 'select(.issue == $n)')"
+  if ! printf '%s' "$sorted_records" | grep -q .; then
+    echo "skip: #$ONLY is not among the monitor's candidates"
+  fi
+fi
+
 survivors=""
+serials=""
 skipped=0
 
 jqr() { printf '%s' "$1" | "$JQ_BIN" -r "$2"; }
@@ -351,15 +442,66 @@ while IFS= read -r rec; do
     skipped=$((skipped + 1))
     continue
   fi
-  if jqr "$rec" '.labels | index("no-parallel") != null' | grep -q true; then
-    echo "skip #$n: labeled no-parallel"
+  # A live prep ledger marker means a session already owns this issue. Prep
+  # leaves no worktree to see, so the marker is the claim — per-issue, so a
+  # running prep cannot be re-dispatched even under a raised --max-prep.
+  stage="$(jqr "$rec" '.stage // "none"')"
+  if [ "$stage" = "prep" ] && [ -n "$prep_live" ] \
+     && printf '%s\n' "$prep_live" \
+        | awk -v n="$n" '$1 == n { found=1 } END { exit !found }'; then
+    echo "skip #$n: prep session already in flight"
     skipped=$((skipped + 1))
+    continue
+  fi
+  if jqr "$rec" '.blocked_by_unknown == true' | grep -q true; then
+    # The monitor could not answer the blocker query; an unknown brake is a
+    # brake, never an all-clear.
+    echo "skip #$n: blocker check failed"
+    skipped=$((skipped + 1))
+    continue
+  fi
+  # GitHub blocking links: the monitor already filtered to open blockers, so
+  # a non-empty list is a live brake.
+  blockers="$(jqr "$rec" '.blocked_by // [] | map("#" + tostring) | join(", ")')"
+  if [ -n "$blockers" ]; then
+    echo "skip #$n: blocked by $blockers"
+    skipped=$((skipped + 1))
+    continue
+  fi
+  if jqr "$rec" '.labels | index("no-parallel") != null' | grep -q true; then
+    # Not an unconditional refusal any more: no-parallel survivors go into the
+    # serial list and are resolved after the parallel survivors are known.
+    serials="${serials}${rec}"$'\n'
     continue
   fi
   # belt-and-braces: a stalled record can never reach this point, but if a
   # monitor ever labels one "ready" it is still refused here.
   survivors="${survivors}${rec}"$'\n'
 done <<< "$sorted_records"
+
+# The serial slot: a no-parallel survivor launches only when no session
+# occupies a slot AND no parallel work survived the filter chain, and at most
+# one launches per run. Anything else is deferred or refused, in issue order.
+serial_run=0
+serial_done=0
+if printf '%s' "$serials" | grep -q .; then
+  if [ "$occupied" -gt 0 ]; then
+    while IFS= read -r rec; do
+      [ -z "$rec" ] && continue
+      echo "skip #$(jqr "$rec" '.issue'): labeled no-parallel"
+      skipped=$((skipped + 1))
+    done <<< "$serials"
+  elif printf '%s' "$survivors" | grep -q .; then
+    while IFS= read -r rec; do
+      [ -z "$rec" ] && continue
+      echo "skip #$(jqr "$rec" '.issue'): serial, deferred while parallel work is queued"
+      skipped=$((skipped + 1))
+    done <<< "$serials"
+  else
+    survivors="$serials"
+    serial_run=1
+  fi
+fi
 
 # 7. Launch loop: re-check the cap and the hourly limit before each launch.
 ledger_count() {
@@ -376,11 +518,25 @@ wt_parent() {
 }
 
 launched=0
+launched_prep=0
+launched_build=0
 
 while IFS= read -r rec; do
   [ -z "$rec" ] && continue
   n="$(jqr "$rec" '.issue')"
   title="$(jqr "$rec" '.title')"
+  # Records lacking the field (older monitor output) count as build work.
+  stage="$(jqr "$rec" '.stage // "none"')"
+  bucket="build"
+  [ "$stage" = "prep" ] && bucket="prep"
+
+  # One serial launch per run, even in dry-run mode: a "would launch" is the
+  # same plan slot as a real launch.
+  if [ "$serial_run" = 1 ] && [ "$serial_done" = 1 ]; then
+    echo "skip #$n: serial, one launch per run"
+    skipped=$((skipped + 1))
+    continue
+  fi
 
   if [ "$occupied" -ge "$MAX" ]; then
     echo "skip #$n: concurrency cap reached ($occupied/$MAX slots occupied)"
@@ -393,11 +549,33 @@ while IFS= read -r rec; do
     skipped=$((skipped + 1))
     continue
   fi
+  # Per-stage concurrency caps, checked after the global caps. The busy count
+  # is live occupancy (step 5b) plus this run's launches in the same bucket —
+  # a launched session holds the slot as soon as its worktree appears, so the
+  # reservation is made at launch time.
+  if [ "$bucket" = "prep" ]; then
+    busy=$((occ_prep + launched_prep))
+    cap="$MAX_PREP"
+  else
+    busy=$((occ_build + launched_build))
+    cap="$MAX_BUILD"
+  fi
+  if [ "$busy" -ge "$cap" ]; then
+    echo "skip #$n: $bucket cap reached ($busy/$cap)"
+    skipped=$((skipped + 1))
+    continue
+  fi
 
   if [ "$LAUNCH" = 0 ]; then
     echo "would launch #$n: $title"
     launched=$((launched + 1))
     occupied=$((occupied + 1))
+    serial_done=1
+    if [ "$bucket" = "prep" ]; then
+      launched_prep=$((launched_prep + 1))
+    else
+      launched_build=$((launched_build + 1))
+    fi
     continue
   fi
 
@@ -412,9 +590,23 @@ their worktrees, branches or issues."
     others_para="No other issues are currently in flight."
   fi
 
-  PROMPT_TEXT="/orchestrator resume $n
+  # Stage-specific prompt: prep is a worktree-less stage, so it skips the
+  # Step 1 setup paragraph entirely; build (and stage-less legacy issues)
+  # keep the original text verbatim.
+  if [ "$stage" = "prep" ]; then
+    middle_para="Issue #$n (\"$title\") is labeled ready-for-agent and stage:prep.
+Prep is a worktree-less stage like exploration: do not create a worktree or
+branch, and skip the request_scope grant; you read the canonical repo and
+write only to the issue.
 
-Issue #$n (\"$title\") is labeled ready-for-agent, but no branch, worktree or
+Read the full issue body with gh issue view $n --json
+title,body,labels,comments, then follow
+.devin/skills/orchestrator/flows/prep.md end to end: grill the issue, read
+the code it cites, and post a ### Phase: Prep — Done comment carrying every
+open question with a recommended answer each, then swap labels as the flow
+says. Do not write implementation code."
+  else
+    middle_para="Issue #$n (\"$title\") is labeled ready-for-agent, but no branch, worktree or
 phase comment exists yet, so Step 1 setup has not run. Plain resume is not
 enough.
 
@@ -424,7 +616,12 @@ the uflow-wt parent rather than a per-run path, per orchestrator rule 5.
 
 Then read the full issue body with gh issue view $n --json
 title,body,labels,comments and classify the request before dispatching
-anything.
+anything."
+  fi
+
+  PROMPT_TEXT="/orchestrator resume $n
+
+$middle_para
 
 $others_para
 
@@ -447,10 +644,18 @@ EOF
   chmod 700 "$launcher"
 
   if "$OSASCRIPT_BIN" -e "tell application \"Terminal\" to do script \"/usr/bin/env bash $launcher\""; then
-    printf '%s %s\n' "$NOW" "$n" >> "$LEDGER"
+    # Third field is the stage, so prep->build answer latency is derivable
+    # from the ledger alone. The awk windows key on $1 only and ignore it.
+    printf '%s %s %s\n' "$NOW" "$n" "$stage" >> "$LEDGER"
     echo "launched #$n in a new Terminal window ($launcher)"
     launched=$((launched + 1))
     occupied=$((occupied + 1))
+    serial_done=1
+    if [ "$bucket" = "prep" ]; then
+      launched_prep=$((launched_prep + 1))
+    else
+      launched_build=$((launched_build + 1))
+    fi
   else
     echo "launch failed for #$n"
     skipped=$((skipped + 1))

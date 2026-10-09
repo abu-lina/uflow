@@ -133,6 +133,8 @@ describe('agent-monitor.sh', () => {
     prs?: { number: number; headRefName: string }[];
     readyAgent?: number[];
     readyHuman?: number[];
+    stagePrep?: number[];
+    stageBuild?: number[];
   }
 
   const PHASE_COMMENT = '### Phase: Grill — Done\n\n- Issue: #N\n';
@@ -175,6 +177,14 @@ describe('agent-monitor.sh', () => {
     sb.writeFixture(
       'ready-human.json',
       JSON.stringify((s.readyHuman ?? []).map((number) => ({ number }))),
+    );
+    sb.writeFixture(
+      'stage-prep.json',
+      JSON.stringify((s.stagePrep ?? []).map((number) => ({ number }))),
+    );
+    sb.writeFixture(
+      'stage-build.json',
+      JSON.stringify((s.stageBuild ?? []).map((number) => ({ number }))),
     );
   }
 
@@ -280,6 +290,100 @@ describe('agent-monitor.sh', () => {
     });
     const [r] = jsonRecords();
     expect(r).toMatchObject({ issue: 106, state: 'blocked-on-human', occupies_slot: false });
+  });
+
+  it('classifies needs-info (no worktree) as blocked-on-human too: it is the decision queue', () => {
+    seedScenario({
+      issues: {
+        106: { state: 'OPEN', labels: ['needs-info', 'stage:prep'], comments: [] },
+      },
+      stagePrep: [106],
+    });
+    const [r] = jsonRecords();
+    expect(r).toMatchObject({ issue: 106, state: 'blocked-on-human', stage: 'prep' });
+  });
+
+  it('widens the candidate set to the stage labels: a stage:prep-only issue appears in --json', () => {
+    // AC3: stage labels feed the candidate union on their own, so an issue
+    // labelled stage:prep (with no ready-for-agent, no worktree, no branch)
+    // is still a candidate the dispatcher can then refuse or take.
+    seedScenario({
+      issues: { 105: { state: 'OPEN', labels: ['stage:prep'], comments: [] } },
+      stagePrep: [105],
+    });
+    const [r] = jsonRecords();
+    expect(r).toMatchObject({ issue: 105, state: 'ready', stage: 'prep' });
+  });
+
+  it('emits stage and blocked_by on every record; blocked_by keeps only open blockers', () => {
+    seedScenario({
+      issues: {
+        105: { state: 'OPEN', labels: ['ready-for-agent', 'stage:prep'], comments: [] },
+        107: { state: 'OPEN', labels: ['ready-for-agent', 'stage:build'], comments: [] },
+        109: { state: 'OPEN', labels: ['ready-for-agent'], comments: [] },
+      },
+      readyAgent: [105, 107, 109],
+    });
+    sb.writeFixture(
+      'blocked-by-105.json',
+      JSON.stringify([
+        { number: 200, state: 'open' },
+        { number: 201, state: 'closed' },
+      ]),
+    );
+    const records = jsonRecords();
+    const byIssue = Object.fromEntries(records.map((r) => [r.issue, r]));
+    expect(byIssue[105]).toMatchObject({ stage: 'prep', blocked_by: [200] });
+    expect(byIssue[107]).toMatchObject({ stage: 'build', blocked_by: [] });
+    expect(byIssue[109]).toMatchObject({ stage: 'none', blocked_by: [] });
+  });
+
+  it('fails closed when the gh api blocked_by call errors: blocked_by_unknown is set', () => {
+    // m2: an api failure (404, rate limit, auth) used to land in `|| []`, which
+    // reads as "no blockers" — the unsafe direction for a brake. The record
+    // must mark the answer unknown so the dispatcher refuses the issue.
+    seedScenario({
+      issues: { 105: { state: 'OPEN', labels: ['ready-for-agent'], comments: [] } },
+      readyAgent: [105],
+    });
+    sb.writeFixture('blocked-by-105.fail', '1');
+    const [r] = jsonRecords();
+    expect(r).toMatchObject({ blocked_by: [], blocked_by_unknown: true });
+  });
+
+  it('fails closed when the blocked_by body is not issue objects', () => {
+    // same contract for a body that does not parse into issue objects: the
+    // answer is unknown, not empty.
+    seedScenario({
+      issues: { 105: { state: 'OPEN', labels: ['ready-for-agent'], comments: [] } },
+      readyAgent: [105],
+    });
+    sb.writeFixture('blocked-by-105.json', '[588]');
+    const [r] = jsonRecords();
+    expect(r).toMatchObject({ blocked_by: [], blocked_by_unknown: true });
+  });
+
+  it('fetches blocked_by only for ready records, never for in-flight or awaiting-review', () => {
+    // AC4: the dependencies call doubles the gh traffic of a record, so it is
+    // gated on the only state that consumes it.
+    seedScenario({
+      worktrees: { 104: 'x', 103: 'y' },
+      branches: { 104: 'fix/104-x', 103: 'fix/103-y' },
+      ahead: { 104: 2, 103: 3 },
+      issues: {
+        104: { state: 'OPEN', comments: [PHASE_COMMENT] },
+        103: { state: 'OPEN', comments: [PHASE_COMMENT] },
+        105: { state: 'OPEN', labels: ['ready-for-agent'], comments: [] },
+      },
+      prs: [{ number: 555, headRefName: 'fix/103-y' }],
+      readyAgent: [105],
+    });
+    const { status } = run(sb, ['--json']);
+    expect(status).toBe(0);
+    const ghLog = sb.readLog('gh');
+    expect(ghLog).toContain('issues/105/dependencies/blocked_by');
+    expect(ghLog).not.toContain('issues/104/dependencies');
+    expect(ghLog).not.toContain('issues/103/dependencies');
   });
 
   it('orders output worst-waste first: cleanup-pending, stalled, then the rest', () => {
@@ -450,10 +554,12 @@ describe('agent-monitor.sh', () => {
     expect(byIssue[528].state).toBe('ready');
   });
 
-  it('--json emits exactly the eleven pinned fields, nulls present not omitted', () => {
+  it('--json emits exactly the fourteen pinned fields, nulls present not omitted', () => {
     seedLiveReplay();
     const { stdout } = run(sb, ['--json']);
     const want = [
+      'blocked_by',
+      'blocked_by_unknown',
       'branch',
       'commits_ahead',
       'issue',
@@ -462,6 +568,7 @@ describe('agent-monitor.sh', () => {
       'occupies_slot',
       'phases',
       'pr',
+      'stage',
       'state',
       'title',
       'worktree',
@@ -494,5 +601,67 @@ describe('agent-monitor.sh', () => {
     const { stdout } = run(sb, ['--max', '4']);
     expect(stdout).toContain('occupied 3/4 slots');
     expect(stdout).toContain('1 slot free');
+  });
+
+  // --- --decisions digest --------------------------------------------------
+  // AC17: a generated view over every open needs-info issue — its open
+  // questions and URL — that writes nothing to disk and needs no repo state.
+
+  it('--decisions prints every open needs-info issue with its questions and URL', () => {
+    sb.writeFixture(
+      'needs-info.json',
+      JSON.stringify([
+        { number: 106, title: 'decide the auth scope', url: 'https://github.com/o/r/issues/106' },
+        { number: 110, title: 'pick an approach', url: 'https://github.com/o/r/issues/110' },
+      ]),
+    );
+    sb.writeFixture(
+      'issue-106.json',
+      JSON.stringify({
+        number: 106,
+        state: 'OPEN',
+        title: 'decide the auth scope',
+        labels: [{ name: 'needs-info' }],
+        comments: [
+          {
+            body:
+              '### Phase: Prep — Done\n\n- Issue: #106\n\n' +
+              '❓ **Q1 - which providers count**: all 805 pending, or halal-certified only?\n' +
+              '➡️ halal-certified only — the 422 path is the halal payload.\n' +
+              'a plain sentence that is not a question.',
+          },
+        ],
+      }),
+    );
+    sb.writeFixture(
+      'issue-110.json',
+      JSON.stringify({
+        number: 110,
+        state: 'OPEN',
+        title: 'pick an approach',
+        labels: [{ name: 'needs-info' }],
+        comments: [{ body: 'Does this need a schema migration or is config enough?' }],
+      }),
+    );
+    const { stdout, status } = run(sb, ['--decisions']);
+    expect(status).toBe(0);
+    expect(stdout).toContain('#106');
+    expect(stdout).toContain('decide the auth scope');
+    expect(stdout).toContain('https://github.com/o/r/issues/106');
+    expect(stdout).toContain('Q1 - which providers count');
+    expect(stdout).toContain('#110');
+    expect(stdout).toContain('https://github.com/o/r/issues/110');
+    expect(stdout).toContain('Does this need a schema migration or is config enough?');
+    // a generated view, not a state store: no git calls, nothing written
+    expect(sb.called('git')).toBe(false);
+    expect(fs.readdirSync(sb.stateDir)).toEqual([]);
+  });
+
+  it('--decisions exits 0 with a clean message when nothing needs an answer', () => {
+    sb.writeFixture('needs-info.json', '[]');
+    const { stdout, status } = run(sb, ['--decisions']);
+    expect(status).toBe(0);
+    expect(stdout).toContain('needs-info');
+    expect(stdout).not.toMatch(/#\d/);
   });
 });
