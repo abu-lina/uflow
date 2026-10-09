@@ -11,9 +11,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock the Supabase client at module level
 const mockRpc = vi.fn();
 
-function createChainMock(resolvedValue: { data: unknown[]; error: null } = { data: [], error: null }) {
+function createChainMock(
+  resolvedValue: { data: unknown[]; error: null } = { data: [], error: null },
+) {
   const chain: Record<string, ReturnType<typeof vi.fn>> = {};
-  const methods = ['select', 'eq', 'in', 'ilike', 'order', 'returns', 'contains', 'is', 'limit'];
+  const methods = [
+    'select',
+    'eq',
+    'neq',
+    'in',
+    'ilike',
+    'order',
+    'returns',
+    'contains',
+    'is',
+    'limit',
+    'single',
+    'maybeSingle',
+  ];
   for (const method of methods) {
     chain[method] = vi.fn(() => chain);
   }
@@ -28,8 +43,8 @@ const mockFrom = vi.fn((..._args: any[]) => createChainMock());
 
 vi.mock('@/lib/supabase/client', () => ({
   supabase: {
-    from: (...args: unknown[]) => mockFrom(...args as [string]),
-    rpc: (...args: unknown[]) => mockRpc(...args as [string]),
+    from: (...args: unknown[]) => mockFrom(...(args as [string])),
+    rpc: (...args: unknown[]) => mockRpc(...(args as [string])),
   },
 }));
 
@@ -38,6 +53,7 @@ import {
   getCategories,
   getCategoriesForSection,
   getProviderCategories,
+  getSecondaryCategoryOptions,
 } from '@/services/categories';
 
 describe('categories service', () => {
@@ -93,9 +109,12 @@ describe('categories service', () => {
       const result = await fetchFilteredCategories(null, 'test query');
       expect(Array.isArray(result)).toBe(true);
       // Should call RPC for search
-      expect(mockRpc).toHaveBeenCalledWith('get_filtered_category_ids_by_search', expect.objectContaining({
-        search_query: 'test query',
-      }));
+      expect(mockRpc).toHaveBeenCalledWith(
+        'get_filtered_category_ids_by_search',
+        expect.objectContaining({
+          search_query: 'test query',
+        }),
+      );
     });
 
     it('passes location filter to RPC when both filters are provided', async () => {
@@ -104,16 +123,23 @@ describe('categories service', () => {
         error: null,
       });
 
-      mockFrom.mockReturnValue(createChainMock({
-        data: [{ id: '1', category_id: 'cat-1', name_de: 'Test', created_at: '', updated_at: '' }],
-        error: null,
-      }));
+      mockFrom.mockReturnValue(
+        createChainMock({
+          data: [
+            { id: '1', category_id: 'cat-1', name_de: 'Test', created_at: '', updated_at: '' },
+          ],
+          error: null,
+        }),
+      );
 
       await fetchFilteredCategories('Berlin', 'search term');
-      expect(mockRpc).toHaveBeenCalledWith('get_filtered_category_ids_by_search', expect.objectContaining({
-        search_query: 'search term',
-        location_filter: 'Berlin',
-      }));
+      expect(mockRpc).toHaveBeenCalledWith(
+        'get_filtered_category_ids_by_search',
+        expect.objectContaining({
+          search_query: 'search term',
+          location_filter: 'Berlin',
+        }),
+      );
     });
 
     it('returns empty when RPC returns no matching category IDs', async () => {
@@ -179,6 +205,51 @@ describe('categories service', () => {
       await getProviderCategories();
 
       expect(chain.in).toHaveBeenCalledWith('applicable_section', ['food', 'store', 'all']);
+    });
+  });
+
+  // #254: secondary picker options are the PRIMARY's own section — 'all'
+  // categories are excluded (the junction trigger would reject them anyway).
+  describe('getSecondaryCategoryOptions', () => {
+    const primaryLookup = (section: string | null) => {
+      const chain = createChainMock();
+      chain.maybeSingle = vi.fn().mockResolvedValue({
+        data: section ? { category_id: 'cat-primary', applicable_section: section } : null,
+        error: null,
+      });
+      return chain;
+    };
+
+    it('returns categories from the primary section only, excluding the primary', async () => {
+      const list = [{ category_id: 'cat-x', name_de: 'X' }];
+      const listChain = createChainMock({ data: list, error: null });
+      mockFrom.mockReturnValueOnce(primaryLookup('food')).mockReturnValueOnce(listChain);
+
+      const result = await getSecondaryCategoryOptions('cat-primary');
+
+      expect(result).toEqual(list);
+      expect(listChain.eq).toHaveBeenCalledWith('applicable_section', 'food');
+      expect(listChain.neq).toHaveBeenCalledWith('category_id', 'cat-primary');
+      // Never broadens to the 'all' scope.
+      expect(listChain.in).not.toHaveBeenCalled();
+    });
+
+    it('returns [] for an all-section primary without a second query', async () => {
+      mockFrom.mockReturnValueOnce(primaryLookup('all'));
+
+      const result = await getSecondaryCategoryOptions('cat-primary');
+
+      expect(result).toEqual([]);
+      expect(mockFrom).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns [] when the primary does not resolve', async () => {
+      mockFrom.mockReturnValueOnce(primaryLookup(null));
+
+      const result = await getSecondaryCategoryOptions('cat-missing');
+
+      expect(result).toEqual([]);
+      expect(mockFrom).toHaveBeenCalledTimes(1);
     });
   });
 });

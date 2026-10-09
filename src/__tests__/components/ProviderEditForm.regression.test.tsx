@@ -6,6 +6,7 @@ const {
   mockPush,
   mockBack,
   mockToastError,
+  mockToastInfo,
   mockToastSuccess,
   mockCreateRelationship,
   mockProviderUpdateEq,
@@ -21,10 +22,15 @@ const {
   mockEngagementsInsert,
   mockCategoriesOrder,
   mockCategoriesSelect,
+  mockPcDelete,
+  mockPcDeleteEq,
+  mockPcDeleteNeq,
+  mockPcInsert,
 } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockBack: vi.fn(),
   mockToastError: vi.fn(),
+  mockToastInfo: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockCreateRelationship: vi.fn(),
   mockProviderUpdateEq: vi.fn(),
@@ -40,6 +46,10 @@ const {
   mockEngagementsInsert: vi.fn(),
   mockCategoriesOrder: vi.fn(),
   mockCategoriesSelect: vi.fn(),
+  mockPcDelete: vi.fn(),
+  mockPcDeleteEq: vi.fn(),
+  mockPcDeleteNeq: vi.fn(),
+  mockPcInsert: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -53,6 +63,7 @@ vi.mock('@iconify/react', () => ({
 vi.mock('sonner', () => ({
   toast: {
     error: mockToastError,
+    info: mockToastInfo,
     success: mockToastSuccess,
   },
 }));
@@ -116,6 +127,10 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'editProvider.sectionUnclassified': 'Unclassified (i18n)',
         'editProvider.sectionFood': 'Food (i18n)',
         'editProvider.sectionBusiness': 'Business (i18n)',
+        'editProvider.additionalCategories': 'Additional categories',
+        'editProvider.noAdditionalCategories': 'None selected',
+        'editProvider.secondaryCategoriesCleared': 'Additional categories were reset',
+        'editProvider.secondaryCategoriesRejected': 'The selected categories could not be saved.',
       };
       return translations[key] || key;
     },
@@ -181,6 +196,13 @@ vi.mock('@/lib/supabase/client', () => ({
       if (table === 'providers') {
         return {
           update: mockProviderUpdate,
+        };
+      }
+
+      if (table === 'provider_categories') {
+        return {
+          delete: mockPcDelete,
+          insert: mockPcInsert,
         };
       }
 
@@ -706,6 +728,7 @@ describe('ProviderEditForm clears localStorage drafts after save', () => {
     'edit_hours_',
     'edit_halal_',
     'edit_values_',
+    'edit_additional_categories_',
   ];
 
   beforeEach(() => {
@@ -727,6 +750,15 @@ describe('ProviderEditForm clears localStorage drafts after save', () => {
 
     mockProviderUpdateEq.mockResolvedValue({ error: null });
     mockProviderUpdate.mockReturnValue({ eq: mockProviderUpdateEq });
+
+    // #254: the owner save path now writes the junction after the providers
+    // update — delete().eq(pid).neq(primary) then insert(rows).
+    mockPcDeleteNeq.mockResolvedValue({ error: null });
+    mockPcDeleteEq.mockReturnValue(
+      Object.assign(Promise.resolve({ error: null }), { neq: mockPcDeleteNeq }),
+    );
+    mockPcDelete.mockReturnValue({ eq: mockPcDeleteEq });
+    mockPcInsert.mockResolvedValue({ error: null });
   });
 
   it('[post-fix PASSES] admin onSubmitForm clears all localStorage draft keys after success', async () => {
@@ -870,5 +902,286 @@ describe('ProviderEditForm reviewStatus dead path (#548, AC 18)', () => {
       unknown
     >;
     expect('reviewStatus' in parsed).toBe(false);
+  });
+});
+
+// #254 Seam 4: secondary categories ride the same form state, the same
+// {pfx}edit_* localStorage draft protocol, and both save paths.
+describe('ProviderEditForm secondary categories (#254)', () => {
+  const pid = baseProvider.provider_id;
+
+  const catFood = {
+    category_id: 'cat-a',
+    name_de: 'Essen & Trinken',
+    name_en: 'Food & Drinks',
+    applicable_section: 'food',
+  };
+  const catTurk = {
+    category_id: 'cat-b',
+    name_de: 'Türkisch',
+    name_en: 'Turkish',
+    applicable_section: 'food',
+  };
+  const catArab = {
+    category_id: 'cat-c',
+    name_de: 'Arabisch',
+    name_en: 'Arabic',
+    applicable_section: 'food',
+  };
+  const catAll = {
+    category_id: 'cat-all',
+    name_de: 'Gemeinschaft & Spenden',
+    name_en: 'Community & Donations',
+    applicable_section: 'all',
+  };
+
+  // Provider with a junction embed: cat-a primary, cat-b + cat-c secondary.
+  const providerWithJunction = {
+    ...baseProvider,
+    category_id: 'cat-a',
+    provider_categories: [
+      { category_id: 'cat-a' },
+      { category_id: 'cat-b' },
+      { category_id: 'cat-c' },
+    ],
+  } as unknown as Provider;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+
+    mockCategoriesOrder.mockResolvedValue({
+      data: [catFood, catTurk, catArab, catAll],
+      error: null,
+    });
+    mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
+
+    mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
+    mockProviderCommunityServicesSelect.mockReturnValue({
+      eq: mockProviderCommunityServicesSelectEq,
+    });
+
+    mockProviderUpdateEq.mockResolvedValue({ error: null });
+    mockProviderUpdate.mockReturnValue({ eq: mockProviderUpdateEq });
+
+    mockEngagementsSelectEq.mockResolvedValue({ data: [], error: null });
+    mockEngagementsSelect.mockReturnValue({ eq: mockEngagementsSelectEq });
+    mockEngagementsDeleteEq.mockResolvedValue({ error: null });
+    mockEngagementsDelete.mockReturnValue({ eq: mockEngagementsDeleteEq });
+    mockEngagementsInsert.mockResolvedValue({ error: null });
+
+    // provider_categories chain: delete().eq(pid) -> thenable, optionally
+    // .neq(primary) -> thenable. insert(rows) -> resolves {error:null}.
+    mockPcDeleteNeq.mockResolvedValue({ error: null });
+    mockPcDeleteEq.mockReturnValue(
+      Object.assign(Promise.resolve({ error: null }), { neq: mockPcDeleteNeq }),
+    );
+    mockPcDelete.mockReturnValue({ eq: mockPcDeleteEq });
+    mockPcInsert.mockResolvedValue({ error: null });
+  });
+
+  it('hydrates secondary categories from junction rows minus the primary (case 47/51)', async () => {
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <ProviderEditForm
+        cancelUrl="/p/test-id"
+        enableLocalStorage={false}
+        onSubmitForm={onSubmitForm}
+        provider={providerWithJunction}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onSubmitForm).toHaveBeenCalledWith(
+        expect.objectContaining({ secondaryCategoryIds: ['cat-b', 'cat-c'] }),
+      );
+    });
+  });
+
+  it.each(['', 'admin_'])(
+    'the %s draft key overrides the hydrated junction value (case 48)',
+    async (prefix) => {
+      localStorage.setItem(`${prefix}edit_additional_categories_${pid}`, '["cat-x","cat-y"]');
+
+      const onSubmitForm = vi.fn().mockResolvedValue(undefined);
+      render(
+        <ProviderEditForm
+          cancelUrl="/p/test-id"
+          enableLocalStorage={true}
+          localStoragePrefix={prefix}
+          onSubmitForm={onSubmitForm}
+          provider={providerWithJunction}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+      await waitFor(() => {
+        expect(onSubmitForm).toHaveBeenCalledWith(
+          expect.objectContaining({ secondaryCategoryIds: ['cat-x', 'cat-y'] }),
+        );
+      });
+    },
+  );
+
+  it('picking a different primary clears the secondary selection and toasts (case 49)', async () => {
+    // User navigated to the category sub-page and chose a new primary; the
+    // draft is waiting in localStorage when the form comes back into focus.
+    localStorage.setItem(`edit_category_${pid}`, 'cat-new');
+
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ProviderEditForm
+        cancelUrl="/p/test-id"
+        enableLocalStorage={true}
+        onSubmitForm={onSubmitForm}
+        provider={providerWithJunction}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(mockToastInfo).toHaveBeenCalledWith('Additional categories were reset');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onSubmitForm).toHaveBeenCalledWith(
+        expect.objectContaining({ categoryId: 'cat-new', secondaryCategoryIds: [] }),
+      );
+    });
+  });
+
+  it('a secondary draft picked under the new primary survives the primary change', async () => {
+    // Drafts written in order by the sub-pages: category first, then the
+    // secondaries chosen under that new primary.
+    localStorage.setItem(`edit_category_${pid}`, 'cat-new');
+    localStorage.setItem(`edit_additional_categories_${pid}`, '["cat-b"]');
+
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ProviderEditForm
+        cancelUrl="/p/test-id"
+        enableLocalStorage={true}
+        onSubmitForm={onSubmitForm}
+        provider={providerWithJunction}
+      />,
+    );
+
+    await waitFor(() => {
+      // The hydrated secondaries were NOT for the draft primary — but the
+      // draft secondary set was, so no reset toast.
+      expect(mockToastInfo).not.toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onSubmitForm).toHaveBeenCalledWith(
+        expect.objectContaining({ categoryId: 'cat-new', secondaryCategoryIds: ['cat-b'] }),
+      );
+    });
+  });
+
+  it('owner save issues the providers update before the junction writes (case 50)', async () => {
+    localStorage.setItem(`edit_additional_categories_${pid}`, '["cat-b"]');
+
+    render(<ProviderEditForm enableLocalStorage={true} provider={providerWithJunction} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mockPcInsert).toHaveBeenCalled();
+    });
+
+    // providers.category_id first — its sync trigger resets the junction —
+    // then delete non-primary rows, then insert the secondary rows.
+    expect(mockProviderUpdate.mock.invocationCallOrder[0]).toBeLessThan(
+      mockPcDelete.mock.invocationCallOrder[0],
+    );
+    expect(mockPcDeleteEq).toHaveBeenCalledWith('provider_id', pid);
+    expect(mockPcDeleteNeq).toHaveBeenCalledWith('category_id', 'cat-a');
+    expect(mockPcInsert).toHaveBeenCalledWith([{ provider_id: pid, category_id: 'cat-b' }]);
+  });
+
+  it('clears the additional-categories draft key after a successful save (case 52)', async () => {
+    localStorage.setItem(`admin_edit_additional_categories_${pid}`, '["cat-b"]');
+
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ProviderEditForm
+        enableLocalStorage={true}
+        localStoragePrefix="admin_"
+        onSubmitForm={onSubmitForm}
+        provider={providerWithJunction}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onSubmitForm).toHaveBeenCalled();
+    });
+    expect(localStorage.getItem(`admin_edit_additional_categories_${pid}`)).toBeNull();
+  });
+
+  it('renders no secondary entry point when the primary is in the all section (case 53)', async () => {
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        provider={
+          {
+            ...baseProvider,
+            category_id: 'cat-all',
+            provider_categories: [{ category_id: 'cat-all' }],
+          } as unknown as Provider
+        }
+      />,
+    );
+
+    // Wait for categories to load so the row would have had its chance.
+    await waitFor(() => {
+      expect(screen.getByText('Community & Donations')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Additional categories')).not.toBeInTheDocument();
+  });
+
+  it('renders the secondary entry point for a food primary and navigates to the sub-page', async () => {
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        provider={providerWithJunction}
+        subPageBaseUrl="/dashboard/providers/x/edit"
+      />,
+    );
+
+    const row = await screen.findByText('Additional categories');
+    expect(row).toBeInTheDocument();
+    // Shows the hydrated secondary names
+    await waitFor(() => {
+      expect(screen.getByText('Turkish, Arabic')).toBeInTheDocument();
+    });
+
+    fireEvent.click(row.closest('div[class*="cursor-pointer"]') as HTMLElement);
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/providers/x/edit/additional-categories');
+  });
+
+  it('translates a 23514 from the junction insert into a German-friendly toast', async () => {
+    mockPcInsert.mockResolvedValue({
+      error: { code: '23514', message: 'maximum is 5 categories' },
+    });
+    localStorage.setItem(`edit_additional_categories_${pid}`, '["cat-b"]');
+
+    render(<ProviderEditForm enableLocalStorage={true} provider={providerWithJunction} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('The selected categories could not be saved.');
+    });
+    expect(mockToastError).not.toHaveBeenCalledWith('Error updating provider');
   });
 });

@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 // Executes migration 139 (provider_categories junction for #254) against a
 // real (WASM) Postgres. Triggers, deferred constraint triggers, FK cascade
@@ -36,6 +36,15 @@ const SCHEMA = `
     provider_description text,
     category_id uuid REFERENCES public.categories(category_id) ON DELETE SET NULL,
     address_city text,
+    address_street text,
+    address_zip text,
+    address_country text,
+    contact_email text,
+    contact_phone text,
+    social_website text,
+    social_instagram text,
+    provider_images jsonb,
+    show_address boolean,
     review_status public.review_status DEFAULT 'pending',
     listing_type public.listing_type_enum,
     user_created_id uuid,
@@ -49,13 +58,41 @@ const SCHEMA = `
     economic_solidarity boolean,
     makes_donations boolean,
     opening_hours jsonb,
-    created_at timestamptz NOT NULL DEFAULT now()
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz
   );
   CREATE TABLE public.provider_offers (provider_id uuid NOT NULL, offer_id uuid NOT NULL);
   CREATE TABLE public.provider_needs (provider_id uuid NOT NULL, need_id uuid NOT NULL);
   CREATE TABLE public.food_menu (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(), provider_id uuid NOT NULL,
-    name_de text, name_en text, is_available boolean DEFAULT true
+    name_de text, name_en text, description_de text, price_cents int,
+    category text, is_available boolean DEFAULT true, sort_order int, updated_at timestamptz
+  );
+  -- Stubs so admin_update_provider (Chunk B, cases 32-36) can execute its
+  -- optional branches. Only the columns the RPC reads/writes exist.
+  CREATE TABLE public.food_providers (
+    provider_id uuid PRIMARY KEY, verification_method text, has_certificate boolean,
+    certificate_url text, no_alcohol boolean, no_pork boolean, no_gambling boolean,
+    updated_at timestamptz
+  );
+  CREATE TABLE public.store_providers (
+    provider_id uuid PRIMARY KEY, verification_method text, has_certificate boolean,
+    certificate_url text, no_alcohol boolean, no_pork boolean, no_gambling boolean,
+    updated_at timestamptz
+  );
+  CREATE TABLE public.provider_delivery_links (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), provider_id uuid NOT NULL,
+    platform text, platform_url text, platform_slug text, is_active boolean, updated_at timestamptz
+  );
+  CREATE TABLE public.provider_engagements (
+    initiating_provider_id uuid NOT NULL, engaged_provider_id uuid NOT NULL
+  );
+  CREATE TABLE public.locations (
+    location_id uuid PRIMARY KEY DEFAULT gen_random_uuid(), provider_id uuid NOT NULL,
+    location_name text, address_street text, address_zip text, address_city text,
+    address_country text, location_latitude numeric, location_longitude numeric,
+    opening_hours jsonb, show_address boolean, contact_phone text, is_primary boolean,
+    updated_at timestamptz
   );
   ALTER TABLE public.providers ENABLE ROW LEVEL SECURITY;
   ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -82,6 +119,7 @@ const ID = {
   pNull: '00000000-0000-0000-0000-0000000000a2', // category_id NULL (pre-migration)
   pB: '00000000-0000-0000-0000-0000000000a3', // primary Döner + secondary Türkisch
   pC: '00000000-0000-0000-0000-0000000000a4', // primary Türkisch + secondary Türkisch Haus
+  pD: '00000000-0000-0000-0000-0000000000a5', // admin_update_provider probe (Chunk B)
 };
 
 // Categories exist before the migration so the backfill and the FK wiring
@@ -426,6 +464,137 @@ describe('migration 139 — provider_categories (executed against Postgres)', ()
       });
       expect(error).toBeUndefined();
     });
+
+    it('a no-op save (same category_id in the SET list) keeps secondaries', async () => {
+      // Review finding: ProviderEditForm always sends category_id in its
+      // blanket update, so UPDATE OF category_id fires even when the value
+      // is unchanged. The sync trigger must not wipe secondaries then;
+      // only a real primary change resets the set (case 13 above).
+      const error = await inCheckedTx(async () => {
+        await db.query(
+          'UPDATE public.providers SET provider_name = $2, category_id = $3 WHERE provider_id = $1',
+          [ID.pB, 'Bosphorus Imbiss renamed', ID.doner],
+        );
+        expect((await junctionRows(ID.pB)).map((r) => r.category_id).sort()).toEqual(
+          [ID.doner, ID.turk].sort(),
+        );
+      });
+      expect(error).toBeUndefined();
+    });
+
+    it('a real primary change still resets secondaries (guard is not a veto)', async () => {
+      const error = await inCheckedTx(async () => {
+        await db.query('UPDATE public.providers SET category_id = $2 WHERE provider_id = $1', [
+          ID.pB,
+          ID.pizza,
+        ]);
+        expect(await junctionRows(ID.pB)).toEqual([{ category_id: ID.pizza }]);
+      });
+      expect(error).toBeUndefined();
+    });
+  });
+
+  describe('re-runnability', () => {
+    it('the whole migration applies a second time without error', async () => {
+      // Project convention (108/101/105 use IF NOT EXISTS; 130/137 use
+      // DROP POLICY IF EXISTS). Application is manual, so "apply again" is
+      // a routine operator move and must not fail. Own PGlite instance: a
+      // failing second run leaves the connection in an aborted transaction
+      // and would poison every later test in this file.
+      const twice = new PGlite();
+      try {
+        await twice.exec(SCHEMA);
+        await twice.exec(sql134);
+        await twice.exec(sql135);
+        await twice.exec(sql137);
+        await twice.exec(sql121);
+        await twice.exec(sql139);
+        await expect(twice.exec(sql139)).resolves.toBeDefined();
+      } finally {
+        await twice.close();
+      }
+    });
+  });
+
+  describe('admin_update_provider — secondary_category_ids (Chunk B)', () => {
+    // pD is dedicated to this describe: the RPC mutates junction state and
+    // the shared fixtures (pB especially) must keep theirs for the search
+    // cases further down.
+    const adminRpc = (data: unknown) =>
+      db.query('SELECT public.admin_update_provider($1, $2::jsonb)', [ID.pD, JSON.stringify(data)]);
+
+    const junctionIds = async (pid: string) =>
+      (await junctionRows(pid)).map((r) => r.category_id).sort();
+
+    beforeAll(async () => {
+      await db.query(
+        `INSERT INTO public.providers (provider_id, provider_name, category_id, address_city, review_status, listing_type)
+         VALUES ($1, 'Admin Probe', $2, 'Berlin', 'approved', 'food')`,
+        [ID.pD, ID.doner],
+      );
+    });
+
+    beforeEach(async () => {
+      // Reset pD to "Döner primary + Türkisch secondary". NULL -> Döner is
+      // a real category change, so the sync trigger rebuilds the junction
+      // to just the primary before we re-add the secondary row.
+      await db.query('UPDATE public.providers SET category_id = NULL WHERE provider_id = $1', [
+        ID.pD,
+      ]);
+      await db.query(
+        `UPDATE public.providers SET category_id = $2, provider_name = 'Admin Probe'
+         WHERE provider_id = $1`,
+        [ID.pD, ID.doner],
+      );
+      await db.query(
+        'INSERT INTO public.provider_categories (provider_id, category_id) VALUES ($1, $2)',
+        [ID.pD, ID.turk],
+      );
+    });
+
+    it('replaces the secondary set with the payload list (case 32)', async () => {
+      await adminRpc({ secondary_category_ids: [ID.pizza, ID.arab] });
+      expect(await junctionIds(ID.pD)).toEqual([ID.doner, ID.pizza, ID.arab].sort());
+    });
+
+    it('an empty list leaves only the primary row (case 33)', async () => {
+      await adminRpc({ secondary_category_ids: [] });
+      expect(await junctionIds(ID.pD)).toEqual([ID.doner]);
+    });
+
+    it('a payload without the key leaves the set untouched (case 34)', async () => {
+      await adminRpc({ providers: { provider_name: 'Admin Probe renamed' } });
+      expect(await junctionIds(ID.pD)).toEqual([ID.doner, ID.turk].sort());
+    });
+
+    it('rejects more than 4 secondaries atomically — no partial write (case 35)', async () => {
+      await expect(
+        adminRpc({
+          providers: { provider_name: 'should not persist' },
+          secondary_category_ids: [ID.pizza, ID.arab, ID.pers, ID.balk, ID.turkHaus],
+        }),
+      ).rejects.toMatchObject({ code: '23514' });
+      // Deferred trigger fired at commit -> whole call rolled back.
+      expect(await junctionIds(ID.pD)).toEqual([ID.doner, ID.turk].sort());
+      const [{ provider_name }] = await rows<{ provider_name: string }>(
+        'SELECT provider_name FROM public.providers WHERE provider_id = $1',
+        [ID.pD],
+      );
+      expect(provider_name).not.toBe('should not persist');
+    });
+
+    it('changing the primary and the secondaries in one call keeps only the new set (case 36)', async () => {
+      await adminRpc({
+        providers: { category_id: ID.pizza },
+        secondary_category_ids: [ID.arab, ID.pers],
+      });
+      expect(await junctionIds(ID.pD)).toEqual([ID.pizza, ID.arab, ID.pers].sort());
+      const [{ category_id }] = await rows<{ category_id: string }>(
+        'SELECT category_id FROM public.providers WHERE provider_id = $1',
+        [ID.pD],
+      );
+      expect(category_id).toBe(ID.pizza);
+    });
   });
 
   describe('search_providers_chat', () => {
@@ -467,7 +636,7 @@ describe('migration 139 — provider_categories (executed against Postgres)', ()
 
     it('returns all approved providers when the category filter is NULL (case 25)', async () => {
       const ids = (await chatSearch('', null)).map((r) => r.provider_id);
-      expect(ids.sort()).toEqual([ID.p1, ID.pNull, ID.pB, ID.pC].sort());
+      expect(ids.sort()).toEqual([ID.p1, ID.pNull, ID.pB, ID.pC, ID.pD].sort());
     });
 
     it('never returns a category-less provider for a category filter (case 26)', async () => {

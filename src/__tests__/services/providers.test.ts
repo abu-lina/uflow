@@ -226,7 +226,9 @@ describe('providers service', () => {
       await searchProviders('', '', '', 12, 0);
 
       expect(mockSelect).toHaveBeenCalledWith(
-        expect.stringContaining('category:categories(name_de, name_en, category_images)'),
+        expect.stringContaining(
+          'category:categories!providers_category_id_fkey(name_de, name_en, category_images)',
+        ),
         { count: 'exact' },
       );
     });

@@ -918,6 +918,20 @@ export const ps = {
       desktopMessage:
         'دا پاڼه د موبایل وسیلو لپاره غوره شوې ده. مهرباني وکړئ دا په موبایل وسیله کې پرانیزئ.',
     },
+    additionalCategories: 'اضافي کټګورۍ',
+    noAdditionalCategories: 'هیڅ ونه غوره شوې',
+    secondaryCategoriesCleared: 'اضافي کټګورۍ بیا تنظیم شوې',
+    secondaryCategoriesRejected: 'کټګورۍ ونه ساتل شوې. مهرباني وکړئ خپله غورنه وګورئ.',
+    editAdditionalCategories: {
+      title: 'اضافي کټګورۍ',
+      searchPlaceholder: 'کټګورۍ لټون وکړئ...',
+      loading: 'کټګورۍ لوډیږي...',
+      selected: '{{count}} غوره شوې',
+      maxSelected: 'تر ډېره ۴ اضافي کټګورۍ غورول کېږي',
+      emptyForAllSection: 'د دې کټګورۍ لپاره اضافي کټګورۍ شتون نه لري.',
+      emptyNoPrimary: 'لومړی یوه اصلي کټګوري وغورئ.',
+      save: 'ساتل',
+    },
     editSocial: {
       title: 'ټولنیز نوښتونه',
       description: 'د هغو ټولنیزو نوښتونو غوره کړئ چې تاسو یې ملاتړ غواړئ.',

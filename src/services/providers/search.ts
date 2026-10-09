@@ -270,8 +270,8 @@ export async function searchProviders(
 
   // Plan 058: Include review fields when admin
   const baseSelectFields = adminOptions?.isAdmin
-    ? '*, category:categories(name_de, name_en, category_images), review_status, review_feedback'
-    : '*, category:categories(name_de, name_en, category_images)';
+    ? '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images), review_status, review_feedback'
+    : '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)';
   const selectFields = hasCategoryFilter
     ? `${baseSelectFields}, provider_categories!inner(category_id)`
     : baseSelectFields;

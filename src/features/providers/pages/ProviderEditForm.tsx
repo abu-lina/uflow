@@ -54,6 +54,8 @@ export interface ProviderEditFormData {
   phone: string;
   images: string;
   selectedCommunityServiceIds: string[];
+  /** #254: Secondary Categories — junction rows minus the Primary. */
+  secondaryCategoryIds: string[];
   menuItems: Array<{
     id?: string;
     name_de: string;
@@ -126,6 +128,14 @@ export function ProviderEditForm({
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const router = useRouter();
+  // #254: set inside the sync's setState updater when a primary change wipes
+  // hydrated secondaries; toasted once at the end of the sync pass.
+  const secondaryClearedRef = useRef(false);
+  // t() changes identity per language switch; a ref keeps it out of the sync
+  // callback's deps — a new dep would re-run the storage merge every render
+  // and several merge branches always produce a new state object (loop).
+  const tRef = useRef(t);
+  tRef.current = t;
 
   // Compute edit sub-page base URL (admin vs owner context)
   const editBaseUrl = subPageBaseUrl ?? `/profile/providers/${provider.provider_id}/edit`;
@@ -164,6 +174,12 @@ export function ProviderEditForm({
         ? provider.provider_images || '[]'
         : JSON.stringify(provider.provider_images || {}),
     selectedCommunityServiceIds: [], // Will be populated from relationships
+    // #254: hydrate Secondaries from the junction embed, minus the Primary.
+    secondaryCategoryIds: (
+      (providerAny.provider_categories as Array<{ category_id: string }> | undefined) ?? []
+    )
+      .map((row) => row.category_id)
+      .filter((id): id is string => Boolean(id) && id !== provider.category_id),
     menuItems: [],
     deliveryLinks: [],
     locations: [],
@@ -195,10 +211,35 @@ export function ProviderEditForm({
     const pfx = localStoragePrefix;
 
     const storedCategory = localStorage.getItem(`${pfx}edit_category_${pid}`);
+    const storedAdditional = localStorage.getItem(`${pfx}edit_additional_categories_${pid}`);
     if (storedCategory) {
-      setFormData((prev) =>
-        prev.categoryId !== storedCategory ? { ...prev, categoryId: storedCategory } : prev,
-      );
+      setFormData((prev) => {
+        if (prev.categoryId === storedCategory) return prev;
+        // #254: a new Primary wipes the Secondary set (the junction sync
+        // trigger does the same on save). A draft from the additional-
+        // categories sub-page was picked under THIS primary, so it survives;
+        // only junction-hydrated/stale secondaries get cleared.
+        if (prev.secondaryCategoryIds.length > 0 && !storedAdditional) {
+          secondaryClearedRef.current = true;
+          return { ...prev, categoryId: storedCategory, secondaryCategoryIds: [] };
+        }
+        return { ...prev, categoryId: storedCategory };
+      });
+    }
+
+    if (storedAdditional) {
+      try {
+        const parsed = JSON.parse(storedAdditional);
+        if (Array.isArray(parsed)) {
+          setFormData((prev) =>
+            JSON.stringify(prev.secondaryCategoryIds) !== storedAdditional
+              ? { ...prev, secondaryCategoryIds: parsed }
+              : prev,
+          );
+        }
+      } catch {
+        /* ignore */
+      }
     }
 
     const storedSocial = localStorage.getItem(`${pfx}edit_social_${pid}`);
@@ -318,6 +359,11 @@ export function ProviderEditForm({
         /* ignore */
       }
     }
+
+    if (secondaryClearedRef.current) {
+      secondaryClearedRef.current = false;
+      toast.info(tRef.current('editProvider.secondaryCategoriesCleared'));
+    }
   }, [
     enableLocalStorage,
     localStoragePrefix,
@@ -363,6 +409,7 @@ export function ProviderEditForm({
       'edit_hours_',
       'edit_halal_',
       'edit_values_',
+      'edit_additional_categories_',
     ];
     keys.forEach((key) => localStorage.removeItem(`${pfx}${key}${pid}`));
   }, [enableLocalStorage, localStoragePrefix, provider.provider_id]);
@@ -513,6 +560,33 @@ export function ProviderEditForm({
 
       if (error) throw error;
 
+      // #254 Secondary Categories: the providers UPDATE above already fired
+      // the sync trigger, which reset the junction to the new Primary.
+      // Order is load-bearing: wipe the remaining non-primary rows, then
+      // insert the chosen secondaries. Inserting before the UPDATE would
+      // lose them to the trigger's reset.
+      if (submitData.categoryId) {
+        const { error: junctionDeleteError } = await supabase
+          .from('provider_categories')
+          .delete()
+          .eq('provider_id', provider.provider_id)
+          .neq('category_id', submitData.categoryId);
+        if (junctionDeleteError) throw junctionDeleteError;
+
+        const secondaryIds = submitData.secondaryCategoryIds.filter(
+          (id) => Boolean(id) && id !== submitData.categoryId,
+        );
+        if (secondaryIds.length > 0) {
+          const { error: junctionInsertError } = await supabase.from('provider_categories').insert(
+            secondaryIds.map((categoryId) => ({
+              provider_id: provider.provider_id,
+              category_id: categoryId,
+            })),
+          );
+          if (junctionInsertError) throw junctionInsertError;
+        }
+      }
+
       // Update community service relationships via provider_engagements
       if (
         submitData.selectedCommunityServiceIds &&
@@ -548,7 +622,14 @@ export function ProviderEditForm({
       }
     } catch (error) {
       console.error('Error updating provider:', error);
-      toast.error(t('editProvider.errorUpdating'));
+      // #254: a check-trigger rejection (SQLSTATE 23514) means the secondary
+      // set broke a rule (max 4, same section). Surface a readable message
+      // instead of the raw Postgres error.
+      if ((error as { code?: string })?.code === '23514') {
+        toast.error(t('editProvider.secondaryCategoriesRejected'));
+      } else {
+        toast.error(t('editProvider.errorUpdating'));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -675,6 +756,42 @@ export function ProviderEditForm({
                 </div>
                 <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />
               </div>
+
+              {/* #254: Secondary Categories — only offered when the Primary's
+                  section allows them ('all' primaries take none, R3). */}
+              {(() => {
+                const primary = categories.find((cat) => cat.category_id === formData.categoryId);
+                if (!primary || primary.applicable_section === 'all') return null;
+                const secondaryNames = formData.secondaryCategoryIds
+                  .map((id) => categories.find((cat) => cat.category_id === id))
+                  .filter((cat): cat is Category => Boolean(cat))
+                  .map((cat) =>
+                    language === 'en' ? cat.name_en || cat.name_de : cat.name_de || cat.name_en,
+                  );
+                return (
+                  <div
+                    className="flex h-[54px] w-full cursor-pointer items-center rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+                    onClick={() =>
+                      saveInlineDataAndNavigate(`${editBaseUrl}/additional-categories`)
+                    }
+                  >
+                    <div className="flex flex-1 flex-col gap-1">
+                      <span className="text-xs font-normal leading-[15px] text-[#999999]">
+                        {t('editProvider.additionalCategories')}
+                      </span>
+                      <span className="text-[15px] font-medium leading-[18px] tracking-[0.15px] text-[#272727]">
+                        {secondaryNames.length > 0
+                          ? secondaryNames.join(', ')
+                          : t('editProvider.noAdditionalCategories')}
+                      </span>
+                    </div>
+                    <Icon
+                      className="h-5 w-5 text-[#999999]"
+                      icon="material-symbols:chevron-right"
+                    />
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

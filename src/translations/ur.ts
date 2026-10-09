@@ -921,6 +921,20 @@ export const ur = {
       desktopMessage:
         'یہ صفحہ موبائل ڈیوائسز کے لیے بہتر ہے۔ براہ کرم اسے موبائل ڈیوائس پر کھولیں۔',
     },
+    additionalCategories: 'مزید زمرے',
+    noAdditionalCategories: 'کوئی انتخاب نہیں',
+    secondaryCategoriesCleared: 'مزید زمرے ری سیٹ کر دیے گئے',
+    secondaryCategoriesRejected: 'زمرے محفوظ نہیں ہو سکے۔ براہ کرم اپنے انتخاب کی جانچ کریں۔',
+    editAdditionalCategories: {
+      title: 'مزید زمرے',
+      searchPlaceholder: 'زمرے تلاش کریں...',
+      loading: 'زمرے لوڈ ہو رہے ہیں...',
+      selected: '{{count}} منتخب',
+      maxSelected: 'زیادہ سے زیادہ 4 مزید زمرے منتخب کیے جا سکتے ہیں',
+      emptyForAllSection: 'اس زمرے کے لیے مزید زمرے دستیاب نہیں ہیں۔',
+      emptyNoPrimary: 'پہلے ایک بنیادی زمرہ منتخب کریں۔',
+      save: 'محفوظ کریں',
+    },
     editSocial: {
       title: 'سماجی منصوبے',
       description: 'سماجی منصوبے منتخب کریں جن کی آپ حمایت کرنا چاہتے ہیں۔',

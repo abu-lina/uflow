@@ -912,6 +912,20 @@ export const en = {
       desktopMessage:
         'This page is optimized for mobile devices. Please open it on a mobile device.',
     },
+    additionalCategories: 'Additional categories',
+    noAdditionalCategories: 'None selected',
+    secondaryCategoriesCleared: 'Additional categories were reset',
+    secondaryCategoriesRejected: 'The categories could not be saved. Please check your selection.',
+    editAdditionalCategories: {
+      title: 'Additional categories',
+      searchPlaceholder: 'Search categories...',
+      loading: 'Loading categories...',
+      selected: '{{count}} selected',
+      maxSelected: 'Maximum 4 additional categories allowed',
+      emptyForAllSection: 'No additional categories are available for this category.',
+      emptyNoPrimary: 'Choose a primary category first.',
+      save: 'Save',
+    },
     editSocial: {
       title: 'Social Initiatives',
       description: 'Select social initiatives you want to support.',
