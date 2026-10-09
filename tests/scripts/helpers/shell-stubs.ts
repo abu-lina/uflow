@@ -69,6 +69,10 @@ const GH_STUB = `#!/usr/bin/env bash
 printf '%s\\n' "$*" >> "$STUB_LOG_DIR/gh.log"
 args="$*"
 case "$args" in
+  *"api"*"dependencies/blocked_by"*)
+    n=$(printf '%s' "$args" | sed -n 's|.*issues/\\([0-9][0-9]*\\)/dependencies/blocked_by.*|\\1|p')
+    cat "$FIXTURE_DIR/blocked-by-$n.json" 2>/dev/null || echo '[]'
+    ;;
   *"issue view"*)
     n=$(printf '%s' "$args" | sed -n 's/.*issue view \\([0-9][0-9]*\\).*/\\1/p')
     if [ -f "$FIXTURE_DIR/issue-$n.json" ]; then
@@ -83,6 +87,15 @@ case "$args" in
     ;;
   *"issue list"*"ready-for-human"*)
     cat "$FIXTURE_DIR/ready-human.json" 2>/dev/null || echo '[]'
+    ;;
+  *"issue list"*"needs-info"*)
+    cat "$FIXTURE_DIR/needs-info.json" 2>/dev/null || echo '[]'
+    ;;
+  *"issue list"*"stage:prep"*)
+    cat "$FIXTURE_DIR/stage-prep.json" 2>/dev/null || echo '[]'
+    ;;
+  *"issue list"*"stage:build"*)
+    cat "$FIXTURE_DIR/stage-build.json" 2>/dev/null || echo '[]'
     ;;
   *"pr list"*)
     cat "$FIXTURE_DIR/pr-list.json" 2>/dev/null || echo '[]'

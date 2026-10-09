@@ -66,6 +66,9 @@ describe('agent-dispatch.sh', () => {
       '--launch',
       '--max',
       '--max-per-hour',
+      '--max-prep',
+      '--max-build',
+      '--only',
       '--terminal',
       '--disable',
       '--enable',
@@ -76,6 +79,9 @@ describe('agent-dispatch.sh', () => {
     ]) {
       expect(stdout).toContain(flag);
     }
+    // the global caps keep their defaults and stay the hard ceilings
+    expect(stdout).toMatch(/--max N.*default 4/);
+    expect(stdout).toMatch(/--max-per-hour N.*default 3/);
   });
 
   it('exits 2 on an unknown flag', () => {
@@ -96,7 +102,15 @@ describe('agent-dispatch.sh', () => {
   });
 
   it('exits 2, not 1, when a flag is missing its argument', () => {
-    for (const flag of ['--max', '--max-per-hour', '--terminal', '--interval']) {
+    for (const flag of [
+      '--max',
+      '--max-per-hour',
+      '--max-prep',
+      '--max-build',
+      '--only',
+      '--terminal',
+      '--interval',
+    ]) {
       const { status, stderr } = run(sb, [flag]);
       expect(status, `${flag} with no argument`).toBe(2);
       expect(stderr, `${flag} with no argument`).toContain(flag);
@@ -104,11 +118,24 @@ describe('agent-dispatch.sh', () => {
   });
 
   it('exits 2 when a numeric flag gets a non-number', () => {
-    for (const flag of ['--max', '--max-per-hour', '--interval']) {
+    for (const flag of [
+      '--max',
+      '--max-per-hour',
+      '--max-prep',
+      '--max-build',
+      '--only',
+      '--interval',
+    ]) {
       const { status, stderr } = run(sb, [flag, 'abc']);
       expect(status, `${flag} abc`).toBe(2);
       expect(stderr, `${flag} abc`).toContain(flag);
     }
+  });
+
+  it('--only cannot be combined with a terminal mode', () => {
+    const { status, stderr } = run(sb, ['--only', '5', '--disable']);
+    expect(status).toBe(2);
+    expect(stderr).toContain('--only');
   });
 
   it('fails with a readable jq message when jq is not on PATH', () => {
@@ -245,7 +272,7 @@ describe('agent-dispatch.sh', () => {
 
   // --- selection: cap and skip reasons --------------------------------------
 
-  function occupiedRecord(n: number): string {
+  function occupiedRecord(n: number, extra: object = {}): string {
     return monitorRecord({
       issue: n,
       title: `in-flight ${n}`,
@@ -258,6 +285,7 @@ describe('agent-dispatch.sh', () => {
       pr: null,
       phases: 1,
       occupies_slot: true,
+      ...extra,
     });
   }
 
@@ -278,9 +306,34 @@ describe('agent-dispatch.sh', () => {
     });
   }
 
+  /** A ready record carrying the no-parallel label — the serial-slot input. */
+  function serialRecord(n: number, extra: object = {}): string {
+    return monitorRecord({
+      issue: n,
+      title: `serial ${n} title`,
+      state: 'ready',
+      issue_state: 'OPEN',
+      labels: ['ready-for-agent', 'no-parallel'],
+      worktree: null,
+      branch: null,
+      commits_ahead: 0,
+      pr: null,
+      phases: 0,
+      occupies_slot: false,
+      ...extra,
+    });
+  }
+
   function feedMonitor(sb: StubSandbox, records: string[]): Record<string, string> {
     const p = sb.writeFixture('monitor.ndjson', ndjson(records));
     return { MONITOR_NDJSON: p };
+  }
+
+  /** Read the prompt out of the single launcher a run wrote. */
+  function launchedPrompt(sb: StubSandbox): string {
+    const dir = path.join(sb.stateDir, 'launchers');
+    const launcher = path.join(dir, fs.readdirSync(dir)[0]);
+    return spawnSync('bash', [launcher], { encoding: 'utf8' }).stdout;
   }
 
   it('at cap (4/4) launches nothing and prints the cap skip', () => {
@@ -409,6 +462,149 @@ describe('agent-dispatch.sh', () => {
     expect(sb.called('osascript')).toBe(false);
   });
 
+  // --- stage axis: blockers, per-stage caps, serial slot, --only --------------
+
+  it('skips a candidate with an open blocker', () => {
+    const env = feedMonitor(sb, [
+      readyRecord(700, ['ready-for-agent', 'stage:build'], {
+        stage: 'build',
+        blocked_by: [588],
+      }),
+    ]);
+    const { stdout, status } = run(sb, ['--launch'], env);
+    expect(status).toBe(0);
+    expect(stdout).toContain('skip #700: blocked by #588');
+    expect(sb.called('osascript')).toBe(false);
+  });
+
+  it('lists every open blocker in the skip line', () => {
+    const env = feedMonitor(sb, [
+      readyRecord(700, ['ready-for-agent'], { blocked_by: [588, 592] }),
+    ]);
+    const { stdout } = run(sb, [], env);
+    expect(stdout).toContain('skip #700: blocked by #588, #592');
+  });
+
+  it('does not skip when every blocker is closed (blocked_by is empty)', () => {
+    const env = feedMonitor(sb, [readyRecord(700, ['ready-for-agent'], { blocked_by: [] })]);
+    const { stdout } = run(sb, [], env);
+    expect(stdout).toContain('would launch #700');
+    expect(stdout).not.toContain('blocked by');
+  });
+
+  it('the global concurrency cap fires in preference to the per-stage cap', () => {
+    const env = feedMonitor(sb, [
+      occupiedRecord(541),
+      occupiedRecord(542),
+      occupiedRecord(543),
+      occupiedRecord(544),
+      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+    ]);
+    const { stdout } = run(sb, ['--launch'], env);
+    expect(stdout).toContain('skip #700: concurrency cap reached (4/4 slots occupied)');
+    expect(stdout).not.toContain('prep cap');
+  });
+
+  it('prep cap reached while build slots remain free', () => {
+    const env = feedMonitor(sb, [
+      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+      readyRecord(701, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+      readyRecord(702, ['ready-for-agent', 'stage:build'], { stage: 'build' }),
+    ]);
+    const { stdout } = run(sb, ['--launch'], env);
+    expect(stdout).toContain('launched #700');
+    expect(stdout).toContain('skip #701: prep cap reached (1/1)');
+    expect(stdout).toContain('launched #702');
+    expect(sb.readLog('osascript').split('\n').filter(Boolean)).toHaveLength(2);
+  });
+
+  it('--max-prep raises the prep launch cap for the run', () => {
+    const env = feedMonitor(sb, [
+      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+      readyRecord(701, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+    ]);
+    const { stdout } = run(sb, ['--launch', '--max-prep', '2'], env);
+    expect(stdout).toContain('launched #700');
+    expect(stdout).toContain('launched #701');
+    expect(stdout).not.toContain('prep cap');
+  });
+
+  // the frozen live fixture is the AC8 third case: 3/4 slots occupied
+  it('serial slot: launches a no-parallel issue when nothing occupies a slot and nothing else is queued', () => {
+    const env = feedMonitor(sb, [serialRecord(528)]);
+    const { stdout, status } = run(sb, ['--launch'], env);
+    expect(status).toBe(0);
+    expect(stdout).toContain('occupied 0/4 slots');
+    expect(stdout).toContain('launched #528');
+    expect(sb.readLog('osascript').split('\n').filter(Boolean)).toHaveLength(1);
+  });
+
+  it('serial slot: defers while parallel work is queued', () => {
+    const env = feedMonitor(sb, [serialRecord(528), readyRecord(700)]);
+    const { stdout } = run(sb, ['--launch'], env);
+    expect(stdout).toContain('skip #528: serial, deferred while parallel work is queued');
+    expect(stdout).toContain('launched #700');
+    expect(sb.readLog('osascript').split('\n').filter(Boolean)).toHaveLength(1);
+  });
+
+  it('serial slot: still refuses when a slot is occupied', () => {
+    const env = feedMonitor(sb, [occupiedRecord(541), serialRecord(528)]);
+    const { stdout } = run(sb, ['--launch'], env);
+    expect(stdout).toContain('skip #528: labeled no-parallel');
+    expect(sb.called('osascript')).toBe(false);
+  });
+
+  it('serial slot: after a serial launch the run launches nothing else', () => {
+    const env = feedMonitor(sb, [serialRecord(528), serialRecord(529)]);
+    const { stdout } = run(sb, ['--launch'], env);
+    expect(stdout).toContain('launched #528');
+    expect(stdout).not.toContain('launched #529');
+    expect(sb.readLog('osascript').split('\n').filter(Boolean)).toHaveLength(1);
+  });
+
+  it('--only N dispatches exactly that issue and nothing else', () => {
+    const env = feedMonitor(sb, [readyRecord(700), readyRecord(701)]);
+    const { stdout } = run(sb, ['--launch', '--only', '701'], env);
+    expect(stdout).toContain('launched #701');
+    expect(stdout).not.toContain('would launch #700');
+    expect(stdout).not.toContain('launched #700');
+    expect(sb.readLog('osascript').split('\n').filter(Boolean)).toHaveLength(1);
+  });
+
+  it('--only without --launch launches nothing', () => {
+    const env = feedMonitor(sb, [readyRecord(700)]);
+    const { stdout, status } = run(sb, ['--only', '700'], env);
+    expect(status).toBe(0);
+    expect(stdout).toContain('would launch #700');
+    expect(sb.called('osascript')).toBe(false);
+  });
+
+  it('--only is the serial escape hatch: launches a no-parallel issue even with parallel work queued', () => {
+    const env = feedMonitor(sb, [serialRecord(528), readyRecord(700)]);
+    const { stdout } = run(sb, ['--launch', '--only', '528'], env);
+    expect(stdout).toContain('launched #528');
+    expect(stdout).not.toContain('would launch #700');
+    expect(stdout).not.toContain('launched #700');
+  });
+
+  it('--only still respects every refusal line (kill switch shown here)', () => {
+    const env = feedMonitor(sb, [readyRecord(700)]);
+    const { stdout, status } = run(sb, ['--launch', '--only', '700'], {
+      ...env,
+      UFLOW_DISPATCH_DISABLED: '1',
+    });
+    expect(status).toBe(0);
+    expect(stdout).toContain('refusing to dispatch: disabled by UFLOW_DISPATCH_DISABLED=1');
+    expect(sb.called('osascript')).toBe(false);
+  });
+
+  it('--only cannot force a serial launch while a slot is occupied', () => {
+    const env = feedMonitor(sb, [occupiedRecord(541), serialRecord(528)]);
+    const { stdout } = run(sb, ['--launch', '--only', '528'], env);
+    expect(stdout).toContain('skip #528: labeled no-parallel');
+    expect(sb.called('osascript')).toBe(false);
+  });
+
   // --- launcher and prompt ---------------------------------------------------
 
   it('--launch writes a launcher under the state dir and calls osascript once', () => {
@@ -492,6 +688,27 @@ describe('agent-dispatch.sh', () => {
     expect(prompt).toContain('No other issues are currently in flight.');
   });
 
+  it('a stage:prep launch names the prep flow in the prompt', () => {
+    const env = feedMonitor(sb, [
+      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+    ]);
+    run(sb, ['--launch'], { ...env, UFLOW_REPO_DIR: sb.dir });
+    const prompt = launchedPrompt(sb);
+    expect(prompt).toContain('stage:prep');
+    expect(prompt).toContain('flows/prep.md');
+  });
+
+  it('a stage:build launch keeps the build prompt, with no prep wording', () => {
+    const env = feedMonitor(sb, [
+      readyRecord(700, ['ready-for-agent', 'stage:build'], { stage: 'build' }),
+    ]);
+    run(sb, ['--launch'], { ...env, UFLOW_REPO_DIR: sb.dir });
+    const prompt = launchedPrompt(sb);
+    expect(prompt).toContain('/orchestrator resume 700');
+    expect(prompt).toContain('Step 1 setup has not run');
+    expect(prompt).not.toContain('flows/prep.md');
+  });
+
   // --- rate limit ledger -------------------------------------------------------
 
   const NOW = 1_800_000_000;
@@ -543,6 +760,15 @@ describe('agent-dispatch.sh', () => {
     });
     expect(status).toBe(0);
     expect(sb.called('osascript')).toBe(true);
+  });
+
+  it('writes the stage as the ledger third field', () => {
+    const env = feedMonitor(sb, [
+      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+      readyRecord(701, ['ready-for-agent'], { stage: 'build' }),
+    ]);
+    run(sb, ['--launch', '--max-prep', '2'], { ...env, UFLOW_NOW: String(NOW) });
+    expect(ledgerLines()).toEqual([`${NOW} 700 prep`, `${NOW} 701 build`]);
   });
 
   // --- kill switch -------------------------------------------------------------

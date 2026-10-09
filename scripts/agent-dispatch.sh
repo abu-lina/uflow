@@ -29,7 +29,8 @@ NOW="${UFLOW_NOW:-$(date +%s)}"
 
 usage() {
   cat <<'EOF'
-Usage: agent-dispatch.sh [--launch] [--max N] [--max-per-hour N] [--terminal APP]
+Usage: agent-dispatch.sh [--launch] [--max N] [--max-per-hour N]
+       [--max-prep N] [--max-build N] [--only N] [--terminal APP]
        agent-dispatch.sh --disable | --enable
        agent-dispatch.sh --install | --uninstall | --print-plist [--interval N]
 
@@ -39,6 +40,12 @@ launches nothing.
   --launch            actually open one Terminal.app window per selection
   --max N             concurrency cap counted by the slot rule (default 4)
   --max-per-hour N    rolling-hour launch ceiling (default 3)
+  --max-prep N        stage:prep launches per run (default 1); prep is the opus
+                      stage, so this is deliberately tight
+  --max-build N       stage:build launches per run (default 3)
+  --only N            consider only issue N; every check, refusal, cap and the
+                      dry-run default still apply. The sanctioned way to force
+                      a no-parallel issue past a busy queue.
   --terminal APP      terminal app to launch into; only "terminal" is accepted
   --disable           create the DISABLED sentinel; stop all unattended launching
   --enable            remove the DISABLED sentinel
@@ -57,6 +64,9 @@ EOF
 LAUNCH=0
 MAX=4
 MAX_PER_HOUR=3
+MAX_PREP=1
+MAX_BUILD=3
+ONLY=""
 TERMINAL="terminal"
 INTERVAL=600
 MODE=""
@@ -80,6 +90,18 @@ while [ $# -gt 0 ]; do
       [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
         || { echo "--max-per-hour needs a number" >&2; exit 2; }
       MAX_PER_HOUR="$2"; shift 2 ;;
+    --max-prep)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--max-prep needs a number" >&2; exit 2; }
+      MAX_PREP="$2"; shift 2 ;;
+    --max-build)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--max-build needs a number" >&2; exit 2; }
+      MAX_BUILD="$2"; shift 2 ;;
+    --only)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--only needs an issue number" >&2; exit 2; }
+      ONLY="$2"; shift 2 ;;
     --terminal)
       [ $# -ge 2 ] || { echo "--terminal needs an app" >&2; exit 2; }
       TERMINAL="$2"; shift 2 ;;
@@ -105,6 +127,10 @@ fi
 # Terminal modes never take the lock, never call the monitor, never launch.
 if [ -n "$MODE" ] && [ "$LAUNCH" = 1 ]; then
   echo "--$MODE cannot be combined with --launch" >&2
+  exit 2
+fi
+if [ -n "$MODE" ] && [ -n "$ONLY" ]; then
+  echo "--only cannot be combined with --$MODE" >&2
   exit 2
 fi
 
@@ -319,7 +345,18 @@ echo "occupied $occupied/$MAX slots"
 # always reported; `ready` records run the filter chain in order.
 sorted_records="$(printf '%s' "$monitor_out" | "$JQ_BIN" -c -s 'sort_by(.issue)[]')"
 
+# --only narrows the run to one issue. The filter chain, caps, serial rule and
+# every refusal below still apply to it; it is a selector, not an override.
+if [ -n "$ONLY" ]; then
+  sorted_records="$(printf '%s' "$sorted_records" | "$JQ_BIN" -c \
+    --argjson n "$ONLY" 'select(.issue == $n)')"
+  if ! printf '%s' "$sorted_records" | grep -q .; then
+    echo "skip: #$ONLY is not among the monitor's candidates"
+  fi
+fi
+
 survivors=""
+serials=""
 skipped=0
 
 jqr() { printf '%s' "$1" | "$JQ_BIN" -r "$2"; }
@@ -351,15 +388,48 @@ while IFS= read -r rec; do
     skipped=$((skipped + 1))
     continue
   fi
-  if jqr "$rec" '.labels | index("no-parallel") != null' | grep -q true; then
-    echo "skip #$n: labeled no-parallel"
+  # GitHub blocking links: the monitor already filtered to open blockers, so
+  # a non-empty list is a live brake.
+  blockers="$(jqr "$rec" '.blocked_by // [] | map("#" + tostring) | join(", ")')"
+  if [ -n "$blockers" ]; then
+    echo "skip #$n: blocked by $blockers"
     skipped=$((skipped + 1))
+    continue
+  fi
+  if jqr "$rec" '.labels | index("no-parallel") != null' | grep -q true; then
+    # Not an unconditional refusal any more: no-parallel survivors go into the
+    # serial list and are resolved after the parallel survivors are known.
+    serials="${serials}${rec}"$'\n'
     continue
   fi
   # belt-and-braces: a stalled record can never reach this point, but if a
   # monitor ever labels one "ready" it is still refused here.
   survivors="${survivors}${rec}"$'\n'
 done <<< "$sorted_records"
+
+# The serial slot: a no-parallel survivor launches only when no session
+# occupies a slot AND no parallel work survived the filter chain, and at most
+# one launches per run. Anything else is deferred or refused, in issue order.
+serial_run=0
+serial_done=0
+if printf '%s' "$serials" | grep -q .; then
+  if [ "$occupied" -gt 0 ]; then
+    while IFS= read -r rec; do
+      [ -z "$rec" ] && continue
+      echo "skip #$(jqr "$rec" '.issue'): labeled no-parallel"
+      skipped=$((skipped + 1))
+    done <<< "$serials"
+  elif printf '%s' "$survivors" | grep -q .; then
+    while IFS= read -r rec; do
+      [ -z "$rec" ] && continue
+      echo "skip #$(jqr "$rec" '.issue'): serial, deferred while parallel work is queued"
+      skipped=$((skipped + 1))
+    done <<< "$serials"
+  else
+    survivors="$serials"
+    serial_run=1
+  fi
+fi
 
 # 7. Launch loop: re-check the cap and the hourly limit before each launch.
 ledger_count() {
@@ -376,11 +446,25 @@ wt_parent() {
 }
 
 launched=0
+launched_prep=0
+launched_build=0
 
 while IFS= read -r rec; do
   [ -z "$rec" ] && continue
   n="$(jqr "$rec" '.issue')"
   title="$(jqr "$rec" '.title')"
+  # Records lacking the field (older monitor output) count as build work.
+  stage="$(jqr "$rec" '.stage // "none"')"
+  bucket="build"
+  [ "$stage" = "prep" ] && bucket="prep"
+
+  # One serial launch per run, even in dry-run mode: a "would launch" is the
+  # same plan slot as a real launch.
+  if [ "$serial_run" = 1 ] && [ "$serial_done" = 1 ]; then
+    echo "skip #$n: serial, one launch per run"
+    skipped=$((skipped + 1))
+    continue
+  fi
 
   if [ "$occupied" -ge "$MAX" ]; then
     echo "skip #$n: concurrency cap reached ($occupied/$MAX slots occupied)"
@@ -393,11 +477,30 @@ while IFS= read -r rec; do
     skipped=$((skipped + 1))
     continue
   fi
+  # Per-stage launch budgets, checked after the global caps. They count this
+  # run's launches, not occupied slots: a finished prep session leaves its
+  # worktree behind and would look occupied forever, deadlocking the stage.
+  if [ "$bucket" = "prep" ] && [ "$launched_prep" -ge "$MAX_PREP" ]; then
+    echo "skip #$n: prep cap reached ($launched_prep/$MAX_PREP)"
+    skipped=$((skipped + 1))
+    continue
+  fi
+  if [ "$bucket" = "build" ] && [ "$launched_build" -ge "$MAX_BUILD" ]; then
+    echo "skip #$n: build cap reached ($launched_build/$MAX_BUILD)"
+    skipped=$((skipped + 1))
+    continue
+  fi
 
   if [ "$LAUNCH" = 0 ]; then
     echo "would launch #$n: $title"
     launched=$((launched + 1))
     occupied=$((occupied + 1))
+    serial_done=1
+    if [ "$bucket" = "prep" ]; then
+      launched_prep=$((launched_prep + 1))
+    else
+      launched_build=$((launched_build + 1))
+    fi
     continue
   fi
 
@@ -410,6 +513,19 @@ while IFS= read -r rec; do
 their worktrees, branches or issues."
   else
     others_para="No other issues are currently in flight."
+  fi
+
+  # Stage-specific prompt: prep sessions run the prep flow and write no code;
+  # build (and stage-less legacy issues) keep the original text verbatim.
+  stage_para=""
+  if [ "$stage" = "prep" ]; then
+    stage_para="This issue is labelled stage:prep, so its flow is the prep flow
+(.devin/skills/orchestrator/flows/prep.md), not the type-table flows: grill,
+investigate and post a ### Phase: Prep — Done comment carrying the open
+questions with a recommended answer each, then swap labels as the flow says.
+Do not write implementation code.
+
+"
   fi
 
   PROMPT_TEXT="/orchestrator resume $n
@@ -426,7 +542,7 @@ Then read the full issue body with gh issue view $n --json
 title,body,labels,comments and classify the request before dispatching
 anything.
 
-$others_para
+$stage_para$others_para
 
 This session was opened by scripts/agent-dispatch.sh. You were dispatched, not
 resumed from a previous context: there is no prior state beyond the issue."
@@ -447,10 +563,18 @@ EOF
   chmod 700 "$launcher"
 
   if "$OSASCRIPT_BIN" -e "tell application \"Terminal\" to do script \"/usr/bin/env bash $launcher\""; then
-    printf '%s %s\n' "$NOW" "$n" >> "$LEDGER"
+    # Third field is the stage, so prep->build answer latency is derivable
+    # from the ledger alone. The awk windows key on $1 only and ignore it.
+    printf '%s %s %s\n' "$NOW" "$n" "$stage" >> "$LEDGER"
     echo "launched #$n in a new Terminal window ($launcher)"
     launched=$((launched + 1))
     occupied=$((occupied + 1))
+    serial_done=1
+    if [ "$bucket" = "prep" ]; then
+      launched_prep=$((launched_prep + 1))
+    else
+      launched_build=$((launched_build + 1))
+    fi
   else
     echo "launch failed for #$n"
     skipped=$((skipped + 1))
