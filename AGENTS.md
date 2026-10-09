@@ -82,7 +82,7 @@ Issues live in GitHub Issues on `abu-lina/uflow`, managed with the `gh` CLI. Eve
 
 ### Triage labels
 
-The five canonical triage roles, each label string equal to its name. Only `wontfix` exists so far. See `docs/agents/triage-labels.md`.
+The five canonical triage roles plus a `stage:prep`/`stage:build` dispatch axis that tells a dispatched session which flow to run. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
