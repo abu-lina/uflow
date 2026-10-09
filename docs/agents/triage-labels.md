@@ -30,15 +30,17 @@ When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the 
 opened live by orchestrator -> ready-for-agent + stage:build     (spec came from the user in-session)
 swept / imported            -> needs-triage
 needs-triage -> wontfix | ready-for-human | ready-for-agent+stage:prep | ready-for-agent+stage:build
-stage:prep   -> needs-info   (questions posted, ready-for-agent REMOVED, stage:prep kept)
-             -> stage:build  (no judgment calls were left)
+stage:prep   -> needs-info   (questions posted, ready-for-agent dropped on entry, stage:prep kept)
+             -> stage:build  (no judgment calls were left; ready-for-agent re-added)
 needs-info   -> ready-for-agent + stage:build   (human answered)
 stage:build  -> in-flight -> awaiting-review -> merged -> closed   (monitor-derived, no labels)
 ```
 
+`stage:prep` is a worktree-less stage: the session creates no worktree or branch, and while it runs the dispatcher's launch ledger marks its slot (`--prep-stale-hours`, default 6h, is the self-healing expiry for a crashed session).
+
 Illegal combinations worth flagging in review: `ready-for-agent` together with `needs-info`, together with `ready-for-human`, or with neither `stage:*` label.
 
-`ready-for-agent` is cleared by the dispatched session itself as soon as its worktree and branch exist (orchestrator Step 1.7), so a PR that closes unmerged does not silently re-dispatch.
+`ready-for-agent` is cleared by the dispatched session itself as soon as its worktree and branch exist (orchestrator Step 1.7), so a PR that closes unmerged does not silently re-dispatch. A `stage:prep` session has no worktree, so its flow clears the label on entry instead, and re-adds it only when handing the issue straight to `stage:build`.
 
 ## Relationship to the `type:*` labels
 

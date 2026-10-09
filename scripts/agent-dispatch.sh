@@ -41,10 +41,12 @@ launches nothing.
   --max N             concurrency cap counted by the slot rule (default 4)
   --max-per-hour N    rolling-hour launch ceiling (default 3)
   --max-prep N        stage:prep concurrency cap (default 1); a prep slot is
-                      held until the issue flips to needs-info, so this is
-                      deliberately tight
+                      held by a live ledger marker, so this is deliberately
+                      tight
   --max-build N       stage:build concurrency cap (default 3); a build slot is
                       held until a PR exists for the branch
+  --prep-stale-hours N  age past which a prep ledger marker counts as a dead
+                      session and frees its slot (default 6)
   --only N            consider only issue N; every check, refusal, cap and the
                       dry-run default still apply. The sanctioned way to force
                       a no-parallel issue past a busy queue.
@@ -68,6 +70,7 @@ MAX=4
 MAX_PER_HOUR=3
 MAX_PREP=1
 MAX_BUILD=3
+PREP_STALE_HOURS=6
 ONLY=""
 TERMINAL="terminal"
 INTERVAL=600
@@ -100,6 +103,10 @@ while [ $# -gt 0 ]; do
       [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
         || { echo "--max-build needs a number" >&2; exit 2; }
       MAX_BUILD="$2"; shift 2 ;;
+    --prep-stale-hours)
+      [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
+        || { echo "--prep-stale-hours needs a number" >&2; exit 2; }
+      PREP_STALE_HOURS="$2"; shift 2 ;;
     --only)
       [ $# -ge 2 ] && [[ "$2" =~ ^[0-9]+$ ]] \
         || { echo "--only needs an issue number" >&2; exit 2; }
@@ -343,21 +350,38 @@ fi
 occupied="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '[.[] | select(.occupies_slot == true)] | length')"
 echo "occupied $occupied/$MAX slots"
 
-# 5b. Per-stage occupancy, derived from issue state rather than launches: an
-# issue holds a slot in its stage while a session could still be working it —
-# issue open, worktree or branch present, and the stage's exit condition not
-# yet met. Prep exits when the issue flips to needs-info (the hand-back);
-# build exits when a PR exists for the branch, the same PR query the monitor
-# already uses for awaiting-review. A leftover worktree is not occupancy.
-# --max-per-hour stays the rate limit; these counts are concurrency.
-occ_prep="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '
-  [.[] | select(.stage == "prep" and .issue_state == "OPEN"
-               and (.worktree != null or .branch != null)
-               and (.labels | index("needs-info") == null))] | length')"
+# 5b. Per-stage occupancy. Build work holds its slot while the issue is open,
+# has a worktree or branch and has no PR yet — the monitor's own
+# awaiting-review derivation. Stalled records are excluded: the filter chain
+# refuses to dispatch them, so they must not burn build concurrency.
 occ_build="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '
   [.[] | select((.stage // "none") != "prep" and .issue_state == "OPEN"
+               and .state != "stalled"
                and (.worktree != null or .branch != null)
                and .pr == null)] | length')"
+
+# Prep is a worktree-less stage, so worktree existence cannot be its marker;
+# the launch ledger is. A "<epoch> <issue> prep" line inside PREP_STALE_HOURS
+# marks a live prep session while the monitor still reports the issue open,
+# stage:prep and not yet needs-info. The marker frees on its own exits
+# (needs-info hand-back, the stage:build flip, a closed issue) or goes stale
+# when the session died — the self-healing half of the mechanism.
+prep_live=""
+if [ -f "$LEDGER" ]; then
+  prep_live="$(awk -v cutoff="$((NOW - PREP_STALE_HOURS * 3600))" \
+    '$1 ~ /^[0-9]+$/ && $1 > cutoff && $3 == "prep" { print $2 }' "$LEDGER" \
+    | sort -u)"
+fi
+if [ -n "$prep_live" ]; then
+  live_json="$(printf '%s\n' "$prep_live" | awk 'NF' | "$JQ_BIN" -R -s \
+    'split("\n") | map(select(length > 0) | tonumber)')"
+  occ_prep="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s --argjson live "$live_json" '
+    [.[] | select(.issue_state == "OPEN" and .stage == "prep"
+                 and (.labels | index("needs-info") == null)
+                 and (. as $r | $live | index($r.issue) != null))] | length')"
+else
+  occ_prep=0
+fi
 
 # 6. Candidates: every record in issue order gets a verdict. `stalled` is
 # always reported; `ready` records run the filter chain in order.
@@ -403,6 +427,24 @@ while IFS= read -r rec; do
   br="$(jqr "$rec" '.branch // empty')"
   if [ -n "$br" ]; then
     echo "skip #$n: branch $br exists"
+    skipped=$((skipped + 1))
+    continue
+  fi
+  # A live prep ledger marker means a session already owns this issue. Prep
+  # leaves no worktree to see, so the marker is the claim — per-issue, so a
+  # running prep cannot be re-dispatched even under a raised --max-prep.
+  stage="$(jqr "$rec" '.stage // "none"')"
+  if [ "$stage" = "prep" ] && [ -n "$prep_live" ] \
+     && printf '%s\n' "$prep_live" \
+        | awk -v n="$n" '$1 == n { found=1 } END { exit !found }'; then
+    echo "skip #$n: prep session already in flight"
+    skipped=$((skipped + 1))
+    continue
+  fi
+  if jqr "$rec" '.blocked_by_unknown == true' | grep -q true; then
+    # The monitor could not answer the blocker query; an unknown brake is a
+    # brake, never an all-clear.
+    echo "skip #$n: blocker check failed"
     skipped=$((skipped + 1))
     continue
   fi
@@ -536,22 +578,23 @@ their worktrees, branches or issues."
     others_para="No other issues are currently in flight."
   fi
 
-  # Stage-specific prompt: prep sessions run the prep flow and write no code;
-  # build (and stage-less legacy issues) keep the original text verbatim.
-  stage_para=""
+  # Stage-specific prompt: prep is a worktree-less stage, so it skips the
+  # Step 1 setup paragraph entirely; build (and stage-less legacy issues)
+  # keep the original text verbatim.
   if [ "$stage" = "prep" ]; then
-    stage_para="This issue is labelled stage:prep, so its flow is the prep flow
-(.devin/skills/orchestrator/flows/prep.md), not the type-table flows: grill,
-investigate and post a ### Phase: Prep — Done comment carrying the open
-questions with a recommended answer each, then swap labels as the flow says.
-Do not write implementation code.
+    middle_para="Issue #$n (\"$title\") is labeled ready-for-agent and stage:prep.
+Prep is a worktree-less stage like exploration: do not create a worktree or
+branch, and skip the request_scope grant; you read the canonical repo and
+write only to the issue.
 
-"
-  fi
-
-  PROMPT_TEXT="/orchestrator resume $n
-
-Issue #$n (\"$title\") is labeled ready-for-agent, but no branch, worktree or
+Read the full issue body with gh issue view $n --json
+title,body,labels,comments, then follow
+.devin/skills/orchestrator/flows/prep.md end to end: grill the issue, read
+the code it cites, and post a ### Phase: Prep — Done comment carrying every
+open question with a recommended answer each, then swap labels as the flow
+says. Do not write implementation code."
+  else
+    middle_para="Issue #$n (\"$title\") is labeled ready-for-agent, but no branch, worktree or
 phase comment exists yet, so Step 1 setup has not run. Plain resume is not
 enough.
 
@@ -561,9 +604,14 @@ the uflow-wt parent rather than a per-run path, per orchestrator rule 5.
 
 Then read the full issue body with gh issue view $n --json
 title,body,labels,comments and classify the request before dispatching
-anything.
+anything."
+  fi
 
-$stage_para$others_para
+  PROMPT_TEXT="/orchestrator resume $n
+
+$middle_para
+
+$others_para
 
 This session was opened by scripts/agent-dispatch.sh. You were dispatched, not
 resumed from a previous context: there is no prior state beyond the issue."

@@ -71,6 +71,10 @@ args="$*"
 case "$args" in
   *"api"*"dependencies/blocked_by"*)
     n=$(printf '%s' "$args" | sed -n 's|.*issues/\\([0-9][0-9]*\\)/dependencies/blocked_by.*|\\1|p')
+    if [ -f "$FIXTURE_DIR/blocked-by-$n.fail" ]; then
+      echo "gh: api call failed (stubbed)" >&2
+      exit 1
+    fi
     cat "$FIXTURE_DIR/blocked-by-$n.json" 2>/dev/null || echo '[]'
     ;;
   *"issue view"*)
@@ -209,6 +213,7 @@ export function monitorRecord(r: {
   occupies_slot: boolean;
   stage?: 'prep' | 'build' | 'none';
   blocked_by?: number[];
+  blocked_by_unknown?: boolean;
 }): string {
   return JSON.stringify(r);
 }

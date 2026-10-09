@@ -264,15 +264,24 @@ while IFS= read -r n; do
   # GitHub blocking links, fetched only for the one state that consumes them:
   # one extra gh call per ready record, not per candidate. Elements are issue
   # objects; closed blockers are filtered out here so the record only ever
-  # carries live brakes. A bare [588] body is tolerated too.
+  # carries live brakes. Any api or parse failure sets blocked_by_unknown —
+  # an unknown brake fails closed in the dispatcher, never open.
   blocked_by_json="[]"
+  blocked_by_unknown=false
   if [ "$state" = "ready" ]; then
-    blocked_by_json="$(run_gh api \
-      "repos/{owner}/{repo}/issues/${n}/dependencies/blocked_by" 2>/dev/null \
-      | "$JQ_BIN" -c \
-        '[.[] | select((.state // "open") | ascii_downcase == "open") | (.number // .)]' \
-      || printf '[]')"
-    case "$blocked_by_json" in \[*) ;; *) blocked_by_json="[]" ;; esac
+    api_raw=""
+    parsed=""
+    if api_raw="$(run_gh api \
+        "repos/{owner}/{repo}/issues/${n}/dependencies/blocked_by" 2>/dev/null)" \
+       && parsed="$(printf '%s' "$api_raw" | "$JQ_BIN" -c \
+          '[.[] | select((.state // "open") | ascii_downcase == "open") | .number | numbers]' \
+          2>/dev/null)" \
+       && [ "${parsed#[}" != "$parsed" ]; then
+      blocked_by_json="$parsed"
+    else
+      blocked_by_unknown=true
+      echo "agent-monitor: blocked_by check failed for #$n; treated as blocked" >&2
+    fi
   fi
 
   # slot rule: open issue, worktree present, no open PR on its branch
@@ -291,6 +300,7 @@ while IFS= read -r n; do
     --argjson slot "$slot" \
     --arg stage "$stage" \
     --argjson blocked "$blocked_by_json" \
+    --argjson blocked_unknown "$blocked_by_unknown" \
     '{
       issue: .number,
       title: .title,
@@ -304,7 +314,8 @@ while IFS= read -r n; do
       phases: $phases,
       occupies_slot: $slot,
       stage: $stage,
-      blocked_by: $blocked
+      blocked_by: $blocked,
+      blocked_by_unknown: $blocked_unknown
     }')"
 
   records="${records}${rank} ${n} ${line}"$'\n'

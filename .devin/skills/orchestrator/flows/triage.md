@@ -19,4 +19,4 @@ For each issue in the batch the worker verifies every cited path, symbol and ver
 - `ready-for-agent` + `stage:build` — already specified enough to implement.
 - `needs-info` — parked on the owner; the blocker is a question only they can answer. Remove `needs-triage`.
 
-When two issues collide on the same files, link them with GitHub issue dependencies (`gh api .../dependencies/blocked_by`) rather than prose warnings — the dispatcher reads those links mechanically.
+When two issues collide on the same files, the Triage worker links them with GitHub issue dependencies (`gh api repos/{owner}/{repo}/issues/<blocked>/dependencies/blocked_by`, posting the blocker's issue id) rather than prose warnings; the dispatcher reads those links mechanically. That `gh api` write is the worker's own permission: rule 7's whitelist binds the orchestrator session, not dispatched workers, so the call is documented here where it happens.

@@ -68,6 +68,7 @@ describe('agent-dispatch.sh', () => {
       '--max-per-hour',
       '--max-prep',
       '--max-build',
+      '--prep-stale-hours',
       '--only',
       '--terminal',
       '--disable',
@@ -107,6 +108,7 @@ describe('agent-dispatch.sh', () => {
       '--max-per-hour',
       '--max-prep',
       '--max-build',
+      '--prep-stale-hours',
       '--only',
       '--terminal',
       '--interval',
@@ -123,6 +125,7 @@ describe('agent-dispatch.sh', () => {
       '--max-per-hour',
       '--max-prep',
       '--max-build',
+      '--prep-stale-hours',
       '--only',
       '--interval',
     ]) {
@@ -159,7 +162,7 @@ describe('agent-dispatch.sh', () => {
 
   // --- dry run -------------------------------------------------------------
 
-  it('with no flags prints the plan and launches nothing', () => {
+  it('dry run (no --launch) prints the plan and launches nothing', () => {
     // --max-build 4: the fixture's three stage-less occupied records count as
     // build work under the stage cap, so at the default 3 the plan would be
     // "build cap reached" instead of "would launch" — the point here is the
@@ -541,35 +544,103 @@ describe('agent-dispatch.sh', () => {
     expect(stdout).not.toContain('prep cap');
   });
 
-  // Per-stage caps are true concurrency limits, not launch counters: a stage
-  // slot is occupied while the issue has a worktree or branch AND has not hit
-  // the stage's exit condition (prep: flipped to needs-info; build: a PR
-  // exists for the branch). Both pairs below pin the exit conditions.
+  // Per-stage caps are true concurrency limits. Build occupancy is derived
+  // from the records: open, worktree or branch present, no PR yet. Prep is a
+  // worktree-less stage, so its marker is the launch ledger instead: a
+  // "<epoch> <issue> prep" line inside --prep-stale-hours (default 6) whose
+  // issue the monitor still reports as open, stage:prep and not needs-info.
+  // The pairs below pin each stage's exit conditions plus the self-healing
+  // staleness window.
 
-  it('a finished prep session (needs-info flipped, worktree surviving) frees the prep slot', () => {
+  it('the full prep-to-build loop: prep done, flipped to stage:build, dispatches as build work', () => {
+    // #541 was launched for prep two minutes ago; it finished clean, swapped
+    // stage:prep -> stage:build and kept ready-for-agent. Prep was
+    // worktree-less, so nothing on the record blocks the build dispatch —
+    // the loop that B1 proved could never fire.
+    seedLedger([`${NOW - 120} 541 prep`]);
     const env = feedMonitor(sb, [
-      occupiedRecord(541, {
-        stage: 'prep',
-        labels: ['stage:prep', 'needs-info'],
-      }),
-      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
-      readyRecord(701, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+      readyRecord(541, ['ready-for-agent', 'stage:build'], { stage: 'build' }),
     ]);
-    const { stdout } = run(sb, ['--launch'], env);
-    // anti-deadlock: #541's leftover worktree does not hold the prep slot
-    expect(stdout).toContain('launched #700');
-    // and the cap still binds inside the same run
-    expect(stdout).toContain('skip #701: prep cap reached (1/1)');
+    const { stdout, status } = run(sb, ['--launch'], { ...env, UFLOW_NOW: String(NOW) });
+    expect(status).toBe(0);
+    expect(stdout).toContain('launched #541');
+    expect(ledgerLines().at(-1)).toBe(`${NOW} 541 build`);
   });
 
-  it('a live prep session (worktree, still stage:prep, no needs-info) occupies the prep slot', () => {
+  it('a live prep session (fresh ledger marker, still stage:prep) occupies the prep slot', () => {
+    seedLedger([`${NOW - 120} 541 prep`]);
     const env = feedMonitor(sb, [
-      occupiedRecord(541, { stage: 'prep', labels: ['stage:prep'] }),
+      readyRecord(541, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+    ]);
+    const { stdout } = run(sb, ['--launch'], { ...env, UFLOW_NOW: String(NOW) });
+    // the running session's own issue is refused individually...
+    expect(stdout).toContain('skip #541: prep session already in flight');
+    // ...and the slot it occupies refuses the next prep
+    expect(stdout).toContain('skip #700: prep cap reached (1/1)');
+    expect(sb.called('osascript')).toBe(false);
+  });
+
+  it('a finished prep session (needs-info flipped) frees the prep slot', () => {
+    seedLedger([`${NOW - 120} 541 prep`]);
+    const env = feedMonitor(sb, [
+      monitorRecord({
+        issue: 541,
+        title: 'prep handed back',
+        state: 'blocked-on-human',
+        issue_state: 'OPEN',
+        labels: ['stage:prep', 'needs-info'],
+        worktree: null,
+        branch: null,
+        commits_ahead: 0,
+        pr: null,
+        phases: 1,
+        occupies_slot: false,
+        stage: 'prep',
+      }),
+      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+    ]);
+    const { stdout } = run(sb, ['--launch'], { ...env, UFLOW_NOW: String(NOW) });
+    expect(stdout).toContain('launched #700');
+  });
+
+  it('a prep ledger marker older than the staleness window frees the slot', () => {
+    // the session that wrote this marker died seven hours ago (default 6h)
+    seedLedger([`${NOW - 7 * 3600} 541 prep`]);
+    const env = feedMonitor(sb, [
+      readyRecord(541, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+      readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+    ]);
+    const { stdout } = run(sb, ['--launch'], { ...env, UFLOW_NOW: String(NOW) });
+    // self-healing: the dead session's issue relaunches, then the cap binds
+    expect(stdout).toContain('launched #541');
+    expect(stdout).toContain('skip #700: prep cap reached (1/1)');
+  });
+
+  it('--prep-stale-hours narrows the marker window', () => {
+    seedLedger([`${NOW - 120} 541 prep`]);
+    const env = feedMonitor(sb, [
+      readyRecord(541, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+    ]);
+    const { stdout } = run(sb, ['--launch', '--prep-stale-hours', '0'], {
+      ...env,
+      UFLOW_NOW: String(NOW),
+    });
+    // window 0: the marker is stale the moment it is written
+    expect(stdout).toContain('launched #541');
+  });
+
+  it('a leftover prep worktree from the worktree-era holds a global slot but not the prep slot', () => {
+    // Artifact from before prep went worktree-less: the worktree still counts
+    // against the global --max (it is real until cleanup) but prep occupancy
+    // is ledger-derived now, so it no longer deadlocks the stage.
+    const env = feedMonitor(sb, [
+      occupiedRecord(541, { stage: 'prep', labels: ['stage:prep', 'needs-info'] }),
       readyRecord(700, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
     ]);
     const { stdout } = run(sb, ['--launch'], env);
-    expect(stdout).toContain('skip #700: prep cap reached (1/1)');
-    expect(sb.called('osascript')).toBe(false);
+    expect(stdout).toContain('occupied 1/4 slots');
+    expect(stdout).toContain('launched #700');
   });
 
   it('a finished build session (PR exists for the branch) frees the build slot', () => {
@@ -601,6 +672,43 @@ describe('agent-dispatch.sh', () => {
     ]);
     const { stdout } = run(sb, ['--launch', '--max-build', '1'], env);
     expect(stdout).toContain('skip #700: build cap reached (1/1)');
+    expect(sb.called('osascript')).toBe(false);
+  });
+
+  it('a stalled record does not occupy a build slot', () => {
+    // The dispatcher refuses to dispatch stalled issues, so they must not
+    // hold build concurrency — they still count against the global --max,
+    // which is the worktree-resource cap, not the stage budget.
+    const env = feedMonitor(sb, [
+      monitorRecord({
+        issue: 541,
+        title: 'stalled work',
+        state: 'stalled',
+        issue_state: 'OPEN',
+        labels: ['stage:build'],
+        worktree: '/fake/uflow-wt/541-x',
+        branch: 'fix/541-x',
+        commits_ahead: 0,
+        pr: null,
+        phases: 0,
+        occupies_slot: true,
+        stage: 'build',
+      }),
+      readyRecord(700, ['ready-for-agent', 'stage:build'], { stage: 'build' }),
+    ]);
+    const { stdout } = run(sb, ['--launch', '--max-build', '1'], env);
+    expect(stdout).toContain('skip #541: stalled, never auto-dispatched');
+    expect(stdout).toContain('launched #700');
+  });
+
+  it('a record whose blocker check failed is refused, fail closed', () => {
+    // monitor emits blocked_by_unknown when the gh api call or its parse
+    // fails; an unknown brake must stop dispatch, not wave it through.
+    const env = feedMonitor(sb, [
+      readyRecord(700, ['ready-for-agent'], { blocked_by_unknown: true }),
+    ]);
+    const { stdout } = run(sb, ['--launch'], env);
+    expect(stdout).toContain('skip #700: blocker check failed');
     expect(sb.called('osascript')).toBe(false);
   });
 
@@ -771,6 +879,9 @@ describe('agent-dispatch.sh', () => {
     const prompt = launchedPrompt(sb);
     expect(prompt).toContain('stage:prep');
     expect(prompt).toContain('flows/prep.md');
+    // prep is worktree-less: the prompt must not send it through Step 1 setup
+    expect(prompt).not.toContain('create the worktree');
+    expect(prompt).not.toContain('request write scope');
   });
 
   it('a stage:build launch keeps the build prompt, with no prep wording', () => {

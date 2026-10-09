@@ -338,6 +338,31 @@ describe('agent-monitor.sh', () => {
     expect(byIssue[109]).toMatchObject({ stage: 'none', blocked_by: [] });
   });
 
+  it('fails closed when the gh api blocked_by call errors: blocked_by_unknown is set', () => {
+    // m2: an api failure (404, rate limit, auth) used to land in `|| []`, which
+    // reads as "no blockers" — the unsafe direction for a brake. The record
+    // must mark the answer unknown so the dispatcher refuses the issue.
+    seedScenario({
+      issues: { 105: { state: 'OPEN', labels: ['ready-for-agent'], comments: [] } },
+      readyAgent: [105],
+    });
+    sb.writeFixture('blocked-by-105.fail', '1');
+    const [r] = jsonRecords();
+    expect(r).toMatchObject({ blocked_by: [], blocked_by_unknown: true });
+  });
+
+  it('fails closed when the blocked_by body is not issue objects', () => {
+    // same contract for a body that does not parse into issue objects: the
+    // answer is unknown, not empty.
+    seedScenario({
+      issues: { 105: { state: 'OPEN', labels: ['ready-for-agent'], comments: [] } },
+      readyAgent: [105],
+    });
+    sb.writeFixture('blocked-by-105.json', '[588]');
+    const [r] = jsonRecords();
+    expect(r).toMatchObject({ blocked_by: [], blocked_by_unknown: true });
+  });
+
   it('fetches blocked_by only for ready records, never for in-flight or awaiting-review', () => {
     // AC4: the dependencies call doubles the gh traffic of a record, so it is
     // gated on the only state that consumes it.
@@ -529,11 +554,12 @@ describe('agent-monitor.sh', () => {
     expect(byIssue[528].state).toBe('ready');
   });
 
-  it('--json emits exactly the thirteen pinned fields, nulls present not omitted', () => {
+  it('--json emits exactly the fourteen pinned fields, nulls present not omitted', () => {
     seedLiveReplay();
     const { stdout } = run(sb, ['--json']);
     const want = [
       'blocked_by',
+      'blocked_by_unknown',
       'branch',
       'commits_ahead',
       'issue',
