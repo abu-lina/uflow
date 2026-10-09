@@ -192,7 +192,9 @@ export function removeSandbox(sb: StubSandbox): void {
   fs.rmSync(sb.dir, { recursive: true, force: true });
 }
 
-/** Build one monitor NDJSON record; every field must be given explicitly. */
+/** Build one monitor NDJSON record; every field must be given explicitly.
+ *  `stage`/`blocked_by` are optional so callers can pin legacy records that
+ *  predate the stage axis — the dispatcher treats a missing stage as `none`. */
 export function monitorRecord(r: {
   issue: number;
   title: string;
@@ -205,6 +207,8 @@ export function monitorRecord(r: {
   pr: number | null;
   phases: number;
   occupies_slot: boolean;
+  stage?: 'prep' | 'build' | 'none';
+  blocked_by?: number[];
 }): string {
   return JSON.stringify(r);
 }

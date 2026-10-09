@@ -40,9 +40,11 @@ launches nothing.
   --launch            actually open one Terminal.app window per selection
   --max N             concurrency cap counted by the slot rule (default 4)
   --max-per-hour N    rolling-hour launch ceiling (default 3)
-  --max-prep N        stage:prep launches per run (default 1); prep is the opus
-                      stage, so this is deliberately tight
-  --max-build N       stage:build launches per run (default 3)
+  --max-prep N        stage:prep concurrency cap (default 1); a prep slot is
+                      held until the issue flips to needs-info, so this is
+                      deliberately tight
+  --max-build N       stage:build concurrency cap (default 3); a build slot is
+                      held until a PR exists for the branch
   --only N            consider only issue N; every check, refusal, cap and the
                       dry-run default still apply. The sanctioned way to force
                       a no-parallel issue past a busy queue.
@@ -341,6 +343,22 @@ fi
 occupied="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '[.[] | select(.occupies_slot == true)] | length')"
 echo "occupied $occupied/$MAX slots"
 
+# 5b. Per-stage occupancy, derived from issue state rather than launches: an
+# issue holds a slot in its stage while a session could still be working it —
+# issue open, worktree or branch present, and the stage's exit condition not
+# yet met. Prep exits when the issue flips to needs-info (the hand-back);
+# build exits when a PR exists for the branch, the same PR query the monitor
+# already uses for awaiting-review. A leftover worktree is not occupancy.
+# --max-per-hour stays the rate limit; these counts are concurrency.
+occ_prep="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '
+  [.[] | select(.stage == "prep" and .issue_state == "OPEN"
+               and (.worktree != null or .branch != null)
+               and (.labels | index("needs-info") == null))] | length')"
+occ_build="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '
+  [.[] | select((.stage // "none") != "prep" and .issue_state == "OPEN"
+               and (.worktree != null or .branch != null)
+               and .pr == null)] | length')"
+
 # 6. Candidates: every record in issue order gets a verdict. `stalled` is
 # always reported; `ready` records run the filter chain in order.
 sorted_records="$(printf '%s' "$monitor_out" | "$JQ_BIN" -c -s 'sort_by(.issue)[]')"
@@ -477,16 +495,19 @@ while IFS= read -r rec; do
     skipped=$((skipped + 1))
     continue
   fi
-  # Per-stage launch budgets, checked after the global caps. They count this
-  # run's launches, not occupied slots: a finished prep session leaves its
-  # worktree behind and would look occupied forever, deadlocking the stage.
-  if [ "$bucket" = "prep" ] && [ "$launched_prep" -ge "$MAX_PREP" ]; then
-    echo "skip #$n: prep cap reached ($launched_prep/$MAX_PREP)"
-    skipped=$((skipped + 1))
-    continue
+  # Per-stage concurrency caps, checked after the global caps. The busy count
+  # is live occupancy (step 5b) plus this run's launches in the same bucket —
+  # a launched session holds the slot as soon as its worktree appears, so the
+  # reservation is made at launch time.
+  if [ "$bucket" = "prep" ]; then
+    busy=$((occ_prep + launched_prep))
+    cap="$MAX_PREP"
+  else
+    busy=$((occ_build + launched_build))
+    cap="$MAX_BUILD"
   fi
-  if [ "$bucket" = "build" ] && [ "$launched_build" -ge "$MAX_BUILD" ]; then
-    echo "skip #$n: build cap reached ($launched_build/$MAX_BUILD)"
+  if [ "$busy" -ge "$cap" ]; then
+    echo "skip #$n: $bucket cap reached ($busy/$cap)"
     skipped=$((skipped + 1))
     continue
   fi
