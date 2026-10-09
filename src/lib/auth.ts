@@ -9,10 +9,10 @@ export const signUpWithLanguage = async (
   language: Language = 'en',
   honeypot?: string,
   termsAccepted?: boolean,
-  privacyAccepted?: boolean
+  privacyAccepted?: boolean,
 ) => {
   console.log('[SIGNUP] Creating user via Admin API:', email);
-  
+
   try {
     // Call our server-side API to create user with Admin API
     // This creates the user WITHOUT auto-login (best practice)
@@ -27,49 +27,47 @@ export const signUpWithLanguage = async (
         language,
         honeypot,
         termsAccepted: termsAccepted === true,
-        privacyAccepted: privacyAccepted === true
+        privacyAccepted: privacyAccepted === true,
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       console.error('[SIGNUP] Signup failed:', data.error);
-      return { 
-        data: null, 
-        error: { message: data.error || 'Signup failed' } 
+      // The API returns an opaque `code` (e.g. EMAIL_ALREADY_REGISTERED) that
+      // the signup page maps through t(). `message` stays for other callers.
+      return {
+        data: null,
+        error: { message: data.error || 'Signup failed', code: data.code },
       };
     }
-    
+
     console.log('[SIGNUP] ✅ User created successfully (no session)');
     console.log('[SIGNUP] ✅ Confirmation email sent');
-    
+
     // Return success with user data (mimics Supabase response format)
-    return { 
-      data: { 
-        user: { 
+    return {
+      data: {
+        user: {
           id: data.userId,
-          email: data.email
-        } 
-      }, 
-      error: null 
+          email: data.email,
+        },
+      },
+      error: null,
     };
-    
   } catch (error) {
     console.error('[SIGNUP] Network or unexpected error:', error);
-    return { 
-      data: null, 
-      error: { message: 'Network error. Please try again.' } 
+    return {
+      data: null,
+      error: { message: 'Network error. Please try again.', code: 'NETWORK_ERROR' },
     };
   }
 };
 
-export const resetPasswordWithLanguage = async (
-  email: string,
-  language: Language = 'en'
-) => {
+export const resetPasswordWithLanguage = async (email: string, language: Language = 'en') => {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
-  
+
   try {
     // First, check if user exists and is confirmed
     const response = await fetch('/api/check-email-exists', {
@@ -81,10 +79,10 @@ export const resetPasswordWithLanguage = async (
     });
 
     if (!response.ok) {
-      return { 
-        error: { 
-          message: 'Unable to verify email. Please try again.' 
-        } 
+      return {
+        error: {
+          message: 'Unable to verify email. Please try again.',
+        },
       };
     }
 
@@ -94,10 +92,10 @@ export const resetPasswordWithLanguage = async (
     // non-existent and unconfirmed accounts (enumeration-safe).
     // Only confirmed accounts can proceed.
     if (!confirmed) {
-      return { 
-        error: { 
-          message: 'EMAIL_NOT_FOUND'
-        } 
+      return {
+        error: {
+          message: 'EMAIL_NOT_FOUND',
+        },
       };
     }
 
@@ -109,24 +107,24 @@ export const resetPasswordWithLanguage = async (
       },
       body: JSON.stringify({
         email,
-        type: 'password_reset'
+        type: 'password_reset',
       }),
     });
 
     if (!tokenResponse.ok) {
       const tokenData = await tokenResponse.json();
-      return { 
-        error: { 
-          message: tokenData.error || 'Failed to generate reset token' 
-        } 
+      return {
+        error: {
+          message: tokenData.error || 'Failed to generate reset token',
+        },
       };
     }
 
     const { token } = await tokenResponse.json();
-    
+
     // Send custom email via API route (keeps Resend key server-side)
     const resetUrl = `${siteUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
-    
+
     try {
       const emailResponse = await fetch('/api/send-auth-email', {
         method: 'POST',
@@ -140,39 +138,36 @@ export const resetPasswordWithLanguage = async (
           confirmationUrl: resetUrl,
         }),
       });
-      
+
       if (!emailResponse.ok) {
         console.error('Failed to send reset email:', await emailResponse.text());
-        return { 
-          error: { 
-            message: 'Failed to send reset email. Please try again.' 
-          } 
+        return {
+          error: {
+            message: 'Failed to send reset email. Please try again.',
+          },
         };
       }
     } catch (emailError) {
       console.error('Failed to send reset email:', emailError);
-      return { 
-        error: { 
-          message: 'Failed to send reset email. Please try again.' 
-        } 
+      return {
+        error: {
+          message: 'Failed to send reset email. Please try again.',
+        },
       };
     }
-    
+
     return { error: null };
   } catch (error) {
     console.error('Password reset error:', error);
-    return { 
-      error: { 
-        message: 'Network error. Please try again.' 
-      } 
+    return {
+      error: {
+        message: 'Network error. Please try again.',
+      },
     };
   }
 };
 
-export const signInWithEmailConfirmation = async (
-  email: string,
-  password: string
-) => {
+export const signInWithEmailConfirmation = async (email: string, password: string) => {
   // First, check if user exists and is confirmed via API
   try {
     const response = await fetch('/api/check-email-exists', {
@@ -190,22 +185,22 @@ export const signInWithEmailConfirmation = async (
       // non-existent and unconfirmed accounts (enumeration-safe).
       // Only confirmed accounts can proceed to sign in.
       if (!confirmed) {
-        return { 
-          data: null, 
-          error: { 
-            message: 'EMAIL_NOT_FOUND'
-          } 
+        return {
+          data: null,
+          error: {
+            message: 'EMAIL_NOT_FOUND',
+          },
         };
       }
     }
   } catch (error) {
     console.error('Error checking email:', error);
     // If we can't verify email confirmation status, block login for security
-    return { 
-      data: null, 
-      error: { 
-        message: 'Unable to verify email confirmation status. Please try again or contact support.'
-      } 
+    return {
+      data: null,
+      error: {
+        message: 'Unable to verify email confirmation status. Please try again or contact support.',
+      },
     };
   }
 
@@ -221,18 +216,17 @@ export const signInWithEmailConfirmation = async (
 
   // Double-check: Ensure the logged-in user is actually confirmed
   // Check both Supabase's email_confirmed_at and our custom metadata field
-  const isConfirmed = 
-    data.user?.email_confirmed_at !== null || 
-    data.user?.user_metadata?.email_confirmed === true;
-  
+  const isConfirmed =
+    data.user?.email_confirmed_at !== null || data.user?.user_metadata?.email_confirmed === true;
+
   if (data.user && !isConfirmed) {
     // Sign out the user immediately if they're not confirmed
     await supabase.auth.signOut();
-    return { 
-      data: null, 
-      error: { 
-        message: 'EMAIL_NOT_CONFIRMED'
-      } 
+    return {
+      data: null,
+      error: {
+        message: 'EMAIL_NOT_CONFIRMED',
+      },
     };
   }
 
@@ -246,7 +240,7 @@ export const signInWithEmailConfirmation = async (
  */
 export const signInWithMagicLink = async (
   email: string,
-  language: 'en' | 'de' | 'ar' | 'tr' = 'en'
+  language: 'en' | 'de' | 'ar' | 'tr' = 'en',
 ) => {
   try {
     // Send magic link via our API (uses Resend for branded emails)
@@ -255,9 +249,9 @@ export const signInWithMagicLink = async (
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         email,
-        language 
+        language,
       }),
     });
 
@@ -266,60 +260,64 @@ export const signInWithMagicLink = async (
     if (!response.ok) {
       // Handle specific error codes from API
       if (data.error === 'EMAIL_NOT_FOUND') {
-        return { 
-          data: null, 
-          error: { 
-            message: 'EMAIL_NOT_FOUND'
-          } 
+        return {
+          data: null,
+          error: {
+            message: 'EMAIL_NOT_FOUND',
+          },
         };
       }
 
       if (data.error === 'EMAIL_NOT_CONFIRMED') {
-        return { 
-          data: null, 
-          error: { 
-            message: 'EMAIL_NOT_CONFIRMED'
-          } 
+        return {
+          data: null,
+          error: {
+            message: 'EMAIL_NOT_CONFIRMED',
+          },
         };
       }
 
       // Check for specific error codes
       if (data.code === 'IP_BLOCKED') {
         console.error('[MAGIC LINK CLIENT] IP blocked:', data.ip, data.debug);
-        return { 
-          data: null, 
-          error: { 
-            message: 'Your IP address has been temporarily blocked. Please try again later or contact support.',
+        return {
+          data: null,
+          error: {
+            message:
+              'Your IP address has been temporarily blocked. Please try again later or contact support.',
             code: 'IP_BLOCKED',
             details: data,
-            diagnosticUrl: data.diagnosticUrl
-          } 
+            diagnosticUrl: data.diagnosticUrl,
+          },
         };
       }
 
       if (data.code === 'RATE_LIMIT_EXCEEDED') {
         console.error('[MAGIC LINK CLIENT] Rate limit exceeded:', data);
-        return { 
-          data: null, 
-          error: { 
-            message: data.message || `Too many requests. Please wait ${data.window} before trying again.`,
+        return {
+          data: null,
+          error: {
+            message:
+              data.message || `Too many requests. Please wait ${data.window} before trying again.`,
             code: 'RATE_LIMIT_EXCEEDED',
             details: data,
-            diagnosticUrl: data.diagnosticUrl
-          } 
+            diagnosticUrl: data.diagnosticUrl,
+          },
         };
       }
 
       if (data.code === 'EMAIL_SEND_FAILED') {
         console.error('[MAGIC LINK CLIENT] Email send failed:', data);
-        return { 
-          data: null, 
-          error: { 
-            message: data.message || 'Failed to send magic link email. Please try again or contact support.',
+        return {
+          data: null,
+          error: {
+            message:
+              data.message ||
+              'Failed to send magic link email. Please try again or contact support.',
             code: 'EMAIL_SEND_FAILED',
             details: data,
-            diagnosticUrl: data.diagnosticUrl
-          } 
+            diagnosticUrl: data.diagnosticUrl,
+          },
         };
       }
 
@@ -330,33 +328,33 @@ export const signInWithMagicLink = async (
         error: data.error,
         code: data.code,
         details: data.details,
-        debug: data.debug
+        debug: data.debug,
       });
-      
-      return { 
-        data: null, 
-        error: { 
+
+      return {
+        data: null,
+        error: {
           message: data.error || 'Failed to send magic link. Please try again.',
           code: data.code,
-          details: data.details
-        } 
+          details: data.details,
+        },
       };
     }
 
     // Success - magic link sent via Resend
-    return { 
-      data: { 
-        message: 'Magic link sent successfully' 
-      }, 
-      error: null 
+    return {
+      data: {
+        message: 'Magic link sent successfully',
+      },
+      error: null,
     };
   } catch (error) {
     console.error('Magic link error:', error);
-    return { 
-      data: null, 
-      error: { 
-        message: 'Network error. Please try again.' 
-      } 
+    return {
+      data: null,
+      error: {
+        message: 'Network error. Please try again.',
+      },
     };
   }
 };
@@ -370,10 +368,10 @@ export const signUpWithEmailOnly = async (
   language: 'en' | 'de' | 'ar' | 'tr' = 'en',
   honeypot?: string,
   termsAccepted?: boolean,
-  privacyAccepted?: boolean
+  privacyAccepted?: boolean,
 ) => {
   console.log('[SIGNUP] Creating user via Admin API (email-only):', email);
-  
+
   try {
     // Call our server-side API to create user without password
     const response = await fetch('/api/auth/signup', {
@@ -391,22 +389,22 @@ export const signUpWithEmailOnly = async (
         emailOnly: true, // Flag to indicate email-only signup
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       console.error('[SIGNUP] Signup failed:', data.error);
-      return { 
-        data: null, 
-        error: { message: data.error || 'Signup failed' } 
+      return {
+        data: null,
+        error: { message: data.error || 'Signup failed', code: data.code },
       };
     }
-    
+
     console.log('[SIGNUP] ✅ User created successfully (no password, no session)');
-    
+
     // After user is created, send magic link for first login
     const magicLinkResult = await signInWithMagicLink(email, language);
-    
+
     if (magicLinkResult.error) {
       // User is created but magic link failed - still return success
       // User can request magic link again later
@@ -414,23 +412,22 @@ export const signUpWithEmailOnly = async (
     } else {
       console.log('[SIGNUP] ✅ Magic link sent');
     }
-    
+
     // Return success with user data
-    return { 
-      data: { 
-        user: { 
+    return {
+      data: {
+        user: {
           id: data.userId,
-          email: data.email
-        } 
-      }, 
-      error: null 
+          email: data.email,
+        },
+      },
+      error: null,
     };
-    
   } catch (error) {
     console.error('[SIGNUP] Network or unexpected error:', error);
-    return { 
-      data: null, 
-      error: { message: 'Network error. Please try again.' } 
+    return {
+      data: null,
+      error: { message: 'Network error. Please try again.', code: 'NETWORK_ERROR' },
     };
   }
 };

@@ -771,11 +771,14 @@ export function clearAllBlockedIPs(): void {
 export function validatePasswordComplexity(password: string): {
   valid: boolean;
   error?: string;
+  /** Opaque sentinel code for client-side i18n mapping (issue #577) */
+  code?: 'PASSWORD_TOO_SHORT' | 'PASSWORD_NEEDS_LETTER' | 'PASSWORD_NEEDS_NUMBER';
 } {
   if (password.length < 8) {
     return {
       valid: false,
       error: 'Password must be at least 8 characters long',
+      code: 'PASSWORD_TOO_SHORT',
     };
   }
 
@@ -784,6 +787,7 @@ export function validatePasswordComplexity(password: string): {
     return {
       valid: false,
       error: 'Password must contain at least one letter',
+      code: 'PASSWORD_NEEDS_LETTER',
     };
   }
 
@@ -792,6 +796,7 @@ export function validatePasswordComplexity(password: string): {
     return {
       valid: false,
       error: 'Password must contain at least one number',
+      code: 'PASSWORD_NEEDS_NUMBER',
     };
   }
 

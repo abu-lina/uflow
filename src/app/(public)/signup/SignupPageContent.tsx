@@ -7,8 +7,9 @@ import { Eye, EyeOff } from 'lucide-react';
 
 import { Logo } from '@/components/ui/Logo';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
-import { PageContent } from '@/components/layout/PageContent';
+import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { PageLayout } from '@/components/layout/PageLayout';
+import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
 import { ContentSection } from '@/components/layout/ContentSection';
 import { TitleAndText } from '@/components/ui/TitleAndText';
@@ -19,12 +20,36 @@ import { LinkButton } from '@/components/ui/LinkButton';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { signUpWithLanguage } from '@/lib/auth';
+import { storePendingSignupEmail } from '@/lib/signup-session';
 
 interface FormData {
   email: string;
   password: string;
   confirmPassword: string;
 }
+
+/**
+ * Opaque sentinel codes returned by /api/auth/signup (and produced locally
+ * for network failures) mapped to translation keys. Any code not in this
+ * table falls back to `signup.genericError`, so a new server code can never
+ * render blank or leak a raw internal string to the user.
+ */
+const SIGNUP_ERROR_KEYS: Record<string, string> = {
+  ACCESS_RESTRICTED: 'signup.accessRestricted',
+  RATE_LIMIT_EXCEEDED: 'signup.rateLimited',
+  CONSENT_REQUIRED: 'legal.consentRequired',
+  INVALID_REQUEST: 'signup.genericError',
+  EMAIL_REQUIRED: 'signup.emailRequired',
+  PASSWORD_REQUIRED: 'signup.passwordRequired',
+  EMAIL_INVALID: 'signup.emailInvalid',
+  EMAIL_DISPOSABLE: 'signup.emailDisposable',
+  PASSWORD_TOO_SHORT: 'signup.passwordTooShort',
+  PASSWORD_NEEDS_LETTER: 'signup.passwordNeedsLetter',
+  PASSWORD_NEEDS_NUMBER: 'signup.passwordNeedsNumber',
+  EMAIL_ALREADY_REGISTERED: 'signup.emailAlreadyRegistered',
+  SIGNUP_FAILED: 'signup.genericError',
+  NETWORK_ERROR: 'signup.networkError',
+};
 
 export function SignupPageContent() {
   const router = useRouter();
@@ -46,7 +71,7 @@ export function SignupPageContent() {
   const { t } = useLanguage();
 
   const handleInputChange = useCallback((field: keyof FormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -86,46 +111,46 @@ export function SignupPageContent() {
 
   const validateForm = () => {
     if (!formData.email) {
-      setError('Bitte gib deine E-Mail-Adresse ein.');
+      setError(t('signup.emailRequired'));
       return false;
     }
-    
+
     // Enhanced password validation
     if (formData.password.length < 8) {
-      setError('Das Passwort muss mindestens 8 Zeichen lang sein.');
+      setError(t('signup.passwordTooShort'));
       return false;
     }
-    
+
     // Check for at least one letter
     if (!/[a-zA-Z]/.test(formData.password)) {
-      setError('Das Passwort muss mindestens einen Buchstaben enthalten.');
+      setError(t('signup.passwordNeedsLetter'));
       return false;
     }
-    
+
     // Check for at least one number
     if (!/\d/.test(formData.password)) {
-      setError('Das Passwort muss mindestens eine Zahl enthalten.');
+      setError(t('signup.passwordNeedsNumber'));
       return false;
     }
-    
+
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwörter stimmen nicht überein.');
+      setError(t('signup.passwordsMismatch'));
       return false;
     }
-    
+
     // Check consent (GDPR requirement)
     if (!termsAccepted || !privacyAccepted) {
-      setError(t('legal.consentRequired') || 'Sie müssen den Allgemeinen Geschäftsbedingungen und der Datenschutzrichtlinie zustimmen.');
+      setError(t('legal.consentRequired'));
       return false;
     }
-    
+
     setError(null);
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -138,35 +163,40 @@ export function SignupPageContent() {
       const form = e.target as HTMLFormElement;
       const honeypotInput = form.querySelector('input[name="website"]') as HTMLInputElement;
       const honeypot = honeypotInput?.value || '';
-      
+
       const { data, error } = await signUpWithLanguage(
-        formData.email, 
-        formData.password, 
+        formData.email,
+        formData.password,
         language,
         honeypot,
         termsAccepted,
-        privacyAccepted
+        privacyAccepted,
       );
-      
+
       if (error) {
-        setError(error.message || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
+        // The API returns opaque sentinel codes; map them to translated
+        // strings. Unknown/missing codes get the generic translated message -
+        // raw server text and codes are never rendered to the user.
+        const code = (error as { code?: string }).code;
+        setError(t(SIGNUP_ERROR_KEYS[code ?? ''] ?? 'signup.genericError'));
         setIsLoading(false);
         return;
       }
-      
+
       // Success - redirect only if we have valid data
       if (data) {
         // Set redirecting state immediately to hide content
         setIsRedirecting(true);
-        
-        // Toast removed - user will see the check-email page with proper messaging
-        
+
+        // Remember the address so check-email can offer a working resend
+        storePendingSignupEmail(formData.email);
+
         // Redirect to check email page
-        window.location.href = '/signup/check-email';
+        router.push('/signup/check-email');
       }
     } catch (error) {
       console.error('Signup error:', error);
-      setError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.');
+      setError(t('signup.unexpectedError'));
       setIsLoading(false);
     }
   };
@@ -181,34 +211,36 @@ export function SignupPageContent() {
   };
 
   return (
-    <ScrollablePageLayout>
+    <PageLayout hasBackground={false}>
       {/* Loading Overlay - Prevents flash during redirect */}
       {isRedirecting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white">
           <div className="flex flex-col items-center gap-4">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-[#589D96]"></div>
-            <p className="text-sm text-[#7A7A7A]">Weiterleitung...</p>
+            <p className="text-sm text-[#7A7A7A]">{t('signup.redirecting')}</p>
           </div>
         </div>
       )}
-      
-      <PageHeader 
+
+      <PageHeader
         rightIcon={<Logo className="h-12 w-12" height={48} width={48} />}
-        title="Registrieren"
+        title={t('signup.title')}
         variant="title-and-icon"
       />
 
-      <PageContent maxWidth="361px" paddingBottom="pb-12">
-        <div className="flex w-full flex-col">
-          {/* Title + Paragraph with proper spacing */}
-          <TitleSection className="mb-6 sm:mb-8">
-            <TitleAndText
-              description="Entdecke muslimische Angebote in deiner Nähe insha'Allah."
-              title="Willkommen bei Ummah Flow"
-            />
-          </TitleSection>
+      <HeaderSpacer />
 
-          {/* Form Content with exact spacing structure */}
+      <PageContentWrapper centerVertically={true} contentClassName="gap-10">
+        {/* Title + Paragraph with proper spacing */}
+        <TitleSection>
+          <TitleAndText
+            description={t('signup.welcomeDescription')}
+            title={t('signup.welcomeTitle')}
+          />
+        </TitleSection>
+
+        {/* Form Content with exact spacing structure */}
+        <div className="flex w-full flex-col">
           <ContentSection>
             <form className="flex w-full flex-col" onSubmit={handleSubmit}>
               {/* Honeypot field - hidden from users */}
@@ -226,22 +258,24 @@ export function SignupPageContent() {
                 tabIndex={-1}
                 type="text"
               />
-              
+
               {/* Form Input Fields */}
               <FormInputGroup gap="gap-3">
                 <FormInput
                   required
-                  label="E-Mail"
-                  placeholder="Email eingeben"
+                  label={t('signup.emailLabel')}
+                  placeholder={t('signup.emailPlaceholder')}
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
                 />
                 <FormInput
                   required
-                  label="Passwort"
-                  placeholder="Mindestens 8 Zeichen, Buchstabe und Zahl"
-                  rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  label={t('signup.passwordLabel')}
+                  placeholder={t('signup.passwordPlaceholder')}
+                  rightIcon={
+                    showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />
+                  }
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   variant="with-icon"
@@ -250,9 +284,15 @@ export function SignupPageContent() {
                 />
                 <FormInput
                   required
-                  label="Passwort bestätigen"
-                  placeholder="Passwort wiederholen"
-                  rightIcon={showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  label={t('signup.confirmPasswordLabel')}
+                  placeholder={t('signup.confirmPasswordPlaceholder')}
+                  rightIcon={
+                    showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )
+                  }
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   variant="with-icon"
@@ -267,8 +307,16 @@ export function SignupPageContent() {
                   <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
                     <div className="flex items-start">
                       <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-danger" fill="currentColor" viewBox="0 0 20 20">
-                          <path clipRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" fillRule="evenodd" />
+                        <svg
+                          className="h-5 w-5 text-danger"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            clipRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            fillRule="evenodd"
+                          />
                         </svg>
                       </div>
                       <div className="ml-3 flex-1">
@@ -283,13 +331,13 @@ export function SignupPageContent() {
 
               {/* Consent Checkbox (24px gap from form fields) */}
               <div className="mt-6">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex cursor-pointer items-center gap-2">
                   <input
                     required
-                    aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
+                    aria-label={t('legal.acceptTerms')}
                     aria-required="true"
                     checked={termsAccepted && privacyAccepted}
-                    className="h-4 w-4 rounded border-gray-300 text-[#589D96] focus:ring-[#589D96] focus:ring-2 flex-shrink-0"
+                    className="h-4 w-4 flex-shrink-0 rounded border-gray-300 text-[#589D96] focus:ring-2 focus:ring-[#589D96]"
                     type="checkbox"
                     onChange={(e) => {
                       setTermsAccepted(e.target.checked);
@@ -297,15 +345,15 @@ export function SignupPageContent() {
                     }}
                   />
                   <span className="text-[11px] leading-[13px] text-[#7A7A7A]">
-                    {t('legal.acceptTermsText') || 'Ich akzeptiere die '}
+                    {t('legal.acceptTermsText')}
                     <Link className="underline hover:text-[#589D96]" href="/terms">
-                      {t('legal.termsOfService') || 'Allgemeinen Geschäftsbedingungen'}
-                    </Link>
-                    {' '}{t('legal.and') || 'und'}{' '}
+                      {t('legal.termsOfService')}
+                    </Link>{' '}
+                    {t('legal.and')}{' '}
                     <Link className="underline hover:text-[#589D96]" href="/privacy-policy">
-                      {t('legal.privacyPolicy') || 'Datenschutzrichtlinie'}
+                      {t('legal.privacyPolicy')}
                     </Link>
-                    . {t('legal.privacyStatement') || 'Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.'}
+                    . {t('legal.privacyStatement')}
                   </span>
                 </label>
               </div>
@@ -316,25 +364,22 @@ export function SignupPageContent() {
                 <Button
                   fullWidth
                   loading={isLoading}
-                  loadingText="Registrieren..."
+                  loadingText={t('signup.signupButtonLoading')}
                   type="submit"
                   variant="auth"
                 >
-                  Registrieren
+                  {t('signup.signupButton')}
                 </Button>
 
                 {/* Link Button (12px gap from main button via space-y-3) */}
-                <LinkButton
-                  type="button"
-                  onClick={handleLoginClick}
-                >
-                  Bereits ein Konto? Jetzt anmelden.
+                <LinkButton type="button" onClick={handleLoginClick}>
+                  {t('signup.haveAccount')}
                 </LinkButton>
               </div>
             </form>
           </ContentSection>
         </div>
-      </PageContent>
-    </ScrollablePageLayout>
+      </PageContentWrapper>
+    </PageLayout>
   );
 }
