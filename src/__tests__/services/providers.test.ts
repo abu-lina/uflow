@@ -230,6 +230,59 @@ describe('providers service', () => {
         { count: 'exact' },
       );
     });
+
+    describe('category filter via provider_categories junction (#254)', () => {
+      const CATEGORY_ID = '11111111-2222-3333-4444-555555555555';
+
+      it('embeds provider_categories!inner and filters on the junction column (case 43)', async () => {
+        await searchProviders('', CATEGORY_ID, '', 12, 0);
+
+        expect(mockSelect).toHaveBeenCalledWith(
+          expect.stringContaining('provider_categories!inner(category_id)'),
+          { count: 'exact' },
+        );
+        expect(mockEq).toHaveBeenCalledWith('provider_categories.category_id', CATEGORY_ID);
+        expect(mockEq).not.toHaveBeenCalledWith('category_id', CATEGORY_ID);
+      });
+
+      it('adds no provider_categories embed without a category filter (case 44)', async () => {
+        await searchProviders('', '', '', 12, 0);
+
+        const selectArg = mockSelect.mock.calls[0][0] as string;
+        expect(selectArg).not.toContain('provider_categories');
+      });
+
+      it('strips the provider_categories key from returned providers (case 45)', async () => {
+        const { getBadgesForEntities } = await import('@/services/badges');
+        vi.mocked(getBadgesForEntities).mockResolvedValueOnce(new Map());
+
+        mockReturns.mockResolvedValueOnce({
+          data: [
+            {
+              provider_id: 'p-1',
+              provider_name: 'Anatolia Grill',
+              provider_categories: [{ category_id: CATEGORY_ID }],
+            },
+          ],
+          error: null,
+          count: 1,
+        });
+
+        const { providers } = await searchProviders('', CATEGORY_ID, '', 12, 0);
+
+        expect(providers).toHaveLength(1);
+        expect('provider_categories' in providers[0]).toBe(false);
+        expect(providers[0].provider_id).toBe('p-1');
+      });
+
+      it('keeps totalCount from the count header (case 46)', async () => {
+        mockReturns.mockResolvedValueOnce({ data: [], error: null, count: 7 });
+
+        const { totalCount } = await searchProviders('', CATEGORY_ID, '', 12, 0);
+
+        expect(totalCount).toBe(7);
+      });
+    });
   });
 
   describe('fetchPopularCities', () => {

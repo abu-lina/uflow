@@ -262,10 +262,19 @@ export async function searchProviders(
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
 ): Promise<{ providers: Provider[]; totalCount: number }> {
+  // #254: a valid category filter matches primary AND secondary categories
+  // via the provider_categories junction. The !inner embed must only be
+  // present when a category filter is active — applied unconditionally it
+  // would drop providers whose category_id is NULL.
+  const hasCategoryFilter = isValidCategoryId(category);
+
   // Plan 058: Include review fields when admin
-  const selectFields = adminOptions?.isAdmin
+  const baseSelectFields = adminOptions?.isAdmin
     ? '*, category:categories(name_de, name_en, category_images), review_status, review_feedback'
     : '*, category:categories(name_de, name_en, category_images)';
+  const selectFields = hasCategoryFilter
+    ? `${baseSelectFields}, provider_categories!inner(category_id)`
+    : baseSelectFields;
 
   // Plan 058: admin queries must use the service-role client to bypass RLS.
   // The caller (API route) passes the admin client directly via the `client` parameter
@@ -335,8 +344,11 @@ export async function searchProviders(
     req = req.in('provider_id', matchingProviderIds);
   }
 
-  if (isValidCategoryId(category)) {
-    req = req.eq('category_id', category);
+  if (hasCategoryFilter) {
+    // PostgREST embed filter: matches any junction row, so a secondary
+    // category match returns the provider once (!inner never multiplies
+    // parent rows) and count: 'exact' stays correct.
+    req = req.eq('provider_categories.category_id', category);
   }
   if (isValidLocation(location)) {
     req = req.eq('address_city', location);
@@ -381,19 +393,25 @@ export async function searchProviders(
   const offersMap = new Map((offersResult.data || []).map((o) => [o.offer_id, o]));
   const needsMap = new Map((needsResult.data || []).map((n) => [n.need_id, n]));
 
-  // Map back to providers efficiently
-  const providersWithOffersAndNeeds = data.map((provider) => ({
-    ...provider,
-    matched_menu_items: matchedMenuItemsByProvider.get(provider.provider_id) || [],
-    offers: (offersByProvider.get(provider.provider_id) || [])
-      .map((id) => offersMap.get(id))
-      .filter(Boolean) as Array<{ name_de: string }>,
-    needs: (needsByProvider.get(provider.provider_id) || [])
-      .map((id) => needsMap.get(id))
-      .filter(Boolean) as Array<{ name_de: string }>,
-    offers_ids: offersByProvider.get(provider.provider_id) || [],
-    needs_ids: needsByProvider.get(provider.provider_id) || [],
-  }));
+  // Map back to providers efficiently. The provider_categories key only
+  // exists when the junction embed was added for a category filter; it is
+  // join plumbing, not part of Provider, so it is dropped here (#254).
+  const providersWithOffersAndNeeds = data.map((row) => {
+    const provider = { ...(row as Provider & { provider_categories?: unknown }) };
+    delete provider.provider_categories;
+    return {
+      ...provider,
+      matched_menu_items: matchedMenuItemsByProvider.get(provider.provider_id) || [],
+      offers: (offersByProvider.get(provider.provider_id) || [])
+        .map((id) => offersMap.get(id))
+        .filter(Boolean) as Array<{ name_de: string }>,
+      needs: (needsByProvider.get(provider.provider_id) || [])
+        .map((id) => needsMap.get(id))
+        .filter(Boolean) as Array<{ name_de: string }>,
+      offers_ids: offersByProvider.get(provider.provider_id) || [],
+      needs_ids: needsByProvider.get(provider.provider_id) || [],
+    };
+  });
 
   // Batch fetch badges for all providers in one query
   const badgesMap = await getBadgesForEntities(providerIds, EntityType.PROVIDER).catch((error) => {
