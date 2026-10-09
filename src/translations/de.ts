@@ -390,8 +390,6 @@ export const de = {
     serves: 'Serviert',
     locationsCount: '{{count}} Standorte',
     halalLevel: 'Halal-Stufe {{level}}',
-    approve: 'Freigeben',
-    reject: 'Ablehnen',
     online: 'Online',
     donations: 'Spenden',
     initiativesSupported: 'Initiativen unterstützt',

@@ -386,8 +386,6 @@ export const ar = {
     serves: 'يقدم',
     locationsCount: '{{count}} مواقع',
     halalLevel: 'مستوى الحلال {{level}}',
-    approve: 'موافقة',
-    reject: 'رفض',
     online: 'عبر الإنترنت',
     donations: 'التبرعات',
     initiativesSupported: 'المبادرات المدعومة',

@@ -242,6 +242,14 @@ cd ../uflow-wt/N-<slug> && git push -u origin <branch>
 gh pr create --title "<title>" --body "<the PR body comment, verbatim>"
 ```
 
+Then hand off to the next request. This is the chained trigger: it picks the next eligible `ready-for-agent` issue and opens a gated session for it in a new Terminal window.
+
+```bash
+cd ../uflow-wt/N-<slug> && ./scripts/agent-dispatch.sh --launch
+```
+
+Run it without `--launch` first if you want to read the plan. The dispatcher is capped (`--max 4`), rate-limited (`--max-per-hour 3`) and locked, and it refuses anything that already has a worktree or branch, anything labeled `no-parallel`, and anything `stalled`. A line starting `refusing to dispatch` is the kill switch or a concurrent dispatch, not an error: quote it at the gate and stop. Never work around it by opening a session by hand. `scripts/agent-dispatch.sh --disable` stops all unattended launching.
+
 The worktree stays. Review feedback lands as more commits on the same branch, so nothing is removed at this point.
 
 ## Cleanup

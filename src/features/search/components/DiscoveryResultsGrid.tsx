@@ -65,13 +65,11 @@ interface DiscoveryResultsGridProps {
   enableBookmarks?: boolean;
   bookmarkedIds?: string[];
   onBookmarkChange?: (providerId: string, isBookmarked: boolean) => void;
-  /** Enables moderation mode (Approve/Reject) and requires onApprove/onReject. */
-  enableModeration?: boolean;
-  /** Enables read-only status labels without moderation actions. */
+  /** Enables read-only status labels. */
   showReviewStatus?: boolean;
-  onApprove?: (providerId: string) => void;
-  onReject?: (providerId: string) => void;
-  reviewingProviderId?: string | null;
+  /** Suppresses the bookmark button on every card (admin filtered-status
+      view hands the card's top-right corner to the status badge). */
+  hideBookmark?: boolean;
   /** Enables infinite scroll and requires hasNextPage/isFetchingNextPage/onLoadMore. */
   enableInfiniteScroll?: boolean;
   hasNextPage?: boolean;
@@ -136,11 +134,8 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   enableBookmarks = false,
   bookmarkedIds = [],
   onBookmarkChange,
-  enableModeration = false,
   showReviewStatus = false,
-  onApprove,
-  onReject,
-  reviewingProviderId,
+  hideBookmark = false,
   enableInfiniteScroll = false,
   hasNextPage = false,
   isFetchingNextPage = false,
@@ -286,20 +281,15 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
           >
             <ProviderCard
               {...itemToProviderCardProps(item)}
+              hideBookmark={hideBookmark}
               isBookmarked={enableBookmarks ? bookmarkedIds.includes(item.provider_id) : undefined}
-              isReviewing={reviewingProviderId === item.provider_id}
-              mode={enableModeration ? 'moderation' : 'bookmark'}
-              reviewStatus={enableModeration || showReviewStatus ? item.review_status : undefined}
+              reviewStatus={showReviewStatus ? item.review_status : undefined}
               showReviewStatus={showReviewStatus}
-              onApprove={
-                enableModeration && onApprove ? () => onApprove(item.provider_id) : undefined
-              }
               onBookmarkChange={
                 enableBookmarks && onBookmarkChange
                   ? (isBookmarked) => onBookmarkChange(item.provider_id, isBookmarked)
                   : undefined
               }
-              onReject={enableModeration && onReject ? () => onReject(item.provider_id) : undefined}
             />
           </div>
         ))}

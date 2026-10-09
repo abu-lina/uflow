@@ -391,8 +391,6 @@ export const ur = {
     serves: 'پیش کرتا ہے',
     locationsCount: '{{count}} مقامات',
     halalLevel: 'حلال سطح {{level}}',
-    approve: 'منظور کریں',
-    reject: 'مسترد کریں',
     online: 'آن لائن',
     donations: 'عطیات',
     initiativesSupported: 'منصوبوں کی حمایت',
