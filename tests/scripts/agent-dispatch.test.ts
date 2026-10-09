@@ -630,6 +630,24 @@ describe('agent-dispatch.sh', () => {
     expect(stdout).toContain('launched #541');
   });
 
+  it('--prep-stale-hours above the ledger retention is clamped and reported', () => {
+    // the ledger prunes at 24h, so a wider window could never see an older
+    // marker anyway; the clamp must say so instead of silently accepting 48
+    seedLedger([`${NOW - 120} 541 prep`]);
+    const env = feedMonitor(sb, [
+      readyRecord(541, ['ready-for-agent', 'stage:prep'], { stage: 'prep' }),
+    ]);
+    const { stdout, stderr } = run(sb, ['--launch', '--prep-stale-hours', '48'], {
+      ...env,
+      UFLOW_NOW: String(NOW),
+    });
+    expect(stderr).toContain('clamped');
+    expect(stderr).toContain('48');
+    expect(stderr).toContain('24');
+    // and the marker inside retention still holds its slot
+    expect(stdout).toContain('skip #541: prep session already in flight');
+  });
+
   it('a leftover prep worktree from the worktree-era holds a global slot but not the prep slot', () => {
     // Artifact from before prep went worktree-less: the worktree still counts
     // against the global --max (it is real until cleanup) but prep occupancy

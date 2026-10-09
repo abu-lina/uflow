@@ -25,6 +25,9 @@ DISPATCH_LOG="${UFLOW_DISPATCH_LOG:-$HOME/Library/Logs/uflow-agent-dispatch.log}
 PLIST_PATH="$LAUNCHAGENTS_DIR/com.uflow.agent-dispatch.plist"
 LOCK="$STATE/dispatch.lock"
 LEDGER="$STATE/launches.log"
+# The ledger doubles as the prep occupancy marker, so its retention bounds
+# --prep-stale-hours too: no marker older than this survives the prune below.
+LEDGER_RETENTION_SECONDS=86400
 NOW="${UFLOW_NOW:-$(date +%s)}"
 
 usage() {
@@ -46,7 +49,9 @@ launches nothing.
   --max-build N       stage:build concurrency cap (default 3); a build slot is
                       held until a PR exists for the branch
   --prep-stale-hours N  age past which a prep ledger marker counts as a dead
-                      session and frees its slot (default 6)
+                      session and frees its slot (default 6; clamped to the
+                      ledger retention window, which prunes older markers
+                      anyway)
   --only N            consider only issue N; every check, refusal, cap and the
                       dry-run default still apply. The sanctioned way to force
                       a no-parallel issue past a busy queue.
@@ -326,13 +331,20 @@ if ! acquire_lock; then
   exit 0
 fi
 
-# 3. Prune: launchers older than 7 days, ledger lines older than 24h.
+# 3. Prune: launchers older than 7 days, ledger lines older than
+# LEDGER_RETENTION_SECONDS. That prune is why --prep-stale-hours has a
+# ceiling: a wider window could never see a marker anyway, so clamp rather
+# than silently accept a value that behaves as the retention.
+if [ "$PREP_STALE_HOURS" -gt $((LEDGER_RETENTION_SECONDS / 3600)) ]; then
+  echo "agent-dispatch.sh: --prep-stale-hours $PREP_STALE_HOURS exceeds the ledger retention of $((LEDGER_RETENTION_SECONDS / 3600))h; clamped to $((LEDGER_RETENTION_SECONDS / 3600))" >&2
+  PREP_STALE_HOURS=$((LEDGER_RETENTION_SECONDS / 3600))
+fi
 mkdir -p "$STATE/launchers"
 chmod 700 "$STATE/launchers" 2>/dev/null || true
 find "$STATE/launchers" -name 'issue-*.sh' -type f -mmin +10080 -delete 2>/dev/null || true
 if [ -f "$LEDGER" ]; then
   _ledger_tmp="$LEDGER.tmp.$$"
-  awk -v cutoff="$((NOW - 86400))" '$1 ~ /^[0-9]+$/ && $1 > cutoff' "$LEDGER" > "$_ledger_tmp"
+  awk -v cutoff="$((NOW - LEDGER_RETENTION_SECONDS))" '$1 ~ /^[0-9]+$/ && $1 > cutoff' "$LEDGER" > "$_ledger_tmp"
   mv "$_ledger_tmp" "$LEDGER"
 fi
 
