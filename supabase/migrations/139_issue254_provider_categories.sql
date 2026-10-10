@@ -132,15 +132,30 @@ BEGIN
   SELECT c.applicable_section INTO v_section
     FROM public.categories c WHERE c.category_id = v_primary;
 
+  -- R3 is split into two distinct messages so the UI can tell an
+  -- 'all'-section secondary apart from a cross-section one — PostgREST
+  -- passes the raise text through intact in the 23514 payload.
   SELECT string_agg(c.name_de, ', ') INTO v_bad
     FROM public.provider_categories pc
     JOIN public.categories c ON c.category_id = pc.category_id
    WHERE pc.provider_id = v_pid
      AND pc.category_id <> v_primary
-     AND (c.applicable_section <> v_section OR c.applicable_section = 'all');
+     AND c.applicable_section = 'all';
 
   IF v_bad IS NOT NULL THEN
-    RAISE EXCEPTION 'additional categories must be in section % and not ''all'': %', v_section, v_bad
+    RAISE EXCEPTION 'secondary categories cannot be ''all''-section categories: %', v_bad
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  SELECT string_agg(c.name_de, ', ') INTO v_bad
+    FROM public.provider_categories pc
+    JOIN public.categories c ON c.category_id = pc.category_id
+   WHERE pc.provider_id = v_pid
+     AND pc.category_id <> v_primary
+     AND c.applicable_section <> v_section;
+
+  IF v_bad IS NOT NULL THEN
+    RAISE EXCEPTION 'secondary categories must be in section % like the primary: %', v_section, v_bad
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -748,5 +763,67 @@ COMMENT ON FUNCTION public.admin_update_provider IS
 
 REVOKE ALL ON FUNCTION public.admin_update_provider(UUID, JSONB) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_update_provider(UUID, JSONB) TO service_role;
+
+-- ---------------------------------------------------------------------------
+-- D9. owner_update_provider_categories (review fix): the owner save path
+-- counterpart to the admin RPC's secondary_category_ids block. ProviderEditForm
+-- used to run the junction DELETE and INSERT as two separate PostgREST
+-- transactions, so a rejected insert left the provider with ZERO secondaries.
+-- Wrapping the replace in one function makes it one transaction: a deferred
+-- trigger rejection at commit rolls the delete back with it.
+--
+-- SECURITY DEFINER, so it bypasses RLS on purpose — and therefore carries its
+-- own authorization check instead of widening a policy: only
+-- provider_owner_id may call it (decision 12: "creator" = owner; a
+-- recommender whose user_created_id matches gets no write access). Call it
+-- AFTER the providers UPDATE, like the admin block, so "non-primary" is
+-- measured against the current row.
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.owner_update_provider_categories(
+  p_provider_id UUID,
+  p_secondary_category_ids UUID[]
+) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_primary UUID;
+BEGIN
+  -- One check covers "not found" and "not owned": leaking which is which
+  -- would expose provider ids to probing.
+  SELECT p.category_id INTO v_primary
+    FROM public.providers p
+   WHERE p.provider_id = p_provider_id
+     AND p.provider_owner_id = (SELECT auth.uid());
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'provider % is not owned by the caller', p_provider_id
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+
+  DELETE FROM public.provider_categories
+   WHERE provider_id = p_provider_id
+     AND category_id IS DISTINCT FROM v_primary;
+
+  INSERT INTO public.provider_categories (provider_id, category_id)
+  SELECT p_provider_id, c
+    FROM unnest(coalesce(p_secondary_category_ids, ARRAY[]::uuid[])) AS c
+   WHERE c IS DISTINCT FROM v_primary
+  ON CONFLICT DO NOTHING;
+END;
+$$;
+
+COMMENT ON FUNCTION public.owner_update_provider_categories IS
+  '#254: owner-path atomic replace of a provider''s secondary categories. Caller must be provider_owner_id; deferred R1-R3 validation still applies at commit.';
+
+-- The baseline default privileges grant EXECUTE on new functions to anon,
+-- authenticated AND service_role, so a bare REVOKE FROM PUBLIC narrows
+-- nothing: the write path must be reachable only by the owner's own session.
+REVOKE ALL ON FUNCTION public.owner_update_provider_categories(UUID, UUID[]) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.owner_update_provider_categories(UUID, UUID[])
+  FROM anon, service_role;
+GRANT EXECUTE ON FUNCTION public.owner_update_provider_categories(UUID, UUID[]) TO authenticated;
 
 COMMIT;

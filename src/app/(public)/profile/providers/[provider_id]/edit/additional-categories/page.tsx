@@ -32,6 +32,10 @@ export default function EditAdditionalCategoriesPage({
   const [isHeaderSticky, setIsHeaderSticky] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [capHit, setCapHit] = useState(false);
+  // The resolved Primary this draft is scoped to — written alongside the
+  // draft so ProviderEditForm can tell a draft picked under the NEW primary
+  // from a stale one picked under the old (reverse visit order fix).
+  const [draftPrimaryId, setDraftPrimaryId] = useState('');
   // 'loading' | 'ok' | 'no-primary' | 'all-section'
   const [primaryState, setPrimaryState] = useState<'loading' | 'ok' | 'no-primary' | 'all-section'>(
     'loading',
@@ -84,6 +88,7 @@ export default function EditAdditionalCategoriesPage({
         }
 
         setPrimaryState('ok');
+        setDraftPrimaryId(primaryId);
         const options = await getSecondaryCategoryOptions(primaryId);
         setCategories(options);
 
@@ -156,6 +161,7 @@ export default function EditAdditionalCategoriesPage({
       if (prev.includes(categoryId)) {
         const next = prev.filter((id) => id !== categoryId);
         localStorage.setItem(`edit_additional_categories_${pid}`, JSON.stringify(next));
+        localStorage.setItem(`edit_additional_categories_for_${pid}`, draftPrimaryId);
         return next;
       }
       if (prev.length >= MAX_SECONDARY_CATEGORIES) {
@@ -166,6 +172,7 @@ export default function EditAdditionalCategoriesPage({
       }
       const next = [...prev, categoryId];
       localStorage.setItem(`edit_additional_categories_${pid}`, JSON.stringify(next));
+      localStorage.setItem(`edit_additional_categories_for_${pid}`, draftPrimaryId);
       return next;
     });
   };

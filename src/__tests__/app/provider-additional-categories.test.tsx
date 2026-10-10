@@ -153,6 +153,19 @@ describe('additional-categories picker (owner route, #254)', () => {
     expect(stored.sort()).toEqual(['c2', 'c3', 'c4', 'c5']);
   });
 
+  it('records the primary the draft was picked under (companion key for the reverse-order reset)', async () => {
+    render(<Page params={params} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Cat c1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByText('Cat c1'));
+
+    expect(localStorage.getItem(`edit_additional_categories_${PID}`)).toBe('["c1"]');
+    expect(localStorage.getItem(`edit_additional_categories_for_${PID}`)).toBe('cat-a');
+  });
+
   it('shows the empty state when the primary is in the all section', async () => {
     mockSupabaseChains('cat-all', 'all');
 

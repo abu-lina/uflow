@@ -919,11 +919,14 @@ export const tr = {
     noAdditionalCategories: 'Seçilmedi',
     secondaryCategoriesCleared: 'Ek kategoriler sıfırlandı',
     secondaryCategoriesRejected: 'Kategoriler kaydedilemedi. Lütfen seçiminizi kontrol edin.',
+    secondaryCategoriesTooMany: 'En fazla 4 ek kategori ekleyebilirsiniz.',
+    secondaryCategoriesAllSection:
+      'Bu kategori tüm bölümler için geçerlidir ve ek kategori olamaz.',
+    secondaryCategoriesWrongSection: 'Ek kategoriler ana kategoriyle aynı bölüme ait olmalıdır.',
     editAdditionalCategories: {
       title: 'Ek kategoriler',
       searchPlaceholder: 'Kategorileri ara...',
       loading: 'Kategoriler yükleniyor...',
-      selected: '{{count}} seçildi',
       maxSelected: 'En fazla 4 ek kategori seçilebilir',
       emptyForAllSection: 'Bu kategori için ek kategori mevcut değil.',
       emptyNoPrimary: 'Önce bir ana kategori seçin.',

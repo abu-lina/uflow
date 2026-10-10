@@ -26,6 +26,7 @@ const {
   mockPcDeleteEq,
   mockPcDeleteNeq,
   mockPcInsert,
+  mockRpc,
 } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockBack: vi.fn(),
@@ -50,6 +51,7 @@ const {
   mockPcDeleteEq: vi.fn(),
   mockPcDeleteNeq: vi.fn(),
   mockPcInsert: vi.fn(),
+  mockRpc: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -131,6 +133,11 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'editProvider.noAdditionalCategories': 'None selected',
         'editProvider.secondaryCategoriesCleared': 'Additional categories were reset',
         'editProvider.secondaryCategoriesRejected': 'The selected categories could not be saved.',
+        'editProvider.secondaryCategoriesTooMany': 'You can add up to 4 additional categories.',
+        'editProvider.secondaryCategoriesAllSection':
+          'This category applies to all sections and cannot be an additional category.',
+        'editProvider.secondaryCategoriesWrongSection':
+          'Additional categories must belong to the same section as the primary category.',
       };
       return translations[key] || key;
     },
@@ -208,6 +215,7 @@ vi.mock('@/lib/supabase/client', () => ({
 
       throw new Error(`Unexpected table ${table}`);
     },
+    rpc: mockRpc,
   },
 }));
 
@@ -240,6 +248,7 @@ const baseProvider: Provider = {
 describe('ProviderEditForm regressions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ data: null, error: null });
 
     mockCategoriesOrder.mockResolvedValue({ data: [], error: null });
     mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
@@ -421,6 +430,7 @@ describe('ProviderEditForm admin draft-state persistence (Plan 060)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ data: null, error: null });
     localStorage.clear();
 
     mockCategoriesOrder.mockResolvedValue({
@@ -504,6 +514,7 @@ describe('ProviderEditForm inline localStorage (Plan 152)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ data: null, error: null });
     localStorage.clear();
 
     mockCategoriesOrder.mockResolvedValue({ data: [], error: null });
@@ -729,10 +740,12 @@ describe('ProviderEditForm clears localStorage drafts after save', () => {
     'edit_halal_',
     'edit_values_',
     'edit_additional_categories_',
+    'edit_additional_categories_for_',
   ];
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ data: null, error: null });
     localStorage.clear();
 
     mockCategoriesOrder.mockResolvedValue({ data: [], error: null });
@@ -825,6 +838,7 @@ describe('ProviderEditForm reviewStatus dead path (#548, AC 18)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ data: null, error: null });
     localStorage.clear();
 
     mockCategoriesOrder.mockResolvedValue({ data: [], error: null });
@@ -948,6 +962,7 @@ describe('ProviderEditForm secondary categories (#254)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRpc.mockResolvedValue({ data: null, error: null });
     localStorage.clear();
 
     mockCategoriesOrder.mockResolvedValue({
@@ -1055,11 +1070,47 @@ describe('ProviderEditForm secondary categories (#254)', () => {
     });
   });
 
+  it('a secondary draft picked under the OLD primary does not survive the primary change (reverse visit order)', async () => {
+    // The sub-pages were visited in reverse: additional-categories first
+    // (draft tagged with the primary it was picked under), then category.
+    // The draft predates the new primary, so the reset must hold and warn.
+    localStorage.setItem(`edit_additional_categories_${pid}`, '["cat-b"]');
+    localStorage.setItem(`edit_additional_categories_for_${pid}`, 'cat-a');
+    localStorage.setItem(`edit_category_${pid}`, 'cat-new');
+
+    const onSubmitForm = vi.fn().mockResolvedValue(undefined);
+    render(
+      <ProviderEditForm
+        cancelUrl="/p/test-id"
+        enableLocalStorage={true}
+        onSubmitForm={onSubmitForm}
+        provider={providerWithJunction}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(mockToastInfo).toHaveBeenCalledWith('Additional categories were reset');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(onSubmitForm).toHaveBeenCalledWith(
+        expect.objectContaining({ categoryId: 'cat-new', secondaryCategoryIds: [] }),
+      );
+    });
+    // The stale draft keys are dropped so a later sync cannot resurrect them.
+    expect(localStorage.getItem(`edit_additional_categories_${pid}`)).toBeNull();
+    expect(localStorage.getItem(`edit_additional_categories_for_${pid}`)).toBeNull();
+  });
+
   it('a secondary draft picked under the new primary survives the primary change', async () => {
     // Drafts written in order by the sub-pages: category first, then the
-    // secondaries chosen under that new primary.
+    // secondaries chosen under that new primary (the companion key records
+    // which primary the picker was scoped to).
     localStorage.setItem(`edit_category_${pid}`, 'cat-new');
     localStorage.setItem(`edit_additional_categories_${pid}`, '["cat-b"]');
+    localStorage.setItem(`edit_additional_categories_for_${pid}`, 'cat-new');
 
     const onSubmitForm = vi.fn().mockResolvedValue(undefined);
     render(
@@ -1086,25 +1137,31 @@ describe('ProviderEditForm secondary categories (#254)', () => {
     });
   });
 
-  it('owner save issues the providers update before the junction writes (case 50)', async () => {
+  it('owner save routes the junction replace through owner_update_provider_categories (case 50)', async () => {
     localStorage.setItem(`edit_additional_categories_${pid}`, '["cat-b"]');
+    localStorage.setItem(`edit_additional_categories_for_${pid}`, 'cat-a');
 
     render(<ProviderEditForm enableLocalStorage={true} provider={providerWithJunction} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
-      expect(mockPcInsert).toHaveBeenCalled();
+      expect(mockRpc).toHaveBeenCalled();
     });
 
     // providers.category_id first — its sync trigger resets the junction —
-    // then delete non-primary rows, then insert the secondary rows.
+    // then ONE rpc replaces the secondary set atomically. No separate
+    // PostgREST delete+insert on provider_categories: that pair was the
+    // non-atomic write that left zero secondaries on a rejected insert.
     expect(mockProviderUpdate.mock.invocationCallOrder[0]).toBeLessThan(
-      mockPcDelete.mock.invocationCallOrder[0],
+      mockRpc.mock.invocationCallOrder[0],
     );
-    expect(mockPcDeleteEq).toHaveBeenCalledWith('provider_id', pid);
-    expect(mockPcDeleteNeq).toHaveBeenCalledWith('category_id', 'cat-a');
-    expect(mockPcInsert).toHaveBeenCalledWith([{ provider_id: pid, category_id: 'cat-b' }]);
+    expect(mockRpc).toHaveBeenCalledWith('owner_update_provider_categories', {
+      p_provider_id: pid,
+      p_secondary_category_ids: ['cat-b'],
+    });
+    expect(mockPcDelete).not.toHaveBeenCalled();
+    expect(mockPcInsert).not.toHaveBeenCalled();
   });
 
   it('clears the additional-categories draft key after a successful save (case 52)', async () => {
@@ -1169,18 +1226,33 @@ describe('ProviderEditForm secondary categories (#254)', () => {
     expect(mockPush).toHaveBeenCalledWith('/dashboard/providers/x/edit/additional-categories');
   });
 
-  it('translates a 23514 from the junction insert into a German-friendly toast', async () => {
-    mockPcInsert.mockResolvedValue({
-      error: { code: '23514', message: 'maximum is 5 categories' },
-    });
+  // #254 review MEDIUM 2: PostgREST passes the constraint text through in
+  // the 23514 payload, so each rule violation maps to a specific toast.
+  it.each([
+    ['provider p has 6 categories, maximum is 5', 'You can add up to 4 additional categories.'],
+    [
+      "secondary categories cannot be 'all'-section categories: Gemeinschaft & Spenden",
+      'This category applies to all sections and cannot be an additional category.',
+    ],
+    [
+      'secondary categories must be in section food like the primary: Kleidung & Mode',
+      'Additional categories must belong to the same section as the primary category.',
+    ],
+    [
+      'provider p primary category x missing from provider_categories',
+      'The selected categories could not be saved.',
+    ],
+  ])('maps the 23514 "%s" to a specific toast', async (message, expectedToast) => {
+    mockRpc.mockResolvedValue({ data: null, error: { code: '23514', message } });
     localStorage.setItem(`edit_additional_categories_${pid}`, '["cat-b"]');
+    localStorage.setItem(`edit_additional_categories_for_${pid}`, 'cat-a');
 
     render(<ProviderEditForm enableLocalStorage={true} provider={providerWithJunction} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
     await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith('The selected categories could not be saved.');
+      expect(mockToastError).toHaveBeenCalledWith(expectedToast);
     });
     expect(mockToastError).not.toHaveBeenCalledWith('Error updating provider');
   });

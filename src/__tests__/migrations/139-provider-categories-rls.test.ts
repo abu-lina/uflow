@@ -237,4 +237,114 @@ describe('migration 139 — provider_categories RLS (executed against Postgres)'
     });
     expect((await junctionCount(APPROVED))[0].n).toBe(1);
   });
+
+  // #254 review MEDIUM 3: the owner save path used to run the junction
+  // DELETE and INSERT as two separate PostgREST transactions, so a rejected
+  // insert left the provider with zero secondaries.
+  // owner_update_provider_categories wraps the replace in one transaction;
+  // SECURITY DEFINER + an internal ownership check keeps write access at
+  // provider_owner_id (decision 12), with no RLS policy widened.
+  describe('owner_update_provider_categories RPC (owner-path atomic secondary writes)', () => {
+    // Autocommit caller: a bare query is its own transaction, so the deferred
+    // constraint trigger fires at its commit — exactly what a PostgREST rpc()
+    // call does. Needed to observe rollback of the DELETE+INSERT pair.
+    async function asCallerAutocommit<T>(
+      role: string,
+      uid: string | null,
+      fn: () => Promise<T>,
+    ): Promise<T> {
+      await rows(`SELECT set_config('request.jwt.claim.sub', $1, false)`, [uid ?? '']);
+      await db.exec(`SET ROLE ${role}`);
+      try {
+        return await fn();
+      } finally {
+        await db.exec('RESET ROLE');
+        await rows(`SELECT set_config('request.jwt.claim.sub', '', false)`);
+      }
+    }
+
+    it('lets the owner replace the secondary set in one call', async () => {
+      await asCallerAutocommit('authenticated', OWNER, () =>
+        db.query('SELECT public.owner_update_provider_categories($1, $2::uuid[])', [
+          APPROVED,
+          [CAT.doner],
+        ]),
+      );
+      expect((await junctionCount(APPROVED))[0].n).toBe(2);
+      // restore
+      await db.query(
+        'DELETE FROM public.provider_categories WHERE provider_id = $1 AND category_id = $2',
+        [APPROVED, CAT.doner],
+      );
+    });
+
+    it('an empty list clears the secondaries but keeps the primary row', async () => {
+      await db.query(
+        'INSERT INTO public.provider_categories (provider_id, category_id) VALUES ($1, $2)',
+        [APPROVED, CAT.doner],
+      );
+      await asCallerAutocommit('authenticated', OWNER, () =>
+        db.query('SELECT public.owner_update_provider_categories($1, $2::uuid[])', [APPROVED, []]),
+      );
+      expect((await junctionCount(APPROVED))[0].n).toBe(1);
+    });
+
+    it('rejects a recommender (user_created_id, not the owner)', async () => {
+      await asCallerAutocommit('authenticated', CREATOR, () =>
+        expect(
+          db.query('SELECT public.owner_update_provider_categories($1, $2::uuid[])', [
+            APPROVED,
+            [CAT.doner],
+          ]),
+        ).rejects.toMatchObject({ code: '42501' }),
+      );
+      expect((await junctionCount(APPROVED))[0].n).toBe(1);
+    });
+
+    it('rejects any other authenticated non-owner', async () => {
+      await asCallerAutocommit('authenticated', OTHER, () =>
+        expect(
+          db.query('SELECT public.owner_update_provider_categories($1, $2::uuid[])', [
+            APPROVED,
+            [CAT.doner],
+          ]),
+        ).rejects.toMatchObject({ code: '42501' }),
+      );
+      expect((await junctionCount(APPROVED))[0].n).toBe(1);
+    });
+
+    it('a rejected insert rolls the delete back too — original secondaries survive', async () => {
+      // Seed one legal secondary as superuser.
+      await db.query(
+        'INSERT INTO public.provider_categories (provider_id, category_id) VALUES ($1, $2)',
+        [APPROVED, CAT.doner],
+      );
+      // A cross-section category trips R3 at commit. The whole call is one
+      // transaction, so the preceding DELETE of the old secondary must roll
+      // back with it.
+      await rows(
+        `INSERT INTO public.categories (category_id, name_de, applicable_section)
+       VALUES ('00000000-0000-0000-0000-0000000000cc', 'Store Cat', 'store')
+       ON CONFLICT DO NOTHING`,
+      );
+      await asCallerAutocommit('authenticated', OWNER, () =>
+        expect(
+          db.query('SELECT public.owner_update_provider_categories($1, $2::uuid[])', [
+            APPROVED,
+            ['00000000-0000-0000-0000-0000000000cc'],
+          ]),
+        ).rejects.toMatchObject({ code: '23514' }),
+      );
+      const ids = await rows<{ category_id: string }>(
+        'SELECT category_id FROM public.provider_categories WHERE provider_id = $1 ORDER BY category_id',
+        [APPROVED],
+      );
+      expect(ids.map((r) => r.category_id).sort()).toEqual([CAT.turk, CAT.doner].sort());
+      // restore
+      await db.query(
+        'DELETE FROM public.provider_categories WHERE provider_id = $1 AND category_id = $2',
+        [APPROVED, CAT.doner],
+      );
+    });
+  });
 });

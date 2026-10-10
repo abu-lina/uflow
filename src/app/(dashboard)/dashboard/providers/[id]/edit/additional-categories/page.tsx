@@ -28,6 +28,10 @@ export default function AdminEditAdditionalCategoriesPage({
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [capHit, setCapHit] = useState(false);
+  // The resolved Primary this draft is scoped to — recorded alongside the
+  // draft so ProviderEditForm can drop a draft picked under an old primary
+  // (reverse visit order fix).
+  const [draftPrimaryId, setDraftPrimaryId] = useState('');
   // 'loading' | 'ok' | 'no-primary' | 'all-section'
   const [primaryState, setPrimaryState] = useState<'loading' | 'ok' | 'no-primary' | 'all-section'>(
     'loading',
@@ -67,6 +71,7 @@ export default function AdminEditAdditionalCategoriesPage({
         }
 
         setPrimaryState('ok');
+        setDraftPrimaryId(primaryId);
         const options = await getSecondaryCategoryOptions(primaryId);
         setCategories(options);
 
@@ -130,6 +135,7 @@ export default function AdminEditAdditionalCategoriesPage({
       `admin_edit_additional_categories_${providerId}`,
       JSON.stringify(selectedIds),
     );
+    localStorage.setItem(`admin_edit_additional_categories_for_${providerId}`, draftPrimaryId);
     router.back();
   };
 

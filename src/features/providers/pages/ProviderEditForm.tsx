@@ -104,6 +104,20 @@ export interface ProviderEditFormData {
   // Review status is set only via PATCH /api/admin/review-provider.
 }
 
+/**
+ * #254: map a 23514 from provider_categories_validate to the i18n key for
+ * the specific rule that failed. Substrings come from the raise text in
+ * migration 139 — each violation has a distinct message so the toast can
+ * say what to fix instead of "check your selection".
+ */
+function secondaryCategoriesErrorKey(error: unknown): string {
+  const message = (error as { message?: string })?.message ?? '';
+  if (message.includes('maximum is 5')) return 'editProvider.secondaryCategoriesTooMany';
+  if (message.includes("'all'-section")) return 'editProvider.secondaryCategoriesAllSection';
+  if (message.includes('must be in section')) return 'editProvider.secondaryCategoriesWrongSection';
+  return 'editProvider.secondaryCategoriesRejected';
+}
+
 export function ProviderEditForm({
   provider,
   onSave,
@@ -212,22 +226,33 @@ export function ProviderEditForm({
 
     const storedCategory = localStorage.getItem(`${pfx}edit_category_${pid}`);
     const storedAdditional = localStorage.getItem(`${pfx}edit_additional_categories_${pid}`);
+    // #254: a Secondary draft belongs to the Primary it was picked under —
+    // the picker records it in this companion key. Without it, visiting the
+    // sub-pages in reverse order (additional-categories first, then a new
+    // primary) would smuggle a stale draft past the reset below. Drafts
+    // written before the companion existed default to the persisted primary:
+    // still valid while the primary is untouched, stale once it changes.
+    const draftPrimary =
+      localStorage.getItem(`${pfx}edit_additional_categories_for_${pid}`) ?? provider.category_id;
+    const effectivePrimary = storedCategory ?? provider.category_id;
+    const draftApplies = storedAdditional !== null && draftPrimary === effectivePrimary;
+
     if (storedCategory) {
       setFormData((prev) => {
         if (prev.categoryId === storedCategory) return prev;
         // #254: a new Primary wipes the Secondary set (the junction sync
-        // trigger does the same on save). A draft from the additional-
-        // categories sub-page was picked under THIS primary, so it survives;
-        // only junction-hydrated/stale secondaries get cleared.
-        if (prev.secondaryCategoryIds.length > 0 && !storedAdditional) {
+        // trigger does the same on save). A draft picked under the NEW
+        // primary survives; hydrated secondaries and drafts picked under
+        // the old one get cleared, and the UI warns.
+        if (draftApplies) return { ...prev, categoryId: storedCategory };
+        if (prev.secondaryCategoryIds.length > 0 || storedAdditional !== null) {
           secondaryClearedRef.current = true;
-          return { ...prev, categoryId: storedCategory, secondaryCategoryIds: [] };
         }
-        return { ...prev, categoryId: storedCategory };
+        return { ...prev, categoryId: storedCategory, secondaryCategoryIds: [] };
       });
     }
 
-    if (storedAdditional) {
+    if (storedAdditional && draftApplies) {
       try {
         const parsed = JSON.parse(storedAdditional);
         if (Array.isArray(parsed)) {
@@ -240,6 +265,11 @@ export function ProviderEditForm({
       } catch {
         /* ignore */
       }
+    } else if (storedAdditional) {
+      // Stale draft picked under another primary — drop it so a later sync
+      // pass cannot resurrect it.
+      localStorage.removeItem(`${pfx}edit_additional_categories_${pid}`);
+      localStorage.removeItem(`${pfx}edit_additional_categories_for_${pid}`);
     }
 
     const storedSocial = localStorage.getItem(`${pfx}edit_social_${pid}`);
@@ -368,6 +398,7 @@ export function ProviderEditForm({
     enableLocalStorage,
     localStoragePrefix,
     provider.provider_id,
+    provider.category_id,
     provider.address_city,
     provider.address_zip,
   ]);
@@ -410,6 +441,7 @@ export function ProviderEditForm({
       'edit_halal_',
       'edit_values_',
       'edit_additional_categories_',
+      'edit_additional_categories_for_',
     ];
     keys.forEach((key) => localStorage.removeItem(`${pfx}${key}${pid}`));
   }, [enableLocalStorage, localStoragePrefix, provider.provider_id]);
@@ -562,29 +594,20 @@ export function ProviderEditForm({
 
       // #254 Secondary Categories: the providers UPDATE above already fired
       // the sync trigger, which reset the junction to the new Primary.
-      // Order is load-bearing: wipe the remaining non-primary rows, then
-      // insert the chosen secondaries. Inserting before the UPDATE would
-      // lose them to the trigger's reset.
+      // Order is load-bearing: the RPC must run AFTER that UPDATE so
+      // "non-primary" is measured against the new primary. The delete+insert
+      // live inside owner_update_provider_categories — one transaction, so
+      // a rejected insert rolls the delete back with it instead of leaving
+      // the provider with zero secondaries (review MEDIUM 3).
       if (submitData.categoryId) {
-        const { error: junctionDeleteError } = await supabase
-          .from('provider_categories')
-          .delete()
-          .eq('provider_id', provider.provider_id)
-          .neq('category_id', submitData.categoryId);
-        if (junctionDeleteError) throw junctionDeleteError;
-
         const secondaryIds = submitData.secondaryCategoryIds.filter(
           (id) => Boolean(id) && id !== submitData.categoryId,
         );
-        if (secondaryIds.length > 0) {
-          const { error: junctionInsertError } = await supabase.from('provider_categories').insert(
-            secondaryIds.map((categoryId) => ({
-              provider_id: provider.provider_id,
-              category_id: categoryId,
-            })),
-          );
-          if (junctionInsertError) throw junctionInsertError;
-        }
+        const { error: categoriesError } = await supabase.rpc('owner_update_provider_categories', {
+          p_provider_id: provider.provider_id,
+          p_secondary_category_ids: secondaryIds,
+        });
+        if (categoriesError) throw categoriesError;
       }
 
       // Update community service relationships via provider_engagements
@@ -623,10 +646,11 @@ export function ProviderEditForm({
     } catch (error) {
       console.error('Error updating provider:', error);
       // #254: a check-trigger rejection (SQLSTATE 23514) means the secondary
-      // set broke a rule (max 4, same section). Surface a readable message
-      // instead of the raw Postgres error.
+      // set broke a rule. PostgREST passes the raise text through in
+      // `message`; map each distinct violation to its own toast. The raw
+      // text (constraint names, ids, category lists) never reaches the user.
       if ((error as { code?: string })?.code === '23514') {
-        toast.error(t('editProvider.secondaryCategoriesRejected'));
+        toast.error(t(secondaryCategoriesErrorKey(error)));
       } else {
         toast.error(t('editProvider.errorUpdating'));
       }

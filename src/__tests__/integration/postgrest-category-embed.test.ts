@@ -10,8 +10,9 @@ import { spawnSync } from 'node:child_process';
  * PGRST201. PGlite and the mocked query-builder tests cannot see this —
  * only real PostgREST computes relationship resolution.
  *
- * Seam: the live local Supabase stack. Skips entirely when it is not
- * running (e.g. CI without `supabase start`).
+ * Seam: the live local Supabase stack for the 6 PostgREST probes. The two
+ * source scans run unconditionally; the live probes gate on LOCAL_STACK and
+ * announce the skip through a dedicated test when the stack is absent.
  *
  * The suite guarantees the ambiguity exists for the duration of the run:
  * if `public.provider_categories` is absent it creates it with the exact
@@ -106,8 +107,68 @@ function collectCategoryEmbeds(): { file: string; embed: string }[] {
   return found;
 }
 
+// --- Source scans: no database needed -------------------------------------
+// These two are pure readFileSync regex scans over src/. They are the ones
+// that would have caught the original PGRST201 defect at authoring time, so
+// they must run unconditionally — in CI and everywhere — not only when a
+// local Supabase stack happens to be up.
+describe('categories embed source scans (no database required)', () => {
+  it('every categories embed in src/ carries the !providers_category_id_fkey hint', () => {
+    const embeds = collectCategoryEmbeds();
+    const unhinted = embeds.filter((e) => !e.embed.includes('!providers_category_id_fkey'));
+    expect(
+      unhinted,
+      `unhinted categories embeds would 400 under PostgREST: ${unhinted
+        .map((e) => `${e.file}: ${e.embed}`)
+        .join('; ')}`,
+    ).toEqual([]);
+    expect(embeds.length).toBeGreaterThan(0);
+  });
+
+  it('no embed carries a duplicated column list (fkey(cols)(cols) artifact)', () => {
+    // A past bulk edit produced `categories!fk(cols)(cols)` — PostgREST
+    // tolerates it, so only a source scan can catch the regression.
+    const DOUBLE_COLS = /(?:category:)?categories(?:!\w+)?\([^)]*\)\s*\(/;
+    const srcDir = join(process.cwd(), 'src');
+    const offenders: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          if (entry.name !== 'node_modules' && entry.name !== '__tests__') walk(full);
+          continue;
+        }
+        if (!/\.(ts|tsx)$/.test(entry.name)) continue;
+        if (DOUBLE_COLS.test(readFileSync(full, 'utf8')))
+          offenders.push(full.replace(`${srcDir}/`, ''));
+      }
+    };
+    walk(srcDir);
+    expect(offenders).toEqual([]);
+  });
+});
+
+// --- Live PostgREST probes -------------------------------------------------
+// The remaining 6 tests genuinely need the running local stack. When it is
+// absent (CI runs no Supabase service) the suite must not read as a silent
+// green: the runIf test below executes instead and prints the skip loudly.
+// `skipIf`/`runIf` is the narrowest gating vitest exposes — there is no
+// "skipped with reason" channel — so visibility comes from a test that runs
+// precisely when the gate is closed.
+it.runIf(!LOCAL_STACK)(
+  'LIVE PGRST201 GUARD SKIPPED — local Supabase stack not reachable, 6 PostgREST tests did not run',
+  () => {
+    console.warn(
+      '[postgrest-category-embed] local Supabase stack not reachable ' +
+        `(postgres ${PGHOST}:${PGPORT}, REST ${REST_BASE}); skipping the 6 ` +
+        'live PostgREST embed tests. The PGRST201 guard is NOT covered in ' +
+        'this run — start the stack (`supabase start`) to cover it.',
+    );
+  },
+);
+
 describe.skipIf(!LOCAL_STACK)(
-  'providers -> categories embeds under the junction m2m ambiguity',
+  'providers -> categories embeds under the junction m2m ambiguity (live stack)',
   () => {
     let createdTable = false;
     let embeds: { file: string; embed: string }[] = [];
@@ -155,39 +216,6 @@ describe.skipIf(!LOCAL_STACK)(
       // below are not vacuous. PostgREST answers 300 with code PGRST201.
       expect(status).not.toBe(200);
       expect((body as { code?: string })?.code).toBe('PGRST201');
-    });
-
-    it('every categories embed in src/ carries the !providers_category_id_fkey hint', () => {
-      const unhinted = embeds.filter((e) => !e.embed.includes('!providers_category_id_fkey'));
-      expect(
-        unhinted,
-        `unhinted categories embeds would 400 under PostgREST: ${unhinted
-          .map((e) => `${e.file}: ${e.embed}`)
-          .join('; ')}`,
-      ).toEqual([]);
-      expect(embeds.length).toBeGreaterThan(0);
-    });
-
-    it('no embed carries a duplicated column list (fkey(...)(...) artifact)', () => {
-      // A past bulk edit produced `categories!fk(cols)(cols)` — PostgREST
-      // tolerates it, so only a source scan can catch the regression.
-      const DOUBLE_COLS = /(?:category:)?categories(?:!\w+)?\([^)]*\)\s*\(/;
-      const srcDir = join(process.cwd(), 'src');
-      const offenders: string[] = [];
-      const walk = (dir: string) => {
-        for (const entry of readdirSync(dir, { withFileTypes: true })) {
-          const full = join(dir, entry.name);
-          if (entry.isDirectory()) {
-            if (entry.name !== 'node_modules' && entry.name !== '__tests__') walk(full);
-            continue;
-          }
-          if (!/\.(ts|tsx)$/.test(entry.name)) continue;
-          if (DOUBLE_COLS.test(readFileSync(full, 'utf8')))
-            offenders.push(full.replace(`${srcDir}/`, ''));
-        }
-      };
-      walk(srcDir);
-      expect(offenders).toEqual([]);
     });
 
     it('every hinted embed resolves live against PostgREST', async () => {

@@ -22,7 +22,7 @@ The single Category used wherever a Provider is displayed as belonging to one th
 _Avoid_: main category, default category
 
 **Secondary Category**:
-An additional Category a Provider also belongs to, used for matching in search but never for display. A Turkish restaurant that sells Döner has "Türkisch" as Primary and "Kebab / Döner" as Secondary.
+An additional Category a Provider also belongs to, used for matching in search but never for display. A Turkish restaurant that sells Döner has "Türkisch" as Primary and "Kebab / Döner" as Secondary. The owner-facing edit UI labels these "Additional Categories" (`editAdditionalCategories` i18n keys, `edit/additional-categories` routes); same concept, different surface.
 _Avoid_: extra category, sub-category, additional tag
 
 **Category Type**:
