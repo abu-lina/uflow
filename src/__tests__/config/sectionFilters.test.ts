@@ -140,9 +140,51 @@ describe('resolveSectionFromRoute', () => {
     expect(resolveSectionFromRoute('/ummah', params)).toBe('food');
   });
 
-  it('uses category inference before pathname fallback when section is absent', () => {
+  // #254: ?category= carries leaf categories (cuisines, store types) on
+  // section routes since 065c8abe, not just the two 'all' parents. The
+  // pathname is the section authority there; inference is only a fallback
+  // for genuinely sectionless legacy URLs like /providers?category=...
+  const KEBAB_DOENER_CUISINE_ID = '9026edb0-490a-4395-a3d7-27c5eacde0e2';
+  const STORE_CATEGORY_ID = 'a0000000-0000-4000-8000-000000000001';
+
+  it('pathname wins over a cuisine category on /food', () => {
+    const params = new URLSearchParams(`category=${KEBAB_DOENER_CUISINE_ID}`);
+    expect(resolveSectionFromRoute('/food', params)).toBe('food');
+  });
+
+  it('pathname wins over a cuisine category on /ummah', () => {
+    const params = new URLSearchParams(`category=${KEBAB_DOENER_CUISINE_ID}`);
+    expect(resolveSectionFromRoute('/ummah', params)).toBe('ummah');
+  });
+
+  it('pathname wins over a store category on /stores', () => {
+    const params = new URLSearchParams(`category=${STORE_CATEGORY_ID}`);
+    expect(resolveSectionFromRoute('/stores', params)).toBe('store');
+  });
+
+  it('pathname wins over category inference even for a known parent category', () => {
+    // Flips the Plan-111 expectation 'uses category inference before pathname
+    // fallback': that test assumed ?category= only ever carried the two
+    // 'all'-section parents, which was true until cuisine UUIDs started
+    // riding this param (#254). The invariant it protected — category-as-
+    // section-signal — is preserved on sectionless routes (next test).
     const params = new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`);
-    expect(resolveSectionFromRoute('/stores', params)).toBe('food');
+    expect(resolveSectionFromRoute('/stores', params)).toBe('store');
+  });
+
+  it('still infers section from category on sectionless /providers URLs', () => {
+    const params = new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`);
+    expect(resolveSectionFromRoute('/providers', params)).toBe('food');
+  });
+
+  it('still infers ummah from Gemeinschaft & Spenden on sectionless /providers URLs', () => {
+    const params = new URLSearchParams(`category=${GEMEINSCHAFT_SPENDEN_ID}`);
+    expect(resolveSectionFromRoute('/providers', params)).toBe('ummah');
+  });
+
+  it('resolves /food city+category path to food', () => {
+    const params = new URLSearchParams('');
+    expect(resolveSectionFromRoute('/food/berlin/kebab-doener', params)).toBe('food');
   });
 
   it('resolves locale-prefixed stores pathname to business when section and category are absent', () => {
