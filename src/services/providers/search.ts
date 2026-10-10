@@ -60,15 +60,20 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
 }
 
 /**
- * Check if a category value is a valid category ID (UUID) or a translated "all" string
- * Category IDs are UUIDs, so if it's not a UUID, it's likely a translation and should be ignored
+ * Translated "all categories" labels. These are an explicit user choice
+ * meaning "no category filter", not a broken filter value, so they must
+ * never trip the invalid-category guard below.
+ */
+const ALL_CATEGORIES_LABELS = ['All', 'Alle', 'الكل', 'Tümü'];
+
+/**
+ * Check if a category value is a valid category ID (UUID).
+ * Category IDs are UUIDs; anything else is not a usable filter.
  */
 function isValidCategoryId(category: string | null | undefined): boolean {
   if (!category) return false;
 
-  // Check if it's a known "all" translation
-  const allTranslations = ['All', 'Alle', 'الكل', 'Tümü'];
-  if (allTranslations.includes(category)) return false;
+  if (ALL_CATEGORIES_LABELS.includes(category)) return false;
 
   // Check if it's a valid UUID format (category IDs are UUIDs)
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -267,6 +272,17 @@ export async function searchProviders(
   // present when a category filter is active — applied unconditionally it
   // would drop providers whose category_id is NULL.
   const hasCategoryFilter = isValidCategoryId(category);
+
+  // A non-empty category that is neither a UUID nor a known "all" label is a
+  // filter that cannot be applied. Fail closed and loud: silently dropping
+  // it would widen the result set and present an unfiltered listing as a
+  // filtered success (#254 post-QA).
+  if (category && !hasCategoryFilter && !ALL_CATEGORIES_LABELS.includes(category)) {
+    console.error(
+      `[searchProviders] Unrecognised category filter "${category}" — refusing to return unfiltered results`,
+    );
+    return { providers: [], totalCount: 0 };
+  }
 
   // Plan 058: Include review fields when admin
   const baseSelectFields = adminOptions?.isAdmin

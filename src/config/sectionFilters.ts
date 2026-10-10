@@ -94,7 +94,7 @@ export function getAllowedFilters(section: Section): SectionFilter[] {
 const ESSEN_TRINKEN_CATEGORY_ID = '20c10efe-404b-4a39-bb81-5089a0332d78';
 
 /** Stable UUID for "Gemeinschaft & Spenden". */
-const GEMEINSCHAFT_SPENDEN_CATEGORY_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
+export const GEMEINSCHAFT_SPENDEN_CATEGORY_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
 
 /**
  * Infers the section from a category UUID.

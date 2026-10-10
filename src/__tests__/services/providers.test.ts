@@ -285,6 +285,68 @@ describe('providers service', () => {
         expect(totalCount).toBe(7);
       });
     });
+
+    describe('invalid category filter fails closed and loud (#254)', () => {
+      it('returns empty results and logs an error for a non-UUID category instead of widening the result set', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        // 'Kebab / Döner' is a display label — exactly what reached this
+        // function in the reported bug and silently widened to all providers.
+        const { providers, totalCount } = await searchProviders('', 'Kebab / Döner', '', 12, 0);
+
+        expect(providers).toEqual([]);
+        expect(totalCount).toBe(0);
+        expect(errorSpy).toHaveBeenCalled();
+        // The query must never reach the DB: no select, no junction filter.
+        expect(mockSelect).not.toHaveBeenCalled();
+
+        errorSpy.mockRestore();
+      });
+
+      it('fails closed for a category slug too (slugs are not valid ids)', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        const { providers } = await searchProviders('', 'kebab-doener', '', 12, 0);
+
+        expect(providers).toEqual([]);
+        expect(errorSpy).toHaveBeenCalled();
+        expect(mockSelect).not.toHaveBeenCalled();
+
+        errorSpy.mockRestore();
+      });
+
+      it('treats known "all categories" labels as an explicit no-filter, not an error', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        mockReturns.mockResolvedValue({ data: [], error: null, count: 0 });
+
+        for (const label of ['All', 'Alle', 'الكل', 'Tümü']) {
+          vi.clearAllMocks();
+          setupChain();
+          mockFrom.mockReturnValue({ select: mockSelect });
+          mockReturns.mockResolvedValue({ data: [], error: null, count: 0 });
+
+          const { providers } = await searchProviders('', label, '', 12, 0);
+
+          expect(providers).toEqual([]);
+          // The query runs normally with no category constraint attached.
+          expect(mockSelect).toHaveBeenCalled();
+          expect(mockEq).not.toHaveBeenCalledWith('provider_categories.category_id', label);
+          expect(errorSpy).not.toHaveBeenCalled();
+        }
+
+        errorSpy.mockRestore();
+      });
+
+      it('still treats empty/null category as no filter', async () => {
+        mockReturns.mockResolvedValueOnce({ data: [], error: null, count: 0 });
+
+        await searchProviders('', '', '', 12, 0);
+
+        expect(mockSelect).toHaveBeenCalled();
+        const selectArg = mockSelect.mock.calls[0][0] as string;
+        expect(selectArg).not.toContain('provider_categories');
+      });
+    });
   });
 
   describe('fetchPopularCities', () => {
