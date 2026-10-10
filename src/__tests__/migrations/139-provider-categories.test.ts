@@ -248,6 +248,8 @@ describe('migration 139 — provider_categories (executed against Postgres)', ()
       expect(await junctionRows(ID.pNull)).toEqual([]);
     });
 
+    // A second PGlite boot + six execs takes ~1.1s alone but has timed out at
+    // the 5s default under full parallel load. Same budget as beforeAll.
     it('applies cleanly against zero providers (case 3)', async () => {
       const empty = new PGlite();
       try {
@@ -260,7 +262,7 @@ describe('migration 139 — provider_categories (executed against Postgres)', ()
       } finally {
         await empty.close();
       }
-    });
+    }, 60_000);
 
     it('backfill statement is idempotent (case 4)', async () => {
       const before = (
@@ -495,6 +497,8 @@ describe('migration 139 — provider_categories (executed against Postgres)', ()
   });
 
   describe('re-runnability', () => {
+    // A second PGlite boot + six execs takes ~1.1s alone but has timed out at
+    // the 5s default under full parallel load. Same budget as beforeAll.
     it('the whole migration applies a second time without error', async () => {
       // Project convention (108/101/105 use IF NOT EXISTS; 130/137 use
       // DROP POLICY IF EXISTS). Application is manual, so "apply again" is
@@ -513,7 +517,7 @@ describe('migration 139 — provider_categories (executed against Postgres)', ()
       } finally {
         await twice.close();
       }
-    });
+    }, 60_000);
   });
 
   describe('admin_update_provider — secondary_category_ids (Chunk B)', () => {

@@ -38,7 +38,10 @@ function run(
   }
 }
 
-describe('agent-monitor.sh', () => {
+// Every test in this file spawns the monitor script (plus fake gh/git shims):
+// ~1-4s each isolated, but they have exceeded the 5s vitest default more than
+// once under full parallel load. Suite-level budget, not a per-test bump.
+describe('agent-monitor.sh', { timeout: 30_000 }, () => {
   let sb: StubSandbox;
   beforeEach(() => {
     sb = makeSandbox('uflow-monitor-');
