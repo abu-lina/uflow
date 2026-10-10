@@ -14,7 +14,11 @@ Two constraints from the same user, also verbatim: a provider must not be "liste
 
 A provider gets up to five categories. One is the Primary Category, which is the only one ever displayed and the only one `listing_type` and `entityType` are derived from. The rest are Secondary Categories: they make the provider match in search, and are invisible everywhere else.
 
+_Display rule superseded post-QA by commit `8a4cea1c` (ADR 0001 amended in the same commit): while a category filter is active, the result card shows the filtered category, not the Primary._
+
 Searching "Turkish" returns both the restaurant that has `Türkisch` as Primary and the one that has it as Secondary, once each, with the Primary match ranked higher. Both rows still show the provider's own Primary Category name on the card.
+
+_Superseded the same way: with a category filter active, both cards show the filtered category (commit `8a4cea1c`, ADR 0001 amended)._
 
 Secondary Categories are set in edit mode only, by an admin or by the provider's owner. Chat registration is unchanged: it still collects exactly one category.
 
@@ -277,6 +281,8 @@ The backfill does not need to worry about R3: every backfilled provider has exac
 
 Signature and return columns **unchanged**: 14 args in the same order with the same defaults, returning the same 16 columns. No caller changes. `category_name` keeps coming from `LEFT JOIN categories c ON p.category_id = c.category_id`, so a result always displays the provider's own Primary Category and never a matched Secondary (decision 5).
 
+_Display rule superseded post-QA by commit `8a4cea1c` (ADR 0001 amended in the same commit): the RPC still returns the Primary's `category_name`, but under an active category filter the card badges the filtered category._
+
 Two edits to the body.
 
 **Matching.** Replace
@@ -510,7 +516,7 @@ Deliberate, with the inconsistency each one leaves:
 - **`search_providers` / `search_providers_enhanced`.** Dead RPCs, zero callers in `src/`. Left on Primary-only.
 - **`search_food_near_me`, `search_scoped_suggestions`.** Primary-only. For suggestions this means a `'cuisine'` label is not offered for a Secondary-only match, though the result list is still correct.
 - **`/food/[city]/[category]` SEO route.** Lists Primary members only. No sitemap generator exists, so the exposure stops there.
-- **Display surfaces.** `useImageFallback` galleries, map pin labels, `ProviderCard`, detail pages and modals, `SearchResultsList`, `DiscoveryResultsGrid`. All keep showing one category, which is decision 5, not an omission.
+- **Display surfaces.** `useImageFallback` galleries, map pin labels, `ProviderCard`, detail pages and modals, `SearchResultsList`, `DiscoveryResultsGrid`. All keep showing one category, which is decision 5, not an omission. Filtered result lists excepted post-QA: under an active category filter the card badges the filtered category (commit `8a4cea1c`, ADR 0001 amended in the same commit).
 - **Import and enrichment.** `upsert_joinhalal_providers`, `src/lib/import/joinhalal.ts`, `cuisine-category-mapper.ts` keep assigning exactly one category. The sync trigger gives each imported provider a correct one-row set for free.
 - **Category-keyed suggestions.** `get_suggested_offers_for_category` / `get_suggested_needs_for_category` stay keyed to the Primary Category.
 - **`category_type` taxonomy cleanup.** Follow-up issue, not filed here, per decision 10. 17 food categories have `category_type = NULL` and overlap semantically with the 8 typed `cuisine` rows added by migration 100; `Amerikanisch` has `slug = NULL`, which breaks its `/food/[city]/[category]` route. Multi-category works fine over the mess, it just makes it easier to see: nothing stops a provider holding both `Mediterran` (typed `cuisine`) and `Türkisch` (untyped). The next obvious request, "filter by cuisine _and_ dish type", does need `category_type` populated first.
