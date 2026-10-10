@@ -10,6 +10,7 @@ import {
 } from '@/features/search/constants/filterKeys';
 import type { Provider, SearchResult, AdminSearchOptions, ProviderSearchResponse } from './types';
 import { transformProviderToSearchResult } from './types';
+import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 
 async function loadProviderRelationIds(
   providerIds: string[],
@@ -60,13 +61,6 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
 }
 
 /**
- * Translated "all categories" labels. These are an explicit user choice
- * meaning "no category filter", not a broken filter value, so they must
- * never trip the invalid-category guard below.
- */
-const ALL_CATEGORIES_LABELS = ['All', 'Alle', 'الكل', 'Tümü'];
-
-/**
  * Check if a category value is a valid category ID (UUID).
  * Category IDs are UUIDs; anything else is not a usable filter.
  */
@@ -88,6 +82,26 @@ function isValidLocation(location: string | null | undefined): boolean {
   // Empty string, null, undefined all mean "all locations"
   if (!location) return false;
   return true;
+}
+
+/**
+ * Bound an attacker-controlled value for safe inclusion in a log line.
+ * The `?category=` param reaches console.error on an uncached SSR path;
+ * raw newlines would let one request forge extra log lines, and the
+ * value is unbounded. Control, format and line/paragraph-separator
+ * characters are escaped to \uXXXX and the value is capped.
+ * (Explicit ranges instead of \p{...} — tsconfig targets es5, no /u flag.)
+ */
+const UNSAFE_LOG_CHARS =
+  // eslint-disable-next-line no-control-regex
+  /[\x00-\x1f\x7f-\x9f\u00ad\u200b-\u200f\u2028-\u202e\u205f-\u2064\u2066-\u206f\ufeff]/g;
+
+function sanitizeLogValue(value: string, maxLength = 100): string {
+  const bounded = value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
+  return bounded.replace(
+    UNSAFE_LOG_CHARS,
+    (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
 }
 
 /**
@@ -279,7 +293,7 @@ export async function searchProviders(
   // filtered success (#254 post-QA).
   if (category && !hasCategoryFilter && !ALL_CATEGORIES_LABELS.includes(category)) {
     console.error(
-      `[searchProviders] Unrecognised category filter "${category}" — refusing to return unfiltered results`,
+      `[searchProviders] Unrecognised category filter "${sanitizeLogValue(category)}" — refusing to return unfiltered results`,
     );
     return { providers: [], totalCount: 0 };
   }

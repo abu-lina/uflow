@@ -319,7 +319,10 @@ describe('providers service', () => {
         const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
         mockReturns.mockResolvedValue({ data: [], error: null, count: 0 });
 
-        for (const label of ['All', 'Alle', 'الكل', 'Tümü']) {
+        // All six locales: en, de, ar, tr, ur, ps. Urdu 'سب' and Pashto 'ټول'
+        // were missing from the sentinel list and failed closed to an empty
+        // result set (#254 post-QA).
+        for (const label of ['All', 'Alle', 'الكل', 'Tümü', 'سب', 'ټول']) {
           vi.clearAllMocks();
           setupChain();
           mockFrom.mockReturnValue({ select: mockSelect });
@@ -345,6 +348,34 @@ describe('providers service', () => {
         expect(mockSelect).toHaveBeenCalled();
         const selectArg = mockSelect.mock.calls[0][0] as string;
         expect(selectArg).not.toContain('provider_categories');
+      });
+
+      it('does not let a category value with newlines forge extra log lines', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        await searchProviders('', 'bogus\n[searchProviders] forged line\r\nsecond', '', 12, 0);
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        const logged = errorSpy.mock.calls[0][0] as string;
+        expect(logged).not.toContain('\n');
+        expect(logged).not.toContain('\r');
+        // The diagnostic still identifies the offending value, escaped.
+        expect(logged).toContain('bogus');
+
+        errorSpy.mockRestore();
+      });
+
+      it('bounds the length of the logged category value', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        const huge = 'x'.repeat(5000);
+
+        await searchProviders('', huge, '', 12, 0);
+
+        const logged = errorSpy.mock.calls[0][0] as string;
+        expect(logged.length).toBeLessThan(300);
+        expect(logged).not.toContain(huge);
+
+        errorSpy.mockRestore();
       });
     });
   });

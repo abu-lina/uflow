@@ -96,7 +96,6 @@ export function CategoryGallerySection({ section, city }: CategoryGallerySection
       section: resolvedSection,
       city: city ?? null,
       categorySlug,
-      categoryId,
     });
     router.push(url);
   };

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 import { logSupabaseError } from '@/utils/errorUtils';
+import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import type { ProviderBadgeWithType } from '@/types/badges';
 
 // ============================================================================
@@ -141,8 +142,7 @@ function mapRowToCS(row: any): CommunityService {
 
 function isValidCategoryId(category: string | null | undefined): boolean {
   if (!category) return false;
-  const allTranslations = ['All', 'Alle', 'الكل', 'Tümü'];
-  if (allTranslations.includes(category)) return false;
+  if (ALL_CATEGORIES_LABELS.includes(category)) return false;
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   return uuidRegex.test(category);
 }
