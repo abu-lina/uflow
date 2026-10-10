@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 import { logSupabaseError } from '@/utils/errorUtils';
-import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
+import { isValidCategoryId } from '@/lib/categoryFilter';
 import type { ProviderBadgeWithType } from '@/types/badges';
 
 // ============================================================================
@@ -138,13 +138,6 @@ function mapRowToCS(row: any): CommunityService {
     created_at: row.created_at,
     updated_at: row.updated_at,
   };
-}
-
-function isValidCategoryId(category: string | null | undefined): boolean {
-  if (!category) return false;
-  if (ALL_CATEGORIES_LABELS.includes(category)) return false;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(category);
 }
 
 function isValidLocation(location: string | null | undefined): boolean {

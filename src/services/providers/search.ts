@@ -11,6 +11,7 @@ import {
 import type { Provider, SearchResult, AdminSearchOptions, ProviderSearchResponse } from './types';
 import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
+import { isValidCategoryId } from '@/lib/categoryFilter';
 
 async function loadProviderRelationIds(
   providerIds: string[],
@@ -58,20 +59,6 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
     const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
     return dateB - dateA;
   });
-}
-
-/**
- * Check if a category value is a valid category ID (UUID).
- * Category IDs are UUIDs; anything else is not a usable filter.
- */
-function isValidCategoryId(category: string | null | undefined): boolean {
-  if (!category) return false;
-
-  if (ALL_CATEGORIES_LABELS.includes(category)) return false;
-
-  // Check if it's a valid UUID format (category IDs are UUIDs)
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(category);
 }
 
 /**

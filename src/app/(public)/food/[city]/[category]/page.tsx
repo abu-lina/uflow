@@ -75,5 +75,8 @@ export default async function FoodCityCategoryPage({
     routeSection: 'food',
     routeCity: cityName,
     routeCategory: category.category_id,
+    // #254 post-QA: pass the already-fetched record so the filtered badge
+    // doesn't cost a second categories query.
+    routeCategoryRecord: category,
   });
 }

@@ -6,7 +6,9 @@ status: accepted
 
 A Provider needs to be findable under several Categories (a Turkish restaurant that sells Döner), but 134 files and ~12 RPCs read `providers.category_id` as if a Provider had exactly one Category, and `providers.listing_type` is derived from the Category's `applicable_section` at creation time. So we add `provider_categories (provider_id, category_id)` as the complete set of a Provider's Categories and keep `providers.category_id` as the Primary Category pointer, with the invariant that the junction always contains a row for `category_id`. Only matching reads the junction; every display path keeps reading `category_id` and keeps working unchanged.
 
-The Primary Category is the one shown in results and the one `listing_type` and `entityType` are derived from. Secondary Categories affect matching only, never display. There is no `is_primary` column: a second definition of "primary" is the sync bug this ADR exists to avoid.
+The Primary Category is the one `listing_type` and `entityType` are derived from, and the one shown wherever no category filter is active: unfiltered lists, free-text search, the provider's own detail page. Secondary Categories otherwise affect matching only, never display. There is no `is_primary` column: a second definition of "primary" is the sync bug this ADR exists to avoid.
+
+_Amended after post-QA user feedback (#254): while a category filter is active, every result card shows the filtered category — including providers that matched on a Secondary Category, which would otherwise badge a primary the user didn't ask about. The original rule ("the Primary Category is the one shown in results") read correctly in the spec but was a bug the moment a real user saw a filtered list: the badge silently answered a different question than the one the filter asked. The card still shows exactly one category; the badge source just follows the filter. Resolved once per page render and threaded to the card as `displayCategory`, which the card's existing locale-aware name path prefers over `category`._
 
 ## Considered options
 

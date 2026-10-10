@@ -2,12 +2,14 @@ import { Suspense } from 'react';
 
 import { searchProvidersAndCommunityServices } from '@/services/providers';
 import type { SearchResult } from '@/services/providers';
+import { getCategoryById } from '@/services/categories';
 import { inferSectionFromCategory, SECTION_META } from '@/config/sectionFilters';
 import type { Section } from '@/providers/search-provider';
 import {
   SEARCH_FILTER_KEY_SET,
   type SearchFilterKey,
 } from '@/features/search/constants/filterKeys';
+import { resolveFilteredCategoryLabel, type FilteredCategoryLabel } from '@/lib/categoryFilter';
 
 import { ProvidersContent } from './ProvidersContent';
 
@@ -18,8 +20,11 @@ export async function renderProvidersPage(opts: {
   routeSection?: Section;
   routeCategory?: string | null;
   routeCity?: string | null;
+  /** #254 post-QA: the /food/[city]/[category] route already fetched the
+      category row for its 404 check; passing it avoids a second query. */
+  routeCategoryRecord?: FilteredCategoryLabel | null;
 }) {
-  const { searchParams, routeSection, routeCategory, routeCity } = opts;
+  const { searchParams, routeSection, routeCategory, routeCity, routeCategoryRecord } = opts;
   const params = await searchParams;
   const query = typeof params.q === 'string' ? params.q : '';
 
@@ -56,6 +61,15 @@ export async function renderProvidersPage(opts: {
     .filter((key): key is SearchFilterKey => SEARCH_FILTER_KEY_SET.has(key));
   const filters = parsedFilters.length > 0 ? parsedFilters : undefined;
 
+  // #254 post-QA: when a real category filter is active, every result card
+  // displays the FILTERED category — a provider that matched on a secondary
+  // still shows the category the user asked for. Resolved once per render;
+  // sentinels (All/Alle/…) and unrecognised values yield null (primary).
+  const displayCategory = await resolveFilteredCategoryLabel(category, {
+    record: routeCategoryRecord ?? null,
+    fetchById: getCategoryById,
+  });
+
   let initialResults: SearchResult[] = [];
   let initialHasMore = false;
   let initialTotalCount = 0;
@@ -82,6 +96,7 @@ export async function renderProvidersPage(opts: {
     <Suspense fallback={null}>
       <ProvidersContent
         defaultLocation={location || undefined}
+        displayCategory={displayCategory}
         initialData={{
           results: initialResults,
           hasMore: initialHasMore,
