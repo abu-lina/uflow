@@ -915,6 +915,23 @@ export const tr = {
       desktopMessage:
         'Bu sayfa mobil cihazlar için optimize edilmiştir. Lütfen bir mobil cihazda açın.',
     },
+    additionalCategories: 'Ek kategoriler',
+    noAdditionalCategories: 'Seçilmedi',
+    secondaryCategoriesCleared: 'Ek kategoriler sıfırlandı',
+    secondaryCategoriesRejected: 'Kategoriler kaydedilemedi. Lütfen seçiminizi kontrol edin.',
+    secondaryCategoriesTooMany: 'En fazla 4 ek kategori ekleyebilirsiniz.',
+    secondaryCategoriesAllSection:
+      'Bu kategori tüm bölümler için geçerlidir ve ek kategori olamaz.',
+    secondaryCategoriesWrongSection: 'Ek kategoriler ana kategoriyle aynı bölüme ait olmalıdır.',
+    editAdditionalCategories: {
+      title: 'Ek kategoriler',
+      searchPlaceholder: 'Kategorileri ara...',
+      loading: 'Kategoriler yükleniyor...',
+      maxSelected: 'En fazla 4 ek kategori seçilebilir',
+      emptyForAllSection: 'Bu kategori için ek kategori mevcut değil.',
+      emptyNoPrimary: 'Önce bir ana kategori seçin.',
+      save: 'Kaydet',
+    },
     editSocial: {
       title: 'Sosyal Girişimler',
       description: 'Desteklemek istediğiniz sosyal girişimleri seçin.',

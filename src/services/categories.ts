@@ -81,7 +81,9 @@ export async function fetchUsedCategories(): Promise<Category[]> {
  * - 'ummah': categories used by approved providers with listing_type = 'ummah'
  * - 'store': categories used by approved providers with listing_type = 'store'
  */
-export async function fetchCategoriesBySection(section: import('@/config/sectionFilters').Section): Promise<Category[]> {
+export async function fetchCategoriesBySection(
+  section: import('@/config/sectionFilters').Section,
+): Promise<Category[]> {
   let categoryIds: string[];
 
   if (section === 'ummah') {
@@ -98,7 +100,9 @@ export async function fetchCategoriesBySection(section: import('@/config/section
       ? data.map((r: { category_id: string | null }) => r.category_id)
       : [];
     categoryIds = Array.from(
-      new Set(ids.filter((id): id is string => typeof id === 'string' && id !== 'null' && id !== '')),
+      new Set(
+        ids.filter((id): id is string => typeof id === 'string' && id !== 'null' && id !== ''),
+      ),
     );
   } else {
     // Food or Store: categories from providers filtered by listing_type
@@ -114,14 +118,15 @@ export async function fetchCategoriesBySection(section: import('@/config/section
       ? data.map((r: { category_id: string | null }) => r.category_id)
       : [];
     categoryIds = Array.from(
-      new Set(ids.filter((id): id is string => typeof id === 'string' && id !== 'null' && id !== '')),
+      new Set(
+        ids.filter((id): id is string => typeof id === 'string' && id !== 'null' && id !== ''),
+      ),
     );
   }
 
   if (categoryIds.length === 0) return [];
 
-  const applicableSectionScopes =
-    section === 'store' ? ['store', 'all'] : [section, 'all'];
+  const applicableSectionScopes = section === 'store' ? ['store', 'all'] : [section, 'all'];
 
   const { data: categories, error: categoriesError } = await supabase
     .from('categories')
@@ -164,18 +169,19 @@ export async function fetchFilteredCategories(
     }
 
     uniqueCategoryIds = Array.isArray(rpcData)
-      ? Array.from(new Set(
-          rpcData
-            .map((row: { category_id: string }) => row.category_id)
-            .filter((id: string): id is string => typeof id === 'string' && id !== 'null' && id !== ''),
-        ))
+      ? Array.from(
+          new Set(
+            rpcData
+              .map((row: { category_id: string }) => row.category_id)
+              .filter(
+                (id: string): id is string => typeof id === 'string' && id !== 'null' && id !== '',
+              ),
+          ),
+        )
       : [];
   } else {
     // No search query — use direct query (no ILIKE needed)
-    let req = supabase
-      .from('providers')
-      .select('category_id')
-      .eq('review_status', 'approved');
+    let req = supabase.from('providers').select('category_id').eq('review_status', 'approved');
 
     // Treat empty string or falsy as "all locations" (no filter)
     if (selectedLocation) {
@@ -242,10 +248,10 @@ export async function getCategoryById(id: string): Promise<Category | null> {
 }
 
 // Fetch categories filtered by section (food, store/business, ummah)
-export async function getCategoriesForSection(section: 'food' | 'store' | 'ummah'): Promise<Category[]> {
-  const sectionScopes = section === 'store'
-    ? ['store', 'all']
-    : [section, 'all'];
+export async function getCategoriesForSection(
+  section: 'food' | 'store' | 'ummah',
+): Promise<Category[]> {
+  const sectionScopes = section === 'store' ? ['store', 'all'] : [section, 'all'];
 
   const { data, error } = await supabase
     .from('categories')
@@ -278,6 +284,41 @@ export async function getProviderCategories(listingType?: 'food' | 'store'): Pro
   return data || [];
 }
 
+/**
+ * #254: options for the Secondary Category picker.
+ *
+ * The list is scoped to the Primary Category's `applicable_section` only —
+ * NOT PROVIDER_CATEGORY_SECTION_SCOPES, which would leak 'all' rows that
+ * the junction check trigger rejects anyway (R3). The Primary itself is
+ * excluded (it is already implied by providers.category_id).
+ *
+ * Returns [] when the primary is missing or lives in the 'all' section:
+ * 'all' primaries take no secondaries.
+ */
+export async function getSecondaryCategoryOptions(primaryCategoryId: string): Promise<Category[]> {
+  const { data: primary, error: primaryError } = await supabase
+    .from('categories')
+    .select('category_id, applicable_section')
+    .eq('category_id', primaryCategoryId)
+    .maybeSingle();
+
+  if (primaryError) throw primaryError;
+
+  const section = (primary as { applicable_section?: string } | null)?.applicable_section;
+  if (!section || section === 'all') return [];
+
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('applicable_section', section)
+    .neq('category_id', primaryCategoryId)
+    .order('name_de', { ascending: true })
+    .returns<Category[]>();
+
+  if (error) throw error;
+  return data || [];
+}
+
 // Fetch categories for social project creation (ummah section)
 export async function getSocialProjectCategories(): Promise<Category[]> {
   return getCategoriesForSection('ummah');
@@ -290,10 +331,7 @@ export async function getCategoryBySlug(
   slug: string,
   section?: 'food' | 'store' | 'ummah',
 ): Promise<Category | null> {
-  let query = supabase
-    .from('categories')
-    .select('*')
-    .eq('slug', slug);
+  let query = supabase.from('categories').select('*').eq('slug', slug);
 
   if (section) {
     query = query.in('applicable_section', [section, 'all']);

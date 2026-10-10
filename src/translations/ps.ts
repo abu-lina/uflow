@@ -918,6 +918,23 @@ export const ps = {
       desktopMessage:
         'دا پاڼه د موبایل وسیلو لپاره غوره شوې ده. مهرباني وکړئ دا په موبایل وسیله کې پرانیزئ.',
     },
+    additionalCategories: 'اضافي کټګورۍ',
+    noAdditionalCategories: 'هیڅ ونه غوره شوې',
+    secondaryCategoriesCleared: 'اضافي کټګورۍ بیا تنظیم شوې',
+    secondaryCategoriesRejected: 'کټګورۍ ونه ساتل شوې. مهرباني وکړئ خپله غورنه وګورئ.',
+    secondaryCategoriesTooMany: 'تاسو کولی شئ تر ۴ پورې اضافي کټګورۍ ورزیاتې کړئ.',
+    secondaryCategoriesAllSection:
+      'دا کټګوري د ټولو برخو لپاره ده او د اضافي کټګورۍ په توګه نشي کېدلی.',
+    secondaryCategoriesWrongSection: 'اضافي کټګورۍ باید د اصلي کټګورۍ له همدې برخې وي.',
+    editAdditionalCategories: {
+      title: 'اضافي کټګورۍ',
+      searchPlaceholder: 'کټګورۍ لټون وکړئ...',
+      loading: 'کټګورۍ لوډیږي...',
+      maxSelected: 'تر ډېره ۴ اضافي کټګورۍ غورول کېږي',
+      emptyForAllSection: 'د دې کټګورۍ لپاره اضافي کټګورۍ شتون نه لري.',
+      emptyNoPrimary: 'لومړی یوه اصلي کټګوري وغورئ.',
+      save: 'ساتل',
+    },
     editSocial: {
       title: 'ټولنیز نوښتونه',
       description: 'د هغو ټولنیزو نوښتونو غوره کړئ چې تاسو یې ملاتړ غواړئ.',

@@ -86,6 +86,10 @@ interface DiscoveryResultsGridProps {
   section?: Section;
   /** Plan 229: Total count of matching providers (from Supabase exact count). */
   totalCount?: number;
+  /** #254 post-QA: the active category filter's label. When set, every card
+      in this grid shows it instead of the provider's primary — a secondary
+      match still displays the category the user filtered by. */
+  displayCategory?: { name_de: string; name_en?: string } | null;
 }
 
 const SKELETON_COUNT = 8;
@@ -147,6 +151,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
   errorDescription,
   section,
   totalCount,
+  displayCategory,
 }: DiscoveryResultsGridProps) {
   const router = useRouter();
   const { t } = useLanguage();
@@ -281,6 +286,7 @@ export const DiscoveryResultsGrid = memo(function DiscoveryResultsGrid({
           >
             <ProviderCard
               {...itemToProviderCardProps(item)}
+              displayCategory={displayCategory}
               hideBookmark={hideBookmark}
               isBookmarked={enableBookmarks ? bookmarkedIds.includes(item.provider_id) : undefined}
               reviewStatus={showReviewStatus ? item.review_status : undefined}

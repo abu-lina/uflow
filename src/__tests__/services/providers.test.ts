@@ -226,9 +226,157 @@ describe('providers service', () => {
       await searchProviders('', '', '', 12, 0);
 
       expect(mockSelect).toHaveBeenCalledWith(
-        expect.stringContaining('category:categories(name_de, name_en, category_images)'),
+        expect.stringContaining(
+          'category:categories!providers_category_id_fkey(name_de, name_en, category_images)',
+        ),
         { count: 'exact' },
       );
+    });
+
+    describe('category filter via provider_categories junction (#254)', () => {
+      const CATEGORY_ID = '11111111-2222-3333-4444-555555555555';
+
+      it('embeds provider_categories!inner and filters on the junction column (case 43)', async () => {
+        await searchProviders('', CATEGORY_ID, '', 12, 0);
+
+        expect(mockSelect).toHaveBeenCalledWith(
+          expect.stringContaining('provider_categories!inner(category_id)'),
+          { count: 'exact' },
+        );
+        expect(mockEq).toHaveBeenCalledWith('provider_categories.category_id', CATEGORY_ID);
+        expect(mockEq).not.toHaveBeenCalledWith('category_id', CATEGORY_ID);
+      });
+
+      it('adds no provider_categories embed without a category filter (case 44)', async () => {
+        await searchProviders('', '', '', 12, 0);
+
+        const selectArg = mockSelect.mock.calls[0][0] as string;
+        expect(selectArg).not.toContain('provider_categories');
+      });
+
+      it('strips the provider_categories key from returned providers (case 45)', async () => {
+        const { getBadgesForEntities } = await import('@/services/badges');
+        vi.mocked(getBadgesForEntities).mockResolvedValueOnce(new Map());
+
+        mockReturns.mockResolvedValueOnce({
+          data: [
+            {
+              provider_id: 'p-1',
+              provider_name: 'Anatolia Grill',
+              provider_categories: [{ category_id: CATEGORY_ID }],
+            },
+          ],
+          error: null,
+          count: 1,
+        });
+
+        const { providers } = await searchProviders('', CATEGORY_ID, '', 12, 0);
+
+        expect(providers).toHaveLength(1);
+        expect('provider_categories' in providers[0]).toBe(false);
+        expect(providers[0].provider_id).toBe('p-1');
+      });
+
+      it('keeps totalCount from the count header (case 46)', async () => {
+        mockReturns.mockResolvedValueOnce({ data: [], error: null, count: 7 });
+
+        const { totalCount } = await searchProviders('', CATEGORY_ID, '', 12, 0);
+
+        expect(totalCount).toBe(7);
+      });
+    });
+
+    describe('invalid category filter fails closed and loud (#254)', () => {
+      it('returns empty results and logs an error for a non-UUID category instead of widening the result set', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        // 'Kebab / Döner' is a display label — exactly what reached this
+        // function in the reported bug and silently widened to all providers.
+        const { providers, totalCount } = await searchProviders('', 'Kebab / Döner', '', 12, 0);
+
+        expect(providers).toEqual([]);
+        expect(totalCount).toBe(0);
+        expect(errorSpy).toHaveBeenCalled();
+        // The query must never reach the DB: no select, no junction filter.
+        expect(mockSelect).not.toHaveBeenCalled();
+
+        errorSpy.mockRestore();
+      });
+
+      it('fails closed for a category slug too (slugs are not valid ids)', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        const { providers } = await searchProviders('', 'kebab-doener', '', 12, 0);
+
+        expect(providers).toEqual([]);
+        expect(errorSpy).toHaveBeenCalled();
+        expect(mockSelect).not.toHaveBeenCalled();
+
+        errorSpy.mockRestore();
+      });
+
+      it('treats known "all categories" labels as an explicit no-filter, not an error', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        mockReturns.mockResolvedValue({ data: [], error: null, count: 0 });
+
+        // All six locales: en, de, ar, tr, ur, ps. Urdu 'سب' and Pashto 'ټول'
+        // were missing from the sentinel list and failed closed to an empty
+        // result set (#254 post-QA).
+        for (const label of ['All', 'Alle', 'الكل', 'Tümü', 'سب', 'ټول']) {
+          vi.clearAllMocks();
+          setupChain();
+          mockFrom.mockReturnValue({ select: mockSelect });
+          mockReturns.mockResolvedValue({ data: [], error: null, count: 0 });
+
+          const { providers } = await searchProviders('', label, '', 12, 0);
+
+          expect(providers).toEqual([]);
+          // The query runs normally with no category constraint attached.
+          expect(mockSelect).toHaveBeenCalled();
+          expect(mockEq).not.toHaveBeenCalledWith('provider_categories.category_id', label);
+          expect(errorSpy).not.toHaveBeenCalled();
+        }
+
+        errorSpy.mockRestore();
+      });
+
+      it('still treats empty/null category as no filter', async () => {
+        mockReturns.mockResolvedValueOnce({ data: [], error: null, count: 0 });
+
+        await searchProviders('', '', '', 12, 0);
+
+        expect(mockSelect).toHaveBeenCalled();
+        const selectArg = mockSelect.mock.calls[0][0] as string;
+        expect(selectArg).not.toContain('provider_categories');
+      });
+
+      it('does not let a category value with newlines forge extra log lines', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        await searchProviders('', 'bogus\n[searchProviders] forged line\r\nsecond', '', 12, 0);
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        const logged = errorSpy.mock.calls[0][0] as string;
+        expect(logged).not.toContain('\n');
+        expect(logged).not.toContain('\r');
+        // The diagnostic still identifies the offending value, escaped.
+        expect(logged).toContain('bogus');
+
+        errorSpy.mockRestore();
+      });
+
+      it('bounds the length of the logged category value', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        const huge = 'x'.repeat(5000);
+
+        await searchProviders('', huge, '', 12, 0);
+
+        const logged = errorSpy.mock.calls[0][0] as string;
+        expect(logged.length).toBeLessThan(300);
+        expect(logged).not.toContain(huge);
+
+        errorSpy.mockRestore();
+      });
     });
   });
 

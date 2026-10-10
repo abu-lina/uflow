@@ -42,6 +42,8 @@ export interface AdminProviderEditData {
   socialInstagram?: string | null;
   providerImages?: string | null;
   communityServiceIds?: string[];
+  /** #254: replace-list of Secondary Category ids (max 4, same section as Primary). */
+  secondaryCategoryIds?: string[];
   openingHours?: Record<string, unknown> | null;
   verificationMethod?: 'online' | 'onsite' | null;
   hasCertificate?: boolean;
@@ -178,6 +180,18 @@ export function buildLocationsPayload(
   return { locations: data.locations };
 }
 
+/**
+ * #254: Secondary Categories as a replace-list, like menu_items /
+ * delivery_links. The key's presence matters: omitting it leaves the set
+ * untouched, [] clears every non-primary junction row.
+ */
+export function buildSecondaryCategoriesPayload(
+  data: Partial<AdminProviderEditData>,
+): Record<string, unknown> {
+  if (data.secondaryCategoryIds === undefined) return {};
+  return { secondary_category_ids: data.secondaryCategoryIds };
+}
+
 function buildRpcPayload(
   editData: AdminProviderEditData,
   listingType?: 'food' | 'store' | string | null,
@@ -212,6 +226,11 @@ function buildRpcPayload(
   const communityService = buildCommunityServicePayload(editData);
   if (Object.keys(communityService).length > 0) {
     Object.assign(payload, communityService);
+  }
+
+  const secondaryCategories = buildSecondaryCategoriesPayload(editData);
+  if (Object.keys(secondaryCategories).length > 0) {
+    Object.assign(payload, secondaryCategories);
   }
 
   const locations = buildLocationsPayload(editData);

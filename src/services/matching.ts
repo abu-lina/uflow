@@ -53,7 +53,7 @@ export async function findProvidersNeedingMyOffers(providerId: string): Promise<
       .select(
         `
         *,
-        category:categories(name_de, name_en)
+        category:categories!providers_category_id_fkey(name_de, name_en)
       `,
       )
       .in('provider_id', matchedProviderIds)
@@ -149,7 +149,7 @@ export async function findProvidersOfferingMyNeeds(providerId: string): Promise<
       .select(
         `
         *,
-        category:categories(name_de, name_en)
+        category:categories!providers_category_id_fkey(name_de, name_en)
       `,
       )
       .in('provider_id', matchedProviderIds)

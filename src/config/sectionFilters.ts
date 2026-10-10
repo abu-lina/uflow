@@ -94,7 +94,7 @@ export function getAllowedFilters(section: Section): SectionFilter[] {
 const ESSEN_TRINKEN_CATEGORY_ID = '20c10efe-404b-4a39-bb81-5089a0332d78';
 
 /** Stable UUID for "Gemeinschaft & Spenden". */
-const GEMEINSCHAFT_SPENDEN_CATEGORY_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
+export const GEMEINSCHAFT_SPENDEN_CATEGORY_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
 
 /**
  * Infers the section from a category UUID.
@@ -137,13 +137,23 @@ export function resolveSectionFromSearchParams(params: URLSearchParams): Section
   return 'food';
 }
 
-/** Resolves section from route context (query params first for backward compat, then pathname). */
+/**
+ * Resolves section from route context.
+ *
+ * Precedence (#254):
+ *   1. An explicit ?section= param — highest priority (deep links).
+ *   2. The pathname — canonical section routes (/food, /ummah, /stores)
+ *      are the section authority. ?category= on these URLs carries a leaf
+ *      category (cuisine, store type), not a section, so it must not
+ *      override the path.
+ *   3. inferSectionFromCategory — last resort for genuinely sectionless
+ *      legacy URLs such as /providers?category=<parent-uuid>.
+ */
 export function resolveSectionFromRoute(
   pathname: string | null | undefined,
   params: URLSearchParams,
 ): Section {
-  // Explicit section/category params take highest priority (backward compat, deep links)
-  if (params.has('section') || params.has('category')) {
+  if (params.has('section')) {
     return resolveSectionFromSearchParams(params);
   }
 
@@ -153,6 +163,6 @@ export function resolveSectionFromRoute(
   if (routePath === '/ummah' || routePath.startsWith('/ummah/')) return 'ummah';
   if (routePath === '/stores' || routePath.startsWith('/stores/')) return 'store';
 
-  // Default fallback
+  // Sectionless route: legacy ?category= inference, then the D9 default (food).
   return resolveSectionFromSearchParams(params);
 }

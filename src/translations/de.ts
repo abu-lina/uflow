@@ -925,6 +925,25 @@ export const de = {
       desktopMessage:
         'Diese Seite ist für mobile Geräte optimiert. Bitte öffnen Sie sie auf einem Mobilgerät.',
     },
+    additionalCategories: 'Weitere Kategorien',
+    noAdditionalCategories: 'Keine ausgewählt',
+    secondaryCategoriesCleared: 'Weitere Kategorien wurden zurückgesetzt',
+    secondaryCategoriesRejected:
+      'Die Kategorien konnten nicht gespeichert werden. Bitte prüfe die Auswahl.',
+    secondaryCategoriesTooMany: 'Du kannst bis zu 4 weitere Kategorien hinzufügen.',
+    secondaryCategoriesAllSection:
+      'Diese Kategorie gilt für alle Bereiche und kann keine weitere Kategorie sein.',
+    secondaryCategoriesWrongSection:
+      'Weitere Kategorien müssen zum selben Bereich wie die Hauptkategorie gehören.',
+    editAdditionalCategories: {
+      title: 'Weitere Kategorien',
+      searchPlaceholder: 'Kategorien durchsuchen...',
+      loading: 'Lade Kategorien...',
+      maxSelected: 'Maximal 4 weitere Kategorien möglich',
+      emptyForAllSection: 'Für diese Kategorie sind keine weiteren Kategorien verfügbar.',
+      emptyNoPrimary: 'Wähle zuerst eine Hauptkategorie aus.',
+      save: 'Speichern',
+    },
     editSocial: {
       title: 'Soziale Initiativen',
       description: 'Wähle soziale Initiativen aus, die du unterstützen möchtest.',

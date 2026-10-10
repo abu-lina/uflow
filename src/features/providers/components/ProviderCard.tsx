@@ -42,6 +42,12 @@ interface ProviderCardProps extends Omit<Provider, 'id'> {
   hideBookmark?: boolean;
   /** Plan 196: distance from the user's location in km, for "near me" search results */
   distanceKm?: number;
+  /** #254 post-QA: when a category filter is active the badge shows the
+      FILTERED category instead of the provider's primary (a provider that
+      matched on a secondary still shows the category the user asked for).
+      Resolved through the same locale-aware path as `category`; surfaces
+      without a category filter omit it and keep showing the primary. */
+  displayCategory?: { name_de: string; name_en?: string } | null;
 }
 
 export const ProviderCard = React.memo(
@@ -70,6 +76,7 @@ export const ProviderCard = React.memo(
         showReviewStatus = false,
         hideBookmark = false,
         distanceKm,
+        displayCategory,
         // Plan 089: Section classification fields for computed badges
         listing_type,
         verification_method,
@@ -182,22 +189,27 @@ export const ProviderCard = React.memo(
 
       // Get category name based on current language
       // Categories are stored in DE/EN only, so we use English for non-German languages when available
+      // #254 post-QA: an active category filter overrides the badge source —
+      // every result card shows the filtered category, resolved through this
+      // same locale-aware path. `category` itself is untouched: it still
+      // drives the fallback stock image below.
       const getCategoryName = () => {
-        if (!category) return t('search.unnamed');
+        const badgeCategory = displayCategory ?? category;
+        if (!badgeCategory) return t('search.unnamed');
 
         // For English, prefer English name
         if (language === 'en') {
-          return category.name_en || category.name_de || t('search.unnamed');
+          return badgeCategory.name_en || badgeCategory.name_de || t('search.unnamed');
         }
 
         // For German, prefer German name
         if (language === 'de') {
-          return category.name_de || category.name_en || t('search.unnamed');
+          return badgeCategory.name_de || badgeCategory.name_en || t('search.unnamed');
         }
 
         // For all other languages (ar, tr, ur, ps), prefer English over German
         // This provides better internationalization than showing German text
-        return category.name_en || category.name_de || t('search.unnamed');
+        return badgeCategory.name_en || badgeCategory.name_de || t('search.unnamed');
       };
       const categoryName = getCategoryName();
       const specialtyNames = (offers || []).map((offer) => offer.name_de).filter(Boolean);

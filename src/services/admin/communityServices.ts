@@ -15,12 +15,14 @@ import type { CommunityService } from '@/services/communityServices';
  * Fetch a community service by ID for admin editing.
  * community_service_id = provider_id for ummah providers.
  */
-export async function getCommunityServiceForAdmin(communityServiceId: string): Promise<CommunityService | null> {
+export async function getCommunityServiceForAdmin(
+  communityServiceId: string,
+): Promise<CommunityService | null> {
   const supabase = getSupabaseAdmin();
 
   const { data: rows, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)')
     .eq('provider_id', communityServiceId)
     .eq('listing_type', 'ummah');
 
@@ -52,7 +54,7 @@ export interface AdminCommunityServiceEditData {
 export async function updateCommunityServiceFields(
   communityServiceId: string,
   editData: AdminCommunityServiceEditData,
-  _adminUserId: string
+  _adminUserId: string,
 ): Promise<Record<string, unknown>> {
   const supabase = getSupabaseAdmin();
 
@@ -77,9 +79,7 @@ export async function updateCommunityServiceFields(
       : null;
   }
   if (editData.addressZip !== undefined) {
-    updatePayload.address_zip = editData.addressZip
-      ? sanitizeTextInput(editData.addressZip)
-      : null;
+    updatePayload.address_zip = editData.addressZip ? sanitizeTextInput(editData.addressZip) : null;
   }
   if (editData.addressCity !== undefined) {
     updatePayload.address_city = editData.addressCity
@@ -135,7 +135,7 @@ export async function updateCommunityServiceReview(
   communityServiceId: string,
   reviewStatus: 'approved' | 'rejected' | 'needs_revision',
   reviewFeedback: string | null,
-  _adminUserId: string
+  _adminUserId: string,
 ): Promise<Record<string, unknown>> {
   const supabase = getSupabaseAdmin();
 

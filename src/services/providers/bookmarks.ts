@@ -26,7 +26,7 @@ export async function getAllBookmarkedItems(
   const { data: bookmarks, error } = await supabase
     .from('bookmarks')
     .select(
-      'provider_id, providers(*, category:categories(name_de, name_en, category_images), locations(*))',
+      'provider_id, providers(*, category:categories!providers_category_id_fkey(name_de, name_en, category_images), locations(*))',
     )
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
