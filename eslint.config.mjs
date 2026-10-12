@@ -130,6 +130,7 @@ const eslintConfig = [
   {
     ignores: [
       'node_modules/',
+      '.worktrees/**', // Parallel lane worktrees (docs/agents/lane.md)
       '.next/',
       '.open-next/',
       '.flowbaby/', // Local Flowbaby memory system (gitignored)
