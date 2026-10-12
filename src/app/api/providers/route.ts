@@ -66,7 +66,7 @@ const SUBMIT_ERROR_MAP: Record<
   CATEGORY_UNKNOWN: { status: 400, error: 'Please choose a valid category.', field: 'category' },
   CITY_NOT_SUPPORTED: {
     status: 400,
-    error: 'Please choose a city from the list.',
+    error: 'We could not find that city. Pick a suggestion or check the spelling.',
     field: 'city',
   },
   HALAL_ATTESTATION_REQUIRED: {

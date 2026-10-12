@@ -4,6 +4,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { TrustLevel } from '@/types/badges';
 import { makeProviderKey } from '@/lib/import/joinhalal';
+import { CITY_ALIASES } from '@/lib/enrichment/delivery-platform/city-coords';
+import { lookupCanonicalCity } from './city-geocode.server';
 import type { CreateProviderResult } from './mutations';
 
 /** ProviderFormData minus File fields, plus already-uploaded public image URLs. */
@@ -289,10 +291,34 @@ async function assertNoDuplicateProvider(
   }
 }
 
+/** Fail-open canonicalisation (#606): resolve the typed value through the
+ * alias map (exact key, then diacritic-folded case-insensitive) so known
+ * variants store canonically even when the geocoder cannot run. */
+function canonicalizeViaAliases(city: string): string {
+  const direct = CITY_ALIASES[city];
+  if (direct) return direct;
+  const folded = stripDiacritics(city.toLowerCase());
+  for (const [alias, canonical] of Object.entries(CITY_ALIASES)) {
+    if (stripDiacritics(alias.toLowerCase()) === folded) return canonical;
+  }
+  return city;
+}
+
 /**
- * The recommend path (#606) only accepts cities from the closed `cities`
- * list. A match canonicalises the submitted value to the stored `city_name`
- * so 'berlin' is stored as 'Berlin'. No match is caller-visible bad input.
+ * The recommend path (#606) never stores an unvalidated free-text city, and
+ * never blocks a user whose town is missing from the `cities` catalog.
+ * Accept chain:
+ *   1. canonicalised catalog match — stored as the catalog `city_name`;
+ *   2. else the server-side geocoder resolves the value — the canonical
+ *      name it returns is stored (and goes through the same R1 duplicate
+ *      normalisation, so a resolved name and a catalog name for the same
+ *      town still collide);
+ *   3. else CITY_NOT_SUPPORTED — only for a lookup that ran and matched
+ *      nothing. A geocoder outage (`unavailable`) fails OPEN, settled at
+ *      the gate: blocking submissions on an external service is the exact
+ *      failure class this issue is about, and pending human review is the
+ *      backstop. The typed value is stored alias-canonicalised. Fallback
+ *      cities land on the provider only — the catalog stays curated.
  * Other flows (import UI, owner create, chat, scripts) keep free-text cities.
  */
 async function canonicalizeRecommendCity(
@@ -310,13 +336,28 @@ async function canonicalizeRecommendCity(
   const match = (rows ?? []).find(
     (row: { city_name: string }) => stripDiacritics(row.city_name.toLowerCase()) === submittedNorm,
   );
-  if (!match) {
-    throw new ProviderSubmitError(
-      'CITY_NOT_SUPPORTED',
-      'Recommend submission rejected: city not in the closed list',
-    );
+  if (match) {
+    formData.city = match.city_name;
+    return;
   }
-  formData.city = match.city_name;
+
+  const geocode = await lookupCanonicalCity(submittedCity);
+  if (geocode.kind === 'resolved') {
+    formData.city = geocode.canonicalName;
+    return;
+  }
+  if (geocode.kind === 'unavailable') {
+    console.warn({
+      event: 'city_geocode_unavailable',
+      submitted_city: submittedCity,
+    });
+    formData.city = canonicalizeViaAliases(submittedCity);
+    return;
+  }
+  throw new ProviderSubmitError(
+    'CITY_NOT_SUPPORTED',
+    'Recommend submission rejected: city could not be resolved',
+  );
 }
 
 const TAG_SYNONYMS = {

@@ -458,7 +458,8 @@ export const en = {
       duplicateApproved: 'This provider is already listed.',
       duplicatePending: 'This provider was already recommended and is under review.',
       viewExisting: 'View entry',
-      cityNotListed: 'Please choose a city from the suggestions.',
+      cityNotListed:
+        'We could not find that city. Pick a suggestion or check the spelling and try again.',
       categoryInvalid: 'Please choose a valid category.',
       halalRequired: 'Please answer all three halal questions.',
       rateLimited: 'Too many attempts. Please try again later.',

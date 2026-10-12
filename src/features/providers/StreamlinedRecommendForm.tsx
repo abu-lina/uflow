@@ -46,6 +46,7 @@ import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
 import type { OSMPlace } from '@/types/osm';
 import { searchPlacesInCity } from '@/services/placeAutocompleteService';
+import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 import { supabase } from '@/lib/supabase/client';
 
 interface StreamlinedRecommendFormProps {
@@ -275,12 +276,25 @@ function inferCategoryFromName(name: string): string {
   return '';
 }
 
-/** A selectable city from the closed `cities` list (#606). The recommend
- * form only offers rows from this table — the same list the server enforces
- * — so a suggestion can never be one the API would reject. */
+/** A selectable city suggestion (#606). `catalog` rows come from the
+ * `cities` table — the primary list, always shown first. `geocoder` rows
+ * come from the Nominatim fallback and appear only when the catalog has no
+ * match, so towns outside the catalog can still be recommended. */
 interface CitySuggestion {
   city_name: string;
   country: string;
+  source: 'catalog' | 'geocoder';
+}
+
+/** Shape of one Nominatim search result (the fields the fallback reads). */
+interface NominatimCityResult {
+  name: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    country?: string;
+  };
 }
 
 export function StreamlinedRecommendForm({
@@ -310,6 +324,7 @@ export function StreamlinedRecommendForm({
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
   const cityListRef = useRef<CitySuggestion[] | null>(null);
+  const citySearchAbortControllerRef = useRef<AbortController | null>(null);
   const [isCitySelected, setIsCitySelected] = useState(!!initialCity);
 
   // Provider name search state
@@ -552,9 +567,15 @@ export function StreamlinedRecommendForm({
   ]);
 
   // City search function
-  // #606: suggestions come from the closed `cities` list, fetched once and
-  // filtered locally. The server enforces the same list on submit.
+  // #606: suggestions come from the `cities` catalog first — fetched once
+  // and filtered locally. When the catalog matches nothing, fall back to
+  // Nominatim so towns outside the catalog can still be recommended; the
+  // server re-validates the pick on submit either way.
   const searchCities = useCallback(async (query: string) => {
+    // Cancel previous geocoder request
+    citySearchAbortControllerRef.current?.abort();
+    citySearchAbortControllerRef.current = new AbortController();
+
     if (query.trim().length < 2) {
       setCitySearchResults([]);
       setIsCitySearching(false);
@@ -569,16 +590,60 @@ export function StreamlinedRecommendForm({
       if (!cityListRef.current) {
         const { data, error } = await supabase.from('cities').select('city_name, country');
         if (error) throw error;
-        cityListRef.current = (data ?? []) as CitySuggestion[];
+        cityListRef.current = ((data ?? []) as { city_name: string; country: string }[]).map(
+          (row) => ({ ...row, source: 'catalog' as const }),
+        );
       }
       const needle = query.trim().toLowerCase();
-      setCitySearchResults(
-        cityListRef.current
-          .filter((city) => city.city_name.toLowerCase().includes(needle))
-          .slice(0, 10),
+      const catalogMatches = cityListRef.current
+        .filter((city) => city.city_name.toLowerCase().includes(needle))
+        .slice(0, 10);
+      if (catalogMatches.length > 0) {
+        setCitySearchResults(catalogMatches);
+        setSelectedCityIndex(-1);
+        return;
+      }
+
+      // Catalog miss: Nominatim fallback.
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?` +
+          `format=json&` +
+          `q=${encodeURIComponent(query)}&` +
+          `addressdetails=1&` +
+          `limit=10&` +
+          `featuretype=city,town,village&` +
+          `countrycodes=`, // Empty = all countries
+        {
+          signal: citySearchAbortControllerRef.current.signal,
+          headers: {
+            'User-Agent': 'UmmahFlow/1.0', // Required by Nominatim ToS
+            'Accept-Language': 'de,en', // Prefer German, fallback to English
+          },
+        },
       );
+      if (!response.ok) throw new Error('Failed to fetch city suggestions');
+
+      const data: NominatimCityResult[] = await response.json();
+      const seen = new Set<string>();
+      const geocoderMatches: CitySuggestion[] = [];
+      for (const result of data) {
+        const cityName =
+          result.address?.city || result.address?.town || result.address?.village || result.name;
+        if (!cityName || seen.has(cityName)) continue;
+        seen.add(cityName);
+        geocoderMatches.push({
+          city_name: cityName,
+          country: normalizeCountryNameForDisplay(result.address?.country ?? ''),
+          source: 'geocoder',
+        });
+        if (geocoderMatches.length >= 10) break;
+      }
+      setCitySearchResults(geocoderMatches);
       setSelectedCityIndex(-1);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return; // Request was cancelled, ignore
+      }
       console.error('[City Search] Error fetching cities:', error);
       setCitySearchResults([]);
     } finally {

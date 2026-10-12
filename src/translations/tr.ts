@@ -457,7 +457,8 @@ export const tr = {
       duplicateApproved: 'Bu sağlayıcı zaten listede.',
       duplicatePending: 'Bu sağlayıcı zaten önerildi ve inceleniyor.',
       viewExisting: 'Kaydı görüntüle',
-      cityNotListed: 'Lütfen önerilerden bir şehir seçin.',
+      cityNotListed:
+        'Bu şehir bulunamadı. Bir öneri seçin veya yazımı kontrol edip tekrar deneyin.',
       categoryInvalid: 'Lütfen geçerli bir kategori seçin.',
       halalRequired: 'Lütfen üç helal sorusunun tümünü yanıtlayın.',
       rateLimited: 'Çok fazla deneme. Lütfen daha sonra tekrar deneyin.',

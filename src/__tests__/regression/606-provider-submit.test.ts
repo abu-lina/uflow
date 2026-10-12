@@ -32,6 +32,11 @@ vi.mock('@/lib/supabase/admin', () => ({
   getSupabaseAdmin: vi.fn(),
 }));
 
+// The server-side geocoder is mocked so CI never makes a live network call.
+vi.mock('@/features/providers/services/city-geocode.server', () => ({
+  lookupCanonicalCity: vi.fn(),
+}));
+
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: vi.fn(() => true),
   getClientIdentifier: vi.fn(() => 'ip:127.0.0.1'),
@@ -191,6 +196,12 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
       id: 'user-1',
       email: 'user@example.com',
     } as never);
+    // Safe default: a lookup that ran and found nothing. Tests that exercise
+    // the fallback set their own outcome; nothing here may hit the network.
+    const { lookupCanonicalCity } = await import(
+      '@/features/providers/services/city-geocode.server'
+    );
+    vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'no_match' });
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -339,8 +350,10 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     });
   });
 
-  describe('closed city list on the recommend path', () => {
-    it('recommend submission with a city outside the list → 400 CITY_NOT_SUPPORTED', async () => {
+  describe('closed city list + geocoder fallback on the recommend path', () => {
+    it('recommend submission with an unresolvable city → 400 CITY_NOT_SUPPORTED', async () => {
+      // Catalog miss AND a lookup that ran and found nothing — the only
+      // rejection path. An outage is never a rejection (see fail-open test).
       const { response, json, providerInsert } = await post(
         validBody({ submissionSource: 'recommend', city: 'Atlantis' }),
         { cities: ['Berlin', 'München'] },
@@ -357,6 +370,68 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
       );
       expect(response.status).toBe(200);
       expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Berlin');
+    });
+
+    it('catalog miss → geocoder resolves: the canonical name is stored, not the typed one', async () => {
+      const { lookupCanonicalCity } = await import(
+        '@/features/providers/services/city-geocode.server'
+      );
+      vi.mocked(lookupCanonicalCity).mockResolvedValue({
+        kind: 'resolved',
+        canonicalName: 'Neu-Ulm',
+      });
+      const { response, providerInsert } = await post(
+        validBody({ submissionSource: 'recommend', city: 'neu ulm' }),
+        { cities: ['Berlin', 'München'] },
+      );
+      expect(response.status).toBe(200);
+      expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Neu-Ulm');
+      expect(lookupCanonicalCity).toHaveBeenCalledWith('neu ulm');
+    });
+
+    it('geocoder unavailable → fail open: submit succeeds, typed value alias-canonicalised', async () => {
+      // Settled at the #606 gate: a geocoder outage must never block a
+      // recommendation — pending human review is the backstop. 'frankfurt'
+      // resolves through CITY_ALIASES to 'Frankfurt am Main'.
+      const { lookupCanonicalCity } = await import(
+        '@/features/providers/services/city-geocode.server'
+      );
+      vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'unavailable' });
+      const { response, providerInsert } = await post(
+        validBody({ submissionSource: 'recommend', city: 'frankfurt' }),
+        { cities: ['Berlin', 'München'] },
+      );
+      expect(response.status).toBe(200);
+      expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Frankfurt am Main');
+    });
+
+    it('a geocoder-resolved city and the same catalog town still collide under R1 → 409', async () => {
+      // The fallback city is stored canonicalised and goes through the same
+      // normalised duplicate scan as any catalog city.
+      const { lookupCanonicalCity } = await import(
+        '@/features/providers/services/city-geocode.server'
+      );
+      vi.mocked(lookupCanonicalCity).mockResolvedValue({
+        kind: 'resolved',
+        canonicalName: 'Berlin',
+      });
+      const { response, json, providerInsert } = await post(
+        validBody({ submissionSource: 'recommend', city: 'berlino' }),
+        {
+          cities: ['München'], // catalog miss → geocoder resolves to 'Berlin'
+          providers: [
+            {
+              provider_id: 'aaaa1111-0000-4000-8000-000000000002',
+              provider_name: 'Test Restaurant',
+              address_city: 'Berlin',
+              review_status: 'approved',
+            },
+          ],
+        },
+      );
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      expect(providerInsert).not.toHaveBeenCalled();
     });
 
     it('submissions without the recommend marker skip the closed-list check', async () => {

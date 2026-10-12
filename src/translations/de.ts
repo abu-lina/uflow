@@ -461,7 +461,8 @@ export const de = {
       duplicateApproved: 'Dieser Anbieter ist bereits eingetragen.',
       duplicatePending: 'Dieser Anbieter wurde bereits empfohlen und wird geprüft.',
       viewExisting: 'Eintrag ansehen',
-      cityNotListed: 'Bitte wähle eine Stadt aus den Vorschlägen.',
+      cityNotListed:
+        'Diese Stadt wurde nicht gefunden. Wähle einen Vorschlag oder prüfe die Schreibweise und versuche es erneut.',
       categoryInvalid: 'Bitte wähle eine gültige Kategorie.',
       halalRequired: 'Bitte beantworte alle drei Halal-Fragen.',
       rateLimited: 'Zu viele Versuche. Bitte versuche es später erneut.',
