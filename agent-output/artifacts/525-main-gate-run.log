@@ -1,0 +1,1404 @@
+===== 01-ioc-scan =====
+==============================================
+  Supply Chain IOC Scanner
+  Last IOC update: 2026-02-25
+==============================================
+
+🔍 Scanning package files for malicious packages...
+
+🔍 Scanning GitHub Actions workflows for malicious actions...
+
+✅ No supply chain IOCs detected.
+
+===== 02-npm-ci =====
+npm warn deprecated @types/react-window@2.0.0: This is a stub types definition. react-window provides its own type definitions, so you do not need this installed.
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+npm warn deprecated critters@0.0.25: Ownership of Critters has moved to the Nuxt team, who will be maintaining the project going forward. If you'd like to keep using Critters, please switch to the actively-maintained fork at https://github.com/danielroe/beasties
+npm warn deprecated tsconfck@3.1.6: unmaintained
+
+> ummah-flow@0.15.21 prepare
+> husky
+
+
+added 890 packages, and audited 891 packages in 8s
+
+348 packages are looking for funding
+  run `npm fund` for details
+
+9 high severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+===== 03-lint =====
+
+> ummah-flow@0.15.21 lint
+> eslint . --max-warnings 131
+
+
+/private/tmp/uflow-main-gate/src/__tests__/api/admin/upload-certificate.test.ts
+  137:96  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/api/chat/route.test.ts
+  134:13  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/app/community-service-detail-page.server-path.test.tsx
+  5:53  warning  'props' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/app/community-service-transform.test.ts
+  127:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  127:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/app/search-page-storage.test.tsx
+   16:65  warning  Do not delete dynamically computed property keys  @typescript-eslint/no-dynamic-delete
+   25:67  warning  Do not delete dynamically computed property keys  @typescript-eslint/no-dynamic-delete
+   83:45  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   89:55  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  147:41  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/private/tmp/uflow-main-gate/src/__tests__/components/MobileProviderDetail.safe-area.test.tsx
+  3:10  warning  'screen' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/components/UnifiedGallery.test.tsx
+  23:7  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/private/tmp/uflow-main-gate/src/__tests__/components/providers/contact-intent-tracking.test.tsx
+  58:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  82:21  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/components/ui/Modal.test.tsx
+   3:37  warning  'act' is defined but never used      @typescript-eslint/no-unused-vars
+   3:42  warning  'waitFor' is defined but never used  @typescript-eslint/no-unused-vars
+  30:45  warning  Forbidden non-null assertion         @typescript-eslint/no-non-null-assertion
+  32:12  warning  Forbidden non-null assertion         @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/features/chat/ChatMessage.test.tsx
+  3:26  warning  'fireEvent' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/features/chat/guardrails.test.ts
+  5:8  warning  'RedirectCounter' is defined but never used  @typescript-eslint/no-unused-vars
+  6:8  warning  'GuardrailResult' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/features/chat/tool-executor.test.ts
+   74:48  warning  'checkCityExists' is defined but never used  @typescript-eslint/no-unused-vars
+  386:73  warning  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/private/tmp/uflow-main-gate/src/__tests__/features/chat/useChat.test.ts
+  76:7  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/hooks/useAriaHidden.test.ts
+  4:8  warning  'React' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/hooks/useFocusTrap.test.ts
+  2:22  warning  'act' is defined but never used    @typescript-eslint/no-unused-vars
+  3:55  warning  'vi' is defined but never used     @typescript-eslint/no-unused-vars
+  4:8   warning  'React' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/hooks/useScrollLock.test.ts
+  2:22  warning  'act' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/lib/enrichment/delivery-enricher.test.ts
+    1:36  warning  'beforeEach' is defined but never used  @typescript-eslint/no-unused-vars
+  147:12  warning  Forbidden non-null assertion            @typescript-eslint/no-non-null-assertion
+  148:12  warning  Forbidden non-null assertion            @typescript-eslint/no-non-null-assertion
+  149:12  warning  Forbidden non-null assertion            @typescript-eslint/no-non-null-assertion
+  166:12  warning  Forbidden non-null assertion            @typescript-eslint/no-non-null-assertion
+  167:12  warning  Forbidden non-null assertion            @typescript-eslint/no-non-null-assertion
+  168:12  warning  Forbidden non-null assertion            @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/lib/enrichment/delivery-platform/geocoder.test.ts
+  12:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  13:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  19:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  25:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  31:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  37:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  45:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  51:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  57:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  63:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/lib/enrichment/delivery-platform/normalizer.test.ts
+   19:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   20:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   21:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   22:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   45:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   46:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   47:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   48:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   55:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   62:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   72:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   73:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   84:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+   85:24  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  102:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  119:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/lib/enrichment/delivery-platform/provider-matcher.test.ts
+    8:15  warning  'VenueLike' is defined but never used  @typescript-eslint/no-unused-vars
+   76:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+   77:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+   78:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+   84:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+   85:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  106:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  112:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  113:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  123:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  124:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  134:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  144:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  145:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  169:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  170:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+  171:12  warning  Forbidden non-null assertion           @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/lib/enrichment/delivery-platform/wolt-client.test.ts
+  195:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/lib/telemetry/perf-telemetry.test.ts
+  14:8  warning  'RequestContext' is defined but never used    @typescript-eslint/no-unused-vars
+  15:8  warning  'DependencyTiming' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/migrations/145-provider-edit-rpc.test.ts
+  3:15  warning  'AdminProviderEditData' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/regression/plan017-i18n-location-sentinel.test.tsx
+  13:18  warning  'waitFor' is defined but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/__tests__/regression/plan085-profile-nav-links.test.tsx
+  49:12  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/private/tmp/uflow-main-gate/src/__tests__/regression/plan123-navbar-auth-state.test.tsx
+  141:22  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  168:22  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  193:22  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/regression/plan172-location-persistence.test.tsx
+   16:65  warning  Do not delete dynamically computed property keys  @typescript-eslint/no-dynamic-delete
+   25:67  warning  Do not delete dynamically computed property keys  @typescript-eslint/no-dynamic-delete
+   77:45  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+   83:55  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  122:41  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/private/tmp/uflow-main-gate/src/__tests__/services/admin/providerEdit-locations.test.ts
+  127:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  133:12  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/services/fetchAllValidCities.test.ts
+   30:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   47:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   67:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/private/tmp/uflow-main-gate/src/__tests__/services/providers-multi-location.test.ts
+  192:14  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/__tests__/utils/navigationUtils-062.test.ts
+  77:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/private/tmp/uflow-main-gate/src/__tests__/utils/navigationUtils-179.test.ts
+  66:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  71:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/private/tmp/uflow-main-gate/src/app/(public)/signup/SignupPageContent.tsx
+  165:9  warning  Do not use `window.location.href` to navigate to internal Next.js pages. Use `redirect()` in the render phase, or `useRouter().push()` in Client Components' event handlers instead. See: https://nextjs.org/docs/messages/no-location-assign-relative-destination  @next/next/no-location-assign-relative-destination
+
+/private/tmp/uflow-main-gate/src/app/city-selection/CitySelectionClient.tsx
+  333:7  warning  Do not use `window.location.href` to navigate to internal Next.js pages. Use `redirect()` in the render phase, or `useRouter().push()` in Client Components' event handlers instead. See: https://nextjs.org/docs/messages/no-location-assign-relative-destination  @next/next/no-location-assign-relative-destination
+
+/private/tmp/uflow-main-gate/src/components/ui/CustomToast.tsx
+  21:41  warning  Do not use `window.location.href` to navigate to internal Next.js pages. Use `redirect()` in the render phase, or `useRouter().push()` in Client Components' event handlers instead. See: https://nextjs.org/docs/messages/no-location-assign-relative-destination  @next/next/no-location-assign-relative-destination
+
+/private/tmp/uflow-main-gate/src/features/admin/components/EnrichmentReviewPanel.tsx
+  64:6  warning  React Hook useCallback has a missing dependency: 'providerId'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/private/tmp/uflow-main-gate/src/features/admin/hooks/__tests__/useProviderReview.test.ts
+    3:27  warning  'waitFor' is defined but never used  @typescript-eslint/no-unused-vars
+  133:7   warning  Forbidden non-null assertion         @typescript-eslint/no-non-null-assertion
+  175:7   warning  Forbidden non-null assertion         @typescript-eslint/no-non-null-assertion
+  224:7   warning  Forbidden non-null assertion         @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/features/providers/__tests__/ProviderImageFallback.test.tsx
+  23:13  warning  'container' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/private/tmp/uflow-main-gate/src/features/providers/pages/ProviderDetailPage.tsx
+  66:9  warning  The 'locations' logical expression could make the dependencies of useMemo Hook (at line 74) change on every render. To fix this, wrap the initialization of 'locations' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/private/tmp/uflow-main-gate/src/features/search/components/EmptyCityCard.test.tsx
+   58:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   84:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  180:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  234:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/private/tmp/uflow-main-gate/src/hooks/useWaitlistFlow.ts
+  326:11  warning  Do not use `window.location.href` to navigate to internal Next.js pages. Use `redirect()` in the render phase, or `useRouter().push()` in Client Components' event handlers instead. See: https://nextjs.org/docs/messages/no-location-assign-relative-destination  @next/next/no-location-assign-relative-destination
+
+/private/tmp/uflow-main-gate/src/lib/enrichment/delivery-platform/__tests__/ubereats-client.test.ts
+    3:15  warning  'UberEatsMenuCategory' is defined but never used  @typescript-eslint/no-unused-vars
+  251:12  warning  Forbidden non-null assertion                      @typescript-eslint/no-non-null-assertion
+  252:12  warning  Forbidden non-null assertion                      @typescript-eslint/no-non-null-assertion
+  253:12  warning  Forbidden non-null assertion                      @typescript-eslint/no-non-null-assertion
+  254:12  warning  Forbidden non-null assertion                      @typescript-eslint/no-non-null-assertion
+  255:12  warning  Forbidden non-null assertion                      @typescript-eslint/no-non-null-assertion
+  256:12  warning  Forbidden non-null assertion                      @typescript-eslint/no-non-null-assertion
+  257:12  warning  Forbidden non-null assertion                      @typescript-eslint/no-non-null-assertion
+
+/private/tmp/uflow-main-gate/src/utils/toastMessages.ts
+  74:34  warning  Do not use `window.location.href` to navigate to internal Next.js pages. Use `redirect()` in the render phase, or `useRouter().push()` in Client Components' event handlers instead. See: https://nextjs.org/docs/messages/no-location-assign-relative-destination  @next/next/no-location-assign-relative-destination
+
+✖ 131 problems (0 errors, 131 warnings)
+
+
+===== 04-typecheck =====
+
+> ummah-flow@0.15.21 type-check
+> tsc --noEmit
+
+
+===== 05-i18n =====
+
+> ummah-flow@0.15.21 i18n:check
+> node scripts/check-i18n.mjs
+
+
+[de] missing keys: 0
+  - none
+
+[ar] missing keys: 0
+  - none
+
+[tr] missing keys: 0
+  - none
+
+[ur] missing keys: 0
+  - none
+
+[ps] missing keys: 0
+  - none
+
+All locale files are key-complete vs en.
+
+===== 06-test =====
+
+> ummah-flow@0.15.21 test:coverage
+> vitest run --coverage
+
+
+ RUN  v5.0.2 /private/tmp/uflow-main-gate
+      Coverage enabled with v8
+
+Not implemented: navigation to another Document
+Not implemented: navigation to another Document
+Error: useAuth must be used within an AuthProvider
+    at useAuth (/private/tmp/uflow-main-gate/src/providers/auth-provider.tsx:150:11)
+    at /private/tmp/uflow-main-gate/src/__tests__/hooks/useAuth.test.tsx:13:22
+    at TestComponent (/private/tmp/uflow-main-gate/node_modules/@testing-library/react/dist/pure.js:309:27)
+    at renderWithHooks (/private/tmp/uflow-main-gate/node_modules/react-dom/cjs/react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (/private/tmp/uflow-main-gate/node_modules/react-dom/cjs/react-dom.development.js:20103:13)
+    at beginWork (/private/tmp/uflow-main-gate/node_modules/react-dom/cjs/react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (/private/tmp/uflow-main-gate/node_modules/react-dom/cjs/react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (/private/tmp/uflow-main-gate/node_modules/jsdom/lib/generated/idl/EventListener.js:26:30)
+    at innerInvokeEventListeners (/private/tmp/uflow-main-gate/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:378:16)
+    at invokeEventListeners (/private/tmp/uflow-main-gate/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:320:3)
+Error: useAuth must be used within an AuthProvider
+    at useAuth (/private/tmp/uflow-main-gate/src/providers/auth-provider.tsx:150:11)
+    at /private/tmp/uflow-main-gate/src/__tests__/hooks/useAuth.test.tsx:13:22
+    at TestComponent (/private/tmp/uflow-main-gate/node_modules/@testing-library/react/dist/pure.js:309:27)
+    at renderWithHooks (/private/tmp/uflow-main-gate/node_modules/react-dom/cjs/react-dom.development.js:15486:18)
+    at mountIndeterminateComponent (/private/tmp/uflow-main-gate/node_modules/react-dom/cjs/react-dom.development.js:20103:13)
+    at beginWork (/private/tmp/uflow-main-gate/node_modules/react-dom/cjs/react-dom.development.js:21626:16)
+    at HTMLUnknownElement.callCallback (/private/tmp/uflow-main-gate/node_modules/react-dom/cjs/react-dom.development.js:4164:14)
+    at HTMLUnknownElement.callTheUserObjectsOperation (/private/tmp/uflow-main-gate/node_modules/jsdom/lib/generated/idl/EventListener.js:26:30)
+    at innerInvokeEventListeners (/private/tmp/uflow-main-gate/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:378:16)
+    at invokeEventListeners (/private/tmp/uflow-main-gate/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:320:3)
+
+ Test Files  297 passed | 1 skipped (298)
+      Tests  2715 passed | 24 skipped (2739)
+   Start at  18:34:12
+   Duration  40.22s (environment 35%, tests 25%, import 23%, setup 10%, worker 4%, transform 4%)
+
+    Isolate  298 workers spawned · ~559ms startup each (spawn + environment, per file)
+             at least ~14.58s faster with isolate: false — reuses workers across files instead of one per file
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   36.86 |    34.95 |   32.19 |   36.92 |                   
+ src               |   75.92 |    70.83 |     100 |    74.5 |                   
+  middleware.ts    |   75.92 |    70.83 |     100 |    74.5 | 73-76,130,137-159 
+ src/__mocks__     |   65.38 |    92.59 |   59.09 |   65.38 |                   
+  sonner.ts        |       0 |      100 |     100 |       0 | 3-5               
+  ...base-admin.ts |   91.89 |    92.59 |   92.85 |   91.89 | 147-150           
+  zod.ts           |       0 |      100 |       0 |       0 | 3-30              
+ ...error-boundary |       0 |      100 |       0 |       0 |                   
+  ...rBoundary.tsx |       0 |      100 |       0 |       0 | 3                 
+ ...ts/ui/skeleton |       0 |      100 |       0 |       0 |                   
+  Skeleton.tsx     |       0 |      100 |       0 |       0 | 3                 
+ ...@/lib/supabase |       0 |        0 |       0 |       0 |                   
+  client.ts        |       0 |        0 |       0 |       0 | 3-28              
+ ...ks__/@supabase |       0 |      100 |     100 |       0 |                   
+  supabase-js.ts   |       0 |      100 |     100 |       0 | 3                 
+ ...__mocks__/next |       0 |      100 |       0 |       0 |                   
+  navigation.ts    |       0 |      100 |     100 |       0 | 3-12              
+  router.ts        |       0 |      100 |       0 |       0 | 3-4               
+ src/__tests__     |       0 |        0 |       0 |       0 |                   
+  test-utils.tsx   |       0 |        0 |       0 |       0 | 13-26             
+ ..._tests__/mocks |     100 |      100 |       0 |     100 |                   
+  providerData.ts  |     100 |      100 |       0 |     100 |                   
+ ..._tests__/utils |    60.9 |       65 |   42.42 |   60.82 |                   
+  test-utils.tsx   |    60.9 |       65 |   42.42 |   60.82 | ...80-286,291-292 
+ src/app           |       0 |        0 |       0 |       0 |                   
+  error.tsx        |       0 |      100 |       0 |       0 | 11-23             
+  layout.tsx       |       0 |        0 |       0 |       0 | 15-48             
+  loading.tsx      |       0 |      100 |       0 |       0 | 4                 
+  page.tsx         |       0 |        0 |       0 |       0 | 29-44             
+ ...ices/[id]/edit |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 17-413            
+ .../edit/category |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 21-176            
+ ...d]/edit/images |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 26-208            
+ ...id]/edit/needs |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 23-235            
+ ...d]/edit/offers |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 23-235            
+ ...ard/enrichment |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 9-13              
+ ...shboard/import |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 5-28              
+ ...ders/[id]/edit |   30.12 |     6.86 |   23.52 |   32.05 |                   
+  page.tsx         |   30.12 |     6.86 |   23.52 |   32.05 | ...44-254,278-280 
+ .../edit/category |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 14-147            
+ .../edit/delivery |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 10-207            
+ ...dit/enrichment |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 10-18             
+ ...id]/edit/halal |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 17-556            
+ ...id]/edit/hours |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 10-120            
+ ...d]/edit/images |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 14-218            
+ ...edit/locations |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 23-185            
+ ...[id]/edit/menu |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 10-217            
+ ...d]/edit/social |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 15-146            
+ ...d]/edit/values |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 28-210            
+ ...(public)/about |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 4                 
+ .../(public)/chat |      75 |    66.66 |   66.66 |      75 |                   
+  page.tsx         |      75 |    66.66 |   66.66 |      75 | 19,24,39          
+ ...ity/[cityName] |       0 |        0 |       0 |       0 |                   
+  ...ntEffects.tsx |       0 |      100 |       0 |       0 | 12-22             
+  ...e1Content.tsx |       0 |        0 |       0 |       0 | 20-47             
+  page.tsx         |       0 |        0 |       0 |       0 | 12-95             
+ ...unity-services |       0 |      100 |       0 |       0 |                   
+  loading.tsx      |       0 |      100 |       0 |       0 | 6-23              
+  not-found.tsx    |       0 |      100 |       0 |       0 | 9                 
+ ...ty_service_id] |   16.66 |    66.17 |   18.75 |   19.14 |                   
+  ...ageClient.tsx |    8.82 |    72.22 |    7.14 |   10.34 | 16-21,33,88-187   
+  page.tsx         |      30 |    42.85 |     100 |   33.33 | 15-35             
+ ...public)/create |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 15-46             
+ ...)/create-quick |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 21-202            
+ ...e-quick/review |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 16-365            
+ .../create/basics |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 18-74             
+ ...asics/category |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 22-159            
+ ...e/basics/needs |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 31-640            
+ .../basics/offers |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 39-749            
+ ...create/contact |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 16-224            
+ ...)/create/halal |   48.64 |    51.51 |   44.44 |   53.12 |                   
+  page.tsx         |   48.64 |    51.51 |   44.44 |   53.12 | ...1-75,78-79,140 
+ ...ate/import-osm |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 15-86             
+ ...reate/location |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 21-479            
+ ...)/create/media |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 27-178            
+ ...e/media/images |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 18-128            
+ ...e/media/social |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 22-150            
+ ...eate/recommend |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 15-88             
+ ...mmend/category |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 21-139            
+ ...commend/offers |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 31-397            
+ ...ocial-category |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 22-108            
+ .../(public)/food |      25 |      100 |      25 |      25 |                   
+  loading.tsx      |       0 |      100 |       0 |       0 | 6-24              
+  not-found.tsx    |       0 |      100 |       0 |       0 | 9                 
+ ...c)/food/[city] |   64.28 |    66.66 |      50 |   64.28 |                   
+  page.tsx         |   64.28 |    66.66 |      50 |   64.28 | 49-56             
+ ...ty]/[category] |   66.66 |    57.14 |      50 |   66.66 |                   
+  page.tsx         |   66.66 |    57.14 |      50 |   66.66 | 62-73             
+ ...orgot-password |       0 |        0 |       0 |       0 |                   
+  ...geContent.tsx |       0 |        0 |       0 |       0 | 23-177            
+  page.tsx         |       0 |      100 |       0 |       0 | 5                 
+ ...lic)/impressum |       0 |        0 |       0 |       0 |                   
+  ...umContent.tsx |       0 |        0 |       0 |       0 | 13-94             
+  page.tsx         |       0 |      100 |       0 |       0 | 4                 
+ ...(public)/login |   43.75 |    31.42 |   58.33 |   43.03 |                   
+  ...geContent.tsx |    44.3 |    31.42 |   63.63 |   43.58 | ...27-203,249-295 
+  page.tsx         |       0 |      100 |       0 |       0 | 5                 
+ ...c)/manual-user |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 6-19              
+ ...owner-decision |   76.19 |    71.79 |    87.5 |   77.41 |                   
+  ...onContent.tsx |      80 |    71.79 |     100 |   81.35 | ...07-108,114-116 
+  page.tsx         |       0 |      100 |       0 |       0 | 5-12              
+ ...public)/p/[id] |       0 |        0 |       0 |       0 |                   
+  ...ageClient.tsx |       0 |        0 |       0 |       0 | 15-146            
+  loading.tsx      |       0 |      100 |       0 |       0 | 2-6               
+  page.tsx         |       0 |      100 |       0 |       0 | 16-26             
+ ...privacy-policy |       0 |        0 |       0 |       0 |                   
+  ...cyContent.tsx |       0 |        0 |       0 |       0 | 13-416            
+  page.tsx         |       0 |      100 |       0 |       0 | 4                 
+ ...ublic)/profile |   34.71 |    33.46 |   22.72 |   36.26 |                   
+  ...leContent.tsx |   35.44 |    33.46 |   24.19 |   37.07 | ...5,899-989,1067 
+  loading.tsx      |       0 |      100 |       0 |       0 | 6-32              
+  page.tsx         |       0 |      100 |       0 |       0 | 7                 
+ ...profile/delete |       0 |        0 |       0 |       0 |                   
+  ...teContent.tsx |       0 |        0 |       0 |       0 | 28-167            
+  page.tsx         |       0 |        0 |       0 |       0 | 6-22              
+ ...)/profile/edit |       0 |        0 |       0 |       0 |                   
+  ...itContent.tsx |       0 |        0 |       0 |       0 | 34-259            
+  page.tsx         |       0 |      100 |       0 |       0 | 7                 
+ .../[provider_id] |      80 |       50 |     100 |     100 |                   
+  page.tsx         |      80 |       50 |     100 |     100 | 11                
+ ...vider_id]/edit |      80 |       50 |     100 |     100 |                   
+  page.tsx         |      80 |       50 |     100 |     100 | 10                
+ .../edit/category |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 13-202            
+ ...d]/edit/images |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 16-213            
+ ...id]/edit/needs |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 13-216            
+ ...d]/edit/offers |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 13-216            
+ ...d]/edit/social |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 15-154            
+ ...lic)/providers |   64.62 |    61.13 |   40.42 |   67.01 |                   
+  ...rsContent.tsx |   62.77 |     62.3 |      40 |   65.43 | ...33,655,685,746 
+  loading.tsx      |       0 |      100 |       0 |       0 | 6-24              
+  not-found.tsx    |       0 |      100 |       0 |       0 | 9                 
+  ...idersPage.tsx |   82.75 |    55.26 |      75 |   82.75 | 35-48,78          
+ ...reset-password |       0 |        0 |       0 |       0 |                   
+  ...geContent.tsx |       0 |        0 |       0 |       0 | 28-271            
+  page.tsx         |       0 |      100 |       0 |       0 | 5                 
+ ...(public)/saved |   65.31 |    57.51 |   33.33 |   66.66 |                   
+  loading.tsx      |       0 |      100 |       0 |       0 | 6-23              
+  page.tsx         |   66.08 |    57.51 |   35.71 |   67.46 | ...15-477,518-568 
+ ...public)/search |   79.35 |    61.29 |   74.68 |   80.79 |                   
+  page.tsx         |   79.35 |    61.29 |   74.68 |   80.79 | ...38-752,780,799 
+ ...public)/signup |   26.19 |    18.75 |   18.75 |    26.5 |                   
+  ...geContent.tsx |    26.5 |    18.75 |      20 |   26.82 | 49,72-76,87-296   
+  page.tsx         |       0 |      100 |       0 |       0 | 5                 
+ ...up/check-email |       0 |      100 |       0 |       0 |                   
+  page.tsx         |       0 |      100 |       0 |       0 | 19-79             
+ ...public)/stores |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 12-15             
+ ...(public)/terms |       0 |        0 |       0 |       0 |                   
+  ...ceContent.tsx |       0 |        0 |       0 |       0 | 13-264            
+  page.tsx         |       0 |      100 |       0 |       0 | 4                 
+ ...(public)/ummah |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 12-15             
+ ...adges/unverify |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 7-96              
+ .../badges/verify |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 7-101             
+ ...min/check-role |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 14-70             
+ ...-services/[id] |   89.47 |       80 |     100 |   89.47 |                   
+  route.ts         |   89.47 |       80 |     100 |   89.47 | 52-59             
+ ...munity-service |   87.09 |    69.23 |     100 |   87.09 |                   
+  route.ts         |   87.09 |    69.23 |     100 |   87.09 | 41-45,54,128      
+ .../edit-provider |   93.75 |    79.48 |     100 |   93.75 |                   
+  route.ts         |   93.75 |    79.48 |     100 |   93.75 | 44-49,58          
+ ...ohol-conflicts |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 27-77             
+ ...ent/candidates |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 30-234            
+ ...nhalal/dry-run |   91.17 |    84.21 |     100 |    90.9 |                   
+  route.ts         |   91.17 |    84.21 |     100 |    90.9 | 54,58,75          
+ ...pi/admin/needs |   71.79 |    44.73 |   33.33 |   75.67 |                   
+  route.ts         |   71.79 |    44.73 |   33.33 |   75.67 | ...37,51-52,69-72 
+ ...i/admin/offers |   79.48 |    52.63 |   66.66 |   81.08 |                   
+  route.ts         |   79.48 |    52.63 |   66.66 |   81.08 | 17,22,29,37,69-72 
+ ...providers/[id] |   61.22 |    56.66 |      50 |   61.22 |                   
+  route.ts         |   61.22 |    56.66 |      50 |   61.22 | 18-61             
+ ...delivery-links |      85 |    66.66 |     100 |      85 |                   
+  route.ts         |      85 |    66.66 |     100 |      85 | 47,52-59          
+ ...[id]/locations |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 6-59              
+ ...ders/[id]/menu |      85 |    66.66 |     100 |      85 |                   
+  route.ts         |      85 |    66.66 |     100 |      85 | 47,52-59          
+ ...efresh-session |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 15-159            
+ ...munity-service |      84 |    72.72 |     100 |      84 |                   
+  route.ts         |      84 |    72.72 |     100 |      84 | 52-56,125-132     
+ ...eview-provider |   59.09 |    40.47 |     100 |   59.09 |                   
+  route.ts         |   59.09 |    40.47 |     100 |   59.09 | ...,78-90,157-189 
+ ...admin/set-role |      75 |    72.91 |     100 |    74.5 |                   
+  route.ts         |      75 |    72.91 |     100 |    74.5 | ...53,166,179-180 
+ ...ad-certificate |   32.43 |     12.5 |     100 |   32.43 |                   
+  route.ts         |   32.43 |     12.5 |     100 |   32.43 | 32-98             
+ ...n/upload-image |    2.77 |        0 |       0 |    2.77 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 16-104            
+ ...api/auth/login |   38.53 |    31.11 |      75 |   38.88 |                   
+  route.ts         |   38.53 |    31.11 |      75 |   38.88 | ...82-283,304-305 
+ ...pi/auth/logout |       0 |      100 |       0 |       0 |                   
+  route.ts         |       0 |      100 |       0 |       0 | 4-7               
+ ...uth/magic-link |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 21-430            
+ ...ink-diagnostic |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 12-188            
+ ...ic-link-status |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 15-115            
+ ...reset-password |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 6-145             
+ ...pi/auth/signup |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 21-322            
+ ...ify-magic-link |   91.17 |    71.42 |     100 |   91.17 |                   
+  route.ts         |   91.17 |    71.42 |     100 |   91.17 | ...35,252,318,352 
+ ...dgeId]/confirm |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 15-86             
+ ...adgeId]/revoke |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 15-78             
+ .../badges/entity |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 13-84             
+ src/app/api/chat  |   52.38 |    40.54 |   39.13 |   52.36 |                   
+  route.ts         |   52.38 |    40.54 |   39.13 |   52.36 | ...69-597,607-634 
+ .../conversations |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 12-59             
+ ...ersations/[id] |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 15-136            
+ ...k-email-exists |   76.59 |    76.92 |     100 |   76.08 |                   
+  route.ts         |   76.59 |    76.92 |     100 |   76.08 | ...,80-81,107-113 
+ ...app/api/cities |   88.23 |       90 |     100 |   88.23 |                   
+  route.ts         |   88.23 |       90 |     100 |   88.23 | 83-86             
+ ...rest/subscribe |   88.57 |    83.33 |     100 |   88.57 |                   
+  route.ts         |   88.57 |    83.33 |     100 |   88.57 | 20,54,106-107     
+ .../confirm-email |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 6-225             
+ ...irmation-token |   10.81 |     4.54 |      50 |   11.11 |                   
+  route.ts         |   10.81 |     4.54 |      50 |   11.11 | 17-102            
+ ...app/api/health |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 50-62             
+ ...stagram/scrape |   58.92 |    32.85 |      50 |   58.92 |                   
+  route.ts         |   58.92 |    32.85 |      50 |   58.92 | ...38-151,168-171 
+ ...p/api/manifest |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 7-218             
+ ...utreach/action |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 12-96             
+ ...outreach/claim |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 15-144            
+ ...rsquare/search |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 4-112             
+ .../api/providers |     100 |    88.23 |     100 |     100 |                   
+  route.ts         |     100 |    88.23 |     100 |     100 | 75-85             
+ ...oviders/search |     100 |    97.56 |     100 |     100 |                   
+  route.ts         |     100 |    97.56 |     100 |     100 | 81                
+ .../api/push/send |   45.94 |     37.5 |   33.33 |   45.71 |                   
+  route.ts         |   45.94 |     37.5 |   33.33 |   45.71 | ...59-306,327-394 
+ ...push/subscribe |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 91-293            
+ ...end-auth-email |   77.27 |    59.09 |     100 |   77.27 |                   
+  route.ts         |   77.27 |    59.09 |     100 |   77.27 | 20,28,36,62-63    
+ ...er/export-data |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 14-122            
+ .../waitlist/join |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 14-154            
+ ...aitlist/status |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 21-97             
+ ...subscribe-city |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 20-154            
+ ...aitlist/update |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 23-167            
+ ...nrich-provider |   81.48 |    86.36 |     100 |   81.48 |                   
+  route.ts         |   81.48 |    86.36 |     100 |   81.48 | 27-28,67-69       
+ .../auth/callback |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 9-368             
+ ...p/auth/confirm |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 8-145             
+ ...city-selection |   35.22 |    19.54 |   43.33 |   35.06 |                   
+  ...ionClient.tsx |   37.33 |    20.15 |   44.82 |   37.24 | ...09-323,412-550 
+  page.tsx         |       0 |        0 |       0 |       0 | 24-39             
+ src/app/pwa-start |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 20-37             
+ src/app/waitlist  |       0 |      100 |       0 |       0 |                   
+  layout.tsx       |       0 |      100 |       0 |       0 | 9                 
+  page.tsx         |       0 |      100 |       0 |       0 | 8-12              
+ src/app/welcome   |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 24-84             
+ ...ponents/common |   19.14 |    31.57 |      25 |   20.68 |                   
+  Card.tsx         |       0 |      100 |       0 |       0 | 9-39              
+  ...FooterBar.tsx |   52.94 |    61.53 |   53.84 |   58.06 | 63-66,112-129     
+  ...ileScreen.tsx |       0 |        0 |       0 |       0 | 13-65             
+  Portal.tsx       |       0 |        0 |       0 |       0 | 6-9               
+  ...ActionBar.tsx |       0 |        0 |       0 |       0 | 22-69             
+ ...error-boundary |       0 |        0 |   16.66 |       0 |                   
+  ...rBoundary.tsx |       0 |        0 |   16.66 |       0 | 18-73             
+ ...unity-services |       0 |        0 |       0 |       0 |                   
+  ...tailModal.tsx |       0 |        0 |       0 |       0 | 49-639            
+  ...Preloader.tsx |       0 |        0 |       0 |       0 | 10-33             
+ ...ponents/create |       0 |        0 |       0 |       0 |                   
+  ...essSearch.tsx |       0 |        0 |       0 |       0 | 31-198            
+  ...ramImport.tsx |       0 |        0 |       0 |       0 | 27-221            
+  ...ptionCard.tsx |       0 |      100 |       0 |       0 | 20                
+ ...mponents/debug |       0 |        0 |       0 |       0 |                   
+  ...tionDebug.tsx |       0 |        0 |       0 |       0 | 10-21             
+  ...reaTester.tsx |       0 |        0 |       0 |       0 | 10-47             
+  ...reenDebug.tsx |       0 |        0 |       0 |       0 | 12-32             
+  ...FlowDebug.tsx |       0 |        0 |       0 |       0 | 24-244            
+ ...ponents/layout |   47.82 |    32.32 |    37.5 |   48.07 |                   
+  BottomSpacer.tsx |       0 |        0 |       0 |       0 | 55-61             
+  ClientHeader.tsx |       0 |      100 |       0 |       0 | 14                
+  ...Providers.tsx |    90.9 |       50 |     100 |   88.88 | 47                
+  ...entLayout.tsx |       0 |        0 |       0 |       0 | 73                
+  ...ntSection.tsx |     100 |       75 |     100 |     100 | 55                
+  ...topFooter.tsx |       0 |        0 |       0 |       0 | 7-9               
+  ...ageLayout.tsx |       0 |        0 |       0 |       0 | 47-58             
+  ...geContent.tsx |       0 |        0 |       0 |       0 | 36-43             
+  ...Container.tsx |       0 |        0 |       0 |       0 | 34-41             
+  Header.tsx       |   48.59 |    42.85 |   31.03 |   48.51 | ...81-185,269-356 
+  ...ingLayout.tsx |       0 |      100 |       0 |       0 | 10                
+  ...geUpdater.tsx |       0 |      100 |       0 |       0 | 7-14              
+  MobileHeader.tsx |       0 |        0 |       0 |       0 | 22-30             
+  MobileLayout.tsx |       0 |      100 |       0 |       0 | 11-12             
+  MobileNavbar.tsx |       0 |        0 |       0 |       0 | 26                
+  PageContent.tsx  |     100 |    78.78 |     100 |     100 | ...02,110,129-134 
+  ...ntWrapper.tsx |       0 |        0 |       0 |       0 | 61-189            
+  PageHeader.tsx   |   59.25 |    43.54 |   71.42 |   60.37 | ...55,162,178-184 
+  PageLayout.tsx   |       0 |        0 |       0 |       0 | 35-140            
+  ...entLayout.tsx |   72.54 |    46.29 |   53.84 |   78.26 | ...89-192,237-271 
+  ...ageHeader.tsx |       0 |        0 |       0 |       0 | 61-71             
+  SplashLayout.tsx |       0 |        0 |       0 |       0 | 24-53             
+ ...ponents/shared |   11.89 |    14.63 |   11.92 |   12.01 |                   
+  AboutCard.tsx    |       0 |        0 |       0 |       0 | 14                
+  ...geContent.tsx |       0 |        0 |       0 |       0 | 23-171            
+  AboutSection.tsx |       0 |      100 |       0 |       0 | 7-28              
+  ...tionModal.tsx |       0 |        0 |       0 |       0 | 21-23             
+  ...ryGallery.tsx |       0 |        0 |       0 |       0 | 22-136            
+  ...rySection.tsx |       0 |        0 |       0 |       0 | 29-167            
+  CityCard.tsx     |       0 |        0 |       0 |       0 | 26-34             
+  ...mptyState.tsx |    6.25 |        0 |       0 |    6.66 | 16-223            
+  ...essNavbar.tsx |     100 |     90.9 |     100 |     100 | 99,114            
+  ...eRedirect.tsx |       0 |        0 |       0 |       0 | 15-36             
+  CityListItem.tsx |       0 |        0 |       0 |       0 | 30-46             
+  ...archModal.tsx |       0 |        0 |       0 |       0 | 52-377            
+  ...tionModal.tsx |       0 |        0 |       0 |       0 | 39-332            
+  ...ceGallery.tsx |       0 |        0 |       0 |       0 | 17-163            
+  ...esGallery.tsx |       0 |        0 |       0 |       0 | 13-77             
+  ...stSection.tsx |       0 |        0 |       0 |       0 | 14-148            
+  ...essScreen.tsx |       0 |        0 |       0 |       0 | 35-59             
+  ...reSection.tsx |       0 |        0 |       0 |       0 | 15-123            
+  ...ionsModal.tsx |       0 |        0 |       0 |       0 | 18-240            
+  LandingHero.tsx  |       0 |        0 |       0 |       0 | 16-209            
+  ...inksModal.tsx |       0 |        0 |       0 |       0 | 30-201            
+  LoginGate.tsx    |       0 |        0 |       0 |       0 | 26-59             
+  ...boutModal.tsx |       0 |        0 |       0 |       0 | 14-29             
+  ...ingHeader.tsx |       0 |        0 |       0 |       0 | 17-114            
+  ...viderCard.tsx |   63.63 |    78.57 |   66.66 |   63.63 | 31,35,42,59       
+  ...ashScreen.tsx |       0 |        0 |       0 |       0 | 16-105            
+  ...allButton.tsx |       0 |        0 |       0 |       0 | 12-73             
+  ...nstallCTA.tsx |   46.66 |     37.5 |   28.57 |   48.27 | 13,56,61,69-91    
+  ...Indicator.tsx |       0 |        0 |       0 |       0 | 14-27             
+  ...tionModal.tsx |       0 |        0 |       0 |       0 | 23-234            
+  QuoteCard.tsx    |       0 |        0 |       0 |       0 | 20                
+  ...essScreen.tsx |   95.83 |       50 |     100 |   95.83 | 65                
+  ...geContent.tsx |   66.66 |    53.57 |      60 |    67.3 | 118,158-196,295   
+  ...tableCard.tsx |   28.57 |    36.84 |      25 |   28.57 | ...,71-88,125-127 
+  ...shContent.tsx |       0 |        0 |       0 |       0 | 17-133            
+  ...e2Content.tsx |       0 |      100 |       0 |       0 | 23-35             
+  ...Indicator.tsx |     100 |    91.66 |     100 |     100 | 28                
+  ...edGallery.tsx |   88.88 |       84 |      80 |   88.23 | 41-44             
+  ...ationTabs.tsx |       0 |        0 |       0 |       0 | 18-110            
+  ...thodField.tsx |   85.71 |       50 |      75 |   85.71 | 53                
+  ...istScreen.tsx |       0 |        0 |       0 |       0 | 22-245            
+  ...essScreen.tsx |       0 |        0 |       0 |       0 | 20-33             
+ src/components/ui |   21.73 |     23.9 |   22.54 |   22.01 |                   
+  ...tonLottie.tsx |       0 |        0 |       0 |       0 | 12                
+  ...ocomplete.tsx |       0 |        0 |       0 |       0 | 105-314           
+  ...HeartIcon.tsx |      90 |    56.52 |     100 |      90 | 109               
+  AppLoader.tsx    |       0 |      100 |       0 |       0 | 8                 
+  BadgeLabel.tsx   |   81.25 |    64.28 |     100 |   81.25 | 43-44,122         
+  BarikButton.tsx  |       0 |        0 |       0 |       0 | 19-20             
+  ...amentIcon.tsx |       0 |        0 |       0 |       0 | 18                
+  Bismillah.tsx    |       0 |        0 |       0 |       0 | 15-1099           
+  ...arkButton.tsx |     100 |    60.86 |     100 |     100 | 56-216            
+  ...ionNavbar.tsx |       0 |        0 |       0 |       0 | 46                
+  ...HeartIcon.tsx |       0 |        0 |       0 |       0 | 7                 
+  Button.tsx       |     100 |       84 |     100 |     100 | 61,81-90          
+  Card.tsx         |       0 |        0 |       0 |       0 | 9-27              
+  CustomToast.tsx  |       0 |        0 |       0 |       0 | 13-52             
+  Dropdown.tsx     |       0 |        0 |       0 |       0 | 15-67             
+  ...t.example.tsx |       0 |      100 |       0 |       0 | 14-19             
+  ...tionAlert.tsx |       0 |      100 |       0 |       0 | 15                
+  EmptyState.tsx   |     100 |       80 |     100 |     100 | 26                
+  FooterAction.tsx |   68.75 |    77.41 |     100 |   73.33 | 105-106,117,245   
+  FormField.tsx    |       0 |        0 |       0 |       0 | 20-75             
+  FormInput.tsx    |       0 |        0 |       0 |       0 | 78-141            
+  Icon.tsx         |      50 |        0 |       0 |      50 | 12-18             
+  IconButton.tsx   |   61.76 |    32.14 |   66.66 |   63.63 | ...04-105,119-125 
+  ...WithTitle.tsx |       0 |        0 |       0 |       0 | 107-113           
+  Input.tsx        |       0 |        0 |       0 |       0 | 10-39             
+  ...eSwitcher.tsx |       0 |        0 |       0 |       0 | 13-206            
+  ...ngSpinner.tsx |       0 |        0 |       0 |       0 | 12-18             
+  ...Animation.tsx |    87.5 |    63.63 |     100 |     100 | 25-26             
+  ...ustration.tsx |       0 |        0 |       0 |       0 | 18                
+  MapsLottie.tsx   |       0 |        0 |       0 |       0 | 12-42             
+  Modal.tsx        |   92.59 |    66.66 |     100 |      96 | 54                
+  ...ocomplete.tsx |       0 |        0 |       0 |       0 | 12-339            
+  ...tSkeleton.tsx |       0 |      100 |       0 |       0 | 9-51              
+  ...iBirdIcon.tsx |       0 |        0 |       0 |       0 | 18                
+  Ornament.tsx     |       0 |        0 |       0 |       0 | 7-43              
+  ...mentFrame.tsx |       0 |        0 |       0 |       0 | 12                
+  OrnamentIcon.tsx |       0 |        0 |       0 |       0 | 13-75             
+  ...allPrompt.tsx |       0 |        0 |       0 |       0 | 24-100            
+  ...Indicator.tsx |       0 |        0 |       0 |       0 | 8-11              
+  ...liderIcon.tsx |       0 |        0 |       0 |       0 | 7-12              
+  ...Indicator.tsx |       0 |        0 |       0 |       0 | 16-24             
+  ProviderIcon.tsx |       0 |        0 |       0 |       0 | 9-38              
+  ...ionPrompt.tsx |       0 |        0 |       0 |       0 | 65-288            
+  ...aryButton.tsx |       0 |        0 |       0 |       0 | 5-105             
+  ...onHeading.tsx |       0 |        0 |       0 |       0 | 36                
+  TitleAndText.tsx |   66.66 |    88.88 |     100 |   66.66 | 66                
+ ...nents/ui/icons |   63.15 |    57.37 |   66.66 |   63.15 |                   
+  ChatIcon.tsx     |       0 |        0 |       0 |       0 | 12-14             
+  CreateIcon.tsx   |     100 |    66.66 |     100 |     100 | 19-37             
+  HeartIcon.tsx    |       0 |        0 |       0 |       0 | 20-21             
+  LucideHeart.tsx  |       0 |        0 |       0 |       0 | 10                
+  SavedIcon.tsx    |     100 |       75 |     100 |     100 | 26-45             
+  ...LevelIcon.tsx |   71.42 |    71.42 |     100 |   71.42 | 29,99             
+ ...ts/ui/skeleton |       0 |        0 |       0 |       0 |                   
+  ...nSkeleton.tsx |       0 |      100 |       0 |       0 | 4                 
+  Skeleton.tsx     |       0 |        0 |       0 |       0 | 9-27              
+ src/config        |   74.57 |    72.22 |   66.66 |   72.54 |                   
+  env.ts           |       0 |        0 |       0 |       0 | 15-62             
+  ...ionFilters.ts |   89.74 |    86.48 |     100 |   90.32 | 117-118,129       
+ src/constants     |   66.66 |      100 |     100 |   66.66 |                   
+  quotes.ts        |       0 |      100 |     100 |       0 | 7                 
+  ...ation-keys.ts |       0 |      100 |     100 |       0 | 8                 
+ ...tem/components |       0 |        0 |       0 |       0 |                   
+  ...eProvider.tsx |       0 |        0 |       0 |       0 | 14-78             
+  ...eSwitcher.tsx |       0 |        0 |       0 |       0 | 14-32             
+ ...-system/themes |       0 |      100 |     100 |       0 |                   
+  default.ts       |       0 |      100 |     100 |       0 | 9                 
+ ...-system/tokens |       0 |      100 |     100 |       0 |                   
+  borders.ts       |       0 |      100 |     100 |       0 | 5                 
+  colors.ts        |       0 |      100 |     100 |       0 | 8                 
+  spacing.ts       |       0 |      100 |     100 |       0 | 6                 
+  typography.ts    |       0 |      100 |     100 |       0 | 6                 
+ ...out/components |       0 |      100 |       0 |       0 |                   
+  AboutButton.tsx  |       0 |      100 |       0 |       0 | 4                 
+ ...min/components |   36.36 |     32.3 |   51.16 |   36.98 |                   
+  ...tusFilter.tsx |     100 |    70.58 |     100 |     100 | 24-29,62-65       
+  ...ctWarning.tsx |       0 |        0 |       0 |       0 | 37-113            
+  ...iderModal.tsx |   91.66 |    85.71 |     100 |    90.9 | 36                
+  ...viewPanel.tsx |       0 |        0 |       0 |       0 | 39-244            
+  RejectModal.tsx  |   95.23 |    82.35 |     100 |      95 | 72                
+ ...es/admin/hooks |     100 |    83.33 |     100 |     100 |                   
+  ...iderReview.ts |     100 |    83.33 |     100 |     100 | 45                
+ ...uth/components |    20.2 |    10.95 |   23.52 |    20.2 |                   
+  CloseButton.tsx  |       0 |      100 |       0 |       0 | 6                 
+  LoginModal.tsx   |   33.89 |     25.8 |   66.66 |   33.89 | ...-63,70-138,187 
+  ...ustration.tsx |       0 |      100 |       0 |       0 | 2                 
+  ...ustration.tsx |       0 |      100 |       0 |       0 | 2                 
+  SignupModal.tsx  |       0 |        0 |       0 |       0 | 20-164            
+ .../auth/services |       0 |      100 |       0 |       0 |                   
+  authService.ts   |       0 |      100 |       0 |       0 | 3-14              
+ ...atures/auth/ui |       0 |        0 |       0 |       0 |                   
+  AccountMenu.tsx  |       0 |        0 |       0 |       0 | 9-31              
+ ...hat/components |      70 |    76.78 |   68.57 |   74.15 |                   
+  ...ingWidget.tsx |       0 |        0 |       0 |       0 | 11-52             
+  ChatInput.tsx    |   93.75 |    81.81 |     100 |     100 | 17-29             
+  ChatMessage.tsx  |   64.28 |    82.14 |      60 |   64.28 | 32-36,83-88       
+  ...gleButton.tsx |       0 |        0 |       0 |       0 | 12-13             
+  ChatWidget.tsx   |   66.66 |       90 |   42.85 |   66.66 | 52-66,93          
+  ProviderCard.tsx |   81.81 |     87.5 |     100 |     100 | 14-15             
+  QuickReplies.tsx |    91.3 |    83.33 |     100 |      95 | 23                
+  ...stionCard.tsx |     100 |     87.5 |     100 |     100 | 37                
+ ...res/chat/hooks |   39.65 |    26.02 |      60 |   40.19 |                   
+  useChat.ts       |   39.65 |    26.02 |      60 |   40.19 | 17,79-172         
+ ...s/chat/prompts |   76.92 |    83.33 |      50 |   83.33 |                   
+  system-prompt.ts |   76.92 |    83.33 |      50 |   83.33 | 136-137           
+ .../chat/services |   65.38 |    70.14 |   58.33 |   69.93 |                   
+  chat.ts          |       0 |        0 |       0 |       0 | 6-46              
+  tool-executor.ts |   71.31 |    72.53 |     100 |   76.92 | ...64-476,507-523 
+ ...ort/components |   69.23 |    71.87 |      60 |      72 |                   
+  ...geContent.tsx |   69.23 |    71.87 |      60 |      72 | 47-50,76-77,201   
+ ...ures/providers |   36.85 |    26.09 |   24.61 |   38.04 |                   
+  ...reateForm.tsx |       0 |        0 |       0 |       0 | 25-668            
+  ...mportForm.tsx |    37.9 |    23.86 |   27.27 |    38.9 | ...1114,1158-1515 
+  ...mmendForm.tsx |   42.71 |    33.48 |   28.57 |   44.88 | ...1310,1358-1706 
+  ...reateForm.tsx |    50.8 |    38.28 |   34.88 |    52.1 | ...80-610,646-671 
+ ...ers/components |   66.52 |    65.86 |   58.64 |   66.29 |                   
+  ...dgeButton.tsx |   33.33 |    57.89 |   33.33 |      35 | 42-60,92          
+  ...ustBanner.tsx |     100 |    66.66 |     100 |     100 | 29                
+  ...rustPopup.tsx |   88.23 |       75 |     100 |   87.87 | 28,32,37,45       
+  LocationCard.tsx |      75 |    76.19 |      50 |      75 | 63                
+  ...derDetail.tsx |   65.51 |    55.76 |      50 |   67.85 | ...,95-98,125,170 
+  ...tatusLine.tsx |   94.73 |    70.83 |     100 |   94.11 | 36                
+  ...fTierCard.tsx |   96.15 |    91.52 |   77.77 |   97.67 | 451               
+  ...ActionBar.tsx |   55.55 |    63.15 |      50 |   55.55 | 41-45             
+  ProviderCard.tsx |    65.1 |    71.31 |   55.17 |   64.58 | ...19-320,420-546 
+  ...lSections.tsx |   76.56 |     60.6 |   82.75 |      75 | ...13,355-356,418 
+  ...idersList.tsx |       0 |        0 |       0 |       0 | 19-43             
+  ...ageHeader.tsx |     100 |       50 |      50 |     100 | 56                
+  ...sultsList.tsx |   61.11 |    57.89 |      50 |      60 | ...,62-66,146-169 
+  ...ltiSelect.tsx |       0 |        0 |       0 |       0 | 12-117            
+  ...esSection.tsx |     100 |       75 |     100 |     100 | 64,82-83,92       
+ ...roviders/pages |   44.49 |    49.86 |   35.39 |    46.6 |                   
+  ...ilButtons.tsx |       0 |        0 |       0 |       0 | 18-336            
+  ...etailPage.tsx |       0 |        0 |       0 |       0 | 19-289            
+  ...CardModal.tsx |   37.71 |    28.19 |   40.54 |   40.28 | ...23-431,558-708 
+  ...tailModal.tsx |   65.57 |    66.38 |   66.66 |   66.85 | ...24-626,735,806 
+  ...etailPage.tsx |   41.53 |    30.37 |   25.49 |    45.5 | ...71-571,689-931 
+  ...rEditForm.tsx |   63.59 |    77.44 |   39.43 |   66.66 | ...1158,1192,1216 
+  ...rEditPage.tsx |       0 |      100 |       0 |       0 | 15-22             
+ ...iders/services |   91.11 |    84.12 |   95.23 |    92.5 |                   
+  ...der.server.ts |   91.47 |    85.07 |     100 |   92.79 | ...27,401-402,438 
+  mutations.ts     |   90.19 |    78.12 |   83.33 |   91.83 | 39-40,71-72       
+ ...rch/components |    79.3 |    75.06 |   71.35 |   79.62 |                   
+  ...FilterBar.tsx |     100 |    96.42 |     100 |     100 | 91                
+  ...eryHeader.tsx |      50 |        0 |       0 |      50 | 41                
+  ...sultsGrid.tsx |   43.18 |    62.83 |   26.66 |   41.86 | ...93,212,277-313 
+  ...yCityCard.tsx |   88.88 |     90.9 |     100 |   88.88 | 57-59             
+  ...SearchBar.tsx |   75.43 |    70.58 |   72.22 |   76.47 | ...,96-98,133,192 
+  HomeListView.tsx |       0 |        0 |       0 |       0 | 18-73             
+  ...earMeList.tsx |    62.5 |    76.47 |   33.33 |    62.5 | 100-108           
+  ...SearchBar.tsx |   90.47 |    85.71 |   71.42 |   90.47 | 68-69             
+  ...archInput.tsx |       0 |        0 |       0 |       0 | 24-65             
+  ...owFilters.tsx |     100 |     93.1 |     100 |     100 | 44-45             
+  ...sultsGrid.tsx |   61.53 |    58.82 |      40 |   61.53 | 79-116            
+  SearchBar.tsx    |   78.75 |    72.98 |   78.26 |   79.67 | ...97,474-477,584 
+  ...ontextBar.tsx |     100 |    85.18 |     100 |     100 | 33,44,64-73       
+  SearchMap.tsx    |   91.66 |    85.18 |      75 |   92.85 | 91-92,170-178     
+  ...ryResults.tsx |   82.35 |    84.09 |    64.7 |   82.35 | ...76,247,271-288 
+  ...alResults.tsx |   95.45 |    86.95 |     100 |     100 | 34,75             
+  ...peResults.tsx |    92.3 |    92.85 |   83.33 |    92.3 | 137               
+  ...nceFilter.tsx |   94.59 |    88.23 |     100 |   94.11 | 97,163            
+  ...tyResults.tsx |      90 |       75 |   81.81 |   89.74 | 171,199,236,247   
+ ...arch/constants |   72.72 |      100 |     100 |   72.72 |                   
+  ...FilterKeys.ts |       0 |      100 |     100 |       0 | 1-15              
+ ...s/search/hooks |   64.89 |       50 |   70.21 |   66.37 |                   
+  ...dminSearch.ts |   32.25 |    15.38 |   33.33 |   34.48 | 40-73             
+  ...pDiscovery.ts |   79.06 |    44.57 |   82.35 |   82.43 | ...32-136,216-218 
+  useNearMe.ts     |   34.32 |    20.58 |   45.45 |   33.87 | ...60,171-177,197 
+  ...arMeSearch.ts |   92.85 |      100 |      75 |   92.85 | 76                
+  ...arMeToggle.ts |   95.74 |    85.29 |     100 |   95.74 | 96-97             
+ ...s/search/utils |     100 |    77.77 |     100 |     100 |                   
+  ...issionHint.ts |     100 |    77.77 |     100 |     100 | 7-9               
+ src/hooks         |   26.79 |    22.84 |   30.47 |   26.93 |                   
+  useAppStage.ts   |       0 |        0 |       0 |       0 | 19-257            
+  useAriaHidden.ts |   94.44 |     87.5 |     100 |     100 | 18                
+  useBadges.ts     |       0 |        0 |       0 |       0 | 28-377            
+  ...rkWithAuth.ts |   57.14 |        0 |      25 |   57.14 | 23-31,35,39       
+  ...tyServices.ts |   53.84 |     64.7 |      60 |   58.33 | 53-82             
+  ...inerScroll.ts |       0 |        0 |       0 |       0 | 61-135            
+  ...uncedValue.ts |       0 |        0 |       0 |       0 | 26-40             
+  ...yedUnmount.ts |   86.36 |    84.61 |     100 |      90 | 27-28             
+  useFocusTrap.ts  |   55.55 |       45 |   83.33 |   57.57 | 43-64             
+  ...eolocation.ts |   96.61 |     93.1 |     100 |   96.61 | 66,153            
+  ...geFallback.ts |   42.22 |       32 |      25 |   41.86 | ...24,129,140-157 
+  useImageSwipe.ts |   51.82 |    38.94 |   61.11 |    52.3 | ...44-246,257-258 
+  useIsMobile.ts   |    37.5 |       25 |   33.33 |      40 | 24-26,45-70       
+  useLanguage.ts   |       0 |        0 |       0 |       0 | 3-26              
+  ...ardingGate.ts |   82.05 |     87.5 |     100 |   82.05 | 56-64,79-81       
+  ...rdingState.ts |       0 |        0 |       0 |       0 | 18-71             
+  ...icBookmark.ts |      10 |        0 |   16.66 |   11.42 | 22-102            
+  usePWAInstall.ts |   52.08 |    41.66 |   57.14 |   52.08 | ...45,50-53,66-83 
+  ...restTicker.ts |       0 |        0 |       0 |       0 | 10-44             
+  ...essedState.ts |    37.5 |      100 |   16.66 |    37.5 | 13-17             
+  useProvider.ts   |       0 |        0 |       0 |       0 | 21-51             
+  ...ifications.ts |       0 |        0 |       0 |       0 | 46-245            
+  useRateLimit.ts  |       0 |        0 |       0 |       0 | 49-121            
+  ...duceMotion.ts |       0 |        0 |       0 |       0 | 11-24             
+  ...lDirection.ts |   47.05 |        0 |      75 |   43.75 | 10-22             
+  ...rollHeader.ts |       0 |        0 |       0 |       0 | 86-277            
+  ...tionInView.ts |       0 |        0 |       0 |       0 | 4-21              
+  ...itlistFlow.ts |       0 |        0 |       0 |       0 | 50-346            
+ src/lib           |    55.8 |    55.44 |   51.02 |   56.85 |                   
+  auth.ts          |   32.97 |    28.57 |      40 |   32.97 | ...51-355,375-431 
+  city-slug.ts     |   68.75 |       40 |     100 |   71.42 | 31-34             
+  logger.ts        |   53.33 |    33.33 |   66.66 |   53.33 | 57,77,88-99       
+  ...ware-utils.ts |   53.33 |     72.5 |   57.14 |   53.44 | ...08,221,226-230 
+  openrouter.ts    |      68 |    56.06 |   44.44 |   73.13 | ...32,153,175-211 
+  rate-limit.ts    |   36.11 |    27.77 |   16.66 |   37.14 | ...97-142,155-158 
+  search-params.ts |   97.87 |     90.9 |     100 |   97.77 | 83                
+  slugify.ts       |     100 |       50 |     100 |     100 | 23                
+  utils.ts         |      10 |        0 |   33.33 |   14.28 | 27-41             
+ src/lib/audit     |       0 |        0 |       0 |       0 |                   
+  adminAudit.ts    |       0 |        0 |       0 |       0 | 30-82             
+ src/lib/auth      |       0 |        0 |       0 |       0 |                   
+  roles.ts         |       0 |        0 |       0 |       0 | 12-113            
+ ...lib/enrichment |    97.2 |    91.42 |     100 |   98.07 |                   
+  ...ly-payload.ts |   97.29 |    96.55 |     100 |     100 | 58                
+  ...ory-mapper.ts |     100 |       90 |     100 |     100 | 79-83             
+  ...y-enricher.ts |   94.28 |    77.77 |     100 |   94.28 | 91-92             
+  ...enrichment.ts |   93.33 |    83.33 |     100 |   92.85 | 318               
+  ...l-enricher.ts |   97.61 |    95.34 |     100 |     100 | 140,143           
+ ...ivery-platform |   53.98 |     46.6 |   45.45 |   54.07 |                   
+  ...l-detector.ts |   96.82 |      100 |     100 |   96.66 | 133,140           
+  ...olt-client.ts |       0 |        0 |       0 |       0 | 16-169            
+  ...e-detector.ts |     100 |    92.85 |     100 |     100 | 66                
+  geocoder.ts      |      95 |    81.25 |     100 |   93.33 | 40                
+  ...ndo-client.ts |   36.52 |    25.95 |   38.46 |    36.3 | 139-351           
+  ...o-enricher.ts |       0 |        0 |       0 |       0 | 16-132            
+  normalizer.ts    |   93.33 |    91.66 |     100 |     100 | 38-39             
+  ...er-matcher.ts |   93.87 |    84.09 |     100 |     100 | 53,72-84,111      
+  ...ats-client.ts |    43.9 |    41.04 |   20.83 |   44.38 | ...88-189,210-480 
+  ...s-enricher.ts |       0 |        0 |       0 |       0 | 11-132            
+  wolt-client.ts   |      95 |    72.97 |      90 |   94.91 | 128-129,159       
+ src/lib/git       |       0 |        0 |       0 |       0 |                   
+  branchHelpers.ts |       0 |        0 |       0 |       0 | 8-126             
+ src/lib/import    |   89.52 |    73.57 |     100 |   90.94 |                   
+  joinhalal.ts     |   89.45 |    73.57 |     100 |   90.87 | ...52-653,679-680 
+ src/lib/logging   |   59.09 |    56.25 |   57.14 |   59.09 |                   
+  ...uredLogger.ts |   59.09 |    56.25 |   57.14 |   59.09 | 51,59,70-78,92-93 
+ src/lib/pwa       |    6.25 |        5 |   16.66 |    6.45 |                   
+  ...sh-handler.js |       0 |        0 |       0 |       0 | 9-115             
+  sw.ts            |       0 |      100 |       0 |       0 | 20-73             
+ src/lib/security  |     100 |    83.33 |     100 |     100 |                   
+  clientIp.ts      |     100 |    83.33 |     100 |     100 | 33                
+ src/lib/supabase  |   41.07 |     30.3 |   33.33 |   41.81 |                   
+  admin.ts         |      80 |       75 |     100 |      80 | 14                
+  ...lidSession.ts |       0 |        0 |       0 |       0 | 6-25              
+  client.ts        |       0 |        0 |       0 |       0 | 3-109             
+  cookieAdapter.ts |      50 |      100 |      20 |      50 | 10-13             
+  ...FromCookie.ts |   71.42 |    64.86 |     100 |   71.42 | ...08,116-117,134 
+  server.ts        |      80 |       75 |     100 |      80 | 10                
+  static.ts        |       0 |        0 |       0 |       0 | 12-17             
+ src/lib/telemetry |   85.18 |       75 |   88.88 |      84 |                   
+  ...-telemetry.ts |   85.18 |       75 |   88.88 |      84 | 62-63,74,159      
+ src/lib/utils     |       0 |        0 |       0 |       0 |                   
+  ...ding-state.ts |       0 |        0 |       0 |       0 | 20-147            
+  ...list-token.ts |       0 |        0 |       0 |       0 | 8-15              
+ ...ib/validations |   32.14 |    27.96 |   47.36 |   29.77 |                   
+  adminSchemas.ts  |   87.09 |     90.9 |   71.42 |    92.3 | 17,105            
+  auth.ts          |       0 |      100 |       0 |       0 | 3-15              
+  ...ifications.ts |       0 |        0 |       0 |       0 | 13-223            
+  ...ionSchemas.ts |     100 |     87.5 |     100 |     100 | 99                
+  ...istSchemas.ts |       0 |      100 |     100 |       0 | 3-8               
+ src/providers     |    42.8 |    33.58 |    36.5 |   44.01 |                   
+  AuthSyncer.tsx   |       0 |        0 |       0 |       0 | 10-108            
+  ...eProvider.tsx |   68.67 |    49.01 |   73.33 |   69.51 | ...91,208-211,247 
+  ...-provider.tsx |   46.87 |    29.03 |   55.55 |   46.87 | ...09-116,121-131 
+  ...-provider.tsx |       0 |        0 |       0 |       0 | 10-27             
+  ...-provider.tsx |   42.42 |    71.42 |   27.77 |    45.9 | ...18,222-226,247 
+  ...-provider.tsx |    90.9 |       50 |     100 |    90.9 | 55                
+  ...-provider.tsx |       0 |        0 |       0 |       0 | 13-62             
+ src/services      |   17.21 |     12.8 |    23.5 |   17.42 |                   
+  account.ts       |       0 |        0 |       0 |       0 | 3-72              
+  badges.ts        |    7.48 |     6.59 |   17.24 |     7.2 | ...50-351,356-802 
+  bookmarks.ts     |   61.11 |    41.66 |      80 |   61.11 | 30,42,48-50,57-58 
+  categories.ts    |   53.68 |    50.53 |      55 |   55.55 | ...59,268,283-307 
+  ...uggestions.ts |       0 |        0 |       0 |       0 | 25-224            
+  ...ces.server.ts |       0 |        0 |       0 |       0 | 13-133            
+  ...tyServices.ts |   18.54 |    15.64 |   17.39 |   20.58 | ...25,228,239-445 
+  dataExport.ts    |       0 |        0 |       0 |       0 | 7-53              
+  emailService.ts  |       0 |        0 |       0 |       0 | 4-510             
+  food-menu.ts     |       0 |        0 |       0 |       0 | 23-50             
+  matching.ts      |   38.57 |    30.95 |   36.36 |   39.06 | 35,46,63,108-243  
+  ...qitService.ts |       0 |        0 |       0 |       0 | 9-180             
+  needs.ts         |    9.09 |        0 |   33.33 |    9.09 | 6-32              
+  offers.ts        |   16.66 |     12.9 |   28.57 |   16.66 | 29-80,114-143     
+  ...aceService.ts |       0 |        0 |       0 |       0 | 9-329             
+  outreach.ts      |   41.33 |    41.17 |   43.75 |   41.33 | ...78,292-453,487 
+  ...Dispatcher.ts |   86.53 |       72 |     100 |   86.53 | ...88-190,224-226 
+  ...eteService.ts |       0 |        0 |       0 |       0 | 10-845            
+  ...ionService.ts |       0 |        0 |       0 |       0 | 54-146            
+  searchByName.ts  |   71.42 |    59.09 |     100 |      70 | 44,66-72,85-86    
+  store-catalog.ts |     100 |    85.71 |     100 |     100 | 51                
+ ...services/admin |   72.07 |     61.4 |   77.77 |      70 |                   
+  ...erviceEdit.ts |   60.81 |    45.23 |      60 |    62.5 | ...50,156-176,240 
+  ...tyServices.ts |   76.92 |       46 |     100 |   76.92 | ...95,100,105,110 
+  ...hment-gate.ts |     100 |    91.66 |     100 |     100 | 61                
+  enrichment.ts    |   42.25 |    42.37 |      50 |   42.85 | ...42,263,274-303 
+  halal-gate.ts    |   92.59 |    77.77 |     100 |   92.59 | 69,74             
+  providerEdit.ts  |     100 |    98.97 |     100 |     100 | 194               
+  providers.ts     |   31.42 |    29.41 |      50 |   31.42 | 64-159            
+ ...services/email |   26.92 |    26.47 |      50 |      26 |                   
+  outreachEmail.ts |   43.75 |    34.61 |   66.66 |   43.33 | 13-20,267-298     
+  waitlistEmail.ts |       0 |        0 |       0 |       0 | 4-206             
+ ...ices/providers |    62.8 |    61.34 |   74.19 |   63.04 |                   
+  bookmarks.ts     |       0 |        0 |       0 |       0 | 11-105            
+  cities.ts        |   79.34 |    66.15 |     100 |   77.64 | ...58,224,239-251 
+  crud.ts          |      50 |    52.11 |   63.63 |   47.94 | ...74-175,185-255 
+  filters.ts       |    91.3 |      100 |     100 |   90.47 | 77-78             
+  near-me.ts       |   88.88 |    85.71 |     100 |   88.88 | 35                
+  search.ts        |   70.27 |    71.15 |   66.66 |      73 | ...89-392,400-401 
+  suggestions.ts   |      75 |    78.57 |     100 |     100 | 35,46-47          
+  types.ts         |     100 |       50 |     100 |     100 | 156-158           
+ src/translations  |      50 |       50 |    37.5 |      50 |                   
+  ar.ts            |       0 |      100 |     100 |       0 | 1                 
+  index.ts         |   58.33 |       50 |    37.5 |   58.33 | 14-15,17-19       
+  ps.ts            |       0 |      100 |     100 |       0 | 1                 
+  tr.ts            |       0 |      100 |     100 |       0 | 1                 
+  ur.ts            |       0 |      100 |     100 |       0 | 1                 
+ src/utils         |   50.45 |    47.61 |   51.51 |   50.11 |                   
+  ...Validation.ts |    1.44 |        0 |       0 |    1.47 | 47-258            
+  ...ll-helpers.ts |   90.58 |    89.01 |     100 |     100 | ...63,172-176,209 
+  categoryUtils.ts |       0 |        0 |       0 |       0 | 10-29             
+  ...ranslation.ts |    6.89 |        0 |       0 |    6.89 | 33-107            
+  ...Validation.ts |   12.08 |     8.84 |   29.41 |   13.07 | ...55,260,277-371 
+  cookieUtils.ts   |       0 |        0 |       0 |       0 | 25-90             
+  distance.ts      |     100 |    88.88 |     100 |     100 | 23                
+  ...yTypeUtils.ts |       0 |      100 |       0 |       0 | 7-15              
+  errorUtils.ts    |       0 |        0 |       0 |       0 | 17-145            
+  gradientDebug.ts |       0 |        0 |       0 |       0 | 7-57              
+  imageUtils.ts    |    82.6 |    76.19 |      75 |   80.64 | 100-116,173-183   
+  ...lal-parser.ts |    78.3 |    73.91 |   72.72 |   78.84 | ...07,546,569-631 
+  json.ts          |   85.71 |      100 |     100 |   85.71 | 7                 
+  jwt.ts           |       0 |        0 |       0 |       0 | 6-50              
+  languageUtils.ts |       0 |        0 |       0 |       0 | 19-87             
+  metadataUtils.ts |       0 |      100 |       0 |       0 | 9-53              
+  ...nt-dataset.ts |   88.57 |    71.87 |     100 |     100 | 51-64,73,81,88    
+  ...ess-parser.ts |     100 |     90.9 |     100 |     100 | 78,181,197        
+  ...ationUtils.ts |   68.93 |    59.32 |   85.71 |    68.8 | ...97,302,315,418 
+  ...ning-hours.ts |   89.21 |    84.33 |   88.88 |   97.64 | 78,143            
+  openStatus.ts    |   91.66 |    87.69 |     100 |   91.54 | ...80,106,168,187 
+  pwaUtils.ts      |       0 |        0 |       0 |       0 | 22-137            
+  sanitizeInput.ts |   82.35 |    57.14 |     100 |   82.35 | 30,71,75          
+  security.ts      |       0 |        0 |       0 |       0 | 15-833            
+  ...guageUtils.ts |       0 |        0 |       0 |       0 | 15-116            
+  ...orkerUtils.ts |       0 |        0 |       0 |       0 | 14-85             
+  splashUtils.ts   |       0 |        0 |       0 |       0 | 10-54             
+  ...oComponent.ts |       0 |        0 |       0 |       0 | 15-61             
+  textUtils.tsx    |       0 |        0 |       0 |       0 | 7-47              
+  toastMessages.ts |       0 |        0 |       0 |       0 | 23-92             
+-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 36.86% ( 7995/21689 )
+Branches     : 34.95% ( 6393/18287 )
+Functions    : 32.19% ( 1372/4262 )
+Lines        : 36.92% ( 7584/20538 )
+================================================================================
+
+===== 07-build =====
+▲ Next.js 16.3.8 (webpack)
+✓ Running next.config.js took 16ms
+Warning: Custom Cache-Control headers detected for the following routes:
+  - /_next/static/:path*
+  - /_next/static/chunks/:path*.js
+  - /_next/static/css/:path*.css
+
+Setting a custom Cache-Control header can break Next.js development behavior.
+- Experiments (use with caution):
+  ✓ optimizeCss
+  · optimizePackageImports
+  ✓ scrollRestoration
+  ✓ webpackBuildWorker
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (113kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (268kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+⚠ Compiled with warnings in 964ms
+
+./node_modules/next/dist/esm/server/app-render/dynamic-rendering.js
+A Node.js API is used (process.cwd at line: 1044) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+./node_modules/next/dist/esm/server/app-render/dynamic-rendering.js
+./node_modules/next/dist/esm/server/request/connection.js
+./node_modules/next/dist/esm/server/web/exports/index.js
+./node_modules/next/dist/esm/api/server.js
+
+./node_modules/next/dist/esm/server/app-render/dynamic-rendering.js
+A Node.js API is used (process.cwd at line: 1044) which is not supported in the Edge Runtime.
+Learn more: https://nextjs.org/docs/api-reference/edge-runtime
+
+Import trace for requested module:
+./node_modules/next/dist/esm/server/app-render/dynamic-rendering.js
+./node_modules/next/dist/esm/server/request/connection.js
+./node_modules/next/dist/esm/server/web/exports/index.js
+./node_modules/next/dist/esm/api/server.js
+
+✓ Compiled successfully in 20.4s
+  Running TypeScript ...
+  Finished TypeScript in 9.9s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/99) ...
+  Generating static pages using 11 workers (24/99) 
+[City Selection] RPC error: {
+  message: "Error: Dynamic server usage: Route /city-selection couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  details: "Error: Dynamic server usage: Route /city-selection couldn't be rendered statically because it used `cookies`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error\n" +
+    '    at C (/private/tmp/uflow-main-gate/.next/server/chunks/7266.js:28:10475)\n' +
+    '    at n (/private/tmp/uflow-main-gate/.next/server/chunks/5573.js:1:4544)\n' +
+    '    at Object.get (/private/tmp/uflow-main-gate/.next/server/app/api/providers/route.js:1:13215)\n' +
+    '    at a (/private/tmp/uflow-main-gate/.next/server/chunks/153.js:23:745)\n' +
+    '    at c (/private/tmp/uflow-main-gate/.next/server/chunks/153.js:23:838)\n' +
+    '    at Object.getItem (/private/tmp/uflow-main-gate/.next/server/chunks/153.js:23:4675)\n' +
+    '    at b5 (/private/tmp/uflow-main-gate/.next/server/chunks/3151.js:11:42401)\n' +
+    '    at dj.__loadSession (/private/tmp/uflow-main-gate/.next/server/chunks/3151.js:24:13351)\n' +
+    '    at dj._useSession (/private/tmp/uflow-main-gate/.next/server/chunks/3151.js:24:13071)\n' +
+    '    at dj.getSession (/private/tmp/uflow-main-gate/.next/server/chunks/3151.js:24:12142)\n' +
+    '    at async dk._getSessionToken (/private/tmp/uflow-main-gate/.next/server/chunks/3151.js:24:64781)\n' +
+    '    at async /private/tmp/uflow-main-gate/.next/server/chunks/3151.js:24:58130\n' +
+    '    at async J (/private/tmp/uflow-main-gate/.next/server/chunks/3151.js:1:5533)\n' +
+    '    at async /private/tmp/uflow-main-gate/.next/server/chunks/3151.js:1:7516\n' +
+    '    at async g (/private/tmp/uflow-main-gate/.next/server/app/city-selection/page.js:1:1504)',
+  hint: '',
+  code: ''
+}
+  Generating static pages using 11 workers (49/99) 
+  Generating static pages using 11 workers (74/99) 
+✓ Generating static pages using 11 workers (99/99) in 509ms
+Community services state: []
+Search query: 
+Filtered projects: []
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ƒ /
+├ ○ /_not-found
+├ ○ /about
+├ ƒ /api/admin/badges/unverify
+├ ƒ /api/admin/badges/verify
+├ ƒ /api/admin/check-role
+├ ƒ /api/admin/community-services/[id]
+├ ƒ /api/admin/edit-community-service
+├ ƒ /api/admin/edit-provider
+├ ƒ /api/admin/enrichment/alcohol-conflicts
+├ ƒ /api/admin/enrichment/candidates
+├ ƒ /api/admin/import-joinhalal/dry-run
+├ ƒ /api/admin/needs
+├ ƒ /api/admin/offers
+├ ƒ /api/admin/providers/[id]
+├ ƒ /api/admin/providers/[id]/delivery-links
+├ ƒ /api/admin/providers/[id]/locations
+├ ƒ /api/admin/providers/[id]/menu
+├ ƒ /api/admin/refresh-session
+├ ƒ /api/admin/review-community-service
+├ ƒ /api/admin/review-provider
+├ ƒ /api/admin/set-role
+├ ƒ /api/admin/upload-certificate
+├ ƒ /api/admin/upload-image
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/magic-link
+├ ƒ /api/auth/magic-link-diagnostic
+├ ƒ /api/auth/magic-link-status
+├ ƒ /api/auth/reset-password
+├ ƒ /api/auth/set
+├ ƒ /api/auth/signup
+├ ƒ /api/auth/verify-magic-link
+├ ƒ /api/badges/[badgeId]/confirm
+├ ƒ /api/badges/[badgeId]/revoke
+├ ƒ /api/badges/entity
+├ ƒ /api/chat
+├ ƒ /api/chat/conversations
+├ ƒ /api/chat/conversations/[id]
+├ ƒ /api/check-email-exists
+├ ƒ /api/cities
+├ ƒ /api/city-interest/subscribe
+├ ƒ /api/confirm-email
+├ ƒ /api/generate-confirmation-token
+├ ƒ /api/health
+├ ƒ /api/instagram/scrape
+├ ƒ /api/manifest
+├ ƒ /api/outreach/action
+├ ƒ /api/outreach/claim
+├ ƒ /api/places/foursquare/search
+├ ƒ /api/providers
+├ ƒ /api/providers/search
+├ ƒ /api/push/send
+├ ƒ /api/push/subscribe
+├ ƒ /api/send-auth-email
+├ ƒ /api/user/export-data
+├ ƒ /api/waitlist/join
+├ ƒ /api/waitlist/status
+├ ƒ /api/waitlist/subscribe-city
+├ ƒ /api/waitlist/update
+├ ƒ /api/webhooks/enrich-provider
+├ ○ /auth/callback
+├ ○ /auth/confirm
+├ ○ /chat
+├ ƒ /city-selection
+├ ● /city/[cityName]
+├ ƒ /community-services/[community_service_id]
+├ ○ /create
+├ ○ /create-quick
+├ ○ /create-quick/review
+├ ○ /create/basics
+├ ○ /create/basics/category
+├ ○ /create/basics/needs
+├ ○ /create/basics/offers
+├ ○ /create/contact
+├ ○ /create/halal
+├ ○ /create/import-osm
+├ ○ /create/location
+├ ○ /create/media
+├ ○ /create/media/images
+├ ○ /create/media/social
+├ ○ /create/recommend
+├ ○ /create/recommend/category
+├ ○ /create/recommend/offers
+├ ○ /create/social-category
+├ ƒ /dashboard/community-services/[id]/edit
+├ ƒ /dashboard/community-services/[id]/edit/category
+├ ƒ /dashboard/community-services/[id]/edit/images
+├ ƒ /dashboard/community-services/[id]/edit/needs
+├ ƒ /dashboard/community-services/[id]/edit/offers
+├ ƒ /dashboard/enrichment
+├ ƒ /dashboard/import
+├ ƒ /dashboard/providers/[id]/edit
+├ ƒ /dashboard/providers/[id]/edit/category
+├ ƒ /dashboard/providers/[id]/edit/delivery
+├ ƒ /dashboard/providers/[id]/edit/enrichment
+├ ƒ /dashboard/providers/[id]/edit/halal
+├ ƒ /dashboard/providers/[id]/edit/hours
+├ ƒ /dashboard/providers/[id]/edit/images
+├ ƒ /dashboard/providers/[id]/edit/locations
+├ ƒ /dashboard/providers/[id]/edit/menu
+├ ƒ /dashboard/providers/[id]/edit/social
+├ ƒ /dashboard/providers/[id]/edit/values
+├ ƒ /food
+├ ƒ /food/[city]
+├ ƒ /food/[city]/[category]
+├ ○ /forgot-password
+├ ○ /impressum
+├ ○ /login
+├ ƒ /manual-user
+├ ○ /owner-decision
+├ ƒ /p/[id]
+├ ○ /privacy-policy
+├ ○ /profile
+├ ƒ /profile/delete
+├ ○ /profile/edit
+├ ƒ /profile/providers/[provider_id]
+├ ƒ /profile/providers/[provider_id]/edit
+├ ƒ /profile/providers/[provider_id]/edit/category
+├ ƒ /profile/providers/[provider_id]/edit/images
+├ ƒ /profile/providers/[provider_id]/edit/needs
+├ ƒ /profile/providers/[provider_id]/edit/offers
+├ ƒ /profile/providers/[provider_id]/edit/social
+├ ○ /pwa-start
+├ ○ /reset-password
+├ ○ /saved
+├ ○ /search
+├ ○ /signup
+├ ○ /signup/check-email
+├ ○ /stores
+├ ○ /suchen
+├ ○ /terms
+├ ○ /ummah
+├ ƒ /waitlist
+└ ○ /welcome
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> ummah-flow@0.15.21 build:sw
+> node scripts/build-sw.js && node scripts/verify-pwa-output.js && node scripts/verify-sw-no-cross-origin-routes.mjs
+
+✓ Running next.config.js took 21ms
+Using configuration from /private/tmp/uflow-main-gate/serwist.config.mjs.
+public/animations/maps.json is 2.22 MB, and won't be precached. Configure maximumFileSizeToCacheInBytes to change this limit.
+public/animations/add-button-transition.json is 9.82 MB, and won't be precached. Configure maximumFileSizeToCacheInBytes to change this limit.
+The service worker file was written to public/sw.js.
+The service worker will precache 284 URLs, totaling 14.3 MB.
+OK: public/sw.js generated and the push handler is bundled into it
+     markers found: "addEventListener(\"push\"", "showNotification", "UFLOW"
+  (control) https://ummahflow.com/offline.html INTERCEPTED, as it must be
+  (control) https://ummahflow.com/ INTERCEPTED for a document request, as it must be
+  (control) https://ummahflow.com/food INTERCEPTED for a document request, as it must be
+  api.iconify.design     not intercepted
+  api.unisvg.com         not intercepted
+  api.simplesvg.com      not intercepted
+OK: public/sw.js registers no route matching the Iconify CDN origins (1 fetch listener(s) inspected)
+
+===== 08-build-output-check =====
+build output OK
+
+===== 09-perf-budgets =====
+
+> ummah-flow@0.15.21 perf:check-budgets
+> node scripts/perf/check-budgets.js
+
+📊 Performance Budget Check (Plan 033)
+
+⚠️  Route /food not found in build output
+⚠️  Route /p/[id] not found in build output
+✅ All performance budgets pass!
+
+
+===== 10-npm-audit =====
+# npm audit report
+
+braces  *
+Severity: high
+braces vulnerable to stack-exhaustion denial of service through deeply nested patterns - https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
+fix available via `npm audit fix --force`
+Will install tailwindcss@4.3.3, which is a breaking change
+node_modules/braces
+  chokidar  2.0.0 - 3.6.0
+  Depends on vulnerable versions of braces
+  node_modules/chokidar
+    tailwindcss  <=0.0.0-oxide-insiders.ff2c25f || 2.1.0-canary.1 - 3.4.19
+    Depends on vulnerable versions of chokidar
+    Depends on vulnerable versions of fast-glob
+    Depends on vulnerable versions of micromatch
+    node_modules/tailwindcss
+      @tailwindcss/typography  <=0.0.0-insiders.fda8ce5 || >=0.5.0-alpha.1
+      Depends on vulnerable versions of tailwindcss
+      node_modules/@tailwindcss/typography
+  micromatch  >=0.2.0
+  Depends on vulnerable versions of braces
+  node_modules/micromatch
+    fast-glob  *
+    Depends on vulnerable versions of micromatch
+    node_modules/@next/eslint-plugin-next/node_modules/fast-glob
+    node_modules/fast-glob
+      @next/eslint-plugin-next  >=14.3.0-canary.0
+      Depends on vulnerable versions of fast-glob
+      node_modules/@next/eslint-plugin-next
+        eslint-config-next  >=14.3.0-canary.0
+        Depends on vulnerable versions of @next/eslint-plugin-next
+        node_modules/eslint-config-next
+    lint-staged  7.0.0 - 16.3.4
+    Depends on vulnerable versions of micromatch
+    node_modules/lint-staged
+
+9 high severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
