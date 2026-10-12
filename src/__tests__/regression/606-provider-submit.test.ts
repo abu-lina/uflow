@@ -118,6 +118,8 @@ interface AdminMockOptions {
   providers?: ProviderRow[];
   cities?: string[];
   failInsert?: boolean;
+  /** Simulates a PostgREST response cap below the requested page size. */
+  pageCap?: number;
 }
 
 function makeAdminClient(opts: AdminMockOptions = {}) {
@@ -136,16 +138,23 @@ function makeAdminClient(opts: AdminMockOptions = {}) {
           insert: (...args: unknown[]) => providerInsert(...args),
           update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
           delete: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
-          // Mirrors the paginated R1 scan chain:
-          // select().not().in().order().range(from, to) — slice honours the
-          // PostgREST max_rows cap, so a test can park the match past row 1000.
+          // Mirrors the keyset R1 scan chain:
+          // select().not().in().gt(provider_id, last).order().limit(n) —
+          // filter+sort+slice honours a response cap, so a test can park
+          // the match behind 1000 other rows on a later page. opts.pageCap
+          // simulates a server-side max_rows smaller than the request.
           select: () => ({
             not: () => ({
               in: () => ({
-                order: () => ({
-                  range: async (from: number, to: number) => ({
-                    data: (opts.providers ?? []).slice(from, to + 1),
-                    error: null,
+                gt: (_col: string, lastId: string) => ({
+                  order: () => ({
+                    limit: async (n: number) => ({
+                      data: (opts.providers ?? [])
+                        .filter((row) => row.provider_id > lastId)
+                        .sort((a, b) => (a.provider_id < b.provider_id ? -1 : 1))
+                        .slice(0, Math.min(n, opts.pageCap ?? n)),
+                      error: null,
+                    }),
                   }),
                 }),
               }),
@@ -365,17 +374,49 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     });
 
     it('a matching provider beyond the first 1000 rows is still caught', async () => {
-      // PostgREST caps each response at max_rows (1000, supabase/config.toml).
-      // The scan must page, not silently check an arbitrary subset — prod has
-      // more than 1045 pending rows alone. The match sits at index 1500.
+      // PostgREST caps each response (max_rows, supabase/config.toml). The
+      // scan is keyset-paged (.gt(provider_id) + .limit), so it covers the
+      // whole table at any cap — prod has more than 1045 pending rows alone.
+      // The match's provider_id sorts after all 1500 fillers, landing it on
+      // page 2; an offset or single-shot scan would miss or truncate.
       const filler: ProviderRow[] = Array.from({ length: 1500 }, (_, i) => ({
-        provider_id: `f0000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+        provider_id: `a0000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
         provider_name: `Unrelated Provider ${i}`,
         address_city: 'Hamburg',
         review_status: 'pending',
       }));
+      const lateMatch: ProviderRow = {
+        ...existingApproved,
+        provider_id: 'ffff1111-0000-4000-8000-000000000001',
+      };
       const { response, json, providerInsert } = await post(validBody(), {
-        providers: [...filler, existingApproved],
+        providers: [...filler, lateMatch],
+      });
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      expect(providerInsert).not.toHaveBeenCalled();
+    });
+
+    it('the keyset scan survives a response cap below the page size', async () => {
+      // If PostgREST's max_rows is ever lowered below the requested window,
+      // an offset scan would silently skip rows mid-table. Keyset paging
+      // (.gt(lastSeenId)) stays contiguous at any cap ≥ 1 — simulate a
+      // server returning at most 100 rows per response.
+      const cappedProviders: ProviderRow[] = Array.from({ length: 250 }, (_, i) => ({
+        provider_id: `a0000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+        provider_name: `Unrelated Provider ${i}`,
+        address_city: 'Hamburg',
+        review_status: 'pending',
+      }));
+      cappedProviders.push({
+        provider_id: 'ffff1111-0000-4000-8000-000000000001',
+        provider_name: 'Test Restaurant',
+        address_city: 'Berlin',
+        review_status: 'approved',
+      });
+      const { response, json, providerInsert } = await post(validBody(), {
+        providers: cappedProviders,
+        pageCap: 100,
       });
       expect(response.status).toBe(409);
       expect(json.code).toBe('PROVIDER_DUPLICATE');

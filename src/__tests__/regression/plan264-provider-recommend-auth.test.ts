@@ -22,11 +22,13 @@ function makeAdminClient() {
         return {
           insert: providerInsert,
           select: () => ({
-            // #606 R1 scan chain: .not().in().order().range() — empty first
-            // page ends the paginated loop immediately.
+            // #606 R1 scan chain: .not().in().gt().order().limit() — empty
+            // first page ends the keyset loop immediately.
             not: () => ({
               in: () => ({
-                order: () => ({ range: async () => ({ data: [], error: null }) }),
+                gt: () => ({
+                  order: () => ({ limit: async () => ({ data: [], error: null }) }),
+                }),
               }),
             }),
           }),

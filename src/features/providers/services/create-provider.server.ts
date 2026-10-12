@@ -246,8 +246,9 @@ function duplicateKey(name: string, city: string): string {
   );
 }
 
-/** Matches PostgREST max_rows (supabase/config.toml) so each page comes
- * back full until the end of the table. */
+/** Page size for the keyset scan. Matches PostgREST max_rows
+ * (supabase/config.toml) today, but correctness does not depend on it —
+ * see the loop below. */
 const DUPLICATE_SCAN_PAGE = 1000;
 
 /**
@@ -256,8 +257,13 @@ const DUPLICATE_SCAN_PAGE = 1000;
  * sampled match was a true duplicate).
  *
  * The scan reads the whole approved+pending set in pages: PostgREST caps a
- * single response at max_rows (1000), and prod has more pending rows than
- * that, so an un-paginated scan silently checks an arbitrary subset.
+ * single response at max_rows, and prod has more pending rows than that,
+ * so an un-paginated scan silently checks an arbitrary subset. The paging
+ * is KEYSET (`.gt(provider_id, lastSeen)` + `.limit`), not offset-based:
+ * if the server ever caps responses below the requested window, an offset
+ * scan would skip the unreturned rows mid-scan and silently truncate again.
+ * Keyset pages are contiguous at any cap ≥ 1; the loop stops only on an
+ * empty page.
  *
  * Visibility follows provider_is_visible (migration 137): an approved match
  * may be linked; a pending match is only "already recommended, under
@@ -272,18 +278,21 @@ async function assertNoDuplicateProvider(
 
   const submittedKey = duplicateKey(formData.title, submittedCity);
   let pendingMatch = false;
+  let lastProviderId = '00000000-0000-0000-0000-000000000000';
 
-  for (let from = 0; ; from += DUPLICATE_SCAN_PAGE) {
+  for (;;) {
     const { data: rows, error } = await admin
       .from('providers')
       .select('provider_id, provider_name, address_city, review_status')
       .not('address_city', 'is', null)
       .in('review_status', ['approved', 'pending'])
+      .gt('provider_id', lastProviderId)
       .order('provider_id', { ascending: true })
-      .range(from, from + DUPLICATE_SCAN_PAGE - 1);
+      .limit(DUPLICATE_SCAN_PAGE);
     if (error) throw error;
+    if (!rows || rows.length === 0) break;
 
-    for (const row of rows ?? []) {
+    for (const row of rows) {
       if (!row.provider_name || !row.address_city) continue;
       // Re-checked row-side even though the query filters review_status:
       // the predicate narrows the scan, the rule lives here.
@@ -304,7 +313,7 @@ async function assertNoDuplicateProvider(
       pendingMatch = true;
     }
 
-    if (!rows || rows.length < DUPLICATE_SCAN_PAGE) break;
+    lastProviderId = rows[rows.length - 1].provider_id;
   }
 
   if (pendingMatch) {

@@ -21,6 +21,11 @@
 -- cities.is_listed (seven readers filter on it; without the column every
 -- public city surface errors with 42703). The column's DEFAULT true makes
 -- the reverse order — schema first, code later — safe.
+--
+-- Rolling back only the CODE is also unsafe: pre-140 code reads `cities`
+-- unfiltered, so a code revert would expose all 176 rows on the city modal,
+-- /city pages and the route guard (the RPCs still filter, so /api/cities
+-- stays clean). Any code revert must run rollback step 1 below as well.
 
 BEGIN;
 
@@ -255,10 +260,11 @@ COMMIT;
 --   1. DELETE FROM public.cities WHERE NOT is_listed;
 --        The 156 seeded catalog rows must go first: dropping is_listed while
 --        they still exist makes them public on every city surface instantly.
---   2. Restore get_cities_with_counts and get_filtered_cities_by_search from
+--   2. Restore get_cities_with_counts and get_city_interest_counts from
 --        supabase/migrations/001_baseline.sql — the versions WITHOUT the
---        is_listed predicate. Do this before step 3: the replacement bodies
---        reference the column and would error with 42703 once it is gone.
+--        is_listed predicate. These are the two functions this migration
+--        replaces; do it before step 3 or their bodies error with 42703
+--        once the column is gone.
 --        Between steps 1 and 2 the unfiltered bodies see only is_listed=true
 --        rows, which is exactly the pre-140 set.
 --   3. ALTER TABLE public.cities DROP COLUMN is_listed;

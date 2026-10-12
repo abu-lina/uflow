@@ -94,11 +94,13 @@ function providerCreationFrom(table: string) {
       delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
       // #606 duplicate scan reads providers before inserting.
       select: () => ({
-            // #606 R1 scan chain: .not().in().order().range() — empty first
-            // page ends the paginated loop immediately.
+            // #606 R1 scan chain: .not().in().gt().order().limit() — empty
+            // first page ends the keyset loop immediately.
             not: () => ({
               in: () => ({
-                order: () => ({ range: async () => ({ data: [], error: null }) }),
+                gt: () => ({
+                  order: () => ({ limit: async () => ({ data: [], error: null }) }),
+                }),
               }),
             }),
           }),
