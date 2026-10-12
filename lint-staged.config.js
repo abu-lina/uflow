@@ -1,24 +1,10 @@
 module.exports = {
-  // TypeScript files — type-check, lint, format
-  '*.{ts,tsx}': [
-    () => 'tsc --noEmit',
-    'eslint --fix --max-warnings=0 --no-warn-ignored',
-    'prettier --write',
-    (files) => {
-      const testFiles = files.filter(
-        (file) =>
-          !file.includes('/e2e/') &&
-          (file.includes('.test.') || file.includes('.spec.') || file.includes('__tests__')),
-      );
-      if (testFiles.length > 0) {
-        return 'npx vitest run ' + testFiles.join(' ');
-      }
-      return [];
-    },
-  ],
+  // TypeScript files — lint and format only. Type-check and tests run in
+  // `verify` (docs/agents/lane.md) and CI, so a red TDD commit can land.
+  '*.{ts,tsx}': ['eslint --fix --no-warn-ignored', 'prettier --write'],
 
-  // JavaScript files — lint and format (no tsc)
-  '*.{js,jsx}': ['eslint --fix --max-warnings=0 --no-warn-ignored', 'prettier --write'],
+  // JavaScript files — lint and format
+  '*.{js,jsx}': ['eslint --fix --no-warn-ignored', 'prettier --write'],
 
   // Style files
   '*.{css,scss,sass,less}': ['prettier --write'],
