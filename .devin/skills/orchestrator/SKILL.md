@@ -290,9 +290,12 @@ cd ../uflow-wt/N-<slug> && git push
 ```
 
 ```bash
-gh pr edit <PR> --title "<title>" --body "<the PR body comment, verbatim>"
+gh api -X PATCH repos/abu-lina/uflow/pulls/<PR> \
+  -f title="<title>" -f body="$(cat <body-file>)"
 gh pr ready <PR>
 ```
+
+`gh pr edit` is deliberately not used: on gh 2.67.0 it queries the deprecated `repository.pullRequest.projectCards` field and fails outright, exactly like `gh issue view --comments` (see Entry). The REST PATCH is version-proof. Write the body to a file first rather than inlining it, so backticks and `$(` in the body are not re-expanded by the shell.
 
 Marking it ready is also what frees the dispatcher's slots. A draft deliberately does not: `agent-monitor.sh` counts a draft as "no PR yet" for both `occupies_slot` and the build-stage slot, so a session in review still holds its concurrency. Without that, opening the draft early would hand the slot back before the review it exists to cover.
 
@@ -349,7 +352,7 @@ Deleting branches and worktrees is destructive, so confirm with the user before 
 4. **Name the tab.** Set the terminal tab to `N-<slug>` in Step 1 and again on resume.
 5. **Grant the worktree write scope before dispatch.** The `uflow-wt` parent only. The canonical repo is the workspace root and needs no grant; see Step 1.6.
 6. **Skill work runs inside subagents.** Name the skills in the dispatch brief; the orchestrator invokes none itself.
-7. **Orchestrator writes are a fixed whitelist.** This fence is prose-only and lives here by necessity, not by preference. It cannot go in frontmatter: a skill-level `permissions.deny` propagates into every dispatched subagent and kills it instantly with `Tool was rejected` and no report. Via `exec` the allowed writes are `git` commands, `gh` commands (`issue create`, `issue comment`, `pr create` including `--draft`, `pr edit`, `pr ready`), `gh issue edit --add-label` and `gh issue edit --remove-label` (label changes only, no `--body` or other `issue edit` flags), `gh label create` for exactly the labels this pipeline can need at issue time (`stage:prep`, `stage:build`, `learning-pending`, or a missing `type:*` label), and the tab-rename `printf`. Nothing else: no `sed -i`, `tee`, or `cat >` heredocs into repo files.
+7. **Orchestrator writes are a fixed whitelist.** This fence is prose-only and lives here by necessity, not by preference. It cannot go in frontmatter: a skill-level `permissions.deny` propagates into every dispatched subagent and kills it instantly with `Tool was rejected` and no report. Via `exec` the allowed writes are `git` commands, `gh` commands (`issue create`, `issue comment`, `pr create` including `--draft`, `pr ready`), `gh api -X PATCH repos/<owner>/<repo>/pulls/<N>` for the PR title and body (`gh pr edit` is broken on gh 2.67.0; see Push and PR), `gh issue edit --add-label` and `gh issue edit --remove-label` (label changes only, no `--body` or other `issue edit` flags), `gh label create` for exactly the labels this pipeline can need at issue time (`stage:prep`, `stage:build`, `learning-pending`, or a missing `type:*` label), and the tab-rename `printf`. Nothing else: no `sed -i`, `tee`, or `cat >` heredocs into repo files.
 8. **Investigation is dispatched.** Root-causing and locating code belong to subagents. The orchestrator reads nothing in the worktree or the canonical repo: no `read`, `grep`, `glob`, or `exec` (`cat`, `rg`, `ls`) on source files. In one session the router told the user the root cause itself ("`PageTransition` is keyed by `pathname`, line 152 of `RootClientLayout.tsx`, forcing full unmount/remount") and then dispatched a subagent to find what it had already found.
 9. **Every implementation brief names `tdd`.**
 10. **Gate between phases.** `ask_user_question` with what was done and what is next.
