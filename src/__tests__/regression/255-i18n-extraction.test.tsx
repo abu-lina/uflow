@@ -99,8 +99,8 @@ describe('255 C6 — icon and colour standards', () => {
   it.each(['app/(public)/create/page.tsx', 'app/(public)/create/halal/page.tsx', ...COMPONENTS])(
     '%s has no hex colour literals',
     (file) => {
-      // Strip #415 issue references so they don't match the 3-char hex pattern.
-      const src = page(file).replaceAll('#415', '');
+      // Strip issue references (#415, #606) so they don't match the 3-char hex pattern.
+      const src = page(file).replaceAll(/#\d{3,}\b/g, '');
       expect(src).not.toMatch(/#[0-9A-Fa-f]{3,8}\b/);
     },
   );

@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { createProviderOrServiceServer } from '@/features/providers/services/create-provider.server';
+import {
+  createProviderOrServiceServer,
+  ProviderSubmitError,
+  type ProviderSubmitErrorCode,
+} from '@/features/providers/services/create-provider.server';
 
 const shortText = (max = 200) => z.string().max(max).optional().default('');
 
@@ -15,6 +19,9 @@ const createProviderBodySchema = z
   .object({
     creationMode: z.enum(['owner', 'recommendation']),
     entityType: z.enum(['provider', 'community_service']).optional().default('provider'),
+    // #606: only submissions that declare the recommend flow are held to the
+    // closed city list; import/owner/tooling posts keep free-text cities.
+    submissionSource: z.enum(['recommend', 'import', 'owner']).optional(),
     title: z.string().trim().min(1, 'Title is required').max(200),
     category: z.union([z.literal(''), z.string().uuid()]),
     description: z.string().max(5000).optional().default(''),
@@ -47,6 +54,29 @@ const createProviderBodySchema = z
   })
   .strict();
 
+/**
+ * Bad-input codes the service can raise, mapped to their HTTP status and a
+ * field the form can point at. `error` stays a short safe fallback for
+ * non-localised clients; the UI keys its copy off `code` (#577/#582).
+ */
+const SUBMIT_ERROR_MAP: Record<
+  ProviderSubmitErrorCode,
+  { status: number; error: string; field?: string }
+> = {
+  CATEGORY_UNKNOWN: { status: 400, error: 'Please choose a valid category.', field: 'category' },
+  CITY_NOT_SUPPORTED: {
+    status: 400,
+    error: 'Please choose a city from the list.',
+    field: 'city',
+  },
+  HALAL_ATTESTATION_REQUIRED: {
+    status: 400,
+    error: 'Please answer all attestation questions.',
+    field: 'attestation',
+  },
+  PROVIDER_DUPLICATE: { status: 409, error: 'This provider already exists.' },
+};
+
 export async function POST(request: NextRequest) {
   try {
     // Resolve the actor from the session first so the rate limit can key on it.
@@ -54,7 +84,10 @@ export async function POST(request: NextRequest) {
     // All submission flows require a logged-in user (#415) — the endpoint
     // enforces the gate too, not just the client.
     if (!user) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      return NextResponse.json(
+        { code: 'AUTH_REQUIRED', error: 'Authentication required' },
+        { status: 401 },
+      );
     }
     const userId = user.id;
 
@@ -63,7 +96,7 @@ export async function POST(request: NextRequest) {
     const isAllowed = checkRateLimit(identifier, 5, 60 * 60 * 1000, 'provider-create');
     if (!isAllowed) {
       return NextResponse.json(
-        { error: 'Too many requests. Please try again later.' },
+        { code: 'RATE_LIMITED', error: 'Too many requests. Please try again later.' },
         { status: 429 },
       );
     }
@@ -71,8 +104,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validation = createProviderBodySchema.safeParse(body);
     if (!validation.success) {
+      const issue = validation.error.issues[0];
       return NextResponse.json(
-        { error: validation.error.issues[0]?.message ?? 'Invalid request body' },
+        {
+          code: 'INVALID_BODY',
+          error: 'Invalid submission',
+          field: typeof issue?.path?.[0] === 'string' ? issue.path[0] : undefined,
+        },
         { status: 400 },
       );
     }
@@ -86,7 +124,10 @@ export async function POST(request: NextRequest) {
     const hasBadCertificate =
       formData.certificate_url.length > 0 && !isStorageUrl(formData.certificate_url);
     if (hasBadImage || hasBadCertificate) {
-      return NextResponse.json({ error: 'Invalid media URL' }, { status: 400 });
+      return NextResponse.json(
+        { code: 'INVALID_MEDIA_URL', error: 'Invalid media URL' },
+        { status: 400 },
+      );
     }
 
     const result = await createProviderOrServiceServer({
@@ -100,6 +141,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('Provider create error:', error);
-    return NextResponse.json({ error: 'Failed to submit provider' }, { status: 500 });
+    if (error instanceof ProviderSubmitError) {
+      const mapped = SUBMIT_ERROR_MAP[error.code];
+      return NextResponse.json(
+        {
+          code: error.code,
+          error: mapped.error,
+          ...(mapped.field ? { field: mapped.field } : {}),
+          ...(error.extras?.existing ? { existing: error.extras.existing } : {}),
+        },
+        { status: mapped.status },
+      );
+    }
+    return NextResponse.json(
+      { code: 'SUBMIT_FAILED', error: 'Failed to submit provider' },
+      { status: 500 },
+    );
   }
 }

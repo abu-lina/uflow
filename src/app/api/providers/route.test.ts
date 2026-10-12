@@ -109,6 +109,9 @@ function makeAdminClient(
           insert: (...args: unknown[]) => providerInsert(...args),
           update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
           delete: () => ({ eq: (...args: unknown[]) => providerDeleteEq(...args) }),
+          select: () => ({
+            not: async () => ({ data: [], error: null }),
+          }),
         };
       }
       if (table === 'categories') {
@@ -119,6 +122,9 @@ function makeAdminClient(
             }),
           }),
         };
+      }
+      if (table === 'cities') {
+        return { select: async () => ({ data: [], error: null }) };
       }
       if (table === 'locations') {
         return { insert: (...args: unknown[]) => locationInsert(...args) };

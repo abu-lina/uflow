@@ -11,6 +11,11 @@ export interface ProviderFormData {
   // Entity type (determined by category selection)
   entityType: 'provider' | 'community_service';
 
+  /** Wire-only marker (#606): identifies the submitting flow to
+   * /api/providers so the recommend path can enforce the closed city list.
+   * Not part of the draft state; set at submit time only. */
+  submissionSource?: 'recommend' | 'import' | 'owner';
+
   // Basics
   title: string;
   category: string;

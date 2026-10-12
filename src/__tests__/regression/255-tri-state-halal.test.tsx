@@ -92,6 +92,8 @@ function providerCreationFrom(table: string) {
       insert: (...args: unknown[]) => mockProviderInsert(...args),
       update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
+      // #606 duplicate scan reads providers before inserting.
+      select: () => ({ not: async () => ({ data: [], error: null }) }),
     };
   }
   if (table === 'categories') {

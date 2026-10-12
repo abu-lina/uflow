@@ -25,7 +25,10 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import {
+  createProviderOrService,
+  ProviderSubmissionError,
+} from '@/features/providers/services/mutations';
 
 const user = { id: 'user-1', email: 'test@test.de' } as unknown as User;
 
@@ -139,6 +142,48 @@ describe('createProviderOrService client contract', () => {
     await expect(createProviderOrService(baseFormData(), user)).rejects.toThrow(
       'Failed to submit provider',
     );
+  });
+
+  it('propagates the server error code, status and extras (#606)', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 409,
+      json: async () => ({
+        code: 'PROVIDER_DUPLICATE',
+        error: 'This provider already exists.',
+        existing: {
+          provider_id: 'p-1',
+          name: 'Test Restaurant',
+          city: 'Berlin',
+          status: 'approved',
+          href: '/p/p-1',
+        },
+      }),
+    });
+
+    const err = await createProviderOrService(baseFormData(), user).catch((e) => e);
+    expect(err).toBeInstanceOf(ProviderSubmissionError);
+    expect(err.code).toBe('PROVIDER_DUPLICATE');
+    expect(err.status).toBe(409);
+    expect(err.existing?.href).toBe('/p/p-1');
+  });
+
+  it('carries AUTH_REQUIRED when the server session is gone', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ code: 'AUTH_REQUIRED', error: 'Authentication required' }),
+    });
+
+    const err = await createProviderOrService(baseFormData(), user).catch((e) => e);
+    expect(err.code).toBe('AUTH_REQUIRED');
+    expect(err.status).toBe(401);
+  });
+
+  it('a client-side missing user also raises AUTH_REQUIRED', async () => {
+    const err = await createProviderOrService(baseFormData(), null).catch((e) => e);
+    expect(err.code).toBe('AUTH_REQUIRED');
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('deduplicates concurrent identical submissions into one request', async () => {

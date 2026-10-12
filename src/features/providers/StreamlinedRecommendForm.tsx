@@ -20,7 +20,10 @@ import {
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import {
+  createProviderOrService,
+  ProviderSubmissionError,
+} from '@/features/providers/services/mutations';
 import { trackEvent } from '@/lib/analytics/plausible';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
@@ -41,9 +44,9 @@ import {
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
-import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 import type { OSMPlace } from '@/types/osm';
 import { searchPlacesInCity } from '@/services/placeAutocompleteService';
+import { supabase } from '@/lib/supabase/client';
 
 interface StreamlinedRecommendFormProps {
   onSuccess?: () => void;
@@ -272,20 +275,12 @@ function inferCategoryFromName(name: string): string {
   return '';
 }
 
-interface NominatimCityResult {
-  place_id: number;
-  display_name: string;
-  name: string;
-  address?: {
-    city?: string;
-    town?: string;
-    village?: string;
-    state?: string;
-    country?: string;
-    country_code?: string;
-  };
-  lat: string;
-  lon: string;
+/** A selectable city from the closed `cities` list (#606). The recommend
+ * form only offers rows from this table — the same list the server enforces
+ * — so a suggestion can never be one the API would reject. */
+interface CitySuggestion {
+  city_name: string;
+  country: string;
 }
 
 export function StreamlinedRecommendForm({
@@ -310,11 +305,11 @@ export function StreamlinedRecommendForm({
 
   // City search state
   const [citySearchQuery, setCitySearchQuery] = useState('');
-  const [citySearchResults, setCitySearchResults] = useState<NominatimCityResult[]>([]);
+  const [citySearchResults, setCitySearchResults] = useState<CitySuggestion[]>([]);
   const [isCitySearching, setIsCitySearching] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
-  const citySearchAbortControllerRef = useRef<AbortController | null>(null);
+  const cityListRef = useRef<CitySuggestion[] | null>(null);
   const [isCitySelected, setIsCitySelected] = useState(!!initialCity);
 
   // Provider name search state
@@ -557,15 +552,9 @@ export function StreamlinedRecommendForm({
   ]);
 
   // City search function
+  // #606: suggestions come from the closed `cities` list, fetched once and
+  // filtered locally. The server enforces the same list on submit.
   const searchCities = useCallback(async (query: string) => {
-    // Cancel previous request
-    if (citySearchAbortControllerRef.current) {
-      citySearchAbortControllerRef.current.abort();
-    }
-
-    // Create new abort controller
-    citySearchAbortControllerRef.current = new AbortController();
-
     if (query.trim().length < 2) {
       setCitySearchResults([]);
       setIsCitySearching(false);
@@ -577,55 +566,19 @@ export function StreamlinedRecommendForm({
     setShowCityDropdown(true);
 
     try {
-      // Use Nominatim search API for cities
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?` +
-          `format=json&` +
-          `q=${encodeURIComponent(query)}&` +
-          `addressdetails=1&` +
-          `limit=10&` +
-          `featuretype=city,town,village&` +
-          `countrycodes=`, // Empty = all countries
-        {
-          signal: citySearchAbortControllerRef.current.signal,
-          headers: {
-            'User-Agent': 'UmmahFlow/1.0', // Required by Nominatim ToS
-            'Accept-Language': 'de,en', // Prefer German, fallback to English
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch city suggestions');
+      if (!cityListRef.current) {
+        const { data, error } = await supabase.from('cities').select('city_name, country');
+        if (error) throw error;
+        cityListRef.current = (data ?? []) as CitySuggestion[];
       }
-
-      const data: NominatimCityResult[] = await response.json();
-
-      // Filter and format results
-      const formattedCities = data
-        .filter((result) => {
-          // Only include results that have a city/town/village name
-          return result.address?.city || result.address?.town || result.address?.village;
-        })
-        .map((result) => {
-          // Replace Israel with Palestine in country field
-          const country = normalizeCountryNameForDisplay(result.address?.country || '');
-          return {
-            ...result,
-            address: {
-              ...result.address,
-              country: country,
-            },
-          };
-        });
-
-      setCitySearchResults(formattedCities);
+      const needle = query.trim().toLowerCase();
+      setCitySearchResults(
+        cityListRef.current
+          .filter((city) => city.city_name.toLowerCase().includes(needle))
+          .slice(0, 10),
+      );
       setSelectedCityIndex(-1);
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        // Request was cancelled, ignore
-        return;
-      }
       console.error('[City Search] Error fetching cities:', error);
       setCitySearchResults([]);
     } finally {
@@ -649,9 +602,8 @@ export function StreamlinedRecommendForm({
   }, [citySearchQuery, searchCities]);
 
   // Handle city selection from dropdown
-  const handleCitySelect = useCallback((city: NominatimCityResult) => {
-    const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
-    setFormData((prev) => ({ ...prev, city: cityName }));
+  const handleCitySelect = useCallback((city: CitySuggestion) => {
+    setFormData((prev) => ({ ...prev, city: city.city_name }));
     setIsCitySelected(true);
     setCitySearchQuery('');
     setCitySearchResults([]);
@@ -1145,6 +1097,9 @@ export function StreamlinedRecommendForm({
         description: formData.message,
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
+        // #606: declares the recommend flow so the server enforces the
+        // closed city list for this submission (only).
+        submissionSource: 'recommend' as const,
         isOnlineBusiness: false,
         street: '',
         zip: '',
@@ -1215,7 +1170,66 @@ export function StreamlinedRecommendForm({
       router.replace('/create/recommend?success=true', { scroll: false });
     } catch (error) {
       console.error('Error creating recommendation:', error);
-      toast.error(t('create.recommend.error'));
+      // #606: the API returns opaque codes; copy is localised client-side.
+      // Nothing below clears the draft — entered data always survives a
+      // failed submit, including the login round-trip on an expired session.
+      const submitError = error as ProviderSubmissionError | null;
+      switch (submitError?.code) {
+        case 'AUTH_REQUIRED':
+          // Session expired while the form was open: the draft is in
+          // localStorage, so the login round-trip loses nothing.
+          toast.error(t('create.recommend.sessionExpired'), {
+            duration: 8000,
+            action: {
+              label: t('create.basics.goToLogin'),
+              onClick: () =>
+                router.push(`/login?returnUrl=${encodeURIComponent('/create/recommend')}`),
+            },
+          });
+          break;
+        case 'PROVIDER_DUPLICATE': {
+          const existingHref = submitError.existing?.href;
+          if (existingHref) {
+            toast.error(t('create.recommend.duplicateApproved'), {
+              duration: 8000,
+              action: {
+                label: t('create.recommend.viewExisting'),
+                onClick: () => router.push(existingHref),
+              },
+            });
+          } else {
+            toast.error(t('create.recommend.duplicatePending'));
+          }
+          break;
+        }
+        case 'CITY_NOT_SUPPORTED':
+          // Surface the inline city hint as well so the field is pointed out.
+          setIsCitySelected(false);
+          toast.error(t('create.recommend.cityNotListed'));
+          break;
+        case 'CATEGORY_UNKNOWN':
+          toast.error(t('create.recommend.categoryInvalid'));
+          break;
+        case 'HALAL_ATTESTATION_REQUIRED':
+          toast.error(t('create.recommend.halalRequired'));
+          break;
+        case 'RATE_LIMITED':
+          toast.error(t('create.recommend.rateLimited'));
+          break;
+        case 'INVALID_BODY':
+        case 'INVALID_MEDIA_URL':
+          toast.error(t('create.recommend.validationFailed'));
+          break;
+        default:
+          // Genuine server failure: offer a retry; the draft is untouched.
+          toast.error(t('create.recommend.error'), {
+            duration: 8000,
+            action: {
+              label: t('create.recommend.retry'),
+              onClick: () => void handleSubmit(),
+            },
+          });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1402,17 +1416,11 @@ export function StreamlinedRecommendForm({
                   </div>
                 ) : (
                   citySearchResults.map((city, index) => {
-                    const cityName =
-                      city.address?.city ||
-                      city.address?.town ||
-                      city.address?.village ||
-                      city.name;
-                    const country = normalizeCountryNameForDisplay(city.address?.country || '');
                     const isSelected = index === selectedCityIndex;
 
                     return (
                       <button
-                        key={city.place_id}
+                        key={city.city_name}
                         aria-selected={isSelected}
                         className={cn(
                           'w-full px-4 py-3 text-left transition-colors',
@@ -1426,9 +1434,11 @@ export function StreamlinedRecommendForm({
                       >
                         <div className="flex flex-col gap-1">
                           <span className="text-[15px] font-medium text-content-heading">
-                            {cityName}
+                            {city.city_name}
                           </span>
-                          {country && <span className="text-xs text-content-muted">{country}</span>}
+                          {city.country && (
+                            <span className="text-xs text-content-muted">{city.country}</span>
+                          )}
                         </div>
                       </button>
                     );

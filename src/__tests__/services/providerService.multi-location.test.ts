@@ -18,6 +18,8 @@ function setupSupabaseMock() {
       return {
         insert: async () => ({ error: null }),
         delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
+        // #606 duplicate scan reads providers before inserting.
+        select: () => ({ not: async () => ({ data: [], error: null }) }),
       };
     }
     if (table === 'provider_offers' || table === 'provider_needs') {
@@ -103,6 +105,7 @@ describe('providerService multi-location creation', () => {
             return { error: null };
           },
           delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
+          select: () => ({ not: async () => ({ data: [], error: null }) }),
         };
       }
       if (table === 'locations') {
@@ -162,6 +165,7 @@ describe('providerService multi-location creation', () => {
         return {
           insert: () => ({ error: null }),
           delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
+          select: () => ({ not: async () => ({ data: [], error: null }) }),
         };
       }
       if (table === 'provider_offers' || table === 'provider_needs') {
@@ -205,6 +209,7 @@ describe('providerService multi-location creation', () => {
         return {
           insert: () => ({ error: null }),
           delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
+          select: () => ({ not: async () => ({ data: [], error: null }) }),
         };
       }
       if (table === 'locations') {

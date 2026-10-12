@@ -9,6 +9,8 @@ export async function findCityBySlug(slug: string): Promise<string | null> {
   const { data: cities } = await supabase
     .from('cities')
     .select('city_name')
+    // #606: unlisted catalog rows exist only for recommend validation.
+    .eq('is_listed', true)
     .limit(500);
 
   if (cities) {

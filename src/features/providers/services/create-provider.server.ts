@@ -3,12 +3,45 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import type { ProviderFormData } from '@/providers/form-provider';
 import { TrustLevel } from '@/types/badges';
+import { makeProviderKey } from '@/lib/import/joinhalal';
 import type { CreateProviderResult } from './mutations';
 
 /** ProviderFormData minus File fields, plus already-uploaded public image URLs. */
 export type CreateProviderPayload = Omit<ProviderFormData, 'images' | 'certificate_file'> & {
   imageUrls?: string[];
+  /** Wire-only marker (#606): which UI flow submitted. 'recommend' opts the
+   * submission into the closed city list; other flows keep free-text cities. */
+  submissionSource?: 'recommend' | 'import' | 'owner';
 };
+
+/** Error codes the /api/providers route maps to statuses and the client maps
+ * to localised copy. Opaque by contract (#577/#582): never leak internals. */
+export type ProviderSubmitErrorCode =
+  | 'CATEGORY_UNKNOWN'
+  | 'CITY_NOT_SUPPORTED'
+  | 'HALAL_ATTESTATION_REQUIRED'
+  | 'PROVIDER_DUPLICATE';
+
+export interface DuplicateProviderMatch {
+  provider_id: string;
+  name: string;
+  city: string;
+  status: 'approved' | 'pending';
+  /** Public detail link — only ever set for approved providers. A pending
+   * row has no public page, and a rejected row is never revealed at all. */
+  href?: string;
+}
+
+export class ProviderSubmitError extends Error {
+  constructor(
+    public readonly code: ProviderSubmitErrorCode,
+    message: string,
+    public readonly extras?: { existing?: DuplicateProviderMatch },
+  ) {
+    super(message);
+    this.name = 'ProviderSubmitError';
+  }
+}
 
 export interface CreateProviderActor {
   /** Resolved from the server-side session; the route rejects anonymous
@@ -86,24 +119,204 @@ async function syncEntityRelations(
   }
 }
 
+type ListingType = 'food' | 'store' | 'ummah';
+
+/**
+ * Fallback for categories whose live `applicable_section` cannot be mapped to
+ * a listing type ('all', the schema default, lands here). Keyed off the
+ * category `slug` — the one stable identifier across environments, since
+ * category ids diverge between prod, dev and local. Values measured from 569
+ * existing prod providers on these categories (#606 gate decision).
+ * German-slug aliases cover environments where `slug` was never backfilled.
+ */
+const UNMAPPED_SECTION_CATEGORY_LISTING: Record<string, ListingType> = {
+  'food-drink': 'food',
+  'essen-trinken': 'food',
+  'crafts-repair': 'store',
+  'handwerk-reparatur': 'store',
+  education: 'store',
+  'bildung-lernen': 'store',
+  other: 'food',
+  sonstiges: 'food',
+  services: 'store',
+  dienstleistungen: 'store',
+  'community-support': 'ummah',
+  'gemeinschaft-spenden': 'ummah',
+};
+
+/** Same slug recipe as migration 125: lowercase, umlauts expanded, runs of
+ * non-alphanumerics collapsed to '-'. */
+function slugifyCategoryName(name: string): string {
+  return name
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/Ä/g, 'ae')
+    .replace(/Ö/g, 'oe')
+    .replace(/Ü/g, 'ue')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Resolves providers.listing_type (NOT NULL, no default) for a category.
+ * Chain (#606): live applicable_section → slug-keyed fallback map → 'food'
+ * (the recommend form only asks halal-food questions; 448 of 497 prod rows
+ * on unmappable categories were food anyway).
+ *
+ * Returns 'category_not_found' only when the category row does not exist —
+ * that is caller-visible bad input (400), while every existing category must
+ * resolve to a real listing type and never throw.
+ */
 async function resolveListingType(
   admin: AdminClient,
   categoryId: string,
-): Promise<'food' | 'store' | 'ummah' | null> {
-  if (!categoryId) return null;
-  try {
-    const { data } = await admin
-      .from('categories')
-      .select('applicable_section')
-      .eq('category_id', categoryId)
-      .single();
-    if (data?.applicable_section && ['food', 'store', 'ummah'].includes(data.applicable_section)) {
-      return data.applicable_section as 'food' | 'store' | 'ummah';
-    }
-  } catch {
-    // Category lookup failed; caller treats this as unresolvable.
+): Promise<ListingType | 'category_not_found'> {
+  if (!categoryId) return 'category_not_found';
+  const { data, error } = await admin
+    .from('categories')
+    .select('applicable_section, slug, name_en, name_de')
+    .eq('category_id', categoryId)
+    .single();
+
+  if (error || !data) {
+    // PostgREST reports an empty .single() result as PGRST116; anything else
+    // is a real infrastructure failure and must surface as a 500, not a 400.
+    if (error && error.code !== 'PGRST116') throw error;
+    return 'category_not_found';
   }
-  return null;
+
+  if (['food', 'store', 'ummah'].includes(data.applicable_section)) {
+    return data.applicable_section as ListingType;
+  }
+
+  const slugCandidates = [data.slug, data.name_en, data.name_de]
+    .filter((v): v is string => typeof v === 'string' && v.length > 0)
+    .map((v) => slugifyCategoryName(v));
+  for (const candidate of slugCandidates) {
+    const mapped = UNMAPPED_SECTION_CATEGORY_LISTING[candidate];
+    if (mapped) return mapped;
+  }
+
+  console.warn({
+    event: 'listing_type_defaulted',
+    category_id: categoryId,
+    applicable_section: data.applicable_section,
+  });
+  return 'food';
+}
+
+/** Folds diacritics (ä→a, é→e, ß→ss) so 'München' and 'munchen' compare
+ * equal in duplicate and city lookups. */
+function stripDiacritics(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/ß/g, 'ss');
+}
+
+/** R1 normalisation (#606): lowercase, diacritic strip, punctuation
+ * collapse. Deliberately not provider-matcher's normalizeName — its legal-
+ * suffix stripping ('X restaurant' → 'x') is asymmetric with punctuation
+ * variants ('X restaurant!' → 'x restaurant') and would miss true dupes. */
+function normalizeForDuplicate(value: string): string {
+  return stripDiacritics(value.trim().toLowerCase())
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** R1 identity (#606): normalised provider name AND normalised city, both
+ * exact after normalisation. */
+function duplicateKey(name: string, city: string): string {
+  return makeProviderKey(normalizeForDuplicate(name), normalizeForDuplicate(city));
+}
+
+/**
+ * Blocks a submission whose normalised name+city already exists on a
+ * provider visible as a duplicate (#606, rule R1 — measured on prod: every
+ * sampled match was a true duplicate).
+ *
+ * Visibility follows provider_is_visible (migration 137): an approved match
+ * may be linked; a pending match is only "already recommended, under
+ * review"; a rejected provider is never revealed — it does not match at all.
+ */
+async function assertNoDuplicateProvider(
+  admin: AdminClient,
+  formData: CreateProviderPayload,
+): Promise<void> {
+  const submittedCity = (formData.city ?? '').trim();
+  if (!submittedCity || !formData.title?.trim()) return;
+
+  const submittedKey = duplicateKey(formData.title, submittedCity);
+  const { data: rows, error } = await admin
+    .from('providers')
+    .select('provider_id, provider_name, address_city, review_status')
+    .not('address_city', 'is', null);
+  if (error) throw error;
+
+  let pendingMatch: DuplicateProviderMatch | null = null;
+  for (const row of rows ?? []) {
+    if (!row.provider_name || !row.address_city) continue;
+    if (row.review_status !== 'approved' && row.review_status !== 'pending') continue;
+    if (duplicateKey(row.provider_name, row.address_city) !== submittedKey) continue;
+
+    if (row.review_status === 'approved') {
+      throw new ProviderSubmitError('PROVIDER_DUPLICATE', 'Duplicate provider submission', {
+        existing: {
+          provider_id: row.provider_id,
+          name: row.provider_name,
+          city: row.address_city,
+          status: 'approved',
+          href: `/p/${row.provider_id}`,
+        },
+      });
+    }
+    pendingMatch = {
+      provider_id: row.provider_id,
+      name: row.provider_name,
+      city: row.address_city,
+      status: 'pending',
+    };
+  }
+
+  if (pendingMatch) {
+    throw new ProviderSubmitError('PROVIDER_DUPLICATE', 'Duplicate provider submission', {
+      existing: pendingMatch,
+    });
+  }
+}
+
+/**
+ * The recommend path (#606) only accepts cities from the closed `cities`
+ * list. A match canonicalises the submitted value to the stored `city_name`
+ * so 'berlin' is stored as 'Berlin'. No match is caller-visible bad input.
+ * Other flows (import UI, owner create, chat, scripts) keep free-text cities.
+ */
+async function canonicalizeRecommendCity(
+  admin: AdminClient,
+  formData: CreateProviderPayload,
+): Promise<void> {
+  if (formData.submissionSource !== 'recommend') return;
+  const submittedCity = (formData.city ?? '').trim();
+  if (!submittedCity) return;
+
+  const { data: rows, error } = await admin.from('cities').select('city_name');
+  if (error) throw error;
+
+  const submittedNorm = stripDiacritics(submittedCity.toLowerCase());
+  const match = (rows ?? []).find(
+    (row: { city_name: string }) => stripDiacritics(row.city_name.toLowerCase()) === submittedNorm,
+  );
+  if (!match) {
+    throw new ProviderSubmitError(
+      'CITY_NOT_SUPPORTED',
+      'Recommend submission rejected: city not in the closed list',
+    );
+  }
+  formData.city = match.city_name;
 }
 
 const TAG_SYNONYMS = {
@@ -157,6 +370,12 @@ export async function createProviderOrServiceServer(
   const admin = getSupabaseAdmin();
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
   const uploadedUrls = formData.imageUrls ?? [];
+
+  // #606: recommend-path submissions take their city from the closed cities
+  // list (canonicalised to the stored spelling), then rule R1 blocks exact
+  // normalised name+city duplicates. Both run before any insert.
+  await canonicalizeRecommendCity(admin, formData);
+  await assertNoDuplicateProvider(admin, formData);
 
   /**
    * Removes a provider row after a required child write failed. When the
@@ -248,9 +467,10 @@ export async function createProviderOrServiceServer(
   // providers.listing_type is NOT NULL with no default; it must be resolved
   // before the insert, not after it.
   const resolvedListingType = await resolveListingType(admin, formData.category);
-  if (!resolvedListingType) {
-    throw new Error(
-      `Unable to resolve listing_type for category '${formData.category}'; provider was not created.`,
+  if (resolvedListingType === 'category_not_found') {
+    throw new ProviderSubmitError(
+      'CATEGORY_UNKNOWN',
+      `Provider submission rejected: category '${formData.category}' does not exist.`,
     );
   }
 
@@ -265,7 +485,8 @@ export async function createProviderOrServiceServer(
       (answer) => answer === undefined,
     )
   ) {
-    throw new Error(
+    throw new ProviderSubmitError(
+      'HALAL_ATTESTATION_REQUIRED',
       'Halal attestation required: all three questions must be answered (yes, no, or not sure).',
     );
   }
