@@ -20,7 +20,9 @@ After each build chunk: review, then test, then capture one learning.
 
 ## Branch-first rule
 
-Create a feature branch before any code changes, at the Implementer handoff, not at DevOps time. The orchestrator creates `<prefix>/<N>-<slug>` from the latest `main` during Step 1 setup, all code commits go onto it, and the DevOps phase only pushes remaining commits and creates the PR. This gives CI visibility during implementation and surfaces pre-existing failures early.
+Create a feature branch before any code changes, at the Implementer handoff, not at DevOps time. The orchestrator creates `<prefix>/<N>-<slug>` from the latest `main` during Step 1 setup and all code commits go onto it.
+
+A branch alone does not give CI visibility, so the PR opens as a **draft at first push**, right after the first Implement or Fix phase and before Code Review. Every rework round then gets a CI result; the DevOps phase only pushes the remaining commits, replaces the placeholder body and runs `gh pr ready`. Issue #606 is the counter-example: branch pushed early, PR opened at the very end, 3h19 of rework with no CI signal.
 
 ## Branch cleanup after merge
 

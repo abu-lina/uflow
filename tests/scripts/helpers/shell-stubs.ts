@@ -209,6 +209,11 @@ export function monitorRecord(r: {
   branch: string | null;
   commits_ahead: number;
   pr: number | null;
+  /** Open non-draft PR number. Omitting pins a legacy record predating the
+   *  field: jq's `.pr_ready == null` is then true, so the record counts as
+   *  STILL HOLDING its build slot — never omit it on a finished-build record
+   *  whose PR exists; set it to the PR number instead. */
+  pr_ready?: number | null;
   phases: number;
   occupies_slot: boolean;
   stage?: 'prep' | 'build' | 'none';

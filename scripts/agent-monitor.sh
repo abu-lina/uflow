@@ -122,7 +122,7 @@ worktrees="$("$GIT_BIN" -C "$REPO_DIR" worktree list --porcelain | sed -n 's/^wo
 refs="$("$GIT_BIN" -C "$REPO_DIR" for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin)"
 
 # Open PRs once; matched to issues by headRefName.
-prs_json="$(run_gh pr list --state open --limit 100 --json number,headRefName)"
+prs_json="$(run_gh pr list --state open --limit 100 --json number,headRefName,isDraft)"
 
 # Open issues carrying either ready label or a stage label. The stage axis is
 # what the dispatcher reads to pick a flow, so a stage label alone must be
@@ -221,9 +221,15 @@ while IFS= read -r n; do
   fi
 
   open_pr=""
+  open_pr_ready=""
   if [ -n "$branch" ]; then
     open_pr="$(printf '%s' "$prs_json" | "$JQ_BIN" -r \
       --arg b "$branch" '[.[] | select(.headRefName == $b) | .number][0] // empty')"
+    # A draft does not free the slot: the PR is opened at first push so CI
+    # covers the reviewer's rework rounds, which is exactly what the slot
+    # exists to cover. Only a review-ready (non-draft) PR releases it.
+    open_pr_ready="$(printf '%s' "$prs_json" | "$JQ_BIN" -r \
+      --arg b "$branch" '[.[] | select(.headRefName == $b and .isDraft != true) | .number][0] // empty')"
   fi
 
   has_tree_or_branch=0
@@ -235,7 +241,7 @@ while IFS= read -r n; do
   elif [ "$issue_state" = "OPEN" ] && [ "$has_tree_or_branch" = 1 ] \
        && [ "$ahead" -eq 0 ] && [ "$phases" -eq 0 ]; then
     state="stalled"; rank=1
-  elif [ "$issue_state" = "OPEN" ] && [ "$has_tree_or_branch" = 1 ] && [ -n "$open_pr" ]; then
+  elif [ "$issue_state" = "OPEN" ] && [ "$has_tree_or_branch" = 1 ] && [ -n "$open_pr_ready" ]; then
     state="awaiting-review"; rank=2
   elif [ "$issue_state" = "OPEN" ] && [ "$has_tree_or_branch" = 1 ]; then
     state="in-flight"; rank=3
@@ -284,9 +290,10 @@ while IFS= read -r n; do
     fi
   fi
 
-  # slot rule: open issue, worktree present, no open PR on its branch
+  # slot rule: open issue, worktree present, no review-ready PR on its
+  # branch — a draft PR keeps holding the slot
   slot=false
-  if [ "$issue_state" = "OPEN" ] && [ -n "$wt" ] && [ -z "$open_pr" ]; then
+  if [ "$issue_state" = "OPEN" ] && [ -n "$wt" ] && [ -z "$open_pr_ready" ]; then
     slot=true
   fi
 
@@ -296,6 +303,7 @@ while IFS= read -r n; do
     --arg br "$branch" \
     --argjson ahead "$ahead" \
     --arg pr "$open_pr" \
+    --arg pr_ready "$open_pr_ready" \
     --argjson phases "$phases" \
     --argjson slot "$slot" \
     --arg stage "$stage" \
@@ -311,6 +319,7 @@ while IFS= read -r n; do
       branch: (if $br == "" then null else $br end),
       commits_ahead: $ahead,
       pr: (if $pr == "" then null else ($pr | tonumber) end),
+      pr_ready: (if $pr_ready == "" then null else ($pr_ready | tonumber) end),
       phases: $phases,
       occupies_slot: $slot,
       stage: $stage,
@@ -339,18 +348,19 @@ while IFS= read -r rec; do
   [ -z "$rec" ] && continue
   json="$(printf '%s' "$rec" | cut -d' ' -f3-)"
   printf '%s' "$json" | "$JQ_BIN" -r '
-    def or_dash($v): if $v == null then "-" else ($v | tostring) end;
     [ .state,
       ("#" + (.issue | tostring)),
       (.title[0:50]),
       (if .occupies_slot then "yes" else "no" end),
       (if .worktree == null then "no" else "yes" end),
       (.branch // "-"),
-      or_dash(.pr),
+      (if .pr == null then "-"
+       elif .pr_ready == null then (.pr | tostring) + "d"
+       else (.pr | tostring) end),
       (.phases | tostring)
     ] | @tsv' \
     | while IFS=$'\t' read -r st iss ttl slot_v wt_v br pr_v ph; do
-        printf '%-17s%-6s%-52sslot=%-4s wt=%-4s br=%-35spr=%-6sphases=%s\n' \
+        printf '%-17s%-6s%-52sslot=%-4s wt=%-4s br=%-35spr=%-8sphases=%s\n' \
           "$st" "$iss" "$ttl" "$slot_v" "$wt_v" "$br" "$pr_v" "$ph"
       done
 done <<< "$sorted"

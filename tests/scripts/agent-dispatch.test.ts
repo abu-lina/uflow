@@ -673,6 +673,7 @@ describe('agent-dispatch.sh', () => {
         branch: 'fix/541-b',
         commits_ahead: 3,
         pr: 555,
+        pr_ready: 555,
         phases: 2,
         occupies_slot: false,
         stage: 'build',
@@ -681,6 +682,38 @@ describe('agent-dispatch.sh', () => {
     ]);
     const { stdout } = run(sb, ['--launch', '--max-build', '1'], env);
     expect(stdout).toContain('launched #700');
+  });
+
+  it('a branch whose only PR is a draft still occupies the build slot', () => {
+    // the orchestrator drafts the PR at first push so CI covers the rework
+    // rounds; the build slot must stay held until that PR is review-ready.
+    const env = feedMonitor(sb, [
+      occupiedRecord(541, {
+        stage: 'build',
+        labels: ['stage:build'],
+        pr: 555,
+        pr_ready: null,
+      }),
+      readyRecord(700, ['ready-for-agent', 'stage:build'], { stage: 'build' }),
+    ]);
+    const { stdout } = run(sb, ['--max-build', '1'], env);
+    expect(stdout).toContain('skip #700: build cap reached (1/1)');
+    expect(stdout).not.toContain('would launch #700');
+  });
+
+  it('a review-ready (non-draft) PR frees the build slot', () => {
+    const env = feedMonitor(sb, [
+      occupiedRecord(541, {
+        stage: 'build',
+        labels: ['stage:build'],
+        pr: 555,
+        pr_ready: 555,
+        occupies_slot: false,
+      }),
+      readyRecord(700, ['ready-for-agent', 'stage:build'], { stage: 'build' }),
+    ]);
+    const { stdout } = run(sb, ['--max-build', '1'], env);
+    expect(stdout).toContain('would launch #700');
   });
 
   it('a live build session (worktree, no PR yet) occupies the build slot', () => {

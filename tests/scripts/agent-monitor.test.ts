@@ -133,7 +133,7 @@ describe('agent-monitor.sh', { timeout: 30_000 }, () => {
     branches?: Record<number, string>; // issue -> branch name
     ahead?: Record<number, number>; // issue -> commits ahead of origin/main
     issues?: Record<number, ScenarioIssue>;
-    prs?: { number: number; headRefName: string }[];
+    prs?: { number: number; headRefName: string; isDraft?: boolean }[];
     readyAgent?: number[];
     readyHuman?: number[];
     stagePrep?: number[];
@@ -235,8 +235,59 @@ describe('agent-monitor.sh', { timeout: 30_000 }, () => {
       issue: 103,
       state: 'awaiting-review',
       pr: 555,
+      pr_ready: 555,
       occupies_slot: false,
     });
+  });
+
+  it('a draft PR keeps the slot: still in-flight, pr set, pr_ready null', () => {
+    // the orchestrator opens the PR as a draft at first push so CI covers the
+    // review rounds; `gh pr list --state open` returns drafts too, so only
+    // isDraft separates "PR exists for humans" from "ready for review".
+    seedScenario({
+      worktrees: { 103: 'x' },
+      branches: { 103: 'fix/103-x' },
+      ahead: { 103: 3 },
+      issues: { 103: { state: 'OPEN', comments: [PHASE_COMMENT] } },
+      prs: [{ number: 555, headRefName: 'fix/103-x', isDraft: true }],
+    });
+    const [r] = jsonRecords();
+    expect(r).toMatchObject({
+      issue: 103,
+      state: 'in-flight',
+      pr: 555,
+      pr_ready: null,
+      occupies_slot: true,
+    });
+  });
+
+  it('table: draft PR renders pr=555d, non-draft pr=555, no PR pr=-, columns aligned', () => {
+    // the JSON replay pins records, not the rendered cells; the table is the
+    // human-facing occupancy view, so the draft suffix and the widened pr
+    // column need direct coverage.
+    seedScenario({
+      worktrees: { 103: 'x', 104: 'x', 105: 'x' },
+      branches: { 103: 'fix/103-x', 104: 'fix/104-x', 105: 'fix/105-x' },
+      ahead: { 103: 3, 104: 2, 105: 1 },
+      issues: {
+        103: { state: 'OPEN', comments: [PHASE_COMMENT] },
+        104: { state: 'OPEN', comments: [PHASE_COMMENT] },
+        105: { state: 'OPEN', comments: [PHASE_COMMENT] },
+      },
+      prs: [
+        { number: 555, headRefName: 'fix/103-x', isDraft: true },
+        { number: 777, headRefName: 'fix/104-x', isDraft: false },
+      ],
+    });
+    const { stdout, status } = run(sb); // no --json: the table path
+    expect(status).toBe(0);
+    const line = (n: number) => stdout.split('\n').find((l) => l.includes(`#${n}`)) ?? '';
+    // the phases= field must sit in its own column after the pr cell, so a
+    // width regression shows up as `555d     phases=` losing its padding
+    expect(line(103)).toMatch(/pr=555d\s+phases=1/);
+    expect(line(104)).toMatch(/pr=777\s+phases=1/);
+    expect(line(105)).toMatch(/pr=-\s+phases=1/);
+    expect(line(103)).not.toContain('nulld');
   });
 
   it('classifies in-flight: open, worktree, no open PR, progress exists', () => {
@@ -557,7 +608,7 @@ describe('agent-monitor.sh', { timeout: 30_000 }, () => {
     expect(byIssue[528].state).toBe('ready');
   });
 
-  it('--json emits exactly the fourteen pinned fields, nulls present not omitted', () => {
+  it('--json emits exactly the fifteen pinned fields, nulls present not omitted', () => {
     seedLiveReplay();
     const { stdout } = run(sb, ['--json']);
     const want = [
@@ -571,6 +622,7 @@ describe('agent-monitor.sh', { timeout: 30_000 }, () => {
       'occupies_slot',
       'phases',
       'pr',
+      'pr_ready',
       'stage',
       'state',
       'title',

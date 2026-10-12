@@ -47,7 +47,8 @@ launches nothing.
                       held by a live ledger marker, so this is deliberately
                       tight
   --max-build N       stage:build concurrency cap (default 3); a build slot is
-                      held until a PR exists for the branch
+                      held until a review-ready (non-draft) PR exists for the
+                      branch — a draft PR keeps holding it
   --prep-stale-hours N  age past which a prep ledger marker counts as a dead
                       session and frees its slot (default 6; clamped to the
                       ledger retention window, which prunes older markers
@@ -363,14 +364,15 @@ occupied="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '[.[] | select(.occupies_s
 echo "occupied $occupied/$MAX slots"
 
 # 5b. Per-stage occupancy. Build work holds its slot while the issue is open,
-# has a worktree or branch and has no PR yet — the monitor's own
-# awaiting-review derivation. Stalled records are excluded: the filter chain
-# refuses to dispatch them, so they must not burn build concurrency.
+# has a worktree or branch and has no review-ready (non-draft) PR yet — the
+# monitor's own awaiting-review derivation; a draft PR keeps holding the slot
+# so CI covers the rework rounds. Stalled records are excluded: the filter
+# chain refuses to dispatch them, so they must not burn build concurrency.
 occ_build="$(printf '%s' "$monitor_out" | "$JQ_BIN" -s '
   [.[] | select((.stage // "none") != "prep" and .issue_state == "OPEN"
                and .state != "stalled"
                and (.worktree != null or .branch != null)
-               and .pr == null)] | length')"
+               and .pr_ready == null)] | length')"
 
 # Prep is a worktree-less stage, so worktree existence cannot be its marker;
 # the launch ledger is. A "<epoch> <issue> prep" line inside PREP_STALE_HOURS
