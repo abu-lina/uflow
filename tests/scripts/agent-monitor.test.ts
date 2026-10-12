@@ -281,8 +281,7 @@ describe('agent-monitor.sh', { timeout: 30_000 }, () => {
     });
     const { stdout, status } = run(sb); // no --json: the table path
     expect(status).toBe(0);
-    const line = (n: number) =>
-      stdout.split('\n').find((l) => l.includes(`#${n}`)) ?? '';
+    const line = (n: number) => stdout.split('\n').find((l) => l.includes(`#${n}`)) ?? '';
     // the phases= field must sit in its own column after the pr cell, so a
     // width regression shows up as `555d     phases=` losing its padding
     expect(line(103)).toMatch(/pr=555d\s+phases=1/);
