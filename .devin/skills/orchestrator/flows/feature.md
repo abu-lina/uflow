@@ -1,7 +1,7 @@
 # Flow: feature
 
 ```
-Grill -> Spec -> [Tickets] -> Implement -> Code Review -> QA -> Done
+Grill -> Spec -> [Gate: confirm spec, split extra scope] -> [Tickets] -> Implement -> [draft PR] -> Code Review -> [Gate: rework or done] -> QA -> Done
 ```
 
 | Phase           | Subagent      | Skills                                                 | What it does                                                                                                                                                   |
