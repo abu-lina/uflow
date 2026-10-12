@@ -1,7 +1,7 @@
 # Flow: change-request
 
 ```
-Grill -> Implement -> Code Review -> Done
+Grill -> Implement -> [draft PR] -> Code Review -> [Gate: rework or done] -> Done
 ```
 
 | Phase           | Subagent      | Skills                                           | What it does                                                                                      |

@@ -1,7 +1,7 @@
 # Flow: bug
 
 ```
-Diagnose -> [Gate: confirm hypotheses] -> Fix -> Code Review -> Done
+Diagnose -> [Gate: confirm hypotheses, split extra defect classes] -> Fix -> [draft PR] -> Code Review -> [Gate: rework or done] -> Done
 ```
 
 | Phase           | Subagent      | Skills                                           | What it does                                                                                    |
