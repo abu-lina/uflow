@@ -21,9 +21,10 @@ describe('fetchAllValidCities', () => {
     ];
 
     const { supabase } = await import('@/lib/supabase/client');
-    const mockSelect = vi.fn().mockReturnValue({
+    const mockEq = vi.fn().mockReturnValue({
       returns: vi.fn().mockResolvedValue({ data: mockCities, error: null }),
     });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
     const mockFrom = vi.fn().mockReturnValue({
       select: mockSelect,
     });
@@ -38,9 +39,10 @@ describe('fetchAllValidCities', () => {
 
   it('should return empty array on error', async () => {
     const { supabase } = await import('@/lib/supabase/client');
-    const mockSelect = vi.fn().mockReturnValue({
+    const mockEq = vi.fn().mockReturnValue({
       returns: vi.fn().mockResolvedValue({ data: null, error: { message: 'DB error' } }),
     });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
     const mockFrom = vi.fn().mockReturnValue({
       select: mockSelect,
     });
@@ -58,9 +60,10 @@ describe('fetchAllValidCities', () => {
 
   it('should handle empty data gracefully', async () => {
     const { supabase } = await import('@/lib/supabase/client');
-    const mockSelect = vi.fn().mockReturnValue({
+    const mockEq = vi.fn().mockReturnValue({
       returns: vi.fn().mockResolvedValue({ data: [], error: null }),
     });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
     const mockFrom = vi.fn().mockReturnValue({
       select: mockSelect,
     });
@@ -82,7 +85,8 @@ describe('checkCityExists', () => {
       error: null,
     });
     const mockIlike = vi.fn().mockReturnValue({ limit: mockLimit });
-    const mockSelect = vi.fn().mockReturnValue({ ilike: mockIlike });
+    const mockEq = vi.fn().mockReturnValue({ ilike: mockIlike });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
     const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 
     vi.mocked(supabase.from).mockImplementation(mockFrom as any);
@@ -92,6 +96,7 @@ describe('checkCityExists', () => {
     expect(result).toBe(true);
     expect(supabase.from).toHaveBeenCalledWith('cities');
     expect(mockSelect).toHaveBeenCalledWith('city_name');
+    expect(mockEq).toHaveBeenCalledWith('is_listed', true);
     expect(mockIlike).toHaveBeenCalledWith('city_name', 'berlin');
     expect(mockLimit).toHaveBeenCalledWith(1);
   });
@@ -102,7 +107,8 @@ describe('checkCityExists', () => {
 
     const mockLimit = vi.fn().mockResolvedValue({ data: [], error: null });
     const mockIlike = vi.fn().mockReturnValue({ limit: mockLimit });
-    const mockSelect = vi.fn().mockReturnValue({ ilike: mockIlike });
+    const mockEq = vi.fn().mockReturnValue({ ilike: mockIlike });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
     const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
 
     vi.mocked(supabase.from).mockImplementation(mockFrom as any);

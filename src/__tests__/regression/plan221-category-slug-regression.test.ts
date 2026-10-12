@@ -21,7 +21,7 @@ describe('Plan 221 — category slug must use DB slug, not slugified German labe
     expect(url).not.toContain('tuerkisch');
   });
 
-  it('omits category from path when categorySlug is missing (old localStorage entry)', () => {
+  it('keeps the filter via ?category=<id> when categorySlug is missing (old localStorage entry)', () => {
     const selection: WasSelection = {
       type: 'category',
       label: 'Türkisch',
@@ -37,8 +37,10 @@ describe('Plan 221 — category slug must use DB slug, not slugified German labe
 
     // Must NOT produce /food/stuttgart/tuerkisch (German-derived slug)
     expect(url).not.toContain('tuerkisch');
-    // Without a valid slug, the category segment is dropped from the path
-    expect(url).toBe('/food/stuttgart');
+    // #254: without a slug the category can no longer ride in the path, so it
+    // falls back to the query param. Silently dropping it (/food/stuttgart)
+    // was the bug that made category filters appear to do nothing.
+    expect(url).toBe('/food/stuttgart?category=232c2870-7929-43eb-a909-6cac90203192');
   });
 
   it('still includes categorySlug for English-named categories', () => {

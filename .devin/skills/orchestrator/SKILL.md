@@ -33,9 +33,11 @@ No local tracking file is read. The issue is the only state store, which is what
 
 ```bash
 gh issue create --title "<type>: <plain-language summary>" \
-  --label "<type-label>" --label "ready-for-agent" \
+  --label "<type-label>" --label "ready-for-agent" --label "stage:build" \
   --body-file <path>
 ```
+
+`ready-for-agent` is the dispatcher's gate and `stage:build` selects the implementation flow; an issue opened live already carries the user's spec in-session, so it skips `stage:prep`. Exploration issues get neither: they are never dispatched.
 
 Capture `N` from the returned URL. Issue body template:
 
@@ -97,7 +99,7 @@ If that fails because main is checked out:
 git checkout main && git pull origin main --ff-only
 ```
 
-5. Create worktree (all flows except exploration):
+5. Create worktree (all flows except exploration and `stage:prep` issues; prep is worktree-less like exploration, reading the canonical repo and writing only to the issue):
 
 ```bash
 mkdir -p ../uflow-wt
@@ -106,7 +108,7 @@ BRANCH_PREFIX="<type>"   # feature | fix | refactor | cr | hotfix
 git worktree add "../uflow-wt/${SESSION_SLUG}" -b "${BRANCH_PREFIX}/${SESSION_SLUG}" main
 ```
 
-6. Call `request_scope` with `scope: write` on `/Users/NARAFIQ/Projects/uflow-wt` (the recursive parent, never a per-run path) before any dispatch, so workers can edit code. Skip it for exploration, which has no worktree.
+6. Call `request_scope` with `scope: write` on `/Users/NARAFIQ/Projects/uflow-wt` (the recursive parent, never a per-run path) before any dispatch, so workers can edit code. Skip it for exploration and `stage:prep`, which have no worktree.
 
    The canonical repo needs no grant. It is the workspace root, so writes beneath it are allowed by default; the denial boundary sits one level up at `/Users/NARAFIQ/Projects/`.
 
@@ -116,7 +118,25 @@ git worktree add "../uflow-wt/${SESSION_SLUG}" -b "${BRANCH_PREFIX}/${SESSION_SL
    - Request one recursive grant for the `uflow-wt` parent, not a narrow per-run path. Narrow grants re-requested every run pile up as dead entries in the user's permission config; that pattern left ~63 stale `Write(~/Projects/uflow-wt/<slug>)` entries.
    - A mid-session `request_scope` does take effect, grants recursively, and reaches workers dispatched after the call. Permission config edits also take effect mid-session. If a grant reports "Scope granted" and the write is still refused, stop looking for a scope gap: a deny rule is blocking the tool, and a deny always beats an allow.
 
+7. For a dispatched session (the issue carried `ready-for-agent`), remove the gate label as soon as the worktree and branch exist:
+
+```bash
+gh issue edit N --remove-label ready-for-agent
+```
+
+The label means "an agent may pick this up"; a live worktree means one already has. Clearing it here is what stops a PR that closes unmerged from silently becoming re-dispatchable. The dispatcher's worktree/branch refusals stay as the second line of defence. A `stage:prep` session has no worktree, so its flow file clears the label on entry and re-adds it only if the issue hands straight to `stage:build`.
+
 ## Step 2: Classify
+
+The stage axis wins over the type table. When the session was opened by the dispatcher or resumed on an existing issue, read the issue's stage label first:
+
+| Stage label   | Flow                                                                                    |
+| ------------- | --------------------------------------------------------------------------------------- |
+| `stage:prep`  | `.devin/skills/orchestrator/flows/prep.md`: grill and spec the issue, write no code     |
+| `stage:build` | The type table below, starting at the implementable phase: the spec is already approved |
+| none          | The type table below, classified from the user's words                                  |
+
+`needs-triage` issues are swept by `.devin/skills/orchestrator/flows/triage.md`, which is human-initiated only: the dispatcher never launches it.
 
 | Type               | Signal                                    | Flow file                                            |
 | ------------------ | ----------------------------------------- | ---------------------------------------------------- |
@@ -145,29 +165,44 @@ These hold for every flow:
   - Flow: <type> / <phase chain>
   ```
 
-  The phase content follows it. Exploration omits the worktree and branch lines, having neither. Require this block in the brief; it is what makes clearing at a gate free rather than lossy.
+  The phase content follows it. Exploration and prep omit the worktree and branch lines, having neither. Require this block in the brief; it is what makes clearing at a gate free rather than lossy.
 
-| Phase           | Comment contains                                                                                                 |
-| --------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Grill           | Decisions, open questions, the acceptance criteria to paste into the issue body                                  |
-| Spec            | The spec                                                                                                         |
-| Diagnose        | Reproduction, ranked hypotheses, the discriminating evidence for the chosen one                                  |
-| Implement / Fix | Branch, commit SHAs, files changed, tests added, test command output                                             |
-| Code Review     | Findings by severity, on both the Standards and Spec axes                                                        |
-| QA              | Commands run, acceptance criteria checked off, failures                                                          |
-| PR body         | Drafted per the `pr` skill, as the final comment. The body follows the header line raw, with no outer code fence |
+| Phase           | Comment contains                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Grill           | Decisions, open questions, the acceptance criteria to paste into the issue body                                                 |
+| Spec            | The spec                                                                                                                        |
+| Diagnose        | Reproduction, ranked hypotheses, the discriminating evidence for the chosen one                                                 |
+| Implement / Fix | Branch, commit SHAs, files changed, tests added, test command output                                                            |
+| Code Review     | Findings by severity, on both the Standards and Spec axes                                                                       |
+| QA              | Commands run, acceptance criteria checked off, failures                                                                         |
+| PR body         | Drafted per the `pr` skill, once, after the final review passes. The body follows the header line raw, with no outer code fence |
 
 - Judgment phases (Grill, Diagnose, Spec, Tickets, Code Review) run foreground (`is_background: false`); execution phases (Implement, Fix, QA, Research) run background (`is_background: true`). The model is pinned in the worker profile, so there is no cheaper tier to pick.
 - Except in exploration, the last dispatched worker appends a learning entry to `docs/ai/LEARNINGS.md` as part of its brief.
 - Name skills in a brief by their bare name only (`tdd`, `to-spec`). Workers cannot invoke skills; they read the SKILL.md off disk, per "Following a skill" in their profile. Never put a plugin cache path in a brief.
 - Name `ponytail` in a brief only when the flow is `hotfix`, or when the diagnosed change touches a single file. Never otherwise, and never as a rule: an always-on "laziest solution" rule cannot distinguish a one-line fix from a feature, and "trivial one-liners need no test" contradicts rule 9's mandatory `tdd`.
-- Except in exploration, the last dispatched worker also drafts the PR body, following the `pr` skill, as a final issue comment headed `### Phase: PR body — Done`. The `pr` skill prints its template inside a fenced `markdown` block; that fence is the skill's own formatting and must never be reproduced in the comment. The comment carries the body raw so it can go to `gh pr create --body` unaltered.
+- In the code-writing flows, the PR body is drafted **once**, as its own dispatch, after the final Code Review passes with no rework pending. Do not attach it to "the last dispatched worker": every rework round then redrafts it against a state the PR never reaches. On #606 it ran at 08:42 and again at 09:59, and the PR opened at 12:03 on a third state, so both drafts were waste. Follow the `pr` skill, as an issue comment headed `### Phase: PR body — Done`. The `pr` skill prints its template inside a fenced `markdown` block; that fence is the skill's own formatting and must never be reproduced in the comment. The comment carries the body raw so it can go to `gh pr edit --body` unaltered.
+
+### Scope: one root cause per issue
+
+At the gate after Diagnose or Spec, count the **defect classes** in the worker's report. More than one means more than one issue. Split before dispatching any Fix: `gh issue create` for each extra class, linked back to #N, and leave them for their own sessions.
+
+A diff that carries several unrelated defects cannot be reviewed to a close, because each review round has a wider surface to re-read than the last. #606 carried four ("500 on unmapped categories, coded errors, city catalog, duplicate detection"), grew to 2,560 insertions across 44 files including a 270-line migration and six locales, and spent 3h19 of its 6h12 in review churn.
+
+A `stage:prep` session is where this is cheapest to catch: splitting at spec time costs one `gh issue create`, splitting after Fix costs a rework round.
+
+### The rework loop is bounded
+
+A Code Review that finds anything opens a **rework round**: Fix, then re-review.
+
+- Brief a re-review against the **delta only**, `git diff <SHA of the reviewed state>..HEAD`, and name that SHA in the brief. The full-branch divergence review already happened in round 1; re-reading the whole branch re-opens findings instead of closing them. A round-2 comment longer than round 1 is the signature (on #606: 12,468 chars after 11,400, longer than the Diagnose comment itself).
+- **Stop at two rework rounds.** If a third round is still finding defects, the scope is wrong rather than the code: raise it with the user at the gate and split the remainder into its own issue instead of dispatching another Fix.
 
 Every dispatch brief MUST include:
 
 - Issue number `N` and its URL
-- Worktree absolute path (omit for exploration)
-- Branch name
+- Worktree absolute path (omit for exploration and prep, which have none)
+- Branch name (same omission)
 - The user's verbatim request
 - The classification (type, route, confidence)
 - Task description
@@ -230,17 +265,39 @@ Workers are capped by **scope**, not tokens: one phase, one brief, one ticket. D
 
 No compaction threshold is configured, and none should be. The rules above keep this session an order of magnitude below the limit, so the only route to 90k is breaking rule 7 or 8, and a threshold would quietly compact over that rather than surface it. See the Context budget section of `AGENTS.md` for the per-launch flag and why it stays off.
 
-## Push and PR
+## Draft PR at first push
 
-After all phases pass, push and create the PR. The PR body was drafted by the last worker as the `### Phase: PR body — Done` issue comment; pass everything after that header line through verbatim. Do not write the body yourself. If the comment arrives wrapped in an outer code fence, that is a defect in the worker's output and would render the whole description as one code block: drop the wrapper, flag it at the gate, and change nothing else in the body.
+As soon as the first Implement or Fix comment lands, and **before** dispatching Code Review, push the branch and open a draft PR:
 
 ```bash
 cd ../uflow-wt/N-<slug> && git push -u origin <branch>
+gh pr create --draft --title "<type>: <plain-language summary>" \
+  --body "Fixes #N. Draft; the description lands at the PR body phase."
+```
+
+CI then covers every rework round instead of only the final state. That is the whole point of the branch-first rule in `AGENTS.md`, and a pushed branch with no PR does not deliver it: #606 pushed early, opened its PR at 12:03, and ran 3h19 of rework with no CI signal.
+
+Pass the draft's URL and number into every later brief, so rework rounds can read the CI result. Flows that write no code (exploration, prep, triage) have no branch and skip this entirely.
+
+## Push and PR
+
+The PR already exists as a draft. After all phases pass, push the remaining commits, replace the placeholder body, and mark it ready.
+
+The body came from the PR body phase as the `### Phase: PR body — Done` issue comment; pass everything after that header line through verbatim. Do not write the body yourself. If the comment arrives wrapped in an outer code fence, that is a defect in the worker's output and would render the whole description as one code block: drop the wrapper, flag it at the gate, and change nothing else in the body.
+
+```bash
+cd ../uflow-wt/N-<slug> && git push
 ```
 
 ```bash
-gh pr create --title "<title>" --body "<the PR body comment, verbatim>"
+gh api -X PATCH repos/abu-lina/uflow/pulls/<PR> \
+  -f title="<title>" -f body="$(cat <body-file>)"
+gh pr ready <PR>
 ```
+
+`gh pr edit` is deliberately not used: on gh 2.67.0 it queries the deprecated `repository.pullRequest.projectCards` field and fails outright, exactly like `gh issue view --comments` (see Entry). The REST PATCH is version-proof. Write the body to a file first rather than inlining it, so backticks and `$(` in the body are not re-expanded by the shell.
+
+Marking it ready is also what frees the dispatcher's slots. A draft deliberately does not: `agent-monitor.sh` counts a draft as "no PR yet" for both `occupies_slot` and the build-stage slot, so a session in review still holds its concurrency. Without that, opening the draft early would hand the slot back before the review it exists to cover.
 
 Then hand off to the next request. This is the chained trigger: it picks the next eligible `ready-for-agent` issue and opens a gated session for it in a new Terminal window.
 
@@ -250,9 +307,9 @@ cd ../uflow-wt/N-<slug> && ./scripts/agent-dispatch.sh --launch
 
 **Without `--launch` the script is a dry run. It prints what it would do and dispatches nothing.** `would launch #N` is a plan, not a launch; the handoff has not happened until a run prints `launched #N`. Reading the plan and then deciding for yourself is the failure this step exists to prevent, so if you run the dry form, the very next command is the `--launch` form.
 
-The dispatcher is capped (`--max 4`), rate-limited (`--max-per-hour 3`) and locked, and it refuses anything that already has a worktree or branch, anything labeled `no-parallel`, and anything `stalled`. A `skip #N` line is ordinary eligibility filtering. A line starting `refusing to dispatch` is the kill switch or a concurrent dispatch, not an error: quote it at the gate and stop. Never work around it by opening a session by hand. `scripts/agent-dispatch.sh --disable` stops all unattended launching.
+The dispatcher is capped (`--max 4` concurrency, `--max-per-hour 3` rolling, plus `--max-prep 1` and `--max-build 3` per-stage concurrency caps; a stage slot is held until the issue hits the stage's exit condition (`needs-info` or `stage:build` for prep, an open PR for build) and a prep marker also frees when its ledger line outlives `--prep-stale-hours`), locked, and it refuses anything that already has a worktree or branch, anything `stalled`, and anything with an open GitHub blocking link (`skip #N: blocked by #M`). A `skip #N` line is ordinary eligibility filtering. A line starting `refusing to dispatch` is the kill switch or a concurrent dispatch, not an error: quote it at the gate and stop. Never work around it by opening a session by hand. `scripts/agent-dispatch.sh --disable` stops all unattended launching.
 
-`no-parallel` is an unconditional refusal, not a wait-for-a-slot: the dispatcher skips those issues even at `0/4 slots`, by design, because they are repo-wide. They never start unattended, so an issue labeled `no-parallel` has to be raised with the user rather than left in the queue to be picked up.
+`no-parallel` issues get the serial slot: the dispatcher launches one only when `0` slots are occupied and no parallel work survived the same run's filter chain (`skip #N: serial, deferred while parallel work is queued` otherwise). That can leave a serial issue waiting indefinitely behind a busy queue, so the sanctioned escape hatch is `agent-dispatch.sh --launch --only N`: it still takes the lock, honours the kill switch, obeys dry-run-by-default and writes the ledger. Never open the session by hand instead.
 
 The worktree stays. Review feedback lands as more commits on the same branch, so nothing is removed at this point.
 
@@ -295,7 +352,7 @@ Deleting branches and worktrees is destructive, so confirm with the user before 
 4. **Name the tab.** Set the terminal tab to `N-<slug>` in Step 1 and again on resume.
 5. **Grant the worktree write scope before dispatch.** The `uflow-wt` parent only. The canonical repo is the workspace root and needs no grant; see Step 1.6.
 6. **Skill work runs inside subagents.** Name the skills in the dispatch brief; the orchestrator invokes none itself.
-7. **Orchestrator writes are a fixed whitelist.** This fence is prose-only and lives here by necessity, not by preference. It cannot go in frontmatter: a skill-level `permissions.deny` propagates into every dispatched subagent and kills it instantly with `Tool was rejected` and no report. Via `exec` the allowed writes are `git` commands, `gh` commands (`issue create`, `issue comment`, `pr create`), `gh label create` for a missing type label, and the tab-rename `printf`. Nothing else: no `sed -i`, `tee`, or `cat >` heredocs into repo files.
+7. **Orchestrator writes are a fixed whitelist.** This fence is prose-only and lives here by necessity, not by preference. It cannot go in frontmatter: a skill-level `permissions.deny` propagates into every dispatched subagent and kills it instantly with `Tool was rejected` and no report. Via `exec` the allowed writes are `git` commands, `gh` commands (`issue create`, `issue comment`, `pr create` including `--draft`, `pr ready`), `gh api -X PATCH repos/<owner>/<repo>/pulls/<N>` for the PR title and body (`gh pr edit` is broken on gh 2.67.0; see Push and PR), `gh issue edit --add-label` and `gh issue edit --remove-label` (label changes only, no `--body` or other `issue edit` flags), `gh label create` for exactly the labels this pipeline can need at issue time (`stage:prep`, `stage:build`, `learning-pending`, or a missing `type:*` label), and the tab-rename `printf`. Nothing else: no `sed -i`, `tee`, or `cat >` heredocs into repo files.
 8. **Investigation is dispatched.** Root-causing and locating code belong to subagents. The orchestrator reads nothing in the worktree or the canonical repo: no `read`, `grep`, `glob`, or `exec` (`cat`, `rg`, `ls`) on source files. In one session the router told the user the root cause itself ("`PageTransition` is keyed by `pathname`, line 152 of `RootClientLayout.tsx`, forcing full unmount/remount") and then dispatched a subagent to find what it had already found.
 9. **Every implementation brief names `tdd`.**
 10. **Gate between phases.** `ask_user_question` with what was done and what is next.
@@ -305,6 +362,10 @@ Deleting branches and worktrees is destructive, so confirm with the user before 
 14. **Clean up after merge.** The request is not done when the PR merges; it is done when the worktree is removed and the branch is deleted locally and on origin. Verify the merge and rescue untracked artifacts out of the worktree first. See Cleanup.
 15. **A mid-flow issue is resumed, not adopted.** If a request lands in a session that is already doing something else, or the issue already has a worktree, a branch or a `### Phase:` comment, it belongs in its own session: say so and have the user run `/orchestrator resume N` in a fresh tab. Continuing inline is how a router turns into a worker, and it does not announce itself: each individual step looks like helpfulness.
 16. **The handoff is a command, not a judgment.** `./scripts/agent-dispatch.sh --launch` after the PR, every time. The dispatcher already encodes the caps, the refusals and the kill switch, so there is nothing left to decide; reading its dry-run plan and acting on it yourself replaces a tested mechanism with an untested one. See Push and PR.
+17. **One root cause per issue.** At the gate after Diagnose or Spec, more than one defect class in the report means more than one issue: split it before dispatching Fix. A multi-defect diff cannot be reviewed to a close. See Step 3.
+18. **Draft PR at first push.** The draft opens right after the first Implement or Fix comment and before Code Review, never after the last review, so CI covers the rework rounds. See Draft PR at first push.
+19. **Re-review the delta, and stop at two rework rounds.** A rework round's review is briefed against `git diff <reviewed SHA>..HEAD`, not the full branch divergence. A third round still finding defects is a scope problem to raise at the gate, not another Fix to dispatch. See Step 3.
+20. **The PR body is drafted once.** Its own dispatch, after the final review passes. Attaching it to "the last worker" redrafts it on every rework round, against a state the PR never reaches. See Step 3.
 
 ---
 

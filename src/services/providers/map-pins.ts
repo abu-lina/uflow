@@ -52,7 +52,7 @@ export async function getMapLocations(
   const { data, error } = await supabase
     .from('locations')
     .select(
-      'provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories(name_de, name_en, category_images))',
+      'provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories!providers_category_id_fkey(name_de, name_en, category_images))',
     )
     .not('location_latitude', 'is', null)
     .not('location_longitude', 'is', null)

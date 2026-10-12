@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase/client';
 import { logSupabaseError } from '@/utils/errorUtils';
+import { isValidCategoryId } from '@/lib/categoryFilter';
 import type { ProviderBadgeWithType } from '@/types/badges';
 
 // ============================================================================
@@ -75,7 +76,7 @@ const UMMAH_SELECT = `
   provider_images,
   provider_owner_id,
   category_id,
-  category:categories(name_de, name_en),
+  category:categories!providers_category_id_fkey(name_de, name_en),
   contact_email,
   contact_phone,
   social_website,
@@ -106,46 +107,37 @@ const UMMAH_SELECT = `
 function mapRowToCS(row: any): CommunityService {
   const up = Array.isArray(row.ummah_providers) ? row.ummah_providers[0] : row.ummah_providers;
   const images: string[] =
-    row.provider_images?.urls ??
-    (Array.isArray(row.provider_images) ? row.provider_images : []);
+    row.provider_images?.urls ?? (Array.isArray(row.provider_images) ? row.provider_images : []);
   return {
-    community_service_id:          row.provider_id,
-    community_service_name:        row.provider_name,
+    community_service_id: row.provider_id,
+    community_service_name: row.provider_name,
     community_service_description: row.provider_description ?? undefined,
-    community_service_images:      images.length > 0 ? images : undefined,
-    is_verified:                   up?.is_verified ?? false,
-    verified_at:                   up?.verified_at ?? undefined,
-    verified_by:                   up?.verified_by ?? undefined,
-    community_service_view_count:  up?.community_service_view_count ?? 0,
-    donation_count:                up?.donation_count ?? 0,
-    category_id:                   row.category_id ?? undefined,
-    category:                      row.category ?? undefined,
-    contact_email:                 row.contact_email ?? undefined,
-    contact_phone:                 row.contact_phone ?? undefined,
-    social_website:                row.social_website ?? undefined,
-    social_instagram:              row.social_instagram ?? undefined,
-    address_street:                row.address_street ?? undefined,
-    address_zip:                   row.address_zip ?? undefined,
-    address_city:                  row.address_city ?? undefined,
-    address_country:               row.address_country ?? undefined,
-    location_latitude:             row.location_latitude != null ? Number(row.location_latitude) : undefined,
-    location_longitude:            row.location_longitude != null ? Number(row.location_longitude) : undefined,
-    review_status:                 row.review_status ?? undefined,
-    review_feedback:               row.review_feedback ?? undefined,
-    show_address:                  row.show_address ?? true,
-    user_created_id:               row.user_created_id ?? undefined,
-    provider_id:                   row.provider_owner_id ?? undefined,
-    created_at:                    row.created_at,
-    updated_at:                    row.updated_at,
+    community_service_images: images.length > 0 ? images : undefined,
+    is_verified: up?.is_verified ?? false,
+    verified_at: up?.verified_at ?? undefined,
+    verified_by: up?.verified_by ?? undefined,
+    community_service_view_count: up?.community_service_view_count ?? 0,
+    donation_count: up?.donation_count ?? 0,
+    category_id: row.category_id ?? undefined,
+    category: row.category ?? undefined,
+    contact_email: row.contact_email ?? undefined,
+    contact_phone: row.contact_phone ?? undefined,
+    social_website: row.social_website ?? undefined,
+    social_instagram: row.social_instagram ?? undefined,
+    address_street: row.address_street ?? undefined,
+    address_zip: row.address_zip ?? undefined,
+    address_city: row.address_city ?? undefined,
+    address_country: row.address_country ?? undefined,
+    location_latitude: row.location_latitude != null ? Number(row.location_latitude) : undefined,
+    location_longitude: row.location_longitude != null ? Number(row.location_longitude) : undefined,
+    review_status: row.review_status ?? undefined,
+    review_feedback: row.review_feedback ?? undefined,
+    show_address: row.show_address ?? true,
+    user_created_id: row.user_created_id ?? undefined,
+    provider_id: row.provider_owner_id ?? undefined,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
   };
-}
-
-function isValidCategoryId(category: string | null | undefined): boolean {
-  if (!category) return false;
-  const allTranslations = ['All', 'Alle', 'الكل', 'Tümü'];
-  if (allTranslations.includes(category)) return false;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(category);
 }
 
 function isValidLocation(location: string | null | undefined): boolean {
@@ -256,7 +248,7 @@ export async function getCommunityServiceById(id: string): Promise<CommunityServ
     ]);
 
     const offerIds = (offersResult.data || []).map((r) => r.offer_id);
-    const needIds  = (needsResult.data  || []).map((r) => r.need_id);
+    const needIds = (needsResult.data || []).map((r) => r.need_id);
 
     const [offersData, needsData] = await Promise.all([
       offerIds.length > 0
@@ -271,9 +263,9 @@ export async function getCommunityServiceById(id: string): Promise<CommunityServ
     return {
       ...cs,
       offers_ids: offerIds,
-      needs_ids:  needIds,
-      offers:     offersData.data || [],
-      needs:      needsData.data  || [],
+      needs_ids: needIds,
+      offers: offersData.data || [],
+      needs: needsData.data || [],
     };
   } catch (error) {
     console.error('Error in getCommunityServiceById:', error);
@@ -282,7 +274,9 @@ export async function getCommunityServiceById(id: string): Promise<CommunityServ
 }
 
 /** Get ummah providers for a given category */
-export async function getCommunityServicesByCategory(categoryId: string): Promise<CommunityService[]> {
+export async function getCommunityServicesByCategory(
+  categoryId: string,
+): Promise<CommunityService[]> {
   const { data, error } = await supabase
     .from('providers')
     .select(UMMAH_SELECT)
@@ -300,7 +294,9 @@ export async function getCommunityServicesByCategory(categoryId: string): Promis
  * Get ummah providers that have an engagement with a given initiating provider.
  * Replaces the old provider_community_services lookup.
  */
-export async function getCommunityServicesForProvider(providerId: string): Promise<CommunityService[]> {
+export async function getCommunityServicesForProvider(
+  providerId: string,
+): Promise<CommunityService[]> {
   try {
     const { data: engagements, error: engErr } = await supabase
       .from('provider_engagements')
@@ -337,12 +333,10 @@ export async function createProviderCommunityServiceRelationship(
   communityServiceId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase
-      .from('provider_engagements')
-      .insert({
-        initiating_provider_id: providerId,
-        engaged_provider_id:    communityServiceId,
-      });
+    const { error } = await supabase.from('provider_engagements').insert({
+      initiating_provider_id: providerId,
+      engaged_provider_id: communityServiceId,
+    });
 
     if (error) {
       console.error('Error creating provider engagement:', error);
@@ -398,7 +392,9 @@ export async function getProvidersForCommunityService(communityServiceId: string
     const providerIds = engagements.map((e) => e.initiating_provider_id);
     const { data, error } = await supabase
       .from('providers')
-      .select('provider_id, provider_name, provider_images, address_city, category:categories(name_de, name_en)')
+      .select(
+        'provider_id, provider_name, provider_images, address_city, category:categories!providers_category_id_fkey(name_de, name_en)',
+      )
       .in('provider_id', providerIds)
       .eq('review_status', 'approved')
       .order('provider_name');
@@ -441,7 +437,8 @@ export async function getCreatedCommunityServices(userId: string): Promise<Commu
 }
 
 /** Ummah services recommended by user — always empty (no separate recommendation model) */
-export async function getRecommendedCommunityServices(_userId: string): Promise<CommunityService[]> {
+export async function getRecommendedCommunityServices(
+  _userId: string,
+): Promise<CommunityService[]> {
   return [];
 }
-

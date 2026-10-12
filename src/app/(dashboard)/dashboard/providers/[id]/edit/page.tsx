@@ -124,6 +124,9 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
           formData.selectedCommunityServiceIds && formData.selectedCommunityServiceIds.length > 0
             ? formData.selectedCommunityServiceIds
             : undefined,
+        // #254: always send — hydrated from the junction, and an admin
+        // clearing every secondary must persist [] rather than be dropped.
+        secondaryCategoryIds: formData.secondaryCategoryIds,
 
         // New fields
         menuItems:

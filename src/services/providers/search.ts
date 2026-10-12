@@ -10,6 +10,8 @@ import {
 } from '@/features/search/constants/filterKeys';
 import type { Provider, SearchResult, AdminSearchOptions, ProviderSearchResponse } from './types';
 import { transformProviderToSearchResult } from './types';
+import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
+import { isValidCategoryId } from '@/lib/categoryFilter';
 
 async function loadProviderRelationIds(
   providerIds: string[],
@@ -60,22 +62,6 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
 }
 
 /**
- * Check if a category value is a valid category ID (UUID) or a translated "all" string
- * Category IDs are UUIDs, so if it's not a UUID, it's likely a translation and should be ignored
- */
-function isValidCategoryId(category: string | null | undefined): boolean {
-  if (!category) return false;
-
-  // Check if it's a known "all" translation
-  const allTranslations = ['All', 'Alle', 'الكل', 'Tümü'];
-  if (allTranslations.includes(category)) return false;
-
-  // Check if it's a valid UUID format (category IDs are UUIDs)
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(category);
-}
-
-/**
  * Check if a location value is a valid city name (not empty/falsy)
  * Empty string or falsy values represent "all locations" (no filter)
  */
@@ -83,6 +69,26 @@ function isValidLocation(location: string | null | undefined): boolean {
   // Empty string, null, undefined all mean "all locations"
   if (!location) return false;
   return true;
+}
+
+/**
+ * Bound an attacker-controlled value for safe inclusion in a log line.
+ * The `?category=` param reaches console.error on an uncached SSR path;
+ * raw newlines would let one request forge extra log lines, and the
+ * value is unbounded. Control, format and line/paragraph-separator
+ * characters are escaped to \uXXXX and the value is capped.
+ * (Explicit ranges instead of \p{...} — tsconfig targets es5, no /u flag.)
+ */
+const UNSAFE_LOG_CHARS =
+  // eslint-disable-next-line no-control-regex
+  /[\x00-\x1f\x7f-\x9f\u00ad\u200b-\u200f\u2028-\u202e\u205f-\u2064\u2066-\u206f\ufeff]/g;
+
+function sanitizeLogValue(value: string, maxLength = 100): string {
+  const bounded = value.length > maxLength ? `${value.slice(0, maxLength)}…` : value;
+  return bounded.replace(
+    UNSAFE_LOG_CHARS,
+    (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
 }
 
 /**
@@ -262,10 +268,30 @@ export async function searchProviders(
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
 ): Promise<{ providers: Provider[]; totalCount: number }> {
+  // #254: a valid category filter matches primary AND secondary categories
+  // via the provider_categories junction. The !inner embed must only be
+  // present when a category filter is active — applied unconditionally it
+  // would drop providers whose category_id is NULL.
+  const hasCategoryFilter = isValidCategoryId(category);
+
+  // A non-empty category that is neither a UUID nor a known "all" label is a
+  // filter that cannot be applied. Fail closed and loud: silently dropping
+  // it would widen the result set and present an unfiltered listing as a
+  // filtered success (#254 post-QA).
+  if (category && !hasCategoryFilter && !ALL_CATEGORIES_LABELS.includes(category)) {
+    console.error(
+      `[searchProviders] Unrecognised category filter "${sanitizeLogValue(category)}" — refusing to return unfiltered results`,
+    );
+    return { providers: [], totalCount: 0 };
+  }
+
   // Plan 058: Include review fields when admin
-  const selectFields = adminOptions?.isAdmin
-    ? '*, category:categories(name_de, name_en, category_images), review_status, review_feedback'
-    : '*, category:categories(name_de, name_en, category_images)';
+  const baseSelectFields = adminOptions?.isAdmin
+    ? '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images), review_status, review_feedback'
+    : '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)';
+  const selectFields = hasCategoryFilter
+    ? `${baseSelectFields}, provider_categories!inner(category_id)`
+    : baseSelectFields;
 
   // Plan 058: admin queries must use the service-role client to bypass RLS.
   // The caller (API route) passes the admin client directly via the `client` parameter
@@ -335,8 +361,11 @@ export async function searchProviders(
     req = req.in('provider_id', matchingProviderIds);
   }
 
-  if (isValidCategoryId(category)) {
-    req = req.eq('category_id', category);
+  if (hasCategoryFilter) {
+    // PostgREST embed filter: matches any junction row, so a secondary
+    // category match returns the provider once (!inner never multiplies
+    // parent rows) and count: 'exact' stays correct.
+    req = req.eq('provider_categories.category_id', category);
   }
   if (isValidLocation(location)) {
     req = req.eq('address_city', location);
@@ -381,19 +410,25 @@ export async function searchProviders(
   const offersMap = new Map((offersResult.data || []).map((o) => [o.offer_id, o]));
   const needsMap = new Map((needsResult.data || []).map((n) => [n.need_id, n]));
 
-  // Map back to providers efficiently
-  const providersWithOffersAndNeeds = data.map((provider) => ({
-    ...provider,
-    matched_menu_items: matchedMenuItemsByProvider.get(provider.provider_id) || [],
-    offers: (offersByProvider.get(provider.provider_id) || [])
-      .map((id) => offersMap.get(id))
-      .filter(Boolean) as Array<{ name_de: string }>,
-    needs: (needsByProvider.get(provider.provider_id) || [])
-      .map((id) => needsMap.get(id))
-      .filter(Boolean) as Array<{ name_de: string }>,
-    offers_ids: offersByProvider.get(provider.provider_id) || [],
-    needs_ids: needsByProvider.get(provider.provider_id) || [],
-  }));
+  // Map back to providers efficiently. The provider_categories key only
+  // exists when the junction embed was added for a category filter; it is
+  // join plumbing, not part of Provider, so it is dropped here (#254).
+  const providersWithOffersAndNeeds = data.map((row) => {
+    const provider = { ...(row as Provider & { provider_categories?: unknown }) };
+    delete provider.provider_categories;
+    return {
+      ...provider,
+      matched_menu_items: matchedMenuItemsByProvider.get(provider.provider_id) || [],
+      offers: (offersByProvider.get(provider.provider_id) || [])
+        .map((id) => offersMap.get(id))
+        .filter(Boolean) as Array<{ name_de: string }>,
+      needs: (needsByProvider.get(provider.provider_id) || [])
+        .map((id) => needsMap.get(id))
+        .filter(Boolean) as Array<{ name_de: string }>,
+      offers_ids: offersByProvider.get(provider.provider_id) || [],
+      needs_ids: needsByProvider.get(provider.provider_id) || [],
+    };
+  });
 
   // Batch fetch badges for all providers in one query
   const badgesMap = await getBadgesForEntities(providerIds, EntityType.PROVIDER).catch((error) => {

@@ -5,17 +5,25 @@ import type { Section } from '@/config/sectionFilters';
 
 /**
  * Build a path-based results URL: /food/[city]/[category]?q=...&filters=...
+ *
+ * The category only rides in the path when both a city and a slug are
+ * available (/food/berlin/kebab-doener). In every other case it falls back
+ * to the ?category=<id> query param — silently dropping it turns a filtered
+ * request into an unfiltered listing (#254). A slug alone is never emitted
+ * as ?category= because the service only accepts category UUIDs.
  */
 export function buildResultsUrl(opts: {
   section: Section;
   city?: string | null;
   categorySlug?: string | null;
+  categoryId?: string | null;
   query?: string | null;
   filters?: string[];
 }): string {
-  const { section, city, categorySlug, query, filters } = opts;
+  const { section, city, categorySlug, categoryId, query, filters } = opts;
   let path = getResultsPathForSection(section);
 
+  const categoryInPath = Boolean(city && categorySlug);
   if (city) {
     path += `/${slugify(city)}`;
     if (categorySlug) {
@@ -25,6 +33,7 @@ export function buildResultsUrl(opts: {
 
   const params = new URLSearchParams();
   if (query) params.set('q', query);
+  if (categoryId && !categoryInPath) params.set('category', categoryId);
   if (filters && filters.length > 0) params.set('filters', filters.join(','));
 
   const qs = params.toString();
@@ -101,10 +110,12 @@ export function buildSearchResultsUrl(opts: {
   const { selectedWas, selectedSection, selectedCity, selectedFilters } = opts;
 
   let categorySlug: string | null = null;
+  let categoryId: string | null = null;
   let query: string | null = null;
 
   if (selectedWas?.type === 'category' && selectedWas.categoryId) {
     categorySlug = selectedWas.categorySlug ?? null;
+    categoryId = selectedWas.categoryId;
   } else if (selectedWas?.type === 'dish' || selectedWas?.type === 'service-type') {
     query = selectedWas.label;
   }
@@ -113,6 +124,7 @@ export function buildSearchResultsUrl(opts: {
     section: selectedSection,
     city: selectedCity,
     categorySlug,
+    categoryId,
     query,
     filters: selectedFilters,
   });

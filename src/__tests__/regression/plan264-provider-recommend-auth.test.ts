@@ -18,15 +18,39 @@ function makeAdminClient() {
   const providerInsert = vi.fn().mockResolvedValue({ error: null });
   const client = {
     from: vi.fn((table: string) => {
-      if (table === 'providers') return { insert: providerInsert };
+      if (table === 'providers') {
+        return {
+          insert: providerInsert,
+          select: () => ({
+            // #606 R1 scan chain: .not().in().gt().order().limit() — empty
+            // first page ends the keyset loop immediately.
+            not: () => ({
+              in: () => ({
+                gt: () => ({
+                  order: () => ({ limit: async () => ({ data: [], error: null }) }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
       if (table === 'categories') {
         return {
           select: () => ({
             eq: () => ({
-              single: async () => ({ data: { applicable_section: 'food' }, error: null }),
+              // '20c10efe' is "Food & Drink" — applicable_section 'all' and
+              // slug 'food-drink' in every environment, which is exactly the
+              // data that caused the #606 500. Mocking 'food' here hid it.
+              single: async () => ({
+                data: { applicable_section: 'all', slug: 'food-drink' },
+                error: null,
+              }),
             }),
           }),
         };
+      }
+      if (table === 'cities') {
+        return { select: async () => ({ data: [], error: null }) };
       }
       if (table === 'locations') {
         return { insert: vi.fn().mockResolvedValue({ error: null }) };
@@ -121,6 +145,8 @@ describe('Plan 264 provider recommendation authentication', () => {
     expect(body.provider_id).toBeTruthy();
     expect(providerInsert.mock.calls[0][0][0].user_created_id).toBe(authUser.id);
     expect(providerInsert.mock.calls[0][0][0].provider_owner_id).toBeNull();
+    // 'all'-section "Food & Drink" resolves to food via the #606 slug map.
+    expect(providerInsert.mock.calls[0][0][0].listing_type).toBe('food');
   });
 
   it('rejects anonymous submissions before resolving the admin client', async () => {
@@ -131,7 +157,7 @@ describe('Plan 264 provider recommendation authentication', () => {
     const body = await response.json();
 
     expect(response.status).toBe(401);
-    expect(body).toEqual({ error: 'Authentication required' });
+    expect(body).toEqual({ code: 'AUTH_REQUIRED', error: 'Authentication required' });
     expect(getSupabaseAdmin).not.toHaveBeenCalled();
   });
 });

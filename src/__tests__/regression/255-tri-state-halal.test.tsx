@@ -92,6 +92,18 @@ function providerCreationFrom(table: string) {
       insert: (...args: unknown[]) => mockProviderInsert(...args),
       update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
+      // #606 duplicate scan reads providers before inserting.
+      select: () => ({
+            // #606 R1 scan chain: .not().in().gt().order().limit() — empty
+            // first page ends the keyset loop immediately.
+            not: () => ({
+              in: () => ({
+                gt: () => ({
+                  order: () => ({ limit: async () => ({ data: [], error: null }) }),
+                }),
+              }),
+            }),
+          }),
     };
   }
   if (table === 'categories') {

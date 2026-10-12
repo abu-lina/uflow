@@ -5,6 +5,10 @@ import type { ProviderFormData } from '@/providers/form-provider';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { getProviderById, fetchProviderCities } from '@/services/providers';
+import {
+  ProviderSubmitError,
+  resolveSubmissionCity,
+} from '@/features/providers/services/create-provider.server';
 import { getOpenStatus } from '@/utils/openStatus';
 import type { OpeningHours } from '@/types/openingHours';
 import type { ToolCall, ToolDefinition } from '@/features/chat/types';
@@ -367,18 +371,26 @@ export async function executeToolCall(toolCall: ToolCall, userId?: string): Prom
         throw new Error('city is required for registration');
       }
 
-      // Use admin client for city check (bypasses RLS)
+      // #606: same accept chain as the recommend path — canonicalised
+      // catalog match, then the server-side geocoder, fail-open on outage,
+      // reject only on a lookup that ran and matched nothing. The raw
+      // `cities` ilike check this replaced silently grew the accepted set
+      // from 20 listed cities to all 176 catalog rows when migration 140
+      // landed, and never canonicalised the stored value.
       const adminSupabase = getSupabaseAdmin();
-      const { data: cityData } = await adminSupabase
-        .from('cities')
-        .select('city_name')
-        .ilike('city_name', city)
-        .limit(1);
-      if (!cityData || cityData.length === 0) {
-        throw new Error(`City "${city}" not found`);
+      let canonicalCity: string;
+      try {
+        canonicalCity = await resolveSubmissionCity(adminSupabase, city);
+      } catch (error) {
+        if (error instanceof ProviderSubmitError && error.code === 'CITY_NOT_SUPPORTED') {
+          throw new Error(`City "${city}" not found`);
+        }
+        throw error;
       }
 
       const { formData } = await mapChatArgsToFormData(args, userId);
+      // Store the resolved canonical name, not the raw typed value.
+      formData.city = canonicalCity;
 
       // Use admin client for provider creation (bypasses RLS)
       const adminForCreate = getSupabaseAdmin();

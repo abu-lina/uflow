@@ -43,22 +43,25 @@ describe('POST /api/providers validation (zod v4)', () => {
     mockCreateProviderOrServiceServer.mockResolvedValue({ provider_id: 'provider-1' });
   });
 
-  it('returns the v4 default message for an over-long title', async () => {
+  it('returns a coded 400 with the field name for an over-long title', async () => {
     const response = await POST(makeRequest({ ...VALID_BODY, title: 'x'.repeat(201) }));
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({
-      error: 'Too big: expected string to have <=200 characters',
+      code: 'INVALID_BODY',
+      error: 'Invalid submission',
+      field: 'title',
     });
   });
 
-  it('returns the v4 default message for an unrecognized key (.strict)', async () => {
+  it('returns a coded 400 for an unrecognized key (.strict), leaking no raw issue text', async () => {
     const response = await POST(makeRequest({ ...VALID_BODY, bogus: true }));
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({
-      error: 'Unrecognized key: "bogus"',
-    });
+    const json = await response.json();
+    expect(json.code).toBe('INVALID_BODY');
+    expect(json.error).toBe('Invalid submission');
+    expect(JSON.stringify(json)).not.toContain('bogus');
   });
 
   it('applies default null to latitude/longitude when the keys are omitted', async () => {

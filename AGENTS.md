@@ -20,7 +20,9 @@ After each build chunk: review, then test, then capture one learning.
 
 ## Branch-first rule
 
-Create a feature branch before any code changes, at the Implementer handoff, not at DevOps time. The orchestrator creates `<prefix>/<N>-<slug>` from the latest `main` during Step 1 setup, all code commits go onto it, and the DevOps phase only pushes remaining commits and creates the PR. This gives CI visibility during implementation and surfaces pre-existing failures early.
+Create a feature branch before any code changes, at the Implementer handoff, not at DevOps time. The orchestrator creates `<prefix>/<N>-<slug>` from the latest `main` during Step 1 setup and all code commits go onto it.
+
+A branch alone does not give CI visibility, so the PR opens as a **draft at first push**, right after the first Implement or Fix phase and before Code Review. Every rework round then gets a CI result; the DevOps phase only pushes the remaining commits, replaces the placeholder body and runs `gh pr ready`. Issue #606 is the counter-example: branch pushed early, PR opened at the very end, 3h19 of rework with no CI signal.
 
 ## Branch cleanup after merge
 
@@ -82,7 +84,7 @@ Issues live in GitHub Issues on `abu-lina/uflow`, managed with the `gh` CLI. Eve
 
 ### Triage labels
 
-The five canonical triage roles, each label string equal to its name. Only `wontfix` exists so far. See `docs/agents/triage-labels.md`.
+The five canonical triage roles plus a `stage:prep`/`stage:build` dispatch axis that tells a dispatched session which flow to run. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
@@ -95,3 +97,13 @@ Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. Neither exis
 - Verified engineering learnings are appended to `docs/ai/LEARNINGS.md`, one entry per build/review/test loop.
 - The orchestrator skill and its worker profiles live in `.devin/`.
 - Historical pipeline output is archived under `agent-output/_archive/`; new durable artifacts (test logs, screenshots, research docs) go to `agent-output/artifacts/`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

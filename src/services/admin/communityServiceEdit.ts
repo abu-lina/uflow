@@ -38,13 +38,13 @@ export interface AdminCommunityServiceEditData {
  * Uses service-role to bypass RLS (can load non-approved services).
  */
 export async function getCommunityServiceForAdmin(
-  communityServiceId: string
+  communityServiceId: string,
 ): Promise<Record<string, unknown> | null> {
   const supabase = getSupabaseAdmin();
 
   const { data: rows, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)')
     .eq('provider_id', communityServiceId)
     .eq('listing_type', 'ummah');
 
@@ -62,7 +62,7 @@ export async function getCommunityServiceForAdmin(
 export async function updateCommunityServiceFields(
   communityServiceId: string,
   editData: AdminCommunityServiceEditData,
-  _adminUserId: string
+  _adminUserId: string,
 ): Promise<Record<string, unknown>> {
   const supabase = getSupabaseAdmin();
 
@@ -87,9 +87,7 @@ export async function updateCommunityServiceFields(
       : null;
   }
   if (editData.addressZip !== undefined) {
-    updatePayload.address_zip = editData.addressZip
-      ? sanitizeTextInput(editData.addressZip)
-      : null;
+    updatePayload.address_zip = editData.addressZip ? sanitizeTextInput(editData.addressZip) : null;
   }
   if (editData.addressCity !== undefined) {
     updatePayload.address_city = editData.addressCity
@@ -142,9 +140,7 @@ export async function updateCommunityServiceFields(
         offer_id: offerId,
       }));
 
-      const { error: insertOffersError } = await supabase
-        .from('provider_offers')
-        .insert(offerRows);
+      const { error: insertOffersError } = await supabase.from('provider_offers').insert(offerRows);
 
       if (insertOffersError) {
         throw new Error(`Failed to update community service offers: ${insertOffersError.message}`);
@@ -168,9 +164,7 @@ export async function updateCommunityServiceFields(
         need_id: needId,
       }));
 
-      const { error: insertNeedsError } = await supabase
-        .from('provider_needs')
-        .insert(needRows);
+      const { error: insertNeedsError } = await supabase.from('provider_needs').insert(needRows);
 
       if (insertNeedsError) {
         throw new Error(`Failed to update community service needs: ${insertNeedsError.message}`);
@@ -207,7 +201,7 @@ export async function updateCommunityServiceReview(
   communityServiceId: string,
   reviewStatus: 'approved' | 'rejected' | 'needs_revision',
   reviewFeedback?: string | null,
-  expectedUpdatedAt?: string
+  expectedUpdatedAt?: string,
 ): Promise<Record<string, unknown>> {
   const supabase = getSupabaseAdmin();
 
@@ -244,7 +238,9 @@ export async function updateCommunityServiceReview(
 
   if (!data) {
     if (expectedUpdatedAt) {
-      throw new Error('CONFLICT: Community service was modified by another reviewer. Please refresh and try again.');
+      throw new Error(
+        'CONFLICT: Community service was modified by another reviewer. Please refresh and try again.',
+      );
     }
     throw new Error('Community service not found');
   }

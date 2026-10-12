@@ -14,6 +14,8 @@ export async function fetchAllValidCities(client?: SupabaseClient): Promise<stri
     const { data, error } = await supabase
       .from('cities')
       .select('city_name')
+      // #606: unlisted catalog rows exist only for recommend validation.
+      .eq('is_listed', true)
       .returns<{ city_name: string }[]>();
 
     if (error) {
@@ -43,6 +45,8 @@ export async function checkCityExists(cityName: string, client?: SupabaseClient)
     const { data, error } = await supabase
       .from('cities')
       .select('city_name')
+      // #606: unlisted catalog rows exist only for recommend validation.
+      .eq('is_listed', true)
       .ilike('city_name', normalizedCity)
       .limit(1);
 

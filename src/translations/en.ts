@@ -453,6 +453,17 @@ export const en = {
       submitting: 'Submitting...',
       success: 'Provider successfully recommended!',
       error: 'Error creating recommendation. Please try again.',
+      retry: 'Retry',
+      sessionExpired: 'Your session expired. Please log in again; your entries are saved.',
+      duplicateApproved: 'This provider is already listed.',
+      duplicatePending: 'This provider was already recommended and is under review.',
+      viewExisting: 'View entry',
+      cityNotListed:
+        'We could not find that city. Pick a suggestion or check the spelling and try again.',
+      categoryInvalid: 'Please choose a valid category.',
+      halalRequired: 'Please answer all three halal questions.',
+      rateLimited: 'Too many attempts. Please try again later.',
+      validationFailed: 'Please check your entries and try again.',
       titleRequired: 'Please enter a provider name',
       categoryRequired: 'Please select a category',
       offersRequired: 'Please select at least one offer',
@@ -911,6 +922,24 @@ export const en = {
       desktopTitle: 'Desktop Version',
       desktopMessage:
         'This page is optimized for mobile devices. Please open it on a mobile device.',
+    },
+    additionalCategories: 'Additional categories',
+    noAdditionalCategories: 'None selected',
+    secondaryCategoriesCleared: 'Additional categories were reset',
+    secondaryCategoriesRejected: 'The categories could not be saved. Please check your selection.',
+    secondaryCategoriesTooMany: 'You can add up to 4 additional categories.',
+    secondaryCategoriesAllSection:
+      'This category applies to all sections and cannot be an additional category.',
+    secondaryCategoriesWrongSection:
+      'Additional categories must belong to the same section as the primary category.',
+    editAdditionalCategories: {
+      title: 'Additional categories',
+      searchPlaceholder: 'Search categories...',
+      loading: 'Loading categories...',
+      maxSelected: 'Maximum 4 additional categories allowed',
+      emptyForAllSection: 'No additional categories are available for this category.',
+      emptyNoPrimary: 'Choose a primary category first.',
+      save: 'Save',
     },
     editSocial: {
       title: 'Social Initiatives',

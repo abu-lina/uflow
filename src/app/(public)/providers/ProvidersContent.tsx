@@ -96,6 +96,10 @@ interface ProvidersContentProps {
   initialFilters?: SearchFilterKey[];
   /** Section used for the server-rendered initial data (Plan 228: gates initialData reuse) */
   initialSection?: Section;
+  /** #254 post-QA: the active category filter's label, resolved once
+      server-side. The results grid shows it on every card instead of each
+      provider's primary while the filter is on. */
+  displayCategory?: { name_de: string; name_en?: string } | null;
 }
 
 export function ProvidersContent({
@@ -104,6 +108,7 @@ export function ProvidersContent({
   initialData,
   initialFilters,
   initialSection,
+  displayCategory,
 }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -555,6 +560,7 @@ export function ProvidersContent({
         enableBookmarks
         enableInfiniteScroll
         bookmarkedIds={bookmarkedProviderIds}
+        displayCategory={displayCategory}
         emptyDescription={t('providers.noResultsDescription')}
         emptyTitle={t('providers.noResultsFound')}
         error={error}

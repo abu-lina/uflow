@@ -17,6 +17,7 @@ import {
   buildAmenitiesPayload,
   buildMenuPayload,
   buildDeliveryLinksPayload,
+  buildSecondaryCategoriesPayload,
 } from '@/services/admin/providerEdit';
 
 describe('buildBasicFieldsPayload', () => {
@@ -143,7 +144,7 @@ describe('buildExtensionFieldsPayload', () => {
   it('returns empty object for unknown listing_type', () => {
     const result = buildExtensionFieldsPayload(
       { verificationMethod: 'online' },
-      'ummah' as 'food' | 'store'
+      'ummah' as 'food' | 'store',
     );
     expect(result).toEqual({});
   });
@@ -231,7 +232,12 @@ describe('buildDeliveryLinksPayload', () => {
     const result = buildDeliveryLinksPayload(data);
     expect(result).toEqual({
       delivery_links: [
-        { platform: 'wolt', platform_url: 'https://wolt.com/venue/test', platform_slug: undefined, is_active: true },
+        {
+          platform: 'wolt',
+          platform_url: 'https://wolt.com/venue/test',
+          platform_slug: undefined,
+          is_active: true,
+        },
       ],
     });
   });
@@ -255,7 +261,7 @@ describe('updateProviderFields — RPC integration', () => {
     const result = await updateProviderFields(
       '123e4567-e89b-12d3-a456-426614174000',
       { providerName: 'Test', listingType: 'food' },
-      'admin-user-id'
+      'admin-user-id',
     );
 
     expect(mockRpc).toHaveBeenCalledWith('admin_update_provider', {
@@ -276,7 +282,7 @@ describe('updateProviderFields — RPC integration', () => {
     const { updateProviderFields } = await import('@/services/admin/providerEdit');
 
     await expect(
-      updateProviderFields('test-id', { providerName: 'Test' }, 'admin-id')
+      updateProviderFields('test-id', { providerName: 'Test' }, 'admin-id'),
     ).rejects.toThrow('RPC failed');
   });
 
@@ -295,7 +301,7 @@ describe('updateProviderFields — RPC integration', () => {
         menuItems: [{ name_de: 'Item', price_cents: 500, sort_order: 0, is_available: true }],
         deliveryLinks: [{ platform: 'wolt', platform_url: 'https://wolt.com', is_active: true }],
       },
-      'admin-id'
+      'admin-id',
     );
 
     const callArg = mockRpc.mock.calls[0][1];
@@ -304,5 +310,59 @@ describe('updateProviderFields — RPC integration', () => {
     expect(callArg.p_data.food_providers.verification_method).toBe('online');
     expect(callArg.p_data.menu_items).toHaveLength(1);
     expect(callArg.p_data.delivery_links).toHaveLength(1);
+  });
+});
+
+// #254: secondary categories are a replace-list — key presence decides.
+describe('buildSecondaryCategoriesPayload', () => {
+  beforeEach(() => {
+    mockRpc.mockReset();
+  });
+
+  it('maps secondaryCategoryIds to secondary_category_ids', () => {
+    const result = buildSecondaryCategoriesPayload({
+      secondaryCategoryIds: ['cat-1', 'cat-2'],
+    });
+    expect(result).toEqual({ secondary_category_ids: ['cat-1', 'cat-2'] });
+  });
+
+  it('an empty list still produces the key (clears all secondaries)', () => {
+    const result = buildSecondaryCategoriesPayload({ secondaryCategoryIds: [] });
+    expect(result).toEqual({ secondary_category_ids: [] });
+  });
+
+  it('undefined omits the key entirely (junction untouched)', () => {
+    const result = buildSecondaryCategoriesPayload({});
+    expect(result).toEqual({});
+  });
+
+  it('updateProviderFields forwards the key into the RPC payload', async () => {
+    mockRpc.mockResolvedValue({ data: { provider_id: 'p1' }, error: null });
+
+    const { updateProviderFields } = await import('@/services/admin/providerEdit');
+
+    await updateProviderFields(
+      '123e4567-e89b-12d3-a456-426614174000',
+      { providerName: 'X', secondaryCategoryIds: ['cat-b', 'cat-c'] },
+      'admin-id',
+    );
+
+    const callArg = mockRpc.mock.calls[0][1];
+    expect(callArg.p_data.secondary_category_ids).toEqual(['cat-b', 'cat-c']);
+  });
+
+  it('updateProviderFields omits the key when secondaryCategoryIds is undefined', async () => {
+    mockRpc.mockResolvedValue({ data: { provider_id: 'p1' }, error: null });
+
+    const { updateProviderFields } = await import('@/services/admin/providerEdit');
+
+    await updateProviderFields(
+      '123e4567-e89b-12d3-a456-426614174000',
+      { providerName: 'X' },
+      'admin-id',
+    );
+
+    const callArg = mockRpc.mock.calls[0][1];
+    expect('secondary_category_ids' in callArg.p_data).toBe(false);
   });
 });

@@ -13,3 +13,12 @@ export interface Category {
   created_at: string;
   updated_at: string;
 }
+
+/** #254: junction row — the complete category set of a provider.
+ * The Primary Category is providers.category_id (a pointer into this
+ * table); every other row is a Secondary Category (search match only). */
+export interface ProviderCategory {
+  provider_id: string;
+  category_id: string;
+  created_at: string;
+}

@@ -11,6 +11,13 @@ export interface ProviderFormData {
   // Entity type (determined by category selection)
   entityType: 'provider' | 'community_service';
 
+  /** Client-side routing hint (#606): 'recommend' makes createProviderOrService
+   * POST to /api/providers/recommend, the only endpoint where the closed
+   * city list is enforced. The server derives enforcement from the route,
+   * not from this field — it is never trusted as a flag. Set at submit
+   * time only; not part of the draft state. */
+  submissionSource?: 'recommend' | 'import' | 'owner';
+
   // Basics
   title: string;
   category: string;

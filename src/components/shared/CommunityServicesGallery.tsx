@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { getCommunityServices, type CommunityService } from '@/services/communityServices';
 import { buildResultsUrl } from '@/lib/search-params';
+import { GEMEINSCHAFT_SPENDEN_CATEGORY_ID } from '@/config/sectionFilters';
 
 import CommunityServiceGallery from './CommunityServiceGallery';
 
@@ -33,7 +34,15 @@ export function CommunityServicesGallery() {
 
   const handleCommunityServiceClick = (_communityServiceId: string) => {
     // Navigate to UMMAH results with Gemeinschaft & Spenden category filter.
-    router.push(buildResultsUrl({ section: 'ummah', categorySlug: 'gemeinschaft-spenden' }));
+    // The categoryId is required — a slug alone cannot carry the filter
+    // without a city segment (#254).
+    router.push(
+      buildResultsUrl({
+        section: 'ummah',
+        categorySlug: 'gemeinschaft-spenden',
+        categoryId: GEMEINSCHAFT_SPENDEN_CATEGORY_ID,
+      }),
+    );
   };
 
   if (isLoading) {
@@ -79,9 +88,9 @@ export function CommunityServicesGallery() {
               }}
             >
               <div className="flex w-full flex-row items-start">
-                <div className="flex flex-1 min-w-0 flex-col items-start justify-between gap-2.5 p-3 pr-3">
+                <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-2.5 p-3 pr-3">
                   <div className="flex flex-col items-start">
-                    <div className="w-full font-inter text-[14px] font-normal leading-[140%] text-[#232323] break-words">
+                    <div className="w-full break-words font-inter text-[14px] font-normal leading-[140%] text-[#232323]">
                       Unterstütze unsere Community Service Partner
                     </div>
                     <div className="w-full min-w-0 truncate font-inter text-[24px] font-semibold leading-[120%] tracking-[-0.02em] text-[#232323]">
@@ -91,7 +100,7 @@ export function CommunityServicesGallery() {
                 </div>
 
                 {/* Right side - Chevron */}
-                <div className="flex flex-row items-start justify-end shrink-0 ml-auto">
+                <div className="ml-auto flex shrink-0 flex-row items-start justify-end">
                   <div className="relative flex h-12 w-12 items-center justify-center">
                     <svg
                       className="text-[#232323]"

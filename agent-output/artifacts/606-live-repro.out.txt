@@ -1,0 +1,23 @@
+[606] reconstructed payload bytes=665
+[606] status=401 bytes=35 body={"error":"Authentication required"}
+[606] status=200 bytes=54 body={"provider_id":"9d7b3482-c082-4876-8c1f-221849ad05ea"}
+[606] status=500 bytes=37 body={"error":"Failed to submit provider"}
+[606] server-side cause: Error: Unable to resolve listing_type for category '20c10efe-404b-4a39-bb81-5089a0332d78'; provider was not created.
+[606] status=500 bytes=37 body={"error":"Failed to submit provider"}
+[606] server-side cause: Error: Unable to resolve listing_type for category '5e5d910d-d790-4184-a061-9cd74d0950e8'; provider was not created.
+[606] status=500 bytes=37 body={"error":"Failed to submit provider"}
+[606] server-side cause: Error: Unable to resolve listing_type for category '1288f269-2cdb-47e8-bd8e-9d552ff25e83'; provider was not created.
+[606] status=200 bytes=63 body={"community_service_id":"b85d5eea-1aaf-4323-8e18-6cdcbb9c967b"}
+[606] status=401 bytes=35 body={"error":"Authentication required"}
+[606] status=400 bytes=41 body={"error":"Unrecognized key: \"message\""}
+     ✓ payload size is in the ballpark of the captured 637 bytes 1ms
+     ✓ anonymous caller (no cookie) gets 401, not 500 110ms
+     ✓ logged-in + section-specific food category (control) persists 59ms
+     × logged-in + "Food & Drink" (all-section, auto-selected for restaurants) must not 500 48ms
+     × logged-in + "Other" (all-section, the prod-trace category) must not 500 47ms
+     × logged-in + "Services" (all-section, auto-selected for shops) must not 500 50ms
+     ✓ logged-in + "Community Support" (mosque) branch 61ms
+     ✓ expired/garbage token behaves like anonymous (401), not 500 8ms
+     ✓ an unknown key in the body is a 400 (strict schema), not a 500 48ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 6 passed (9)

@@ -29,7 +29,11 @@ function computeStage(providerCount: number): AppStage {
  */
 export async function generateStaticParams() {
   const supabase = createSupabaseStaticClient();
-  const { data } = await supabase.from('cities').select('city_name');
+  // #606: unlisted catalog rows stay invisible to /city pages.
+  const { data } = await supabase
+    .from('cities')
+    .select('city_name')
+    .eq('is_listed', true);
   return (data || []).map((city) => ({ cityName: city.city_name }));
 }
 
@@ -75,6 +79,8 @@ export default async function CityPage({ params }: CityPageProps) {
     .from('cities')
     .select('id, city_name, country, is_unlocked')
     .eq('city_name', cityName)
+    // #606: unlisted catalog rows stay invisible to /city pages.
+    .eq('is_listed', true)
     .maybeSingle();
 
   // Get live provider count via RPC (case-insensitive match)

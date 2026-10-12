@@ -256,7 +256,8 @@ export async function getProviderForAdmin(
     .select(
       `
       *,
-      category:categories(name_de, name_en, category_images),
+      category:categories!providers_category_id_fkey(name_de, name_en, category_images),
+      provider_categories(category_id),
       locations(*),
       food_providers(*),
       store_providers(*),

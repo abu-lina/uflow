@@ -121,6 +121,8 @@ export const providerEditUpdateSchema = z.object({
       { message: 'providerImages must be valid JSON' },
     ),
   communityServiceIds: z.array(z.string().uuid()).optional(),
+  // #254: replace-list of Secondary Category ids; 4 secondaries + 1 primary = 5 max.
+  secondaryCategoryIds: z.array(z.string().uuid()).max(4).optional(),
   openingHours: z.any().optional(),
   verificationMethod: z.enum(['online', 'onsite']).nullable().optional(),
   hasCertificate: z.boolean().optional(),

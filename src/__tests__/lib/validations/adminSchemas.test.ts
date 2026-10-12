@@ -161,3 +161,42 @@ describe('providerEditUpdateSchema — Plan 145 new fields', () => {
     expect(invalid.success).toBe(false);
   });
 });
+
+describe('providerEditUpdateSchema — secondaryCategoryIds (#254)', () => {
+  const base = { providerId: '123e4567-e89b-12d3-a456-426614174000' };
+  // zod's uuid() checks version/variant nibbles — use well-formed ids.
+  const uuids = (n: number) =>
+    Array.from({ length: n }, (_, i) => `00000000-0000-4000-8000-0000000000c${i + 1}`);
+
+  it('accepts up to 4 secondary category ids', () => {
+    const result = providerEditUpdateSchema.safeParse({
+      ...base,
+      secondaryCategoryIds: uuids(4),
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a 5th secondary — mirrors the junction cap (primary + 4)', () => {
+    const result = providerEditUpdateSchema.safeParse({
+      ...base,
+      secondaryCategoryIds: uuids(5),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects non-uuid entries', () => {
+    const result = providerEditUpdateSchema.safeParse({
+      ...base,
+      secondaryCategoryIds: ['not-a-uuid'],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('is optional — absent key stays absent (junction untouched)', () => {
+    const result = providerEditUpdateSchema.safeParse({ ...base, providerName: 'X' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.secondaryCategoryIds).toBeUndefined();
+    }
+  });
+});

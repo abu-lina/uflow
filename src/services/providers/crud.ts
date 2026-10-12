@@ -14,8 +14,8 @@ export async function getProviders(
     const supabase = getSupabaseClient(client);
 
     const selectFields = includeLocations
-      ? '*, category:categories(name_de, name_en, category_images), locations(*)'
-      : '*, category:categories(name_de, name_en, category_images)';
+      ? '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images), locations(*)'
+      : '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)';
 
     let query = supabase
       .from('providers')
@@ -69,7 +69,9 @@ export async function getProviderById(
 
     const { data, error } = await supabase
       .from('providers')
-      .select('*, category:categories(name_de, name_en, category_images), locations(*)')
+      .select(
+        '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images), locations(*), provider_categories(category_id)',
+      )
       .eq('provider_id', id)
       .single();
 
@@ -185,7 +187,7 @@ export async function getCreatedProviders(
   const supabase = getSupabaseClient(client);
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)')
     .eq('provider_owner_id', userId)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
@@ -208,7 +210,7 @@ export async function getRecommendations(
   // First, get all providers where user is the creator
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)')
     .eq('user_created_id', userId)
     .order('created_at', { ascending: false })
     .returns<Provider[]>();
@@ -242,7 +244,7 @@ export async function getRecentApprovedProviders(
 
   const { data, error } = await supabase
     .from('providers')
-    .select('*, category:categories(name_de, name_en, category_images)')
+    .select('*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)')
     .eq('review_status', 'approved')
     .order('created_at', { ascending: false })
     .limit(limit);

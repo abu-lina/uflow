@@ -455,6 +455,18 @@ export const de = {
       submitting: 'Wird gesendet...',
       success: 'Anbieter erfolgreich vorgeschlagen!',
       error: 'Fehler beim Erstellen. Bitte versuche es erneut.',
+      retry: 'Erneut versuchen',
+      sessionExpired:
+        'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an – deine Eingaben sind gespeichert.',
+      duplicateApproved: 'Dieser Anbieter ist bereits eingetragen.',
+      duplicatePending: 'Dieser Anbieter wurde bereits empfohlen und wird geprüft.',
+      viewExisting: 'Eintrag ansehen',
+      cityNotListed:
+        'Diese Stadt wurde nicht gefunden. Wähle einen Vorschlag oder prüfe die Schreibweise und versuche es erneut.',
+      categoryInvalid: 'Bitte wähle eine gültige Kategorie.',
+      halalRequired: 'Bitte beantworte alle drei Halal-Fragen.',
+      rateLimited: 'Zu viele Versuche. Bitte versuche es später erneut.',
+      validationFailed: 'Bitte überprüfe deine Eingaben und versuche es erneut.',
       titleRequired: 'Bitte gib einen Anbieternamen ein',
       categoryRequired: 'Bitte wähle eine Kategorie aus',
       offersRequired: 'Bitte wähle mindestens ein Angebot aus',
@@ -924,6 +936,25 @@ export const de = {
       desktopTitle: 'Desktop Version',
       desktopMessage:
         'Diese Seite ist für mobile Geräte optimiert. Bitte öffnen Sie sie auf einem Mobilgerät.',
+    },
+    additionalCategories: 'Weitere Kategorien',
+    noAdditionalCategories: 'Keine ausgewählt',
+    secondaryCategoriesCleared: 'Weitere Kategorien wurden zurückgesetzt',
+    secondaryCategoriesRejected:
+      'Die Kategorien konnten nicht gespeichert werden. Bitte prüfe die Auswahl.',
+    secondaryCategoriesTooMany: 'Du kannst bis zu 4 weitere Kategorien hinzufügen.',
+    secondaryCategoriesAllSection:
+      'Diese Kategorie gilt für alle Bereiche und kann keine weitere Kategorie sein.',
+    secondaryCategoriesWrongSection:
+      'Weitere Kategorien müssen zum selben Bereich wie die Hauptkategorie gehören.',
+    editAdditionalCategories: {
+      title: 'Weitere Kategorien',
+      searchPlaceholder: 'Kategorien durchsuchen...',
+      loading: 'Lade Kategorien...',
+      maxSelected: 'Maximal 4 weitere Kategorien möglich',
+      emptyForAllSection: 'Für diese Kategorie sind keine weiteren Kategorien verfügbar.',
+      emptyNoPrimary: 'Wähle zuerst eine Hauptkategorie aus.',
+      save: 'Speichern',
     },
     editSocial: {
       title: 'Soziale Initiativen',

@@ -3,11 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 
-import { fetchUsedCategories, fetchCategoriesBySection, type Category } from '@/services/categories';
 import {
-  inferSectionFromCategory,
-  type Section,
-} from '@/config/sectionFilters';
+  fetchUsedCategories,
+  fetchCategoriesBySection,
+  type Category,
+} from '@/services/categories';
+import { inferSectionFromCategory, type Section } from '@/config/sectionFilters';
 import { buildResultsUrl } from '@/lib/search-params';
 import { slugify } from '@/lib/slugify';
 import { formatAllahText } from '@/utils/textUtils';
@@ -131,7 +132,7 @@ export function CategoryGallerySection({ section, city }: CategoryGallerySection
     if (section) {
       const isEnglish = detectUserLanguage() === 'en';
       return (
-        <section className="w-full px-6 py-12 text-center text-muted-foreground lg:hidden">
+        <section className="text-muted-foreground w-full px-6 py-12 text-center lg:hidden">
           <p className="text-sm">{isEnglish ? 'Coming soon' : 'Demnächst verfügbar'}</p>
         </section>
       );
