@@ -3,7 +3,6 @@ description: 'Security vulnerability, audit finding, or compliance concern. Sens
 title: '[Security] '
 labels:
   - 'type:security'
-  - 'plan'
 body:
   - type: markdown
     attributes:
@@ -53,13 +52,6 @@ body:
       required: true
 
   - type: input
-    id: plan_id
-    attributes:
-      label: 'Plan ID'
-      description: 'If linked to an agent-output plan, enter the ID. Leave blank if not yet planned.'
-      placeholder: '088'
-
-  - type: input
     id: target_release
     attributes:
       label: 'Target Release'
@@ -67,13 +59,38 @@ body:
       placeholder: 'v0.10.9'
 
   - type: dropdown
+    id: area
+    attributes:
+      label: 'Area'
+      description: 'Becomes the area:* label. Parallel lanes never share an area, so pick the one the fix lives in.'
+      options:
+        - 'auth'
+        - 'search'
+        - 'providers'
+        - 'map'
+        - 'dashboard'
+        - 'admin'
+        - 'i18n'
+        - 'pwa'
+        - 'db'
+        - 'ci'
+        - 'infra'
+        - 'ui'
+        - 'imports'
+        - 'docs'
+        - 'deps'
+    validations:
+      required: true
+
+  - type: dropdown
     id: priority
     attributes:
       label: 'Priority'
+      description: 'P0 blocks users or leaks data. P1 this week. P2 next. P3 someday.'
       options:
-        - 'Critical'
-        - 'High'
-        - 'Medium'
-        - 'Low'
+        - 'P0'
+        - 'P1'
+        - 'P2'
+        - 'P3'
     validations:
       required: true
