@@ -61,6 +61,12 @@ vi.mock('@/services/providers', () => ({
   searchProviders: vi.fn(),
 }));
 
+// #606: register_provider shares the recommend path's city chain — the
+// server-side geocoder is mocked so no test hits Nominatim.
+vi.mock('@/features/providers/services/city-geocode.server', () => ({
+  lookupCanonicalCity: vi.fn(),
+}));
+
 const { mockGetOpenStatus } = vi.hoisted(() => ({
   mockGetOpenStatus: vi.fn(),
 }));
@@ -74,9 +80,15 @@ import type { ToolCall } from '@/features/chat/types';
 import { getProviderById, fetchProviderCities, checkCityExists } from '@/services/providers';
 
 describe('Tool Executor', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     mockGetOpenStatus.mockReturnValue({ visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null });
+    // Safe default: geocoder "outage" → the shared city chain fails open and
+    // accepts the typed city. Tests that need a rejection set 'no_match'.
+    const { lookupCanonicalCity } = await import(
+      '@/features/providers/services/city-geocode.server'
+    );
+    vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'unavailable' });
   });
 
   describe('TOOL_DEFINITIONS', () => {
@@ -374,16 +386,21 @@ describe('Tool Executor', () => {
         );
       });
 
-      it('rejects registration when city does not exist', async () => {
-        // Mock the admin client to return empty for city lookup
+      it('rejects registration when the city resolves nowhere', async () => {
+        // Catalog miss AND a geocoder lookup that ran and matched nothing —
+        // the same reject condition as the recommend path (#606).
         const mockAdminForCity = {
           from: vi.fn().mockReturnThis(),
-          select: vi.fn().mockReturnThis(),
+          select: vi.fn().mockResolvedValue({ data: [], error: null }),
           ilike: vi.fn().mockReturnThis(),
           limit: vi.fn().mockResolvedValue({ data: [], error: null }),
         };
         const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
         vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminForCity as any);
+        const { lookupCanonicalCity } = await import(
+          '@/features/providers/services/city-geocode.server'
+        );
+        vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'no_match' });
 
         const toolCall: ToolCall = {
           id: 'call_9',

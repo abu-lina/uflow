@@ -173,7 +173,15 @@ async function doCreateProviderOrService(
   delete payload.images;
   delete payload.certificate_file;
 
-  const response = await fetch('/api/providers', {
+  // #606: the closed-city check is bound to the recommend route server-side;
+  // the client only picks which door to knock on — it can never toggle the
+  // check itself.
+  const submitUrl =
+    formData.submissionSource === 'recommend'
+      ? '/api/providers/recommend'
+      : '/api/providers';
+
+  const response = await fetch(submitUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

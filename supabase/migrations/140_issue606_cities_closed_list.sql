@@ -16,6 +16,11 @@
 -- needs to read catalog rows for its closed-list suggestions, and hiding
 -- them would break exactly the flow the seed exists for. Visibility is a
 -- query concern here, not a row-security one.
+--
+-- DEPLOY ORDER: apply this migration BEFORE shipping the code that reads
+-- cities.is_listed (seven readers filter on it; without the column every
+-- public city surface errors with 42703). The column's DEFAULT true makes
+-- the reverse order — schema first, code later — safe.
 
 BEGIN;
 
@@ -245,3 +250,15 @@ VALUES
 ON CONFLICT (city_name) DO NOTHING;
 
 COMMIT;
+
+-- ROLLBACK (order matters — do NOT just drop the column):
+--   1. DELETE FROM public.cities WHERE NOT is_listed;
+--        The 156 seeded catalog rows must go first: dropping is_listed while
+--        they still exist makes them public on every city surface instantly.
+--   2. Restore get_cities_with_counts and get_filtered_cities_by_search from
+--        supabase/migrations/001_baseline.sql — the versions WITHOUT the
+--        is_listed predicate. Do this before step 3: the replacement bodies
+--        reference the column and would error with 42703 once it is gone.
+--        Between steps 1 and 2 the unfiltered bodies see only is_listed=true
+--        rows, which is exactly the pre-140 set.
+--   3. ALTER TABLE public.cities DROP COLUMN is_listed;

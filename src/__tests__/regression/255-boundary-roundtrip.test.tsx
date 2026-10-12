@@ -57,7 +57,15 @@ function providerFrom(table: string) {
       update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       delete: () => ({ eq: (...args: unknown[]) => mockProviderDeleteEq(...args) }),
       // #606 duplicate scan reads providers before inserting.
-      select: () => ({ not: async () => ({ data: [], error: null }) }),
+      select: () => ({
+            // #606 R1 scan chain: .not().in().order().range() — empty first
+            // page ends the paginated loop immediately.
+            not: () => ({
+              in: () => ({
+                order: () => ({ range: async () => ({ data: [], error: null }) }),
+              }),
+            }),
+          }),
     };
   }
   if (table === 'categories') {

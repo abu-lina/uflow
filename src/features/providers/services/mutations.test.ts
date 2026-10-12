@@ -104,6 +104,18 @@ describe('createProviderOrService client contract', () => {
     expect(result).toEqual({ provider_id: 'new-provider-id' });
   });
 
+  it('POSTs recommend-flow submissions to /api/providers/recommend (#606)', async () => {
+    // The closed-city check is bound to the route server-side; the client
+    // only chooses which door to knock on.
+    await createProviderOrService(
+      baseFormData({ creationMode: 'recommendation', submissionSource: 'recommend' }),
+      user,
+    );
+
+    const [url] = mockFetch.mock.calls[0];
+    expect(url).toBe('/api/providers/recommend');
+  });
+
   it('uploads images first and includes their storage URLs in the payload', async () => {
     const image = new File(['x'], 'photo.png', { type: 'image/png' });
 

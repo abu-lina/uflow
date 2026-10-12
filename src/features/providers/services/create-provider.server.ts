@@ -11,8 +11,9 @@ import type { CreateProviderResult } from './mutations';
 /** ProviderFormData minus File fields, plus already-uploaded public image URLs. */
 export type CreateProviderPayload = Omit<ProviderFormData, 'images' | 'certificate_file'> & {
   imageUrls?: string[];
-  /** Wire-only marker (#606): which UI flow submitted. 'recommend' opts the
-   * submission into the closed city list; other flows keep free-text cities. */
+  /** Server-set marker (#606): which endpoint accepted the submission. The
+   * route overwrites whatever the body carried — /api/providers/recommend
+   * sets 'recommend' (closed city list), all other routes clear it. */
   submissionSource?: 'recommend' | 'import' | 'owner';
 };
 
@@ -25,9 +26,12 @@ export type ProviderSubmitErrorCode =
   | 'PROVIDER_DUPLICATE';
 
 export interface DuplicateProviderMatch {
-  provider_id: string;
-  name: string;
-  city: string;
+  /** Only ever set for approved matches. A pending row is RLS-invisible to
+   * non-creators (migration 137), so its id, stored name and city must not
+   * leak through this API — pending matches return `status` only. */
+  provider_id?: string;
+  name?: string;
+  city?: string;
   status: 'approved' | 'pending';
   /** Public detail link — only ever set for approved providers. A pending
    * row has no public page, and a rejected row is never revealed at all. */
@@ -231,15 +235,29 @@ function normalizeForDuplicate(value: string): string {
 }
 
 /** R1 identity (#606): normalised provider name AND normalised city, both
- * exact after normalisation. */
+ * exact after normalisation. The city side runs through the alias map on
+ * BOTH sides of the comparison — the catalog seeds exonym pairs (Munich /
+ * München, Cologne / Köln, Hanover / Hannover, Nuremberg / Nürnberg) and
+ * diacritic folding alone never equates them. */
 function duplicateKey(name: string, city: string): string {
-  return makeProviderKey(normalizeForDuplicate(name), normalizeForDuplicate(city));
+  return makeProviderKey(
+    normalizeForDuplicate(name),
+    normalizeForDuplicate(canonicalizeViaAliases(city)),
+  );
 }
+
+/** Matches PostgREST max_rows (supabase/config.toml) so each page comes
+ * back full until the end of the table. */
+const DUPLICATE_SCAN_PAGE = 1000;
 
 /**
  * Blocks a submission whose normalised name+city already exists on a
  * provider visible as a duplicate (#606, rule R1 — measured on prod: every
  * sampled match was a true duplicate).
+ *
+ * The scan reads the whole approved+pending set in pages: PostgREST caps a
+ * single response at max_rows (1000), and prod has more pending rows than
+ * that, so an un-paginated scan silently checks an arbitrary subset.
  *
  * Visibility follows provider_is_visible (migration 137): an approved match
  * may be linked; a pending match is only "already recommended, under
@@ -253,40 +271,48 @@ async function assertNoDuplicateProvider(
   if (!submittedCity || !formData.title?.trim()) return;
 
   const submittedKey = duplicateKey(formData.title, submittedCity);
-  const { data: rows, error } = await admin
-    .from('providers')
-    .select('provider_id, provider_name, address_city, review_status')
-    .not('address_city', 'is', null);
-  if (error) throw error;
+  let pendingMatch = false;
 
-  let pendingMatch: DuplicateProviderMatch | null = null;
-  for (const row of rows ?? []) {
-    if (!row.provider_name || !row.address_city) continue;
-    if (row.review_status !== 'approved' && row.review_status !== 'pending') continue;
-    if (duplicateKey(row.provider_name, row.address_city) !== submittedKey) continue;
+  for (let from = 0; ; from += DUPLICATE_SCAN_PAGE) {
+    const { data: rows, error } = await admin
+      .from('providers')
+      .select('provider_id, provider_name, address_city, review_status')
+      .not('address_city', 'is', null)
+      .in('review_status', ['approved', 'pending'])
+      .order('provider_id', { ascending: true })
+      .range(from, from + DUPLICATE_SCAN_PAGE - 1);
+    if (error) throw error;
 
-    if (row.review_status === 'approved') {
-      throw new ProviderSubmitError('PROVIDER_DUPLICATE', 'Duplicate provider submission', {
-        existing: {
-          provider_id: row.provider_id,
-          name: row.provider_name,
-          city: row.address_city,
-          status: 'approved',
-          href: `/p/${row.provider_id}`,
-        },
-      });
+    for (const row of rows ?? []) {
+      if (!row.provider_name || !row.address_city) continue;
+      // Re-checked row-side even though the query filters review_status:
+      // the predicate narrows the scan, the rule lives here.
+      if (row.review_status !== 'approved' && row.review_status !== 'pending') continue;
+      if (duplicateKey(row.provider_name, row.address_city) !== submittedKey) continue;
+
+      if (row.review_status === 'approved') {
+        throw new ProviderSubmitError('PROVIDER_DUPLICATE', 'Duplicate provider submission', {
+          existing: {
+            provider_id: row.provider_id,
+            name: row.provider_name,
+            city: row.address_city,
+            status: 'approved',
+            href: `/p/${row.provider_id}`,
+          },
+        });
+      }
+      pendingMatch = true;
     }
-    pendingMatch = {
-      provider_id: row.provider_id,
-      name: row.provider_name,
-      city: row.address_city,
-      status: 'pending',
-    };
+
+    if (!rows || rows.length < DUPLICATE_SCAN_PAGE) break;
   }
 
   if (pendingMatch) {
     throw new ProviderSubmitError('PROVIDER_DUPLICATE', 'Duplicate provider submission', {
-      existing: pendingMatch,
+      // A pending row is invisible to this caller under RLS. Disclose only
+      // that a matching recommendation is under review — never its id,
+      // stored name or a link that would 404 anyway.
+      existing: { status: 'pending' },
     });
   }
 }
@@ -305,12 +331,12 @@ function canonicalizeViaAliases(city: string): string {
 }
 
 /**
- * The recommend path (#606) never stores an unvalidated free-text city, and
- * never blocks a user whose town is missing from the `cities` catalog.
- * Accept chain:
- *   1. canonicalised catalog match — stored as the catalog `city_name`;
+ * Shared closed-city accept chain (#606): never stores an unvalidated
+ * free-text city, and never blocks a user whose town is missing from the
+ * `cities` catalog.
+ *   1. canonicalised catalog match — returns the catalog `city_name`;
  *   2. else the server-side geocoder resolves the value — the canonical
- *      name it returns is stored (and goes through the same R1 duplicate
+ *      name it returns is used (and goes through the same R1 duplicate
  *      normalisation, so a resolved name and a catalog name for the same
  *      town still collide);
  *   3. else CITY_NOT_SUPPORTED — only for a lookup that ran and matched
@@ -319,16 +345,13 @@ function canonicalizeViaAliases(city: string): string {
  *      failure class this issue is about, and pending human review is the
  *      backstop. The typed value is stored alias-canonicalised. Fallback
  *      cities land on the provider only — the catalog stays curated.
- * Other flows (import UI, owner create, chat, scripts) keep free-text cities.
+ * Callers: the recommend path (canonicalizeRecommendCity below) and the
+ * chat register_provider tool.
  */
-async function canonicalizeRecommendCity(
+export async function resolveSubmissionCity(
   admin: AdminClient,
-  formData: CreateProviderPayload,
-): Promise<void> {
-  if (formData.submissionSource !== 'recommend') return;
-  const submittedCity = (formData.city ?? '').trim();
-  if (!submittedCity) return;
-
+  submittedCity: string,
+): Promise<string> {
   const { data: rows, error } = await admin.from('cities').select('city_name');
   if (error) throw error;
 
@@ -336,28 +359,35 @@ async function canonicalizeRecommendCity(
   const match = (rows ?? []).find(
     (row: { city_name: string }) => stripDiacritics(row.city_name.toLowerCase()) === submittedNorm,
   );
-  if (match) {
-    formData.city = match.city_name;
-    return;
-  }
+  if (match) return match.city_name;
 
   const geocode = await lookupCanonicalCity(submittedCity);
-  if (geocode.kind === 'resolved') {
-    formData.city = geocode.canonicalName;
-    return;
-  }
+  if (geocode.kind === 'resolved') return geocode.canonicalName;
   if (geocode.kind === 'unavailable') {
     console.warn({
       event: 'city_geocode_unavailable',
       submitted_city: submittedCity,
     });
-    formData.city = canonicalizeViaAliases(submittedCity);
-    return;
+    return canonicalizeViaAliases(submittedCity);
   }
   throw new ProviderSubmitError(
     'CITY_NOT_SUPPORTED',
     'Recommend submission rejected: city could not be resolved',
   );
+}
+
+/** The recommend path enforces the closed city list. The caller decides:
+ * `formData.submissionSource` is set by the route, never trusted from the
+ * request body (#606 review) — /api/providers/recommend sets 'recommend',
+ * every other caller leaves it unset and keeps free-text cities. */
+async function canonicalizeRecommendCity(
+  admin: AdminClient,
+  formData: CreateProviderPayload,
+): Promise<void> {
+  if (formData.submissionSource !== 'recommend') return;
+  const submittedCity = (formData.city ?? '').trim();
+  if (!submittedCity) return;
+  formData.city = await resolveSubmissionCity(admin, submittedCity);
 }
 
 const TAG_SYNONYMS = {

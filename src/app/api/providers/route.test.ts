@@ -110,7 +110,13 @@ function makeAdminClient(
           update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
           delete: () => ({ eq: (...args: unknown[]) => providerDeleteEq(...args) }),
           select: () => ({
-            not: async () => ({ data: [], error: null }),
+            // #606 R1 scan chain: .not().in().order().range() — empty first
+            // page ends the paginated loop immediately.
+            not: () => ({
+              in: () => ({
+                order: () => ({ range: async () => ({ data: [], error: null }) }),
+              }),
+            }),
           }),
         };
       }

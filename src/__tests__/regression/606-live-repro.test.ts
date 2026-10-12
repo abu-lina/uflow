@@ -10,41 +10,80 @@
  * whose `applicable_section` is 'all', which the route surfaced as a
  * generic 500.
  *
- * Gated: needs NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in the
- * environment AND a reachable PostgREST. In CI neither exists, so the
- * suite reports its skip loudly instead of reading as silent green.
- * Run locally against `supabase start` (or a UAT project) by exporting
- * both env vars first.
+ * Gated on dedicated env vars the global test setup never touches:
+ *   UFLOW_LIVE_DB_URL      — a real Supabase URL (local `supabase start`
+ *                            or an explicitly trusted remote)
+ *   UFLOW_LIVE_SERVICE_KEY — the matching service-role key
+ *   UFLOW_LIVE_ALLOW_REMOTE=1 — extra opt-in required before the key is
+ *                            ever sent to a non-loopback host
+ * It never reads NEXT_PUBLIC_SUPABASE_URL: setup.ts overwrites that with a
+ * mock host, and sending a service key to a URL the developer did not set
+ * is a credential leak. The key reaches the probe child process via env,
+ * never argv (ps-visible). In CI none of this is set, so the suite reports
+ * its skip loudly instead of reading as silent green.
  */
 
 import { afterAll, describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env.UFLOW_LIVE_DB_URL;
+const SERVICE_KEY = process.env.UFLOW_LIVE_SERVICE_KEY;
+
+/** The service key may only leave this process for a loopback Supabase
+ * (`supabase start`), or a remote host the developer explicitly opted into
+ * via UFLOW_LIVE_ALLOW_REMOTE=1. Anything else → skip, no keyed request. */
+function liveHostAllowed(url: string): boolean {
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    return false;
+  }
+  if (
+    hostname === 'localhost' ||
+    hostname === '::1' ||
+    hostname === '[::1]' ||
+    hostname.startsWith('127.')
+  ) {
+    return true;
+  }
+  return process.env.UFLOW_LIVE_ALLOW_REMOTE === '1';
+}
+
+const HOST_ALLOWED = Boolean(SUPABASE_URL && SERVICE_KEY && liveHostAllowed(SUPABASE_URL));
 
 // Sync REST probe — top-level await isn't available under this tsconfig.
-const REST_UP = SUPABASE_URL
+// URL and key go through env so neither lands in the child's argv.
+const REST_UP = HOST_ALLOWED
   ? spawnSync(
       process.execPath,
       [
         '-e',
-        `fetch('${SUPABASE_URL}/rest/v1/providers?select=provider_id&limit=0',{headers:{apikey:'${SERVICE_KEY ?? ''}'}}).then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))`,
+        `fetch(process.env.UFLOW_PROBE_URL+'/rest/v1/providers?select=provider_id&limit=0',{headers:{apikey:process.env.UFLOW_PROBE_KEY}}).then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))`,
       ],
-      { encoding: 'utf8', timeout: 5000 },
+      {
+        encoding: 'utf8',
+        timeout: 5000,
+        env: {
+          ...process.env,
+          UFLOW_PROBE_URL: SUPABASE_URL!,
+          UFLOW_PROBE_KEY: SERVICE_KEY!,
+        },
+      },
     ).status === 0
   : false;
 
-const LIVE = Boolean(SUPABASE_URL && SERVICE_KEY && REST_UP);
+const LIVE = Boolean(HOST_ALLOWED && REST_UP);
 
 it.runIf(!LIVE)(
   'LIVE 606 REPRO SKIPPED — no Supabase env/reachable stack, the end-to-end submission did not run',
   () => {
     console.warn(
-      '[606-live-repro] NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY ' +
-        'missing or PostgREST unreachable; the live submission harness did ' +
-        'not run. Export both env vars against a running stack to cover it.',
+      '[606-live-repro] UFLOW_LIVE_DB_URL / UFLOW_LIVE_SERVICE_KEY missing, ' +
+        'the URL is not loopback (set UFLOW_LIVE_ALLOW_REMOTE=1 for a trusted ' +
+        'remote), or PostgREST is unreachable; the live submission harness ' +
+        'did not run.',
     );
   },
 );

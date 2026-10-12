@@ -22,7 +22,13 @@ function makeAdminClient() {
         return {
           insert: providerInsert,
           select: () => ({
-            not: async () => ({ data: [], error: null }),
+            // #606 R1 scan chain: .not().in().order().range() — empty first
+            // page ends the paginated loop immediately.
+            not: () => ({
+              in: () => ({
+                order: () => ({ range: async () => ({ data: [], error: null }) }),
+              }),
+            }),
           }),
         };
       }

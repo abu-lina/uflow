@@ -23,6 +23,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 let POST: typeof import('@/app/api/providers/route').POST;
+let RECOMMEND_POST: typeof import('@/app/api/providers/recommend/route').POST;
 
 vi.mock('@/lib/supabase/getUserFromCookie', () => ({
   getUserFromCookie: vi.fn(),
@@ -67,8 +68,8 @@ interface ProviderRow {
   review_status: 'approved' | 'pending' | 'rejected';
 }
 
-function makeRequest(body: unknown) {
-  return new NextRequest('http://localhost:3000/api/providers', {
+function makeRequest(body: unknown, url = 'http://localhost:3000/api/providers') {
+  return new NextRequest(url, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
@@ -135,8 +136,20 @@ function makeAdminClient(opts: AdminMockOptions = {}) {
           insert: (...args: unknown[]) => providerInsert(...args),
           update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
           delete: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+          // Mirrors the paginated R1 scan chain:
+          // select().not().in().order().range(from, to) — slice honours the
+          // PostgREST max_rows cap, so a test can park the match past row 1000.
           select: () => ({
-            not: async () => ({ data: opts.providers ?? [], error: null }),
+            not: () => ({
+              in: () => ({
+                order: () => ({
+                  range: async (from: number, to: number) => ({
+                    data: (opts.providers ?? []).slice(from, to + 1),
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
           }),
         };
       }
@@ -190,6 +203,7 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     vi.resetModules();
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', STORAGE_ORIGIN);
     ({ POST } = await import('@/app/api/providers/route'));
+    ({ POST: RECOMMEND_POST } = await import('@/app/api/providers/recommend/route'));
     vi.clearAllMocks();
     const { getUserFromCookie } = await import('@/lib/supabase/getUserFromCookie');
     vi.mocked(getUserFromCookie).mockResolvedValue({
@@ -216,6 +230,19 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     const { client, providerInsert } = makeAdminClient(adminOpts);
     vi.mocked(getSupabaseAdmin).mockReturnValue(client as never);
     const response = await POST(makeRequest(body));
+    const json = (await response.json()) as Record<string, unknown>;
+    return { response, json, providerInsert };
+  }
+
+  // The recommend endpoint: identical handling, but the closed-city check is
+  // bound to the route itself — no client-sent flag can enable or skip it.
+  async function postRecommend(body: unknown, adminOpts: AdminMockOptions = {}) {
+    const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
+    const { client, providerInsert } = makeAdminClient(adminOpts);
+    vi.mocked(getSupabaseAdmin).mockReturnValue(client as never);
+    const response = await RECOMMEND_POST(
+      makeRequest(body, 'http://localhost:3000/api/providers/recommend'),
+    );
     const json = (await response.json()) as Record<string, unknown>;
     return { response, json, providerInsert };
   }
@@ -322,15 +349,48 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
       expect(response.status).toBe(409);
     });
 
-    it('a pending match → 409 with no href and no id leak', async () => {
+    it('a pending match → 409 with no href and no id/name leak', async () => {
       const { response, json } = await post(validBody(), {
         providers: [{ ...existingApproved, review_status: 'pending' }],
       });
       expect(response.status).toBe(409);
       expect(json.code).toBe('PROVIDER_DUPLICATE');
       const existing = json.existing as Record<string, unknown>;
-      expect(existing.href).toBeUndefined();
       expect(existing.status).toBe('pending');
+      // RLS hides pending rows from non-creators (migration 137): the body
+      // must not smuggle the row's id or stored name out to them.
+      expect(existing.provider_id).toBeUndefined();
+      expect(existing.name).toBeUndefined();
+      expect(existing.href).toBeUndefined();
+    });
+
+    it('a matching provider beyond the first 1000 rows is still caught', async () => {
+      // PostgREST caps each response at max_rows (1000, supabase/config.toml).
+      // The scan must page, not silently check an arbitrary subset — prod has
+      // more than 1045 pending rows alone. The match sits at index 1500.
+      const filler: ProviderRow[] = Array.from({ length: 1500 }, (_, i) => ({
+        provider_id: `f0000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+        provider_name: `Unrelated Provider ${i}`,
+        address_city: 'Hamburg',
+        review_status: 'pending',
+      }));
+      const { response, json, providerInsert } = await post(validBody(), {
+        providers: [...filler, existingApproved],
+      });
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      expect(providerInsert).not.toHaveBeenCalled();
+    });
+
+    it('city aliases collide: stored "Munich" vs submitted "München"', async () => {
+      // The catalog seeds both spellings; R1 must canonicalise both sides
+      // through CITY_ALIASES or the same provider inserts twice.
+      const { response, json, providerInsert } = await post(validBody({ city: 'München' }), {
+        providers: [{ ...existingApproved, address_city: 'Munich' }],
+      });
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      expect(providerInsert).not.toHaveBeenCalled();
     });
 
     it('a rejected provider is never revealed — submit proceeds', async () => {
@@ -350,12 +410,16 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     });
   });
 
+  // #606: the closed-city check is bound to the /api/providers/recommend
+  // route, not to a client-sent submissionSource flag — a client cannot opt
+  // out by omitting it, and a flag on the generic route is ignored.
   describe('closed city list + geocoder fallback on the recommend path', () => {
-    it('recommend submission with an unresolvable city → 400 CITY_NOT_SUPPORTED', async () => {
-      // Catalog miss AND a lookup that ran and found nothing — the only
-      // rejection path. An outage is never a rejection (see fail-open test).
-      const { response, json, providerInsert } = await post(
-        validBody({ submissionSource: 'recommend', city: 'Atlantis' }),
+    it('enforces even when the client sends no submissionSource flag', async () => {
+      // The whole point of route-bound enforcement: the flag is not the
+      // switch. Catalog miss + a lookup that ran and found nothing → the
+      // only rejection path.
+      const { response, json, providerInsert } = await postRecommend(
+        validBody({ city: 'Atlantis' }),
         { cities: ['Berlin', 'München'] },
       );
       expect(response.status).toBe(400);
@@ -364,8 +428,8 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     });
 
     it('a case variant canonicalises to the cities row before insert', async () => {
-      const { response, providerInsert } = await post(
-        validBody({ submissionSource: 'recommend', city: 'BERLIN' }),
+      const { response, providerInsert } = await postRecommend(
+        validBody({ city: 'BERLIN' }),
         { cities: ['Berlin'] },
       );
       expect(response.status).toBe(200);
@@ -380,8 +444,8 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
         kind: 'resolved',
         canonicalName: 'Neu-Ulm',
       });
-      const { response, providerInsert } = await post(
-        validBody({ submissionSource: 'recommend', city: 'neu ulm' }),
+      const { response, providerInsert } = await postRecommend(
+        validBody({ city: 'neu ulm' }),
         { cities: ['Berlin', 'München'] },
       );
       expect(response.status).toBe(200);
@@ -397,8 +461,8 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
         '@/features/providers/services/city-geocode.server'
       );
       vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'unavailable' });
-      const { response, providerInsert } = await post(
-        validBody({ submissionSource: 'recommend', city: 'frankfurt' }),
+      const { response, providerInsert } = await postRecommend(
+        validBody({ city: 'frankfurt' }),
         { cities: ['Berlin', 'München'] },
       );
       expect(response.status).toBe(200);
@@ -415,8 +479,8 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
         kind: 'resolved',
         canonicalName: 'Berlin',
       });
-      const { response, json, providerInsert } = await post(
-        validBody({ submissionSource: 'recommend', city: 'berlino' }),
+      const { response, json, providerInsert } = await postRecommend(
+        validBody({ city: 'berlino' }),
         {
           cities: ['München'], // catalog miss → geocoder resolves to 'Berlin'
           providers: [
@@ -434,11 +498,13 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
       expect(providerInsert).not.toHaveBeenCalled();
     });
 
-    it('submissions without the recommend marker skip the closed-list check', async () => {
-      // The import UI posts creationMode 'recommendation' too but must not be
-      // held to the recommend list (its cities come from OSM).
+    it('the generic /api/providers route ignores a client-sent recommend flag', async () => {
+      // The import UI posts creationMode 'recommendation' here too and must
+      // not be held to the recommend list (its cities come from OSM). The
+      // body flag decides nothing: a stale client claiming 'recommend' on
+      // the generic route is treated like any other generic submission.
       const { response, providerInsert } = await post(
-        validBody({ city: 'Atlantis' }),
+        validBody({ submissionSource: 'recommend', city: 'Atlantis' }),
         { cities: ['Berlin'] },
       );
       expect(response.status).toBe(200);

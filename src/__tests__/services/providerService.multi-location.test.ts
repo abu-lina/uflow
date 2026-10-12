@@ -19,7 +19,15 @@ function setupSupabaseMock() {
         insert: async () => ({ error: null }),
         delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
         // #606 duplicate scan reads providers before inserting.
-        select: () => ({ not: async () => ({ data: [], error: null }) }),
+        select: () => ({
+            // #606 R1 scan chain: .not().in().order().range() — empty first
+            // page ends the paginated loop immediately.
+            not: () => ({
+              in: () => ({
+                order: () => ({ range: async () => ({ data: [], error: null }) }),
+              }),
+            }),
+          }),
       };
     }
     if (table === 'provider_offers' || table === 'provider_needs') {
@@ -105,7 +113,15 @@ describe('providerService multi-location creation', () => {
             return { error: null };
           },
           delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
-          select: () => ({ not: async () => ({ data: [], error: null }) }),
+          select: () => ({
+            // #606 R1 scan chain: .not().in().order().range() — empty first
+            // page ends the paginated loop immediately.
+            not: () => ({
+              in: () => ({
+                order: () => ({ range: async () => ({ data: [], error: null }) }),
+              }),
+            }),
+          }),
         };
       }
       if (table === 'locations') {
@@ -165,7 +181,15 @@ describe('providerService multi-location creation', () => {
         return {
           insert: () => ({ error: null }),
           delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
-          select: () => ({ not: async () => ({ data: [], error: null }) }),
+          select: () => ({
+            // #606 R1 scan chain: .not().in().order().range() — empty first
+            // page ends the paginated loop immediately.
+            not: () => ({
+              in: () => ({
+                order: () => ({ range: async () => ({ data: [], error: null }) }),
+              }),
+            }),
+          }),
         };
       }
       if (table === 'provider_offers' || table === 'provider_needs') {
@@ -209,7 +233,15 @@ describe('providerService multi-location creation', () => {
         return {
           insert: () => ({ error: null }),
           delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
-          select: () => ({ not: async () => ({ data: [], error: null }) }),
+          select: () => ({
+            // #606 R1 scan chain: .not().in().order().range() — empty first
+            // page ends the paginated loop immediately.
+            not: () => ({
+              in: () => ({
+                order: () => ({ range: async () => ({ data: [], error: null }) }),
+              }),
+            }),
+          }),
         };
       }
       if (table === 'locations') {

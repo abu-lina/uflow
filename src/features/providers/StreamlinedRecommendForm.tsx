@@ -1162,8 +1162,9 @@ export function StreamlinedRecommendForm({
         description: formData.message,
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
-        // #606: declares the recommend flow so the server enforces the
-        // closed city list for this submission (only).
+        // #606: routes this submission to /api/providers/recommend — the
+        // only endpoint where the server enforces the closed city list.
+        // The flag picks the door; the door does the enforcing.
         submissionSource: 'recommend' as const,
         isOnlineBusiness: false,
         street: '',
