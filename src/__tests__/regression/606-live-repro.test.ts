@@ -30,6 +30,17 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.UFLOW_LIVE_DB_URL;
 const SERVICE_KEY = process.env.UFLOW_LIVE_SERVICE_KEY;
 
+/** Narrows the env pair inside the live-only paths; the skip gate above must
+ * still see them as possibly-absent, so it never calls this. */
+function liveEnv(): { url: string; key: string } {
+  if (!SUPABASE_URL || !SERVICE_KEY) throw new Error('live harness env missing');
+  return { url: SUPABASE_URL, key: SERVICE_KEY };
+}
+
+function assertPresent<T>(v: T | null | undefined, what: string): asserts v is T {
+  if (v == null) throw new Error(`expected ${what}`);
+}
+
 /** The service key may only leave this process for a loopback Supabase
  * (`supabase start`), or a remote host the developer explicitly opted into
  * via UFLOW_LIVE_ALLOW_REMOTE=1. Anything else → skip, no keyed request. */
@@ -67,8 +78,8 @@ const REST_UP = HOST_ALLOWED
         timeout: 5000,
         env: {
           ...process.env,
-          UFLOW_PROBE_URL: SUPABASE_URL!,
-          UFLOW_PROBE_KEY: SERVICE_KEY!,
+          UFLOW_PROBE_URL: liveEnv().url,
+          UFLOW_PROBE_KEY: liveEnv().key,
         },
       },
     ).status === 0
@@ -102,8 +113,9 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
     // env vars — and setup.ts:15 clobbers the URL with the mock host. Without
     // these stubs the service would send the shell's SUPABASE_SERVICE_ROLE_KEY
     // to that unowned domain. Point it at the live stack for this describe.
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', SUPABASE_URL!);
-    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', SERVICE_KEY!);
+    const { url, key } = liveEnv();
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', url);
+    vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', key);
 
     const { data, error } = await adminClient().auth.admin.createUser({
       email: `606repro-${Date.now()}@example.com`,
@@ -116,7 +128,8 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
 
   function adminClient(): SupabaseClient {
     if (!admin) {
-      admin = createClient(SUPABASE_URL!, SERVICE_KEY!, {
+      const { url, key } = liveEnv();
+      admin = createClient(url, key, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
     }
@@ -191,10 +204,11 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
       .select('category_id, name_en, applicable_section')
       .eq('applicable_section', 'all');
     if (error) throw error;
-    expect(allCategories!.length).toBeGreaterThan(0);
+    assertPresent(allCategories, 'allCategories');
+    expect(allCategories.length).toBeGreaterThan(0);
 
     const city = await closedListCity();
-    for (const category of allCategories!) {
+    for (const category of allCategories) {
       const result = await createProviderOrServiceServer(
         payload({
           category: category.category_id,
@@ -206,14 +220,16 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
       // other category returns provider_id. Both land in `providers`.
       const createdId = result.provider_id ?? result.community_service_id;
       expect(createdId).toBeTruthy();
-      createdProviderIds.push(createdId!);
+      assertPresent(createdId, 'createdId');
+      createdProviderIds.push(createdId);
 
       const { data: row } = await adminClient()
         .from('providers')
         .select('listing_type')
         .eq('provider_id', createdId)
         .single();
-      expect(['food', 'store', 'ummah']).toContain(row!.listing_type);
+      assertPresent(row, 'providers row');
+      expect(['food', 'store', 'ummah']).toContain(row.listing_type);
     }
   }, 60_000);
 
@@ -226,10 +242,11 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
       .select('category_id')
       .limit(1)
       .single();
+    assertPresent(cat, 'a categories row');
 
     await expect(
       createProviderOrServiceServer(
-        payload({ category: cat!.category_id, city: `Atlantis-${runId}` }) as never,
+        payload({ category: cat.category_id, city: `Atlantis-${runId}` }) as never,
       ),
     ).rejects.toMatchObject({
       name: 'ProviderSubmitError',
@@ -248,14 +265,16 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
       .neq('applicable_section', 'ummah')
       .limit(1)
       .single();
+    assertPresent(cat, 'a categories row');
     const city = await closedListCity();
     const first = await createProviderOrServiceServer(
-      payload({ category: cat!.category_id, city }) as never,
+      payload({ category: cat.category_id, city }) as never,
     );
-    createdProviderIds.push(first.provider_id!);
+    assertPresent(first.provider_id, 'first.provider_id');
+    createdProviderIds.push(first.provider_id);
 
     await expect(
-      createProviderOrServiceServer(payload({ category: cat!.category_id, city }) as never),
+      createProviderOrServiceServer(payload({ category: cat.category_id, city }) as never),
     ).rejects.toMatchObject({
       name: 'ProviderSubmitError',
       code: 'PROVIDER_DUPLICATE',
