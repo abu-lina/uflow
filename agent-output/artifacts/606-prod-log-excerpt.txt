@@ -1,0 +1,19 @@
+# #606 server-side evidence. Pulled read-only on 2026-10-12 via
+#   ssh root@91.98.207.106 'docker logs --timestamps <container>' | grep -A12 "Provider create error"
+# Lines carrying tokens/cookies/keys filtered out; none were present in these excerpts.
+
+## uflow-app (production), the captured request (cf-ray a493cff75cfba03a-FRA, Date 05:47:53 GMT)
+2026-10-12T05:47:52.867Z { event: 'auth_attempt', result: 'ssr_miss', reason: 'ssr_client_no_user' }   <- normal, non-terminal fall-through to sb-access-token
+                         (no 'auth_outcome: no_user' follows -> cookie path resolved the user)
+2026-10-12T05:47:53.048Z Provider create error: Error: Unable to resolve listing_type for category '5e5d910d-d790-4184-a061-9cd74d0950e8'; provider was not created.
+    at n (.next/server/app/api/providers/route.js:1:10256)
+    at async q (.next/server/app/api/providers/route.js:1:15775)
+    at async $ (.next/server/app/api/providers/route.js:1:3717)
+    at async _ (.next/server/app/api/providers/route.js:1:4784)
+    at async Module.A (.next/server/app/api/providers/route.js:1:6819)
+
+## Every "Provider create error" in retained logs (uflow-app since 2026-10-09T15:14Z, uflow-uat since 2026-10-10T15:55Z)
+uflow-app  2026-10-11  x2  Unable to resolve listing_type for category '20c10efe-404b-4a39-bb81-5089a0332d78'  (Food & Drink)
+uflow-app  2026-10-12  x2  Unable to resolve listing_type for category '5e5d910d-d790-4184-a061-9cd74d0950e8'  (Other)
+uflow-uat  2026-10-12  x1  Unable to resolve listing_type for category '5e5d910d-d790-4184-a061-9cd74d0950e8'  (Other)
+=> 5 of 5 provider-create 500s share this single cause. No DB constraint error, no auth error.
