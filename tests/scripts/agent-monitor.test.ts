@@ -261,6 +261,36 @@ describe('agent-monitor.sh', { timeout: 30_000 }, () => {
     });
   });
 
+  it('table: draft PR renders pr=555d, non-draft pr=555, no PR pr=-, columns aligned', () => {
+    // the JSON replay pins records, not the rendered cells; the table is the
+    // human-facing occupancy view, so the draft suffix and the widened pr
+    // column need direct coverage.
+    seedScenario({
+      worktrees: { 103: 'x', 104: 'x', 105: 'x' },
+      branches: { 103: 'fix/103-x', 104: 'fix/104-x', 105: 'fix/105-x' },
+      ahead: { 103: 3, 104: 2, 105: 1 },
+      issues: {
+        103: { state: 'OPEN', comments: [PHASE_COMMENT] },
+        104: { state: 'OPEN', comments: [PHASE_COMMENT] },
+        105: { state: 'OPEN', comments: [PHASE_COMMENT] },
+      },
+      prs: [
+        { number: 555, headRefName: 'fix/103-x', isDraft: true },
+        { number: 777, headRefName: 'fix/104-x', isDraft: false },
+      ],
+    });
+    const { stdout, status } = run(sb); // no --json: the table path
+    expect(status).toBe(0);
+    const line = (n: number) =>
+      stdout.split('\n').find((l) => l.includes(`#${n}`)) ?? '';
+    // the phases= field must sit in its own column after the pr cell, so a
+    // width regression shows up as `555d     phases=` losing its padding
+    expect(line(103)).toMatch(/pr=555d\s+phases=1/);
+    expect(line(104)).toMatch(/pr=777\s+phases=1/);
+    expect(line(105)).toMatch(/pr=-\s+phases=1/);
+    expect(line(103)).not.toContain('nulld');
+  });
+
   it('classifies in-flight: open, worktree, no open PR, progress exists', () => {
     seedScenario({
       worktrees: { 104: 'x' },
