@@ -96,14 +96,30 @@ describe('255 C6 — icon and colour standards', () => {
     expect(src).not.toContain('material-symbols:');
   });
 
+  // Issue references (#415, #606) live in comments; strip comments before
+  // the hex check instead of stripping digit patterns — a real all-digit
+  // hex colour (#000, #333, #666666) must still be caught.
+  const stripComments = (src: string) =>
+    src
+      .replace(/\/\*[\s\S]*?\*\//g, '') // block + JSX {/* */} comments
+      .replace(/(^|[^:'"`])\/\/[^\n]*/gm, '$1'); // line comments ('//' after : or quotes is a URL/string)
+
+  const hasHexLiteral = (src: string) => /#[0-9A-Fa-f]{3,8}\b/.test(stripComments(src));
+
   it.each(['app/(public)/create/page.tsx', 'app/(public)/create/halal/page.tsx', ...COMPONENTS])(
     '%s has no hex colour literals',
     (file) => {
-      // Strip #415 issue references so they don't match the 3-char hex pattern.
-      const src = page(file).replaceAll('#415', '');
-      expect(src).not.toMatch(/#[0-9A-Fa-f]{3,8}\b/);
+      expect(hasHexLiteral(page(file))).toBe(false);
     },
   );
+
+  it('the hex gate still catches all-digit colours while ignoring issue refs', () => {
+    // #606 in a comment is an issue ref — stripped. #333 in code is a real
+    // hex colour — caught. A widened /#\d{3,}/ strip would delete both.
+    expect(hasHexLiteral("const c = '#333'; // fixes #606")).toBe(true);
+    expect(hasHexLiteral('className="bg-[#333]" {/* ref #606 */}')).toBe(true);
+    expect(hasHexLiteral('// issue #606\n/* also #415 */')).toBe(false);
+  });
 
   it('halal page uses lucide-react icons with w-icon-*/h-icon-* tokens', () => {
     const src = page('app/(public)/create/halal/page.tsx');

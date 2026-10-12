@@ -24,7 +24,9 @@ vi.mock('@/lib/supabase/client', () => ({
       if (table === 'cities') {
         return {
           select: () => ({
-            limit: () => Promise.resolve({ data: CITY_ROWS, error: null }),
+            eq: () => ({
+              limit: () => Promise.resolve({ data: CITY_ROWS, error: null }),
+            }),
           }),
         };
       }

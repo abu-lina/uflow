@@ -150,7 +150,11 @@ async function citySlugsFromCitiesTable(): Promise<Set<string> | null> {
   const cached = readCache(slugSetCache, 'cities');
   if (cached !== undefined) return cached;
 
-  const result = await postgrest<{ city_name: string }>('cities?select=city_name&limit=500');
+  // is_listed=eq.true mirrors findCityBySlug: catalog rows seeded for the
+  // recommend closed list (#606) must not mint /food/<city> routes.
+  const result = await postgrest<{ city_name: string }>(
+    'cities?select=city_name&is_listed=eq.true&limit=500',
+  );
   // "Unknown" is never written to the cache — the next request retries.
   if (result === null) return null;
 

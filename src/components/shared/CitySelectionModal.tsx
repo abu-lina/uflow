@@ -52,6 +52,8 @@ export function CitySelectionModal({
         const { data, error } = await supabase
           .from('cities')
           .select('id, city_name, country, provider_count, is_unlocked')
+          // #606: unlisted catalog rows exist only for recommend validation.
+          .eq('is_listed', true)
           .order('provider_count', { ascending: false })
           .order('city_name', { ascending: true });
 

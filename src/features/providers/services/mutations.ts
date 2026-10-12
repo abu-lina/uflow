@@ -8,6 +8,32 @@ export interface CreateProviderResult {
   community_service_id?: string;
 }
 
+export interface ProviderDuplicateInfo {
+  provider_id?: string;
+  name?: string;
+  city?: string;
+  status?: 'approved' | 'pending';
+  href?: string;
+}
+
+/**
+ * Submission failure with the server's opaque `code` (#606). The UI maps the
+ * code to localised copy; `message` is only a safe English fallback, never
+ * internals (the API never forwards server-side detail).
+ */
+export class ProviderSubmissionError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+    public readonly status: number,
+    public readonly field?: string,
+    public readonly existing?: ProviderDuplicateInfo,
+  ) {
+    super(message);
+    this.name = 'ProviderSubmissionError';
+  }
+}
+
 /**
  * Uploads entity images to the appropriate storage bucket and returns their
  * public URLs. Uploads are namespaced by user id (#415: submissions require a
@@ -122,7 +148,11 @@ async function doCreateProviderOrService(
   // Throw a readable error if a client gate is ever bypassed — the server
   // route derives the actor from the session regardless of this parameter.
   if (!user) {
-    throw new Error('Authentication required to create a provider or service');
+    throw new ProviderSubmissionError(
+      'AUTH_REQUIRED',
+      'Authentication required to create a provider or service',
+      401,
+    );
   }
   const isCommunityService = formData.category === '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
 
@@ -143,18 +173,35 @@ async function doCreateProviderOrService(
   delete payload.images;
   delete payload.certificate_file;
 
-  const response = await fetch('/api/providers', {
+  // #606: the closed-city check is bound to the recommend route server-side;
+  // the client only picks which door to knock on — it can never toggle the
+  // check itself.
+  const submitUrl =
+    formData.submissionSource === 'recommend'
+      ? '/api/providers/recommend'
+      : '/api/providers';
+
+  const response = await fetch(submitUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   const data = (await response.json().catch(() => ({}))) as CreateProviderResult & {
+    code?: string;
     error?: string;
+    field?: string;
+    existing?: ProviderDuplicateInfo;
   };
 
   if (!response.ok) {
-    throw new Error(data.error ?? `Provider submission failed (${response.status})`);
+    throw new ProviderSubmissionError(
+      data.code ?? 'SUBMIT_FAILED',
+      data.error ?? `Provider submission failed (${response.status})`,
+      response.status,
+      data.field,
+      data.existing,
+    );
   }
 
   return data;

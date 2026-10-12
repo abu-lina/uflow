@@ -61,6 +61,12 @@ vi.mock('@/services/providers', () => ({
   searchProviders: vi.fn(),
 }));
 
+// #606: register_provider shares the recommend path's city chain — the
+// server-side geocoder is mocked so no test hits Nominatim.
+vi.mock('@/features/providers/services/city-geocode.server', () => ({
+  lookupCanonicalCity: vi.fn(),
+}));
+
 const { mockGetOpenStatus } = vi.hoisted(() => ({
   mockGetOpenStatus: vi.fn(),
 }));
@@ -74,9 +80,16 @@ import type { ToolCall } from '@/features/chat/types';
 import { getProviderById, fetchProviderCities, checkCityExists } from '@/services/providers';
 
 describe('Tool Executor', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     mockGetOpenStatus.mockReturnValue({ visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null });
+    // Default: a lookup that ran and found nothing. Tests exercise the
+    // catalog-hit or fail-open branches by stubbing explicitly — 'Berlin'
+    // below goes through a real catalog match, not fail-open.
+    const { lookupCanonicalCity } = await import(
+      '@/features/providers/services/city-geocode.server'
+    );
+    vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'no_match' });
   });
 
   describe('TOOL_DEFINITIONS', () => {
@@ -332,6 +345,17 @@ describe('Tool Executor', () => {
 
     describe('register_provider', () => {
       it('validates required fields and creates provider', async () => {
+        // Catalog hit for 'Berlin' — the shared chain must resolve it
+        // without touching the geocoder.
+        const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
+        vi.mocked(getSupabaseAdmin).mockReturnValue({
+          from: vi.fn((table: string) =>
+            table === 'cities'
+              ? { select: async () => ({ data: [{ city_name: 'Berlin' }], error: null }) }
+              : mockSupabase.from(table),
+          ),
+        } as any);
+
         const toolCall: ToolCall = {
           id: 'call_7',
           type: 'function',
@@ -352,6 +376,11 @@ describe('Tool Executor', () => {
         expect(parsed.success).toBe(true);
         expect(parsed.review_status).toBe('pending');
         expect(parsed.provider_id).toBeDefined();
+
+        const { lookupCanonicalCity } = await import(
+          '@/features/providers/services/city-geocode.server'
+        );
+        expect(lookupCanonicalCity).not.toHaveBeenCalled();
       });
 
       it('rejects invalid listing_type', async () => {
@@ -374,16 +403,21 @@ describe('Tool Executor', () => {
         );
       });
 
-      it('rejects registration when city does not exist', async () => {
-        // Mock the admin client to return empty for city lookup
+      it('rejects registration when the city resolves nowhere', async () => {
+        // Catalog miss AND a geocoder lookup that ran and matched nothing —
+        // the same reject condition as the recommend path (#606).
         const mockAdminForCity = {
           from: vi.fn().mockReturnThis(),
-          select: vi.fn().mockReturnThis(),
+          select: vi.fn().mockResolvedValue({ data: [], error: null }),
           ilike: vi.fn().mockReturnThis(),
           limit: vi.fn().mockResolvedValue({ data: [], error: null }),
         };
         const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
         vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminForCity as any);
+        const { lookupCanonicalCity } = await import(
+          '@/features/providers/services/city-geocode.server'
+        );
+        vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'no_match' });
 
         const toolCall: ToolCall = {
           id: 'call_9',

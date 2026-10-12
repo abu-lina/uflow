@@ -1,0 +1,555 @@
+// @vitest-environment node
+/**
+ * #606 — POST /api/providers must never 500 on bad-but-honest input.
+ *
+ * Regression coverage for the production 500: categories with
+ * applicable_section 'all' could not resolve a listing_type and the bare
+ * throw surfaced as a 37-byte generic 500.
+ *
+ * Contracts locked down here:
+ * - An 'all'-section category resolves via the slug-keyed fallback map
+ *   (real prod data: food-drink->food, other->food, services->store).
+ * - A category the resolver has never seen still submits (default 'food');
+ *   nothing about the category's section may ever produce a 500 again.
+ * - Genuinely bad input is a coded 4xx, never a 500: unknown category,
+ *   missing halal answers, city outside the closed list, duplicate.
+ * - The duplicate check (rule R1: normalised name AND normalised city)
+ *   returns 409; a pending match carries no href, a rejected match is
+ *   never revealed at all.
+ * - Every error body carries an opaque `code`; no internals leak.
+ */
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { NextRequest } from 'next/server';
+
+let POST: typeof import('@/app/api/providers/route').POST;
+let RECOMMEND_POST: typeof import('@/app/api/providers/recommend/route').POST;
+
+vi.mock('@/lib/supabase/getUserFromCookie', () => ({
+  getUserFromCookie: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
+  getSupabaseAdmin: vi.fn(),
+}));
+
+// The server-side geocoder is mocked so CI never makes a live network call.
+vi.mock('@/features/providers/services/city-geocode.server', () => ({
+  lookupCanonicalCity: vi.fn(),
+}));
+
+vi.mock('@/lib/rate-limit', () => ({
+  checkRateLimit: vi.fn(() => true),
+  getClientIdentifier: vi.fn(() => 'ip:127.0.0.1'),
+}));
+
+const STORAGE_ORIGIN = 'https://test.supabase.co';
+
+// Real category ids from the local seed (same ids the prod log named).
+const CATEGORY = {
+  foodAndDrink: '20c10efe-404b-4a39-bb81-5089a0332d78', // 'all' locally + prod
+  other: '5e5d910d-d790-4184-a061-9cd74d0950e8', // 'all', the prod-trace category
+  services: '1288f269-2cdb-47e8-bd8e-9d552ff25e83', // 'all' locally + prod
+  brandNew: '11111111-2222-4333-8444-555555555555', // never-seen 'all' category
+  unknown: '99999999-9999-4999-8999-999999999999', // no categories row
+};
+
+interface CategoryRow {
+  applicable_section: string;
+  slug?: string | null;
+  name_en?: string | null;
+  name_de?: string | null;
+}
+
+interface ProviderRow {
+  provider_id: string;
+  provider_name: string;
+  address_city: string | null;
+  review_status: 'approved' | 'pending' | 'rejected';
+}
+
+function makeRequest(body: unknown, url = 'http://localhost:3000/api/providers') {
+  return new NextRequest(url, {
+    method: 'POST',
+    body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+function validBody(over: Record<string, unknown> = {}) {
+  return {
+    creationMode: 'recommendation',
+    entityType: 'provider',
+    title: 'Test Restaurant',
+    category: CATEGORY.foodAndDrink,
+    description: '',
+    isOnlineBusiness: false,
+    street: '',
+    zip: '',
+    city: 'Berlin',
+    country: '',
+    latitude: null,
+    longitude: null,
+    showAddress: true,
+    website: '',
+    instagram: '',
+    phone: '',
+    email: '',
+    offers_ids: [],
+    needs_ids: [],
+    selectedCommunityServiceIds: [],
+    tags: [],
+    socialCategory: '',
+    socialTitle: '',
+    socialDescription: '',
+    no_alcohol: true,
+    no_pork: true,
+    no_gambling: true,
+    verification_method: 'online',
+    has_certificate: false,
+    certificate_url: '',
+    imageUrls: [],
+    ...over,
+  };
+}
+
+interface AdminMockOptions {
+  category?: CategoryRow | null;
+  providers?: ProviderRow[];
+  cities?: string[];
+  failInsert?: boolean;
+  /** Simulates a PostgREST response cap below the requested page size. */
+  pageCap?: number;
+}
+
+function makeAdminClient(opts: AdminMockOptions = {}) {
+  const providerInsert = vi.fn().mockResolvedValue(
+    opts.failInsert ? { error: { message: 'insert denied by constraint xyz' } } : { error: null },
+  );
+  const category =
+    opts.category === undefined
+      ? ({ applicable_section: 'food', slug: 'turkish', name_en: 'Turkish', name_de: 'Türkisch' } as CategoryRow)
+      : opts.category;
+
+  const client = {
+    from: vi.fn((table: string) => {
+      if (table === 'providers') {
+        return {
+          insert: (...args: unknown[]) => providerInsert(...args),
+          update: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+          delete: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+          // Mirrors the keyset R1 scan chain:
+          // select().not().in().gt(provider_id, last).order().limit(n) —
+          // filter+sort+slice honours a response cap, so a test can park
+          // the match behind 1000 other rows on a later page. opts.pageCap
+          // simulates a server-side max_rows smaller than the request.
+          select: () => ({
+            not: () => ({
+              in: () => ({
+                gt: (_col: string, lastId: string) => ({
+                  order: () => ({
+                    limit: async (n: number) => ({
+                      data: (opts.providers ?? [])
+                        .filter((row) => row.provider_id > lastId)
+                        .sort((a, b) => (a.provider_id < b.provider_id ? -1 : 1))
+                        .slice(0, Math.min(n, opts.pageCap ?? n)),
+                      error: null,
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'categories') {
+        return {
+          select: () => ({
+            eq: () => ({
+              single: async () =>
+                category === null
+                  ? { data: null, error: { code: 'PGRST116', message: 'no rows' } }
+                  : { data: category, error: null },
+            }),
+          }),
+        };
+      }
+      if (table === 'cities') {
+        return {
+          select: async () => ({
+            data: (opts.cities ?? ['Berlin', 'München']).map((city_name) => ({ city_name })),
+            error: null,
+          }),
+        };
+      }
+      if (table === 'locations') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      if (table === 'food_providers' || table === 'store_providers') {
+        return { upsert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      if (table === 'provider_offers' || table === 'provider_needs') {
+        return {
+          delete: () => ({ eq: vi.fn().mockResolvedValue({ error: null }) }),
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        };
+      }
+      if (table === 'badge_types') {
+        return { select: () => ({ in: async () => ({ data: [], error: null }) }) };
+      }
+      if (table === 'provider_badges' || table === 'provider_engagements') {
+        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+      }
+      return { insert: vi.fn().mockResolvedValue({ error: null }) };
+    }),
+  };
+
+  return { client, providerInsert };
+}
+
+describe('#606 POST /api/providers — no more 500s on honest input', () => {
+  beforeEach(async () => {
+    vi.resetModules();
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', STORAGE_ORIGIN);
+    ({ POST } = await import('@/app/api/providers/route'));
+    ({ POST: RECOMMEND_POST } = await import('@/app/api/providers/recommend/route'));
+    vi.clearAllMocks();
+    const { getUserFromCookie } = await import('@/lib/supabase/getUserFromCookie');
+    vi.mocked(getUserFromCookie).mockResolvedValue({
+      id: 'user-1',
+      email: 'user@example.com',
+    } as never);
+    // Safe default: a lookup that ran and found nothing. Tests that exercise
+    // the fallback set their own outcome; nothing here may hit the network.
+    const { lookupCanonicalCity } = await import(
+      '@/features/providers/services/city-geocode.server'
+    );
+    vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'no_match' });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  async function post(body: unknown, adminOpts: AdminMockOptions = {}) {
+    const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
+    const { client, providerInsert } = makeAdminClient(adminOpts);
+    vi.mocked(getSupabaseAdmin).mockReturnValue(client as never);
+    const response = await POST(makeRequest(body));
+    const json = (await response.json()) as Record<string, unknown>;
+    return { response, json, providerInsert };
+  }
+
+  // The recommend endpoint: identical handling, but the closed-city check is
+  // bound to the route itself — no client-sent flag can enable or skip it.
+  async function postRecommend(body: unknown, adminOpts: AdminMockOptions = {}) {
+    const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
+    const { client, providerInsert } = makeAdminClient(adminOpts);
+    vi.mocked(getSupabaseAdmin).mockReturnValue(client as never);
+    const response = await RECOMMEND_POST(
+      makeRequest(body, 'http://localhost:3000/api/providers/recommend'),
+    );
+    const json = (await response.json()) as Record<string, unknown>;
+    return { response, json, providerInsert };
+  }
+
+  it('anonymous submitter gets a coded 401', async () => {
+    const { getUserFromCookie } = await import('@/lib/supabase/getUserFromCookie');
+    vi.mocked(getUserFromCookie).mockResolvedValue(null as never);
+    const { response, json } = await post(validBody());
+    expect(response.status).toBe(401);
+    expect(json.code).toBe('AUTH_REQUIRED');
+  });
+
+  // The exact production failure: 'all'-section categories on a logged-in
+  // submit. Real sections and slugs as they exist in the local seed/prod.
+  it.each([
+    ['Food & Drink', CATEGORY.foodAndDrink, 'food-drink', 'food'],
+    ['Other', CATEGORY.other, 'other', 'food'],
+    ['Services', CATEGORY.services, 'services', 'store'],
+  ])(
+    'all-section category "%s" persists with mapped listing_type %s',
+    async (_name, categoryId, slug, listingType) => {
+      const { response, providerInsert } = await post(validBody({ category: categoryId }), {
+        category: { applicable_section: 'all', slug, name_en: _name, name_de: _name },
+      });
+      expect(response.status).toBe(200);
+      expect(providerInsert.mock.calls[0][0][0].listing_type).toBe(listingType);
+    },
+  );
+
+  it('a brand-new unmappable category still submits (default food, never a throw)', async () => {
+    const { response, providerInsert } = await post(validBody({ category: CATEGORY.brandNew }), {
+      category: { applicable_section: 'all', slug: 'brand-new-thing', name_en: 'Brand New Thing' },
+    });
+    expect(response.status).toBe(200);
+    expect(providerInsert.mock.calls[0][0][0].listing_type).toBe('food');
+  });
+
+  it('a live section value always wins over the fallback map', async () => {
+    // Dev env disagrees: there 'Food & Drink' is a real food category.
+    const { response, providerInsert } = await post(
+      validBody({ category: CATEGORY.foodAndDrink }),
+      { category: { applicable_section: 'store', slug: 'food-drink' } },
+    );
+    expect(response.status).toBe(200);
+    expect(providerInsert.mock.calls[0][0][0].listing_type).toBe('store');
+  });
+
+  it('an unknown category id is a coded 400, not a 500', async () => {
+    const { response, json } = await post(validBody({ category: CATEGORY.unknown }), {
+      category: null,
+    });
+    expect(response.status).toBe(400);
+    expect(json.code).toBe('CATEGORY_UNKNOWN');
+    expect(JSON.stringify(json)).not.toContain('PGRST116');
+  });
+
+  it('missing halal answers is a coded 400, not a 500', async () => {
+    const { response, json } = await post(validBody({ no_gambling: undefined }), {
+      category: { applicable_section: 'food', slug: 'turkish' },
+    });
+    expect(response.status).toBe(400);
+    expect(json.code).toBe('HALAL_ATTESTATION_REQUIRED');
+  });
+
+  it('a zod rejection is a coded 400 with no raw issue text', async () => {
+    const { response, json } = await post({ ...validBody(), message: 'surprise key' });
+    expect(response.status).toBe(400);
+    expect(json.code).toBe('INVALID_BODY');
+    expect(JSON.stringify(json)).not.toContain('Unrecognized');
+  });
+
+  it('an unexpected service error is a coded 500 that leaks nothing', async () => {
+    const { response, json } = await post(validBody(), { failInsert: true });
+    expect(response.status).toBe(500);
+    expect(json.code).toBe('SUBMIT_FAILED');
+    expect(JSON.stringify(json)).not.toContain('constraint xyz');
+    expect(JSON.stringify(json)).not.toContain('insert denied');
+  });
+
+  describe('duplicate detection (rule R1: normalised name AND city)', () => {
+    const existingApproved: ProviderRow = {
+      provider_id: 'aaaa1111-0000-4000-8000-000000000001',
+      provider_name: 'Test Restaurant',
+      address_city: 'Berlin',
+      review_status: 'approved',
+    };
+
+    it('exact name+city on an approved provider → 409 with link', async () => {
+      const { response, json, providerInsert } = await post(validBody(), {
+        providers: [existingApproved],
+      });
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      const existing = json.existing as Record<string, unknown>;
+      expect(existing.provider_id).toBe(existingApproved.provider_id);
+      expect(existing.href).toBe(`/p/${existingApproved.provider_id}`);
+      expect(providerInsert).not.toHaveBeenCalled();
+    });
+
+    it('diacritic and punctuation variants still match', async () => {
+      const { response } = await post(validBody({ title: 'TEST  restaurant!', city: 'berlin' }), {
+        providers: [existingApproved],
+      });
+      expect(response.status).toBe(409);
+    });
+
+    it('a pending match → 409 with no href and no id/name leak', async () => {
+      const { response, json } = await post(validBody(), {
+        providers: [{ ...existingApproved, review_status: 'pending' }],
+      });
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      const existing = json.existing as Record<string, unknown>;
+      expect(existing.status).toBe('pending');
+      // RLS hides pending rows from non-creators (migration 137): the body
+      // must not smuggle the row's id or stored name out to them.
+      expect(existing.provider_id).toBeUndefined();
+      expect(existing.name).toBeUndefined();
+      expect(existing.href).toBeUndefined();
+    });
+
+    it('a matching provider beyond the first 1000 rows is still caught', async () => {
+      // PostgREST caps each response (max_rows, supabase/config.toml). The
+      // scan is keyset-paged (.gt(provider_id) + .limit), so it covers the
+      // whole table at any cap — prod has more than 1045 pending rows alone.
+      // The match's provider_id sorts after all 1500 fillers, landing it on
+      // page 2; an offset or single-shot scan would miss or truncate.
+      const filler: ProviderRow[] = Array.from({ length: 1500 }, (_, i) => ({
+        provider_id: `a0000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+        provider_name: `Unrelated Provider ${i}`,
+        address_city: 'Hamburg',
+        review_status: 'pending',
+      }));
+      const lateMatch: ProviderRow = {
+        ...existingApproved,
+        provider_id: 'ffff1111-0000-4000-8000-000000000001',
+      };
+      const { response, json, providerInsert } = await post(validBody(), {
+        providers: [...filler, lateMatch],
+      });
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      expect(providerInsert).not.toHaveBeenCalled();
+    });
+
+    it('the keyset scan survives a response cap below the page size', async () => {
+      // If PostgREST's max_rows is ever lowered below the requested window,
+      // an offset scan would silently skip rows mid-table. Keyset paging
+      // (.gt(lastSeenId)) stays contiguous at any cap ≥ 1 — simulate a
+      // server returning at most 100 rows per response.
+      const cappedProviders: ProviderRow[] = Array.from({ length: 250 }, (_, i) => ({
+        provider_id: `a0000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+        provider_name: `Unrelated Provider ${i}`,
+        address_city: 'Hamburg',
+        review_status: 'pending',
+      }));
+      cappedProviders.push({
+        provider_id: 'ffff1111-0000-4000-8000-000000000001',
+        provider_name: 'Test Restaurant',
+        address_city: 'Berlin',
+        review_status: 'approved',
+      });
+      const { response, json, providerInsert } = await post(validBody(), {
+        providers: cappedProviders,
+        pageCap: 100,
+      });
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      expect(providerInsert).not.toHaveBeenCalled();
+    });
+
+    it('city aliases collide: stored "Munich" vs submitted "München"', async () => {
+      // The catalog seeds both spellings; R1 must canonicalise both sides
+      // through CITY_ALIASES or the same provider inserts twice.
+      const { response, json, providerInsert } = await post(validBody({ city: 'München' }), {
+        providers: [{ ...existingApproved, address_city: 'Munich' }],
+      });
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      expect(providerInsert).not.toHaveBeenCalled();
+    });
+
+    it('a rejected provider is never revealed — submit proceeds', async () => {
+      const { response, providerInsert } = await post(validBody(), {
+        providers: [{ ...existingApproved, review_status: 'rejected' }],
+      });
+      expect(response.status).toBe(200);
+      expect(providerInsert).toHaveBeenCalled();
+    });
+
+    it('same name in a different city is not a duplicate', async () => {
+      const { response, providerInsert } = await post(validBody(), {
+        providers: [{ ...existingApproved, address_city: 'Hamburg' }],
+      });
+      expect(response.status).toBe(200);
+      expect(providerInsert).toHaveBeenCalled();
+    });
+  });
+
+  // #606: the closed-city check is bound to the /api/providers/recommend
+  // route, not to a client-sent submissionSource flag — a client cannot opt
+  // out by omitting it, and a flag on the generic route is ignored.
+  describe('closed city list + geocoder fallback on the recommend path', () => {
+    it('enforces even when the client sends no submissionSource flag', async () => {
+      // The whole point of route-bound enforcement: the flag is not the
+      // switch. Catalog miss + a lookup that ran and found nothing → the
+      // only rejection path.
+      const { response, json, providerInsert } = await postRecommend(
+        validBody({ city: 'Atlantis' }),
+        { cities: ['Berlin', 'München'] },
+      );
+      expect(response.status).toBe(400);
+      expect(json.code).toBe('CITY_NOT_SUPPORTED');
+      expect(providerInsert).not.toHaveBeenCalled();
+    });
+
+    it('a case variant canonicalises to the cities row before insert', async () => {
+      const { response, providerInsert } = await postRecommend(
+        validBody({ city: 'BERLIN' }),
+        { cities: ['Berlin'] },
+      );
+      expect(response.status).toBe(200);
+      expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Berlin');
+    });
+
+    it('catalog miss → geocoder resolves: the canonical name is stored, not the typed one', async () => {
+      const { lookupCanonicalCity } = await import(
+        '@/features/providers/services/city-geocode.server'
+      );
+      vi.mocked(lookupCanonicalCity).mockResolvedValue({
+        kind: 'resolved',
+        canonicalName: 'Neu-Ulm',
+      });
+      const { response, providerInsert } = await postRecommend(
+        validBody({ city: 'neu ulm' }),
+        { cities: ['Berlin', 'München'] },
+      );
+      expect(response.status).toBe(200);
+      expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Neu-Ulm');
+      expect(lookupCanonicalCity).toHaveBeenCalledWith('neu ulm');
+    });
+
+    it('geocoder unavailable → fail open: submit succeeds, typed value alias-canonicalised', async () => {
+      // Settled at the #606 gate: a geocoder outage must never block a
+      // recommendation — pending human review is the backstop. 'frankfurt'
+      // resolves through CITY_ALIASES to 'Frankfurt am Main'.
+      const { lookupCanonicalCity } = await import(
+        '@/features/providers/services/city-geocode.server'
+      );
+      vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'unavailable' });
+      const { response, providerInsert } = await postRecommend(
+        validBody({ city: 'frankfurt' }),
+        { cities: ['Berlin', 'München'] },
+      );
+      expect(response.status).toBe(200);
+      expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Frankfurt am Main');
+    });
+
+    it('a geocoder-resolved city and the same catalog town still collide under R1 → 409', async () => {
+      // The fallback city is stored canonicalised and goes through the same
+      // normalised duplicate scan as any catalog city.
+      const { lookupCanonicalCity } = await import(
+        '@/features/providers/services/city-geocode.server'
+      );
+      vi.mocked(lookupCanonicalCity).mockResolvedValue({
+        kind: 'resolved',
+        canonicalName: 'Berlin',
+      });
+      const { response, json, providerInsert } = await postRecommend(
+        validBody({ city: 'berlino' }),
+        {
+          cities: ['München'], // catalog miss → geocoder resolves to 'Berlin'
+          providers: [
+            {
+              provider_id: 'aaaa1111-0000-4000-8000-000000000002',
+              provider_name: 'Test Restaurant',
+              address_city: 'Berlin',
+              review_status: 'approved',
+            },
+          ],
+        },
+      );
+      expect(response.status).toBe(409);
+      expect(json.code).toBe('PROVIDER_DUPLICATE');
+      expect(providerInsert).not.toHaveBeenCalled();
+    });
+
+    it('the generic /api/providers route ignores a client-sent recommend flag', async () => {
+      // The import UI posts creationMode 'recommendation' here too and must
+      // not be held to the recommend list (its cities come from OSM). The
+      // body flag decides nothing: a stale client claiming 'recommend' on
+      // the generic route is treated like any other generic submission.
+      const { response, providerInsert } = await post(
+        validBody({ submissionSource: 'recommend', city: 'Atlantis' }),
+        { cities: ['Berlin'] },
+      );
+      expect(response.status).toBe(200);
+      expect(providerInsert).toHaveBeenCalled();
+    });
+  });
+});

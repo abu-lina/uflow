@@ -20,7 +20,10 @@ import {
 import { useFormData } from '@/providers/form-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { useAuth } from '@/providers/auth-provider';
-import { createProviderOrService } from '@/features/providers/services/mutations';
+import {
+  createProviderOrService,
+  ProviderSubmissionError,
+} from '@/features/providers/services/mutations';
 import { trackEvent } from '@/lib/analytics/plausible';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
@@ -41,9 +44,10 @@ import {
 import { cn } from '@/lib/utils';
 import type { Category } from '@/types/supabase';
 import { getCategories } from '@/services/categories';
-import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 import type { OSMPlace } from '@/types/osm';
 import { searchPlacesInCity } from '@/services/placeAutocompleteService';
+import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
+import { supabase } from '@/lib/supabase/client';
 
 interface StreamlinedRecommendFormProps {
   onSuccess?: () => void;
@@ -272,20 +276,25 @@ function inferCategoryFromName(name: string): string {
   return '';
 }
 
+/** A selectable city suggestion (#606). `catalog` rows come from the
+ * `cities` table — the primary list, always shown first. `geocoder` rows
+ * come from the Nominatim fallback and appear only when the catalog has no
+ * match, so towns outside the catalog can still be recommended. */
+interface CitySuggestion {
+  city_name: string;
+  country: string;
+  source: 'catalog' | 'geocoder';
+}
+
+/** Shape of one Nominatim search result (the fields the fallback reads). */
 interface NominatimCityResult {
-  place_id: number;
-  display_name: string;
   name: string;
   address?: {
     city?: string;
     town?: string;
     village?: string;
-    state?: string;
     country?: string;
-    country_code?: string;
   };
-  lat: string;
-  lon: string;
 }
 
 export function StreamlinedRecommendForm({
@@ -310,10 +319,11 @@ export function StreamlinedRecommendForm({
 
   // City search state
   const [citySearchQuery, setCitySearchQuery] = useState('');
-  const [citySearchResults, setCitySearchResults] = useState<NominatimCityResult[]>([]);
+  const [citySearchResults, setCitySearchResults] = useState<CitySuggestion[]>([]);
   const [isCitySearching, setIsCitySearching] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [selectedCityIndex, setSelectedCityIndex] = useState(-1);
+  const cityListRef = useRef<CitySuggestion[] | null>(null);
   const citySearchAbortControllerRef = useRef<AbortController | null>(null);
   const [isCitySelected, setIsCitySelected] = useState(!!initialCity);
 
@@ -557,13 +567,13 @@ export function StreamlinedRecommendForm({
   ]);
 
   // City search function
+  // #606: suggestions come from the `cities` catalog first — fetched once
+  // and filtered locally. When the catalog matches nothing, fall back to
+  // Nominatim so towns outside the catalog can still be recommended; the
+  // server re-validates the pick on submit either way.
   const searchCities = useCallback(async (query: string) => {
-    // Cancel previous request
-    if (citySearchAbortControllerRef.current) {
-      citySearchAbortControllerRef.current.abort();
-    }
-
-    // Create new abort controller
+    // Cancel previous geocoder request
+    citySearchAbortControllerRef.current?.abort();
     citySearchAbortControllerRef.current = new AbortController();
 
     if (query.trim().length < 2) {
@@ -577,7 +587,24 @@ export function StreamlinedRecommendForm({
     setShowCityDropdown(true);
 
     try {
-      // Use Nominatim search API for cities
+      if (!cityListRef.current) {
+        const { data, error } = await supabase.from('cities').select('city_name, country');
+        if (error) throw error;
+        cityListRef.current = ((data ?? []) as { city_name: string; country: string }[]).map(
+          (row) => ({ ...row, source: 'catalog' as const }),
+        );
+      }
+      const needle = query.trim().toLowerCase();
+      const catalogMatches = cityListRef.current
+        .filter((city) => city.city_name.toLowerCase().includes(needle))
+        .slice(0, 10);
+      if (catalogMatches.length > 0) {
+        setCitySearchResults(catalogMatches);
+        setSelectedCityIndex(-1);
+        return;
+      }
+
+      // Catalog miss: Nominatim fallback.
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
           `format=json&` +
@@ -594,37 +621,28 @@ export function StreamlinedRecommendForm({
           },
         },
       );
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch city suggestions');
-      }
+      if (!response.ok) throw new Error('Failed to fetch city suggestions');
 
       const data: NominatimCityResult[] = await response.json();
-
-      // Filter and format results
-      const formattedCities = data
-        .filter((result) => {
-          // Only include results that have a city/town/village name
-          return result.address?.city || result.address?.town || result.address?.village;
-        })
-        .map((result) => {
-          // Replace Israel with Palestine in country field
-          const country = normalizeCountryNameForDisplay(result.address?.country || '');
-          return {
-            ...result,
-            address: {
-              ...result.address,
-              country: country,
-            },
-          };
+      const seen = new Set<string>();
+      const geocoderMatches: CitySuggestion[] = [];
+      for (const result of data) {
+        const cityName =
+          result.address?.city || result.address?.town || result.address?.village || result.name;
+        if (!cityName || seen.has(cityName)) continue;
+        seen.add(cityName);
+        geocoderMatches.push({
+          city_name: cityName,
+          country: normalizeCountryNameForDisplay(result.address?.country ?? ''),
+          source: 'geocoder',
         });
-
-      setCitySearchResults(formattedCities);
+        if (geocoderMatches.length >= 10) break;
+      }
+      setCitySearchResults(geocoderMatches);
       setSelectedCityIndex(-1);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        // Request was cancelled, ignore
-        return;
+        return; // Request was cancelled, ignore
       }
       console.error('[City Search] Error fetching cities:', error);
       setCitySearchResults([]);
@@ -649,9 +667,8 @@ export function StreamlinedRecommendForm({
   }, [citySearchQuery, searchCities]);
 
   // Handle city selection from dropdown
-  const handleCitySelect = useCallback((city: NominatimCityResult) => {
-    const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
-    setFormData((prev) => ({ ...prev, city: cityName }));
+  const handleCitySelect = useCallback((city: CitySuggestion) => {
+    setFormData((prev) => ({ ...prev, city: city.city_name }));
     setIsCitySelected(true);
     setCitySearchQuery('');
     setCitySearchResults([]);
@@ -1145,6 +1162,10 @@ export function StreamlinedRecommendForm({
         description: formData.message,
         creationMode: 'recommendation' as const,
         entityType: 'provider' as const,
+        // #606: routes this submission to /api/providers/recommend — the
+        // only endpoint where the server enforces the closed city list.
+        // The flag picks the door; the door does the enforcing.
+        submissionSource: 'recommend' as const,
         isOnlineBusiness: false,
         street: '',
         zip: '',
@@ -1215,7 +1236,66 @@ export function StreamlinedRecommendForm({
       router.replace('/create/recommend?success=true', { scroll: false });
     } catch (error) {
       console.error('Error creating recommendation:', error);
-      toast.error(t('create.recommend.error'));
+      // #606: the API returns opaque codes; copy is localised client-side.
+      // Nothing below clears the draft — entered data always survives a
+      // failed submit, including the login round-trip on an expired session.
+      const submitError = error as ProviderSubmissionError | null;
+      switch (submitError?.code) {
+        case 'AUTH_REQUIRED':
+          // Session expired while the form was open: the draft is in
+          // localStorage, so the login round-trip loses nothing.
+          toast.error(t('create.recommend.sessionExpired'), {
+            duration: 8000,
+            action: {
+              label: t('create.basics.goToLogin'),
+              onClick: () =>
+                router.push(`/login?returnUrl=${encodeURIComponent('/create/recommend')}`),
+            },
+          });
+          break;
+        case 'PROVIDER_DUPLICATE': {
+          const existingHref = submitError.existing?.href;
+          if (existingHref) {
+            toast.error(t('create.recommend.duplicateApproved'), {
+              duration: 8000,
+              action: {
+                label: t('create.recommend.viewExisting'),
+                onClick: () => router.push(existingHref),
+              },
+            });
+          } else {
+            toast.error(t('create.recommend.duplicatePending'));
+          }
+          break;
+        }
+        case 'CITY_NOT_SUPPORTED':
+          // Surface the inline city hint as well so the field is pointed out.
+          setIsCitySelected(false);
+          toast.error(t('create.recommend.cityNotListed'));
+          break;
+        case 'CATEGORY_UNKNOWN':
+          toast.error(t('create.recommend.categoryInvalid'));
+          break;
+        case 'HALAL_ATTESTATION_REQUIRED':
+          toast.error(t('create.recommend.halalRequired'));
+          break;
+        case 'RATE_LIMITED':
+          toast.error(t('create.recommend.rateLimited'));
+          break;
+        case 'INVALID_BODY':
+        case 'INVALID_MEDIA_URL':
+          toast.error(t('create.recommend.validationFailed'));
+          break;
+        default:
+          // Genuine server failure: offer a retry; the draft is untouched.
+          toast.error(t('create.recommend.error'), {
+            duration: 8000,
+            action: {
+              label: t('create.recommend.retry'),
+              onClick: () => void handleSubmit(),
+            },
+          });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1402,17 +1482,11 @@ export function StreamlinedRecommendForm({
                   </div>
                 ) : (
                   citySearchResults.map((city, index) => {
-                    const cityName =
-                      city.address?.city ||
-                      city.address?.town ||
-                      city.address?.village ||
-                      city.name;
-                    const country = normalizeCountryNameForDisplay(city.address?.country || '');
                     const isSelected = index === selectedCityIndex;
 
                     return (
                       <button
-                        key={city.place_id}
+                        key={city.city_name}
                         aria-selected={isSelected}
                         className={cn(
                           'w-full px-4 py-3 text-left transition-colors',
@@ -1426,9 +1500,11 @@ export function StreamlinedRecommendForm({
                       >
                         <div className="flex flex-col gap-1">
                           <span className="text-[15px] font-medium text-content-heading">
-                            {cityName}
+                            {city.city_name}
                           </span>
-                          {country && <span className="text-xs text-content-muted">{country}</span>}
+                          {city.country && (
+                            <span className="text-xs text-content-muted">{city.country}</span>
+                          )}
                         </div>
                       </button>
                     );

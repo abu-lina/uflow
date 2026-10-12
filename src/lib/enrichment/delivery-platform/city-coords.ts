@@ -124,9 +124,16 @@ export const CITY_ALIASES: Record<string, string> = {
   'Frankfurt': 'Frankfurt am Main',
   'Frankfurt am Main069 21001381': 'Frankfurt am Main',  // phone number appended
   'LANGEN': 'Langen',
-  'Neu': 'München',  // likely incomplete entry, fallback to Munich area
   'Böblingen': 'Böblingen',
   'Frankfurt Am Main': 'Frankfurt am Main',
-  'Neu-Ulm': 'Ulm',
+  // #606: English exonyms for the big four. The cities catalog seeds both
+  // spellings, and R1 duplicate matching canonicalises both sides through
+  // this map so 'X, Munich' and 'X, München' collide.
+  'Munich': 'München',
+  'Cologne': 'Köln',
+  'Hanover': 'Hannover',
+  'Nuremberg': 'Nürnberg',
+  // #606: two wrong entries removed — 'Neu' is an incomplete value, not
+  // München, and 'Neu-Ulm' is its own city across the river from Ulm.
 };
 

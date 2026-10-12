@@ -455,6 +455,18 @@ export const de = {
       submitting: 'Wird gesendet...',
       success: 'Anbieter erfolgreich vorgeschlagen!',
       error: 'Fehler beim Erstellen. Bitte versuche es erneut.',
+      retry: 'Erneut versuchen',
+      sessionExpired:
+        'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an – deine Eingaben sind gespeichert.',
+      duplicateApproved: 'Dieser Anbieter ist bereits eingetragen.',
+      duplicatePending: 'Dieser Anbieter wurde bereits empfohlen und wird geprüft.',
+      viewExisting: 'Eintrag ansehen',
+      cityNotListed:
+        'Diese Stadt wurde nicht gefunden. Wähle einen Vorschlag oder prüfe die Schreibweise und versuche es erneut.',
+      categoryInvalid: 'Bitte wähle eine gültige Kategorie.',
+      halalRequired: 'Bitte beantworte alle drei Halal-Fragen.',
+      rateLimited: 'Zu viele Versuche. Bitte versuche es später erneut.',
+      validationFailed: 'Bitte überprüfe deine Eingaben und versuche es erneut.',
       titleRequired: 'Bitte gib einen Anbieternamen ein',
       categoryRequired: 'Bitte wähle eine Kategorie aus',
       offersRequired: 'Bitte wähle mindestens ein Angebot aus',
