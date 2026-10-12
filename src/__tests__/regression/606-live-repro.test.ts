@@ -30,8 +30,9 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.UFLOW_LIVE_DB_URL;
 const SERVICE_KEY = process.env.UFLOW_LIVE_SERVICE_KEY;
 
-/** Narrows the env pair inside the live-only paths; the skip gate above must
- * still see them as possibly-absent, so it never calls this. */
+/** Narrows the env pair for the live-only paths. The REST probe below does
+ * call this, which is safe because HOST_ALLOWED already requires both vars;
+ * the skip gate itself reads the raw consts, which stay possibly-absent. */
 function liveEnv(): { url: string; key: string } {
   if (!SUPABASE_URL || !SERVICE_KEY) throw new Error('live harness env missing');
   return { url: SUPABASE_URL, key: SERVICE_KEY };
