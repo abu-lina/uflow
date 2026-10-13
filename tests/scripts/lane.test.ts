@@ -23,6 +23,8 @@ describe('lane shell helpers', () => {
   it('starts a default Devin foreman in the main checkout tmux window', () => {
     expect(laneScript).toContain('_foreman_prompt()');
     expect(laneScript).toMatch(/foreman\(\)[\s\S]*?agent="\$\{1:-devin\}"/);
+    expect(laneScript).toContain('claude-opus-5-5-high');
+    expect(laneScript).toMatch(/lane\(\)\s*\{\s*local issue="\$1" slug="\$2" agent="\$\{3:-copilot\}"/);
     expect(laneScript).toContain('run foreman from the main checkout, not a worktree');
     expect(laneScript).toMatch(/tmux new-window -t "\$session" -n foreman -c "\$root"/);
     expect(laneScript).toContain('tmux select-window -t "$session:foreman"');
@@ -68,7 +70,7 @@ describe('lane shell helpers', () => {
 
   it('documents model defaults, permission policy, and folder trust findings', () => {
     expect(foremanGuide).toContain('devin');
-    expect(foremanGuide).toContain('model');
+    expect(foremanGuide).toContain('claude-opus-5-5-high');
     expect(setupDecisions).toContain('Ghostty');
     expect(setupDecisions).toContain('trustedFolders');
     expect(setupDecisions).toContain('allow-all-paths');
