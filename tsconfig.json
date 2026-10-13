@@ -46,6 +46,7 @@
   ],
   "exclude": [
     "node_modules",
+    ".worktrees/**/*",
     "agent-output/**/*",
     "supabase/functions/**/*",
     "docs/archive/nextjs-supabase-starter",

@@ -3,7 +3,6 @@ description: "Something isn't working correctly. For urgent production outages u
 title: '[Bug] '
 labels:
   - 'type:bugfix'
-  - 'plan'
 body:
   - type: markdown
     attributes:
@@ -51,13 +50,6 @@ body:
       required: true
 
   - type: input
-    id: plan_id
-    attributes:
-      label: 'Plan ID'
-      description: 'If linked to an agent-output plan, enter the ID (e.g. 085). Leave blank if not yet planned.'
-      placeholder: '085'
-
-  - type: input
     id: target_release
     attributes:
       label: 'Target Release'
@@ -65,13 +57,38 @@ body:
       placeholder: 'v0.10.9'
 
   - type: dropdown
+    id: area
+    attributes:
+      label: 'Area'
+      description: 'Becomes the area:* label. Parallel lanes never share an area, so pick the one the fix lives in.'
+      options:
+        - 'auth'
+        - 'search'
+        - 'providers'
+        - 'map'
+        - 'dashboard'
+        - 'admin'
+        - 'i18n'
+        - 'pwa'
+        - 'db'
+        - 'ci'
+        - 'infra'
+        - 'ui'
+        - 'imports'
+        - 'docs'
+        - 'deps'
+    validations:
+      required: true
+
+  - type: dropdown
     id: priority
     attributes:
       label: 'Priority'
+      description: 'P0 blocks users or leaks data. P1 this week. P2 next. P3 someday.'
       options:
-        - 'Low'
-        - 'Medium'
-        - 'High'
-        - 'Critical'
+        - 'P0'
+        - 'P1'
+        - 'P2'
+        - 'P3'
     validations:
       required: true

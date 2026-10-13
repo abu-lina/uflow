@@ -17,6 +17,7 @@ Use native Postgres features before adding external services:
 ### 2. Keep It Simple
 
 **Current Stack:**
+
 - Next.js 15 + Supabase + Hetzner
 - Postgres full-text search (tsvector)
 - React Query for client-side caching
@@ -24,6 +25,7 @@ Use native Postgres features before adding external services:
 - Cloudflare CDN for static assets
 
 **When to Add Services:**
+
 - **Redis**: Only when scaling to multiple servers (>5,000 DAU, need shared state)
 - **Elasticsearch**: Only if Postgres full-text search isn't sufficient (rare)
 - **Queue Service**: Only for high-volume, mission-critical background jobs
@@ -52,6 +54,7 @@ const { data, error } = await supabase.rpc('search_offers', {
 ```
 
 **Benefits:**
+
 - 10-100x faster than ILIKE
 - Language-aware stemming (German/English)
 - Relevance ranking with `ts_rank`
@@ -61,13 +64,11 @@ const { data, error } = await supabase.rpc('search_offers', {
 
 ```typescript
 // ❌ Bad: Slow, no index usage
-const { data } = await supabase
-  .from('offers')
-  .select('*')
-  .ilike('name_de', `%${query}%`);
+const { data } = await supabase.from('offers').select('*').ilike('name_de', `%${query}%`);
 ```
 
 **Problems:**
+
 - Sequential scan (very slow on large tables)
 - No relevance ranking
 - No language-aware stemming
@@ -84,14 +85,16 @@ const { data } = await supabase
 ### ❌ DON'T: Add Redis Prematurely
 
 **When NOT to add Redis:**
+
 - Single server setup
 - <5,000 DAU
 - Can use Postgres materialized views instead
 - In-memory caching is sufficient
 
 **When to add Redis:**
+
 - Multiple servers (need shared state)
-- >5,000 DAU
+- > 5,000 DAU
 - Need distributed session storage
 - High read traffic requiring faster response times
 
@@ -113,11 +116,12 @@ CREATE TABLE jobs (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_jobs_status_scheduled ON jobs(status, scheduled_at) 
+CREATE INDEX idx_jobs_status_scheduled ON jobs(status, scheduled_at)
 WHERE status = 'pending';
 ```
 
 **Benefits:**
+
 - Simple, no external service needed
 - Handles thousands of jobs without issues
 - Easy to debug and monitor
@@ -126,11 +130,13 @@ WHERE status = 'pending';
 ### ❌ DON'T: Add Queue Service Prematurely
 
 **When NOT to add:**
+
 - Low to medium job volume
 - Jobs table pattern handles the load
 - No mission-critical, high-volume requirements
 
 **When to add:**
+
 - High-volume, mission-critical job processing
 - Need advanced features (priority queues, delayed jobs, etc.)
 
@@ -140,7 +146,7 @@ WHERE status = 'pending';
 
 ```sql
 CREATE MATERIALIZED VIEW provider_stats AS
-SELECT 
+SELECT
   category_id,
   COUNT(*) as provider_count,
   COUNT(DISTINCT address_city) as city_count
@@ -152,12 +158,14 @@ REFRESH MATERIALIZED VIEW provider_stats;
 ```
 
 **Use cases:**
+
 - Dashboard statistics
 - Popular searches or categories
 - User activity summaries
 - Any expensive GROUP BY queries
 
 **Benefits:**
+
 - Pre-computed results (sub-millisecond response)
 - No Redis needed
 - Supabase supports natively
@@ -172,13 +180,14 @@ CREATE INDEX idx_providers_city ON providers(city);
 CREATE INDEX idx_providers_created_at ON providers(created_at DESC);
 
 -- Full-text search indexes (GIN indexes)
-CREATE INDEX idx_providers_name_search 
+CREATE INDEX idx_providers_name_search
   ON providers USING gin(to_tsvector('german', provider_name));
-CREATE INDEX idx_providers_description_search 
+CREATE INDEX idx_providers_description_search
   ON providers USING gin(to_tsvector('german', provider_description));
 ```
 
 **Index types:**
+
 - **B-tree**: Standard indexes for equality, range queries
 - **GIN**: Full-text search indexes (tsvector)
 - **Partial**: Indexes with WHERE clause (exclude NULLs)
@@ -189,11 +198,12 @@ CREATE INDEX idx_providers_description_search
 
 ```sql
 EXPLAIN ANALYZE
-SELECT * FROM providers 
+SELECT * FROM providers
 WHERE provider_name ILIKE '%search%';
 ```
 
 **Check for:**
+
 - Sequential scans (bad - add index)
 - Index scans (good)
 - Query execution time
@@ -221,24 +231,16 @@ When adding new features:
 
 ## Cost Comparison
 
-| Setup | Monthly Cost | When to Use |
-|-------|-------------|-------------|
-| **Current (Simple)** | €4-33 | <5,000 DAU, single server |
-| **With Redis** | €8-48 | Multiple servers, >5,000 DAU |
-| **With Elasticsearch** | €54-103 | Postgres search insufficient (rare) |
-| **Full Stack** | €100+ | Large scale, multiple services |
+| Setup                  | Monthly Cost | When to Use                         |
+| ---------------------- | ------------ | ----------------------------------- |
+| **Current (Simple)**   | €4-33        | <5,000 DAU, single server           |
+| **With Redis**         | €8-48        | Multiple servers, >5,000 DAU        |
+| **With Elasticsearch** | €54-103      | Postgres search insufficient (rare) |
+| **Full Stack**         | €100+        | Large scale, multiple services      |
 
 **Recommendation:** Start simple, add services only when hitting actual bottlenecks.
 
 ## References
 
 - [Architecture Overview](ARCHITECTURE_OVERVIEW.md)
-- [Backend Expert Rules](../../.cursor/rules/backend-expert.mdc)
-- [Architecture Expert Rules](../../.cursor/rules/architecture-expert.mdc)
-
-
-
-
-
-
-
+- [Agent rules](../../AGENTS.md)

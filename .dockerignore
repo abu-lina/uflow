@@ -83,3 +83,6 @@ storybook-static
 .branches
 .temp
 .supabase
+
+# Parallel lane worktrees
+.worktrees
