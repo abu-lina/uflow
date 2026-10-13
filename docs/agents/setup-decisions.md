@@ -26,6 +26,9 @@ Context for future sessions. Written 2026-10-13 when the plan-ID pipeline was re
 13. **Resume** a lane from inside its worktree (`lane <issue>` reopens it), never from `main`.
 14. **Learnings** go into the PR body and the lane's final issue comment. The foreman copies them into `docs/ai/LEARNINGS.md` on `main` after merge. Lanes never edit that file (it conflicted by construction, issue #612).
 15. **Auto-dispatch is off.** `scripts/agent-dispatch.sh` and `agent-monitor.sh` were removed; the foreman proposes and the owner approves.
+16. **Ghostty + tmux is the only agent surface.** VS Code remains an editor for hand-edits, not an agent surface. The foreman runs inside the tmux session it supervises. The default foreman is Devin on `claude-opus-5-5-high`; lanes default to Copilot on Auto. Both accept a per-invocation model, and Copilot also accepts a reasoning-effort value.
+17. **Permissions are scoped.** Copilot lanes auto-approve only the required write, npm/npx, git, and selected GitHub issue/PR tools, with explicit denies for merge, rebase, force-push, and PR merge. Devin lanes use `accept-edits` with `--sandbox`; Devin foremen use `auto`. Never use `--allow-all-paths`, `--allow-all`, or `--yolo`: they remove path checks or grant permissions beyond the lane's needs.
+18. **Folder trust was checked against current CLI help.** Copilot has no per-launch trust flag; `trustedFolders` can grant a specific path persistently in settings, while `COPILOT_ALLOW_ALL=true` also suppresses the prompt but auto-approves every tool and is not used. Devin exposes `--respect-workspace-trust false`, which skips the trust check for that invocation; it is not used. No trust setting is changed automatically for a new worktree.
 
 ## Repo facts the decisions rest on (verified 2026-10-13)
 

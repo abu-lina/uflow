@@ -26,15 +26,16 @@ describe('lane shell helpers', () => {
     expect(laneScript).toContain('claude-opus-5-5-high');
     expect(laneScript).toMatch(/lane\(\)\s*\{\s*local issue="\$1" slug="\$2" agent="\$\{3:-copilot\}"/);
     expect(laneScript).toContain('run foreman from the main checkout, not a worktree');
-    expect(laneScript).toMatch(/tmux new-window -t "\$session" -n foreman -c "\$root"/);
-    expect(laneScript).toContain('tmux select-window -t "$session:foreman"');
+    expect(laneScript).toContain('win=foreman');
+    expect(laneScript).toMatch(/tmux new-window -t "\$session" -n "\$win" -c "\$root"/);
+    expect(laneScript).toContain('tmux select-window -t "$session:$win"');
     expect(foremanGuide).toContain('foreman [copilot|devin]');
     expect(foremanGuide).toContain('inside the tmux session it supervises');
   });
 
   it('gives the foreman a read-only role and approval-first prompt', () => {
     expect(laneScript).toMatch(/_foreman_prompt\(\)[\s\S]*?docs\/agents\/foreman\.md/);
-    expect(laneScript).toMatch(/_foreman_prompt\(\)[\s\S]*?never write code/);
+    expect(laneScript).toMatch(/_foreman_prompt\(\)[\s\S]*?never write code/i);
     expect(laneScript).toMatch(/_foreman_prompt\(\)[\s\S]*?wait for approval/);
   });
 

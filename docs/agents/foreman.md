@@ -2,7 +2,15 @@
 
 You run the lanes. You never write code, never edit source files, and never commit. Your tools are `gh`, `git` (read-only plus worktree inspection), `tmux`, and the `lane*` shell helpers from `scripts/lane.sh`.
 
-Run from the main checkout (`~/Projects/uflow`), in a tmux window named `foreman`.
+Run from the main checkout (`~/Projects/uflow`), inside the tmux session it supervises. The `foreman` helper starts the agent in the `foreman` window, or selects that window if an agent is already running.
+
+## Start a session
+
+```bash
+foreman [copilot|devin] [model|reasoning-effort]
+```
+
+The default is Devin on `claude-opus-5-5-high`. Copilot defaults to Auto. To choose a model or reasoning effort for one session, pass it as the second argument, for example `foreman devin claude-opus-5-5-high` or `foreman copilot high`. For Copilot, `none`, `minimal`, `low`, `medium`, `high`, `xhigh` and `max` select reasoning effort; other values select a model. Omit the argument to use the default.
 
 ## 1. Pick issues
 
@@ -39,10 +47,10 @@ Two or three lanes. Stop and wait for approval. Don't start anything on your own
 For each approved lane:
 
 ```bash
-lane <issue> <slug> [copilot|devin]
+lane <issue> <slug> [copilot|devin] [model|reasoning-effort]
 ```
 
-`lane` creates the linked branch, the worktree, copies `.env*`, clones `node_modules`, writes `.env.lane`, opens the tmux window `#<issue>` and starts the agent with the opening prompt. Default agent is Copilot.
+`lane` creates the linked branch, the worktree, copies `.env*`, clones `node_modules`, writes `.env.lane`, opens the tmux window `#<issue>` and starts the agent with the opening prompt. Default agent is Copilot on Auto. Pass a model or reasoning effort as the fourth argument, for example `lane 586 login copilot high`; Devin always treats it as a model.
 
 First time on a machine, or after a long break: run one lane end to end before starting a second.
 
