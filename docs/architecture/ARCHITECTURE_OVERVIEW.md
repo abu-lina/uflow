@@ -882,7 +882,7 @@ Currently not automated. Manual process:
 - **Recommended Tools**:
   - **UptimeRobot** or **BetterStack**: Uptime monitoring
   - **Grafana + Prometheus**: Metrics collection and visualization
-  - **New Relic** or **Datadog**: APM (Application Performance Monitoring)
+  - **New Relic**: APM (Application Performance Monitoring)
 - **Current State**: Basic server metrics available via Hetzner dashboard
 
 ### Alerting

@@ -382,7 +382,6 @@ Add to GitHub Actions workflow:
 Export metrics to monitoring systems:
 - Prometheus
 - Grafana
-- Datadog
 - New Relic
 
 ## Additional Resources
@@ -398,7 +397,6 @@ For issues or questions:
 2. Review test logs in `tests/performance/reports/`
 3. Check UAT server logs
 4. Contact the development team
-
 
 
 
