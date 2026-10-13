@@ -1,7 +1,6 @@
 'use client';
 
 import { CityEarlyAccessEmptyState } from '@/components/shared/CityEarlyAccessEmptyState';
-import { CityEarlyAccessNavbar } from '@/components/shared/CityEarlyAccessNavbar';
 
 /**
  * Client wrapper for Stage 1 city content (Plan 035 — M2).
@@ -45,15 +44,10 @@ export function CityStage1Content({
   };
 
   return (
-    <>
-      <CityEarlyAccessEmptyState
-        cityName={cityName}
-        country={country ?? undefined}
-        onReceiveUpdates={handleReceiveUpdates}
-      />
-      <div className="block md:hidden">
-        <CityEarlyAccessNavbar />
-      </div>
-    </>
+    <CityEarlyAccessEmptyState
+      cityName={cityName}
+      country={country ?? undefined}
+      onReceiveUpdates={handleReceiveUpdates}
+    />
   );
 }

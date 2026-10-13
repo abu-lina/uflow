@@ -10,8 +10,8 @@
  * [post-fix PASSES] — Profile link is rendered with correct auth-gated href
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 // --- Mocks ---
@@ -63,6 +63,12 @@ describe('Plan 062 — CityEarlyAccessNavbar Profile entry', () => {
     mockPathname = '/';
     mockUseAppStage.mockReturnValue({ stage: 'stage1', isLoading: false });
     mockUseAuth.mockReturnValue({ user: null, session: null, loading: false });
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 844 });
+  });
+
+  afterEach(() => {
+    mockPathname = '/';
   });
 
   // ---------- [post-fix PASSES] — Profile icon rendered ----------
@@ -88,6 +94,29 @@ describe('Plan 062 — CityEarlyAccessNavbar Profile entry', () => {
     const profileLink = screen.getByRole('link', { name: /profile|account/i });
     expect(profileLink).toBeInTheDocument();
     expect(profileLink).toHaveAttribute('href', '/login');
+  });
+
+  it('[post-fix PASSES] keeps the Stage 1 authenticated city route on /profile at mobile width', () => {
+    mockPathname = '/city/Berlin';
+    mockUseAppStage.mockReturnValue({ stage: 'stage1', isLoading: false });
+    mockUseAuth.mockReturnValue({
+      user: { id: 'u1', email: 'test@example.com' },
+      session: { access_token: 'tok' },
+      loading: false,
+    });
+
+    render(<CityEarlyAccessNavbar />);
+
+    const homeLink = screen.getByRole('link', { name: /home/i });
+    const createLink = screen.getByRole('link', { name: /create/i });
+    const profileLink = screen.getByRole('link', { name: /profile|account/i });
+
+    expect(homeLink).toHaveAttribute('href', '/');
+    expect(createLink).toHaveAttribute('href', '/create');
+    expect(profileLink).toHaveAttribute('href', '/profile');
+
+    fireEvent.click(profileLink);
+    expect(profileLink).toHaveAttribute('href', '/profile');
   });
 
   it('[post-fix PASSES] renders Profile link pointing to /profile for authenticated user', () => {
