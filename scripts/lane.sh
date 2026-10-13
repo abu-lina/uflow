@@ -2,7 +2,8 @@
 # Lane helpers for the foreman + crew workflow (docs/agents/foreman.md).
 # Source from ~/.zshrc:  source ~/Projects/uflow/scripts/lane.sh
 #
-#   lane <issue> [slug] [copilot|devin]   create or reopen a lane
+#   lane <issue> [slug] [copilot|devin] [model|effort]
+#   foreman [copilot|devin] [model|effort] start or focus the foreman
 #   lane_done <issue> [--force]           remove a merged lane
 #   lane_status                           one pane tail per lane + leftover worktrees
 #
@@ -42,15 +43,76 @@ _lane_prompt() {
   printf 'You are a lane. Read AGENTS.md, then docs/agents/lane.md, then work on GitHub issue #%s. Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, comment on the issue with the outcome, the blocker or the question, and the next step required from the owner.' "$issue"
 }
 
-lane() {
-  local issue="$1" slug="$2" agent="${3:-copilot}"
-  [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [copilot|devin]" >&2; return 1; }
+_foreman_prompt() {
+  printf 'You are the foreman. Read AGENTS.md, then docs/agents/foreman.md. Never write code. Propose lanes and wait for approval from the owner before starting them.'
+}
 
-  local root session dir branch port
+_agent_model_args() {
+  local agent="$1" choice="$2"
+  [[ -z "$choice" ]] && return 0
+  if [[ "$agent" == copilot ]]; then
+    case "$choice" in
+      none | minimal | low | medium | high | xhigh | max)
+        printf -- '--reasoning-effort %q' "$choice"
+        ;;
+      *) printf -- '--model %q' "$choice" ;;
+    esac
+  else
+    printf -- '--model %q' "$choice"
+  fi
+}
+
+foreman() {
+  local agent="${1:-devin}" model="${2:-}"
+  [[ "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be copilot or devin" >&2; return 1; }
+  [[ "$agent" == devin && -z "$model" ]] && model="claude-opus-5-5-high"
+
+  local root session win cmd model_args current
+  root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
+  [[ "$root" == */.worktrees/* ]] && { echo "run foreman from the main checkout, not a worktree" >&2; return 1; }
+  session="$(_lane_session)"
+  model_args="$(_agent_model_args "$agent" "$model")"
+
+  case "$agent" in
+    copilot) cmd="copilot --no-remote $model_args -i $(printf %q "$(_foreman_prompt)")" ;;
+    devin)
+      if devin list 2>/dev/null | grep -q .; then
+        cmd="devin --permission-mode auto $model_args --continue"
+      else
+        cmd="devin --permission-mode auto $model_args -- $(printf %q "$(_foreman_prompt)")"
+      fi
+      ;;
+  esac
+
+  win=foreman
+  if ! tmux has-session -t "$session" 2>/dev/null; then
+    tmux new-session -d -s "$session" -c "$root" -n "$win" "$cmd; exec \$SHELL"
+  elif ! tmux list-windows -t "$session" -F '#W' | grep -qx "$win"; then
+    tmux new-window -t "$session" -n "$win" -c "$root" "$cmd; exec \$SHELL"
+  else
+    tmux select-window -t "$session:$win"
+    current="$(tmux display-message -p -t "$session:$win" '#{pane_current_command}')"
+    case "$current" in
+      bash | zsh | sh | fish | dash | ksh)
+        tmux send-keys -t "$session:$win" "cd $(printf %q "$root") && $cmd" Enter
+        ;;
+      *) echo "foreman window already running ($current); selected it without starting another agent" ;;
+    esac
+  fi
+  [[ -z "$TMUX" ]] && tmux attach -t "$session"
+}
+
+lane() {
+  local issue="$1" slug="$2" agent="${3:-copilot}" model="${4:-}"
+  [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [copilot|devin] [model|effort]" >&2; return 1; }
+
+  local root session dir branch port model_args copilot_permissions
   root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
   [[ "$root" == */.worktrees/* ]] && { echo "run lane from the main checkout, not a worktree" >&2; return 1; }
   session="$(_lane_session)"
   dir="$(_lane_dir "$root" "$issue")"
+  model_args="$(_agent_model_args "$agent" "$model")"
+  copilot_permissions="--allow-tool=write --allow-tool='shell(npm:*)' --allow-tool='shell(npx:*)' --allow-tool='shell(git:*)' --allow-tool='shell(gh issue:*)' --allow-tool='shell(gh pr create)' --allow-tool='shell(gh pr checks)' --deny-tool='shell(git merge)' --deny-tool='shell(git rebase)' --deny-tool='write(.env.local)' --deny-tool='shell(gh pr merge)'"
 
   if [[ -z "$dir" ]]; then
     [[ -z "$slug" ]] && { echo "new lane needs a slug: lane $issue <slug>" >&2; return 1; }
@@ -97,16 +159,16 @@ EOF
   case "$agent" in
     copilot)
       if [[ -n "$(ls -A "$dir/.copilot" 2>/dev/null)" ]]; then
-        cmd="copilot --no-remote --resume"
+        cmd="copilot --no-remote $model_args $copilot_permissions --resume"
       else
-        cmd="copilot --no-remote -i $(printf %q "$(_lane_prompt "$issue")")"
+        cmd="copilot --no-remote $model_args $copilot_permissions -i $(printf %q "$(_lane_prompt "$issue")")"
       fi
       ;;
     devin)
       if devin list 2>/dev/null | grep -q .; then
-        cmd="devin --continue"
+        cmd="devin --permission-mode accept-edits --sandbox $model_args --continue"
       else
-        cmd="devin -- $(printf %q "$(_lane_prompt "$issue")")"
+        cmd="devin --permission-mode accept-edits --sandbox $model_args -- $(printf %q "$(_lane_prompt "$issue")")"
       fi
       ;;
     *) echo "agent must be copilot or devin" >&2; return 1 ;;
