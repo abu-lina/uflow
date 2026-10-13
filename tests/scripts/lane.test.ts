@@ -56,7 +56,7 @@ describe('lane shell helpers', () => {
       'shell(gh pr checks)',
       'shell(git merge)',
       'shell(git rebase)',
-      'shell(git push --force)',
+      'write(.env.local)',
       'shell(gh pr merge)',
     ]) {
       expect(laneScript).toContain(tool);

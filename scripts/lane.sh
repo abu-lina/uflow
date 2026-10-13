@@ -112,7 +112,7 @@ lane() {
   session="$(_lane_session)"
   dir="$(_lane_dir "$root" "$issue")"
   model_args="$(_agent_model_args "$agent" "$model")"
-  copilot_permissions="--allow-tool=write --allow-tool='shell(npm:*)' --allow-tool='shell(npx:*)' --allow-tool='shell(git:*)' --allow-tool='shell(gh issue:*)' --allow-tool='shell(gh pr create)' --allow-tool='shell(gh pr checks)' --deny-tool='shell(git merge)' --deny-tool='shell(git rebase)' --deny-tool='shell(git push --force)' --deny-tool='shell(gh pr merge)'"
+  copilot_permissions="--allow-tool=write --allow-tool='shell(npm:*)' --allow-tool='shell(npx:*)' --allow-tool='shell(git:*)' --allow-tool='shell(gh issue:*)' --allow-tool='shell(gh pr create)' --allow-tool='shell(gh pr checks)' --deny-tool='shell(git merge)' --deny-tool='shell(git rebase)' --deny-tool='write(.env.local)' --deny-tool='shell(gh pr merge)'"
 
   if [[ -z "$dir" ]]; then
     [[ -z "$slug" ]] && { echo "new lane needs a slug: lane $issue <slug>" >&2; return 1; }
