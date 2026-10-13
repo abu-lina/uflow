@@ -54,21 +54,21 @@ When asked for status, or every time you resume:
 lane_status
 ```
 
-That prints the last 40 lines of each `#<issue>` window plus `git worktree list`. Report one line per lane:
+The idle marker in `lane_status` (`#<issue> idle`) and the lane's issue comments (`gh issue view N --json comments`) are the primary evidence. The pane tail is the fallback when there is no comment or no idle marker. Report one line per lane:
 
 ```
-#586  working      red tests committed, implementing LoginForm
-#550  waiting      asked you: keep the mobile navbar or the desktop one?
+#586  working      lane is editing; red tests committed, implementing LoginForm
+#550  waiting      comment asks: keep the mobile navbar or the desktop one?
 #579  done         PR #620 green, ready for your merge
-#612  stuck        3 CI fix rounds failed on "Run Tests", see PR #618 comment
+#612  stuck        3 CI fix rounds failed on "Run Tests"; no owner comment yet
 ```
 
-Classify from the pane text:
+Classify from the status evidence:
 
-- **working**: tool calls or edits in the last lines
-- **waiting for me**: a question to the owner, or "waiting for approval"
-- **done**: PR marked ready and CI green (`gh pr checks <pr>`)
-- **stuck**: the agent reported stopping, the same error repeats, or no output change since the last status call
+- **working**: pane output is active or the latest issue comment says the lane is still coding
+- **waiting for me**: the latest issue comment asks for approval or a decision, or the lane is idle but expects a reply
+- **done**: the issue comment says the PR is ready and CI is green (`gh pr checks <pr>`)
+- **stuck**: the lane is idle, the same error repeats, or the last issue comment says it stopped after failed CI rounds or a blocker
 
 Also report leftover worktrees from `git worktree list` that have no open tmux window.
 

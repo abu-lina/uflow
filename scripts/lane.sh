@@ -39,7 +39,7 @@ _lane_type() {
 
 _lane_prompt() {
   local issue="$1"
-  printf 'You are a lane. Read AGENTS.md, then docs/agents/lane.md, then work on GitHub issue #%s. Start with step 0 of lane.md and stop at any "stop and ask" condition.' "$issue"
+  printf 'You are a lane. Read AGENTS.md, then docs/agents/lane.md, then work on GitHub issue #%s. Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, comment on the issue with the outcome, the blocker or the question, and the next step required from the owner.' "$issue"
 }
 
 lane() {
@@ -121,6 +121,8 @@ EOF
     tmux new-window -t "$session" -n "$win" -c "$dir" \
       "export PORT=$port PLAYWRIGHT_BASE_URL=http://127.0.0.1:$port; $cmd; exec \$SHELL"
   fi
+  tmux set-window-option -t "$session:$win" monitor-silence 60 >/dev/null 2>&1 || true
+  tmux set-option -t "$session" visual-silence on >/dev/null 2>&1 || true
   [[ -z "$TMUX" ]] && tmux attach -t "$session"
 }
 
@@ -156,13 +158,31 @@ lane_done() {
 }
 
 lane_status() {
-  local root session w
+  local root session w silence activity
   root="$(_lane_root)" || return 1
   session="$(_lane_session)"
+
+  if ! tmux has-session -t "$session" 2>/dev/null; then
+    printf '\n=== worktrees ===\n'
+    git worktree list
+    return 0
+  fi
+
   for w in $(tmux list-windows -t "$session" -F '#W' 2>/dev/null | grep '^#'); do
+    silence="$(tmux display-message -p -t "$session:$w" -F '#{window_silence_flag}' 2>/dev/null || echo 0)"
+    activity="$(tmux display-message -p -t "$session:$w" -F '#{window_activity_flag}' 2>/dev/null || echo 0)"
+
     printf '\n=== %s ===\n' "$w"
+    if [[ "$silence" == "1" ]]; then
+      printf '%s idle\n' "$w"
+    elif [[ "$activity" == "1" ]]; then
+      printf '%s working\n' "$w"
+    else
+      printf '%s waiting\n' "$w"
+    fi
     tmux capture-pane -p -t "$session:$w" | grep -v '^\s*$' | tail -40
   done
+
   printf '\n=== worktrees ===\n'
   git worktree list
 }

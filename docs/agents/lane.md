@@ -72,7 +72,14 @@ Push only your own branch. Never merge, never push to `main`, never rebase or `g
 
 ## 6. Report
 
-Post one comment on the issue when the PR is green and ready, with: PR number, which acceptance criteria are covered by which tests, anything out of scope you found, and one learning (what surprised you, one sentence). The foreman folds learnings into `docs/ai/LEARNINGS.md` after merge; don't edit that file from a lane.
+Post a comment on the issue every time you stop, not only when the PR is green and ready. The comment is the last action before leaving the lane, and the lane prompt tells you to do it before any stop-and-ask or blocked state.
+
+- PR ready: include the PR number or URL, the green checks, which acceptance criteria are covered by which tests, anything out of scope you found, and one learning (what surprised you, one sentence).
+- Stopped after 3 failed CI attempts: include the exact command, the last failing error, the fix rounds already tried, and what you need the owner to decide or unblock.
+- Stop-and-ask or blocked: include the direct question or blocker, the most recent evidence, and the exact next step needed from the owner.
+- Any other stop: include what happened, what you need, and the reason you are leaving the lane without more work.
+
+The foreman folds learnings into `docs/ai/LEARNINGS.md` after merge; don't edit that file from a lane.
 
 ## Resume
 
