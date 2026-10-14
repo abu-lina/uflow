@@ -78,6 +78,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline
 
+      - name: Install memory backend dependencies
+        run: npm ci --prefix tools/memory-backend --prefer-offline
+
+      - name: Run memory backend tests
+        run: npm test --prefix tools/memory-backend
+
       - name: Run tests with coverage
         run: npm run test:coverage
 
