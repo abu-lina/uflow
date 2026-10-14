@@ -53,9 +53,15 @@ describe('provider not-found page localization', () => {
       expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
         translate(translations, 'providers.notFound.title'),
       );
-      expect(screen.getByText(translate(translations, 'providers.notFound.description'))).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: translate(translations, 'providers.notFound.browse') })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: translate(translations, 'providers.notFound.home') })).toBeInTheDocument();
+      expect(
+        screen.getByText(translate(translations, 'providers.notFound.description')),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', { name: translate(translations, 'providers.notFound.browse') }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', { name: translate(translations, 'providers.notFound.home') }),
+      ).toBeInTheDocument();
 
       unmount();
     }

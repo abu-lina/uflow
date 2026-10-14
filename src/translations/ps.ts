@@ -405,6 +405,12 @@ export const ps = {
     communityServiceImage: 'د ټولنې خدمت انځور {{index}}',
     providerThumbnailAlt: '{{name}} کوچنی انځور {{index}}',
     providerImageAlt: '{{name}} انځور {{index}}',
+    notFound: {
+      title: 'وړاندې کوونکی ونه موندل شو',
+      description: 'هغه وړاندې کوونکی چې تاسو یې لټوئ نشته یا لرې شوی دی.',
+      browse: 'ټول وړاندې کوونکي وګورئ',
+      home: 'کورپاڼې ته لاړ شئ',
+    },
   },
   create: {
     title: 'وړاندې کوونکی اضافه کړئ',

@@ -406,6 +406,12 @@ export const de = {
     communityServiceImage: 'Community-Service-Bild {{index}}',
     providerThumbnailAlt: '{{name}} Vorschaubild {{index}}',
     providerImageAlt: '{{name}} Bild {{index}}',
+    notFound: {
+      title: 'Anbieter nicht gefunden',
+      description: 'Der gesuchte Anbieter existiert nicht oder wurde entfernt.',
+      browse: 'Alle Anbieter durchsuchen',
+      home: 'Zur Startseite',
+    },
   },
   create: {
     title: 'Anbieter hinzufügen',
