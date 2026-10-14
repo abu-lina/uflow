@@ -39,10 +39,12 @@ describe('Plan 227 — Desktop header overlap: source-level guards', () => {
     expect(discoveryHeaderSrc).not.toContain('sm:hidden');
   });
 
-  it('RootPageContent landing header uses md:hidden (not sm:hidden)', () => {
-    // The landing page fixed header should hide at md, matching desktop Header visibility
-    expect(rootPageSrc).toMatch(/className="[^"]*md:hidden/);
-    expect(rootPageSrc).not.toMatch(/className="[^"]*sm:hidden/);
+  it('RootPageContent uses the shared DiscoveryHeader for home navigation', () => {
+    expect(rootPageSrc).toContain('import { DiscoveryHeader }');
+    expect(rootPageSrc).toContain('<DiscoveryHeader');
+    expect(rootPageSrc).not.toContain('className="fixed left-0 right-0 top-0 z-50 md:hidden"');
+    expect(discoveryHeaderSrc).toContain('md:hidden');
+    expect(discoveryHeaderSrc).not.toContain('sm:hidden');
   });
 
   it('DiscoveryHeader does not declare an unused section prop', () => {

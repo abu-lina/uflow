@@ -9,9 +9,9 @@ import { useAppStage } from '@/hooks/useAppStage';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
+import { DiscoveryHeader } from '@/features/search/components/DiscoveryHeader';
 import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
 import { HomeListView } from '@/features/search/components/HomeListView';
-import { SectionSelector } from '@/features/search/components/SectionSelector';
 import {
   AdminStatusFilter,
   type ReviewStatusFilter,
@@ -246,38 +246,9 @@ export function RootPageContent() {
             {/* Stage 2/3: Category Discovery Home */}
             {(stage === 'stage2' || stage === 'stage3') && (
               <div className="flex min-h-screen w-full flex-col bg-uflow-light">
-                {/* Fixed header: search bar only */}
-                <header
+                <DiscoveryHeader
                   ref={headerRef}
-                  className="fixed left-0 right-0 top-0 z-50 md:hidden"
-                  style={{
-                    transition:
-                      'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
-                    background: 'rgba(255, 255, 255, 0.15)',
-                    backdropFilter:
-                      viewMode === 'list' ? 'blur(20px) saturate(180%)' : 'blur(1.5px)',
-                    WebkitBackdropFilter:
-                      viewMode === 'list' ? 'blur(20px) saturate(180%)' : 'blur(1.5px)',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.18)',
-                    isolation: 'isolate',
-                    marginLeft: '-1px',
-                    marginRight: '-1px',
-                    paddingLeft: '1px',
-                    paddingRight: '1px',
-                  }}
-                >
-                  <div
-                    className="px-4 pb-3"
-                    style={{
-                      paddingTop: 'max(24px, calc(env(safe-area-inset-top) + 24px))',
-                    }}
-                  >
-                    <div className="pb-3">
-                      <SectionSelector
-                        selectedSection={activeSection}
-                        onSectionChange={setActiveSection}
-                      />
-                    </div>
+                  searchSlot={
                     <HomeSearchBar
                       activeSection={activeSection}
                       adminSlot={
@@ -294,8 +265,11 @@ export function RootPageContent() {
                       onToggleNearMe={handleToggleNearMe}
                       onToggleOpenNow={() => setIsOpenNow((v) => !v)}
                     />
-                  </div>
-                </header>
+                  }
+                  selectedSection={activeSection}
+                  viewMode={viewMode}
+                  onSectionChange={setActiveSection}
+                />
 
                 <div
                   style={{

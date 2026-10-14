@@ -122,7 +122,7 @@ describe('RootPageContent layout regression (Plan 109)', () => {
 
     const searchHeader = screen.getByTestId('home-search-bar').closest('header');
     expect(searchHeader).toBeInTheDocument();
-    expect(searchHeader).toHaveClass('fixed', 'left-0', 'right-0', 'top-0', 'z-50');
+    expect(searchHeader).toHaveClass('fixed', 'left-0', 'right-0', 'top-0', 'z-40');
 
     const sectionTablist = screen.getByRole('tablist', { name: /browse sections/i });
     expect(sectionTablist).toBeInTheDocument();

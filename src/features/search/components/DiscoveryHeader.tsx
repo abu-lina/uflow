@@ -21,10 +21,8 @@ interface DiscoveryHeaderProps {
 /**
  * DiscoveryHeader — unified fixed glass header for discovery surfaces.
  *
- * Merges the inline home header and ProvidersPageHeader into one shell:
- * safe-area padding, backdrop-filter, border, z-50. The caller supplies the
- * search affordance via `searchSlot`, so home can pass its inline search input
- * and results can pass SearchContextBar without forking the header.
+ * Shared fixed header for home and provider discovery. It stays below the
+ * z-50 mobile navigation while remaining above page content.
  */
 export const DiscoveryHeader = forwardRef<HTMLElement, DiscoveryHeaderProps>(
   function DiscoveryHeader(
@@ -41,7 +39,7 @@ export const DiscoveryHeader = forwardRef<HTMLElement, DiscoveryHeaderProps>(
     return (
       <header
         ref={ref}
-        className={`fixed left-0 right-0 top-0 z-50 md:hidden ${className}`}
+        className={`fixed left-0 right-0 top-0 z-40 md:hidden ${className}`}
         data-testid="discovery-header"
         data-view-mode={viewMode}
         style={{
