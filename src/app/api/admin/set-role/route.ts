@@ -153,23 +153,6 @@ export async function POST(request: Request) {
       successMessage = `User record created with role ${role}`;
     }
 
-    const mergedMetadata = {
-      ...(authUserData.user.user_metadata || {}),
-      role,
-    };
-
-    const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
-      user_metadata: mergedMetadata,
-    });
-
-    if (metadataError) {
-      console.warn('[set-role] Role updated in DB but metadata sync failed:', {
-        targetUserId,
-        role,
-        error: metadataError.message,
-      });
-    }
-
     return NextResponse.json({
       success: true,
       message: successMessage,
@@ -186,4 +169,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
