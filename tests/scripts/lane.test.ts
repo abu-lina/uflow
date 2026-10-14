@@ -96,8 +96,8 @@ describe('lane shell helpers', () => {
   });
 
   it('uses a non-prompting foreman permission mode and explains the choice', () => {
-    expect(laneScript).toContain('--permission-mode auto');
-    expect(laneScript).toMatch(/permission-mode auto[^\\n]*read-only/);
+    expect(laneScript).toContain('--permission-mode dangerous');
+    expect(laneScript).toContain('auto mode prompts for generic shell reads');
   });
 
   it('tells the foreman to wait for blocked or completed lanes', () => {
