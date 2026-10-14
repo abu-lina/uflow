@@ -87,7 +87,9 @@ test('Home nav link hit-tests to itself across its full mobile target', async ({
   const hitTest = await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll<HTMLAnchorElement>('nav a')).find(
       (anchor) =>
-        anchor.getAttribute('href') === '/' && getComputedStyle(anchor).visibility === 'visible',
+        anchor.getAttribute('href') === '/' &&
+        getComputedStyle(anchor).visibility === 'visible' &&
+        anchor.getClientRects().length > 0,
     );
     if (!link) return { found: false as const, checked: 0, hits: [] };
 
