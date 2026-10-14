@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { DEFAULT_SECTION } from '@/config/sectionFilters';
+import type { Section } from '@/config/sectionFilters';
 import { getSupabaseClient } from './client';
 import type { OpeningHours } from '@/types/openingHours';
 
@@ -14,6 +16,7 @@ export interface RawProviderRow {
   provider_name?: string | null;
   opening_hours?: OpeningHours | null;
   provider_images?: string | { urls?: string[] } | null;
+  listing_type?: Section | null;
   address_city?: string | null;
   category_id?: string | null;
   categories?: RawCategoryRow | RawCategoryRow[] | null;
@@ -27,7 +30,7 @@ export interface RawCategoryRow {
 
 /**
  * Hard cap on rows returned for the map. Without it PostgREST streams the
- * entire approved-food set, which was part of the main-thread stall in
+ * entire approved set, which was part of the main-thread stall in
  * Plan 261. Ordering keeps the truncation deterministic so pins do not
  * shuffle between loads once the cap is reached.
  *
@@ -37,27 +40,36 @@ export interface RawCategoryRow {
 export const MAP_LOCATIONS_LIMIT = 1000;
 
 /**
- * Fetch all map pin locations for food providers.
+ * Fetch map pin locations for a provider section.
  * Returns raw location rows with joined provider data for map rendering.
- *
- * @param reviewStatus - Review status to filter by (defaults to 'approved').
- *   Admin callers can pass a different status to see pending/rejected providers.
  */
+export interface MapLocationsOptions {
+  section?: Section;
+  city?: string | null;
+  reviewStatus?: string | null;
+}
+
 export async function getMapLocations(
-  reviewStatus?: string | null,
+  { section = DEFAULT_SECTION, city, reviewStatus }: MapLocationsOptions = {},
   client?: SupabaseClient,
 ): Promise<RawLocationRow[]> {
   const supabase = getSupabaseClient(client);
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('locations')
     .select(
       'provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories!providers_category_id_fkey(name_de, name_en, category_images))',
     )
     .not('location_latitude', 'is', null)
     .not('location_longitude', 'is', null)
-    .eq('providers.listing_type', 'food')
-    .eq('providers.review_status', reviewStatus ?? 'approved')
+    .eq('providers.listing_type', section)
+    .eq('providers.review_status', reviewStatus ?? 'approved');
+
+  if (city) {
+    query = query.eq('address_city', city);
+  }
+
+  const { data, error } = await query
     .order('provider_id', { ascending: true })
     .limit(MAP_LOCATIONS_LIMIT);
 

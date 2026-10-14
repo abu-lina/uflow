@@ -90,6 +90,7 @@ async function fetchProvidersFromAPI(
 
 interface ProvidersContentProps {
   defaultLocation?: string; // For Stage 2: render on root with city filter
+  mapCity?: string | null;
   showGreeting?: boolean; // Show greeting header instead of search bar and category filter
   /** Server-rendered initial data for the first page of results (Plan 010 P1a) */
   initialData?: { results: SearchResult[]; hasMore: boolean; totalCount?: number };
@@ -104,6 +105,7 @@ interface ProvidersContentProps {
 
 export function ProvidersContent({
   defaultLocation,
+  mapCity,
   showGreeting = false,
   initialData,
   initialFilters,
@@ -224,7 +226,7 @@ export function ProvidersContent({
       pathname,
       replace: router.replace,
     },
-    { deferPinsUntilMapOpened: true },
+    { deferPinsUntilMapOpened: true, section, city: mapCity },
   );
 
   const nearMe = useNearMe({

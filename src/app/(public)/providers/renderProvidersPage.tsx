@@ -97,6 +97,7 @@ export async function renderProvidersPage(opts: {
       <ProvidersContent
         defaultLocation={location || undefined}
         displayCategory={displayCategory}
+        mapCity={routeCity}
         initialData={{
           results: initialResults,
           hasMore: initialHasMore,
