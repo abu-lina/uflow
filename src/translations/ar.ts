@@ -402,6 +402,12 @@ export const ar = {
     communityServiceImage: 'صورة خدمة المجتمع {{index}}',
     providerThumbnailAlt: '{{name}} صورة مصغرة {{index}}',
     providerImageAlt: '{{name}} صورة {{index}}',
+    notFound: {
+      title: 'لم يتم العثور على المزود',
+      description: 'المزود الذي تبحث عنه غير موجود أو تمت إزالته.',
+      browse: 'تصفح جميع المزودين',
+      home: 'الذهاب إلى الصفحة الرئيسية',
+    },
   },
   create: {
     title: 'إضافة مزود',

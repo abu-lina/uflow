@@ -404,6 +404,12 @@ export const en = {
     communityServiceImage: 'Community service image {{index}}',
     providerThumbnailAlt: '{{name}} thumbnail {{index}}',
     providerImageAlt: '{{name}} image {{index}}',
+    notFound: {
+      title: 'Provider not found',
+      description: 'The provider you are looking for does not exist or has been removed.',
+      browse: 'Browse all providers',
+      home: 'Go to homepage',
+    },
   },
   create: {
     title: 'Add Provider',

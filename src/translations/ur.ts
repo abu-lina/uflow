@@ -407,6 +407,12 @@ export const ur = {
     communityServiceImage: 'کمیونٹی سروس تصویر {{index}}',
     providerThumbnailAlt: '{{name}} تھمب نیل {{index}}',
     providerImageAlt: '{{name}} تصویر {{index}}',
+    notFound: {
+      title: 'فراہم کنندہ نہیں ملا',
+      description: 'آپ جس فراہم کنندہ کو تلاش کر رہے ہیں وہ موجود نہیں یا ہٹا دیا گیا ہے۔',
+      browse: 'تمام فراہم کنندگان دیکھیں',
+      home: 'صفحۂ اول پر جائیں',
+    },
   },
   create: {
     title: 'فراہم کنندہ شامل کریں',

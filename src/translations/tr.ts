@@ -403,6 +403,12 @@ export const tr = {
     communityServiceImage: 'Topluluk hizmeti gorseli {{index}}',
     providerThumbnailAlt: '{{name}} kucuk resmi {{index}}',
     providerImageAlt: '{{name}} gorseli {{index}}',
+    notFound: {
+      title: 'Sağlayıcı bulunamadı',
+      description: 'Aradığınız sağlayıcı mevcut değil veya kaldırıldı.',
+      browse: 'Tüm sağlayıcıları görüntüle',
+      home: 'Ana sayfaya git',
+    },
   },
   create: {
     title: 'Sağlayıcı Ekle',
