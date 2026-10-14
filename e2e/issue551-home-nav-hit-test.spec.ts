@@ -82,33 +82,47 @@ test('Home nav link hit-tests to itself across its full mobile target', async ({
   );
 
   await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('nav a[href="/"]:visible').first()).toBeVisible({ timeout: 15_000 });
 
   const hitTest = await page.evaluate(() => {
     const link = Array.from(document.querySelectorAll<HTMLAnchorElement>('nav a')).find(
       (anchor) =>
         anchor.getAttribute('href') === '/' && getComputedStyle(anchor).visibility === 'visible',
     );
-    if (!link) return { found: false as const, hits: [] };
+    if (!link) return { found: false as const, checked: 0, hits: [] };
 
     const rect = link.getBoundingClientRect();
-    const hits = [0.1, 0.5, 0.9].flatMap((xRatio) =>
-      [0.1, 0.5, 0.9].map((yRatio) => {
-        const x = Math.floor(rect.left + rect.width * xRatio);
-        const y = Math.floor(rect.top + rect.height * yRatio);
-        const topmost = document.elementFromPoint(x, y);
-        return {
-          point: { x, y },
-          topmost: topmost ? `${topmost.tagName}.${String(topmost.className).slice(0, 60)}` : 'none',
-          hitsLink: topmost === link || (topmost !== null && link.contains(topmost)),
-        };
-      }),
-    );
-    return { found: true as const, hits };
+    let checked = 0;
+    const hits = [];
+    for (let x = Math.floor(rect.left); x < Math.ceil(rect.right); x += 1) {
+      for (let y = Math.floor(rect.top); y < Math.ceil(rect.bottom); y += 1) {
+        const point = { x: x + 0.5, y: y + 0.5 };
+        if (
+          point.x < rect.left ||
+          point.x >= rect.right ||
+          point.y < rect.top ||
+          point.y >= rect.bottom
+        ) {
+          continue;
+        }
+        checked += 1;
+        const topmost = document.elementFromPoint(point.x, point.y);
+        if (topmost !== link && (topmost === null || !link.contains(topmost)) && hits.length < 10) {
+          hits.push({
+            point,
+            topmost: topmost
+              ? `${topmost.tagName}.${String(topmost.className).slice(0, 60)}`
+              : 'none',
+          });
+        }
+      }
+    }
+    return { found: true as const, checked, hits };
   });
 
   expect(hitTest.found, 'expected a visible Home nav link').toBe(true);
-  expect(
-    hitTest.hits.filter((hit) => !hit.hitsLink),
-    'every sampled point across the Home link target must hit the link or one of its children',
-  ).toEqual([]);
+  expect(hitTest.checked, 'expected a non-empty Home nav target').toBeGreaterThan(0);
+  expect(hitTest.hits, 'every pixel across the Home link target must hit the link or a child').toEqual(
+    [],
+  );
 });
