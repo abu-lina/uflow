@@ -5,6 +5,7 @@ import { ProviderCard } from '@/features/providers/components/ProviderCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { DEFAULT_SECTION } from '@/config/sectionFilters';
 import type { NearMeFoodResult } from '@/services/providers';
 
 interface HomeNearMeListProps {
@@ -123,7 +124,7 @@ export function HomeNearMeList({
               contact_phone={null}
               created_at={null}
               distanceKm={result.distance_km}
-              listing_type="food"
+              listing_type={DEFAULT_SECTION}
               location_latitude={result.location_latitude}
               location_longitude={result.location_longitude}
               needs_ids={[]}

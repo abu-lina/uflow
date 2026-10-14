@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getMapLocations } from '@/services/providers';
 import type { RawLocationRow } from '@/services/providers';
+import type { Section } from '@/config/sectionFilters';
 import { filterOpenNow } from '@/utils/filterOpenNow';
 import type { MapPin } from '@/features/search/components/SearchMap';
 import type { GeolocationCoords } from '@/hooks/useGeolocation';
@@ -42,6 +43,7 @@ function toMapPin(row: RawLocationRow): MapPin | null {
     providerName: name,
     lat: Number(row.location_latitude),
     lng: Number(row.location_longitude),
+    listing_type: p?.listing_type ?? undefined,
     opening_hours: p?.opening_hours ?? null,
     provider_images: p?.provider_images ?? null,
     address_city: p?.address_city ?? null,
@@ -83,16 +85,19 @@ export interface UseMapDiscoveryResult {
  *   Defaults to 'approved' when null/undefined.
  * @param urlSync - Optional URL-sync config. When provided the hook
  *   reads `?view=` on mount and writes it back on toggle/set.
- * @param options.deferPinsUntilMapOpened - When true, the pin fetch is
- *   deferred until the map view has been opened at least once. Opt-in:
- *   consumers that need pins in list view (e.g. the home page) omit it.
+ * @param options - Section and optional city scope for the pin query.
+ *   deferPinsUntilMapOpened skips fetching until the map is opened once.
  */
 export function useMapDiscovery(
   geolocation: { status: string; coords: GeolocationCoords | null },
   defaultViewMode: ViewMode = 'list',
   reviewStatus?: string | null,
   urlSync?: UrlSyncConfig,
-  options?: { deferPinsUntilMapOpened?: boolean },
+  options?: {
+    deferPinsUntilMapOpened?: boolean;
+    section?: Section;
+    city?: string | null;
+  },
 ): UseMapDiscoveryResult {
   const [isOpenNow, setIsOpenNow] = useState(() => urlSync?.searchParams.get('open_now') === '1');
 
@@ -109,6 +114,8 @@ export function useMapDiscovery(
 
   const [viewMode, _setViewMode] = useState<ViewMode>(initialView);
   const deferPins = options?.deferPinsUntilMapOpened ?? false;
+  const section = options?.section;
+  const city = options?.city;
   const [hasOpenedMap, setHasOpenedMap] = useState(initialView === 'map');
   const [allRows, setAllRows] = useState<RawLocationRow[]>([]);
   const [pinsLoading, setPinsLoading] = useState(!deferPins);
@@ -198,7 +205,7 @@ export function useMapDiscovery(
       setPinsLoading(true);
       setPinsError(null);
       try {
-        const rows = await getMapLocations(reviewStatus);
+        const rows = await getMapLocations({ section, city, reviewStatus });
         setAllRows(rows);
       } catch (err) {
         setPinsError(err instanceof Error ? err : new Error(String(err)));
@@ -207,7 +214,7 @@ export function useMapDiscovery(
       }
     };
     void load();
-  }, [reviewStatus, deferPins, hasOpenedMap]);
+  }, [reviewStatus, deferPins, hasOpenedMap, section, city]);
 
   // Compute map pins from allRows, filtering by open-now when active
   const pins = useMemo<MapPin[]>(() => {

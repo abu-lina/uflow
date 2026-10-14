@@ -1,6 +1,7 @@
 'use client';
 
 import { ProviderCard } from '@/features/providers/components/ProviderCard';
+import { DEFAULT_SECTION } from '@/config/sectionFilters';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import type { NearMeFoodResult } from '@/services/providers';
@@ -101,7 +102,7 @@ export function NearMeResultsGrid({
             distanceKm={result.distance_km}
             hideWebsiteButton={true}
             isBookmarked={bookmarkedProviderIds.includes(result.provider_id)}
-            listing_type="food"
+            listing_type={DEFAULT_SECTION}
             location_latitude={result.location_latitude}
             location_longitude={result.location_longitude}
             needs_ids={[]}

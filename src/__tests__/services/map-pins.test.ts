@@ -63,8 +63,29 @@ describe('getMapLocations', () => {
     expect(mockEq).toHaveBeenCalledWith('providers.review_status', 'approved');
   });
 
+  it.each(['food', 'store', 'ummah'] as const)(
+    'filters to the requested %s section',
+    async (section) => {
+      await getMapLocations({ section });
+
+      expect(mockEq).toHaveBeenCalledWith('providers.listing_type', section);
+    },
+  );
+
+  it('filters by city only when one is provided', async () => {
+    await getMapLocations({ section: 'food', city: 'Berlin' });
+
+    expect(mockEq).toHaveBeenCalledWith('address_city', 'Berlin');
+  });
+
+  it('does not filter by city when none is provided', async () => {
+    await getMapLocations({ section: 'food' });
+
+    expect(mockEq).not.toHaveBeenCalledWith('address_city', expect.anything());
+  });
+
   it('uses the passed review status when one is given', async () => {
-    await getMapLocations('pending');
+    await getMapLocations({ reviewStatus: 'pending' });
 
     expect(mockEq).toHaveBeenCalledWith('providers.review_status', 'pending');
     expect(mockEq).not.toHaveBeenCalledWith('providers.review_status', 'approved');

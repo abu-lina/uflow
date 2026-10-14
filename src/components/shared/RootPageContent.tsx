@@ -91,7 +91,7 @@ export function RootPageContent() {
     searchParams,
     pathname,
     replace: router.replace,
-  });
+  }, { section: activeSection });
 
   const homeNearMe = useNearMe({
     coords: userCoords,

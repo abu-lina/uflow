@@ -13,6 +13,8 @@
 /** Canonical section type. */
 export type Section = 'food' | 'ummah' | 'store';
 
+export const DEFAULT_SECTION: Section = 'food';
+
 /** Section metadata for active/inactive state and i18n label keys. */
 export interface SectionMeta {
   active: boolean;
