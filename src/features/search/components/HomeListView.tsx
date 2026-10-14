@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { ProviderCard } from '@/features/providers/components/ProviderCard';
+import { DEFAULT_SECTION } from '@/config/sectionFilters';
 import { SkeletonGrid } from '@/components/ui/SkeletonGrid';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { MapPin } from './SearchMap';
@@ -83,7 +84,7 @@ export function HomeListView({ pins, isLoading, isOpenNow, headerOffset }: HomeL
               contact_phone={null}
               created_at={null}
               hideWebsiteButton={true}
-              listing_type="food"
+              listing_type={pin.listing_type ?? DEFAULT_SECTION}
               location_latitude={pin.lat}
               location_longitude={pin.lng}
               needs_ids={[]}

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ProvidersContent } from '@/app/(public)/providers/ProvidersContent';
@@ -8,13 +8,21 @@ const mockReplace = vi.fn();
 const mockPush = vi.fn();
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/providers',
+  usePathname: () => '/stores',
   useRouter: () => ({
     replace: mockReplace,
     push: mockPush,
     prefetch: vi.fn(),
   }),
-  useSearchParams: () => new URLSearchParams('section=food&q=Indigo&location=Berlin'),
+  useSearchParams: () => new URLSearchParams('section=store&view=map&q=Indigo&location=Berlin'),
+}));
+
+const { mockGetMapLocations } = vi.hoisted(() => ({
+  mockGetMapLocations: vi.fn(async () => []),
+}));
+
+vi.mock('@/services/providers', () => ({
+  getMapLocations: mockGetMapLocations,
 }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -164,7 +172,7 @@ vi.mock('@/lib/supabase/client', () => ({
 
 describe('ProvidersContent layout regression (Plan 109)', () => {
   it('renders section tabs inside the fixed mobile header above the search bar', () => {
-    render(<ProvidersContent />);
+    render(<ProvidersContent initialSection="store" />);
 
     const fixedSearchHeader = screen.getByTestId('discovery-header');
     expect(fixedSearchHeader).toHaveClass('fixed', 'left-0', 'right-0', 'top-0', 'z-50');
@@ -177,5 +185,13 @@ describe('ProvidersContent layout regression (Plan 109)', () => {
     expect(
       within(main).queryByRole('tablist', { name: /browse sections/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('fetches map pins for the route section', async () => {
+    render(<ProvidersContent initialSection="store" />);
+
+    await waitFor(() => {
+      expect(mockGetMapLocations).toHaveBeenCalledWith(expect.objectContaining({ section: 'store' }));
+    });
   });
 });
