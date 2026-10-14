@@ -81,7 +81,7 @@ const TEST_USERS = [
  */
 async function createTestUsers() {
   console.log('📝 Creating test users...');
-  const createdUsers = [];
+  const testUsers = [];
 
   for (const user of TEST_USERS) {
     try {
@@ -93,13 +93,28 @@ async function createTestUsers() {
 
       if (error) {
         if (error.message.includes('already registered')) {
-          console.log(`   ⚠️  User ${user.email} already exists, skipping`);
+          let existingUser;
+          for (let page = 1; !existingUser; page++) {
+            const { data: listedUsers, error: listError } = await supabase.auth.admin.listUsers({
+              page,
+              perPage: 1000,
+            });
+            if (listError) throw listError;
+            existingUser = listedUsers.users.find(
+              (listedUser) => listedUser.email?.toLowerCase() === user.email.toLowerCase(),
+            );
+            if (existingUser || listedUsers.users.length < 1000) break;
+          }
+
+          if (!existingUser) throw new Error(`Could not find existing auth user ${user.email}`);
+          testUsers.push({ ...user, id: existingUser.id });
+          console.log(`   ⚠️  User ${user.email} already exists, reusing`);
           continue;
         }
         throw error;
       }
 
-      createdUsers.push({ ...user, id: data.user.id });
+      testUsers.push({ ...user, id: data.user.id });
       console.log(`   ✅ Created user: ${user.email}`);
     } catch (error) {
       console.error(`   ❌ Failed to create user ${user.email}:`, error.message);
@@ -107,7 +122,7 @@ async function createTestUsers() {
   }
 
   // Set admin role if needed
-  for (const user of createdUsers) {
+  for (const user of testUsers) {
     if (user.role === 'admin') {
       const { error } = await supabase
         .from('users')
@@ -121,7 +136,7 @@ async function createTestUsers() {
     }
   }
 
-  return createdUsers;
+  return testUsers;
 }
 
 /**
@@ -257,6 +272,25 @@ async function verifySetup() {
       console.error(`   ❌ Failed to verify user ${user.email}:`, error.message);
       allGood = false;
     }
+  }
+
+  try {
+    const { data: adminUser, error } = await supabase
+      .from('users')
+      .select('role')
+      .eq('email', 'perf-admin@ummahflow.com')
+      .maybeSingle();
+
+    if (error) throw error;
+    if (adminUser?.role === 'admin') {
+      console.log('   ✅ Performance admin has DB admin role');
+    } else {
+      console.error('   ❌ Performance admin is missing DB admin role');
+      allGood = false;
+    }
+  } catch (error) {
+    console.error('   ❌ Failed to verify performance admin role:', error.message);
+    allGood = false;
   }
 
   // Check providers
