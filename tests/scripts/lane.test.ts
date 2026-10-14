@@ -19,6 +19,7 @@ describe('lane shell helpers', () => {
     for (const flag of ['--cwd', '--branch', '--base main', '--path', '--label']) {
       expect(laneScript).toContain(flag);
     }
+    expect(laneScript).toContain('--label "#$issue $slug"');
     expect(laneScript).toContain('.result.root_pane.pane_id');
   });
 
@@ -52,6 +53,7 @@ describe('lane shell helpers', () => {
   it('writes only lane ports and clones dependencies without copying environment files', () => {
     expect(laneScript).toContain('PORT=$port');
     expect(laneScript).toContain('PLAYWRIGHT_BASE_URL=http://127.0.0.1:$port');
+    expect(laneScript).not.toContain('SUPABASE_PROJECT_ID');
     expect(laneScript).toContain('cp -c -R "$root/node_modules"');
     expect(laneScript).not.toContain('cp "$f" "$dir/"');
   });
@@ -85,6 +87,7 @@ describe('lane shell helpers', () => {
     expect(laneScript).toContain('branch');
     expect(laneScript).toContain('checkout_path');
     expect(laneScript).toContain('does not exist');
+    expect(laneScript).toContain('No lanes open.');
   });
 
   it('starts the default Devin foreman in the main workspace pane with Herdr skill context', () => {
