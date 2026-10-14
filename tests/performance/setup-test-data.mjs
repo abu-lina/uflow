@@ -109,15 +109,15 @@ async function createTestUsers() {
   // Set admin role if needed
   for (const user of createdUsers) {
     if (user.role === 'admin') {
-      try {
-        // Update user metadata to mark as admin
-        await supabase.auth.admin.updateUserById(user.id, {
-          user_metadata: { role: 'admin' },
-        });
-        console.log(`   ✅ Set admin role for: ${user.email}`);
-      } catch (error) {
-        console.error(`   ⚠️  Failed to set admin role:`, error.message);
-      }
+      const { error } = await supabase
+        .from('users')
+        .upsert(
+          { user_id: user.id, email: user.email, role: 'admin' },
+          { onConflict: 'user_id' },
+        );
+
+      if (error) throw error;
+      console.log(`   ✅ Set admin role for: ${user.email}`);
     }
   }
 
@@ -332,4 +332,3 @@ if (import.meta.url === `file://${process.argv[1]}` || import.meta.url.endsWith(
 }
 
 export { createTestUsers, seedProviderData, cleanupTestData, verifySetup };
-

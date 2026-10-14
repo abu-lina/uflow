@@ -21,8 +21,6 @@ function isTestMode(request: Request): boolean {
   return process.env.NODE_ENV === 'test';
 }
 
-const VALID_ROLES = new Set(['user', 'owner', 'admin', 'moderator']);
-
 export async function POST(request: Request) {
   const startTime = Date.now();
   const ip = getClientIP(request);
@@ -304,26 +302,8 @@ export async function POST(request: Request) {
       );
     }
     
-    // 9. Confirm email if needed and sync DB role into auth metadata
+    // 9. Confirm email if needed
     const isConfirmed = user.email_confirmed_at !== null || user.user_metadata?.email_confirmed === true;
-
-    let roleFromDb: string | undefined;
-    const { data: roleRow, error: roleError } = await supabaseAdmin
-      .from('users')
-      .select('role')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (roleError) {
-      logAuth('warn', {
-        event: 'token_verification_role_lookup_error',
-        ip,
-        email,
-        error: roleError.message || 'Failed to read DB role',
-      });
-    } else if (roleRow?.role && VALID_ROLES.has(roleRow.role)) {
-      roleFromDb = roleRow.role;
-    }
 
     const mergedMetadata: Record<string, unknown> = {
       ...(user.user_metadata || {}),
@@ -337,11 +317,6 @@ export async function POST(request: Request) {
       shouldUpdateMetadata = true;
     }
 
-    if (roleFromDb && mergedMetadata.role !== roleFromDb) {
-      mergedMetadata.role = roleFromDb;
-      shouldUpdateMetadata = true;
-    }
-
     if (shouldUpdateMetadata) {
       const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
         ...(isConfirmed ? {} : { email_confirm: true }),
@@ -350,7 +325,7 @@ export async function POST(request: Request) {
 
       if (metadataError) {
         logAuth('warn', {
-          event: isConfirmed ? 'token_verification_role_sync_error' : 'token_verification_email_confirm_error',
+          event: 'token_verification_email_confirm_error',
           ip,
           email,
           error: metadataError.message || 'Failed to sync auth metadata',
