@@ -83,7 +83,7 @@ describe('lane shell helpers', () => {
 
   it('reports lane agents and orphaned Herdr workspaces', () => {
     expect(laneScript).toContain('herdr agent list');
-    expect(laneScript).toContain('workspace label');
+    expect(laneScript).toContain('WORKSPACE LABEL');
     expect(laneScript).toContain('branch');
     expect(laneScript).toContain('checkout_path');
     expect(laneScript).toContain('does not exist');
