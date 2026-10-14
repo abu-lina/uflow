@@ -6,7 +6,7 @@ Context for future sessions. Written 2026-10-13 when the plan-ID pipeline was re
 
 - Solo developer, Next.js 15 marketplace (~115k lines), macOS.
 - Agents: GitHub Copilot CLI (primary, `copilot --no-remote`) and Devin CLI. Local only. No `--cloud`, `/handoff` or `/delegate`.
-- Terminal: Ghostty + tmux + zsh. One tmux session per project, one window per lane, named `#<issue>`.
+- Terminal: Ghostty + Herdr + zsh. Herdr workspaces and named agents are the only agent surface.
 - Goal: parallel work with strict TDD and ~100k tokens of context per session.
 
 ## Decisions
@@ -19,16 +19,17 @@ Context for future sessions. Written 2026-10-13 when the plan-ID pipeline was re
 6. **Shared rules live in `AGENTS.md`** (under 16 KiB, most important first). Tool files (`.github/copilot-instructions.md`, `.devin/*`) only point to it.
 7. **Prove one lane end to end** before running lanes in parallel.
 8. **PR loop**: open a draft at first push with `Closes #N`, fix CI, answer reviews, stop after 3 failed fix attempts. See `docs/agents/pr-loop.md`.
-9. **Foreman status** reads `tmux capture-pane -p -t "#<issue>" | tail -40` per lane and reports working / waiting for me / done / stuck.
-10. **Worktree per lane** in `.worktrees/<issue>-<slug>/`, `.env*` copied, `node_modules` cloned with `cp -c`, `PORT=3000 + issue % 1000`. Tests and dev server run inside the worktree.
-11. **Cleanup**: `lane_done <issue>` after merge removes worktree and tmux window. GitHub auto-deletes merged branches. Leftover worktrees are reported in status.
+9. **Foreman status** reads Herdr's `working` / `blocked` / `idle` / `done` agent states and issue comments. `herdr agent wait <lane> --until blocked --until done` replaces polling.
+10. **Worktree per lane** in `.worktrees/<issue>-<slug>/`, `.env.lane` contains only `PORT` and `PLAYWRIGHT_BASE_URL`, `node_modules` cloned with `cp -c`, `PORT=3000 + issue % 1000`. Tests and dev server run inside the worktree.
+11. **Cleanup**: `lane_done <issue>` after merge removes the Herdr workspace and checkout. GitHub auto-deletes merged branches. Workspaces whose checkout path disappeared are reported in status.
 12. **Merge order**: branches must be up to date (ruleset enforces it). After each merge only the next PR in line is updated, via `gh pr update-branch`. Lanes never rebase.
-13. **Resume** a lane from inside its worktree (`lane <issue>` reopens it), never from `main`.
+13. **Resume** a lane from the main checkout (`lane <issue>` focuses its existing Herdr workspace); never run `lane` inside `.worktrees/`.
 14. **Learnings** go into the PR body and the lane's final issue comment. The foreman copies them into `docs/ai/LEARNINGS.md` on `main` after merge. Lanes never edit that file (it conflicted by construction, issue #612).
 15. **Auto-dispatch is off.** `scripts/agent-dispatch.sh` and `agent-monitor.sh` were removed; the foreman proposes and the owner approves.
-16. **Ghostty + tmux is the only agent surface.** VS Code remains an editor for hand-edits, not an agent surface. The foreman runs inside the tmux session it supervises. The default foreman is Devin on `claude-opus-5-5-high`; lanes default to Copilot on Auto. Both accept a per-invocation model, and Copilot also accepts a reasoning-effort value.
-17. **Permissions are scoped.** Copilot lanes auto-approve only the required write, npm/npx, git, and selected GitHub issue/PR tools, with explicit denies for merge, rebase, `.env.local` writes, and PR merge. The CLI cannot deny force-push at subcommand granularity, so preventing it remains an `AGENTS.md` rule, not a permission mechanism. Devin lanes use `accept-edits` with `--sandbox`; Devin foremen use `auto`. Never use `--allow-all-paths`, `--allow-all`, or `--yolo`: they remove path checks or grant permissions beyond the lane's needs.
+16. **Herdr is the only agent surface.** VS Code remains an editor for hand-edits, not an agent surface. The foreman starts in the main repository workspace; lanes start in the root pane returned by Herdr worktree creation. The default foreman is Devin on `claude-opus-5-5-high`; lanes default to Copilot on Auto. Both accept a per-invocation model, and Copilot also accepts a reasoning-effort value. The foreman prompt includes `herdr --skill`.
+17. **Permissions are scoped where possible.** Copilot lanes auto-approve only the required write, npm/npx, git, and selected GitHub issue/PR tools, with explicit denies for merge, rebase, `.env.local` writes, and PR merge. The CLI cannot deny force-push at subcommand granularity, so preventing it remains an `AGENTS.md` rule, not a permission mechanism. Devin lanes use `accept-edits` with `--sandbox`. Devin foremen use `dangerous` because `auto` still prompts for read-only commands through the generic shell tool; the foreman prompt and role keep it read-only, and owner approval is required before starting lanes. Never use `--allow-all-paths`, `--allow-all`, or `--yolo`: they remove path checks or grant permissions beyond the lane's needs.
 18. **Folder trust was checked against current CLI help.** Copilot has no per-launch trust flag; `trustedFolders` can grant a specific path persistently in settings, while `COPILOT_ALLOW_ALL=true` also suppresses the prompt but auto-approves every tool and is not used. Devin exposes `--respect-workspace-trust false`, which skips the trust check for that invocation; it is not used. No trust setting is changed automatically for a new worktree.
+19. **Lane environment files stay minimal.** `.env.lane` contains only `PORT` and `PLAYWRIGHT_BASE_URL`; lane creation does not copy `.env.local`. An earlier lane created its own small placeholder and passed CI without access to the owner's larger `.env.local`. Keep `[ui.toast] delivery = "system"` in Herdr config for desktop notifications when a lane blocks.
 
 ## Repo facts the decisions rest on (verified 2026-10-13)
 

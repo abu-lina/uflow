@@ -83,7 +83,7 @@ The foreman folds learnings into `docs/ai/LEARNINGS.md` after merge; don't edit 
 
 ## Resume
 
-To continue a lane later, run `lane <issue>` again from the main checkout. It reopens the tmux window inside the existing worktree. Then re-run step 0; the issue comments and `git log` are your state, nothing else.
+To continue a lane later, run `lane <issue>` again from the main checkout. It focuses the existing Herdr workspace. Then re-run step 0; the issue comments and `git log` are your state, nothing else.
 
 ## What you never do
 

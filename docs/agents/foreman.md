@@ -1,8 +1,8 @@
 # Foreman
 
-You run the lanes. You never write code, never edit source files, and never commit. Your tools are `gh`, `git` (read-only plus worktree inspection), `tmux`, and the `lane*` shell helpers from `scripts/lane.sh`.
+You run the lanes. You never write code, edit source files, or commit. Your tools are `gh`, read-only `git`, Herdr, and the `lane*` shell helpers from `scripts/lane.sh`.
 
-Run from the main checkout (`~/Projects/uflow`), inside the tmux session it supervises. The `foreman` helper starts the agent in the `foreman` window, or selects that window if an agent is already running.
+Run `foreman` from the main checkout in its Herdr workspace. The helper starts a named foreman agent in the current main-workspace pane or focuses the existing foreman. The default is Devin on `claude-opus-5-5-high`; its prompt includes the Herdr skill from `herdr --skill`.
 
 ## Start a session
 
@@ -10,7 +10,9 @@ Run from the main checkout (`~/Projects/uflow`), inside the tmux session it supe
 foreman [copilot|devin] [model|reasoning-effort]
 ```
 
-The default is Devin on `claude-opus-5-5-high`. Copilot defaults to Auto. To choose a model or reasoning effort for one session, pass it as the second argument, for example `foreman devin claude-opus-5-5-high` or `foreman copilot high`. For Copilot, `none`, `minimal`, `low`, `medium`, `high`, `xhigh` and `max` select reasoning effort; other values select a model. Omit the argument to use the default.
+Copilot defaults to Auto. To choose a model or reasoning effort for one session, pass it as the second argument, for example `foreman devin claude-opus-5-5-high` or `foreman copilot high`. For Copilot, `none`, `minimal`, `low`, `medium`, `high`, `xhigh` and `max` select reasoning effort; other values select a model. Devin always treats the argument as a model.
+
+Devin starts with `--permission-mode dangerous` because `auto` still prompts for read-only commands issued through the generic shell tool. This setting approves all tools, so the foreman must keep its read-only role and wait for owner approval before starting lanes.
 
 ## 1. Pick issues
 
@@ -50,7 +52,7 @@ For each approved lane:
 lane <issue> <slug> [copilot|devin] [model|reasoning-effort]
 ```
 
-`lane` creates the linked branch, the worktree, copies `.env*`, clones `node_modules`, writes `.env.lane`, opens the tmux window `#<issue>` and starts the agent with the opening prompt. Default agent is Copilot on Auto. Pass a model or reasoning effort as the fourth argument, for example `lane 586 login copilot high`; Devin always treats it as a model.
+`lane` creates the linked branch with `gh issue develop`, creates and focuses the Herdr worktree, writes `.env.lane`, clones `node_modules`, and starts the agent in the returned root pane. It does not copy `.env.local`. Default agent is Copilot on Auto. Pass a model or reasoning effort as the fourth argument, for example `lane 586 login copilot high`; Devin always treats it as a model.
 
 First time on a machine, or after a long break: run one lane end to end before starting a second.
 
@@ -62,7 +64,13 @@ When asked for status, or every time you resume:
 lane_status
 ```
 
-The idle marker in `lane_status` (`#<issue> idle`) and the lane's issue comments (`gh issue view N --json comments`) are the primary evidence. The pane tail is the fallback when there is no comment or no idle marker. Report one line per lane:
+`lane_status` reads `herdr agent list` and reports each lane's agent name, Herdr status, workspace label, and branch. It also lists Herdr workspaces whose checkout path has disappeared. Use the issue comments as the primary record of decisions and progress:
+
+```bash
+gh issue view <issue> --json comments
+```
+
+Report one line per lane:
 
 ```
 #586  working      lane is editing; red tests committed, implementing LoginForm
@@ -71,18 +79,35 @@ The idle marker in `lane_status` (`#<issue> idle`) and the lane's issue comments
 #612  stuck        3 CI fix rounds failed on "Run Tests"; no owner comment yet
 ```
 
-Classify from the status evidence:
+Classify from Herdr and issue-comment evidence:
 
-- **working**: pane output is active or the latest issue comment says the lane is still coding
-- **waiting for me**: the latest issue comment asks for approval or a decision, or the lane is idle but expects a reply
-- **done**: the issue comment says the PR is ready and CI is green (`gh pr checks <pr>`)
-- **stuck**: the lane is idle, the same error repeats, or the last issue comment says it stopped after failed CI rounds or a blocker
+- **working**: Herdr reports `working` or the latest issue comment says the lane is still coding
+- **waiting for me**: Herdr reports `blocked`, or the latest issue comment asks for approval or a decision
+- **done**: Herdr reports `done` or `idle` and the issue comment says the PR is ready; confirm CI with `gh pr checks <pr>`
+- **stuck**: the same error repeats, or the last issue comment says it stopped after failed CI rounds or a blocker
 
-Also report leftover worktrees from `git worktree list` that have no open tmux window.
+To watch a running lane instead of polling, wait for either owner input or completion:
+
+```bash
+herdr agent wait lane-<issue> --until blocked --until done
+```
+
+Read a lane's terminal output when its issue comments or Herdr status do not explain the blocker:
+
+```bash
+herdr agent read lane-<issue> --source recent-unwrapped --lines 120
+```
 
 ## 5. Trigger review
 
-When a lane reports done, run the review from `docs/agents/review.md` against the PR. Post the merged findings as one PR review. Tell the lane (via `tmux send-keys -t "#<issue>"`) to address blocking and should-fix items. Nits are the owner's call.
+When a lane reports done, run the review from `docs/agents/review.md` against the PR. Post the merged findings as one PR review. Tell the lane to address blocking and should-fix items:
+
+```bash
+herdr agent send-keys lane-<issue> esc
+herdr agent prompt lane-<issue> "Address the blocking and should-fix review findings."
+```
+
+Nits are the owner's call.
 
 ## 6. Merge order and updates
 
@@ -96,9 +121,19 @@ Only the next PR gets updated. The others stay as they are until their turn.
 
 ## 7. Cleanup
 
-`lane_done <issue>` refuses if the PR isn't merged, if the worktree has uncommitted or unpushed changes, or if a dev server still listens on the lane's port. Fix the cause or pass `--force` only after the owner says so. It removes the worktree, prunes, deletes the local branch and closes the tmux window. GitHub deletes the remote branch on merge.
+`lane_done <issue>` refuses if the PR isn't merged, if the worktree has uncommitted or unpushed changes, or if a dev server still listens on the lane's port. Fix the cause or pass `--force` only after the owner says so. It removes the Herdr workspace and checkout, prunes worktrees, and deletes the local branch. GitHub deletes the remote branch on merge.
 
 After merge, copy the lane's learning line from its issue comment into `docs/ai/LEARNINGS.md`. That is the one file you may edit, and only on `main` after the lane is gone.
+
+## Command mapping
+
+| Task | Herdr command or helper |
+|---|---|
+| Lane status | `lane_status` |
+| Reading a lane | `herdr agent read lane-<issue>` |
+| Sending keys to a lane | `herdr agent send-keys lane-<issue> <key>` |
+| Starting a lane | `lane <issue> <slug> [copilot|devin] [model|reasoning-effort]` |
+| Cleaning up a lane | `lane_done <issue>` |
 
 ## What you never do
 
