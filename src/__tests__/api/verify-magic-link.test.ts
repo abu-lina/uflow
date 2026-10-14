@@ -312,7 +312,7 @@ describe('POST /api/auth/verify-magic-link', () => {
       expect(data.hashedToken).toBe('test-hashed-token-123');
     });
 
-    it('[pre-fix FAILS, post-fix PASSES] syncs DB role into auth user_metadata.role on successful verification', async () => {
+    it('does not write the DB role to auth user metadata on successful verification', async () => {
       const validToken = createMockTokenData({
         token: 'valid-token-role-sync',
         email: 'test@example.com',
@@ -350,12 +350,7 @@ describe('POST /api/auth/verify-magic-link', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
-      expect(mock.auth.admin.updateUserById).toHaveBeenCalledWith(validToken.user_id, {
-        user_metadata: {
-          language: 'en',
-          role: 'user',
-        },
-      });
+      expect(mock.auth.admin.updateUserById).not.toHaveBeenCalled();
     });
   });
 

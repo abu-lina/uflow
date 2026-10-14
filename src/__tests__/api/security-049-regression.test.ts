@@ -189,7 +189,7 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
     expect(res.status).toBe(200);
   });
 
-  it('[pre-fix FAILS, post-fix PASSES] syncs DB role to auth user_metadata.role when setting role', async () => {
+  it('updates the DB role without writing it to auth user metadata', async () => {
     mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123', email: 'admin@test.com' });
     mockGetUserRole.mockResolvedValue('admin');
 
@@ -224,15 +224,7 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
     const res = await POST(makeRequest({ userId: 'target-user', role: 'moderator' }));
     expect(res.status).toBe(200);
 
-    expect(mockSupabaseAdmin.auth.admin.updateUserById).toHaveBeenCalledWith(
-      'target-user',
-      {
-        user_metadata: {
-          language: 'en',
-          role: 'moderator',
-        },
-      }
-    );
+    expect(mockSupabaseAdmin.auth.admin.updateUserById).not.toHaveBeenCalled();
   });
 });
 

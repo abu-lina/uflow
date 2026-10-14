@@ -23,12 +23,12 @@ vi.mock('@/utils/security', () => ({
   unblockIP: vi.fn(),
 }));
 
-describe('POST /api/auth/login role sync', () => {
+describe('POST /api/auth/login role metadata', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('[pre-fix FAILS, post-fix PASSES] syncs DB role to auth user_metadata.role when mismatched', async () => {
+  it('does not write the DB role to auth user metadata', async () => {
     const updateUserById = vi.fn().mockResolvedValue({ error: null });
     const fromChain = {
       select: vi.fn().mockReturnValue({
@@ -86,11 +86,6 @@ describe('POST /api/auth/login role sync', () => {
     const res = await POST(req);
     expect(res.status).toBe(200);
 
-    expect(updateUserById).toHaveBeenCalledWith('user-1', {
-      user_metadata: {
-        language: 'en',
-        role: 'moderator',
-      },
-    });
+    expect(updateUserById).not.toHaveBeenCalled();
   });
 });
