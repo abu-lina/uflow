@@ -62,17 +62,17 @@ _herdr_workspace_id() {
   local json="$1" path="$2"
   printf '%s\n' "$json" |
     jq -r --arg path "$path" \
-      '[.. | objects | select((.checkout_path? // .path? // .cwd?) == $path) | (.id? // .workspace_id?)] | first // empty'
+      '[.result.workspaces[]? | select(.worktree.checkout_path == $path) | .workspace_id] | first // empty'
 }
 
 _herdr_workspace_for_issue() {
   local json="$1" issue="$2"
   printf '%s\n' "$json" |
     jq -r --arg issue "$issue" '
-      [.. | objects | select((.checkout_path? // .path? // .cwd? // "") |
+      [.result.workspaces[]? | select((.worktree.checkout_path // "") |
         contains("/.worktrees/" + $issue + "-"))] | first // {} |
-      [(.id // .workspace_id // ""), (.checkout_path // .path // .cwd // ""),
-        (.branch // ""), (.label // .name // "")] | @tsv
+      [(.workspace_id // ""), (.worktree.checkout_path // ""),
+        (.branch // ""), (.label // "")] | @tsv
     '
 }
 
@@ -110,7 +110,7 @@ foreman() {
 }
 
 lane() {
-  local issue="$1" slug="$2" agent="${3:-copilot}" model="${4:-}"
+  local issue="${1:-}" slug="${2:-}" agent="${3:-copilot}" model="${4:-}"
   [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [copilot|devin] [model|effort]" >&2; return 1; }
   [[ "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be copilot or devin" >&2; return 1; }
 
@@ -184,7 +184,7 @@ EOF
 }
 
 lane_done() {
-  local issue="$1" force="$2"
+  local issue="${1:-}" force="${2:-}"
   [[ -z "$issue" ]] && { echo "usage: lane_done <issue> [--force]" >&2; return 1; }
 
   local root dir branch port workspace_json workspace_id workspace_record stale_dir stale_branch stale_label cleanup_failed=0
@@ -258,20 +258,17 @@ lane_status() {
   workspaces="$(herdr workspace list)" || return 1
 
   lane_rows="$(printf '%s\n' "$agents" | jq -r --argjson workspace_data "$workspaces" '
-    [.. | objects | select((.name? // "") | startswith("lane-"))] as $agents |
-    [$workspace_data | .. | objects | select((.checkout_path? // .path? // .cwd?) != null)] as $workspaces |
-    $agents[] |
+    (.result.agents // []) |
+    map(select((.name // "") | startswith("lane-")))[] |
     . as $agent |
-    ($agent.pane_id // $agent.pane.pane_id // "") as $pane_id |
-    ($agent.workspace_id // $agent.workspace.id // $agent.workspace // ($pane_id | split(":")[0])) as $workspace_id |
-    ([$workspaces[] | select((.id // .workspace_id // "") == $workspace_id or
-      (.root_pane.pane_id // "") == $pane_id)] | first // {}) as $workspace |
+    ([$workspace_data.result.workspaces[]? |
+      select(.workspace_id == $agent.workspace_id)] | first // {}) as $workspace |
     [
       $agent.name,
-      ($agent.status // $agent.state // "unknown"),
-      ($agent.workspace_label // $workspace.label // $workspace.name // "-"),
+      ($agent.agent_status // "unknown"),
+      ($workspace.label // "-"),
       ($agent.branch // $workspace.branch // "-"),
-      ($workspace.checkout_path // $workspace.path // $workspace.cwd // $agent.checkout_path // "")
+      ($workspace.worktree.checkout_path // $agent.cwd // "")
     ] | @tsv
   ')" || return 1
 
@@ -288,13 +285,14 @@ lane_status() {
   fi
 
   workspace_rows="$(printf '%s\n' "$workspaces" | jq -r '
-    [.. | objects | select((.checkout_path? // .path? // .cwd?) != null)] |
-    unique_by(.id // .workspace_id // .checkout_path // .path // .cwd)[] |
-    [(.id // .workspace_id // ""), (.label // .name // ""), (.checkout_path // .path // .cwd // "")] |
+    .result.workspaces[]? |
+    [(.workspace_id // ""), (.label // ""), (.worktree.checkout_path // "")] |
     @tsv
   ')" || return 1
   while IFS=$'\t' read -r workspace_id label path; do
-    [[ -n "$path" && ! -e "$path" ]] &&
+    if [[ -n "$path" && ! -e "$path" ]]; then
       printf 'STALE WORKSPACE\t%s\t%s\tcheckout path does not exist: %s\n' "$workspace_id" "$label" "$path"
+    fi
   done <<<"$workspace_rows"
+  return 0
 }
