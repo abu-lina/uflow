@@ -6,6 +6,7 @@ import { Icon } from '@iconify/react';
 import L from 'leaflet';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { logApp } from '@/lib/logger';
+import type { Section } from '@/config/sectionFilters';
 import type { OpeningHours } from '@/types/openingHours';
 import 'leaflet/dist/leaflet.css';
 
@@ -14,6 +15,7 @@ export interface MapPin {
   providerName: string;
   lat: number;
   lng: number;
+  listing_type?: Section;
   opening_hours?: OpeningHours | null;
   provider_images?: string | { urls?: string[] } | null;
   address_city?: string | null;

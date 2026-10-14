@@ -1,8 +1,16 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { RootPageContent } from '@/components/shared/RootPageContent';
+
+const { mockGetMapLocations } = vi.hoisted(() => ({
+  mockGetMapLocations: vi.fn(async () => []),
+}));
+
+vi.mock('@/services/providers', () => ({
+  getMapLocations: mockGetMapLocations,
+}));
 
 vi.mock('@/hooks/useAppStage', () => ({
   useAppStage: () => ({
@@ -64,8 +72,12 @@ vi.mock('@/features/search/components/HomeSearchBar', () => ({
 }));
 
 vi.mock('@/features/search/components/SectionSelector', () => ({
-  SectionSelector: () => (
-    <div aria-label="browse sections" data-testid="home-section-selector" role="tablist" />
+  SectionSelector: ({ onSectionChange }: { onSectionChange: (section: 'store') => void }) => (
+    <div aria-label="browse sections" data-testid="home-section-selector" role="tablist">
+      <button onClick={() => onSectionChange('store')} type="button">
+        Stores
+      </button>
+    </div>
   ),
 }));
 
@@ -97,6 +109,10 @@ vi.mock('sonner', () => ({
 }));
 
 describe('RootPageContent layout regression (Plan 109)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders section tabs above the search bar in the fixed header on mobile', async () => {
     render(<RootPageContent />);
 
@@ -112,5 +128,15 @@ describe('RootPageContent layout regression (Plan 109)', () => {
     expect(sectionTablist).toBeInTheDocument();
     // Section tabs are now inside the fixed header, above the search bar
     expect(searchHeader).toContainElement(sectionTablist);
+  });
+
+  it('fetches map pins for the selected section', async () => {
+    render(<RootPageContent />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stores' }));
+
+    await waitFor(() => {
+      expect(mockGetMapLocations).toHaveBeenCalledWith(expect.objectContaining({ section: 'store' }));
+    });
   });
 });

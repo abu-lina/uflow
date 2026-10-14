@@ -83,6 +83,7 @@ describe('#254 post-QA: renderProvidersPage displayCategory', () => {
       name_de: 'Kebab / Döner',
       name_en: 'Kebab / Döner',
     });
+    expect(props.mapCity).toBe('Berlin');
   });
 
   it.each(ALL_CATEGORIES_LABELS)(

@@ -104,6 +104,7 @@ export async function renderProvidersPage(opts: {
         }}
         initialFilters={filters}
         initialSection={section}
+        mapCity={routeCity}
       />
     </Suspense>
   );

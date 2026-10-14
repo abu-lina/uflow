@@ -98,7 +98,7 @@ function sanitizeLogValue(value: string, maxLength = 100): string {
  * review_status/review_feedback fields in results.
  *
  * Plan 089: Added `section` parameter for section-based routing.
- *   - 'food'    -> providers with listing_type = 'food'
+ *   - 'food'    -> food listings
  *   - 'ummah'   -> community_services table only
  *   - 'business'-> providers with listing_type = 'business'
  *   - undefined -> defaults to 'food' per D9
