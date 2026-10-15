@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
+import { maskEmail, maskIp, redactError } from '@/lib/logging/redact-pii';
 
 // Rate limiting for confirmation attempts
 const confirmationRateLimit = new Map<string, { count: number; resetTime: number }>();
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         });
 
         if (authError || !authData.user) {
-          console.log(`[CONFIRM] Supabase auth verification failed:`, authError);
+          console.log(`[CONFIRM] Supabase auth verification failed:`, redactError(authError));
           // Convert AuthError to a format that matches our error handling
           tokenError = {
             name: 'AuthError',
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
           };
         }
       } catch (authVerifyError) {
-        console.error(`[CONFIRM] Error verifying Supabase auth token:`, authVerifyError);
+        console.error(`[CONFIRM] Error verifying Supabase auth token:`, redactError(authVerifyError));
         tokenError = {
           name: 'AuthVerifyError',
           message:
@@ -148,14 +148,7 @@ export async function POST(request: Request) {
     if (tokenError || !tokenData) {
       console.error(`[CONFIRM] Token validation failed:`, {
         email: maskEmail(email),
-        tokenError: tokenError
-          ? {
-              message: tokenError.message,
-              details: tokenError.details,
-              hint: tokenError.hint,
-              code: tokenError.code,
-            }
-          : null,
+        tokenError: tokenError ? redactError(tokenError) : null,
         hasTokenData: !!tokenData,
       });
       return NextResponse.json(

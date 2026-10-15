@@ -72,3 +72,44 @@ export function maskIp(value: unknown): string {
   const firstThree = hextets.slice(0, 3);
   return firstThree.every((hextet) => hextet === '0') ? '::' : `${firstThree.join(':')}::`;
 }
+
+export function maskIdentifier(value: unknown): string {
+  if (typeof value !== 'string') {
+    return REDACTED;
+  }
+  if (value.startsWith('ip:')) {
+    return `ip:${maskIp(value.slice(3))}`;
+  }
+  return value.startsWith('user:') ? value : REDACTED;
+}
+
+const TEXT_TOKEN = /[^\s"'`<>()[\]{},;:=]+/g;
+const LEADING_EMAIL = /^([^@]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)(.*)$/;
+
+export function redactEmails(text: string): string {
+  return text.replace(TEXT_TOKEN, (token) => {
+    if (!token.includes('@')) {
+      return token;
+    }
+    const match = LEADING_EMAIL.exec(token);
+    return match ? `${maskEmail(match[1])}${match[2]}` : REDACTED;
+  });
+}
+
+const ERROR_FIELDS = ['name', 'message', 'code', 'status', 'details', 'hint'] as const;
+
+export function redactError(error: unknown): Record<string, unknown> {
+  if (!error || typeof error !== 'object') {
+    return { message: redactEmails(String(error)) };
+  }
+
+  const source = error as Record<string, unknown>;
+  return Object.fromEntries(
+    ERROR_FIELDS.filter((field) => source[field] !== undefined && source[field] !== null).map(
+      (field) => {
+        const value = source[field];
+        return [field, typeof value === 'string' ? redactEmails(value) : value];
+      },
+    ),
+  );
+}

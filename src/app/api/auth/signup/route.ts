@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
+import { maskEmail, maskIp, redactEmails, redactError } from '@/lib/logging/redact-pii';
 import {
   getClientIP,
   checkIPBlocked,
@@ -41,10 +41,7 @@ export async function POST(request: Request) {
 
     // Enhanced debug logging
     if (testApiKeyHeader) {
-      console.log(
-        '[SIGNUP API] Test API key header received:',
-        testApiKeyHeader.substring(0, 10) + '...',
-      );
+      console.log('[SIGNUP API] Test API key header received');
       console.log('[SIGNUP API] Expected key set:', expectedKey ? 'YES' : 'NO');
       console.log('[SIGNUP API] Test mode active:', isTest);
     }
@@ -227,7 +224,7 @@ export async function POST(request: Request) {
     if (error) {
       // Never forward the Supabase error message to the client: it can
       // contain table names, constraint names or other internals.
-      console.error('[SIGNUP API] Error creating user:', error);
+      console.error('[SIGNUP API] Error creating user:', redactError(error));
       return NextResponse.json(
         { error: 'Failed to create user', code: 'SIGNUP_FAILED' },
         { status: 500 },
@@ -295,7 +292,7 @@ export async function POST(request: Request) {
       });
 
     if (tokenError) {
-      console.error('[SIGNUP API] Error storing token:', tokenError);
+      console.error('[SIGNUP API] Error storing token:', redactError(tokenError));
       // User is created but token failed - should still return success
       // User can request resend later
     } else {
@@ -324,7 +321,7 @@ export async function POST(request: Request) {
           console.log('[SIGNUP API] ✅ Confirmation email sent successfully');
         } else {
           const errorText = await emailResponse.text();
-          console.error('[SIGNUP API] Failed to send email:', errorText);
+          console.error('[SIGNUP API] Failed to send email:', redactEmails(errorText));
           // Don't fail signup if email fails - user can resend later
         }
       } catch (emailError) {

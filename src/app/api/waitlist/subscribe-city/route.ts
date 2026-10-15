@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
+import { maskEmail, maskIdentifier, redactError } from '@/lib/logging/redact-pii';
 
 /**
  * POST /api/waitlist/subscribe-city
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const isAllowed = checkRateLimit(identifier, 20, 60 * 60 * 1000, 'waitlist-subscribe-city');
 
     if (!isAllowed) {
-      console.log('[Subscribe City] Rate limit exceeded for:', maskIp(identifier.slice(3)));
+      console.log('[Subscribe City] Rate limit exceeded for:', maskIdentifier(identifier));
       return NextResponse.json(
         {
           data: null,
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
     // 4. Handle errors
     if (error) {
-      console.error('[Subscribe City] RPC function error:', error);
+      console.error('[Subscribe City] RPC function error:', redactError(error));
       return NextResponse.json(
         {
           data: null,

@@ -3,10 +3,9 @@ import { getClientIP, checkIPBlocked } from '@/utils/security';
 import { getClientIdentifier, getRemainingRequests } from '@/lib/rate-limit';
 
 /**
- * User-friendly diagnostic endpoint for magic link issues
- * Users can visit this URL on their iPhone to get diagnostic information
+ * Admin-only diagnostic endpoint for magic link issues (requires x-admin-key header)
  * GET /api/auth/magic-link-diagnostic?email=user@example.com
- * GET /api/auth/magic-link-diagnostic?email=user@example.com&ip=85.216.121.245 (admin only - requires x-admin-key header)
+ * GET /api/auth/magic-link-diagnostic?email=user@example.com&ip=85.216.121.245
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -14,14 +13,16 @@ export async function GET(request: Request) {
   const adminKey = request.headers.get('x-admin-key');
   const expectedKey = process.env.ADMIN_DEBUG_KEY;
   // F-049-03: No fallback key — admin override disabled when ADMIN_DEBUG_KEY is unset.
-  // Non-admin (user) diagnostic mode is unrestricted and continues below.
+  if (!expectedKey || adminKey !== expectedKey) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
   
   // Allow admin to check specific IP by providing it in query params
   let ip: string;
   let identifier: string;
   
   const requestedIP = url.searchParams.get('ip');
-  if (requestedIP && adminKey === expectedKey) {
+  if (requestedIP) {
     // Admin override - check the requested IP instead of visitor's IP
     ip = requestedIP;
     identifier = `ip:${ip.replace(/\s+/g, '')}`;
@@ -55,7 +56,7 @@ export async function GET(request: Request) {
     'cf-connecting-ip': request.headers.get('cf-connecting-ip'),
   };
   
-  const isAdminMode = requestedIP && adminKey === expectedKey;
+  const isAdminMode = Boolean(requestedIP);
   
   const diagnostic = {
     timestamp: new Date().toISOString(),
