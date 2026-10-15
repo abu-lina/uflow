@@ -138,6 +138,8 @@ lane() {
 
   local root dir branch port workspace_json workspace_id worktree_result pane prompt base
   local -a agent_args
+  local ci_supabase_url="https://ci-build-test.supabase.co"
+  local ci_supabase_anon_key="sb_publishable_ci_build_placeholder_not_a_real_key"
   root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
   [[ "$root" == */.worktrees/* ]] && { echo "run lane from the main checkout, not a worktree" >&2; return 1; }
   dir="$(_lane_dir "$root" "$issue")"
@@ -176,6 +178,14 @@ PORT=$port
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:$port
 EOF
 
+  (
+    umask 077
+    cat >"$dir/.env.local" <<EOF
+NEXT_PUBLIC_SUPABASE_URL=$ci_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=$ci_supabase_anon_key
+EOF
+  ) || { echo "could not write $dir/.env.local" >&2; return 1; }
+
   if [[ -d "$root/node_modules" ]]; then
     cp -c -R "$root/node_modules" "$dir/node_modules" 2>/dev/null ||
       cp -R "$root/node_modules" "$dir/node_modules" ||
@@ -196,6 +206,7 @@ EOF
       '--allow-tool=shell(gh pr checks)'
       '--deny-tool=shell(git merge)'
       '--deny-tool=shell(git rebase)'
+      '--deny-tool=shell(pass-cli:*)'
       '--deny-tool=write(.env.local)'
       '--deny-tool=shell(gh pr merge)')
   else
