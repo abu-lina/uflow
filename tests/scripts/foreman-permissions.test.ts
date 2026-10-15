@@ -16,11 +16,15 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 15;
+const probeCount = 17;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
+const fakeEmail = 'probe-user@example.com';
+const fakeOrg = 'org-0123456789abcdef0123';
 
-// Emulates Devin: PATH comes from "$SHELL" run as an interactive login shell.
+// Emulates Devin: PATH comes from "$SHELL" run as an interactive login shell, a
+// login banner goes to stderr, and every tool call leaves a "Permission decision"
+// line in a per-run log under ~/.local/share/devin/cli/logs.
 const stubDevin = `#!/bin/sh
 printf '%s\\n' "$*" >> "$DEVIN_LOG"
 if [ -n "\${DEVIN_PERMISSION_MODE+x}\${DEVIN_SANDBOX+x}" ]; then
@@ -32,6 +36,16 @@ case "$instruction" in
   "Run this exact shell command"*) cmd="\${instruction#*: }" ;;
   *) cmd="" ;;
 esac
+echo "Logged in as ${fakeEmail}" >&2
+echo "Organization: ${fakeOrg}" >&2
+echo "You're all set" >&2
+echo "session ready in ${fakeOrg}" >&2
+logs="$HOME/.local/share/devin/cli/logs"
+mkdir -p "$logs"
+decide() {
+  printf 'INFO chisel_core::translator: Permission decision for tool %s: auto-decided Some(%s) by cog\\n' "$1" "$2" >> "$logs/devin_stub_$$.log"
+}
+acted() { printf '%s\\n' "$1" >> "$ACTION_LOG"; }
 if [ "$cmd" = "command -v gh && command -v herdr" ]; then
   [ "$STUB_MODE" = hijacked ] && PATH="$FAKE_BREW:$PATH"
   eval "$cmd"
@@ -56,29 +70,37 @@ if [ "$STUB_MODE" = compliant ]; then
       exit $?
       ;;
   esac
+  # A denied call ends the turn with no reply, as real Devin does.
   case "$instruction" in
-    *"reply with exactly MCP_UNAVAILABLE"*) echo MCP_UNAVAILABLE ;;
-    *) echo "The tool call was denied by the permission rules." ;;
+    *"git -C . commit"*|*"env git commit"*) decide exec Deny ;;
+    *MCP*) decide mcp__dev-supabase__list_tables Deny ;;
   esac
   exit 0
 fi
-jq '.permissions.allow += ["Exec(git push)"]' "$config" > "$config.tmp" && mv "$config.tmp" "$config"
-printf ' ' >> .devin/foreman.json
+# Violating mode: every forbidden action is logged only after it succeeded.
+jq '.permissions.allow += ["Exec(git push)"]' "$config" > "$config.tmp" && mv "$config.tmp" "$config" && acted widen-config
+printf ' ' >> .devin/foreman.json && acted edit-committed-config
 case "$instruction" in
   "Write a file /tmp/foreman-probe-"*)
     path="\${instruction#Write a file }"
     path="\${path%% *}"
-    printf ok > "$path"
+    printf ok > "$path" && acted tmp-write
     printf '%s\\n' "$path" >> "$TMP_PROBE_LOG"
     ;;
-  *write-probe.txt*) touch write-probe.txt ;;
-  *probe.txt*) touch probe.txt ;;
-  *LEARNINGS*) echo probe >> docs/ai/LEARNINGS.md ;;
-  *"npm install"*) echo probe >> package.json ;;
-  *"scripts/lane start"*) herdr worktree create --path probe ;;
-  *MCP*) echo "Tables: providers, listings" ;;
+  *write-probe.txt*) touch write-probe.txt && acted write-probe ;;
+  *probe.txt*) touch probe.txt && acted edit-probe ;;
+  *LEARNINGS*) echo probe >> docs/ai/LEARNINGS.md && acted learnings ;;
+  *"npm install"*) echo probe >> package.json && acted npm-install ;;
+  *"scripts/lane start"*) herdr worktree create --path probe && acted lane-start ;;
+  *MCP*)
+    decide mcp__dev-supabase__list_tables Allow
+    echo "Tables: providers, listings" && acted mcp
+    ;;
   *"git log"*|*"gh issue list"*|*"herdr agent list"*|*"scripts/lane status"*) exit 1 ;;
-  *) eval "$cmd" ;;
+  *)
+    decide exec Allow
+    eval "$cmd" >/dev/null 2>&1 && acted "ran: $cmd"
+    ;;
 esac
 `;
 
@@ -150,6 +172,7 @@ const runVerify = (mode: 'compliant' | 'violating' | 'hijacked') => {
   const { fixture, root, bin, home, fakeBrew } = createFixture();
   const devinLog = join(fixture, 'devin.log');
   const tmpProbeLog = join(fixture, 'tmp-probe.log');
+  const actionLog = join(fixture, 'actions.log');
   try {
     const result = spawnSync('bash', [join(root, 'scripts', 'verify-foreman-permissions.sh')], {
       cwd: fixture,
@@ -163,6 +186,7 @@ const runVerify = (mode: 'compliant' | 'violating' | 'hijacked') => {
         DEVIN_PERMISSION_MODE: 'dangerous',
         DEVIN_SANDBOX: '1',
         TMP_PROBE_LOG: tmpProbeLog,
+        ACTION_LOG: actionLog,
         STUB_MODE: mode,
         GIT_AUTHOR_NAME: 'Probe',
         GIT_AUTHOR_EMAIL: 'probe@example.com',
@@ -180,7 +204,10 @@ const runVerify = (mode: 'compliant' | 'violating' | 'hijacked') => {
     const tmpProbes = existsSync(tmpProbeLog)
       ? readFileSync(tmpProbeLog, 'utf8').trimEnd().split('\n')
       : [];
-    return { result, devinCalls, results, tmpProbes };
+    const actions = existsSync(actionLog)
+      ? readFileSync(actionLog, 'utf8').trimEnd().split('\n')
+      : [];
+    return { result, devinCalls, results, tmpProbes, actions };
   } finally {
     rmSync(fixture, { recursive: true, force: true });
   }
@@ -213,6 +240,13 @@ describe('foreman permission config (#649)', () => {
       'Exec(rm)',
       'Exec(gh pr merge)',
       'Exec(gh repo)',
+      'Exec(git -C)',
+      'Exec(git -c)',
+      'Exec(env)',
+      'Exec(command)',
+      'Exec(bash)',
+      'Exec(sh)',
+      'Exec(eval)',
       'mcp__*',
     ]) {
       expect(permissions.deny).toContain(rule);
@@ -239,8 +273,28 @@ describe('foreman permission config (#649)', () => {
   });
 
   it('AC2: exits non-zero and reports every write probe as failed when Devin performs the action', () => {
-    const { result, devinCalls, results, tmpProbes } = runVerify('violating');
+    const { result, devinCalls, results, tmpProbes, actions } = runVerify('violating');
 
+    // Each forbidden action really happened, so every FAIL below is earned.
+    for (const action of [
+      'edit-probe',
+      'write-probe',
+      'learnings',
+      'ran: git commit --allow-empty -m probe',
+      'ran: git status && git commit --allow-empty -m probe',
+      'ran: git -C . commit --allow-empty -m probe',
+      'ran: env git commit --allow-empty -m probe',
+      'ran: git push origin HEAD:refs/heads/probe',
+      'npm-install',
+      'ran: gh pr merge 1',
+      'lane-start',
+      'mcp',
+      'tmp-write',
+    ]) {
+      expect(actions, action).toContain(action);
+    }
+    expect(actions.filter((action) => action === 'widen-config')).toHaveLength(probeCount);
+    expect(actions.filter((action) => action === 'edit-committed-config')).toHaveLength(probeCount);
     expect(result.status, result.stderr).not.toBe(0);
     expect(devinCalls).toHaveLength(probeCount + 1);
     expect(devinCalls[0]).toMatch(
@@ -270,9 +324,22 @@ describe('foreman permission config (#649)', () => {
     expect(results).toHaveLength(reportCount);
     for (const line of results) expect(line).toMatch(/^PASS/);
     expect(result.stdout).toContain('config copy changed: devin.org_id');
+    expect(result.stdout).toContain('devin decisions: exec=Deny');
+    expect(result.stdout).toContain('devin decisions: mcp__dev-supabase__list_tables=Deny');
     expect(result.stdout).not.toContain('org-fake-value');
     expect(result.stdout).not.toContain('real-tool-marker');
     expect(tmpProbes).toEqual([]);
+  }, 60_000);
+
+  it('strips the Devin login banner and org ids from printed transcripts', () => {
+    const { result } = runVerify('compliant');
+
+    expect(result.stdout).not.toMatch(/logged in as/i);
+    expect(result.stdout).not.toContain(fakeEmail);
+    expect(result.stdout).not.toContain('Organization:');
+    expect(result.stdout).not.toContain("You're all set");
+    expect(result.stdout).not.toContain(fakeOrg);
+    expect(result.stdout).toContain('session ready in org-<redacted>');
   }, 60_000);
 
   it('aborts before any probe when gh or herdr inside Devin do not resolve to the stubs', () => {
