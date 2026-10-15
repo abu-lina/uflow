@@ -1333,3 +1333,13 @@ Corrected (2026-10-05): the "no branch protection" claim above is stale. `main` 
 
 - **Learning**: `headers.get()` returns `null` for a missing header, so `adminKey === process.env.KEY` is `null === undefined` (false) when the header is absent; the real risk is when the env var is unset and the compared value can be `undefined`, so every secret comparison needs an explicit "key is configured" check.
 - **Task/PR**: Issue #658, PR #663
+
+### 2026-10-15 — ShellCheck can't see zsh special-variable bindings
+
+- **Learning**: ShellCheck sees the file declared Bash dialect, so checking the real zsh risk requires a separate binding check proven by executable fixtures.
+- **Task/PR**: Issue #648, PR #665
+
+### 2026-10-15 — `devin --config` replaces the user config and writes state back into it
+
+- **Learning**: `devin --config` replaces the user config file, and Devin saves session state (org_id, model, grants) back into whatever file that flag names, so pass it a throwaway copy.
+- **Task/PR**: Issue #649, PR #661
