@@ -605,6 +605,99 @@ esac
     expect(laneScript).toContain('--permission-mode accept-edits --sandbox');
   });
 
+  it('grants Devin lanes only the shared git directory and approved gh commands', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-devin-sandbox-'));
+    const bin = join(fixture, 'bin');
+    const herdrLog = join(fixture, 'herdr.log');
+    const { root } = createLaneRepo(fixture);
+    try {
+      mkdirSync(bin);
+      writeFileSync(
+        join(bin, 'gh'),
+        `#!/bin/sh
+case "$1 $2" in
+  "issue view") printf '%s\\n' 'type:bugfix' ;;
+  "issue develop")
+    shift 2
+    while [ "$#" -gt 0 ]; do
+      if [ "$1" = --name ]; then branch="$2"; shift 2; else shift; fi
+    done
+    git -C "$REPO_ROOT" push -q origin "main:refs/heads/$branch"
+    ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+      writeFileSync(
+        join(bin, 'herdr'),
+        `#!/bin/sh
+case "$1 $2" in
+  "worktree create")
+    shift 2
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --cwd) repo="$2"; shift 2 ;;
+        --branch) branch="$2"; shift 2 ;;
+        --base) base="$2"; shift 2 ;;
+        --path) path="$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    git -C "$repo" worktree add -b "$branch" "$path" "$base" >/dev/null || exit 1
+    printf '%s\\n' '{"result":{"root_pane":{"pane_id":"pane-lane"}}}'
+    ;;
+  "agent start")
+    printf '%s\\n' 'agent start' >> "$HERDR_LOG"
+    shift 2
+    for arg do printf '%s\\n' "$arg" >> "$HERDR_LOG"; done
+    ;;
+  "agent prompt") printf '%s\\n' 'agent prompt' >> "$HERDR_LOG" ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+      const result = spawnSync(
+        'bash',
+        [laneEntrypoint, 'start', '659', 'devin-sandbox', 'devin'],
+        {
+          cwd: root,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            PATH: `${bin}:${process.env.PATH}`,
+            HERDR_LOG: herdrLog,
+            REPO_ROOT: root,
+          },
+        },
+      );
+
+      expect(result.status, result.stderr).toBe(0);
+      const loggedArgs = readFileSync(herdrLog, 'utf8').split('\n');
+      const startIndex = loggedArgs.indexOf('agent start');
+      const promptIndex = loggedArgs.indexOf('agent prompt', startIndex);
+      const args = loggedArgs.slice(startIndex + 1, promptIndex);
+      expect(args).toContain('--sandbox');
+      const configIndex = args.indexOf('--config');
+      expect(configIndex).toBeGreaterThanOrEqual(0);
+      const configPath = args[configIndex + 1];
+      expect(configPath).toBeTruthy();
+      const config = JSON.parse(readFileSync(configPath, 'utf8')) as {
+        permissions: { allow: string[] };
+        sandbox: { excluded: { allow: string[] } };
+      };
+      const commonDir = git(root, 'rev-parse', '--path-format=absolute', '--git-common-dir');
+      expect(config.permissions.allow).toEqual([`Write(${commonDir})`]);
+      expect(config.sandbox.excluded.allow).toEqual([
+        'Exec(gh issue comment)',
+        'Exec(gh pr create --draft)',
+        'Exec(gh pr checks)',
+        'Exec(gh pr view)',
+      ]);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
   it('writes only lane ports and clones dependencies without copying environment files', () => {
     expect(laneScript).toContain('PORT=$port');
     expect(laneScript).toContain('PLAYWRIGHT_BASE_URL=http://127.0.0.1:$port');

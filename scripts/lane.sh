@@ -199,7 +199,28 @@ EOF
       '--deny-tool=write(.env.local)'
       '--deny-tool=shell(gh pr merge)')
   else
-    agent_args+=(--permission-mode accept-edits --sandbox)
+    local git_common_dir config_dir config_file
+    git_common_dir="$(git -C "$root" rev-parse --path-format=absolute --git-common-dir)" ||
+      { echo "could not resolve the repository's git common directory" >&2; return 1; }
+    config_dir="$(mktemp -d "${TMPDIR:-/tmp}/lane-config.XXXXXX")" || return 1
+    config_file="$config_dir/lane.json"
+    (umask 077 && jq -n --arg git_common_dir "$git_common_dir" '{
+      "permissions": {
+        "allow": ["Write(\($git_common_dir))"]
+      },
+      "sandbox": {
+        "excluded": {
+          "allow": [
+            "Exec(gh issue comment)",
+            "Exec(gh pr create --draft)",
+            "Exec(gh pr checks)",
+            "Exec(gh pr view)"
+          ]
+        }
+      }
+    }' > "$config_file") ||
+      { echo "could not write Devin lane sandbox config" >&2; return 1; }
+    agent_args+=(--permission-mode accept-edits --sandbox --config "$config_file")
   fi
 
   herdr agent start "lane-$issue" --kind "$agent" --pane "$pane" -- "${agent_args[@]}" || return 1
