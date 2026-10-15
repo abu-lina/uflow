@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 13;
+const probeCount = 15;
 
 const stubDevin = `#!/bin/sh
 printf '%s\\n' "$*" >> "$DEVIN_LOG"
@@ -32,10 +32,21 @@ if [ "$STUB_MODE" = compliant ]; then
       exit $?
       ;;
   esac
+  case "$instruction" in
+    "Write a file /tmp/foreman-probe-"*)
+      path="\${instruction#Write a file }"
+      path="\${path%% *}"
+      printf ok > "$path"
+      printf '%s\\n' "$path" >> "$TMP_PROBE_LOG"
+      exit 0
+      ;;
+  esac
   echo "The tool call was denied by the permission rules."
   exit 0
 fi
 case "$instruction" in
+  "Write a file /tmp/"*) exit 0 ;;
+  *write-probe.txt*) touch write-probe.txt ;;
   *probe.txt*) touch probe.txt ;;
   *LEARNINGS*) echo probe >> docs/ai/LEARNINGS.md ;;
   *"npm install"*) echo probe >> package.json ;;
@@ -88,6 +99,7 @@ const createFixture = () => {
 const runVerify = (mode: 'compliant' | 'violating') => {
   const { fixture, root, bin } = createFixture();
   const devinLog = join(fixture, 'devin.log');
+  const tmpProbeLog = join(fixture, 'tmp-probe.log');
   try {
     const result = spawnSync('bash', [join(root, 'scripts', 'verify-foreman-permissions.sh')], {
       cwd: fixture,
@@ -96,6 +108,7 @@ const runVerify = (mode: 'compliant' | 'violating') => {
         ...process.env,
         PATH: `${bin}:${process.env.PATH}`,
         DEVIN_LOG: devinLog,
+        TMP_PROBE_LOG: tmpProbeLog,
         STUB_MODE: mode,
         GIT_AUTHOR_NAME: 'Probe',
         GIT_AUTHOR_EMAIL: 'probe@example.com',
@@ -110,7 +123,10 @@ const runVerify = (mode: 'compliant' | 'violating') => {
           .filter((call) => call !== '--version')
       : [];
     const results = result.stdout.split('\n').filter((line) => /^(PASS|FAIL) {2}/.test(line));
-    return { result, devinCalls, results };
+    const tmpProbes = existsSync(tmpProbeLog)
+      ? readFileSync(tmpProbeLog, 'utf8').trimEnd().split('\n')
+      : [];
+    return { result, devinCalls, results, tmpProbes };
   } finally {
     rmSync(fixture, { recursive: true, force: true });
   }
@@ -180,11 +196,14 @@ describe('foreman permission config (#649)', () => {
   }, 60_000);
 
   it('AC2 + AC3: passes every probe when Devin blocks writes and runs read-only commands without a prompt', () => {
-    const { result, devinCalls, results } = runVerify('compliant');
+    const { result, devinCalls, results, tmpProbes } = runVerify('compliant');
 
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
     expect(devinCalls).toHaveLength(probeCount);
     expect(results).toHaveLength(probeCount);
     for (const line of results) expect(line).toMatch(/^PASS/);
+    expect(tmpProbes).toHaveLength(1);
+    expect(tmpProbes[0]).toMatch(/^\/tmp\/foreman-probe-.+\.txt$/);
+    expect(existsSync(tmpProbes[0])).toBe(false);
   }, 60_000);
 });

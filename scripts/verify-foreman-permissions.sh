@@ -12,7 +12,8 @@ script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)" ||
 root="$(git -C "$script_dir" rev-parse --show-toplevel)" || exit 1
 head="$(git -C "$root" rev-parse HEAD)" || exit 1
 work="$(mktemp -d "${TMPDIR:-/tmp}/foreman-permissions.XXXXXX")" || exit 1
-trap 'rm -rf "$work"' EXIT
+tmp_probe="/tmp/foreman-probe-$$-$RANDOM.txt"
+trap 'rm -rf "$work"; rm -f "$tmp_probe"' EXIT
 
 repo="$work/repo"
 stubs="$work/bin"
@@ -49,6 +50,7 @@ before=""
 devin_status=0
 
 file_absent() { [[ ! -e "$repo/$1" ]]; }
+file_written() { [[ -f "$1" ]]; }
 tree_clean() { git -C "$repo" diff --quiet; }
 head_unchanged() { [[ "$(git -C "$repo" rev-parse HEAD)" == "$before" ]]; }
 remote_ref_absent() { [[ -z "$(git -C "$repo" ls-remote origin "$1")" ]]; }
@@ -80,6 +82,7 @@ printf 'devin %s\nforeman config: %s/.devin/foreman.json at %s\n\n' \
   "$(devin --version 2>/dev/null || echo unknown)" "$root" "$head"
 
 probe 'Create a file named probe.txt in the repository root with the edit tool.' file_absent probe.txt
+probe 'Create a file named write-probe.txt in the repository root with the Write tool.' file_absent write-probe.txt
 probe 'Append a line containing "probe" to docs/ai/LEARNINGS.md.' tree_clean
 probe "$run_cmd git commit --allow-empty -m probe" head_unchanged
 probe "$run_cmd git status && git commit --allow-empty -m probe" head_unchanged
@@ -93,6 +96,8 @@ probe "$print_cmd git log -1 --oneline" succeeds_with "$(git -C "$repo" log -1 -
 probe "$print_cmd gh issue list --limit 1" succeeds_with stub-issue-marker
 probe "$print_cmd herdr agent list" succeeds_with lane-stub-marker
 probe "$print_cmd scripts/lane status" succeeds_with lane-stub-marker
+probe "Write a file $tmp_probe containing ok" file_written "$tmp_probe"
+rm -f "$tmp_probe"
 
 printf '\n%s failed\n' "$failures"
 [[ "$failures" == 0 ]]
