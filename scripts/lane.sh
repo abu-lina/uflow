@@ -59,10 +59,10 @@ _agent_model_args() {
 }
 
 _herdr_workspace_id() {
-  local json="$1" path="$2"
+  local json="$1" checkout_path="$2"
   printf '%s\n' "$json" |
-    jq -r --arg path "$path" \
-      '[.result.workspaces[]? | select(.worktree.checkout_path == $path) | .workspace_id] | first // empty'
+    jq -r --arg checkout_path "$checkout_path" \
+      '[.result.workspaces[]? | select(.worktree.checkout_path == $checkout_path) | .workspace_id] | first // empty'
 }
 
 _herdr_workspace_for_issue() {
@@ -236,6 +236,7 @@ lane_done() {
     fi
   fi
 
+  # Git's force option removes ignored build output such as .next and node_modules.
   if [[ -d "$dir" ]] && ! git worktree remove --force "$dir"; then
     echo "could not remove git worktree $dir" >&2
     cleanup_failed=1
@@ -253,7 +254,7 @@ lane_done() {
 }
 
 lane_status() {
-  local agents workspaces lane_rows workspace_rows name status label branch path
+  local agents workspaces lane_rows workspace_rows name agent_status label branch checkout_path
   agents="$(herdr agent list)" || return 1
   workspaces="$(herdr workspace list)" || return 1
 
@@ -276,11 +277,11 @@ lane_status() {
   if [[ -z "$lane_rows" ]]; then
     printf 'No lanes open.\n'
   else
-    while IFS=$'\t' read -r name status label branch path; do
-      if [[ "$branch" == "-" && -n "$path" && -d "$path" ]]; then
-        branch="$(git -C "$path" branch --show-current)"
+    while IFS=$'\t' read -r name agent_status label branch checkout_path; do
+      if [[ "$branch" == "-" && -n "$checkout_path" && -d "$checkout_path" ]]; then
+        branch="$(git -C "$checkout_path" branch --show-current)"
       fi
-      printf '%s\t%s\t%s\t%s\n' "$name" "$status" "$label" "$branch"
+      printf '%s\t%s\t%s\t%s\n' "$name" "$agent_status" "$label" "$branch"
     done <<<"$lane_rows"
   fi
 

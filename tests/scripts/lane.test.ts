@@ -1,4 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const laneScript = readFileSync(new URL('../../scripts/lane.sh', import.meta.url), 'utf8');
@@ -6,7 +9,121 @@ const laneGuide = readFileSync(new URL('../../docs/agents/lane.md', import.meta.
 const foremanGuide = readFileSync(new URL('../../docs/agents/foreman.md', import.meta.url), 'utf8');
 const setupDecisions = readFileSync(new URL('../../docs/agents/setup-decisions.md', import.meta.url), 'utf8');
 
+const shellFunction = (name: string) => {
+  const match = laneScript.match(new RegExp(`^${name}\\(\\) \\{[\\s\\S]*?^\\}`, 'm'));
+  if (!match) throw new Error(`Could not find ${name} in scripts/lane.sh`);
+  return match[0];
+};
+
 describe('lane shell helpers', () => {
+  it('does not bind zsh special variables in local declarations', () => {
+    const specialVariables = new Set(['path', 'status', 'cdpath', 'fpath', 'manpath']);
+    const declarations = laneScript.split('\n').flatMap((line) => {
+      const declaration = line.match(/^\s*local\s+(.+)$/);
+      return declaration?.[1].split(/\s+/).flatMap((entry) => {
+        const variable = entry.match(/^([A-Za-z_][A-Za-z0-9_]*)(?:=|$)/)?.[1];
+        return variable && specialVariables.has(variable) ? [variable] : [];
+      }) ?? [];
+    });
+    expect(declarations).toEqual([]);
+  });
+
+  it('keeps external commands available in zsh while resolving a workspace id', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-zsh-'));
+    try {
+      writeFileSync(join(fixture, 'jq'), '#!/bin/sh\nprintf "workspace-636\\n"\n', { mode: 0o755 });
+      const output = execFileSync(
+        'zsh',
+        ['-c', `${shellFunction('_herdr_workspace_id')}\n_herdr_workspace_id '{}' '/tmp/checkout'`],
+        { encoding: 'utf8', env: { ...process.env, PATH: `${fixture}:/usr/bin:/bin` } },
+      );
+      expect(output.trim()).toBe('workspace-636');
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('removes ignored build output and closes a failed Herdr worktree removal', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-cleanup-'));
+    const root = join(fixture, 'repo');
+    const worktree = join(root, '.worktrees', '636-fixture');
+    const bin = join(fixture, 'bin');
+    const herdrState = join(fixture, 'herdr-closed');
+    const herdrLog = join(fixture, 'herdr.log');
+    try {
+      mkdirSync(root);
+      mkdirSync(bin);
+      execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
+      execFileSync('git', ['-C', root, 'config', 'user.email', 'lane-test@example.com']);
+      execFileSync('git', ['-C', root, 'config', 'user.name', 'Lane test']);
+      writeFileSync(join(root, '.gitignore'), '.next/\nnode_modules/\n');
+      writeFileSync(join(root, 'README.md'), 'fixture\n');
+      execFileSync('git', ['-C', root, 'add', '.gitignore', 'README.md']);
+      execFileSync('git', ['-C', root, 'commit', '-m', 'fixture'], { stdio: 'ignore' });
+      mkdirSync(join(root, '.worktrees'));
+      execFileSync('git', ['-C', root, 'worktree', 'add', '-b', 'fix/636-fixture', worktree, 'HEAD'], {
+        stdio: 'ignore',
+      });
+      mkdirSync(join(worktree, '.next'));
+      mkdirSync(join(worktree, 'node_modules'));
+      writeFileSync(join(worktree, '.next', 'build-output'), 'ignored\n');
+      writeFileSync(join(worktree, 'node_modules', 'dependency'), 'ignored\n');
+      writeFileSync(
+        join(bin, 'herdr'),
+        `#!/bin/sh
+printf '%s\\n' "$*" >> "$HERDR_LOG"
+case "$1 $2" in
+  "workspace list")
+    if [ -f "$HERDR_STATE" ]; then
+      printf '{"result":{"workspaces":[]}}\\n'
+    else
+      printf '{"result":{"workspaces":[{"workspace_id":"workspace-636","worktree":{"checkout_path":"%s"}}]}}\\n' "$LANE_WORKTREE"
+    fi
+    ;;
+  "worktree remove") exit 1 ;;
+  "workspace close") : > "$HERDR_STATE" ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+      writeFileSync(join(bin, 'jq'), '#!/bin/sh\nprintf "workspace-636\\n"\n', { mode: 0o755 });
+
+      const script = [
+        shellFunction('_lane_root'),
+        shellFunction('_lane_dir'),
+        shellFunction('_lane_port'),
+        shellFunction('_herdr_workspace_id'),
+        shellFunction('lane_done'),
+        'lane_done 636 --force 2>&1',
+        'herdr workspace list',
+      ].join('\n');
+      const output = execFileSync('bash', ['-c', script], {
+        cwd: root,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          HERDR_LOG: herdrLog,
+          HERDR_STATE: herdrState,
+          LANE_WORKTREE: worktree,
+        },
+      });
+
+      expect(readFileSync(herdrLog, 'utf8')).toContain('workspace close workspace-636');
+      expect(output).toMatch(
+        /Herdr could not remove .*; closing its workspace and completing local cleanup/,
+      );
+      expect(output).toContain('lane #636 removed');
+      expect(JSON.parse(output.trim().split('\n').at(-1) ?? '').result.workspaces).toEqual([]);
+      expect(existsSync(worktree)).toBe(false);
+      expect(execFileSync('git', ['-C', root, 'branch', '--list', 'fix/636-fixture'], { encoding: 'utf8' })).toBe(
+        '',
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
   it('uses Herdr instead of tmux for agent work', () => {
     for (const file of [laneScript, laneGuide, foremanGuide]) {
       expect(file).not.toContain('tmux');
