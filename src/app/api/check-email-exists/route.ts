@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { maskIp } from '@/lib/logging/redact-pii';
 
 // Rate limiting store (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -45,7 +46,7 @@ export async function POST(request: Request) {
     }
 
     // F-049-12: Log security event without PII
-    console.log(`[SECURITY] Email check attempt from IP: ${ip}`);
+    console.log(`[SECURITY] Email check attempt from IP: ${maskIp(ip)}`);
 
     // Use admin API to check user existence and metadata
     // Use pagination to handle large user lists (same approach as login route)

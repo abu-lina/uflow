@@ -3,6 +3,7 @@ import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { getClientIP } from '@/utils/security';
+import { maskIp } from '@/lib/logging/redact-pii';
 
 /**
  * GET /api/user/export-data
@@ -103,7 +104,7 @@ export async function GET(request: Request) {
 
     // 4. Log export request for audit (optional)
     const ip = getClientIP(request);
-    console.log(`[EXPORT] User ${user.id} exported their data from IP ${ip}`);
+    console.log(`[EXPORT] User ${user.id} exported their data from IP ${maskIp(ip)}`);
 
     // 5. Return JSON with download headers
     const jsonString = JSON.stringify(userData, null, 2);

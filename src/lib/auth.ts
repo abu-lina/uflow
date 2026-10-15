@@ -2,6 +2,7 @@
 
 import { supabase } from './supabase/client';
 import type { Language } from '@/translations';
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 
 export const signUpWithLanguage = async (
   email: string,
@@ -11,7 +12,7 @@ export const signUpWithLanguage = async (
   termsAccepted?: boolean,
   privacyAccepted?: boolean,
 ) => {
-  console.log('[SIGNUP] Creating user via Admin API:', email);
+  console.log('[SIGNUP] Creating user via Admin API:', maskEmail(email));
 
   try {
     // Call our server-side API to create user with Admin API
@@ -34,7 +35,7 @@ export const signUpWithLanguage = async (
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[SIGNUP] Signup failed:', data.error);
+      console.error('[SIGNUP] Signup failed:', data.code);
       // The API returns an opaque `code` (e.g. EMAIL_ALREADY_REGISTERED) that
       // the signup page maps through t(). `message` stays for other callers.
       return {
@@ -140,7 +141,7 @@ export const resetPasswordWithLanguage = async (email: string, language: Languag
       });
 
       if (!emailResponse.ok) {
-        console.error('Failed to send reset email:', await emailResponse.text());
+        console.error('Failed to send reset email:', emailResponse.status);
         return {
           error: {
             message: 'Failed to send reset email. Please try again.',
@@ -279,7 +280,7 @@ export const signInWithMagicLink = async (
 
       // Check for specific error codes
       if (data.code === 'IP_BLOCKED') {
-        console.error('[MAGIC LINK CLIENT] IP blocked:', data.ip, data.debug);
+        console.error('[MAGIC LINK CLIENT] IP blocked:', maskIp(data.ip));
         return {
           data: null,
           error: {
@@ -293,7 +294,10 @@ export const signInWithMagicLink = async (
       }
 
       if (data.code === 'RATE_LIMIT_EXCEEDED') {
-        console.error('[MAGIC LINK CLIENT] Rate limit exceeded:', data);
+        console.error('[MAGIC LINK CLIENT] Rate limit exceeded:', {
+          code: data.code,
+          message: data.message,
+        });
         return {
           data: null,
           error: {
@@ -307,7 +311,7 @@ export const signInWithMagicLink = async (
       }
 
       if (data.code === 'EMAIL_SEND_FAILED') {
-        console.error('[MAGIC LINK CLIENT] Email send failed:', data);
+        console.error('[MAGIC LINK CLIENT] Email send failed:', { code: data.code });
         return {
           data: null,
           error: {
@@ -325,10 +329,7 @@ export const signInWithMagicLink = async (
       console.error('[MAGIC LINK CLIENT] API error:', {
         status: response.status,
         statusText: response.statusText,
-        error: data.error,
         code: data.code,
-        details: data.details,
-        debug: data.debug,
       });
 
       return {
@@ -370,7 +371,7 @@ export const signUpWithEmailOnly = async (
   termsAccepted?: boolean,
   privacyAccepted?: boolean,
 ) => {
-  console.log('[SIGNUP] Creating user via Admin API (email-only):', email);
+  console.log('[SIGNUP] Creating user via Admin API (email-only):', maskEmail(email));
 
   try {
     // Call our server-side API to create user without password
@@ -393,7 +394,7 @@ export const signUpWithEmailOnly = async (
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[SIGNUP] Signup failed:', data.error);
+      console.error('[SIGNUP] Signup failed:', data.code);
       return {
         data: null,
         error: { message: data.error || 'Signup failed', code: data.code },
@@ -408,7 +409,9 @@ export const signUpWithEmailOnly = async (
     if (magicLinkResult.error) {
       // User is created but magic link failed - still return success
       // User can request magic link again later
-      console.warn('[SIGNUP] User created but magic link failed:', magicLinkResult.error);
+      console.warn('[SIGNUP] User created but magic link failed:', {
+        code: magicLinkResult.error.code,
+      });
     } else {
       console.log('[SIGNUP] ✅ Magic link sent');
     }

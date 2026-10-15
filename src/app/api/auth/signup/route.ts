@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 import {
   getClientIP,
   checkIPBlocked,
@@ -50,7 +51,13 @@ export async function POST(request: Request) {
 
     // 1. Check if IP is blocked (unless test mode)
     if (!isTest && checkIPBlocked(ip)) {
-      console.log('[SIGNUP API] Blocked IP attempted signup:', ip, '(test mode:', isTest, ')');
+      console.log(
+        '[SIGNUP API] Blocked IP attempted signup:',
+        maskIp(ip),
+        '(test mode:',
+        isTest,
+        ')',
+      );
       if (testApiKeyHeader && !expectedKey) {
         console.error('[SIGNUP API] ⚠️ TEST_API_KEY not set in server environment!');
       }
@@ -65,7 +72,10 @@ export async function POST(request: Request) {
 
     // Log test mode status for debugging
     if (isTest) {
-      console.log('[SIGNUP API] ✅ Test mode enabled, bypassing security checks for IP:', ip);
+      console.log(
+        '[SIGNUP API] ✅ Test mode enabled, bypassing security checks for IP:',
+        maskIp(ip),
+      );
     } else if (testApiKeyHeader) {
       console.warn(
         '[SIGNUP API] ⚠️ Test API key provided but test mode not active. Check TEST_API_KEY env var.',
@@ -81,7 +91,7 @@ export async function POST(request: Request) {
       if (!isTest) {
         markSuspiciousIP(ip, 1); // Block for 1 hour
       }
-      console.log('[SIGNUP API] Rate limit exceeded for IP:', ip);
+      console.log('[SIGNUP API] Rate limit exceeded for IP:', maskIp(ip));
       return NextResponse.json(
         { error: 'Too many signup attempts. Please try again later.', code: 'RATE_LIMIT_EXCEEDED' },
         { status: 429 },
@@ -106,7 +116,7 @@ export async function POST(request: Request) {
     // 4. Honeypot check (should be empty) - skip in test mode
     if (!isTest && honeypot && honeypot.trim() !== '') {
       markSuspiciousIP(ip, 24); // Block for 24 hours
-      console.log('[SIGNUP API] Honeypot triggered for IP:', ip);
+      console.log('[SIGNUP API] Honeypot triggered for IP:', maskIp(ip));
       return NextResponse.json(
         { error: 'Invalid request', code: 'INVALID_REQUEST' },
         { status: 400 },
@@ -116,7 +126,7 @@ export async function POST(request: Request) {
     // 5. Request timing check (too fast = likely bot) - skip in test mode
     if (!isTest && isSuspiciousTiming(startTime)) {
       markSuspiciousIP(ip, 1);
-      console.log('[SIGNUP API] Suspiciously fast request from IP:', ip);
+      console.log('[SIGNUP API] Suspiciously fast request from IP:', maskIp(ip));
     }
 
     // 6. Validate input
@@ -136,7 +146,7 @@ export async function POST(request: Request) {
 
     // 7. Email format validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      console.error('[SIGNUP API] Invalid email format:', email);
+      console.error('[SIGNUP API] Invalid email format:', maskEmail(email));
       return NextResponse.json(
         { error: 'Invalid email format', code: 'EMAIL_INVALID' },
         { status: 400 },
@@ -145,7 +155,7 @@ export async function POST(request: Request) {
 
     // 8. Disposable email check
     if (isDisposableEmail(email)) {
-      console.log('[SIGNUP API] Disposable email blocked:', email);
+      console.log('[SIGNUP API] Disposable email blocked:', maskEmail(email));
       return NextResponse.json(
         { error: 'Disposable email addresses are not allowed', code: 'EMAIL_DISPOSABLE' },
         { status: 400 },
@@ -167,7 +177,7 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log('[SIGNUP API] Received signup request:', { email, language });
+    console.log('[SIGNUP API] Received signup request:', { language });
 
     // Check if user already exists
     console.log('[SIGNUP API] Checking if user exists...');
@@ -186,7 +196,7 @@ export async function POST(request: Request) {
     }
 
     if (users.some((u) => u.email === email)) {
-      console.log('[SIGNUP API] User already exists:', email);
+      console.log('[SIGNUP API] User already exists:', maskEmail(email));
       return NextResponse.json(
         { error: 'User with this email already exists', code: 'EMAIL_ALREADY_REGISTERED' },
         { status: 409 },
@@ -232,7 +242,9 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('[SIGNUP API] ✅ User created successfully (no session):', email);
+    console.log('[SIGNUP API] ✅ User created successfully (no session):', {
+      userId: data.user.id,
+    });
 
     // Log consent to consent_logs table (GDPR requirement)
     const userAgent = request.headers.get('user-agent') || null;
@@ -323,7 +335,7 @@ export async function POST(request: Request) {
       console.log('[SIGNUP API] Skipping confirmation email in test mode');
     }
 
-    console.log('[SIGNUP API] Signup complete for:', email);
+    console.log('[SIGNUP API] Signup complete for user:', data.user.id);
 
     return NextResponse.json({
       success: true,

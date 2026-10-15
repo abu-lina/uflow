@@ -5,6 +5,7 @@ import {
   checkRateLimit,
   getClientIdentifier,
 } from '@/lib/rate-limit';
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 import {
   getClientIP,
   checkIPBlocked,
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     // 1. Check if IP is blocked (unless test mode)
     // In test mode, we bypass IP blocking entirely
     if (!isTest && checkIPBlocked(ip)) {
-      console.log('[LOGIN API] Blocked IP attempted login:', ip, '(test mode:', isTest, ')');
+      console.log('[LOGIN API] Blocked IP attempted login:', maskIp(ip), '(test mode:', isTest, ')');
       if (testApiKeyHeader && !expectedKey) {
         console.error('[LOGIN API] ⚠️ TEST_API_KEY not set in server environment!');
       }
@@ -71,11 +72,11 @@ export async function POST(request: Request) {
     
     // Log test mode status for debugging
     if (isTest) {
-      console.log('[LOGIN API] ✅ Test mode enabled, bypassing security checks for IP:', ip);
+      console.log('[LOGIN API] ✅ Test mode enabled, bypassing security checks for IP:', maskIp(ip));
       // Clear any existing IP blocks for this IP in test mode
       if (checkIPBlocked(ip)) {
         unblockIP(ip);
-        console.log('[LOGIN API] Cleared IP block for test mode:', ip);
+        console.log('[LOGIN API] Cleared IP block for test mode:', maskIp(ip));
       }
     } else if (testApiKeyHeader) {
       console.warn('[LOGIN API] ⚠️ Test API key provided but test mode not active. Check TEST_API_KEY env var.');
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
       if (!isTest) {
         markSuspiciousIP(ip, 1); // Block for 1 hour
       }
-      console.log('[LOGIN API] Rate limit exceeded for IP:', ip);
+      console.log('[LOGIN API] Rate limit exceeded for IP:', maskIp(ip));
       return NextResponse.json(
         { error: 'Too many login attempts. Please try again later.' },
         { status: 429 }
@@ -111,14 +112,14 @@ export async function POST(request: Request) {
     
     // 4. Email format validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      console.error('[LOGIN API] Invalid email format:', email);
+      console.error('[LOGIN API] Invalid email format:', maskEmail(email));
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
       );
     }
     
-    console.log('[LOGIN API] Received login request:', { email, isTest });
+    console.log('[LOGIN API] Received login request:', { isTest });
     
     const tempClient = createSupabaseServerClient();
     const supabaseAdmin = getSupabaseAdmin();
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
         }
         
         // In test mode, auto-confirm the email and retry
-        console.log('[LOGIN API] Auto-confirming email in test mode for:', email);
+        console.log('[LOGIN API] Auto-confirming email in test mode for:', maskEmail(email));
         try {
           // Use pagination to find user (handles large user lists)
           let user = null;
@@ -205,7 +206,7 @@ export async function POST(request: Request) {
               );
             }
 
-            console.log('[LOGIN API] ✅ Login successful (after auto-confirm) for:', email);
+            console.log('[LOGIN API] ✅ Login successful (after auto-confirm) for user:', retryData.user.id);
             return NextResponse.json({ 
               accessToken: retryData.session.access_token,
               refreshToken: retryData.session.refresh_token,
@@ -215,7 +216,7 @@ export async function POST(request: Request) {
               }
             });
           } else {
-            console.error('[LOGIN API] User not found for auto-confirm:', email);
+            console.error('[LOGIN API] User not found for auto-confirm:', maskEmail(email));
           }
         } catch (confirmError) {
           console.error('[LOGIN API] Error during auto-confirm:', confirmError);
@@ -237,7 +238,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('[LOGIN API] ✅ Login successful for:', email);
+    console.log('[LOGIN API] ✅ Login successful for user:', sessionData.user.id);
     
     // Return tokens in the format expected by the test script
     return NextResponse.json({ 

@@ -5,6 +5,7 @@ import {
   checkRateLimit,
   getClientIdentifier,
 } from '@/lib/rate-limit';
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 import {
   getClientIP,
   checkIPBlocked,
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
   
   console.log('[MAGIC LINK API] ========================================');
   console.log('[MAGIC LINK API] Magic link request received');
-  console.log('[MAGIC LINK API] IP:', ip);
+  console.log('[MAGIC LINK API] IP:', maskIp(ip));
   console.log('[MAGIC LINK API] NODE_ENV:', process.env.NODE_ENV);
   console.log('[MAGIC LINK API] Using Resend for branded emails');
   console.log('[MAGIC LINK API] ========================================');
@@ -63,12 +64,12 @@ export async function POST(request: Request) {
     
     // Log IP blocking status for debugging (will show in server logs)
     if (ipBlocked) {
-      console.error('[MAGIC LINK API] ⚠️ BLOCKED IP attempted magic link:', ip);
-      console.error('[MAGIC LINK API] Identifier:', identifier);
+      console.error('[MAGIC LINK API] ⚠️ BLOCKED IP attempted magic link:', maskIp(ip));
+      console.error('[MAGIC LINK API] Identifier:', maskIp(ip));
       console.error('[MAGIC LINK API] This IP was previously marked as suspicious');
       console.error('[MAGIC LINK API] To unblock, contact admin or wait for block to expire');
     } else {
-      console.log('[MAGIC LINK API] ✅ IP not blocked:', ip);
+      console.log('[MAGIC LINK API] ✅ IP not blocked:', maskIp(ip));
     }
     
     // TEMPORARY: For UAT debugging, log but don't block if it's a magic link request
@@ -105,8 +106,8 @@ export async function POST(request: Request) {
       if (!isTest) {
         markSuspiciousIP(ip, 0.25); // Block for 15 minutes
       }
-      console.log('[MAGIC LINK API] Rate limit exceeded for IP:', ip);
-      console.log('[MAGIC LINK API] Identifier:', identifier);
+      console.log('[MAGIC LINK API] Rate limit exceeded for IP:', maskIp(ip));
+      console.log('[MAGIC LINK API] Identifier:', maskIp(ip));
       const requestOrigin = request.headers.get('origin') || 
                            request.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
                            process.env.NEXT_PUBLIC_SITE_URL || 
@@ -140,7 +141,7 @@ export async function POST(request: Request) {
     
     // 4. Email format validation
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      console.error('[MAGIC LINK API] Invalid email format:', email);
+      console.error('[MAGIC LINK API] Invalid email format:', maskEmail(email));
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
@@ -149,7 +150,7 @@ export async function POST(request: Request) {
 
     // 5. Disposable email check
     if (isDisposableEmail(email)) {
-      console.log('[MAGIC LINK API] Disposable email blocked:', email);
+      console.log('[MAGIC LINK API] Disposable email blocked:', maskEmail(email));
       return NextResponse.json(
         { error: 'Disposable email addresses are not allowed' },
         { status: 400 }
@@ -159,10 +160,13 @@ export async function POST(request: Request) {
     // 6. Request timing check (too fast = likely bot) - skip in test mode
     if (!isTest && isSuspiciousTiming(startTime)) {
       markSuspiciousIP(ip, 1);
-      console.log('[MAGIC LINK API] Suspiciously fast request from IP:', ip);
+      console.log('[MAGIC LINK API] Suspiciously fast request from IP:', maskIp(ip));
     }
     
-    console.log('[MAGIC LINK API] Received magic link request:', { email, language });
+    console.log('[MAGIC LINK API] Received magic link request:', {
+      email: maskEmail(email),
+      language,
+    });
     
     // 7. Check if user exists, create if not
     // Use pagination to find user (handles large user lists)
@@ -197,7 +201,7 @@ export async function POST(request: Request) {
     
     // If user doesn't exist, create them automatically (passwordless signup)
     if (!user) {
-      console.log('[MAGIC LINK API] User not found, creating new user:', email);
+      console.log('[MAGIC LINK API] User not found, creating new user:', maskEmail(email));
       
       // Generate a random password (required by Supabase, but user won't use it)
       const randomPassword = crypto.randomBytes(32).toString('hex');
@@ -236,7 +240,7 @@ export async function POST(request: Request) {
       }
       
       user = newUserData.user;
-      console.log('[MAGIC LINK API] ✅ New user created successfully:', email);
+      console.log('[MAGIC LINK API] ✅ New user created successfully for user:', user.id);
       console.log('[MAGIC LINK API] User email confirmed:', user.email_confirmed_at !== null);
       
       // Log consent for magic link signup (GDPR compliance)
@@ -341,7 +345,7 @@ export async function POST(request: Request) {
     
     console.log('[MAGIC LINK API] Generated magic link URL');
     console.log('[MAGIC LINK API] Request origin:', requestOrigin);
-    console.log('[MAGIC LINK API] Magic link URL (first 100 chars):', magicLinkUrl.substring(0, 100));
+    console.log('[MAGIC LINK API] Magic link URL generated (email and token omitted)');
     
     // 11. Send branded email via Resend
     const emailLanguage = (language === 'en' || language === 'de' || language === 'ar' || language === 'tr') 
@@ -350,7 +354,7 @@ export async function POST(request: Request) {
     
     try {
       console.log('[MAGIC LINK API] Sending magic link email via Resend...');
-      console.log('[MAGIC LINK API] Magic link URL:', magicLinkUrl.substring(0, 100) + '...');
+      console.log('[MAGIC LINK API] Sending magic link URL (email and token omitted)');
       
       const emailResult = await sendAuthEmail(
         email,
@@ -410,7 +414,7 @@ export async function POST(request: Request) {
       );
     }
     
-    console.log('[MAGIC LINK API] Magic link request complete for:', email);
+    console.log('[MAGIC LINK API] Magic link request complete for user:', user.id);
     
     return NextResponse.json({ 
       success: true,

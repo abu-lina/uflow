@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST } from '@/app/api/auth/verify-magic-link/route';
-import { createMockSupabaseAdmin, createMockTokenData, createMockUser } from '@/__mocks__/supabase-admin';
+import {
+  createMockSupabaseAdmin,
+  createMockTokenData,
+  createMockUser,
+} from '@/__mocks__/supabase-admin';
 import { checkIPBlocked, clearAllBlockedIPs } from '@/utils/security';
 import { checkRateLimit } from '@/lib/rate-limit';
 
@@ -103,6 +107,42 @@ describe('POST /api/auth/verify-magic-link', () => {
   });
 
   describe('Token Validation - Invalid Tokens', () => {
+    it('redacts the probe email and IP from invalid-token logs', async () => {
+      await setupMockClient({ tokenData: null });
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'info').mockImplementation(() => {});
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'debug').mockImplementation(() => {});
+
+      const request = new Request('http://localhost/api/auth/verify-magic-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-test-ip': '203.0.113.77',
+        },
+        body: JSON.stringify({
+          token: 'invalid-token',
+          email: 'pii-probe@example.test',
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(400);
+
+      const loggedOutput = JSON.stringify([
+        vi.mocked(console.log).mock.calls,
+        vi.mocked(console.info).mock.calls,
+        vi.mocked(console.warn).mock.calls,
+        vi.mocked(console.error).mock.calls,
+        vi.mocked(console.debug).mock.calls,
+      ]);
+      expect(loggedOutput).not.toContain('pii-probe@example.test');
+      expect(loggedOutput).not.toContain('203.0.113.77');
+      expect(loggedOutput).toContain('p***@example.test');
+      expect(loggedOutput).toContain('203.0.113.0');
+    });
+
     it('should return 400 if token is not found', async () => {
       await setupMockClient({ tokenData: null });
 
@@ -175,7 +215,9 @@ describe('POST /api/auth/verify-magic-link', () => {
 
       // Token query now has a pre-check for used tokens with specific error message
       expect(response.status).toBe(400);
-      expect(data.error).toBe('This magic link has already been used. Magic links can only be used once. Please request a new one.');
+      expect(data.error).toBe(
+        'This magic link has already been used. Magic links can only be used once. Please request a new one.',
+      );
     });
 
     it('should return 400 if invalid token from blocked IP in test mode (IP blocking bypassed)', async () => {
@@ -213,27 +255,44 @@ describe('POST /api/auth/verify-magic-link', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-test-ip': '192.168.1.1',
+          'x-test-ip': '203.0.113.77',
         },
         body: JSON.stringify({
           token: 'invalid-token',
-          email: 'test@example.com',
+          email: 'pii-probe@example.test',
         }),
       });
 
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'info').mockImplementation(() => {});
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'debug').mockImplementation(() => {});
       const response = await POST(request);
       const data = await response.json();
 
       expect(response.status).toBe(429);
       expect(data.error).toBe('Too many verification attempts. Please try again later.');
+
+      const loggedOutput = JSON.stringify([
+        vi.mocked(console.log).mock.calls,
+        vi.mocked(console.info).mock.calls,
+        vi.mocked(console.warn).mock.calls,
+        vi.mocked(console.error).mock.calls,
+        vi.mocked(console.debug).mock.calls,
+      ]);
+      expect(loggedOutput).not.toContain('pii-probe@example.test');
+      expect(loggedOutput).not.toContain('203.0.113.77');
+      expect(loggedOutput).toContain('p***@example.test');
+      expect(loggedOutput).toContain('203.0.113.0');
     });
   });
 
   describe('Token Validation - Valid Tokens', () => {
-    it('should return 200 with hashedToken for valid token from non-blocked IP', async () => {
+    it('should return 200 with hashedToken and log the user ID instead of email', async () => {
       const validToken = createMockTokenData({
         token: 'valid-token',
-        email: 'test@example.com',
+        email: 'pii-probe@example.test',
         expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
       });
 
@@ -252,7 +311,7 @@ describe('POST /api/auth/verify-magic-link', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-test-ip': '192.168.1.1',
+          'x-test-ip': '203.0.113.77',
         },
         body: JSON.stringify({
           token: 'valid-token',
@@ -260,6 +319,11 @@ describe('POST /api/auth/verify-magic-link', () => {
         }),
       });
 
+      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.spyOn(console, 'info').mockImplementation(() => {});
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(console, 'debug').mockImplementation(() => {});
       const response = await POST(request);
       const data = await response.json();
 
@@ -268,6 +332,19 @@ describe('POST /api/auth/verify-magic-link', () => {
       expect(data.hashedToken).toBe('test-hashed-token-123');
       expect(data.user.id).toBe(validToken.user_id);
       expect(data.user.email).toBe(validToken.email);
+
+      const loggedOutput = JSON.stringify([
+        vi.mocked(console.log).mock.calls,
+        vi.mocked(console.info).mock.calls,
+        vi.mocked(console.warn).mock.calls,
+        vi.mocked(console.error).mock.calls,
+        vi.mocked(console.debug).mock.calls,
+      ]);
+      expect(loggedOutput).toContain(validToken.user_id);
+      expect(loggedOutput).not.toContain('pii-probe@example.test');
+      expect(loggedOutput).not.toContain('p***@example.test');
+      expect(loggedOutput).not.toContain('203.0.113.77');
+      expect(loggedOutput).toContain('203.0.113.0');
     });
 
     it('should bypass IP blocking for valid token (bypass feature)', async () => {
@@ -590,7 +667,7 @@ describe('POST /api/auth/verify-magic-link', () => {
         validToken.user_id,
         expect.objectContaining({
           email_confirm: true,
-        })
+        }),
       );
     });
 

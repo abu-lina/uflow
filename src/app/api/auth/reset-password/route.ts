@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 
 // Rate limiting storage (in production, use Redis or similar)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -58,10 +59,10 @@ export async function POST(request: Request) {
     }
 
     // Log security event
-    console.log(`[SECURITY] Password reset attempt for: ${email} from IP: ${ip}`);
+    console.log(`[SECURITY] Password reset attempt for: ${maskEmail(email)} from IP: ${maskIp(ip)}`);
 
     // Validate token from database
-    console.log(`[RESET] Validating token for email: ${email}`);
+    console.log(`[RESET] Validating token for email: ${maskEmail(email)}`);
 
     const supabaseAdmin = getSupabaseAdmin();
     const { data: tokenData, error: tokenError } = await supabaseAdmin
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
 
     if (tokenError || !tokenData) {
       console.error(`[RESET] Token validation failed:`, {
-        email,
+        email: maskEmail(email),
         tokenError: tokenError
           ? {
               message: tokenError.message,
@@ -99,13 +100,13 @@ export async function POST(request: Request) {
 
     // Check if token is expired
     if (new Date() > new Date(tokenData.expires_at)) {
-      console.log(`[SECURITY] Expired token attempt for: ${email} from IP: ${ip}`);
+      console.log(`[SECURITY] Expired token attempt for user: ${tokenData.user_id} from IP: ${maskIp(ip)}`);
       return NextResponse.json({ error: 'Reset link has expired' }, { status: 400 });
     }
 
     // Check if token is already used
     if (tokenData.used) {
-      console.log(`[SECURITY] Already used token attempt for: ${email} from IP: ${ip}`);
+      console.log(`[SECURITY] Already used token attempt for user: ${tokenData.user_id} from IP: ${maskIp(ip)}`);
       return NextResponse.json({ error: 'Reset link has already been used' }, { status: 400 });
     }
 
@@ -134,7 +135,7 @@ export async function POST(request: Request) {
     }
 
     // Log successful password reset
-    console.log(`[SECURITY] Password successfully reset for: ${email} from IP: ${ip}`);
+    console.log(`[SECURITY] Password successfully reset for user: ${tokenData.user_id} from IP: ${maskIp(ip)}`);
 
     return NextResponse.json({
       success: true,
