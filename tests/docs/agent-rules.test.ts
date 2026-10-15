@@ -5,12 +5,15 @@ import { describe, expect, it } from 'vitest';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
+const listFiles = (directory: string): string[] =>
+  readdirSync(join(root, directory), { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    return entry.isDirectory() ? listFiles(path) : entry.isFile() ? [path] : [];
+  });
 
 const agentRuleFiles = [
   'AGENTS.md',
-  ...readdirSync(join(root, 'docs/agents'), { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => `docs/agents/${entry.name}`),
+  ...listFiles('docs/agents'),
 ];
 
 describe('agent documentation rules', () => {
@@ -20,12 +23,16 @@ describe('agent documentation rules', () => {
 
     expect(foreman).toMatch(/Normal mode/i);
     expect(foreman).toMatch(/--config/);
-    expect(foreman).toMatch(/0600/);
+    expect(foreman).toMatch(/private 0600 copy of `.devin\/foreman\.json`/);
     expect(foreman).toMatch(/mktemp -d/);
     expect(foreman).toMatch(/\$TMPDIR/);
     expect(foreman).toMatch(/org_id/);
     expect(foreman).toMatch(/always allow/);
+    expect(foreman).toMatch(/committed config stays unchanged/i);
+    expect(foreman).toMatch(/each start begins from its rules/i);
+    expect(foreman).toMatch(/replaces `~\/\.config\/devin\/config\.json`/);
     expect(foreman).toMatch(/doesn't merge/i);
+    expect(foreman).toMatch(/foreman can't write files/i);
     expect(foreman).toMatch(/issue and PR bodies.*--body/i);
     expect(foreman).toMatch(/shouldn't click "always allow"/i);
     expect(foreman).toMatch(/gh pr review.*step 5/i);
@@ -60,7 +67,7 @@ describe('agent documentation rules', () => {
     expect(archive.split('\n')[0]).toMatch(/frozen/i);
     expect(archive.split('\n')[0]).toMatch(/docs\/ai\/learnings\//);
     expect(learning).toMatch(/^# .+/);
-    expect(learning).toMatch(/^- \*\*Learning\*\*: .+\n/);
+    expect(learning).toMatch(/^- \*\*Learning\*\*: [^\n]+$/m);
     expect(learning).toMatch(/^- \*\*Task\/PR\*\*: #666$/m);
   });
 
@@ -77,6 +84,9 @@ describe('agent documentation rules', () => {
     expect(agents).toContain(`NEXT_PUBLIC_SUPABASE_ANON_KEY=${key}`);
     expect(lane).toContain(`NEXT_PUBLIC_SUPABASE_URL=${url}`);
     expect(lane).toContain(`NEXT_PUBLIC_SUPABASE_ANON_KEY=${key}`);
+    const buildCommand = `NEXT_PUBLIC_SUPABASE_URL=${url} \\\nNEXT_PUBLIC_SUPABASE_ANON_KEY=${key} \\\nnpm run build`;
+    expect(agents).toContain(buildCommand);
+    expect(lane).toContain(buildCommand);
     expect(agents).toMatch(/\.env\.local.*placeholders/i);
     expect(lane).toMatch(/\.env\.local.*placeholders/i);
     expect(agents).toMatch(/never receives or requests real credentials/i);

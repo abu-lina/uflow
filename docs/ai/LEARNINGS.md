@@ -1,3 +1,5 @@
+> Frozen: add new entries to `docs/ai/learnings/`, one file per issue.
+
 # AI / workflow learnings
 
 Short log of learnings from plan → build → review → test loops. Append one entry per learning. Use `@capture-learning.md` to generate entries.

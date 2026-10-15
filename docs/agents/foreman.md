@@ -14,7 +14,18 @@ foreman [copilot|devin] [model|reasoning-effort]
 
 Copilot defaults to Auto. To choose a model or reasoning effort for one session, pass it as the second argument, for example `foreman devin claude-opus-5-5-high` or `foreman copilot high`. For Copilot, `none`, `minimal`, `low`, `medium`, `high`, `xhigh` and `max` select reasoning effort; other values select a model. Devin always treats the argument as a model.
 
-Devin starts with `--permission-mode dangerous` because `auto` still prompts for read-only commands issued through the generic shell tool. This setting approves all tools, so the foreman must keep its read-only role and wait for owner approval before starting lanes.
+`foreman()` starts Devin in Normal mode with `--config` pointing to a private 0600 copy of `.devin/foreman.json` in a fresh `mktemp -d` directory under `$TMPDIR`. Devin writes state such as `org_id`, model, and "always allow" grants to that copy; the committed config stays unchanged, and each start begins from its rules. `--config` replaces `~/.config/devin/config.json`, it doesn't merge with it. The foreman can't write files, so pass issue and PR bodies with `--body`. The owner shouldn't click "always allow" inside a foreman session.
+
+These remote writes are intentional and limited to the listed steps:
+
+| Command | Step and purpose |
+|---|---|
+| `gh pr review` | Step 5, post the merged review findings. |
+| `gh pr update-branch` | Step 6, update only the next PR after a merge. |
+| `herdr agent prompt`, `herdr agent send-keys` | Steps 5 and later, send owner-approved answers and the review instruction only, never start new work. |
+| `gh issue comment` | Any step, post status replies and questions. |
+| `gh issue create` | Step 1, split an issue into sub-issues. |
+| `gh issue edit --add-label` / `--remove-label` | Step 1, label issues. |
 
 ## 1. Pick issues
 
@@ -111,6 +122,8 @@ herdr agent prompt lane-<issue> "Address the blocking and should-fix review find
 
 Nits are the owner's call.
 
+A missing learnings file at `docs/ai/learnings/<issue>.md` is a should-fix review finding.
+
 ## 6. Merge order and updates
 
 The owner merges, one PR at a time. Your job after each merge:
@@ -125,8 +138,7 @@ Only the next PR gets updated. The others stay as they are until their turn.
 
 `scripts/lane done <issue>` refuses if the PR isn't merged, if the worktree has uncommitted or unpushed changes, or if a dev server still listens on the lane's port. Fix the cause or pass `--force` only after the owner says so. It removes the Herdr workspace and checkout, prunes worktrees, and deletes the local branch. GitHub deletes the remote branch on merge.
 
-After merge, copy the lane's learning line from its issue comment into `docs/ai/LEARNINGS.md`. That is the one file you may edit, and only on `main` after the lane is gone.
-Push the LEARNINGS commit before starting the next lane; otherwise its unpushed commit can leak into the lane branch and leave local `main` ahead of `origin/main`.
+The lane's learning file lands in its PR. The foreman edits no files after merge.
 
 ## Command mapping
 

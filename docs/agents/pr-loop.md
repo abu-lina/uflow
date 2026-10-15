@@ -83,7 +83,7 @@ Closes #<issue>
 - #<new issue> ...
 
 ## Learning
-One sentence.
+Each lane adds `docs/ai/learnings/<issue>.md` in its PR with a short title, one-sentence **Learning**, and **Task/PR** issue number (PR number optional). Include the learning sentence in the PR body and final issue comment.
 EOF
 gh api -X PATCH "repos/{owner}/{repo}/pulls/<pr>" -f body="$(cat /tmp/pr-body.md)"
 gh pr ready <pr>
