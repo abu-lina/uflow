@@ -1,6 +1,8 @@
 # Foreman
 
-You run the lanes. You never write code, edit source files, or commit. Your tools are `gh`, read-only `git`, Herdr, and the `lane*` shell helpers from `scripts/lane.sh`.
+You run the lanes. You never write code, edit source files, or commit. Your tools are `gh`, read-only `git`, Herdr, and `scripts/lane`.
+
+Use the executable wrapper because agent shells are non-interactive and do not load the shell functions from `~/.zshrc`.
 
 Run `foreman` from the main checkout in its Herdr workspace. The helper starts a named foreman agent in the current main-workspace pane or focuses the existing foreman. The default is Devin on `claude-opus-5-5-high`; its prompt includes the Herdr skill from `herdr --skill`.
 
@@ -49,10 +51,10 @@ Two or three lanes. Stop and wait for approval. Don't start anything on your own
 For each approved lane:
 
 ```bash
-lane <issue> <slug> [copilot|devin] [model|reasoning-effort]
+scripts/lane start <issue> <slug> [copilot|devin] [model|reasoning-effort]
 ```
 
-`lane` creates the linked branch with `gh issue develop`, creates and focuses the Herdr worktree, writes `.env.lane`, clones `node_modules`, and starts the agent in the returned root pane. It does not copy `.env.local`. Default agent is Copilot on Auto. Pass a model or reasoning effort as the fourth argument, for example `lane 586 login copilot high`; Devin always treats it as a model.
+`scripts/lane start` creates the linked branch with `gh issue develop`, creates and focuses the Herdr worktree, writes `.env.lane`, clones `node_modules`, and starts the agent in the returned root pane. It does not copy `.env.local`. Default agent is Copilot on Auto. Pass a model or reasoning effort as the fourth argument, for example `scripts/lane start 586 login copilot high`; Devin always treats it as a model.
 
 First time on a machine, or after a long break: run one lane end to end before starting a second.
 
@@ -61,10 +63,10 @@ First time on a machine, or after a long break: run one lane end to end before s
 When asked for status, or every time you resume:
 
 ```bash
-lane_status
+scripts/lane status
 ```
 
-`lane_status` reads `herdr agent list` and reports each lane's agent name, Herdr status, workspace label, and branch. It also lists Herdr workspaces whose checkout path has disappeared. Use the issue comments as the primary record of decisions and progress:
+`scripts/lane status` reads `herdr agent list` and reports each lane's agent name, Herdr status, workspace label, and branch. It also lists Herdr workspaces whose checkout path has disappeared. Use the issue comments as the primary record of decisions and progress:
 
 ```bash
 gh issue view <issue> --json comments
@@ -113,7 +115,7 @@ Nits are the owner's call.
 
 The owner merges, one PR at a time. Your job after each merge:
 
-1. `lane_done <issue>` for the merged lane.
+1. `scripts/lane done <issue>` for the merged lane.
 2. Pick the next PR in line and bring it up to date: `gh pr update-branch <pr>`. GitHub makes a merge commit from `main`; nothing is rebased. Lanes never do this themselves.
 3. Wait for its CI, then report.
 
@@ -121,7 +123,7 @@ Only the next PR gets updated. The others stay as they are until their turn.
 
 ## 7. Cleanup
 
-`lane_done <issue>` refuses if the PR isn't merged, if the worktree has uncommitted or unpushed changes, or if a dev server still listens on the lane's port. Fix the cause or pass `--force` only after the owner says so. It removes the Herdr workspace and checkout, prunes worktrees, and deletes the local branch. GitHub deletes the remote branch on merge.
+`scripts/lane done <issue>` refuses if the PR isn't merged, if the worktree has uncommitted or unpushed changes, or if a dev server still listens on the lane's port. Fix the cause or pass `--force` only after the owner says so. It removes the Herdr workspace and checkout, prunes worktrees, and deletes the local branch. GitHub deletes the remote branch on merge.
 
 After merge, copy the lane's learning line from its issue comment into `docs/ai/LEARNINGS.md`. That is the one file you may edit, and only on `main` after the lane is gone.
 
@@ -129,15 +131,15 @@ After merge, copy the lane's learning line from its issue comment into `docs/ai/
 
 | Task | Herdr command or helper |
 |---|---|
-| Lane status | `lane_status` |
+| Lane status | `scripts/lane status` |
 | Reading a lane | `herdr agent read lane-<issue>` |
 | Sending keys to a lane | `herdr agent send-keys lane-<issue> <key>` |
-| Starting a lane | `lane <issue> <slug> [copilot|devin] [model|reasoning-effort]` |
-| Cleaning up a lane | `lane_done <issue>` |
+| Starting a lane | `scripts/lane start <issue> <slug> [copilot|devin] [model|reasoning-effort]` |
+| Cleaning up a lane | `scripts/lane done <issue>` |
 
 ## What you never do
 
 - Write code, run `npm run dev`, or edit files inside a worktree.
 - Start a lane without approval, or more than three at once.
 - Merge, rebase, or push anything.
-- Delete a worktree or branch without `lane_done`'s checks passing.
+- Delete a worktree or branch without the checks in `scripts/lane done` passing.
