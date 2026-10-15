@@ -63,6 +63,7 @@ vi.mock('leaflet', () => {
   };
   const mapInstance = {
     setView: vi.fn().mockReturnThis(),
+    fitBounds: vi.fn().mockReturnThis(),
     on: vi.fn().mockReturnThis(),
     remove: vi.fn(),
   };
@@ -71,6 +72,7 @@ vi.mock('leaflet', () => {
   return {
     default: {
       map: vi.fn(() => mapInstance),
+      latLngBounds: vi.fn((points: unknown) => ({ points })),
       tileLayer: vi.fn(() => tileLayerInstance),
       marker: vi.fn(() => markerInstance),
       icon: vi.fn(() => ({})),
@@ -187,5 +189,72 @@ describe('SearchMap', () => {
         }),
       );
     });
+  });
+});
+
+describe('#674 SearchMap zooms to the focused city', () => {
+  const pins = [
+    { providerId: 'p1', providerName: 'A', lat: 53.55, lng: 9.99 },
+    { providerId: 'p2', providerName: 'B', lat: 53.6, lng: 10.05 },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+  });
+
+  async function mapInstance() {
+    const L = await import('leaflet');
+    return vi.mocked(L.default.map).mock.results[0]?.value as {
+      setView: ReturnType<typeof vi.fn>;
+      fitBounds: ReturnType<typeof vi.fn>;
+    };
+  }
+
+  it('centers the map on the city center at city zoom when the city has coordinates', async () => {
+    render(
+      <SearchMap focus={{ key: 'Hamburg', center: { lat: 53.55, lng: 10.0 } }} pins={pins} />,
+    );
+
+    const map = await mapInstance();
+    await waitFor(() => expect(map.setView).toHaveBeenCalledWith([53.55, 10.0], 12));
+    expect(map.fitBounds).not.toHaveBeenCalled();
+  });
+
+  it('fits the map to the city pins when the city has no coordinates', async () => {
+    render(<SearchMap focus={{ key: 'Hamburg', center: null }} pins={pins} />);
+
+    const map = await mapInstance();
+    await waitFor(() => expect(map.fitBounds).toHaveBeenCalledTimes(1));
+    expect(map.fitBounds.mock.calls[0]?.[0]).toEqual({
+      points: [
+        [53.55, 9.99],
+        [53.6, 10.05],
+      ],
+    });
+  });
+
+  it('focuses once per city, so later pin updates do not undo the user panning', async () => {
+    const { rerender } = render(
+      <SearchMap focus={{ key: 'Hamburg', center: { lat: 53.55, lng: 10.0 } }} pins={pins} />,
+    );
+    rerender(
+      <SearchMap
+        focus={{ key: 'Hamburg', center: { lat: 53.55, lng: 10.0 } }}
+        pins={[...pins]}
+      />,
+    );
+
+    const map = await mapInstance();
+    const cityCalls = map.setView.mock.calls.filter(([, zoom]) => zoom === 12);
+    expect(cityCalls).toHaveLength(1);
+  });
+
+  it('keeps the saved or default view when no city is focused', async () => {
+    render(<SearchMap pins={pins} />);
+
+    const map = await mapInstance();
+    await waitFor(() => expect(map.setView).toHaveBeenCalledWith([51.1657, 10.4515], 6));
+    expect(map.fitBounds).not.toHaveBeenCalled();
   });
 });
