@@ -109,7 +109,6 @@ export async function POST(request: Request) {
         { 
           error: 'Too many magic link requests. Please try again later.',
           code: 'RATE_LIMIT_EXCEEDED',
-          ip,
           limit: rateLimit,
           window: `${rateLimitWindow / 1000 / 60} minutes`,
           message: `You have exceeded the limit of ${rateLimit} requests per ${rateLimitWindow / 1000 / 60} minutes. Please wait before trying again.`
@@ -215,9 +214,9 @@ export async function POST(request: Request) {
       });
       
       if (createError) {
-        console.error('[MAGIC LINK API] Error creating user:', createError);
+        console.error('[MAGIC LINK API] Error creating user:', redactError(createError));
         return NextResponse.json(
-          { error: createError.message || 'Failed to create user' },
+          { error: 'Failed to create user' },
           { status: 500 }
         );
       }

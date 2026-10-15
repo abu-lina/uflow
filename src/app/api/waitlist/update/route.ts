@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { maskIdentifier } from '@/lib/logging/redact-pii';
+import { maskEmail, maskIdentifier, redactError } from '@/lib/logging/redact-pii';
 import { waitlistUpdateSchema } from '@/lib/validations/waitlistSchemas';
 import { toValidationDetails } from '@/lib/validations/errors';
 
@@ -92,7 +92,7 @@ export async function PATCH(request: Request) {
     // Log what we're trying to update
     if (updates.selected_city !== undefined) {
       console.log('[Waitlist Update] Updating selected_city:', {
-        email: email.toLowerCase().trim(),
+        email: maskEmail(email.toLowerCase().trim()),
         selected_city: updates.selected_city,
         tokenLength: waitlistToken?.length,
       });
@@ -110,7 +110,7 @@ export async function PATCH(request: Request) {
 
     // 4. Handle errors
     if (error) {
-      console.error('[Waitlist Update] RPC function error:', error);
+      console.error('[Waitlist Update] RPC function error:', redactError(error));
       return NextResponse.json(
         {
           data: null,
@@ -123,8 +123,8 @@ export async function PATCH(request: Request) {
     // Check result from RPC function
     if (!result || !result.success) {
       console.log('[Waitlist Update] Update failed:', {
-        email: email.toLowerCase().trim(),
-        error: result?.error || 'Invalid email or token',
+        email: maskEmail(email.toLowerCase().trim()),
+        error: redactError(result?.error || 'Invalid email or token').message,
         tokenLength: waitlistToken?.length,
       });
       return NextResponse.json(
@@ -137,7 +137,7 @@ export async function PATCH(request: Request) {
     }
 
     console.log('[Waitlist Update] Successfully updated:', {
-      email,
+      email: maskEmail(email),
       updates,
       rowsUpdated: result.updated,
     });
@@ -151,7 +151,7 @@ export async function PATCH(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    console.error('[Waitlist Update] Unexpected error:', error);
+    console.error('[Waitlist Update] Unexpected error:', redactError(error));
 
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
