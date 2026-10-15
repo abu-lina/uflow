@@ -34,8 +34,12 @@ If none of these apply (an ad-hoc session in the main checkout), you still follo
 npm run type-check
 npm run lint
 npx vitest run
+NEXT_PUBLIC_SUPABASE_URL=https://ci-build-test.supabase.co \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ci_build_placeholder_not_a_real_key \
 npm run build
 ```
+
+If `.env.local` already exists, it contains these CI placeholders. Don't edit, commit, or replace them with real values. If it doesn't exist, don't create it. Build with the inline placeholders above; never request or use real credentials.
 
 Never make CI pass by skipping a test, loosening a type, raising lint limits or editing a workflow. Stop after 3 failed fix attempts on one check and report (`docs/agents/pr-loop.md`).
 
@@ -47,6 +51,7 @@ Target 100k tokens per session. Read the issue, then the files it names, then th
 
 - the issue has no acceptance criteria, or they can't be turned into tests
 - the fix needs a schema change, a new dependency, a secret, or a CI change the issue doesn't mention
+- a lane never receives or requests real credentials; if a task needs them, stop and have the owner run that step
 - a test outside your diff fails
 - you'd need to touch another `area:*` than the issue's
 - anything would be destructive (delete branch, remove worktree, reset)
@@ -115,7 +120,7 @@ GitHub Issues on `abu-lina/uflow` via `gh`. Labels: `P0`-`P3` priority, `ready` 
 
 ## Learnings
 
-One sentence per PR, in the PR body and the final issue comment. The foreman copies it into `docs/ai/LEARNINGS.md` on `main` after merge. Lanes never edit that file.
+Each lane adds `docs/ai/learnings/<issue>.md` in its PR with a short title, one-sentence **Learning**, and **Task/PR** issue number (PR number optional). Include the learning sentence in the PR body and final issue comment. Lanes never edit `docs/ai/LEARNINGS.md`.
 
 ## Writing style (non-code)
 

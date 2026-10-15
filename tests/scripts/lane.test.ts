@@ -562,11 +562,10 @@ esac
     }
   });
 
-  it('requires pushing the LEARNINGS commit before starting another lane', () => {
-    expect(foremanGuide).toMatch(
-      /push(?:ing)? (?:the )?LEARNINGS commit before (?:starting|the next lane)/i,
-    );
-    expect(foremanGuide).toMatch(/unpushed.*(?:lane|commit)|(?:lane|commit).*unpushed/i);
+  it('keeps learnings in the lane PR without a foreman follow-up commit', () => {
+    expect(foremanGuide).toMatch(/lane's learning file lands in its PR/i);
+    expect(foremanGuide).toMatch(/foreman edits no files after merge/i);
+    expect(foremanGuide).not.toMatch(/push(?:ing)? (?:the )?LEARNINGS commit/i);
   });
 
   it('creates the linked branch and Herdr worktree with its root pane', () => {

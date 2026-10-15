@@ -54,8 +54,12 @@ Run all four inside the worktree. All must pass before you push.
 npm run type-check
 npm run lint
 npx vitest run
+NEXT_PUBLIC_SUPABASE_URL=https://ci-build-test.supabase.co \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ci_build_placeholder_not_a_real_key \
 npm run build
 ```
+
+If `.env.local` already exists, it contains these CI placeholders. Don't edit, commit, or replace them with real values. If it doesn't exist, don't create it. Build with the inline placeholders above; never request or use real credentials.
 
 If you need the dev server: `npm run dev` picks up `PORT` from `.env.lane` (export it first: `set -a; source .env.lane; set +a`). Never use port 3000 directly.
 
@@ -79,7 +83,7 @@ Post a comment on the issue every time you stop, not only when the PR is green a
 - Stop-and-ask or blocked: include the direct question or blocker, the most recent evidence, and the exact next step needed from the owner.
 - Any other stop: include what happened, what you need, and the reason you are leaving the lane without more work.
 
-The foreman folds learnings into `docs/ai/LEARNINGS.md` after merge; don't edit that file from a lane.
+Add `docs/ai/learnings/<issue>.md` to the PR. Include a short title, a one-sentence **Learning**, and **Task/PR** with the issue number; the PR number is optional. Include the learning sentence in the PR body and final issue comment.
 
 ## Resume
 
