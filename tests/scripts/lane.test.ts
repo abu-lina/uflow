@@ -16,7 +16,10 @@ const laneScript = readFileSync(new URL('../../scripts/lane.sh', import.meta.url
 const laneEntrypoint = new URL('../../scripts/lane', import.meta.url).pathname;
 const laneGuide = readFileSync(new URL('../../docs/agents/lane.md', import.meta.url), 'utf8');
 const foremanGuide = readFileSync(new URL('../../docs/agents/foreman.md', import.meta.url), 'utf8');
-const setupDecisions = readFileSync(new URL('../../docs/agents/setup-decisions.md', import.meta.url), 'utf8');
+const setupDecisions = readFileSync(
+  new URL('../../docs/agents/setup-decisions.md', import.meta.url),
+  'utf8',
+);
 
 const shellFunction = (name: string) => {
   const match = laneScript.match(new RegExp(`^${name}\\(\\) \\{[\\s\\S]*?^\\}`, 'm'));
@@ -175,10 +178,12 @@ esac
     const specialVariables = new Set(['path', 'status', 'cdpath', 'fpath', 'manpath']);
     const declarations = laneScript.split('\n').flatMap((line) => {
       const declaration = line.match(/^\s*local\s+(.+)$/);
-      return declaration?.[1].split(/\s+/).flatMap((entry) => {
-        const variable = entry.match(/^([A-Za-z_][A-Za-z0-9_]*)(?:=|$)/)?.[1];
-        return variable && specialVariables.has(variable) ? [variable] : [];
-      }) ?? [];
+      return (
+        declaration?.[1].split(/\s+/).flatMap((entry) => {
+          const variable = entry.match(/^([A-Za-z_][A-Za-z0-9_]*)(?:=|$)/)?.[1];
+          return variable && specialVariables.has(variable) ? [variable] : [];
+        }) ?? []
+      );
     });
     expect(declarations).toEqual([]);
   });
@@ -192,6 +197,23 @@ esac
     const pathAfter = join(fixture, 'path-after');
     const jqPath = join(fixture, 'jq-path');
     const variableDeclarations = join(fixture, 'variables');
+    const workspaceJson = JSON.stringify({
+      result: {
+        workspaces: [
+          {
+            workspace_id: 'workspace-existing',
+            label: 'Existing',
+            worktree: { checkout_path: existingPath },
+          },
+          {
+            workspace_id: 'workspace-missing',
+            label: 'Missing',
+            worktree: { checkout_path: missingPath },
+          },
+          { workspace_id: 'workspace-no-path', label: 'No path', worktree: {} },
+        ],
+      },
+    });
     try {
       mkdirSync(bin);
       mkdirSync(existingPath);
@@ -200,17 +222,7 @@ esac
         `#!/bin/sh
 case "$1 $2" in
   "agent list") printf '%s\\n' '{"result":{"agents":[]}}' ;;
-  "workspace list") printf '%s\\n' '{"result":{"workspaces":[]}}' ;;
-esac
-`,
-        { mode: 0o755 },
-      );
-      writeFileSync(
-        join(bin, 'jq'),
-        `#!/bin/sh
-case "$*" in
-  *"--argjson workspace_data"*) printf '\\n' ;;
-  *) printf 'workspace-existing\\tExisting\\t%s\\nworkspace-missing\\tMissing\\t%s\\nworkspace-no-path\\tNo path\\t\\n' "$EXISTING_PATH" "$MISSING_PATH" ;;
+  "workspace list") printf '%s\\n' ${shellQuote(workspaceJson)} ;;
 esac
 `,
         { mode: 0o755 },
@@ -219,8 +231,6 @@ esac
       const env = {
         ...process.env,
         PATH: `${bin}:${process.env.PATH}`,
-        EXISTING_PATH: existingPath,
-        MISSING_PATH: missingPath,
         PATH_BEFORE: pathBefore,
         PATH_AFTER: pathAfter,
         JQ_PATH: jqPath,
@@ -233,9 +243,10 @@ esac
           '-c',
           `source ${shellQuote(new URL('../../scripts/lane.sh', import.meta.url).pathname)}
 printf '%s\\n' "$PATH" > "$PATH_BEFORE"
+jq_before="$(command -v jq)"
 lane_status
 printf '%s\\n' "$PATH" > "$PATH_AFTER"
-command -v jq > "$JQ_PATH"
+printf '%s\\n%s\\n' "$jq_before" "$(command -v jq)" > "$JQ_PATH"
 typeset -p workspace_id label path > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
         ],
         { cwd: new URL('../..', import.meta.url).pathname, encoding: 'utf8', env },
@@ -255,7 +266,10 @@ typeset -p workspace_id label path > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
       expect(zsh.stdout).toBe(expectedOutput);
       expect(bash.stdout).toBe(expectedOutput);
       expect(readFileSync(pathAfter, 'utf8')).toBe(readFileSync(pathBefore, 'utf8'));
-      expect(readFileSync(jqPath, 'utf8')).toBe(join(bin, 'jq') + '\n');
+      const jqPaths = readFileSync(jqPath, 'utf8').trimEnd().split('\n');
+      expect(jqPaths).toHaveLength(2);
+      expect(jqPaths[0]).not.toBe('');
+      expect(jqPaths[1]).toBe(jqPaths[0]);
       const declarations = readFileSync(variableDeclarations, 'utf8');
       expect(declarations).toContain('no such variable: workspace_id');
       expect(declarations).toContain('no such variable: label');
@@ -298,9 +312,13 @@ typeset -p workspace_id label path > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
       execFileSync('git', ['-C', root, 'add', '.gitignore', 'README.md']);
       execFileSync('git', ['-C', root, 'commit', '-m', 'fixture'], { stdio: 'ignore' });
       mkdirSync(join(root, '.worktrees'));
-      execFileSync('git', ['-C', root, 'worktree', 'add', '-b', 'fix/636-fixture', worktree, 'HEAD'], {
-        stdio: 'ignore',
-      });
+      execFileSync(
+        'git',
+        ['-C', root, 'worktree', 'add', '-b', 'fix/636-fixture', worktree, 'HEAD'],
+        {
+          stdio: 'ignore',
+        },
+      );
       mkdirSync(join(worktree, '.next'));
       mkdirSync(join(worktree, 'node_modules'));
       writeFileSync(join(worktree, '.next', 'build-output'), 'ignored\n');
@@ -353,9 +371,11 @@ esac
       expect(output).toContain('lane #636 removed');
       expect(JSON.parse(output.trim().split('\n').at(-1) ?? '').result.workspaces).toEqual([]);
       expect(existsSync(worktree)).toBe(false);
-      expect(execFileSync('git', ['-C', root, 'branch', '--list', 'fix/636-fixture'], { encoding: 'utf8' })).toBe(
-        '',
-      );
+      expect(
+        execFileSync('git', ['-C', root, 'branch', '--list', 'fix/636-fixture'], {
+          encoding: 'utf8',
+        }),
+      ).toBe('');
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
@@ -381,10 +401,14 @@ esac
         'git branch lane-base-test "$base"',
       ].join('\n');
       execFileSync('bash', ['-c', script], { cwd: root, stdio: 'ignore' });
-      const containsLocalCommit = spawnSync(
-        'git',
-        ['-C', root, 'merge-base', '--is-ancestor', localCommit, 'lane-base-test'],
-      );
+      const containsLocalCommit = spawnSync('git', [
+        '-C',
+        root,
+        'merge-base',
+        '--is-ancestor',
+        localCommit,
+        'lane-base-test',
+      ]);
 
       expect(containsLocalCommit.status).toBe(1);
     } finally {
@@ -404,9 +428,9 @@ esac
       git(root, 'update-ref', 'refs/remotes/origin/main', baseCommit);
       const script = [shellFunction('_lane_base'), '_lane_base'].join('\n');
 
-      expect(
-        execFileSync('bash', ['-c', script], { cwd: root, encoding: 'utf8' }).trim(),
-      ).toBe('origin/main');
+      expect(execFileSync('bash', ['-c', script], { cwd: root, encoding: 'utf8' }).trim()).toBe(
+        'origin/main',
+      );
       expect(git(root, 'rev-parse', 'origin/main')).toBe(remoteCommit);
     } finally {
       rmSync(fixture, { recursive: true, force: true });
