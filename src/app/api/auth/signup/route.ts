@@ -185,7 +185,7 @@ export async function POST(request: Request) {
     } = await supabaseAdmin.auth.admin.listUsers();
 
     if (listError) {
-      console.error('[SIGNUP API] Error checking existing users:', listError);
+      console.error('[SIGNUP API] Error checking existing users:', redactError(listError));
       return NextResponse.json(
         { error: 'Failed to check user existence', code: 'SIGNUP_FAILED' },
         { status: 500 },
@@ -269,7 +269,7 @@ export async function POST(request: Request) {
       .insert(consentLogs);
 
     if (consentError) {
-      console.error('[SIGNUP API] Error logging consent:', consentError);
+      console.error('[SIGNUP API] Error logging consent:', redactError(consentError));
       // Don't fail signup if consent logging fails, but log the error
     } else {
       console.log('[SIGNUP API] ✅ Consent logged successfully');
@@ -325,7 +325,7 @@ export async function POST(request: Request) {
           // Don't fail signup if email fails - user can resend later
         }
       } catch (emailError) {
-        console.error('[SIGNUP API] Exception sending email:', emailError);
+        console.error('[SIGNUP API] Exception sending email:', redactError(emailError));
         // Don't fail signup if email fails
       }
     } else {
@@ -340,7 +340,7 @@ export async function POST(request: Request) {
       email: data.user.email,
     });
   } catch (error) {
-    console.error('[SIGNUP API] Unexpected error:', error);
+    console.error('[SIGNUP API] Unexpected error:', redactError(error));
     return NextResponse.json(
       { error: 'An unexpected error occurred during signup', code: 'SIGNUP_FAILED' },
       { status: 500 },

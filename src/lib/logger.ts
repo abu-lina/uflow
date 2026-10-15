@@ -20,6 +20,7 @@ import {
   maskEmail,
   maskIdentifier,
   maskIp,
+  maskSecret,
   redactEmails,
   redactError,
 } from '@/lib/logging/redact-pii';
@@ -53,6 +54,12 @@ const PII_MASKS: Record<string, (value: unknown) => string> = {
   ip: maskIp,
   clientip: maskIp,
   identifier: maskIdentifier,
+  token: maskSecret,
+  password: maskSecret,
+  accesstoken: maskSecret,
+  refreshtoken: maskSecret,
+  otp: maskSecret,
+  session: maskSecret,
 };
 
 function redactValue(value: unknown): unknown {

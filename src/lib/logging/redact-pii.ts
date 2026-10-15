@@ -73,6 +73,10 @@ export function maskIp(value: unknown): string {
   return firstThree.every((hextet) => hextet === '0') ? '::' : `${firstThree.join(':')}::`;
 }
 
+export function maskSecret(): string {
+  return REDACTED;
+}
+
 export function maskIdentifier(value: unknown): string {
   if (typeof value !== 'string') {
     return REDACTED;
@@ -85,9 +89,17 @@ export function maskIdentifier(value: unknown): string {
 
 const TEXT_TOKEN = /[^\s"'`<>()[\]{},;:=]+/g;
 const LEADING_EMAIL = /^([^@]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)(.*)$/;
+const TEXT_IPV4 = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+const TEXT_IPV6 = /(?<![\w:.])(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}(?![\w:.])/g;
+
+function redactIps(text: string): string {
+  return text
+    .replace(TEXT_IPV4, (candidate) => maskIp(candidate))
+    .replace(TEXT_IPV6, (candidate) => (expandIpv6(candidate) ? maskIp(candidate) : candidate));
+}
 
 export function redactEmails(text: string): string {
-  return text.replace(TEXT_TOKEN, (token) => {
+  return redactIps(text).replace(TEXT_TOKEN, (token) => {
     if (!token.includes('@')) {
       return token;
     }
