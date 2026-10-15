@@ -23,6 +23,25 @@ gh pr checks <pr> --watch --interval 180
 
 Check at most every few minutes. Don't poll in a tight loop and don't re-trigger CI by pushing empty commits. The required checks are `Lint & Type Check`, `Run Tests`, `Build Verification` and `Playwright smoke suite`. `Security Audit` is advisory.
 
+## Triage red checks before debugging
+
+`gh pr checks` can display a cancelled job as `fail`. Before debugging a red PR, inspect the jobs for its workflow run:
+
+```bash
+gh api repos/<owner>/<repo>/actions/runs/<run_id>/jobs \
+  --jq '.jobs[] | "\(.name)\t\(.conclusion)\tsteps=\(.steps|length)\trunner=\(.runner_name // "NONE")"'
+```
+
+Do not re-run a red check hoping it passes, and do not edit code, until this check distinguishes a cancellation from a genuine failure. `steps=0` and `runner=NONE` means the job never got a runner; treat it as an infrastructure failure, not a code failure. A runner and non-empty steps mean the job executed; inspect its logs to find the failing step.
+
+Use the surrounding evidence to confirm an infrastructure incident:
+
+- Identical durations across jobs, especially around the same timeout, point to a shared runner or workflow-start problem rather than independent code failures.
+- Compare with a known-good run of the same workflow. For `ci.yml`, a healthy run has taken about 3.5 minutes: Lint 55–66s, Build about 1m58s, Tests 3m16–3m35s, Security Audit about 30s. A run near 15 minutes did not follow that baseline.
+- Check GitHub Actions status: `curl -s https://www.githubstatus.com/api/v2/components.json` and inspect the `Actions` component and incident details.
+
+When reporting PR status, distinguish `mergeable` from `mergeStateStatus`: `mergeable` describes merge conflicts, while `mergeStateStatus` includes whether required checks are satisfied. A PR can be `MERGEABLE` and still be `BLOCKED`.
+
 ## Fix CI failures
 
 For each red check:
