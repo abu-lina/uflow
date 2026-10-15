@@ -120,6 +120,20 @@ export function getResultsPathForSection(section: Section): '/food' | '/stores' 
   return '/stores';
 }
 
+/** The section `/` opens: DEFAULT_SECTION while active, otherwise the first active one. */
+export function getHomeSection(): Section {
+  if (SECTION_META[DEFAULT_SECTION].active) return DEFAULT_SECTION;
+  const sections = Object.keys(SECTION_META) as Section[];
+  return sections.find((section) => SECTION_META[section].active) ?? DEFAULT_SECTION;
+}
+
+/** `/` hands off to the home section route, keeping the incoming query string (#674). */
+export function getHomeRedirectPath(params: URLSearchParams): string {
+  const path = getResultsPathForSection(getHomeSection());
+  const qs = params.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
 /** Resolves section from URL params with legacy category fallback (D9 default: food). */
 export function resolveSectionFromSearchParams(params: URLSearchParams): Section {
   const sectionParam = params.get('section');

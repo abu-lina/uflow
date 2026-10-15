@@ -137,14 +137,4 @@ describe('Card components prefetch routes', () => {
     expect(src).toMatch(/onTouchStart|onMouseEnter/);
     expect(src).toContain('router.prefetch');
   });
-
-  it('HomeListView card wrappers have onTouchStart for prefetch', () => {
-    const src = readFileSync(
-      resolve(__dirname, '../../features/search/components/HomeListView.tsx'),
-      'utf-8',
-    );
-
-    expect(src).toMatch(/onTouchStart|onMouseEnter/);
-    expect(src).toContain('router.prefetch');
-  });
 });

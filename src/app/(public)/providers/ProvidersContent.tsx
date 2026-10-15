@@ -226,7 +226,13 @@ export function ProvidersContent({
       pathname,
       replace: router.replace,
     },
-    { deferPinsUntilMapOpened: true, section, city: mapCity },
+    // #674: same section, city and filters as the list, so pins stay a subset of it
+    {
+      deferPinsUntilMapOpened: true,
+      section,
+      city: mapCity ?? (location || null),
+      filters: normalizedFilters,
+    },
   );
 
   const nearMe = useNearMe({

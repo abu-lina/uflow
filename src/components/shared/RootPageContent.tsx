@@ -1,46 +1,20 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getOnboardingState } from '@/lib/utils/onboarding-state';
 import { getFeatureFlag } from '@/config/feature-flags';
+import { getHomeRedirectPath } from '@/config/sectionFilters';
 import { useAppStage } from '@/hooks/useAppStage';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
-import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
-import { DiscoveryHeader } from '@/features/search/components/DiscoveryHeader';
-import { HomeSearchBar } from '@/features/search/components/HomeSearchBar';
-import { HomeListView } from '@/features/search/components/HomeListView';
-import {
-  AdminStatusFilter,
-  type ReviewStatusFilter,
-} from '@/features/admin/components/AdminStatusFilter';
-import {
-  DiscoveryResultsGrid,
-  type DiscoveryCardItem,
-} from '@/features/search/components/DiscoveryResultsGrid';
 import { AboutSection } from './AboutSection';
-import type { Section } from '@/config/sectionFilters';
 import { DesktopWaitlistSection } from './DesktopWaitlistSection';
 import { ExploreSection } from './ExploreSection';
 import { LandingHero } from './LandingHero';
 import { MobileSplashScreen } from './MobileSplashScreen';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
-import { ViewToggleButton } from '@/features/search/components/ViewToggleButton';
-import { useNearMe } from '@/features/search/hooks/useNearMe';
-import { HomeNearMeList } from '@/features/search/components/HomeNearMeList';
-import { useAdminSearch } from '@/features/search/hooks/useAdminSearch';
-import type { SearchResult } from '@/services/providers';
-import { logApp } from '@/lib/logger';
-
-const SearchMap = dynamic(
-  () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
-  { ssr: false },
-);
 
 /**
  * RootPageContent Component
@@ -48,13 +22,13 @@ const SearchMap = dynamic(
  * Client component that conditionally renders based on device type and app stage:
  *
  * Desktop (md: and above):
- * - Always shows landing page content (LandingHero, AboutSection, ExploreSection)
- * - City stage does not affect desktop view
+ * - Shows landing page content (LandingHero, AboutSection, ExploreSection)
+ *   until onboarding completes with stage 2/3, then redirects like mobile
  *
  * Mobile (below md:):
  * - Stage 1 (0-5 providers): CityEarlyAccessEmptyState
- * - Stage 2 (6-14 providers): Unified discovery home (search + tabs + section galleries)
- * - Stage 3 (15+ providers): Unified discovery home (search + tabs + section galleries)
+ * - Stage 2/3 (6+ providers): replaced by the active section route (#674);
+ *   map and list live there, not on /
  * - Onboarding: Waitlist/onboarding content (MobileSplashScreen)
  *
  * Onboarding is complete when:
@@ -65,84 +39,26 @@ const SearchMap = dynamic(
  */
 export function RootPageContent() {
   const { ready: shouldShowCityContent, city: selectedCity, isRecovering } = useOnboardingGate();
-  const { isAdmin } = useIsAdmin();
-  const [activeSection, setActiveSection] = useState<Section>('food');
-  const [nearMeActive, setNearMeActive] = useState(false);
-  const [adminStatus, setAdminStatus] = useState<ReviewStatusFilter>(null);
-
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const geolocation = useGeolocation();
-
-  // Shared map/discovery state: pins, view mode, open-now, header metrics
-  const {
-    pins,
-    pinsLoading,
-    isOpenNow,
-    setIsOpenNow,
-    viewMode,
-    setViewMode,
-    toggleViewMode,
-    headerRef,
-    headerHeight,
-    userCoords,
-  } = useMapDiscovery(geolocation, 'map', isAdmin ? adminStatus : null, {
-    searchParams,
-    pathname,
-    replace: router.replace,
-  }, { section: activeSection });
-
-  const homeNearMe = useNearMe({
-    coords: userCoords,
-    active: nearMeActive && viewMode === 'list',
-    openNow: isOpenNow,
-    radiusKm: 25,
-    reviewStatus: isAdmin ? adminStatus : null,
-  });
-
-  // Admin search: fetch providers via the search API when a status filter is
-  // active. getMapLocations (used by useMapDiscovery) joins through the
-  // locations table, so providers without location records are invisible.
-  // The search API queries providers directly and includes all matches.
-  const adminSearch = useAdminSearch(isAdmin ? adminStatus : null, activeSection);
-
-  // True when the admin has picked a specific status (not "All")
-  const adminSearchActive = isAdmin && adminStatus !== null;
-
-  // Auto-switch to list view when the admin picks a status filter.
-  // The map view relies on getMapLocations (location-based inner join) which
-  // misses providers without location records. List view uses the search API.
-  useEffect(() => {
-    if (adminSearchActive) {
-      setViewMode('list');
-    }
-  }, [adminSearchActive, setViewMode]);
-
-  useEffect(() => {
-    if (viewMode === 'list' && userCoords === null) {
-      logApp('info', {
-        event: 'home_list_nearme_skipped',
-        status: geolocation.status,
-      });
-    }
-  }, [viewMode, userCoords, geolocation.status]);
-
-  const handleToggleNearMe = useCallback(() => {
-    if (nearMeActive || geolocation.status === 'granted') {
-      setNearMeActive(false);
-      geolocation.reset();
-      return;
-    }
-    setNearMeActive(true);
-    geolocation.requestLocation();
-  }, [nearMeActive, geolocation]);
 
   // Get app stage to determine which content to show
   const { stage, cityName, isLoading: stageLoading } = useAppStage();
 
-  // Wait for client-side check or recovery to complete
-  if (shouldShowCityContent === null || isRecovering || stageLoading) {
+  // Use cityName from useAppStage hook (more reliable than selectedCity state)
+  const displayCity = cityName || selectedCity;
+
+  // #674: discovery lives on the section route. Once onboarding is complete
+  // and the city has enough providers, hand off with the query string intact.
+  const showsDiscovery =
+    !!shouldShowCityContent && !!displayCity && (stage === 'stage2' || stage === 'stage3');
+  const query = searchParams.toString();
+  useEffect(() => {
+    if (showsDiscovery) router.replace(getHomeRedirectPath(new URLSearchParams(query)));
+  }, [showsDiscovery, query, router]);
+
+  // Wait for client-side check or recovery to complete, or for the hand-off
+  if (shouldShowCityContent === null || isRecovering || stageLoading || showsDiscovery) {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -190,31 +106,8 @@ export function RootPageContent() {
     }
   };
 
-  // Adapt a SearchResult from the search API to the DiscoveryCardItem shape
-  // that DiscoveryResultsGrid expects.
-  function adaptSearchResult(result: SearchResult): DiscoveryCardItem {
-    return {
-      id: result.id,
-      provider_id: result.id,
-      provider_name: result.name,
-      provider_images: result.images,
-      category: result.category ?? null,
-      category_id: result.category_id,
-      address_city: result.address_city,
-      opening_hours: result.opening_hours ?? result.originalProvider?.opening_hours ?? null,
-      listing_type: result.listing_type,
-      location_latitude: result.location_latitude,
-      location_longitude: result.location_longitude,
-      review_status: (result.review_status as ReviewStatusFilter) ?? adminStatus ?? undefined,
-      review_feedback: result.review_feedback,
-    };
-  }
-
   // Render content based on app stage
-  // Use cityName from useAppStage hook (more reliable than selectedCity state)
-  const displayCity = cityName || selectedCity;
-
-  // Desktop: Always show landing page content regardless of city stage
+  // Desktop: Show landing page content (stage 2/3 already handed off above)
   // Mobile: Show stage-based content if onboarding complete, otherwise show waitlist
   const isAppLaunched = getFeatureFlag('isAppLaunched');
   const skipWaitlist = getFeatureFlag('skipWaitlist');
@@ -241,80 +134,6 @@ export function RootPageContent() {
                 cityName={displayCity}
                 onReceiveUpdates={handleReceiveUpdates}
               />
-            )}
-
-            {/* Stage 2/3: Category Discovery Home */}
-            {(stage === 'stage2' || stage === 'stage3') && (
-              <div className="flex min-h-screen w-full flex-col bg-uflow-light">
-                <DiscoveryHeader
-                  ref={headerRef}
-                  searchSlot={
-                    <HomeSearchBar
-                      activeSection={activeSection}
-                      adminSlot={
-                        isAdmin ? (
-                          <AdminStatusFilter
-                            selectedStatus={adminStatus}
-                            onStatusChange={setAdminStatus}
-                          />
-                        ) : undefined
-                      }
-                      geoStatus={geolocation.status}
-                      isOpenNow={isOpenNow}
-                      nearMeActive={nearMeActive}
-                      onToggleNearMe={handleToggleNearMe}
-                      onToggleOpenNow={() => setIsOpenNow((v) => !v)}
-                    />
-                  }
-                  selectedSection={activeSection}
-                  viewMode={viewMode}
-                  onSectionChange={setActiveSection}
-                />
-
-                <div
-                  style={{
-                    visibility: viewMode === 'map' ? 'visible' : 'hidden',
-                    position: 'absolute',
-                    inset: 0,
-                  }}
-                >
-                  <SearchMap pins={pins} userCoords={userCoords} />
-                </div>
-
-                {viewMode === 'list' &&
-                  (adminSearchActive ? (
-                    <DiscoveryResultsGrid
-                      error={adminSearch.error}
-                      headerOffset={headerHeight}
-                      isLoading={adminSearch.isLoading}
-                      items={adminSearch.results.map(adaptSearchResult)}
-                      openNow={isOpenNow}
-                      onRetry={adminSearch.refetch}
-                    />
-                  ) : homeNearMe.isActive ? (
-                    <HomeNearMeList
-                      error={homeNearMe.error}
-                      headerOffset={headerHeight}
-                      isLoading={homeNearMe.isLoading}
-                      results={homeNearMe.results}
-                      onRetry={homeNearMe.refetch}
-                    />
-                  ) : (
-                    <HomeListView
-                      headerOffset={headerHeight}
-                      isLoading={pinsLoading}
-                      isOpenNow={isOpenNow}
-                      pins={pins}
-                    />
-                  ))}
-
-                {/* Toggle button: map ↔ list, sits above navbar.
-                    Hidden when admin search is active (list-only; map can't show
-                    providers without location records). */}
-                {!adminSearchActive && (
-                  <ViewToggleButton viewMode={viewMode} onToggle={toggleViewMode} />
-                )}
-              </div>
             )}
 
             {/* Show loading state while stage is being determined */}

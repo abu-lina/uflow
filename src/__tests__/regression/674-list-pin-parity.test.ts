@@ -146,10 +146,7 @@ async function foodListIds(params: Record<string, string>, routeCity?: string) {
 }
 
 async function pinIds(opts: { city?: string | null; filters?: SearchFilterKey[] }) {
-  const rows = await getMapLocations(
-    { section: 'food', ...opts } as Parameters<typeof getMapLocations>[0],
-    client.current!,
-  );
+  const rows = await getMapLocations({ section: 'food', ...opts }, client.current ?? undefined);
   return rows
     .filter((row) => row.location_latitude !== null && row.location_longitude !== null)
     .map((row) => row.provider_id);

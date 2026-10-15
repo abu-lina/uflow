@@ -75,13 +75,14 @@ describe('getMapLocations', () => {
   it('filters by city only when one is provided', async () => {
     await getMapLocations({ section: 'food', city: 'Berlin' });
 
-    expect(mockEq).toHaveBeenCalledWith('address_city', 'Berlin');
+    // #674: on the provider row, like the list search
+    expect(mockEq).toHaveBeenCalledWith('providers.address_city', 'Berlin');
   });
 
   it('does not filter by city when none is provided', async () => {
     await getMapLocations({ section: 'food' });
 
-    expect(mockEq).not.toHaveBeenCalledWith('address_city', expect.anything());
+    expect(mockEq).not.toHaveBeenCalledWith('providers.address_city', expect.anything());
   });
 
   it('uses the passed review status when one is given', async () => {
