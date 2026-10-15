@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 17;
+const probeCount = 24;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -287,6 +287,13 @@ describe('foreman permission config (#649)', () => {
       'ran: git push origin HEAD:refs/heads/probe',
       'npm-install',
       'ran: gh pr merge 1',
+      'ran: git diff --output=diff-output-probe.txt',
+      'ran: git log --output=log-output-probe.txt',
+      'ran: git show --output=show-output-probe.txt',
+      'upload-pack-ran',
+      'ran: git fetch -u origin',
+      'ran: gh issue delete 1',
+      'ran: gh issue transfer 1 other-repo',
       'lane-start',
       'mcp',
       'tmp-write',
@@ -314,10 +321,17 @@ describe('foreman permission config (#649)', () => {
     expect(result.stdout).toContain('config copy changed: permissions.allow.');
     expect(tmpProbes).toHaveLength(1);
     expect(existsSync(tmpProbes[0])).toBe(false);
+    for (const output of [
+      'diff-output-probe.txt',
+      'log-output-probe.txt',
+      'show-output-probe.txt',
+    ]) {
+      expect(existsSync(join(root, output))).toBe(true);
+    }
   }, 60_000);
 
   it('AC2 + AC3: passes every probe when Devin blocks writes and runs read-only commands without a prompt', () => {
-    const { result, devinCalls, results, tmpProbes } = runVerify('compliant');
+    const { result, devinCalls, results, tmpProbes, actions } = runVerify('compliant');
 
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
     expect(devinCalls).toHaveLength(probeCount + 1);
@@ -329,6 +343,18 @@ describe('foreman permission config (#649)', () => {
     expect(result.stdout).not.toContain('org-fake-value');
     expect(result.stdout).not.toContain('real-tool-marker');
     expect(tmpProbes).toEqual([]);
+    for (const output of [
+      'diff-output-probe.txt',
+      'log-output-probe.txt',
+      'show-output-probe.txt',
+    ]) {
+      expect(existsSync(join(root, output))).toBe(false);
+    }
+    expect(actions).not.toContain('upload-pack-ran');
+    expect(actions).not.toContain('ran: git fetch -u origin');
+    expect(readFileSync(join(fixture, 'gh.log'), 'utf8')).not.toMatch(
+      /issue (delete|transfer)/,
+    );
   }, 60_000);
 
   it('strips the Devin login banner and org ids from printed transcripts', () => {
