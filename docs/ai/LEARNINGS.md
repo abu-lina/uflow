@@ -1318,3 +1318,13 @@ Corrected (2026-10-05): the "no branch protection" claim above is stale. `main` 
 - **Learning**: Never `local` a zsh special variable (`path`, `status`, `cdpath`, `fpath`, `manpath`) in a shell script this repo sources. Worse, the whole file was covered by tests that only grepped its contents, so both defects shipped with green `type-check`, `lint`, `vitest` and `build`. A test that asserts a string is present proves the string is present and nothing else.
 - **Change to prevent repeat**: Shell helpers get behavioural tests that execute the function in a real `zsh` with a known `PATH` and assert on the result, not on the source text. Grep for `local .*\b(path|status|cdpath|fpath|manpath)=` before touching `scripts/lane.sh`. Worktree teardown forces removal and tears down branch, workspace and directory independently so one failure cannot strand the others.
 - **Task/PR**: Issue #636, PR #637
+
+### 2026-10-15 — A cancelled CI job looks like a real failure in `gh pr checks`
+
+- **Learning**: A cancelled check can look identical to a real failure in `gh pr checks`, so inspect job steps and runner assignment before debugging.
+- **Task/PR**: Issue #546, PR #642
+
+### 2026-10-15 — Lane worktrees must branch from a freshly fetched `origin/main`
+
+- **Learning**: Lane worktree creation must use a freshly fetched remote base, not the local main ref.
+- **Task/PR**: Issue #641, PR #644
