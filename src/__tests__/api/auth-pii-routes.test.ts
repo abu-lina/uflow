@@ -50,10 +50,12 @@ vi.mock('@/lib/rate-limit', () => ({
   getClientIdentifier: (request: Request) => `ip:${request.headers.get('x-real-ip') || 'unknown'}`,
 }));
 
-import { POST as confirmEmail } from '@/app/api/confirm-email/route';
-import { POST as checkEmailExists } from '@/app/api/check-email-exists/route';
-import { POST as generateToken } from '@/app/api/generate-confirmation-token/route';
-import { POST as resetPassword } from '@/app/api/auth/reset-password/route';
+type Handler = (request: Request) => Promise<Response>;
+
+let confirmEmail: Handler;
+let checkEmailExists: Handler;
+let generateToken: Handler;
+let resetPassword: Handler;
 
 const EMAIL = 'pii-probe@example.test';
 const IP = '203.0.113.77';
@@ -77,7 +79,12 @@ function loggedOutput(): string {
 }
 
 describe('authentication routes do not log email or IP', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
+    ({ POST: confirmEmail } = await import('@/app/api/confirm-email/route'));
+    ({ POST: checkEmailExists } = await import('@/app/api/check-email-exists/route'));
+    ({ POST: generateToken } = await import('@/app/api/generate-confirmation-token/route'));
+    ({ POST: resetPassword } = await import('@/app/api/auth/reset-password/route'));
     vi.clearAllMocks();
     mockGetSupabaseAdmin.mockReturnValue(admin);
     mockCheckRateLimit.mockReturnValue(true);
