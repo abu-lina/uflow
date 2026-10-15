@@ -1,0 +1,3 @@
+fixture() {
+  local -a fpath
+}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
+import { maskEmail, maskIp, redactError } from '@/lib/logging/redact-pii';
 
 // Rate limiting storage (in production, use Redis or similar)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -77,14 +77,7 @@ export async function POST(request: Request) {
     if (tokenError || !tokenData) {
       console.error(`[RESET] Token validation failed:`, {
         email: maskEmail(email),
-        tokenError: tokenError
-          ? {
-              message: tokenError.message,
-              details: tokenError.details,
-              hint: tokenError.hint,
-              code: tokenError.code,
-            }
-          : null,
+        tokenError: tokenError ? redactError(tokenError) : null,
         hasTokenData: !!tokenData,
       });
       return NextResponse.json(

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { maskIdentifier } from '@/lib/logging/redact-pii';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 /**
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
     const isAllowed = checkRateLimit(identifier, 20, 60 * 60 * 1000, 'cities-list');
     
     if (!isAllowed) {
-      console.log('[Cities API] Rate limit exceeded for:', identifier);
+      console.log('[Cities API] Rate limit exceeded for:', maskIdentifier(identifier));
       return NextResponse.json(
         { 
           data: null,

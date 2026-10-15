@@ -1328,3 +1328,8 @@ Corrected (2026-10-05): the "no branch protection" claim above is stale. `main` 
 
 - **Learning**: Lane worktree creation must use a freshly fetched remote base, not the local main ref.
 - **Task/PR**: Issue #641, PR #644
+
+### 2026-10-15 — Secret comparisons need an explicit "key is configured" check
+
+- **Learning**: `headers.get()` returns `null` for a missing header, so `adminKey === process.env.KEY` is `null === undefined` (false) when the header is absent; the real risk is when the env var is unset and the compared value can be `undefined`, so every secret comparison needs an explicit "key is configured" check.
+- **Task/PR**: Issue #658, PR #663
