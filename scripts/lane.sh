@@ -12,8 +12,12 @@ _lane_root() {
 }
 
 _lane_dir() {
-  local root="$1" issue="$2"
-  ls -d "$root/.worktrees/$issue-"*/ 2>/dev/null | head -1 | sed 's:/$::'
+  local root="$1" issue="$2" lane_dir
+  for lane_dir in "$root/.worktrees/$issue-"*/; do
+    [[ -d "$lane_dir" ]] || continue
+    printf '%s\n' "${lane_dir%/}"
+    return 0
+  done
 }
 
 _lane_port() {
@@ -85,7 +89,7 @@ _herdr_workspace_for_issue() {
       [.result.workspaces[]? | select((.worktree.checkout_path // "") |
         contains("/.worktrees/" + $issue + "-"))] | first // {} |
       [(.workspace_id // ""), (.worktree.checkout_path // ""),
-        (.branch // ""), (.label // "")] | @tsv
+        (.branch // "")] | @tsv
     '
 }
 
@@ -202,14 +206,14 @@ lane_done() {
   local issue="${1:-}" force="${2:-}"
   [[ -z "$issue" ]] && { echo "usage: lane_done <issue> [--force]" >&2; return 1; }
 
-  local root dir branch port workspace_json workspace_id workspace_record stale_dir stale_branch stale_label cleanup_failed=0
+  local root dir branch port workspace_json workspace_id workspace_record stale_dir stale_branch cleanup_failed=0
   root="$(_lane_root)" || return 1
   [[ "$root" == */.worktrees/* ]] && { echo "run lane_done from the main checkout" >&2; return 1; }
   dir="$(_lane_dir "$root" "$issue")"
   workspace_json="$(herdr workspace list)" || return 1
   if [[ -z "$dir" ]]; then
     workspace_record="$(_herdr_workspace_for_issue "$workspace_json" "$issue")"
-    IFS=$'\t' read -r workspace_id stale_dir stale_branch stale_label <<<"$workspace_record"
+    IFS=$'\t' read -r workspace_id stale_dir stale_branch <<<"$workspace_record"
     [[ -n "$workspace_id" ]] || { echo "no worktree or Herdr workspace for #$issue"; return 0; }
     dir="$stale_dir"
     branch="$stale_branch"

@@ -1,0 +1,3 @@
+fixture() {
+  declare manpath=x
+}

@@ -12,6 +12,7 @@ while [[ -L "$script_path" ]]; do
 done
 script_dir="$(cd -P "$(dirname "$script_path")" >/dev/null 2>&1 && pwd)" || exit 1
 
+# shellcheck source=./scripts/lane.sh
 source "$script_dir/lane.sh" || exit 1
 
 command="${1:-}"

@@ -29,6 +29,24 @@ const shellFunction = (name: string) => {
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 
+const createLintStubs = (fixture: string) => {
+  const bin = join(fixture, 'bin');
+  const log = join(fixture, 'lint.log');
+  mkdirSync(bin);
+  for (const tool of ['bash', 'zsh', 'shellcheck']) {
+    writeFileSync(
+      join(bin, tool),
+      `#!/bin/sh
+printf '%s' "\${0##*/}" >> "$LINT_LOG"
+for arg do printf '\\t%s' "$arg" >> "$LINT_LOG"; done
+printf '\\n' >> "$LINT_LOG"
+`,
+      { mode: 0o755 },
+    );
+  }
+  return { bin, log };
+};
+
 const git = (root: string, ...args: string[]) =>
   execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
 
@@ -174,18 +192,102 @@ esac
     }
   });
 
-  it('does not bind zsh special variables in local declarations', () => {
-    const specialVariables = new Set(['path', 'status', 'cdpath', 'fpath', 'manpath']);
-    const declarations = laneScript.split('\n').flatMap((line) => {
-      const declaration = line.match(/^\s*local\s+(.+)$/);
-      return (
-        declaration?.[1].split(/\s+/).flatMap((entry) => {
-          const variable = entry.match(/^([A-Za-z_][A-Za-z0-9_]*)(?:=|$)/)?.[1];
-          return variable && specialVariables.has(variable) ? [variable] : [];
-        }) ?? []
-      );
+  it('rejects zsh special-variable bindings in shell fixtures', () => {
+    const fixtures = [
+      { file: 'local-path.sh', line: 2, variable: 'path' },
+      { file: 'local-array-fpath.sh', line: 2, variable: 'fpath' },
+      { file: 'typeset-cdpath.sh', line: 2, variable: 'cdpath' },
+      { file: 'declare-manpath.sh', line: 2, variable: 'manpath' },
+      { file: 'readonly-status.sh', line: 2, variable: 'status' },
+      { file: 'read-path.sh', line: 2, variable: 'path' },
+      { file: 'ifs-read-status.sh', line: 2, variable: 'status' },
+      { file: 'for-path.sh', line: 2, variable: 'path' },
+      { file: 'assignment-path.sh', line: 2, variable: 'path' },
+      { file: 'assignment-status.sh', line: 2, variable: 'status' },
+    ];
+    const root = new URL('../..', import.meta.url).pathname;
+
+    for (const { file, line, variable } of fixtures) {
+      const fixture = join(root, 'tests/fixtures/shell', file);
+      const result = spawnSync('npm', ['run', 'lint:shell', '--', fixture], {
+        cwd: root,
+        encoding: 'utf8',
+      });
+      const output = `${result.stdout}${result.stderr}`;
+
+      expect(result.status, file).not.toBe(0);
+      expect(output, file).toContain(`${fixture}:${line}`);
+      expect(output, file).toContain(variable);
+      expect(output, file).toContain('zsh special parameter');
+    }
+
+    const cleanFixture = join(root, 'tests/fixtures/shell/clean.sh');
+    const cleanResult = spawnSync('npm', ['run', 'lint:shell', '--', cleanFixture], {
+      cwd: root,
+      encoding: 'utf8',
     });
-    expect(declarations).toEqual([]);
+    expect(cleanResult.status, cleanFixture).toBe(0);
+  }, 30_000);
+
+  it('criterion 1: runs all shell checks on defaults and only requested files', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lint-shell-criterion-1-'));
+    const { bin, log } = createLintStubs(fixture);
+    const root = new URL('../..', import.meta.url).pathname;
+    const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, LINT_LOG: log };
+
+    try {
+      const defaults = spawnSync('npm', ['run', 'lint:shell'], {
+        cwd: root,
+        encoding: 'utf8',
+        env,
+      });
+      expect(defaults.status).toBe(0);
+      expect(readFileSync(log, 'utf8').trim().split('\n')).toEqual([
+        `bash\t-n\t${join(root, 'scripts/lane.sh')}`,
+        `zsh\t-n\t${join(root, 'scripts/lane.sh')}`,
+        `shellcheck\t--shell=bash\t-x\t${join(root, 'scripts/lane.sh')}`,
+        `bash\t-n\t${join(root, 'scripts/lane')}`,
+        `zsh\t-n\t${join(root, 'scripts/lane')}`,
+        `shellcheck\t--shell=bash\t-x\t${join(root, 'scripts/lane')}`,
+      ]);
+
+      writeFileSync(log, '');
+      const specialFixture = join(root, 'tests/fixtures/shell/assignment-path.sh');
+      const selected = spawnSync('npm', ['run', 'lint:shell', '--', specialFixture], {
+        cwd: root,
+        encoding: 'utf8',
+        env,
+      });
+      expect(selected.status).not.toBe(0);
+      expect(`${selected.stdout}${selected.stderr}`).toContain('zsh special parameter');
+      expect(readFileSync(log, 'utf8').trim().split('\n')).toEqual([
+        `bash\t-n\t${specialFixture}`,
+        `zsh\t-n\t${specialFixture}`,
+        `shellcheck\t--shell=bash\t-x\t${specialFixture}`,
+      ]);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it('follows ShellCheck sources when linting scripts/lane alone', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lint-shell-source-'));
+    const { bin, log } = createLintStubs(fixture);
+    const root = new URL('../..', import.meta.url).pathname;
+
+    try {
+      const result = spawnSync('npm', ['run', 'lint:shell', '--', 'scripts/lane'], {
+        cwd: root,
+        encoding: 'utf8',
+        env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, LINT_LOG: log },
+      });
+      expect(result.status).toBe(0);
+      expect(readFileSync(log, 'utf8')).toContain(
+        `shellcheck\t--shell=bash\t-x\t${join(root, 'scripts/lane')}`,
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
   });
 
   it('preserves zsh variables and status output when listing stale workspaces', () => {
