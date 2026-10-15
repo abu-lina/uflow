@@ -28,6 +28,7 @@
     "analyze:browser": "BUNDLE_ANALYZE=browser npm run build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:shell": "node scripts/lint-shell.mjs",
     "lint:watch": "eslint . --watch",
     "lint:check": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",

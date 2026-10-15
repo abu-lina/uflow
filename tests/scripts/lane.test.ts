@@ -180,6 +180,7 @@ esac
       { file: 'local-array-fpath.sh', line: 2, variable: 'fpath' },
       { file: 'typeset-cdpath.sh', line: 2, variable: 'cdpath' },
       { file: 'declare-manpath.sh', line: 2, variable: 'manpath' },
+      { file: 'readonly-status.sh', line: 2, variable: 'status' },
       { file: 'read-path.sh', line: 2, variable: 'path' },
       { file: 'ifs-read-status.sh', line: 2, variable: 'status' },
       { file: 'for-path.sh', line: 2, variable: 'path' },
@@ -199,6 +200,7 @@ esac
       expect(result.status, file).not.toBe(0);
       expect(output, file).toContain(`${fixture}:${line}`);
       expect(output, file).toContain(variable);
+      expect(output, file).toContain('zsh special parameter');
     }
 
     const cleanFixture = join(root, 'tests/fixtures/shell/clean.sh');
@@ -207,7 +209,7 @@ esac
       encoding: 'utf8',
     });
     expect(cleanResult.status, cleanFixture).toBe(0);
-  });
+  }, 30_000);
 
   it('preserves zsh variables and status output when listing stale workspaces', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-status-path-'));
