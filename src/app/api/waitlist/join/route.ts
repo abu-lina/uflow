@@ -145,7 +145,7 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    console.error('[Waitlist] Unexpected error:', error);
+    console.error('[Waitlist] Unexpected error:', redactError(error));
 
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {

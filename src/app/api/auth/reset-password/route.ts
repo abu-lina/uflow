@@ -110,7 +110,7 @@ export async function POST(request: Request) {
       .eq('id', tokenData.id);
 
     if (updateTokenError) {
-      console.error('Error updating token:', updateTokenError);
+      console.error('Error updating token:', redactError(updateTokenError));
       return NextResponse.json({ error: 'Failed to process reset request' }, { status: 500 });
     }
 
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
     );
 
     if (updateUserError) {
-      console.error('[SECURITY] Error updating password:', updateUserError);
+      console.error('[SECURITY] Error updating password:', redactError(updateUserError));
       return NextResponse.json({ error: 'Failed to update password' }, { status: 500 });
     }
 
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       message: 'Password updated successfully',
     });
   } catch (error) {
-    console.error('Password reset error:', error);
+    console.error('Password reset error:', redactError(error));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

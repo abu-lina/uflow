@@ -172,7 +172,7 @@ export async function POST(request: Request) {
       });
       
       if (listError) {
-        console.error('[MAGIC LINK API] Error checking existing users:', listError);
+        console.error('[MAGIC LINK API] Error checking existing users:', redactError(listError));
         return NextResponse.json(
           { error: 'Failed to verify user' },
           { status: 500 }
@@ -259,7 +259,7 @@ export async function POST(request: Request) {
         .insert(consentLogs);
 
       if (consentError) {
-        console.error('[MAGIC LINK API] Error logging consent:', consentError);
+        console.error('[MAGIC LINK API] Error logging consent:', redactError(consentError));
         // Continue anyway - user creation succeeded
       } else {
         console.log('[MAGIC LINK API] ✅ Consent logged for new user');
@@ -285,7 +285,7 @@ export async function POST(request: Request) {
       .from('email_confirmation_tokens')
       .insert({
         user_id: user.id,
-        email,
+        email: email.trim().toLowerCase(),
         token,
         type: 'magic_link',
         expires_at: expiresAt.toISOString(),
@@ -295,7 +295,7 @@ export async function POST(request: Request) {
       .single();
     
     if (tokenError) {
-      console.error('[MAGIC LINK API] Error storing token:', tokenError);
+      console.error('[MAGIC LINK API] Error storing token:', redactError(tokenError));
       return NextResponse.json(
         { error: 'Failed to generate magic link token' },
         { status: 500 }
@@ -353,26 +353,13 @@ export async function POST(request: Request) {
         magicLinkUrl
       );
       
-      // Extract error to help TypeScript with type narrowing
-      const emailError = emailResult.error as { message?: string } | null | undefined;
-      
-      // Helper to safely get error message
-      const getErrorMessage = (err: unknown): string | undefined => {
-        if (err && typeof err === 'object' && 'message' in err) {
-          return String(err.message);
-        }
-        return undefined;
-      };
-      
       // Check if Resend returned an error even though no exception was thrown
-      if (emailError) {
-        console.error('[MAGIC LINK API] ❌ Resend returned error in response:', redactError(emailError));
-        const errorDetails = getErrorMessage(emailError) || JSON.stringify(emailError);
+      if (emailResult.error) {
+        console.error('[MAGIC LINK API] ❌ Resend returned error in response:', redactError(emailResult.error));
         return NextResponse.json(
           { 
             error: 'Failed to send magic link email.',
             code: 'RESEND_API_ERROR',
-            details: errorDetails
           },
           { status: 500 }
         );
@@ -387,7 +374,6 @@ export async function POST(request: Request) {
         { 
           error: 'Failed to send magic link email. Please check Resend configuration.',
           code: 'EMAIL_SEND_FAILED',
-          details: emailError instanceof Error ? emailError.message : String(emailError),
           message: 'We were unable to send the magic link email. Please try again or contact support if the problem persists.'
         },
         { status: 500 }
@@ -406,7 +392,7 @@ export async function POST(request: Request) {
     });
     
   } catch (error) {
-    console.error('[MAGIC LINK API] Unexpected error:', error);
+    console.error('[MAGIC LINK API] Unexpected error:', redactError(error));
     return NextResponse.json(
       { error: 'An unexpected error occurred' },
       { status: 500 }

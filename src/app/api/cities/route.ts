@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { maskIdentifier } from '@/lib/logging/redact-pii';
+import { maskIdentifier, redactError } from '@/lib/logging/redact-pii';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 /**
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     const { data: citiesWithCounts, error: rpcError } = await supabase.rpc('get_cities_with_counts');
     
     if (rpcError) {
-      console.error('[Cities API] Failed to fetch cities with counts:', rpcError);
+      console.error('[Cities API] Failed to fetch cities with counts:', redactError(rpcError));
       return NextResponse.json(
         { 
           data: null,
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
     );
 
   } catch (error) {
-    console.error('[Cities API] Unexpected error:', error);
+    console.error('[Cities API] Unexpected error:', redactError(error));
     
     // Generic error response
     return NextResponse.json(
