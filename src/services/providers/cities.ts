@@ -62,6 +62,51 @@ export async function checkCityExists(cityName: string, client?: SupabaseClient)
 }
 
 /**
+ * Nearest city with at least `minProviders` approved providers (#674).
+ * The origin is `coords` when given, else the stored center of `cityName`.
+ * Returns null when no city qualifies; throws on RPC errors.
+ */
+export async function findNearestCityWithProviders(
+  cityName: string,
+  minProviders: number,
+  coords?: { lat: number; lon: number } | null,
+  client?: SupabaseClient,
+): Promise<string | null> {
+  const { data, error } = await getSupabaseClient(client).rpc('get_nearest_city_with_providers', {
+    p_city_name: cityName,
+    p_min_providers: minProviders,
+    p_lat: coords?.lat ?? null,
+    p_lon: coords?.lon ?? null,
+  });
+  if (error) throw error;
+  return (data as { city_name: string }[] | null)?.[0]?.city_name ?? null;
+}
+
+/**
+ * Center of a city from the cities table, or null when unknown (#674).
+ * Never throws: the center only positions the map, so a failed lookup must
+ * not fail the page.
+ */
+export async function getCityCenter(
+  cityName: string,
+  client?: SupabaseClient,
+): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const { data, error } = await getSupabaseClient(client)
+      .from('cities')
+      .select('latitude, longitude')
+      .eq('city_name', cityName)
+      .maybeSingle<{ latitude: number | null; longitude: number | null }>();
+    if (error) throw error;
+    if (data?.latitude == null || data.longitude == null) return null;
+    return { lat: Number(data.latitude), lng: Number(data.longitude) };
+  } catch (error) {
+    console.error('Error fetching city center:', error);
+    return null;
+  }
+}
+
+/**
  * Fetch cities that currently have approved providers.
  * Optionally filter by section (listing_type) so only cities with
  * providers in the active section are returned.

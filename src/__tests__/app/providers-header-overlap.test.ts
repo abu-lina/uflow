@@ -18,7 +18,6 @@ describe('Plan 227 — Desktop header overlap: source-level guards', () => {
   const headerSrc = readSrc('components/layout/Header.tsx');
   const providersSrc = readSrc('app/(public)/providers/ProvidersContent.tsx');
   const discoveryHeaderSrc = readSrc('features/search/components/DiscoveryHeader.tsx');
-  const rootPageSrc = readSrc('components/shared/RootPageContent.tsx');
   const gridSrc = readSrc('features/search/components/DiscoveryResultsGrid.tsx');
 
   it('Header.tsx uses borderBoxSize (not contentRect.height) for --desktop-header-height', () => {
@@ -39,10 +38,10 @@ describe('Plan 227 — Desktop header overlap: source-level guards', () => {
     expect(discoveryHeaderSrc).not.toContain('sm:hidden');
   });
 
-  it('RootPageContent uses the shared DiscoveryHeader for home navigation', () => {
-    expect(rootPageSrc).toContain('import { DiscoveryHeader }');
-    expect(rootPageSrc).toContain('<DiscoveryHeader');
-    expect(rootPageSrc).not.toContain('className="fixed left-0 right-0 top-0 z-50 md:hidden"');
+  // #674: discovery moved from / to the section routes (ProvidersContent)
+  it('ProvidersContent uses the shared DiscoveryHeader for section navigation', () => {
+    expect(providersSrc).toContain('import { DiscoveryHeader }');
+    expect(providersSrc).toContain('<DiscoveryHeader');
     expect(discoveryHeaderSrc).toContain('md:hidden');
     expect(discoveryHeaderSrc).not.toContain('sm:hidden');
   });

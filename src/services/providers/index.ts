@@ -42,6 +42,8 @@ export {
   fetchProviderCities,
   fetchPopularCities,
   fetchFilteredCities,
+  findNearestCityWithProviders,
+  getCityCenter,
 } from './cities';
 
 // Bookmarks

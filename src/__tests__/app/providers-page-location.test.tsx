@@ -7,6 +7,7 @@ const { mockSearchProvidersAndCommunityServices, mockProvidersContent } = vi.hoi
 
 vi.mock('@/services/providers', () => ({
   searchProvidersAndCommunityServices: mockSearchProvidersAndCommunityServices,
+  getCityCenter: async () => null,
 }));
 
 vi.mock('@/app/(public)/providers/ProvidersContent', () => ({

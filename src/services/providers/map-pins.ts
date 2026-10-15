@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { DEFAULT_SECTION } from '@/config/sectionFilters';
 import type { Section } from '@/config/sectionFilters';
+import {
+  SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN,
+  type SearchFilterKey,
+} from '@/features/search/constants/filterKeys';
 import { getSupabaseClient } from './client';
 import type { OpeningHours } from '@/types/openingHours';
 
@@ -47,10 +51,15 @@ export interface MapLocationsOptions {
   section?: Section;
   city?: string | null;
   reviewStatus?: string | null;
+  filters?: SearchFilterKey[];
 }
 
+/**
+ * City and filters apply to the provider row, as in searchProviders, so the
+ * pins for a section/city/filter scope are a subset of its list (#674).
+ */
 export async function getMapLocations(
-  { section = DEFAULT_SECTION, city, reviewStatus }: MapLocationsOptions = {},
+  { section = DEFAULT_SECTION, city, reviewStatus, filters }: MapLocationsOptions = {},
   client?: SupabaseClient,
 ): Promise<RawLocationRow[]> {
   const supabase = getSupabaseClient(client);
@@ -66,7 +75,11 @@ export async function getMapLocations(
     .eq('providers.review_status', reviewStatus ?? 'approved');
 
   if (city) {
-    query = query.eq('address_city', city);
+    query = query.eq('providers.address_city', city);
+  }
+
+  for (const filterKey of filters ?? []) {
+    query = query.eq(`providers.${SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN[filterKey]}`, true);
   }
 
   const { data, error } = await query
