@@ -4,6 +4,7 @@ import {
   mkdtempSync,
   mkdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   symlinkSync,
   writeFileSync,
@@ -554,9 +555,53 @@ esac
     expect(laneScript).toContain('herdr pane current');
   });
 
-  it('uses a non-prompting foreman permission mode and explains the choice', () => {
-    expect(laneScript).toContain('--permission-mode dangerous');
-    expect(laneScript).toContain('auto mode prompts for generic shell reads');
+  it('foreman passes --config "$root/.devin/foreman.json" to Devin and no bypassing permission mode', () => {
+    const fixture = realpathSync(mkdtempSync(join(tmpdir(), 'lane-foreman-config-')));
+    const root = join(fixture, 'repo');
+    const bin = join(fixture, 'bin');
+    const herdrLog = join(fixture, 'herdr.log');
+    try {
+      mkdirSync(root);
+      mkdirSync(bin);
+      execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
+      writeFileSync(
+        join(bin, 'herdr'),
+        `#!/bin/sh
+printf '%s\\n' "$*" >> "$HERDR_LOG"
+case "$1 $2" in
+  "agent list") printf '%s\\n' '{"result":{"agents":[]}}' ;;
+  "pane current") printf '%s\\n' '{"result":{"pane":{"pane_id":"pane-main"}}}' ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+
+      const result = spawnSync(
+        'bash',
+        [
+          '-c',
+          `source ${shellQuote(new URL('../../scripts/lane.sh', import.meta.url).pathname)}\nforeman`,
+        ],
+        {
+          cwd: root,
+          encoding: 'utf8',
+          env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, HERDR_LOG: herdrLog },
+        },
+      );
+
+      expect(result.status, result.stderr).toBe(0);
+      const start = readFileSync(herdrLog, 'utf8')
+        .split('\n')
+        .find((line) => line.startsWith('agent start foreman'));
+      expect(start).toBeDefined();
+      const args = (start ?? '').split(' ');
+      expect(args).toContain('--kind');
+      expect(args[args.indexOf('--kind') + 1]).toBe('devin');
+      expect(args[args.indexOf('--config') + 1]).toBe(`${root}/.devin/foreman.json`);
+      expect(start).not.toMatch(/--permission-mode (dangerous|bypass|yolo|smart|accept-edits)/);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
   });
 
   it('tells the foreman to wait for blocked or completed lanes', () => {
