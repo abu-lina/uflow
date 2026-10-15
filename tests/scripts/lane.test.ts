@@ -174,18 +174,39 @@ esac
     }
   });
 
-  it('does not bind zsh special variables in local declarations', () => {
-    const specialVariables = new Set(['path', 'status', 'cdpath', 'fpath', 'manpath']);
-    const declarations = laneScript.split('\n').flatMap((line) => {
-      const declaration = line.match(/^\s*local\s+(.+)$/);
-      return (
-        declaration?.[1].split(/\s+/).flatMap((entry) => {
-          const variable = entry.match(/^([A-Za-z_][A-Za-z0-9_]*)(?:=|$)/)?.[1];
-          return variable && specialVariables.has(variable) ? [variable] : [];
-        }) ?? []
-      );
+  it('rejects zsh special-variable bindings in shell fixtures', () => {
+    const fixtures = [
+      { file: 'local-path.sh', line: 2, variable: 'path' },
+      { file: 'local-array-fpath.sh', line: 2, variable: 'fpath' },
+      { file: 'typeset-cdpath.sh', line: 2, variable: 'cdpath' },
+      { file: 'declare-manpath.sh', line: 2, variable: 'manpath' },
+      { file: 'read-path.sh', line: 2, variable: 'path' },
+      { file: 'ifs-read-status.sh', line: 2, variable: 'status' },
+      { file: 'for-path.sh', line: 2, variable: 'path' },
+      { file: 'assignment-path.sh', line: 2, variable: 'path' },
+      { file: 'assignment-status.sh', line: 2, variable: 'status' },
+    ];
+    const root = new URL('../..', import.meta.url).pathname;
+
+    for (const { file, line, variable } of fixtures) {
+      const fixture = join(root, 'tests/fixtures/shell', file);
+      const result = spawnSync('npm', ['run', 'lint:shell', '--', fixture], {
+        cwd: root,
+        encoding: 'utf8',
+      });
+      const output = `${result.stdout}${result.stderr}`;
+
+      expect(result.status, file).not.toBe(0);
+      expect(output, file).toContain(`${fixture}:${line}`);
+      expect(output, file).toContain(variable);
+    }
+
+    const cleanFixture = join(root, 'tests/fixtures/shell/clean.sh');
+    const cleanResult = spawnSync('npm', ['run', 'lint:shell', '--', cleanFixture], {
+      cwd: root,
+      encoding: 'utf8',
     });
-    expect(declarations).toEqual([]);
+    expect(cleanResult.status, cleanFixture).toBe(0);
   });
 
   it('preserves zsh variables and status output when listing stale workspaces', () => {
