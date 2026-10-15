@@ -1301,7 +1301,20 @@ Corrected (2026-10-05): the "no branch protection" claim above is stale. `main` 
 - **Learning**: In generated SQL, the separator must be emitted _before_ any inline comment (`'uuid',  -- label`), never by joining already-commented lines. More generally this class of bug is invisible to eyeballing the generated file (every line looks right) and invisible to a diff of the id set against the source (`re.findall` on quoted UUIDs matched all 42 in order and still passed), because both checks ignore the delimiters. Only the parser catches it. The local `supabase` stack at `postgresql://postgres:postgres@127.0.0.1:54322/postgres` validates column names, enum casts and syntax for free, and `supabase status -o env | grep DB_URL` is how to get the URL.
 - **Change to prevent repeat**: Validate any generated data-fix SQL against the local Supabase DB before handing it over, in two passes: first `sed 's/^COMMIT;$/ROLLBACK;/'` with `ON_ERROR_STOP=1` to prove it parses against the real schema, then seed the source export and run the real statement inside a rolled-back transaction to prove the row count and the field outcomes. Seeding needs `SET session_replication_role = replica` held through the write, since local lacks the `users` rows the `user_created_id`/`reviewed_by` FKs point at. Also run `psql` with `--pset=pager=off` and `PAGER=cat`: under this harness it otherwise blocks forever in its pager with no output and no active query in `pg_stat_activity`.
 - **Task/PR**: No issue; ad-hoc data fix, artifact at `agent-output/artifacts/loco-chicken-approve-backfill.sql`
+
 ### 2026-10-12 — Remove retired service names from every requested doc reference (issue #615)
 
 - **Learning**: Removing a service from a product should clear its explicit references from documentation while retaining the alternatives that remain supported.
 - **Task/PR**: Issue #615
+
+### 2026-10-14 — Herdr exposes lane state under `worktree.checkout_path` and `agent_status`
+
+- **Learning**: Herdr JSON nests workspace paths under `worktree.checkout_path` and reports lifecycle in `agent_status`, so the lane status helpers read those fields directly instead of parsing pane titles the way the tmux version did.
+- **Task/PR**: Issue #634, PR #635
+
+### 2026-10-15 — `local path=` in a zsh function wipes `PATH` for the rest of that function
+
+- **Context**: `_herdr_workspace_id()` in `scripts/lane.sh` declared `local json="$1" path="$2"`. In zsh `path` is the array tied to `PATH`, so the assignment replaced the search path with a single directory and every external command inside the function failed. `lane_done 634` died with `command not found: jq` on a machine where `jq` sits in `/usr/bin`. A second defect in the same run: `git worktree remove` refuses a lane holding a 919 MB `.next`, so the directory was left behind after the branch was already deleted.
+- **Learning**: Never `local` a zsh special variable (`path`, `status`, `cdpath`, `fpath`, `manpath`) in a shell script this repo sources. Worse, the whole file was covered by tests that only grepped its contents, so both defects shipped with green `type-check`, `lint`, `vitest` and `build`. A test that asserts a string is present proves the string is present and nothing else.
+- **Change to prevent repeat**: Shell helpers get behavioural tests that execute the function in a real `zsh` with a known `PATH` and assert on the result, not on the source text. Grep for `local .*\b(path|status|cdpath|fpath|manpath)=` before touching `scripts/lane.sh`. Worktree teardown forces removal and tears down branch, workspace and directory independently so one failure cannot strand the others.
+- **Task/PR**: Issue #636, PR #637
