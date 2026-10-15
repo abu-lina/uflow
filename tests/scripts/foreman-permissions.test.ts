@@ -17,35 +17,51 @@ const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
 const probeCount = 15;
+// preflight + every probe + the final foreman.json permissions check
+const reportCount = probeCount + 2;
 
+// Emulates Devin: PATH comes from "$SHELL" run as an interactive login shell.
 const stubDevin = `#!/bin/sh
 printf '%s\\n' "$*" >> "$DEVIN_LOG"
+if [ -n "\${DEVIN_PERMISSION_MODE+x}\${DEVIN_SANDBOX+x}" ]; then
+  echo "leaked DEVIN_* env" >> "$DEVIN_LOG"
+fi
+snapshot="$("$SHELL" -ilc 'printf %s "$PATH"' </dev/null 2>/dev/null)" && [ -n "$snapshot" ] && PATH="$snapshot"
 for instruction; do :; done
 case "$instruction" in
   "Run this exact shell command"*) cmd="\${instruction#*: }" ;;
   *) cmd="" ;;
 esac
+if [ "$cmd" = "command -v gh herdr" ]; then
+  [ "$STUB_MODE" = hijacked ] && PATH="$FAKE_BREW:$PATH"
+  command -v gh herdr
+  exit 0
+fi
+case "$*" in
+  *"--config .devin/foreman.json"*) config=.devin/foreman.json ;;
+  *) config="" ;;
+esac
 if [ "$STUB_MODE" = compliant ]; then
+  if [ -n "$config" ]; then
+    jq '.devin.org_id = "org-fake-value"' "$config" > "$config.tmp" && mv "$config.tmp" "$config"
+  fi
   case "$cmd" in
     "git log -1 --oneline"|"gh issue list --limit 1"|"herdr agent list"|"scripts/lane status")
       eval "$cmd"
       exit $?
       ;;
   esac
-  case "$instruction" in
-    "Write a file /tmp/foreman-probe-"*)
-      path="\${instruction#Write a file }"
-      path="\${path%% *}"
-      printf ok > "$path"
-      printf '%s\\n' "$path" >> "$TMP_PROBE_LOG"
-      exit 0
-      ;;
-  esac
   echo "The tool call was denied by the permission rules."
   exit 0
 fi
+jq '.permissions.allow += ["Exec(git push)"]' "$config" > "$config.tmp" && mv "$config.tmp" "$config"
 case "$instruction" in
-  "Write a file /tmp/"*) exit 0 ;;
+  "Write a file /tmp/foreman-probe-"*)
+    path="\${instruction#Write a file }"
+    path="\${path%% *}"
+    printf ok > "$path"
+    printf '%s\\n' "$path" >> "$TMP_PROBE_LOG"
+    ;;
   *write-probe.txt*) touch write-probe.txt ;;
   *probe.txt*) touch probe.txt ;;
   *LEARNINGS*) echo probe >> docs/ai/LEARNINGS.md ;;
@@ -57,11 +73,17 @@ case "$instruction" in
 esac
 `;
 
+const hostileProfile = 'export PATH="$FAKE_BREW:$PATH"\n';
+
 const createFixture = () => {
   const fixture = mkdtempSync(join(tmpdir(), 'foreman-permissions-'));
   const root = join(fixture, 'repo');
   const bin = join(fixture, 'bin');
+  const home = join(fixture, 'home');
+  const fakeBrew = join(fixture, 'brew');
   mkdirSync(bin);
+  mkdirSync(home);
+  mkdirSync(fakeBrew);
   for (const file of [
     'scripts/verify-foreman-permissions.sh',
     'scripts/lane',
@@ -93,11 +115,18 @@ const createFixture = () => {
     { stdio: 'ignore' },
   );
   writeFileSync(join(bin, 'devin'), stubDevin, { mode: 0o755 });
-  return { fixture, root, bin };
+  for (const tool of ['gh', 'herdr']) {
+    writeFileSync(join(fakeBrew, tool), '#!/bin/sh\necho real-tool-marker\n', { mode: 0o755 });
+  }
+  // Like `brew shellenv` in a real profile: puts other gh/herdr binaries first.
+  for (const profile of ['.zprofile', '.zshrc', '.bash_profile', '.profile']) {
+    writeFileSync(join(home, profile), hostileProfile);
+  }
+  return { fixture, root, bin, home, fakeBrew };
 };
 
-const runVerify = (mode: 'compliant' | 'violating') => {
-  const { fixture, root, bin } = createFixture();
+const runVerify = (mode: 'compliant' | 'violating' | 'hijacked') => {
+  const { fixture, root, bin, home, fakeBrew } = createFixture();
   const devinLog = join(fixture, 'devin.log');
   const tmpProbeLog = join(fixture, 'tmp-probe.log');
   try {
@@ -106,8 +135,12 @@ const runVerify = (mode: 'compliant' | 'violating') => {
       encoding: 'utf8',
       env: {
         ...process.env,
+        HOME: home,
         PATH: `${bin}:${process.env.PATH}`,
+        FAKE_BREW: fakeBrew,
         DEVIN_LOG: devinLog,
+        DEVIN_PERMISSION_MODE: 'dangerous',
+        DEVIN_SANDBOX: '1',
         TMP_PROBE_LOG: tmpProbeLog,
         STUB_MODE: mode,
         GIT_AUTHOR_NAME: 'Probe',
@@ -139,7 +172,7 @@ describe('foreman permission config (#649)', () => {
     expect(spawnSync('bash', ['-n', verifyScript]).status).toBe(0);
   });
 
-  it('AC2: .devin/foreman.json denies the edit tool, repo writes, mutating git, package tools, gh pr merge, gh repo and MCP', () => {
+  it('AC2: .devin/foreman.json denies the edit tool, every write, mutating git, package tools, gh pr merge, gh repo and MCP', () => {
     const { permissions } = JSON.parse(readFileSync(foremanConfig, 'utf8')) as {
       permissions: { allow: string[]; ask: string[]; deny: string[] };
     };
@@ -181,29 +214,49 @@ describe('foreman permission config (#649)', () => {
     ]) {
       expect(permissions.allow).toContain(rule);
     }
+    expect(permissions.allow.filter((rule) => rule.startsWith('Write('))).toEqual([]);
   });
 
   it('AC2: exits non-zero and reports every write probe as failed when Devin performs the action', () => {
-    const { result, devinCalls, results } = runVerify('violating');
+    const { result, devinCalls, results, tmpProbes } = runVerify('violating');
 
     expect(result.status, result.stderr).not.toBe(0);
-    expect(devinCalls).toHaveLength(probeCount);
-    for (const call of devinCalls) {
+    expect(devinCalls).toHaveLength(probeCount + 1);
+    expect(devinCalls[0]).toMatch(
+      /--config \S+\/preflight\.json --respect-workspace-trust false -p/,
+    );
+    for (const call of devinCalls.slice(1)) {
       expect(call).toContain('--config .devin/foreman.json --respect-workspace-trust false -p');
     }
-    expect(results).toHaveLength(probeCount);
-    for (const line of results) expect(line).toMatch(/^FAIL/);
+    expect(results).toHaveLength(reportCount);
+    expect(results[0]).toMatch(/^PASS {2}preflight/);
+    for (const line of results.slice(1)) expect(line).toMatch(/^FAIL/);
+    expect(results.at(-1)).toMatch(/foreman\.json permissions are unchanged/);
+    expect(result.stdout).toContain('foreman.json changed: permissions.allow.');
+    expect(tmpProbes).toHaveLength(1);
+    expect(existsSync(tmpProbes[0])).toBe(false);
   }, 60_000);
 
   it('AC2 + AC3: passes every probe when Devin blocks writes and runs read-only commands without a prompt', () => {
     const { result, devinCalls, results, tmpProbes } = runVerify('compliant');
 
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
-    expect(devinCalls).toHaveLength(probeCount);
-    expect(results).toHaveLength(probeCount);
+    expect(devinCalls).toHaveLength(probeCount + 1);
+    expect(results).toHaveLength(reportCount);
     for (const line of results) expect(line).toMatch(/^PASS/);
-    expect(tmpProbes).toHaveLength(1);
-    expect(tmpProbes[0]).toMatch(/^\/tmp\/foreman-probe-.+\.txt$/);
-    expect(existsSync(tmpProbes[0])).toBe(false);
+    expect(result.stdout).toContain('foreman.json changed: devin.org_id');
+    expect(result.stdout).not.toContain('org-fake-value');
+    expect(result.stdout).not.toContain('real-tool-marker');
+    expect(tmpProbes).toEqual([]);
+  }, 60_000);
+
+  it('aborts before any probe when gh or herdr inside Devin do not resolve to the stubs', () => {
+    const { result, devinCalls, results } = runVerify('hijacked');
+
+    expect(result.status).not.toBe(0);
+    expect(devinCalls).toHaveLength(1);
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatch(/^FAIL {2}preflight/);
+    expect(result.stdout).toContain('abort: stubs are not first on PATH');
   }, 60_000);
 });

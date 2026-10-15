@@ -28,9 +28,7 @@
       "Exec(herdr agent prompt)",
       "Exec(herdr agent send-keys)",
       "Exec(herdr pane read)",
-      "Exec(scripts/lane status)",
-      "Write(/tmp/**)",
-      "Write(/private/tmp/**)"
+      "Exec(scripts/lane status)"
     ],
     "ask": [
       "Exec(scripts/lane start)",
