@@ -328,7 +328,9 @@ describe('review findings: dead /providers checks removed', () => {
 
     it('emits the browse shortcut at /food, not /providers', () => {
       const manifest = JSON.parse(readFileSync(generatedManifestPath, 'utf-8'));
-      expect(manifest.shortcuts.find((shortcut: { url: string }) => shortcut.url === '/food')).toBeTruthy();
+      expect(
+        manifest.shortcuts.find((shortcut: { url: string }) => shortcut.url === '/food'),
+      ).toBeTruthy();
       expect(
         manifest.shortcuts.find((shortcut: { url: string }) => shortcut.url === '/providers'),
       ).toBeFalsy();
@@ -338,6 +340,16 @@ describe('review findings: dead /providers checks removed', () => {
       expect(readFileSync(generatedManifestPath, 'utf-8')).toBe(
         readFileSync(resolve(ROOT, 'public/manifest.json'), 'utf-8'),
       );
+    });
+
+    it('ignores public/manifest.json in Prettier', () => {
+      const fileInfo = JSON.parse(
+        execFileSync('npx', ['prettier', '--file-info', 'public/manifest.json'], {
+          cwd: ROOT,
+          encoding: 'utf-8',
+        }),
+      );
+      expect(fileInfo.ignored).toBe(true);
     });
   });
 
