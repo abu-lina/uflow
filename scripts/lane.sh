@@ -20,6 +20,19 @@ _lane_port() {
   echo $((3000 + $1 % 1000))
 }
 
+_lane_base() {
+  git fetch -q origin main || return 1
+  printf '%s\n' origin/main
+}
+
+_lane_check_main() {
+  local unpushed
+  unpushed="$(git log --oneline origin/main..main)" || return 1
+  [[ -z "$unpushed" ]] && return 0
+  printf 'local main is ahead of origin/main; push these commits before starting a lane:\n%s\n' "$unpushed" >&2
+  return 1
+}
+
 _lane_type() {
   case "$(gh issue view "$1" --json labels --jq '[.labels[].name|select(startswith("type:"))][0]')" in
     type:feature) echo feat ;;
@@ -114,7 +127,7 @@ lane() {
   [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [copilot|devin] [model|effort]" >&2; return 1; }
   [[ "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be copilot or devin" >&2; return 1; }
 
-  local root dir branch port workspace_json workspace_id worktree_result pane prompt
+  local root dir branch port workspace_json workspace_id worktree_result pane prompt base
   local -a agent_args
   root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
   [[ "$root" == */.worktrees/* ]] && { echo "run lane from the main checkout, not a worktree" >&2; return 1; }
@@ -131,6 +144,8 @@ lane() {
   [[ -z "$slug" ]] && { echo "new lane needs a slug: lane $issue <slug>" >&2; return 1; }
   branch="$(_lane_type "$issue")/$issue-$slug"
   dir="$root/.worktrees/$issue-$slug"
+  base="$(_lane_base)" || return 1
+  _lane_check_main || return 1
   if ! git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
     gh issue develop "$issue" --name "$branch" --base main >/dev/null || return 1
   fi
@@ -139,7 +154,7 @@ lane() {
   worktree_result="$(herdr worktree create \
     --cwd "$root" \
     --branch "$branch" \
-    --base main \
+    --base "$base" \
     --path "$dir" \
     --label "#$issue $slug" \
     --focus)" || return 1
