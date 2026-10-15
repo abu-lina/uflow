@@ -81,6 +81,7 @@ Post a comment on the issue every time you stop, not only when the PR is green a
 - PR ready: include the PR number or URL, the green checks, which acceptance criteria are covered by which tests, anything out of scope you found, and one learning (what surprised you, one sentence).
 - Stopped after 3 failed CI attempts: include the exact command, the last failing error, the fix rounds already tried, and what you need the owner to decide or unblock.
 - Stop-and-ask or blocked: include the direct question or blocker, the most recent evidence, and the exact next step needed from the owner.
+- On a red check, summarize the failing step and error in the issue comment in five lines or fewer; don't include raw CI logs.
 - Any other stop: include what happened, what you need, and the reason you are leaving the lane without more work.
 
 Add `docs/ai/learnings/<issue>.md` to the PR. Include a short title, a one-sentence **Learning**, and **Task/PR** with the issue number; the PR number is optional. Include the learning sentence in the PR body and final issue comment.
