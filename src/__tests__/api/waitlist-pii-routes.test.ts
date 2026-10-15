@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PROBE_EMAIL, capturedLogArgs } from '@/__tests__/utils/pii-probe';
 
 const mockCheckRateLimit = vi.fn((..._args: unknown[]) => true);
 const mockGetClientIdentifier = vi.fn(
   (request: Request) => `ip:${request.headers.get('x-real-ip') || 'unknown'}`,
 );
-const mockInsert = vi.fn(
-  (..._args: unknown[]): Promise<{ error: { code: string } | null }> =>
-    Promise.resolve({ error: null }),
+const mockInsert = vi.fn((..._args: unknown[]): Promise<{ error: { code: string } | null }> =>
+  Promise.resolve({ error: null }),
 );
 const mockRpc = vi.fn(
   (
@@ -20,6 +20,8 @@ const mockSendWaitlistEmail = vi.fn((..._args: unknown[]): Promise<void> => Prom
 const mockSendAuthEmail = vi.fn((..._args: unknown[]) =>
   Promise.resolve({ data: { id: 'email-1' }, error: null }),
 );
+const EMAIL = PROBE_EMAIL;
+const IP = '203.0.113.77';
 
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
@@ -54,9 +56,7 @@ vi.mock('next/headers', () => ({
 import { POST as sendAuthEmail } from '@/app/api/send-auth-email/route';
 import { POST as joinWaitlist } from '@/app/api/waitlist/join/route';
 import { POST as subscribeCity } from '@/app/api/waitlist/subscribe-city/route';
-
-const EMAIL = 'pii-probe@example.test';
-const IP = '203.0.113.77';
+import { PATCH as updateWaitlist } from '@/app/api/waitlist/update/route';
 
 function request(path: string, body: Record<string, unknown>): Request {
   return new Request(`http://localhost/api/${path}`, {
@@ -173,6 +173,31 @@ describe('waitlist and auth email routes do not log raw PII', () => {
     expect(logs).not.toContain(IP);
     expect(logs).toContain('p***@example.test');
     expect(logs).toContain('203.0.113.0');
+  });
+
+  it('does not log the email on waitlist update paths', async () => {
+    const makeUpdateRequest = () =>
+      new Request('http://localhost/api/waitlist/update', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json', 'x-real-ip': IP },
+        body: JSON.stringify({
+          email: EMAIL,
+          waitlistToken: 'waitlist-token',
+          selected_city: 'Berlin',
+        }),
+      });
+
+    mockRpc.mockResolvedValueOnce({
+      data: { success: false, error: 'Invalid email or token' },
+      error: null,
+    });
+    const failed = await updateWaitlist(makeUpdateRequest());
+    expect(failed.status).toBe(404);
+
+    const success = await updateWaitlist(makeUpdateRequest());
+    expect(success.status).toBe(200);
+
+    expect(capturedLogArgs().some((argument) => argument.includes(EMAIL))).toBe(false);
   });
 
   it('preserves auth email dispatch behavior without logging request PII', async () => {

@@ -143,4 +143,39 @@ describe('POST /api/auth/magic-link PII logging', () => {
       expect(logs).not.toContain(IP);
     },
   );
+
+  it('returns a generic error when user creation fails', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    mockCreateUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: `${EMAIL} internal-detail-xyz` },
+    });
+
+    const response = await POST(makeRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toEqual({ error: 'Failed to create user' });
+    expect(JSON.stringify(body)).not.toContain(EMAIL);
+    expect(JSON.stringify(body)).not.toContain('internal-detail-xyz');
+  });
+
+  it('omits the caller IP from rate-limit responses', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    mockCheckRateLimit.mockReturnValue(false);
+
+    const response = await POST(makeRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(body).toEqual({
+      error: 'Too many magic link requests. Please try again later.',
+      code: 'RATE_LIMIT_EXCEEDED',
+      limit: 10,
+      window: '60 minutes',
+      message:
+        'You have exceeded the limit of 10 requests per 60 minutes. Please wait before trying again.',
+    });
+    expect(JSON.stringify(body)).not.toContain(IP);
+  });
 });

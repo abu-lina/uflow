@@ -5,7 +5,7 @@ import {
   checkRateLimit,
   getClientIdentifier,
 } from '@/lib/rate-limit';
-import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
+import { maskEmail, maskIp, redactError } from '@/lib/logging/redact-pii';
 import {
   getClientIP,
   checkIPBlocked,
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
             console.error('[LOGIN API] User not found for auto-confirm:', maskEmail(email));
           }
         } catch (confirmError) {
-          console.error('[LOGIN API] Error during auto-confirm:', confirmError);
+          console.error('[LOGIN API] Error during auto-confirm:', redactError(confirmError));
         }
       }
       

@@ -11,6 +11,7 @@ import {
 const mockSignInWithPassword = vi.fn();
 const mockListUsers = vi.fn();
 const mockCreateUser = vi.fn();
+const mockUpdateUserById = vi.fn();
 const mockInsert = vi.fn();
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -25,7 +26,7 @@ vi.mock('@/lib/supabase/admin', () => ({
       admin: {
         listUsers: (...args: unknown[]) => mockListUsers(...args),
         createUser: (...args: unknown[]) => mockCreateUser(...args),
-        updateUserById: vi.fn(async () => ({ error: null })),
+        updateUserById: (...args: unknown[]) => mockUpdateUserById(...args),
       },
     },
     from: () => ({ insert: (...args: unknown[]) => mockInsert(...args) }),
@@ -50,7 +51,11 @@ vi.mock('@/utils/security', () => ({
 import { POST as login } from '@/app/api/auth/login/route';
 import { POST as signup } from '@/app/api/auth/signup/route';
 
-function request(path: string, body: Record<string, unknown>, headers: Record<string, string> = {}) {
+function request(
+  path: string,
+  body: Record<string, unknown>,
+  headers: Record<string, string> = {},
+) {
   return new Request(`http://localhost/api/auth/${path}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-real-ip': PROBE_IP, ...headers },
@@ -83,6 +88,7 @@ describe('auth login and signup log no secret or PII material', () => {
       data: { user: { id: 'signup-user-1', email: PROBE_EMAIL } },
       error: null,
     });
+    mockUpdateUserById.mockResolvedValue({ error: null });
     mockInsert.mockResolvedValue({ error: null });
   });
 
@@ -135,7 +141,8 @@ describe('auth login and signup log no secret or PII material', () => {
         'fetch',
         vi.fn().mockResolvedValue({
           ok: false,
-          text: async () => `{"error":"Could not deliver to ${PROBE_EMAIL}","details":"${PROBE_EMAIL}"}`,
+          text: async () =>
+            `{"error":"Could not deliver to ${PROBE_EMAIL}","details":"${PROBE_EMAIL}"}`,
         }),
       );
 
@@ -162,5 +169,27 @@ describe('auth login and signup log no secret or PII material', () => {
       expect(response.status).toBe(200);
       expect(leakedValues([PROBE_EMAIL, PROBE_IP])).toEqual([]);
     });
+  });
+
+  it('redacts PII from auto-confirm errors in login logs', async () => {
+    mockSignInWithPassword.mockResolvedValue({
+      data: { user: null, session: null },
+      error: { message: 'Email not confirmed' },
+    });
+    mockListUsers.mockResolvedValue({
+      data: { users: [{ id: 'login-user-1', email: PROBE_EMAIL, user_metadata: {} }] },
+      error: null,
+    });
+    const confirmError = Object.assign(new Error(`Could not confirm ${PROBE_EMAIL}`), {
+      details: `Email update failed for ${PROBE_EMAIL}`,
+    });
+    mockUpdateUserById.mockRejectedValue(confirmError);
+
+    const response = await login(
+      request('login', { email: PROBE_EMAIL, password: 'Password123!' }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(leakedValues([PROBE_EMAIL])).toEqual([]);
   });
 });
