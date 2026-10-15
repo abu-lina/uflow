@@ -78,6 +78,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline
 
+      - name: Install zsh for shell regression tests
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y zsh
+
       - name: Install memory backend dependencies
         run: npm ci --prefix tools/memory-backend --prefer-offline
 
