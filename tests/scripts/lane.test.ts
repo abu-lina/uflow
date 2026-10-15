@@ -183,6 +183,88 @@ esac
     expect(declarations).toEqual([]);
   });
 
+  it('preserves zsh variables and status output when listing stale workspaces', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-status-path-'));
+    const bin = join(fixture, 'bin');
+    const existingPath = join(fixture, 'existing-checkout');
+    const missingPath = join(fixture, 'missing-checkout');
+    const pathBefore = join(fixture, 'path-before');
+    const pathAfter = join(fixture, 'path-after');
+    const jqPath = join(fixture, 'jq-path');
+    const variableDeclarations = join(fixture, 'variables');
+    try {
+      mkdirSync(bin);
+      mkdirSync(existingPath);
+      writeFileSync(
+        join(bin, 'herdr'),
+        `#!/bin/sh
+case "$1 $2" in
+  "agent list") printf '%s\\n' '{"result":{"agents":[]}}' ;;
+  "workspace list") printf '%s\\n' '{"result":{"workspaces":[]}}' ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+      writeFileSync(
+        join(bin, 'jq'),
+        `#!/bin/sh
+case "$*" in
+  *"--argjson workspace_data"*) printf '\\n' ;;
+  *) printf 'workspace-existing\\tExisting\\t%s\\nworkspace-missing\\tMissing\\t%s\\nworkspace-no-path\\tNo path\\t\\n' "$EXISTING_PATH" "$MISSING_PATH" ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+
+      const env = {
+        ...process.env,
+        PATH: `${bin}:${process.env.PATH}`,
+        EXISTING_PATH: existingPath,
+        MISSING_PATH: missingPath,
+        PATH_BEFORE: pathBefore,
+        PATH_AFTER: pathAfter,
+        JQ_PATH: jqPath,
+        VARIABLE_DECLARATIONS: variableDeclarations,
+      };
+      const zsh = spawnSync(
+        'zsh',
+        [
+          '-f',
+          '-c',
+          `source ${shellQuote(new URL('../../scripts/lane.sh', import.meta.url).pathname)}
+printf '%s\\n' "$PATH" > "$PATH_BEFORE"
+lane_status
+printf '%s\\n' "$PATH" > "$PATH_AFTER"
+command -v jq > "$JQ_PATH"
+typeset -p workspace_id label path > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
+        ],
+        { cwd: new URL('../..', import.meta.url).pathname, encoding: 'utf8', env },
+      );
+      const bash = spawnSync('bash', [laneEntrypoint, 'status'], {
+        cwd: new URL('../..', import.meta.url).pathname,
+        encoding: 'utf8',
+        env,
+      });
+
+      const expectedOutput =
+        `AGENT\tSTATUS\tWORKSPACE LABEL\tBRANCH\n` +
+        `No lanes open.\n` +
+        `STALE WORKSPACE\tworkspace-missing\tMissing\tcheckout path does not exist: ${missingPath}\n`;
+      expect(zsh.status).toBe(0);
+      expect(bash.status).toBe(0);
+      expect(zsh.stdout).toBe(expectedOutput);
+      expect(bash.stdout).toBe(expectedOutput);
+      expect(readFileSync(pathAfter, 'utf8')).toBe(readFileSync(pathBefore, 'utf8'));
+      expect(readFileSync(jqPath, 'utf8')).toBe(join(bin, 'jq') + '\n');
+      const declarations = readFileSync(variableDeclarations, 'utf8');
+      expect(declarations).toContain('no such variable: workspace_id');
+      expect(declarations).toContain('no such variable: label');
+      expect(declarations).toContain('typeset -aT PATH path=');
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
   it('keeps external commands available in zsh while resolving a workspace id', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-zsh-'));
     try {
