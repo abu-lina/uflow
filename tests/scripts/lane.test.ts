@@ -1,10 +1,19 @@
-import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const laneScript = readFileSync(new URL('../../scripts/lane.sh', import.meta.url), 'utf8');
+const laneEntrypoint = new URL('../../scripts/lane', import.meta.url).pathname;
 const laneGuide = readFileSync(new URL('../../docs/agents/lane.md', import.meta.url), 'utf8');
 const foremanGuide = readFileSync(new URL('../../docs/agents/foreman.md', import.meta.url), 'utf8');
 const setupDecisions = readFileSync(new URL('../../docs/agents/setup-decisions.md', import.meta.url), 'utf8');
@@ -15,7 +24,134 @@ const shellFunction = (name: string) => {
   return match[0];
 };
 
+const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
+
 describe('lane shell helpers', () => {
+  it('runs lane status from a non-interactive shell without loading shell startup files', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-entrypoint-'));
+    const bin = join(fixture, 'bin');
+    const herdrLog = join(fixture, 'herdr.log');
+    try {
+      mkdirSync(bin);
+      writeFileSync(
+        join(bin, 'herdr'),
+        `#!/bin/sh
+printf "%s\\n" "$*" >> "$HERDR_LOG"
+case "$1 $2" in
+  "agent list"|"workspace list") printf '%s\\n' '{"result":{}}' ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+      writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
+
+      const result = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} status`], {
+        cwd: new URL('../..', import.meta.url).pathname,
+        encoding: 'utf8',
+        env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, HERDR_LOG: herdrLog },
+      });
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain('AGENT\tSTATUS\tWORKSPACE LABEL\tBRANCH');
+      expect(readFileSync(herdrLog, 'utf8')).toContain('agent list');
+      expect(readFileSync(herdrLog, 'utf8')).toContain('workspace list');
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('resolves the helper for absolute, relative, and symlink invocations from a nested repo directory', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-entrypoint-link-'));
+    const bin = join(fixture, 'bin');
+    const link = join(fixture, 'lane');
+    const repoRoot = new URL('../..', import.meta.url).pathname;
+    const nestedDirectory = join(repoRoot, 'docs', 'agents');
+    try {
+      mkdirSync(bin);
+      writeFileSync(
+        join(bin, 'herdr'),
+        `#!/bin/sh
+case "$1 $2" in
+  "agent list"|"workspace list") printf '%s\\n' '{"result":{}}' ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+      writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
+      symlinkSync(laneEntrypoint, link);
+
+      const invocations = [
+        [laneEntrypoint, nestedDirectory],
+        ['../../scripts/lane', nestedDirectory],
+        [link, nestedDirectory],
+      ];
+      for (const [path, cwd] of invocations) {
+        const result = spawnSync('zsh', ['-c', `${shellQuote(path)} status`], {
+          cwd,
+          encoding: 'utf8',
+          env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+        });
+        expect(result.status, `${path}: ${result.stderr}`).toBe(0);
+        expect(result.stdout).toContain('AGENT\tSTATUS\tWORKSPACE LABEL\tBRANCH');
+      }
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('prints usage for missing and unknown subcommands', () => {
+    for (const command of ['', 'foreman']) {
+      const result = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} ${command}`], {
+        encoding: 'utf8',
+      });
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('status');
+      expect(result.stderr).toContain('start');
+      expect(result.stderr).toContain('done');
+    }
+  });
+
+  it('returns the dispatched helper exit code for success and failure', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-entrypoint-exit-'));
+    const bin = join(fixture, 'bin');
+    try {
+      mkdirSync(bin);
+      writeFileSync(
+        join(bin, 'herdr'),
+        `#!/bin/sh
+case "$1 $2" in
+  "agent list"|"workspace list") printf '%s\\n' '{"result":{}}' ;;
+esac
+`,
+        { mode: 0o755 },
+      );
+      writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
+
+      const env = { ...process.env, PATH: `${bin}:${process.env.PATH}` };
+      const successful = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} status`], {
+        cwd: new URL('../..', import.meta.url).pathname,
+        encoding: 'utf8',
+        env,
+      });
+      const startMissingIssue = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} start`], {
+        encoding: 'utf8',
+        env,
+      });
+      const failed = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} done`], {
+        encoding: 'utf8',
+        env,
+      });
+
+      expect(successful.status).toBe(0);
+      expect(startMissingIssue.status).toBe(1);
+      expect(startMissingIssue.stderr).toContain('usage: lane <issue>');
+      expect(failed.status).toBe(1);
+      expect(failed.stderr).toContain('usage: lane_done');
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
   it('does not bind zsh special variables in local declarations', () => {
     const specialVariables = new Set(['path', 'status', 'cdpath', 'fpath', 'manpath']);
     const declarations = laneScript.split('\n').flatMap((line) => {
