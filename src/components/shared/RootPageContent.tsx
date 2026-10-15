@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getOnboardingState } from '@/lib/utils/onboarding-state';
 import { getFeatureFlag } from '@/config/feature-flags';
-import { getHomeRedirectPath } from '@/config/sectionFilters';
+import { getCityMapPath } from '@/config/sectionFilters';
 import { useAppStage } from '@/hooks/useAppStage';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';
@@ -49,13 +49,15 @@ export function RootPageContent() {
   const displayCity = cityName || selectedCity;
 
   // #674: discovery lives on the section route. Once onboarding is complete
-  // and the city has enough providers, hand off with the query string intact.
+  // and the city has enough providers, open its map with the query string intact.
   const showsDiscovery =
     !!shouldShowCityContent && !!displayCity && (stage === 'stage2' || stage === 'stage3');
   const query = searchParams.toString();
   useEffect(() => {
-    if (showsDiscovery) router.replace(getHomeRedirectPath(new URLSearchParams(query)));
-  }, [showsDiscovery, query, router]);
+    if (showsDiscovery && displayCity) {
+      router.replace(getCityMapPath(displayCity, new URLSearchParams(query)));
+    }
+  }, [showsDiscovery, displayCity, query, router]);
 
   // Wait for client-side check or recovery to complete, or for the hand-off
   if (shouldShowCityContent === null || isRecovering || stageLoading || showsDiscovery) {

@@ -91,6 +91,8 @@ async function fetchProvidersFromAPI(
 interface ProvidersContentProps {
   defaultLocation?: string; // For Stage 2: render on root with city filter
   mapCity?: string | null;
+  /** #674: center of the city in scope; the map opens on it. */
+  mapCenter?: { lat: number; lng: number } | null;
   showGreeting?: boolean; // Show greeting header instead of search bar and category filter
   /** Server-rendered initial data for the first page of results (Plan 010 P1a) */
   initialData?: { results: SearchResult[]; hasMore: boolean; totalCount?: number };
@@ -106,6 +108,7 @@ interface ProvidersContentProps {
 export function ProvidersContent({
   defaultLocation,
   mapCity,
+  mapCenter = null,
   showGreeting = false,
   initialData,
   initialFilters,
@@ -157,6 +160,8 @@ export function ProvidersContent({
   // Priority: defaultLocation > URL param ('' preserved) > LOCATION_ALL ('')
   // URL is sole source of truth. Context is never used as fallback for location.
   const location = defaultLocation ?? normalizedUrlLocation;
+  // #674: the city the list and the map are scoped to
+  const scopeCity = mapCity ?? (location || null);
   const query = searchParams.get('q') || '';
 
   // URL param is the canonical source of truth for category filter.
@@ -230,7 +235,7 @@ export function ProvidersContent({
     {
       deferPinsUntilMapOpened: true,
       section,
-      city: mapCity ?? (location || null),
+      city: scopeCity,
       filters: normalizedFilters,
     },
   );
@@ -711,7 +716,11 @@ export function ProvidersContent({
               inset: 0,
             }}
           >
-            <SearchMap pins={pins} userCoords={userCoords} />
+            <SearchMap
+              focus={scopeCity ? { key: scopeCity, center: mapCenter } : null}
+              pins={pins}
+              userCoords={userCoords}
+            />
           </div>
         )}
 

@@ -1105,6 +1105,7 @@ export const tr = {
       changeCity: 'Şehri değiştir',
       cityChanged: 'Şehir başarıyla değiştirildi',
       suggestProvider: 'Sağlayıcı öner',
+      exploreUmmahFlow: "UmmahFlow'u keşfet",
       receiveUpdates: '{{city}} için güncellemeleri al',
       subscribeSuccess: '{{city}} daha fazla sağlayıcıya sahip olduğunda bilgilendirileceksiniz.',
       subscribeError: 'Abone olma hatası. Lütfen tekrar deneyin.',

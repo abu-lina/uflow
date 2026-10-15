@@ -1097,6 +1097,7 @@ export const en = {
       description:
         '{{city}} grows in Early Access step by step together with the Ummah. Every recommendation helps make Muslim offerings visible.',
       suggestProvider: 'Suggest provider',
+      exploreUmmahFlow: 'Explore UmmahFlow',
       receiveUpdates: 'Receive updates for {{city}}',
       subscribeSuccess: 'You will be notified when {{city}} has more providers.',
       subscribeError: 'Error subscribing. Please try again.',

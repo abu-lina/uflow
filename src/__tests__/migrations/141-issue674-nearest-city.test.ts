@@ -21,7 +21,8 @@ const SCHEMA = `
   CREATE TABLE public.cities (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     city_name text NOT NULL UNIQUE,
-    country text NOT NULL
+    country text NOT NULL,
+    updated_at timestamptz DEFAULT now()
   );
   CREATE TABLE public.providers (
     provider_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

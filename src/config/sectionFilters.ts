@@ -134,6 +134,14 @@ export function getHomeRedirectPath(params: URLSearchParams): string {
   return qs ? `${path}?${qs}` : path;
 }
 
+/** Map view of the home section scoped to `city`; explicit params win (#674). */
+export function getCityMapPath(city: string | null, params = new URLSearchParams()): string {
+  const next = new URLSearchParams(params);
+  if (city && !next.has('location')) next.set('location', city);
+  if (!next.has('view')) next.set('view', 'map');
+  return getHomeRedirectPath(next);
+}
+
 /** Resolves section from URL params with legacy category fallback (D9 default: food). */
 export function resolveSectionFromSearchParams(params: URLSearchParams): Section {
   const sectionParam = params.get('section');

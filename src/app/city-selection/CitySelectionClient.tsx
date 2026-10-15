@@ -10,6 +10,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
 import { normalizeCountryNameForDisplay } from '@/utils/addressValidation';
 import { getOnboardingState, setOnboardingState } from '@/lib/utils/onboarding-state';
+import { setSelectedCityCoords } from '@/lib/utils/selected-city-coords';
 
 interface CityData {
   id: string;
@@ -225,6 +226,7 @@ export default function CitySelectionClient({ initialCities }: { initialCities?:
     try {
       sessionStorage.setItem('selectedCity', city.city_name);
       localStorage.setItem('selectedCity', city.city_name);
+      setSelectedCityCoords(null);
       window.dispatchEvent(
         new CustomEvent('city-selected', { detail: { cityName: city.city_name } }),
       );
@@ -271,6 +273,9 @@ export default function CitySelectionClient({ initialCities }: { initialCities?:
 
     sessionStorage.setItem('selectedCity', cityName);
     localStorage.setItem('selectedCity', cityName);
+    const lat = Number(city.lat);
+    const lon = Number(city.lon);
+    setSelectedCityCoords(Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null);
     window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName } }));
 
     const email =
