@@ -193,7 +193,6 @@ export async function POST(request: Request) {
           ip,
           email,
           tokenValid: false,
-          tokenPrefix: token?.substring(0, 8),
           duration: Date.now() - startTime,
         });
         return NextResponse.json(

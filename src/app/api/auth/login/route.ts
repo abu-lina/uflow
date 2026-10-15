@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     
     // Enhanced debug logging
     if (testApiKeyHeader) {
-      console.log('[LOGIN API] Test API key header received:', testApiKeyHeader.substring(0, 10) + '...');
+      console.log('[LOGIN API] Test API key header received');
       console.log('[LOGIN API] Expected key set:', expectedKey ? 'YES' : 'NO');
       console.log('[LOGIN API] Test mode active:', isTest);
     }

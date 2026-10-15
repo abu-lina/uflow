@@ -5,7 +5,7 @@ import {
   checkRateLimit,
   getClientIdentifier,
 } from '@/lib/rate-limit';
-import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
+import { maskEmail, maskIp, redactError } from '@/lib/logging/redact-pii';
 import {
   getClientIP,
   checkIPBlocked,
@@ -82,11 +82,7 @@ export async function POST(request: Request) {
         { 
           error: 'Access temporarily restricted. Please try again later.',
           code: 'IP_BLOCKED',
-          ip,
-          identifier,
           message: 'Your IP address has been temporarily blocked due to suspicious activity. Please contact support if you believe this is an error.',
-          diagnosticUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://uat.ummahflow.com'}/api/auth/magic-link-diagnostic?email=${encodeURIComponent(email || '')}`,
-          debug: process.env.NODE_ENV !== 'production' ? { ipBlocked, identifier } : undefined
         },
         { status: 403 }
       );
@@ -108,10 +104,6 @@ export async function POST(request: Request) {
       }
       console.log('[MAGIC LINK API] Rate limit exceeded for IP:', maskIp(ip));
       console.log('[MAGIC LINK API] Identifier:', maskIp(ip));
-      const requestOrigin = request.headers.get('origin') || 
-                           request.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
-                           process.env.NEXT_PUBLIC_SITE_URL || 
-                           'https://uat.ummahflow.com';
       
       return NextResponse.json(
         { 
@@ -120,7 +112,6 @@ export async function POST(request: Request) {
           ip,
           limit: rateLimit,
           window: `${rateLimitWindow / 1000 / 60} minutes`,
-          diagnosticUrl: `${requestOrigin}/api/auth/magic-link-diagnostic?email=${encodeURIComponent(email || '')}`,
           message: `You have exceeded the limit of ${rateLimit} requests per ${rateLimitWindow / 1000 / 60} minutes. Please wait before trying again.`
         },
         { status: 429 }
@@ -376,7 +367,7 @@ export async function POST(request: Request) {
       
       // Check if Resend returned an error even though no exception was thrown
       if (emailError) {
-        console.error('[MAGIC LINK API] ❌ Resend returned error in response:', emailError);
+        console.error('[MAGIC LINK API] ❌ Resend returned error in response:', redactError(emailError));
         const errorDetails = getErrorMessage(emailError) || JSON.stringify(emailError);
         return NextResponse.json(
           { 
@@ -391,23 +382,13 @@ export async function POST(request: Request) {
       console.log('[MAGIC LINK API] ✅ Magic link email sent successfully via Resend');
       console.log('[MAGIC LINK API] Resend email ID:', emailResult.data?.id);
     } catch (emailError) {
-      console.error('[MAGIC LINK API] ❌ Failed to send email via Resend:', emailError);
-      console.error('[MAGIC LINK API] Error details:', {
-        message: emailError instanceof Error ? emailError.message : String(emailError),
-        stack: emailError instanceof Error ? emailError.stack : undefined
-      });
+      console.error('[MAGIC LINK API] ❌ Failed to send email via Resend:', redactError(emailError));
       // Return error - don't silently fail
-      const requestOrigin = request.headers.get('origin') || 
-                           request.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
-                           process.env.NEXT_PUBLIC_SITE_URL || 
-                           'https://uat.ummahflow.com';
-      
       return NextResponse.json(
         { 
           error: 'Failed to send magic link email. Please check Resend configuration.',
           code: 'EMAIL_SEND_FAILED',
           details: emailError instanceof Error ? emailError.message : String(emailError),
-          diagnosticUrl: `${requestOrigin}/api/auth/magic-link-diagnostic?email=${encodeURIComponent(email || '')}`,
           message: 'We were unable to send the magic link email. Please try again or contact support if the problem persists.'
         },
         { status: 500 }
@@ -419,14 +400,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       success: true,
       message: 'Magic link sent successfully',
-      debug: {
-        ip,
-        identifier,
-        email,
-        requestOrigin,
-        timestamp: new Date().toISOString(),
-        diagnosticUrl: `${requestOrigin}/api/auth/magic-link-diagnostic?email=${encodeURIComponent(email)}`
-      }
+      debug:
+        process.env.NODE_ENV !== 'production'
+          ? { ip, identifier, email, requestOrigin, timestamp: new Date().toISOString() }
+          : undefined,
     });
     
   } catch (error) {

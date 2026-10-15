@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
+import { maskEmail, maskIp, redactError } from '@/lib/logging/redact-pii';
 import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { waitlistSchema } from '@/lib/validations/waitlistSchemas';
 import { sendWaitlistConfirmationEmail } from '@/services/email/waitlistEmail';
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       }
 
       // Other database errors
-      console.error('[Waitlist] Database error:', error);
+      console.error('[Waitlist] Database error:', redactError(error));
       return NextResponse.json<WaitlistResponse>(
         {
           data: null,
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
     // 6. Send confirmation email (async, don't block response)
     // Fire and forget - we don't want email failures to block signup
     sendWaitlistConfirmationEmail(email, isProvider).catch((error) => {
-      console.error('[Waitlist] Failed to send confirmation email:', error);
+      console.error('[Waitlist] Failed to send confirmation email:', redactError(error));
     });
 
     console.log('[Waitlist] New signup:', {

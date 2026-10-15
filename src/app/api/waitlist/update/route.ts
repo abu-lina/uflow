@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { maskIdentifier } from '@/lib/logging/redact-pii';
 import { waitlistUpdateSchema } from '@/lib/validations/waitlistSchemas';
 import { toValidationDetails } from '@/lib/validations/errors';
 
@@ -27,7 +28,7 @@ export async function PATCH(request: Request) {
     const isAllowed = checkRateLimit(identifier, 20, 60 * 60 * 1000, 'waitlist-update');
 
     if (!isAllowed) {
-      console.log('[Waitlist Update] Rate limit exceeded for:', identifier);
+      console.log('[Waitlist Update] Rate limit exceeded for:', maskIdentifier(identifier));
       return NextResponse.json(
         {
           data: null,
