@@ -1,6 +1,8 @@
+import console from 'node:console';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
+import process from 'node:process';
 
 const files = process.argv.slice(2).length
   ? process.argv.slice(2)
