@@ -26,6 +26,25 @@ const shellFunction = (name: string) => {
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 
+const git = (root: string, ...args: string[]) =>
+  execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
+
+const createLaneRepo = (fixture: string) => {
+  const root = join(fixture, 'repo');
+  const remote = join(fixture, 'origin.git');
+  mkdirSync(root);
+  execFileSync('git', ['init', '--bare', remote], { stdio: 'ignore' });
+  execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
+  git(root, 'config', 'user.email', 'lane-test@example.com');
+  git(root, 'config', 'user.name', 'Lane test');
+  writeFileSync(join(root, 'README.md'), 'fixture\n');
+  git(root, 'add', 'README.md');
+  git(root, 'commit', '-m', 'fixture');
+  git(root, 'remote', 'add', 'origin', remote);
+  git(root, 'push', '-u', 'origin', 'main');
+  return { root, baseCommit: git(root, 'rev-parse', 'HEAD') };
+};
+
 describe('lane shell helpers', () => {
   it('runs lane status from a non-interactive shell without loading shell startup files', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-entrypoint-'));
@@ -266,10 +285,84 @@ esac
     }
   });
 
+  it('bases a lane branch on origin/main rather than an unpushed local main commit', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-base-'));
+    try {
+      const { root } = createLaneRepo(fixture);
+      writeFileSync(join(root, 'local-only.txt'), 'unpushed\n');
+      git(root, 'add', 'local-only.txt');
+      git(root, 'commit', '-m', 'local-only main commit');
+      const localCommit = git(root, 'rev-parse', 'HEAD');
+      const script = [
+        shellFunction('_lane_base'),
+        'base="$(_lane_base)"',
+        'git branch lane-base-test "$base"',
+      ].join('\n');
+      execFileSync('bash', ['-c', script], { cwd: root, stdio: 'ignore' });
+      const containsLocalCommit = spawnSync(
+        'git',
+        ['-C', root, 'merge-base', '--is-ancestor', localCommit, 'lane-base-test'],
+      );
+
+      expect(containsLocalCommit.status).toBe(1);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('fetches origin/main before resolving the lane base', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-base-fetch-'));
+    try {
+      const { root, baseCommit } = createLaneRepo(fixture);
+      writeFileSync(join(root, 'remote-only.txt'), 'remote\n');
+      git(root, 'add', 'remote-only.txt');
+      git(root, 'commit', '-m', 'new origin main');
+      const remoteCommit = git(root, 'rev-parse', 'HEAD');
+      git(root, 'push', 'origin', 'main');
+      git(root, 'update-ref', 'refs/remotes/origin/main', baseCommit);
+      const script = [shellFunction('_lane_base'), '_lane_base'].join('\n');
+
+      expect(
+        execFileSync('bash', ['-c', script], { cwd: root, encoding: 'utf8' }).trim(),
+      ).toBe('origin/main');
+      expect(git(root, 'rev-parse', 'origin/main')).toBe(remoteCommit);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses to start when local main has unpushed commits and names them', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-main-ahead-'));
+    try {
+      const { root } = createLaneRepo(fixture);
+      writeFileSync(join(root, 'local-only.txt'), 'unpushed\n');
+      git(root, 'add', 'local-only.txt');
+      git(root, 'commit', '-m', 'unpushed main marker');
+      const result = spawnSync(
+        'bash',
+        ['-c', `${shellFunction('_lane_check_main')}\n_lane_check_main`],
+        { cwd: root, encoding: 'utf8' },
+      );
+
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('local main is ahead of origin/main');
+      expect(result.stderr).toContain('unpushed main marker');
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('requires pushing the LEARNINGS commit before starting another lane', () => {
+    expect(foremanGuide).toMatch(
+      /push(?:ing)? (?:the )?LEARNINGS commit before (?:starting|the next lane)/i,
+    );
+    expect(foremanGuide).toMatch(/unpushed.*(?:lane|commit)|(?:lane|commit).*unpushed/i);
+  });
+
   it('creates the linked branch and Herdr worktree with its root pane', () => {
     expect(laneScript).toContain('gh issue develop "$issue" --name "$branch" --base main');
     expect(laneScript).toContain('herdr worktree create');
-    for (const flag of ['--cwd', '--branch', '--base main', '--path', '--label']) {
+    for (const flag of ['--cwd', '--branch', '--base "$base"', '--path', '--label']) {
       expect(laneScript).toContain(flag);
     }
     expect(laneScript).toContain('--label "#$issue $slug"');
