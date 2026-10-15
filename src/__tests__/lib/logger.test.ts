@@ -84,6 +84,32 @@ describe.each([
     ['logAuth', logAuth],
     ['logApi', logApi],
     ['logApp', logApp],
+  ] as const)('%s masks PII keys regardless of case', (_loggerName, logger) => {
+    vi.stubEnv('NODE_ENV', nodeEnv);
+    const output = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    logger('info', {
+      event: 'pii_redaction_probe',
+      route: '/api/probe',
+      Email: 'pii-probe@example.test',
+      IP: '203.0.113.77',
+      nested: {
+        clientIP: '203.0.113.77',
+        USEREMAIL: 'pii-probe@example.test',
+        Identifier: 'ip:203.0.113.77',
+      },
+    });
+
+    const serializedOutput = JSON.stringify(output.mock.calls);
+    expect(serializedOutput).not.toContain('pii-probe@example.test');
+    expect(serializedOutput).not.toContain('203.0.113.77');
+    expect(serializedOutput).toContain('203.0.113.0');
+  });
+
+  it.each([
+    ['logAuth', logAuth],
+    ['logApi', logApi],
+    ['logApp', logApp],
   ] as const)('AC6: %s scrubs emails embedded in error text', (_loggerName, logger) => {
     vi.stubEnv('NODE_ENV', nodeEnv);
     const output = vi.spyOn(console, 'log').mockImplementation(() => {});

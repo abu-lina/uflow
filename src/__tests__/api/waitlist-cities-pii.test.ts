@@ -29,10 +29,12 @@ vi.mock('next/headers', () => ({
   cookies: async () => ({ get: () => ({ value: 'waitlist-token' }) }),
 }));
 
-import { GET as listCities } from '@/app/api/cities/route';
-import { POST as joinWaitlist } from '@/app/api/waitlist/join/route';
-import { POST as subscribeCity } from '@/app/api/waitlist/subscribe-city/route';
-import { PATCH as updateWaitlist } from '@/app/api/waitlist/update/route';
+type Handler = (request: Request) => Promise<Response>;
+
+let listCities: Handler;
+let joinWaitlist: Handler;
+let subscribeCity: Handler;
+let updateWaitlist: Handler;
 
 function request(path: string, method: string, body?: Record<string, unknown>): Request {
   return new Request(`http://localhost/api/${path}`, {
@@ -50,7 +52,12 @@ const dbError = (source: string) => ({
 });
 
 describe('waitlist and cities routes log no raw PII', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
+    ({ GET: listCities } = await import('@/app/api/cities/route'));
+    ({ POST: joinWaitlist } = await import('@/app/api/waitlist/join/route'));
+    ({ POST: subscribeCity } = await import('@/app/api/waitlist/subscribe-city/route'));
+    ({ PATCH: updateWaitlist } = await import('@/app/api/waitlist/update/route'));
     vi.clearAllMocks();
     mockCheckRateLimit.mockReturnValue(true);
     mockInsert.mockResolvedValue({ error: null });
@@ -95,7 +102,10 @@ describe('waitlist and cities routes log no raw PII', () => {
       mockCheckRateLimit.mockReturnValue(false);
 
       const response = await updateWaitlist(
-        request('waitlist/update', 'PATCH', { email: PROBE_EMAIL, waitlistToken: 'waitlist-token' }),
+        request('waitlist/update', 'PATCH', {
+          email: PROBE_EMAIL,
+          waitlistToken: 'waitlist-token',
+        }),
       );
 
       expect(response.status).toBe(429);

@@ -44,8 +44,12 @@ describe('GET /api/auth/magic-link-diagnostic (AC4)', () => {
     async (_name, envKey) => {
       if (envKey) vi.stubEnv('ADMIN_DEBUG_KEY', envKey);
 
-      const existing = await snapshot(await GET(request(`email=${encodeURIComponent(EXISTING_EMAIL)}`)));
-      const unknown = await snapshot(await GET(request(`email=${encodeURIComponent(UNKNOWN_EMAIL)}`)));
+      const existing = await snapshot(
+        await GET(request(`email=${encodeURIComponent(EXISTING_EMAIL)}`)),
+      );
+      const unknown = await snapshot(
+        await GET(request(`email=${encodeURIComponent(UNKNOWN_EMAIL)}`)),
+      );
 
       expect(existing.status).toBe(403);
       expect(unknown).toEqual(existing);
@@ -78,5 +82,42 @@ describe('GET /api/auth/magic-link-diagnostic (AC4)', () => {
 
     expect(response.status).toBe(200);
     expect((await response.json()).mode).toBe('admin');
+  });
+
+  it.each([
+    ['same-length wrong key', 'FAKE-ADMIN-KEY-FOR-TESTINX'],
+    ['shorter wrong key', 'FAKE'],
+    ['empty key', ''],
+  ])('rejects a %s', async (_name, key) => {
+    vi.stubEnv('ADMIN_DEBUG_KEY', ADMIN_KEY);
+
+    const response = await GET(request('ip=198.51.100.1', { 'x-admin-key': key }));
+
+    expect(response.status).toBe(403);
+  });
+
+  it('HTML-escapes every query value in the admin HTML view, including the JSON block', async () => {
+    vi.stubEnv('ADMIN_DEBUG_KEY', ADMIN_KEY);
+    const emailPayload = `"><script>alert('email')</script>`;
+    const ipPayload = `<img src=x onerror="alert('ip')">`;
+
+    const response = await GET(
+      request(
+        `format=html&email=${encodeURIComponent(emailPayload)}&ip=${encodeURIComponent(ipPayload)}`,
+        { 'x-admin-key': ADMIN_KEY },
+      ),
+    );
+    const html = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(html).not.toContain(emailPayload);
+    expect(html).not.toContain(ipPayload);
+    expect(html).not.toContain('<img');
+    expect(html.match(/<script>/g)).toHaveLength(1);
+    expect(html).toContain('&quot;&gt;&lt;script&gt;alert(&#39;email&#39;)&lt;/script&gt;');
+    expect(html).toContain('&lt;img src=x onerror=&quot;alert(&#39;ip&#39;)&quot;&gt;');
+    const pre = html.slice(html.indexOf('<pre id="json-data">'), html.indexOf('</pre>'));
+    expect(pre).not.toMatch(/<(?!pre)/);
+    expect(pre).toContain('&lt;script&gt;');
   });
 });

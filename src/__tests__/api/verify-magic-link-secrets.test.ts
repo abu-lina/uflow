@@ -100,7 +100,7 @@ vi.mock('@/utils/security', () => ({
   checkIPBlocked: () => scenario.ipBlocked,
 }));
 
-import { POST } from '@/app/api/auth/verify-magic-link/route';
+let POST: (request: Request) => Promise<Response>;
 
 function request(body: Record<string, unknown>): Request {
   return new Request('http://localhost/api/auth/verify-magic-link', {
@@ -117,12 +117,7 @@ const rejectionPaths: Array<[string, () => void, Record<string, unknown>, number
   ['missing email', () => {}, { token: PROBE_TOKEN }, 400],
   ['missing token', () => {}, { email: PROBE_EMAIL }, 400],
   ['invalid email', () => {}, { token: PROBE_TOKEN, email: 'not-an-email' }, 400],
-  [
-    'not found',
-    () => Object.assign(scenario, { byToken: null, byEmail: null }),
-    PROBE_BODY,
-    400,
-  ],
+  ['not found', () => Object.assign(scenario, { byToken: null, byEmail: null }), PROBE_BODY, 400],
   [
     'expired',
     () => {
@@ -197,7 +192,9 @@ const rejectionPaths: Array<[string, () => void, Record<string, unknown>, number
 ];
 
 describe('POST /api/auth/verify-magic-link logs no token or PII material', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    vi.resetModules();
+    ({ POST } = await import('@/app/api/auth/verify-magic-link/route'));
     resetScenario();
     spyOnConsole();
   });
@@ -221,9 +218,21 @@ describe('POST /api/auth/verify-magic-link logs no token or PII material', () =>
 
   describe('AC6: DB and auth errors do not echo the email', () => {
     it.each([
-      ['token lookup error', () => Object.assign(scenario, { byEmailError: emailError('lookup') }), 500],
-      ['mark-used error', () => Object.assign(scenario, { updateError: emailError('update') }), 200],
-      ['getUserById error', () => Object.assign(scenario, { userError: emailError('getUser') }), 500],
+      [
+        'token lookup error',
+        () => Object.assign(scenario, { byEmailError: emailError('lookup') }),
+        500,
+      ],
+      [
+        'mark-used error',
+        () => Object.assign(scenario, { updateError: emailError('update') }),
+        200,
+      ],
+      [
+        'getUserById error',
+        () => Object.assign(scenario, { userError: emailError('getUser') }),
+        500,
+      ],
       [
         'metadata update error',
         () => Object.assign(scenario, { metadataError: emailError('updateUserById') }),

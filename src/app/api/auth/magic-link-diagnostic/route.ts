@@ -1,6 +1,27 @@
+import { createHash, timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { getClientIP, checkIPBlocked } from '@/utils/security';
 import { getClientIdentifier, getRemainingRequests } from '@/lib/rate-limit';
+
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+function escapeHtml(value: unknown): string {
+  return String(value).replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
+function digest(value: string): Buffer {
+  return createHash('sha256').update(value).digest();
+}
+
+function keyMatches(provided: string | null, expected: string): boolean {
+  return provided !== null && timingSafeEqual(digest(provided), digest(expected));
+}
 
 /**
  * Admin-only diagnostic endpoint for magic link issues (requires x-admin-key header)
@@ -13,7 +34,7 @@ export async function GET(request: Request) {
   const adminKey = request.headers.get('x-admin-key');
   const expectedKey = process.env.ADMIN_DEBUG_KEY;
   // F-049-03: No fallback key — admin override disabled when ADMIN_DEBUG_KEY is unset.
-  if (!expectedKey || adminKey !== expectedKey) {
+  if (!expectedKey || !keyMatches(adminKey, expectedKey)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
   
@@ -141,32 +162,32 @@ export async function GET(request: Request) {
 <body>
   <h1>🔍 Magic Link Diagnostic</h1>
   
-  <div class="status ${diagnostic.status.canRequestMagicLink ? 'ok' : 'error'}">
-    <strong>Status:</strong> ${diagnostic.status.canRequestMagicLink ? '✅ No issues detected' : '❌ Issues found'}
+  <div class="status ${escapeHtml(diagnostic.status.canRequestMagicLink ? 'ok' : 'error')}">
+    <strong>Status:</strong> ${escapeHtml(diagnostic.status.canRequestMagicLink ? '✅ No issues detected' : '❌ Issues found')}
   </div>
   
   <h2>Your Information</h2>
-  <p><strong>IP Address:</strong> <code>${diagnostic.ip}</code></p>
-  <p><strong>Email:</strong> <code>${diagnostic.email}</code></p>
-  <p><strong>Time:</strong> ${new Date(diagnostic.timestamp).toLocaleString()}</p>
+  <p><strong>IP Address:</strong> <code>${escapeHtml(diagnostic.ip)}</code></p>
+  <p><strong>Email:</strong> <code>${escapeHtml(diagnostic.email)}</code></p>
+  <p><strong>Time:</strong> ${escapeHtml(new Date(diagnostic.timestamp).toLocaleString())}</p>
   
   <h2>Checks</h2>
-  <div class="status ${diagnostic.status.ipBlocked ? 'error' : 'ok'}">
-    <strong>IP Blocked:</strong> ${diagnostic.status.ipBlocked ? '❌ Yes' : '✅ No'}
+  <div class="status ${escapeHtml(diagnostic.status.ipBlocked ? 'error' : 'ok')}">
+    <strong>IP Blocked:</strong> ${escapeHtml(diagnostic.status.ipBlocked ? '❌ Yes' : '✅ No')}
   </div>
-  <div class="status ${diagnostic.rateLimits.magicLink.status === 'EXCEEDED' ? 'error' : diagnostic.rateLimits.magicLink.status === 'OK' ? 'ok' : 'info'}">
-    <strong>Rate Limit:</strong> ${diagnostic.rateLimits.magicLink.remaining !== null ? `${diagnostic.rateLimits.magicLink.remaining} of ${diagnostic.rateLimits.magicLink.limit} remaining` : 'No active limit'}
+  <div class="status ${escapeHtml(diagnostic.rateLimits.magicLink.status === 'EXCEEDED' ? 'error' : diagnostic.rateLimits.magicLink.status === 'OK' ? 'ok' : 'info')}">
+    <strong>Rate Limit:</strong> ${escapeHtml(diagnostic.rateLimits.magicLink.remaining !== null ? `${diagnostic.rateLimits.magicLink.remaining} of ${diagnostic.rateLimits.magicLink.limit} remaining` : 'No active limit')}
   </div>
   
   <h2>Recommendations</h2>
   <ul>
-    ${diagnostic.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+    ${diagnostic.recommendations.map(rec => `<li>${escapeHtml(rec)}</li>`).join('')}
   </ul>
   
   <h2>Share This Information</h2>
   <p>Copy the diagnostic data below and share it with support:</p>
   <button class="copy-btn" onclick="copyToClipboard()">Copy Diagnostic Data</button>
-  <pre id="json-data">${JSON.stringify(diagnostic, null, 2)}</pre>
+  <pre id="json-data">${escapeHtml(JSON.stringify(diagnostic, null, 2))}</pre>
   
   <script>
     function copyToClipboard() {

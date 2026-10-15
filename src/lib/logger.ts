@@ -49,9 +49,9 @@ const PII_MASKS: Record<string, (value: unknown) => string> = {
   email: maskEmail,
   to: maskEmail,
   recipient: maskEmail,
-  userEmail: maskEmail,
+  useremail: maskEmail,
   ip: maskIp,
-  clientIp: maskIp,
+  clientip: maskIp,
   identifier: maskIdentifier,
 };
 
@@ -67,10 +67,11 @@ function redactValue(value: unknown): unknown {
   }
   if (value && typeof value === 'object' && !(value instanceof Date)) {
     return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [
-        key,
-        Object.hasOwn(PII_MASKS, key) ? PII_MASKS[key](entry) : redactValue(entry),
-      ]),
+      Object.entries(value).map(([key, entry]) => {
+        const maskKey = key.toLowerCase();
+        const mask = Object.hasOwn(PII_MASKS, maskKey) ? PII_MASKS[maskKey] : undefined;
+        return [key, mask ? mask(entry) : redactValue(entry)];
+      }),
     );
   }
   return value;
