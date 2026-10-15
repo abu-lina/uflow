@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdtempSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -16,6 +17,7 @@ import { describe, expect, it } from 'vitest';
 
 const laneScript = readFileSync(new URL('../../scripts/lane.sh', import.meta.url), 'utf8');
 const laneEntrypoint = new URL('../../scripts/lane', import.meta.url).pathname;
+const ciWorkflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
 const laneGuide = readFileSync(new URL('../../docs/agents/lane.md', import.meta.url), 'utf8');
 const foremanGuide = readFileSync(new URL('../../docs/agents/foreman.md', import.meta.url), 'utf8');
 const setupDecisions = readFileSync(
@@ -30,6 +32,20 @@ const shellFunction = (name: string) => {
 };
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
+
+const ciBuildPlaceholder = (key: string) => {
+  const match = ciWorkflow.match(
+    new RegExp(`echo "${key}=\\$\\{${key}:-([^}]+)\\}" >> \\$GITHUB_ENV`),
+  );
+  if (!match) throw new Error(`Could not find ${key} CI build placeholder`);
+  return match[1];
+};
+
+const filesUnder = (directory: string): string[] =>
+  readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    return entry.isDirectory() ? filesUnder(path) : entry.isFile() ? [path] : [];
+  });
 
 const createLintStubs = (fixture: string) => {
   const bin = join(fixture, 'bin');
@@ -66,6 +82,69 @@ const createLaneRepo = (fixture: string) => {
   git(root, 'remote', 'add', 'origin', remote);
   execFileSync('git', ['-C', root, 'push', '-u', 'origin', 'main'], { stdio: 'ignore' });
   return { root, baseCommit: git(root, 'rev-parse', 'HEAD') };
+};
+
+const startCopilotLane = (fixture: string, rootEnv = '') => {
+  const bin = join(fixture, 'bin');
+  const herdrLog = join(fixture, 'herdr.log');
+  const { root } = createLaneRepo(fixture);
+  mkdirSync(bin);
+  if (rootEnv) writeFileSync(join(root, '.env.local'), rootEnv);
+  writeFileSync(
+    join(bin, 'gh'),
+    `#!/bin/sh
+case "$1 $2" in
+  "issue view") printf '%s\\n' 'type:bugfix' ;;
+  "issue develop")
+    shift 2
+    while [ "$#" -gt 0 ]; do
+      if [ "$1" = --name ]; then branch="$2"; shift 2; else shift; fi
+    done
+    git -C "$REPO_ROOT" push -q origin "main:refs/heads/$branch"
+    ;;
+esac
+`,
+    { mode: 0o755 },
+  );
+  writeFileSync(
+    join(bin, 'herdr'),
+    `#!/bin/sh
+case "$1 $2" in
+  "worktree create")
+    shift 2
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --cwd) repo="$2"; shift 2 ;;
+        --branch) branch="$2"; shift 2 ;;
+        --base) base="$2"; shift 2 ;;
+        --path) path="$2"; shift 2 ;;
+        *) shift ;;
+      esac
+    done
+    git -C "$repo" worktree add -b "$branch" "$path" "$base" >/dev/null || exit 1
+    printf '%s\\n' '{"result":{"root_pane":{"pane_id":"pane-lane"}}}'
+    ;;
+  "agent start")
+    printf '%s\\n' 'agent start' >> "$HERDR_LOG"
+    shift 2
+    for arg do printf '%s\\n' "$arg" >> "$HERDR_LOG"; done
+    ;;
+  "agent prompt") printf '%s\\n' 'agent prompt' >> "$HERDR_LOG" ;;
+esac
+`,
+    { mode: 0o755 },
+  );
+  const result = spawnSync('bash', [laneEntrypoint, 'start', '640', 'placeholder-test'], {
+    cwd: root,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      HERDR_LOG: herdrLog,
+      REPO_ROOT: root,
+    },
+  });
+  return { root, herdrLog, result };
 };
 
 describe('lane shell helpers', () => {
@@ -605,6 +684,74 @@ esac
     expect(laneScript).toContain('--permission-mode accept-edits --sandbox');
   });
 
+  it('writes CI placeholder values to the new worktree .env.local with mode 0600', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-placeholders-'));
+    try {
+      const { root, result } = startCopilotLane(fixture);
+      expect(result.status, result.stderr).toBe(0);
+      const envPath = join(root, '.worktrees/640-placeholder-test/.env.local');
+      expect(readFileSync(envPath, 'utf8')).toBe(
+        `NEXT_PUBLIC_SUPABASE_URL=${ciBuildPlaceholder('NEXT_PUBLIC_SUPABASE_URL')}\n` +
+          `NEXT_PUBLIC_SUPABASE_ANON_KEY=${ciBuildPlaceholder('NEXT_PUBLIC_SUPABASE_ANON_KEY')}\n`,
+      );
+      expect(statSync(envPath).mode & 0o777).toBe(0o600);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps the lane .env.local limited to the two public CI build variables', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-env-allowlist-'));
+    try {
+      const { root, result } = startCopilotLane(
+        fixture,
+        'SUPABASE_SERVICE_ROLE_KEY=owner-secret\nRESEND_API_KEY=owner-secret\n',
+      );
+      expect(result.status, result.stderr).toBe(0);
+      const laneEnv = readFileSync(
+        join(root, '.worktrees/640-placeholder-test/.env.local'),
+        'utf8',
+      );
+      expect(laneEnv).not.toContain('owner-secret');
+      expect(
+        laneEnv
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => line.split('=')[0]),
+      ).toEqual(['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY']);
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('starts Copilot lane agents with pass-cli shell access denied', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-pass-cli-denied-'));
+    try {
+      const { herdrLog, result } = startCopilotLane(fixture);
+      expect(result.status, result.stderr).toBe(0);
+      expect(readFileSync(herdrLog, 'utf8').split('\n')).toContain('--deny-tool=shell(pass-cli:*)');
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('defines CI placeholder values once and keeps them aligned with ci.yml', () => {
+    const scriptFiles = filesUnder(new URL('../../scripts/', import.meta.url).pathname);
+    for (const [name, key] of [
+      ['ci_supabase_url', 'NEXT_PUBLIC_SUPABASE_URL'],
+      ['ci_supabase_anon_key', 'NEXT_PUBLIC_SUPABASE_ANON_KEY'],
+    ]) {
+      const value = ciBuildPlaceholder(key);
+      const match = laneScript.match(new RegExp(`local ${name}="([^"]+)"`));
+      expect(match, `Expected ${name} to be defined once in scripts/lane.sh`).not.toBeNull();
+      expect(laneScript.match(new RegExp(`local ${name}=`, 'g'))).toHaveLength(1);
+      expect(match?.[1]).toBe(value);
+      expect(scriptFiles.filter((file) => readFileSync(file, 'utf8').includes(value))).toEqual([
+        new URL('../../scripts/lane.sh', import.meta.url).pathname,
+      ]);
+    }
+  });
+
   it('grants Devin lanes only the shared git directory and approved gh commands', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-devin-sandbox-'));
     const bin = join(fixture, 'bin');
@@ -656,20 +803,16 @@ esac
 `,
         { mode: 0o755 },
       );
-      const result = spawnSync(
-        'bash',
-        [laneEntrypoint, 'start', '659', 'devin-sandbox', 'devin'],
-        {
-          cwd: root,
-          encoding: 'utf8',
-          env: {
-            ...process.env,
-            PATH: `${bin}:${process.env.PATH}`,
-            HERDR_LOG: herdrLog,
-            REPO_ROOT: root,
-          },
+      const result = spawnSync('bash', [laneEntrypoint, 'start', '659', 'devin-sandbox', 'devin'], {
+        cwd: root,
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          HERDR_LOG: herdrLog,
+          REPO_ROOT: root,
         },
-      );
+      });
 
       expect(result.status, result.stderr).toBe(0);
       const loggedArgs = readFileSync(herdrLog, 'utf8').split('\n');
