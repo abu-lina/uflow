@@ -126,6 +126,7 @@ Only the next PR gets updated. The others stay as they are until their turn.
 `scripts/lane done <issue>` refuses if the PR isn't merged, if the worktree has uncommitted or unpushed changes, or if a dev server still listens on the lane's port. Fix the cause or pass `--force` only after the owner says so. It removes the Herdr workspace and checkout, prunes worktrees, and deletes the local branch. GitHub deletes the remote branch on merge.
 
 After merge, copy the lane's learning line from its issue comment into `docs/ai/LEARNINGS.md`. That is the one file you may edit, and only on `main` after the lane is gone.
+Push the LEARNINGS commit before starting the next lane; otherwise its unpushed commit can leak into the lane branch and leave local `main` ahead of `origin/main`.
 
 ## Command mapping
 

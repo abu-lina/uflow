@@ -41,7 +41,7 @@ const createLaneRepo = (fixture: string) => {
   git(root, 'add', 'README.md');
   git(root, 'commit', '-m', 'fixture');
   git(root, 'remote', 'add', 'origin', remote);
-  git(root, 'push', '-u', 'origin', 'main');
+  execFileSync('git', ['-C', root, 'push', '-u', 'origin', 'main'], { stdio: 'ignore' });
   return { root, baseCommit: git(root, 'rev-parse', 'HEAD') };
 };
 
@@ -318,7 +318,7 @@ esac
       git(root, 'add', 'remote-only.txt');
       git(root, 'commit', '-m', 'new origin main');
       const remoteCommit = git(root, 'rev-parse', 'HEAD');
-      git(root, 'push', 'origin', 'main');
+      execFileSync('git', ['-C', root, 'push', 'origin', 'main'], { stdio: 'ignore' });
       git(root, 'update-ref', 'refs/remotes/origin/main', baseCommit);
       const script = [shellFunction('_lane_base'), '_lane_base'].join('\n');
 
