@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sendAuthEmail } from '@/services/emailService';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { redactError } from '@/lib/logging/redact-pii';
 
 export async function POST(request: Request) {
   try {
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ success: true, result }, { status: 200 });
   } catch (error) {
-    console.error('Failed to send auth email:', error);
+    console.error('Failed to send auth email:', redactError(error));
     return NextResponse.json(
       { error: 'Failed to send email' },
       { status: 500 }

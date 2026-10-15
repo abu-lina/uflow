@@ -1,12 +1,32 @@
+import { createHash, timingSafeEqual } from 'crypto';
 import { NextResponse } from 'next/server';
 import { getClientIP, checkIPBlocked } from '@/utils/security';
 import { getClientIdentifier, getRemainingRequests } from '@/lib/rate-limit';
 
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+function escapeHtml(value: unknown): string {
+  return String(value).replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
+function digest(value: string): Buffer {
+  return createHash('sha256').update(value).digest();
+}
+
+function keyMatches(provided: string | null, expected: string): boolean {
+  return provided !== null && timingSafeEqual(digest(provided), digest(expected));
+}
+
 /**
- * User-friendly diagnostic endpoint for magic link issues
- * Users can visit this URL on their iPhone to get diagnostic information
+ * Admin-only diagnostic endpoint for magic link issues (requires x-admin-key header)
  * GET /api/auth/magic-link-diagnostic?email=user@example.com
- * GET /api/auth/magic-link-diagnostic?email=user@example.com&ip=85.216.121.245 (admin only - requires x-admin-key header)
+ * GET /api/auth/magic-link-diagnostic?email=user@example.com&ip=85.216.121.245
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -14,14 +34,16 @@ export async function GET(request: Request) {
   const adminKey = request.headers.get('x-admin-key');
   const expectedKey = process.env.ADMIN_DEBUG_KEY;
   // F-049-03: No fallback key — admin override disabled when ADMIN_DEBUG_KEY is unset.
-  // Non-admin (user) diagnostic mode is unrestricted and continues below.
+  if (!expectedKey || !keyMatches(adminKey, expectedKey)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
   
   // Allow admin to check specific IP by providing it in query params
   let ip: string;
   let identifier: string;
   
   const requestedIP = url.searchParams.get('ip');
-  if (requestedIP && adminKey === expectedKey) {
+  if (requestedIP) {
     // Admin override - check the requested IP instead of visitor's IP
     ip = requestedIP;
     identifier = `ip:${ip.replace(/\s+/g, '')}`;
@@ -55,7 +77,7 @@ export async function GET(request: Request) {
     'cf-connecting-ip': request.headers.get('cf-connecting-ip'),
   };
   
-  const isAdminMode = requestedIP && adminKey === expectedKey;
+  const isAdminMode = Boolean(requestedIP);
   
   const diagnostic = {
     timestamp: new Date().toISOString(),
@@ -140,32 +162,32 @@ export async function GET(request: Request) {
 <body>
   <h1>🔍 Magic Link Diagnostic</h1>
   
-  <div class="status ${diagnostic.status.canRequestMagicLink ? 'ok' : 'error'}">
-    <strong>Status:</strong> ${diagnostic.status.canRequestMagicLink ? '✅ No issues detected' : '❌ Issues found'}
+  <div class="status ${escapeHtml(diagnostic.status.canRequestMagicLink ? 'ok' : 'error')}">
+    <strong>Status:</strong> ${escapeHtml(diagnostic.status.canRequestMagicLink ? '✅ No issues detected' : '❌ Issues found')}
   </div>
   
   <h2>Your Information</h2>
-  <p><strong>IP Address:</strong> <code>${diagnostic.ip}</code></p>
-  <p><strong>Email:</strong> <code>${diagnostic.email}</code></p>
-  <p><strong>Time:</strong> ${new Date(diagnostic.timestamp).toLocaleString()}</p>
+  <p><strong>IP Address:</strong> <code>${escapeHtml(diagnostic.ip)}</code></p>
+  <p><strong>Email:</strong> <code>${escapeHtml(diagnostic.email)}</code></p>
+  <p><strong>Time:</strong> ${escapeHtml(new Date(diagnostic.timestamp).toLocaleString())}</p>
   
   <h2>Checks</h2>
-  <div class="status ${diagnostic.status.ipBlocked ? 'error' : 'ok'}">
-    <strong>IP Blocked:</strong> ${diagnostic.status.ipBlocked ? '❌ Yes' : '✅ No'}
+  <div class="status ${escapeHtml(diagnostic.status.ipBlocked ? 'error' : 'ok')}">
+    <strong>IP Blocked:</strong> ${escapeHtml(diagnostic.status.ipBlocked ? '❌ Yes' : '✅ No')}
   </div>
-  <div class="status ${diagnostic.rateLimits.magicLink.status === 'EXCEEDED' ? 'error' : diagnostic.rateLimits.magicLink.status === 'OK' ? 'ok' : 'info'}">
-    <strong>Rate Limit:</strong> ${diagnostic.rateLimits.magicLink.remaining !== null ? `${diagnostic.rateLimits.magicLink.remaining} of ${diagnostic.rateLimits.magicLink.limit} remaining` : 'No active limit'}
+  <div class="status ${escapeHtml(diagnostic.rateLimits.magicLink.status === 'EXCEEDED' ? 'error' : diagnostic.rateLimits.magicLink.status === 'OK' ? 'ok' : 'info')}">
+    <strong>Rate Limit:</strong> ${escapeHtml(diagnostic.rateLimits.magicLink.remaining !== null ? `${diagnostic.rateLimits.magicLink.remaining} of ${diagnostic.rateLimits.magicLink.limit} remaining` : 'No active limit')}
   </div>
   
   <h2>Recommendations</h2>
   <ul>
-    ${diagnostic.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+    ${diagnostic.recommendations.map(rec => `<li>${escapeHtml(rec)}</li>`).join('')}
   </ul>
   
   <h2>Share This Information</h2>
   <p>Copy the diagnostic data below and share it with support:</p>
   <button class="copy-btn" onclick="copyToClipboard()">Copy Diagnostic Data</button>
-  <pre id="json-data">${JSON.stringify(diagnostic, null, 2)}</pre>
+  <pre id="json-data">${escapeHtml(JSON.stringify(diagnostic, null, 2))}</pre>
   
   <script>
     function copyToClipboard() {

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
+import {
+  maskEmail,
+  maskIdentifier,
+  maskIp,
+  redactEmails,
+  redactError,
+} from '@/lib/logging/redact-pii';
 
 describe('maskEmail', () => {
   it('masks the local part and preserves the domain', () => {
@@ -70,5 +76,58 @@ describe('maskIp', () => {
 
   it('redacts non-string input', () => {
     expect(maskIp(null)).toBe('[redacted]');
+  });
+});
+
+describe('maskIdentifier', () => {
+  it('masks the IP inside an ip: identifier', () => {
+    expect(maskIdentifier('ip:203.0.113.77')).toBe('ip:203.0.113.0');
+  });
+
+  it('keeps a user: identifier', () => {
+    expect(maskIdentifier('user:abc-123')).toBe('user:abc-123');
+  });
+
+  it('redacts anything else', () => {
+    expect(maskIdentifier('203.0.113.77')).toBe('[redacted]');
+    expect(maskIdentifier(undefined)).toBe('[redacted]');
+  });
+});
+
+describe('redactEmails', () => {
+  it('masks every email embedded in text', () => {
+    expect(redactEmails('a pii-probe@example.test and (other@example.org).')).toBe(
+      'a p***@example.test and (o***@example.org).',
+    );
+  });
+
+  it('leaves text without emails unchanged', () => {
+    expect(redactEmails('no address here')).toBe('no address here');
+  });
+});
+
+describe('redactError', () => {
+  it('keeps diagnostic fields and masks emails in their text', () => {
+    const error = Object.assign(new Error('failed for pii-probe@example.test'), {
+      code: '23505',
+      details: 'Key (email)=(pii-probe@example.test)',
+    });
+
+    expect(redactError(error)).toEqual({
+      name: 'Error',
+      message: 'failed for p***@example.test',
+      code: '23505',
+      details: 'Key (email)=(p***@example.test)',
+    });
+  });
+
+  it('handles plain error objects and strings', () => {
+    expect(redactError({ message: 'to pii-probe@example.test', status: 400 })).toEqual({
+      message: 'to p***@example.test',
+      status: 400,
+    });
+    expect(redactError('send to pii-probe@example.test failed')).toEqual({
+      message: 'send to p***@example.test failed',
+    });
   });
 });
