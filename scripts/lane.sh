@@ -316,7 +316,3 @@ lane_status() {
   done <<<"$workspace_rows"
   return 0
 }
-
-_lint_tripwire() {
-  local path=x
-}
