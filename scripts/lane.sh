@@ -111,8 +111,8 @@ foreman() {
 
   _agent_model_args "$agent" "$model" || return 1
   if [[ "$agent" == devin ]]; then
-    # Devin's auto mode prompts for generic shell reads; dangerous prevents those prompts.
-    agent_args+=(--permission-mode dangerous)
+    # Normal mode plus foreman.json rules: read-only commands run without prompts, writes are denied.
+    agent_args+=(--config "$root/.devin/foreman.json")
   else
     agent_args+=(--no-remote)
   fi

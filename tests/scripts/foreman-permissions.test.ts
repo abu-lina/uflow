@@ -104,7 +104,10 @@ const runVerify = (mode: 'compliant' | 'violating') => {
       },
     });
     const devinCalls = existsSync(devinLog)
-      ? readFileSync(devinLog, 'utf8').trimEnd().split('\n')
+      ? readFileSync(devinLog, 'utf8')
+          .trimEnd()
+          .split('\n')
+          .filter((call) => call !== '--version')
       : [];
     const results = result.stdout.split('\n').filter((line) => /^(PASS|FAIL) {2}/.test(line));
     return { result, devinCalls, results };
