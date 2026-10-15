@@ -34,7 +34,8 @@ export async function POST(request: Request) {
     const isTest = isTestMode(request);
     
     const body = await request.json();
-    const { token, email } = body;
+    const { token } = body;
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : body.email;
     
     // 1. Validate input first
     if (!token || !email) {
@@ -98,13 +99,12 @@ export async function POST(request: Request) {
       }
     }
     
-    // Try case-insensitive email match for unused tokens
-    // This handles cases where email might be stored with different casing
+    // Exact match on the normalised email; magic-link stores it trimmed and lowercased
     let { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .select('*')
       .eq('token', token)
-      .ilike('email', email) // Case-insensitive match
+      .eq('email', email)
       .eq('type', 'magic_link')
       .eq('used', false)
       .maybeSingle();

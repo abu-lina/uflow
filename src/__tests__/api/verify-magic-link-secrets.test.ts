@@ -64,9 +64,8 @@ vi.mock('@/lib/supabase/admin', () => ({
       let filteredByEmail = false;
       const builder = {
         select: () => builder,
-        eq: () => builder,
-        ilike: () => {
-          filteredByEmail = true;
+        eq: (column: string) => {
+          filteredByEmail ||= column === 'email';
           return builder;
         },
         maybeSingle: async () =>
