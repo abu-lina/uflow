@@ -18,14 +18,43 @@ Copilot defaults to Auto. To choose a model or reasoning effort for one session,
 
 These remote writes are intentional and limited to the listed steps:
 
-| Command | Step and purpose |
-|---|---|
-| `gh pr review` | Step 5, post the merged review findings. |
-| `gh pr update-branch` | Step 6, update only the next PR after a merge. |
-| `herdr agent prompt`, `herdr agent send-keys` | Steps 5 and later, send owner-approved answers and the review instruction only, never start new work. |
-| `gh issue comment` | Any step, post status replies and questions. |
-| `gh issue create` | Step 1, split an issue into sub-issues. |
-| `gh issue edit --add-label` / `--remove-label` | Step 1, label issues. |
+| Command                                        | Step and purpose                                                                                      |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `gh pr review`                                 | Step 5, post the merged review findings.                                                              |
+| `gh pr update-branch`                          | Step 6, update only the next PR after a merge.                                                        |
+| `herdr agent prompt`, `herdr agent send-keys`  | Steps 5 and later, send owner-approved answers and the review instruction only, never start new work. |
+| `gh issue comment`                             | Any step, post status replies and questions.                                                          |
+| `gh issue create`                              | Step 1, split an issue into sub-issues.                                                               |
+| `gh issue edit --add-label` / `--remove-label` | Step 1, label issues.                                                                                 |
+
+## Working log and checkpoints
+
+On startup or restart, read only the latest comment on the open issue labelled `foreman-log`:
+
+```bash
+gh issue list --label foreman-log --state open --json number --jq '.[0].number'
+gh issue view <log-issue> --json comments --jq '.comments[-1].body'
+```
+
+Append a comment to that issue after every owner decision and at each checkpoint. Use these four headings, keeping each item specific:
+
+```markdown
+### Queue
+
+### Open questions
+
+### Standing approvals
+
+### Pending follow-ups
+```
+
+Include the scope of every standing approval; all standing approvals expire when the foreman restarts. A checkpoint is after a merge round's cleanup or before proposing a new round. At each checkpoint, read the foreman's context figure and include the exact result in the log comment:
+
+```bash
+herdr agent read foreman --source visible --lines 3 | grep -oE 'Context: [0-9]+k'
+```
+
+If it is above 100k, append the checkpoint state to the log, tell the owner, and stop for a restart. Never restart mid-round while a lane is blocked. Until #650 merges, use its three manual restart commands; after it merges, use `scripts/lane foreman`.
 
 ## 1. Pick issues
 
@@ -99,6 +128,14 @@ Classify from Herdr and issue-comment evidence:
 - **done**: Herdr reports `done` or `idle` and the issue comment says the PR is ready; confirm CI with `gh pr checks <pr>`
 - **stuck**: the same error repeats, or the last issue comment says it stopped after failed CI rounds or a blocker
 
+## Per-action context limits
+
+- Issue comments: read only the last two when checking progress, using `gh issue view <issue> --json comments --jq '.comments[-2:][].body'`. On startup, read only the latest `foreman-log` comment.
+- `herdr agent read`: use `--source visible` or `--lines 30`, and cap the output at 2,048 bytes with `head -c 2048`. If it is truncated, use a narrower read to diagnose the named blocker and say why.
+- Reviews: run `gh pr diff <pr> | git apply --stat` first; `gh pr diff` has no `--stat` flag. Read diffs of up to 100 changed lines yourself; for larger diffs, use the review subagents in `docs/agents/review.md` and bring only their finding lines into your context.
+- Triage of `needs-info` issues and audit research: use one read-only subagent to return a diagnosis of 40 lines or fewer. Do not bring raw file contents into the foreman's context.
+- CI: never read raw CI logs. The lane summarizes the failing step and error in its issue comment in five lines or fewer.
+
 To watch a running lane instead of polling, wait for either owner input or completion:
 
 ```bash
@@ -142,13 +179,13 @@ The lane's learning file lands in its PR. The foreman edits no files after merge
 
 ## Command mapping
 
-| Task | Herdr command or helper |
-|---|---|
-| Lane status | `scripts/lane status` |
-| Reading a lane | `herdr agent read lane-<issue>` |
-| Sending keys to a lane | `herdr agent send-keys lane-<issue> <key>` |
-| Starting a lane | `scripts/lane start <issue> <slug> [copilot|devin] [model|reasoning-effort]` |
-| Cleaning up a lane | `scripts/lane done <issue>` |
+| Task                   | Herdr command or helper                     |
+| ---------------------- | ------------------------------------------- |
+| Lane status            | `scripts/lane status`                       |
+| Reading a lane         | `herdr agent read lane-<issue>`             |
+| Sending keys to a lane | `herdr agent send-keys lane-<issue> <key>`  |
+| Starting a lane        | `scripts/lane start <issue> <slug> [copilot | devin] [model | reasoning-effort]` |
+| Cleaning up a lane     | `scripts/lane done <issue>`                 |
 
 ## What you never do
 
