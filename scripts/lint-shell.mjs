@@ -7,7 +7,6 @@ import process from 'node:process';
 const files = process.argv.slice(2).length
   ? process.argv.slice(2)
   : ['scripts/lane.sh', 'scripts/lane'];
-const followSources = files.some((file) => resolve(file) === resolve('scripts/lane.sh'));
 const specialVariables = new Set(['path', 'status', 'cdpath', 'fpath', 'manpath']);
 const readOptionsWithValues = new Set(['-d', '-i', '-k', '-n', '-N', '-p', '-t', '-u']);
 let failed = false;
@@ -79,7 +78,7 @@ for (const input of files) {
   const file = resolve(input);
   run('bash', ['-n'], file);
   run('zsh', ['-n'], file);
-  run('shellcheck', ['--shell=bash', ...(followSources ? ['-x'] : [])], file);
+  run('shellcheck', ['--shell=bash', '-x'], file);
 
   let source;
   try {
