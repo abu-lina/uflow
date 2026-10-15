@@ -7,6 +7,9 @@ dist/
 # Dependencies
 node_modules/
 
+# Generated PWA manifest
+public/manifest.json
+
 # Coverage
 coverage/
 

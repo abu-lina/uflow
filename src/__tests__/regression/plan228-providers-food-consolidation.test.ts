@@ -12,9 +12,11 @@
  *   6. Link references updated from /providers to /food
  */
 
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { afterAll, beforeAll, describe, it, expect } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 
 const ROOT = resolve(__dirname, '../../../');
 
@@ -307,6 +309,48 @@ describe('review findings: dead /providers checks removed', () => {
     const src = readFileSync(resolve(ROOT, 'src/components/common/MobileFooterBar.tsx'), 'utf-8');
     expect(src).not.toContain("pathname === '/providers'");
     expect(src).toContain("pathname === '/food'");
+  });
+
+  // ─── 16. Generated manifest output ────────────────────────────────────────────
+  describe('manifest generator output', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'uflow-manifest-'));
+    const generatedManifestPath = join(tempDir, 'public/manifest.json');
+
+    beforeAll(() => {
+      execFileSync(process.execPath, [resolve(ROOT, 'scripts/generate-manifest.js')], {
+        cwd: tempDir,
+      });
+    });
+
+    afterAll(() => {
+      rmSync(tempDir, { recursive: true, force: true });
+    });
+
+    it('emits the browse shortcut at /food, not /providers', () => {
+      const manifest = JSON.parse(readFileSync(generatedManifestPath, 'utf-8'));
+      expect(
+        manifest.shortcuts.find((shortcut: { url: string }) => shortcut.url === '/food'),
+      ).toBeTruthy();
+      expect(
+        manifest.shortcuts.find((shortcut: { url: string }) => shortcut.url === '/providers'),
+      ).toBeFalsy();
+    });
+
+    it('matches the committed manifest byte-for-byte', () => {
+      expect(readFileSync(generatedManifestPath, 'utf-8')).toBe(
+        readFileSync(resolve(ROOT, 'public/manifest.json'), 'utf-8'),
+      );
+    });
+
+    it('ignores public/manifest.json in Prettier', () => {
+      const fileInfo = JSON.parse(
+        execFileSync('npx', ['prettier', '--file-info', 'public/manifest.json'], {
+          cwd: ROOT,
+          encoding: 'utf-8',
+        }),
+      );
+      expect(fileInfo.ignored).toBe(true);
+    });
   });
 
   it('RootClientLayout does not check pathname === /providers', () => {

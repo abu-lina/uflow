@@ -65,7 +65,7 @@ const manifest = {
       name: 'Anbieter durchsuchen',
       short_name: 'Durchsuchen',
       description: 'Alle Anbieter anzeigen',
-      url: '/providers',
+      url: '/food',
       icons: [{ src: '/icons/icon-192x192.png', sizes: '192x192' }],
     },
     {
@@ -104,4 +104,3 @@ if (!fs.existsSync(publicDir)) {
 // Write manifest file
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 console.log('✅ Generated static manifest.json at', manifestPath);
-

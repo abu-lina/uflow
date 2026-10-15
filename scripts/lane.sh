@@ -269,7 +269,7 @@ lane_done() {
 }
 
 lane_status() {
-  local agents workspaces lane_rows workspace_rows name agent_status label branch checkout_path
+  local agents workspaces lane_rows workspace_rows name agent_status label branch checkout_path workspace_id
   agents="$(herdr agent list)" || return 1
   workspaces="$(herdr workspace list)" || return 1
 
@@ -305,9 +305,9 @@ lane_status() {
     [(.workspace_id // ""), (.label // ""), (.worktree.checkout_path // "")] |
     @tsv
   ')" || return 1
-  while IFS=$'\t' read -r workspace_id label path; do
-    if [[ -n "$path" && ! -e "$path" ]]; then
-      printf 'STALE WORKSPACE\t%s\t%s\tcheckout path does not exist: %s\n' "$workspace_id" "$label" "$path"
+  while IFS=$'\t' read -r workspace_id label checkout_path; do
+    if [[ -n "$checkout_path" && ! -e "$checkout_path" ]]; then
+      printf 'STALE WORKSPACE\t%s\t%s\tcheckout path does not exist: %s\n' "$workspace_id" "$label" "$checkout_path"
     fi
   done <<<"$workspace_rows"
   return 0
