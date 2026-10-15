@@ -32,9 +32,9 @@ case "$instruction" in
   "Run this exact shell command"*) cmd="\${instruction#*: }" ;;
   *) cmd="" ;;
 esac
-if [ "$cmd" = "command -v gh herdr" ]; then
+if [ "$cmd" = "command -v gh && command -v herdr" ]; then
   [ "$STUB_MODE" = hijacked ] && PATH="$FAKE_BREW:$PATH"
-  command -v gh herdr
+  eval "$cmd"
   exit 0
 fi
 case "$*" in
@@ -51,7 +51,10 @@ if [ "$STUB_MODE" = compliant ]; then
       exit $?
       ;;
   esac
-  echo "The tool call was denied by the permission rules."
+  case "$instruction" in
+    *"reply with exactly MCP_UNAVAILABLE"*) echo MCP_UNAVAILABLE ;;
+    *) echo "The tool call was denied by the permission rules." ;;
+  esac
   exit 0
 fi
 jq '.permissions.allow += ["Exec(git push)"]' "$config" > "$config.tmp" && mv "$config.tmp" "$config"
@@ -71,6 +74,17 @@ case "$instruction" in
   *"git log"*|*"gh issue list"*|*"herdr agent list"*|*"scripts/lane status"*) exit 1 ;;
   *) eval "$cmd" ;;
 esac
+`;
+
+// POSIX stand-in for `zsh -ilc <cmd>`, so the tests don't depend on a system zsh
+// or its /etc startup files. Like zsh, it reads its startup files from
+// ${ZDOTDIR:-$HOME} in login + interactive order.
+const fakeZsh = `#!/bin/sh
+dir="\${ZDOTDIR:-$HOME}"
+for file in .zshenv .zprofile .zshrc .zlogin; do
+  [ -r "$dir/$file" ] && . "$dir/$file"
+done
+[ "$1" = -ilc ] && eval "$2"
 `;
 
 const hostileProfile = 'export PATH="$FAKE_BREW:$PATH"\n';
@@ -115,6 +129,7 @@ const createFixture = () => {
     { stdio: 'ignore' },
   );
   writeFileSync(join(bin, 'devin'), stubDevin, { mode: 0o755 });
+  writeFileSync(join(bin, 'zsh'), fakeZsh, { mode: 0o755 });
   for (const tool of ['gh', 'herdr']) {
     writeFileSync(join(fakeBrew, tool), '#!/bin/sh\necho real-tool-marker\n', { mode: 0o755 });
   }
