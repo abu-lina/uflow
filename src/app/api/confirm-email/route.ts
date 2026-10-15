@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 
 // Rate limiting for confirmation attempts
 const confirmationRateLimit = new Map<string, { count: number; resetTime: number }>();
@@ -49,10 +50,10 @@ export async function POST(request: Request) {
     }
 
     // Log security event
-    console.log(`[SECURITY] Email confirmation attempt for: ${email} from IP: ${ip}`);
+    console.log(`[SECURITY] Email confirmation attempt for: ${maskEmail(email)} from IP: ${maskIp(ip)}`);
 
     // Validate token from database
-    console.log(`[CONFIRM] Validating token for email: ${email}`);
+    console.log(`[CONFIRM] Validating token for email: ${maskEmail(email)}`);
 
     const supabaseAdmin = getSupabaseAdmin();
 
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
         } else {
           console.log(
             `[CONFIRM] Supabase auth verification successful for user:`,
-            authData.user.email,
+            authData.user.id,
           );
           // Create a mock tokenData object for the Supabase flow
           tokenData = {
@@ -146,7 +147,7 @@ export async function POST(request: Request) {
 
     if (tokenError || !tokenData) {
       console.error(`[CONFIRM] Token validation failed:`, {
-        email,
+        email: maskEmail(email),
         tokenError: tokenError
           ? {
               message: tokenError.message,
@@ -170,13 +171,13 @@ export async function POST(request: Request) {
 
     // Check if token is expired
     if (new Date(tokenData.expires_at) < new Date()) {
-      console.log(`[SECURITY] Expired token attempt for: ${email} from IP: ${ip}`);
+      console.log(`[SECURITY] Expired token attempt for user: ${tokenData.user_id} from IP: ${maskIp(ip)}`);
       return NextResponse.json({ error: 'Confirmation link has expired' }, { status: 400 });
     }
 
     // Check if token is already used
     if (tokenData.used) {
-      console.log(`[SECURITY] Already used token attempt for: ${email} from IP: ${ip}`);
+      console.log(`[SECURITY] Already used token attempt for user: ${tokenData.user_id} from IP: ${maskIp(ip)}`);
       return NextResponse.json(
         { error: 'Confirmation link has already been used' },
         { status: 400 },
@@ -214,7 +215,7 @@ export async function POST(request: Request) {
     }
 
     // Log successful confirmation
-    console.log(`[SECURITY] Email successfully confirmed for: ${email} from IP: ${ip}`);
+    console.log(`[SECURITY] Email successfully confirmed for user: ${tokenData.user_id} from IP: ${maskIp(ip)}`);
 
     return NextResponse.json({
       success: true,

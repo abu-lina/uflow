@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         logAuth('warn', {
           event: 'token_verification_already_used',
           ip,
-          email,
+          userId: tokenByTokenOnly.user_id,
           tokenId: tokenByTokenOnly.id,
           duration: Date.now() - startTime,
         });
@@ -175,8 +175,7 @@ export async function POST(request: Request) {
           logAuth('warn', {
             event: 'token_verification_email_mismatch',
             ip,
-            email,
-            storedEmail: tokenByTokenOnly.email,
+            userId: tokenByTokenOnly.user_id,
             tokenValid: false,
             duration: Date.now() - startTime,
           });
@@ -209,7 +208,7 @@ export async function POST(request: Request) {
       logAuth('warn', {
         event: 'token_verification_expired',
         ip,
-        email,
+        userId: tokenData.user_id,
         tokenValid: false,
         expiresAt: expiresAt?.toISOString(),
         now: now.toISOString(),
@@ -233,7 +232,7 @@ export async function POST(request: Request) {
       logAuth('info', {
         event: 'token_verification_bypass_ip_block',
         ip,
-        email,
+        userId: tokenData.user_id,
         tokenValid: true,
         ipBlocked: true,
         bypassed: true,
@@ -250,7 +249,7 @@ export async function POST(request: Request) {
       logAuth('warn', {
         event: 'token_verification_update_error',
         ip,
-        email,
+        userId: tokenData.user_id,
         error: updateError.message || 'Failed to mark token as used',
         // Continue anyway - token verification succeeded
       });
@@ -264,7 +263,6 @@ export async function POST(request: Request) {
       logAuth('error', {
         event: 'token_verification_user_fetch_error',
         ip,
-        email,
         userId: tokenData.user_id,
         error: userError.message || 'Failed to fetch user',
         duration: Date.now() - startTime,
@@ -279,7 +277,6 @@ export async function POST(request: Request) {
       logAuth('error', {
         event: 'token_verification_user_not_found',
         ip,
-        email,
         userId: tokenData.user_id,
         duration: Date.now() - startTime,
       });
@@ -293,7 +290,7 @@ export async function POST(request: Request) {
       logAuth('error', {
         event: 'token_verification_user_email_missing',
         ip,
-        email,
+        userId: tokenData.user_id,
         duration: Date.now() - startTime,
       });
       return NextResponse.json(
@@ -327,7 +324,7 @@ export async function POST(request: Request) {
         logAuth('warn', {
           event: 'token_verification_email_confirm_error',
           ip,
-          email,
+          userId: user.id,
           error: metadataError.message || 'Failed to sync auth metadata',
         });
       }
@@ -353,7 +350,7 @@ export async function POST(request: Request) {
       logAuth('error', {
         event: 'token_verification_session_link_error',
         ip,
-        email,
+        userId: user.id,
         error: linkError.message || 'Failed to generate session link',
         duration: Date.now() - startTime,
       });
@@ -371,7 +368,7 @@ export async function POST(request: Request) {
       logAuth('error', {
         event: 'token_verification_missing_hashed_token',
         ip,
-        email,
+        userId: user.id,
         error: 'No hashed_token in generateLink response',
         duration: Date.now() - startTime,
       });
@@ -385,7 +382,7 @@ export async function POST(request: Request) {
     logAuth('info', {
       event: 'token_verification_success',
       ip,
-      email,
+      userId: user.id,
       tokenValid: true,
       ipBlocked: ipBlocked,
       bypassed: ipBlocked,

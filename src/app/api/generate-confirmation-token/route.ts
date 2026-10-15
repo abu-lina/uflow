@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { maskEmail } from '@/lib/logging/redact-pii';
 
 export async function POST(request: Request) {
   try {
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     console.log('[TOKEN] Generation request:', { userId, type });
     
     if (!email || !type) {
-      console.error('[TOKEN] Missing required fields:', { userId, email, type });
+      console.error('[TOKEN] Missing required fields:', { userId, email: maskEmail(email), type });
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }

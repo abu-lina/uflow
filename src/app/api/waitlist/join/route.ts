@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 import { getTrustedClientIp } from '@/lib/security/clientIp';
 import { waitlistSchema } from '@/lib/validations/waitlistSchemas';
 import { sendWaitlistConfirmationEmail } from '@/services/email/waitlistEmail';
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     const isAllowed = checkRateLimit(identifier, 10, 60 * 60 * 1000, 'waitlist-join');
 
     if (!isAllowed) {
-      console.log('[Waitlist] Rate limit exceeded for:', identifier);
+      console.log('[Waitlist] Rate limit exceeded for:', maskIp(ip));
       return NextResponse.json<WaitlistResponse>(
         {
           data: null,
@@ -52,7 +53,10 @@ export async function POST(request: Request) {
     const validation = waitlistSchema.safeParse(body);
 
     if (!validation.success) {
-      console.log('[Waitlist] Validation failed:', validation.error.issues);
+      console.log(
+        '[Waitlist] Validation failed:',
+        validation.error.issues.map(({ code, path }) => ({ code, path })),
+      );
       return NextResponse.json<WaitlistResponse>(
         {
           data: null,
@@ -85,7 +89,7 @@ export async function POST(request: Request) {
     if (error) {
       // PostgreSQL unique constraint violation code
       if (error.code === '23505') {
-        console.log('[Waitlist] Duplicate email attempt:', email);
+        console.log('[Waitlist] Duplicate email attempt:', maskEmail(email));
         return NextResponse.json<WaitlistResponse>(
           {
             data: null,
@@ -112,7 +116,11 @@ export async function POST(request: Request) {
       console.error('[Waitlist] Failed to send confirmation email:', error);
     });
 
-    console.log('[Waitlist] New signup:', { email, isProvider, ip });
+    console.log('[Waitlist] New signup:', {
+      email: maskEmail(email),
+      isProvider,
+      ip: maskIp(ip),
+    });
 
     // 7. Set waitlist token as HTTP-only cookie (secure, 30 days)
     const response = NextResponse.json<WaitlistResponse>(

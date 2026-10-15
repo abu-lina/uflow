@@ -1,21 +1,22 @@
 /**
  * Structured Logging Utility
- * 
+ *
  * Provides structured JSON logging for production monitoring while maintaining
  * readable console output for development.
- * 
+ *
  * Usage:
  * ```typescript
  * import { logAuth } from '@/lib/logger';
- * 
+ *
  * logAuth('info', {
  *   event: 'token_verification_success',
- *   ip: '192.168.1.1',
- *   email: 'user@example.com',
+ *   ip: '192.168.1.0',
+ *   email: 'u***@example.com',
  *   duration: 150,
  * });
  * ```
  */
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 
 export interface LogContext {
   event: string;
@@ -38,18 +39,27 @@ interface LogEntry {
   [key: string]: unknown;
 }
 
+function redactLogContext(context: LogContext): LogContext {
+  return {
+    ...context,
+    ...(Object.hasOwn(context, 'email') ? { email: maskEmail(context.email) } : {}),
+    ...(Object.hasOwn(context, 'ip') ? { ip: maskIp(context.ip) } : {}),
+  };
+}
+
 /**
  * Log authentication-related events
- * 
+ *
  * In production: Outputs structured JSON for log aggregation systems
  * In development: Outputs human-readable format for debugging
  */
 export function logAuth(level: LogLevel, context: LogContext): void {
+  const safeContext = redactLogContext(context);
   const logEntry: LogEntry = {
     timestamp: new Date().toISOString(),
     service: 'auth',
     level,
-    ...context,
+    ...safeContext,
   };
 
   if (process.env.NODE_ENV === 'production') {
@@ -58,7 +68,7 @@ export function logAuth(level: LogLevel, context: LogContext): void {
   } else {
     // Human-readable format for development
     const prefix = `[AUTH ${level.toUpperCase()}]`;
-    console.log(`${prefix} ${context.event}`, context);
+    console.log(`${prefix} ${safeContext.event}`, safeContext);
   }
 }
 
@@ -66,18 +76,19 @@ export function logAuth(level: LogLevel, context: LogContext): void {
  * Log general application events
  */
 export function logApp(level: LogLevel, context: LogContext): void {
+  const safeContext = redactLogContext(context);
   const logEntry: LogEntry = {
     timestamp: new Date().toISOString(),
     service: 'app',
     level,
-    ...context,
+    ...safeContext,
   };
 
   if (process.env.NODE_ENV === 'production') {
     console.log(JSON.stringify(logEntry));
   } else {
     const prefix = `[APP ${level.toUpperCase()}]`;
-    console.log(`${prefix} ${context.event}`, context);
+    console.log(`${prefix} ${safeContext.event}`, safeContext);
   }
 }
 
@@ -85,17 +96,18 @@ export function logApp(level: LogLevel, context: LogContext): void {
  * Log API route events
  */
 export function logApi(level: LogLevel, context: LogContext & { route: string }): void {
+  const safeContext = redactLogContext(context);
   const logEntry: LogEntry = {
     timestamp: new Date().toISOString(),
     service: 'api',
     level,
-    ...context,
+    ...safeContext,
   };
 
   if (process.env.NODE_ENV === 'production') {
     console.log(JSON.stringify(logEntry));
   } else {
     const prefix = `[API ${level.toUpperCase()}]`;
-    console.log(`${prefix} ${context.route} - ${context.event}`, context);
+    console.log(`${prefix} ${safeContext.route} - ${safeContext.event}`, safeContext);
   }
 }

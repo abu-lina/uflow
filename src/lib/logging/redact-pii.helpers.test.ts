@@ -25,6 +25,18 @@ describe('maskEmail', () => {
   it('redacts an address without a domain', () => {
     expect(maskEmail('user@')).toBe('[redacted]');
   });
+
+  it('redacts an address without a qualified domain', () => {
+    expect(maskEmail('user@example')).toBe('[redacted]');
+  });
+
+  it('redacts an address with multiple at signs', () => {
+    expect(maskEmail('user@@example.com')).toBe('[redacted]');
+  });
+
+  it('redacts malformed local parts', () => {
+    expect(maskEmail('user..name@example.com')).toBe('[redacted]');
+  });
 });
 
 describe('maskIp', () => {
@@ -34,6 +46,10 @@ describe('maskIp', () => {
 
   it('masks IPv6 after the first three hextets', () => {
     expect(maskIp('2001:db8:85a3:8d3:1319:8a2e:370:7348')).toBe('2001:db8:85a3::');
+  });
+
+  it('masks compressed IPv6 after the first three hextets', () => {
+    expect(maskIp('2001:db8:85a3::1')).toBe('2001:db8:85a3::');
   });
 
   it('masks IPv4-mapped IPv6 as IPv4', () => {

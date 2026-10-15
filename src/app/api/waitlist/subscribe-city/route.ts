@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 
 /**
  * POST /api/waitlist/subscribe-city
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     const isAllowed = checkRateLimit(identifier, 20, 60 * 60 * 1000, 'waitlist-subscribe-city');
 
     if (!isAllowed) {
-      console.log('[Subscribe City] Rate limit exceeded for:', identifier);
+      console.log('[Subscribe City] Rate limit exceeded for:', maskIp(identifier.slice(3)));
       return NextResponse.json(
         {
           data: null,
@@ -60,7 +61,10 @@ export async function POST(request: Request) {
     const validation = subscribeCitySchema.safeParse(bodyWithToken);
 
     if (!validation.success) {
-      console.log('[Subscribe City] Validation failed:', validation.error.issues);
+      console.log(
+        '[Subscribe City] Validation failed:',
+        validation.error.issues.map(({ code, path }) => ({ code, path })),
+      );
       const firstError = validation.error.issues[0];
       const errorMessage = firstError?.message || 'Invalid request data';
       return NextResponse.json(
@@ -78,7 +82,7 @@ export async function POST(request: Request) {
     const supabase = createSupabaseServerClient();
 
     console.log('[Subscribe City] Subscribing to city:', {
-      email: email.toLowerCase().trim(),
+      email: maskEmail(email.toLowerCase().trim()),
       cityName,
       tokenLength: waitlistToken?.length,
     });
@@ -108,8 +112,8 @@ export async function POST(request: Request) {
     // Check result from RPC function
     if (!result || !result.success) {
       console.log('[Subscribe City] Subscription failed:', {
-        email: email.toLowerCase().trim(),
-        error: result?.error || 'Invalid email or token',
+        email: maskEmail(email.toLowerCase().trim()),
+        failed: true,
         tokenLength: waitlistToken?.length,
       });
       return NextResponse.json(
@@ -122,7 +126,7 @@ export async function POST(request: Request) {
     }
 
     console.log('[Subscribe City] Successfully subscribed:', {
-      email,
+      email: maskEmail(email),
       cityName,
       rowsUpdated: result.updated,
     });
