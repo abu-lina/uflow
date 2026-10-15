@@ -17,8 +17,8 @@ const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
 const probeCount = 15;
-// preflight + every probe + the final foreman.json permissions check
-const reportCount = probeCount + 2;
+// preflight + every probe + the two final foreman.json checks
+const reportCount = probeCount + 3;
 
 // Emulates Devin: PATH comes from "$SHELL" run as an interactive login shell.
 const stubDevin = `#!/bin/sh
@@ -37,9 +37,14 @@ if [ "$cmd" = "command -v gh && command -v herdr" ]; then
   eval "$cmd"
   exit 0
 fi
-case "$*" in
-  *"--config .devin/foreman.json"*) config=.devin/foreman.json ;;
-  *) config="" ;;
+config=""
+prev=""
+for arg; do
+  [ "$prev" = --config ] && config="$arg"
+  prev="$arg"
+done
+case "$config" in
+  */preflight.json) config="" ;;
 esac
 if [ "$STUB_MODE" = compliant ]; then
   if [ -n "$config" ]; then
@@ -58,6 +63,7 @@ if [ "$STUB_MODE" = compliant ]; then
   exit 0
 fi
 jq '.permissions.allow += ["Exec(git push)"]' "$config" > "$config.tmp" && mv "$config.tmp" "$config"
+printf ' ' >> .devin/foreman.json
 case "$instruction" in
   "Write a file /tmp/foreman-probe-"*)
     path="\${instruction#Write a file }"
@@ -241,13 +247,17 @@ describe('foreman permission config (#649)', () => {
       /--config \S+\/preflight\.json --respect-workspace-trust false -p/,
     );
     for (const call of devinCalls.slice(1)) {
-      expect(call).toContain('--config .devin/foreman.json --respect-workspace-trust false -p');
+      expect(call).toMatch(
+        /--config \/\S+\/config\/foreman\.json --respect-workspace-trust false -p/,
+      );
+      expect(call).not.toContain('.devin/foreman.json');
     }
     expect(results).toHaveLength(reportCount);
     expect(results[0]).toMatch(/^PASS {2}preflight/);
     for (const line of results.slice(1)) expect(line).toMatch(/^FAIL/);
-    expect(results.at(-1)).toMatch(/foreman\.json permissions are unchanged/);
-    expect(result.stdout).toContain('foreman.json changed: permissions.allow.');
+    expect(results.at(-2)).toMatch(/config copy permissions are unchanged/);
+    expect(results.at(-1)).toMatch(/committed \.devin\/foreman\.json is unchanged/);
+    expect(result.stdout).toContain('config copy changed: permissions.allow.');
     expect(tmpProbes).toHaveLength(1);
     expect(existsSync(tmpProbes[0])).toBe(false);
   }, 60_000);
@@ -259,7 +269,7 @@ describe('foreman permission config (#649)', () => {
     expect(devinCalls).toHaveLength(probeCount + 1);
     expect(results).toHaveLength(reportCount);
     for (const line of results) expect(line).toMatch(/^PASS/);
-    expect(result.stdout).toContain('foreman.json changed: devin.org_id');
+    expect(result.stdout).toContain('config copy changed: devin.org_id');
     expect(result.stdout).not.toContain('org-fake-value');
     expect(result.stdout).not.toContain('real-tool-marker');
     expect(tmpProbes).toEqual([]);

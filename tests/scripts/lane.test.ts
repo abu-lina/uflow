@@ -6,6 +6,7 @@ import {
   readFileSync,
   realpathSync,
   rmSync,
+  statSync,
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -555,52 +556,89 @@ esac
     expect(laneScript).toContain('herdr pane current');
   });
 
-  it('foreman passes --config "$root/.devin/foreman.json" to Devin and no bypassing permission mode', () => {
-    const fixture = realpathSync(mkdtempSync(join(tmpdir(), 'lane-foreman-config-')));
-    const root = join(fixture, 'repo');
-    const bin = join(fixture, 'bin');
-    const herdrLog = join(fixture, 'herdr.log');
-    try {
-      mkdirSync(root);
-      mkdirSync(bin);
-      execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
-      writeFileSync(
-        join(bin, 'herdr'),
-        `#!/bin/sh
+  it('foreman passes Devin a private 0600 copy of .devin/foreman.json via --config, never the committed file, and no bypassing permission mode', () => {
+    const committedConfig = readFileSync(new URL('../../.devin/foreman.json', import.meta.url));
+    const shells: [string, string[]][] = [
+      ['bash', ['-c']],
+      ['zsh', ['-f', '-c']],
+    ];
+    for (const [shell, shellArgs] of shells) {
+      const fixture = realpathSync(mkdtempSync(join(tmpdir(), 'lane-foreman-config-')));
+      const root = join(fixture, 'repo');
+      const bin = join(fixture, 'bin');
+      const temp = join(fixture, 'tmp');
+      const herdrLog = join(fixture, 'herdr.log');
+      const configSnapshot = join(fixture, 'config-at-start.json');
+      try {
+        mkdirSync(join(root, '.devin'), { recursive: true });
+        mkdirSync(bin);
+        mkdirSync(temp);
+        execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
+        writeFileSync(join(root, '.devin', 'foreman.json'), committedConfig);
+        // On agent start the stub acts like Devin: it saves its own state into the --config file.
+        writeFileSync(
+          join(bin, 'herdr'),
+          `#!/bin/sh
 printf '%s\\n' "$*" >> "$HERDR_LOG"
 case "$1 $2" in
   "agent list") printf '%s\\n' '{"result":{"agents":[]}}' ;;
   "pane current") printf '%s\\n' '{"result":{"pane":{"pane_id":"pane-main"}}}' ;;
+  "agent start")
+    prev=""
+    for arg; do
+      if [ "$prev" = --config ]; then
+        cp "$arg" "$CONFIG_SNAPSHOT"
+        printf '%s\\n' '{"devin":{"org_id":"org-fake"},"permissions":{"allow":["exec"]}}' > "$arg"
+      fi
+      prev="$arg"
+    done
+    ;;
 esac
 `,
-        { mode: 0o755 },
-      );
+          { mode: 0o755 },
+        );
 
-      const result = spawnSync(
-        'bash',
-        [
-          '-c',
-          `source ${shellQuote(new URL('../../scripts/lane.sh', import.meta.url).pathname)}\nforeman`,
-        ],
-        {
-          cwd: root,
-          encoding: 'utf8',
-          env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, HERDR_LOG: herdrLog },
-        },
-      );
+        const result = spawnSync(
+          shell,
+          [
+            ...shellArgs,
+            `source ${shellQuote(new URL('../../scripts/lane.sh', import.meta.url).pathname)}\nforeman`,
+          ],
+          {
+            cwd: root,
+            encoding: 'utf8',
+            env: {
+              ...process.env,
+              PATH: `${bin}:${process.env.PATH}`,
+              TMPDIR: temp,
+              HERDR_LOG: herdrLog,
+              CONFIG_SNAPSHOT: configSnapshot,
+            },
+          },
+        );
 
-      expect(result.status, result.stderr).toBe(0);
-      const start = readFileSync(herdrLog, 'utf8')
-        .split('\n')
-        .find((line) => line.startsWith('agent start foreman'));
-      expect(start).toBeDefined();
-      const args = (start ?? '').split(' ');
-      expect(args).toContain('--kind');
-      expect(args[args.indexOf('--kind') + 1]).toBe('devin');
-      expect(args[args.indexOf('--config') + 1]).toBe(`${root}/.devin/foreman.json`);
-      expect(start).not.toMatch(/--permission-mode (dangerous|bypass|yolo|smart|accept-edits)/);
-    } finally {
-      rmSync(fixture, { recursive: true, force: true });
+        expect(result.status, `${shell}: ${result.stderr}`).toBe(0);
+        const start = readFileSync(herdrLog, 'utf8')
+          .split('\n')
+          .find((line) => line.startsWith('agent start foreman'));
+        expect(start, shell).toBeDefined();
+        const args = (start ?? '').split(' ');
+        expect(args[args.indexOf('--kind') + 1]).toBe('devin');
+        expect(args).toContain('--config');
+        const config = args[args.indexOf('--config') + 1];
+        expect(config).not.toBe(`${root}/.devin/foreman.json`);
+        expect(config.startsWith(`${temp}/`), `${shell}: ${config}`).toBe(true);
+        expect(statSync(config).mode & 0o777).toBe(0o600);
+        expect(JSON.parse(readFileSync(configSnapshot, 'utf8')).permissions).toEqual(
+          JSON.parse(committedConfig.toString()).permissions,
+        );
+        expect(readFileSync(join(root, '.devin', 'foreman.json')).equals(committedConfig)).toBe(
+          true,
+        );
+        expect(start).not.toMatch(/--permission-mode (dangerous|bypass|yolo|smart|accept-edits)/);
+      } finally {
+        rmSync(fixture, { recursive: true, force: true });
+      }
     }
   });
 

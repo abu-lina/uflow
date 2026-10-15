@@ -25,6 +25,7 @@ stubs="$work/bin"
 zdot="$work/zdot"
 transcript="$work/transcript"
 snapshot="$work/foreman.json.snapshot"
+config_copy="$work/config/foreman.json"
 preflight_config="$work/preflight.json"
 export GH_LOG="$work/gh.log" HERDR_LOG="$work/herdr.log"
 
@@ -32,7 +33,11 @@ git clone -q --bare "$root" "$work/origin.git" || exit 1
 git clone -q "$work/origin.git" "$repo" || exit 1
 git -C "$repo" checkout -q --detach "$head" || exit 1
 [[ -f "$repo/.devin/foreman.json" ]] || { echo "HEAD $head has no .devin/foreman.json" >&2; exit 1; }
-cp "$repo/.devin/foreman.json" "$snapshot" || exit 1
+# Like foreman() in scripts/lane.sh: Devin saves session state into its --config
+# file, so the probes get a private 0600 copy of the committed rules.
+mkdir -m 700 "$work/config" || exit 1
+(umask 077 && cp "$repo/.devin/foreman.json" "$config_copy" && chmod 600 "$config_copy") || exit 1
+cp "$config_copy" "$snapshot" || exit 1
 
 mkdir "$stubs" "$zdot" || exit 1
 cat >"$stubs/gh" <<'STUB'
@@ -78,7 +83,7 @@ stubs_first() { grep -Fq "$stubs/gh" "$transcript" && grep -Fq "$stubs/herdr" "$
 permissions_unchanged() {
   local committed current
   committed="$(git -C "$repo" show HEAD:.devin/foreman.json | jq -S .permissions)" || return 1
-  current="$(jq -S .permissions "$repo/.devin/foreman.json" 2>/dev/null)" || return 1
+  current="$(jq -S .permissions "$config_copy" 2>/dev/null)" || return 1
   [[ "$current" == "$committed" ]]
 }
 
@@ -92,9 +97,9 @@ changed_keys() {
 }
 
 report_config_changes() {
-  cmp -s "$snapshot" "$repo/.devin/foreman.json" && return 0
-  printf '      foreman.json changed: %s\n' "$(changed_keys "$snapshot" "$repo/.devin/foreman.json")"
-  cp "$repo/.devin/foreman.json" "$snapshot"
+  cmp -s "$snapshot" "$config_copy" && return 0
+  printf '      config copy changed: %s\n' "$(changed_keys "$snapshot" "$config_copy")"
+  cp "$config_copy" "$snapshot"
 }
 
 run_devin() {
@@ -120,7 +125,7 @@ probe() {
   local instruction="$1"
   shift
   before="$(git -C "$repo" rev-parse HEAD)"
-  run_devin .devin/foreman.json "$instruction"
+  run_devin "$config_copy" "$instruction"
   report "$instruction" "$@"
   report_config_changes
 }
@@ -158,7 +163,8 @@ probe "$print_cmd scripts/lane status" succeeds_with lane-stub-marker
 
 : >"$transcript"
 devin_status=-
-report 'foreman.json permissions are unchanged after all probes' permissions_unchanged
+report 'config copy permissions are unchanged after all probes' permissions_unchanged
+report 'committed .devin/foreman.json is unchanged after all probes' files_unchanged .devin/foreman.json
 
 printf '\n%s failed\n' "$failures"
 [[ "$failures" == 0 ]]

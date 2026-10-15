@@ -90,7 +90,7 @@ _herdr_workspace_for_issue() {
 }
 
 foreman() {
-  local agent="${1:-devin}" model="${2:-}" root pane_response pane prompt agents
+  local agent="${1:-devin}" model="${2:-}" root pane_response pane prompt agents config_dir
   local -a agent_args
   agent_args=()
   [[ "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be copilot or devin" >&2; return 1; }
@@ -112,7 +112,12 @@ foreman() {
   _agent_model_args "$agent" "$model" || return 1
   if [[ "$agent" == devin ]]; then
     # Normal mode plus foreman.json rules: read-only commands run without prompts, writes are denied.
-    agent_args+=(--config "$root/.devin/foreman.json")
+    # Devin saves session state (org_id, model, "always allow" grants) into its --config file,
+    # so it gets a private copy and the committed rules stay untouched.
+    config_dir="$(mktemp -d "${TMPDIR:-/tmp}/foreman-config.XXXXXX")" || return 1
+    (umask 077 && cp "$root/.devin/foreman.json" "$config_dir/foreman.json" && chmod 600 "$config_dir/foreman.json") ||
+      { echo "could not copy $root/.devin/foreman.json" >&2; return 1; }
+    agent_args+=(--config "$config_dir/foreman.json")
   else
     agent_args+=(--no-remote)
   fi
