@@ -94,7 +94,7 @@ esac
         shellFunction('_lane_port'),
         shellFunction('_herdr_workspace_id'),
         shellFunction('lane_done'),
-        'lane_done 636 --force',
+        'lane_done 636 --force 2>&1',
         'herdr workspace list',
       ].join('\n');
       const output = execFileSync('bash', ['-c', script], {
@@ -110,6 +110,9 @@ esac
       });
 
       expect(readFileSync(herdrLog, 'utf8')).toContain('workspace close workspace-636');
+      expect(output).toMatch(
+        /Herdr could not remove .*; closing its workspace and completing local cleanup/,
+      );
       expect(output).toContain('lane #636 removed');
       expect(JSON.parse(output.trim().split('\n').at(-1) ?? '').result.workspaces).toEqual([]);
       expect(existsSync(worktree)).toBe(false);
