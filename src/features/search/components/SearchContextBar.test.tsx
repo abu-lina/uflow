@@ -116,7 +116,8 @@ describe('SearchContextBar', () => {
   it('lets the input take the space the back button used, with no leftover left margin', () => {
     render(<SearchContextBar searchTerm="Doner" section="food" />);
 
-    const wrapper = screen.getByRole('searchbox').parentElement?.parentElement?.parentElement as HTMLElement;
+    const wrapper = screen.getByRole('searchbox').closest('.mr-2') as HTMLElement;
+    expect(wrapper.parentElement?.firstElementChild).toBe(wrapper);
     expect(wrapper.className).not.toMatch(/(^|\s)(mx-2|ml-2)(\s|$)/);
   });
 });
