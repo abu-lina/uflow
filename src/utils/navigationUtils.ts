@@ -174,6 +174,15 @@ export function hasCompletedOnboarding(): boolean {
   }
 }
 
+const ONBOARDING_STEPS_WITHOUT_NAVBAR = ['splash', 'about', 'waitlist'];
+
+/** On `/`, the onboarding steps splash, about and waitlist never show a navbar (#693). */
+export const isHiddenByOnboardingStep = (
+  pathname: string,
+  onboardingStep?: string | null,
+): boolean =>
+  pathname === '/' && !!onboardingStep && ONBOARDING_STEPS_WITHOUT_NAVBAR.includes(onboardingStep);
+
 /**
  * Determines if the current pathname should show the mobile footer bar
  * @param pathname - Current pathname
@@ -181,6 +190,7 @@ export function hasCompletedOnboarding(): boolean {
  * @param user - Current authenticated user (null for early access or guests)
  * @param isAppLaunched - Whether app is launched (Stage 3 - Full Access)
  * @param stage - Current app stage ('stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading')
+ * @param onboardingStep - Current onboarding flow step on `/` (useWaitlistFlow)
  * @returns True if mobile footer should be shown
  */
 export const shouldShowMobileFooter = (
@@ -189,9 +199,14 @@ export const shouldShowMobileFooter = (
   user: User | null,
   isAppLaunched: boolean = false,
   stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading',
+  onboardingStep?: string | null,
 ): boolean => {
   // City selection is an onboarding step; never show bottom navigation here.
   if (pathname.endsWith('/city-selection')) {
+    return false;
+  }
+
+  if (isHiddenByOnboardingStep(pathname, onboardingStep)) {
     return false;
   }
 
@@ -343,6 +358,7 @@ export const isProviderDetailPage = (pathname: string): boolean => {
  * @param isAppLaunched - Whether app is launched (Stage 3)
  * @param user - Current authenticated user
  * @param stage - Current app stage ('stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading')
+ * @param onboardingStep - Current onboarding flow step on `/` (useWaitlistFlow)
  * @returns True if CityEarlyAccessNavbar should be shown
  */
 export const shouldShowCityEarlyAccessNavbar = (
@@ -351,10 +367,15 @@ export const shouldShowCityEarlyAccessNavbar = (
   isAppLaunched: boolean,
   _user: User | null,
   stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading',
+  onboardingStep?: string | null,
 ): boolean => {
   // City selection is an onboarding step; never show this navbar here.
   // Use suffix check so locale-prefixed routes (e.g. /de/city-selection) are also excluded.
   if (pathname.endsWith('/city-selection')) {
+    return false;
+  }
+
+  if (isHiddenByOnboardingStep(pathname, onboardingStep)) {
     return false;
   }
 

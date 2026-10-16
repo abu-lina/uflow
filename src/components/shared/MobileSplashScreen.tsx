@@ -23,7 +23,7 @@ const ProviderSelectionModal = dynamic(
 );
 
 export function MobileSplashScreen() {
-  const { isSplashVisible, dismissSplash } = useSplash();
+  const { isSplashVisible, dismissSplash, setOnboardingStep } = useSplash();
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -81,6 +81,12 @@ export function MobileSplashScreen() {
     setShowProviderModal(false);
     handleWaitlistComplete(token);
   };
+
+  // Let the layout hide the navbar during the onboarding steps
+  useEffect(() => {
+    setOnboardingStep(currentState);
+    return () => setOnboardingStep(null);
+  }, [currentState, setOnboardingStep]);
 
   // The first button or link press on the splash marks it as seen, so the navbar is not hidden again.
   // Later states (about, waitlist, ...) are not the splash and must not dismiss it.
