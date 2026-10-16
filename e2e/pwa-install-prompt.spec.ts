@@ -106,7 +106,8 @@ test.describe('PWA install prompt (mobile)', () => {
       }),
     );
 
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    // `/` has no navbar in stage 1 since #700; /saved always shows the footer.
+    await page.goto('/saved', { waitUntil: 'domcontentloaded' });
 
     // The prompt fires 3s after load on iOS / installable devices.
     // Non-modal nudge: role=region, named by its own heading ("Installiere
