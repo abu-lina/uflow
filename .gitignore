@@ -166,3 +166,25 @@ supabase/seed-multi-location-example.sql
 
 # devin local config (may hold tokens; never commit)
 .devin/*.local.json
+
+# Local media (audio/video drops, contact sheets); new files over 5 MB are also rejected by .husky/pre-commit
+imports/**/*.mp3
+imports/**/*.mp4
+imports/**/*.mov
+imports/**/*.wav
+imports/**/*.webm
+imports/**/*.m4a
+video/**/*.mp3
+video/**/*.mp4
+video/**/*.mov
+video/**/*.wav
+video/**/*.webm
+video/**/*.m4a
+agent-output/artifacts/**/*.mp3
+agent-output/artifacts/**/*.mp4
+agent-output/artifacts/**/*.mov
+agent-output/artifacts/**/*.wav
+agent-output/artifacts/**/*.webm
+agent-output/artifacts/**/*.m4a
+agent-output/artifacts/**/*.jpg
+agent-output/artifacts/**/*.jpeg
