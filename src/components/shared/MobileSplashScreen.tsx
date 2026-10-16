@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import dynamic from 'next/dynamic';
 
+import { useSplash } from '@/providers/splash-provider';
 import { useWaitlistFlow } from '@/hooks/useWaitlistFlow';
 import { AboutPageContent } from '@/components/shared/AboutPageContent';
 import { SplashLayout } from '@/components/layout/SplashLayout';
@@ -21,11 +22,8 @@ const ProviderSelectionModal = dynamic(
   { ssr: false },
 );
 
-interface MobileSplashScreenProps {
-  onContinue?: () => void;
-}
-
-export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScreenProps) {
+export function MobileSplashScreen() {
+  const { isSplashVisible, dismissSplash, setOnboardingStep } = useSplash();
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -84,25 +82,46 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
     handleWaitlistComplete(token);
   };
 
+  // Let the layout hide the navbar during the onboarding steps
   useEffect(() => {
-    if (!isMounted || !isInitialized) return;
-  }, [currentState, isMounted, isInitialized, showProviderModal]);
+    setOnboardingStep(currentState);
+    return () => setOnboardingStep(null);
+  }, [currentState, setOnboardingStep]);
+
+  // The first button or link press on the splash marks it as seen, so the navbar is not hidden again.
+  // Later states (about, waitlist, ...) are not the splash and must not dismiss it.
+  const withSplashDismiss = (node: React.ReactNode) => (
+    <div
+      className="contents"
+      onClickCapture={(e) => {
+        if (
+          isSplashVisible &&
+          currentState === 'splash' &&
+          (e.target as HTMLElement).closest('button, a')
+        ) {
+          dismissSplash();
+        }
+      }}
+    >
+      {node}
+    </div>
+  );
 
   // During SSR and initial hydration, show consistent content to prevent hydration mismatch
   if (!isMounted || !isInitialized) {
     // Show splash layout during initial render to match server
     // This prevents hydration mismatch
-    return (
+    return withSplashDismiss(
       <SplashLayout onContinue={handleContinue}>
         <SplashContent />
-      </SplashLayout>
+      </SplashLayout>,
     );
   }
 
   // Render based on current state using state machine
   // Use AnimatePresence for smooth transitions between states
 
-  return (
+  return withSplashDismiss(
     <AnimatePresence mode="wait">
       {currentState === 'loading' && (
         <motion.div
@@ -203,6 +222,6 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
           />
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
   );
 }

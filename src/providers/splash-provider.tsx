@@ -1,11 +1,15 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import type { WaitlistFlowState } from '@/hooks/useWaitlistFlow';
 import { hasSeenSplashScreen, markSplashScreenAsSeen } from '@/utils/splashUtils';
 
 interface SplashContextType {
   isSplashVisible: boolean;
   isFirstVisit: boolean;
+  /** Current onboarding flow step shown on `/`; null when the flow isn't mounted. */
+  onboardingStep: WaitlistFlowState | null;
+  setOnboardingStep: (step: WaitlistFlowState | null) => void;
   setSplashVisible: (visible: boolean) => void;
   dismissSplash: () => void;
 }
@@ -19,6 +23,7 @@ interface SplashProviderProps {
 export function SplashProvider({ children }: SplashProviderProps) {
   const [isSplashVisible, setIsSplashVisible] = useState(false);
   const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<WaitlistFlowState | null>(null);
 
   useEffect(() => {
     const firstVisit = !hasSeenSplashScreen();
@@ -48,7 +53,16 @@ export function SplashProvider({ children }: SplashProviderProps) {
   }, []);
 
   return (
-    <SplashContext.Provider value={{ isSplashVisible, isFirstVisit, setSplashVisible, dismissSplash }}>
+    <SplashContext.Provider
+      value={{
+        isSplashVisible,
+        isFirstVisit,
+        onboardingStep,
+        setOnboardingStep,
+        setSplashVisible,
+        dismissSplash,
+      }}
+    >
       {children}
     </SplashContext.Provider>
   );

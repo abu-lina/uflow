@@ -22,6 +22,7 @@ import { useAppStage } from '@/hooks/useAppStage';
 import {
   shouldShowMobileFooter,
   shouldShowCityEarlyAccessNavbar,
+  isHiddenByOnboardingStep,
   shouldShowSubpageAction,
   getPageType,
 } from '@/utils/navigationUtils';
@@ -34,7 +35,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
-  const { isSplashVisible } = useSplash();
+  const { isSplashVisible, onboardingStep } = useSplash();
   const { t } = useLanguage();
   const mainRef = useRef<HTMLElement>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -79,6 +80,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
     user,
     isAppLaunched,
     stage,
+    onboardingStep,
   );
   const showCityEarlyAccessNavbar = shouldShowCityEarlyAccessNavbar(
     pathname,
@@ -86,6 +88,7 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
     isAppLaunched,
     user,
     stage,
+    onboardingStep,
   );
   const showSubpageAction = shouldShowSubpageAction(pathname);
 
@@ -95,22 +98,23 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
   const isFoodDiscovery = pathname === '/food' || pathname === '/stores' || pathname === '/ummah';
 
   // When not yet mounted use 'none' so slot reserves space without showing wrong UI; after mount show correct one
-  const mobileUiMode = !isMounted
-    ? 'none'
-    : forceMobileFooter
-      ? 'footer'
-      : isDiscoveryHome ||
-          isFoodDiscovery ||
-          pathname === '/saved' ||
-          pathname === '/profile' ||
-          pathname === '/login' ||
-          pathname === '/signup'
+  const mobileUiMode =
+    !isMounted || isHiddenByOnboardingStep(pathname, onboardingStep)
+      ? 'none'
+      : forceMobileFooter
         ? 'footer'
-        : showMobileFooter
+        : isDiscoveryHome ||
+            isFoodDiscovery ||
+            pathname === '/saved' ||
+            pathname === '/profile' ||
+            pathname === '/login' ||
+            pathname === '/signup'
           ? 'footer'
-          : showCityEarlyAccessNavbar
-            ? 'navbar'
-            : 'none';
+          : showMobileFooter
+            ? 'footer'
+            : showCityEarlyAccessNavbar
+              ? 'navbar'
+              : 'none';
 
   // Debug logging for footer visibility (development only)
   useEffect(() => {
