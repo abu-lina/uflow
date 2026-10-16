@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import dynamic from 'next/dynamic';
 
+import { useSplash } from '@/providers/splash-provider';
 import { useWaitlistFlow } from '@/hooks/useWaitlistFlow';
 import { AboutPageContent } from '@/components/shared/AboutPageContent';
 import { SplashLayout } from '@/components/layout/SplashLayout';
@@ -25,7 +26,7 @@ interface MobileSplashScreenProps {
   onContinue?: () => void;
 }
 
-export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScreenProps) {
+function MobileSplashScreenContent() {
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -204,5 +205,20 @@ export function MobileSplashScreen({ onContinue: _onContinue }: MobileSplashScre
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+// The first button or link press marks the splash as seen, so the navbar is not hidden again.
+export function MobileSplashScreen(_props: MobileSplashScreenProps) {
+  const { dismissSplash } = useSplash();
+  return (
+    <div
+      className="contents"
+      onClickCapture={(e) => {
+        if ((e.target as HTMLElement).closest('button, a')) dismissSplash();
+      }}
+    >
+      <MobileSplashScreenContent />
+    </div>
   );
 }

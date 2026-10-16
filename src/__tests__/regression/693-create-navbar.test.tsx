@@ -70,13 +70,17 @@ describe('#693 /create navbar for early access users', () => {
   it('3. /create subpages keep hiding the navbar', () => {
     completeOnboarding();
     for (const path of ['/create/basics', '/create/recommend', '/create/media/images']) {
-      expect(shouldShowMobileFooter(path, true, user, false, 'stage1')).toBe(false);
-      expect(shouldShowCityEarlyAccessNavbar(path, true, false, null, 'stage1')).toBe(false);
+      for (const splash of [true, false]) {
+        expect(shouldShowMobileFooter(path, splash, user, false, 'stage1')).toBe(false);
+        expect(shouldShowCityEarlyAccessNavbar(path, splash, false, null, 'stage1')).toBe(false);
+      }
     }
   });
 
   it('4. /city-selection and pre-onboarding /welcome and /about show no navbar', () => {
-    expect(shouldShowCityEarlyAccessNavbar('/city-selection', true, false, null, 'stage1')).toBe(false);
+    expect(shouldShowCityEarlyAccessNavbar('/city-selection', true, false, null, 'stage1')).toBe(
+      false,
+    );
     expect(shouldShowMobileFooter('/city-selection', true, user, false, 'stage1')).toBe(false);
     for (const path of ['/welcome', '/about']) {
       expect(shouldShowCityEarlyAccessNavbar(path, false, false, null, 'onboarding')).toBe(false);

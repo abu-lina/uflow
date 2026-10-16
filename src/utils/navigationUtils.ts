@@ -241,8 +241,8 @@ export const shouldShowMobileFooter = (
     return false;
   }
 
-  // 3. Hide footer when splash is visible (even for returning users)
-  if (isSplashVisible) {
+  // 3. Hide footer when splash is visible on the root page (even for returning users)
+  if (isSplashVisible && pathname === '/') {
     return false;
   }
 
@@ -365,8 +365,9 @@ export const shouldShowCityEarlyAccessNavbar = (
   }
 
   // Hide navbar when splash is visible (even for returning users)
-  // Matches shouldShowMobileFooter behavior to prevent navbar during onboarding screens
-  if (isSplashVisible) {
+  // Matches shouldShowMobileFooter behavior to prevent navbar during onboarding screens.
+  // The splash only lives on the root page; other pages must not depend on the flag (#693).
+  if (isSplashVisible && pathname === '/') {
     return false;
   }
 
@@ -411,6 +412,11 @@ export const shouldShowCityEarlyAccessNavbar = (
   ];
 
   if (excludedPages.includes(pathname)) {
+    return false;
+  }
+
+  // Create subpages have their own action bar, same as shouldShowMobileFooter (#693)
+  if (pathname.startsWith('/create/')) {
     return false;
   }
 
