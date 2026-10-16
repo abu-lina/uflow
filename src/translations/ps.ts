@@ -1100,7 +1100,7 @@ export const ps = {
       description:
         '{{city}} په Early Access کې له امت سره ګام په ګام وده کوي. هر وړاندیز مسلمان وړاندیزونه لیدل کېدل اسانه کوي.',
       suggestProvider: 'وړاندې کوونکی وړاندیز کړئ',
-      exploreUmmahFlow: 'UmmahFlow وپلټئ',
+      exploreUmmahFlow: 'Ummah Flow وپلټئ',
       receiveUpdates: 'د {{city}} لپاره تازه معلومات ترلاسه کړئ',
       subscribeSuccess: 'کله چې {{city}} کې نور وړاندې کوونکي وي نو تاسو ته به خبر ورکړل شي.',
       subscribeError: 'د ګډون کولو کې ستونزه. مهرباني وکړئ بیا هڅه وکړئ.',
