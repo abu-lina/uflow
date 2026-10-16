@@ -19,6 +19,11 @@ describe('#698 AC1: returns returnUrl only if, after decoding, it is a same-orig
     expect(getSafeReturnUrl('/\\evil.example/path', FALLBACK)).toBe(FALLBACK);
   });
 
+  it('returns the fallback when a tab or newline turns the path into //', () => {
+    expect(getSafeReturnUrl('/%09/evil.example', FALLBACK)).toBe(FALLBACK);
+    expect(getSafeReturnUrl('/%0A/evil.example', FALLBACK)).toBe(FALLBACK);
+  });
+
   it('returns the fallback when the value has a scheme', () => {
     expect(getSafeReturnUrl('mailto:someone@evil.example', FALLBACK)).toBe(FALLBACK);
   });
