@@ -24,6 +24,7 @@ import { PageContent } from '@/components/layout/PageContent';
 import { FooterAction } from '@/components/ui/FooterAction';
 import { Button } from '@/components/ui/Button';
 import { ErrorBoundary } from '@/components/common/error-boundary/ErrorBoundary';
+import { LoginGate } from '@/components/shared/LoginGate';
 import { OfferListSkeleton } from '@/components/ui/OfferListSkeleton';
 import { cn } from '@/lib/utils';
 
@@ -41,7 +42,7 @@ export default function SelectOffersPage() {
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
 
@@ -247,6 +248,16 @@ export default function SelectOffersPage() {
   const showCreateOption =
     searchQuery.trim() &&
     !offers.some((o) => normalizeText(o.name_de) === normalizeText(searchQuery.trim()));
+
+  if (!isAuthLoading && !user) {
+    return (
+      <LoginGate
+        createDesktopLayout
+        returnPath="/create/recommend/offers"
+        title={t('create.offers.title')}
+      />
+    );
+  }
 
   return (
     <ErrorBoundary>
