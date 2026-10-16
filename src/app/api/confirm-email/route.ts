@@ -152,10 +152,7 @@ export async function POST(request: Request) {
         hasTokenData: !!tokenData,
       });
       return NextResponse.json(
-        {
-          error: 'Invalid or expired confirmation link',
-          details: tokenError?.message || 'Token not found',
-        },
+        { error: 'Invalid or expired confirmation link' },
         { status: 400 },
       );
     }

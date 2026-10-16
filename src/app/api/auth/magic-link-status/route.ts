@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { redactError } from '@/lib/logging/redact-pii';
 
 /**
  * Check magic link status for a specific email
@@ -13,8 +14,8 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const email = url.searchParams.get('email');
-  
+  const email = url.searchParams.get('email')?.trim().toLowerCase();
+
   if (!email) {
     return NextResponse.json(
       { error: 'Email parameter is required' },
@@ -29,14 +30,15 @@ export async function GET(request: Request) {
     const { data: tokens, error: tokensError } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .select('*')
-      .ilike('email', email)
+      .eq('email', email)
       .eq('type', 'magic_link')
       .order('created_at', { ascending: false })
       .limit(10);
     
     if (tokensError) {
+      console.error('[MAGIC LINK STATUS] Token lookup failed:', redactError(tokensError));
       return NextResponse.json(
-        { error: 'Failed to fetch tokens', details: tokensError.message },
+        { error: 'Failed to fetch tokens' },
         { status: 500 }
       );
     }
@@ -45,13 +47,14 @@ export async function GET(request: Request) {
     const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (userError) {
+      console.error('[MAGIC LINK STATUS] User lookup failed:', redactError(userError));
       return NextResponse.json(
-        { error: 'Failed to fetch users', details: userError.message },
+        { error: 'Failed to fetch users' },
         { status: 500 }
       );
     }
     
-    const user = users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    const user = users?.find(u => u.email?.toLowerCase() === email);
     
     const now = new Date();
     const status = {
@@ -112,12 +115,7 @@ export async function GET(request: Request) {
     return NextResponse.json(status);
     
   } catch (error) {
-    return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : String(error)
-      },
-      { status: 500 }
-    );
+    console.error('[MAGIC LINK STATUS] Unexpected error:', redactError(error));
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
