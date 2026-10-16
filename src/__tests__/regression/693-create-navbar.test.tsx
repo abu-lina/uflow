@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { User } from '@supabase/supabase-js';
 
 import { MobileSplashScreen } from '@/components/shared/MobileSplashScreen';
-import { SplashProvider } from '@/providers/splash-provider';
+import { SplashProvider, useSplash } from '@/providers/splash-provider';
 import { shouldShowCityEarlyAccessNavbar, shouldShowMobileFooter } from '@/utils/navigationUtils';
 
 vi.mock('next/navigation', () => ({
@@ -13,9 +13,11 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
+const flow = vi.hoisted(() => ({ currentState: 'splash' }));
+
 vi.mock('@/hooks/useWaitlistFlow', () => ({
   useWaitlistFlow: () => ({
-    currentState: 'splash',
+    currentState: flow.currentState,
     flowData: {},
     isInitialized: true,
     handleContinue: vi.fn(),
@@ -33,8 +35,13 @@ vi.mock('@/components/layout/SplashLayout', () => ({
     <div>
       {children}
       <button type="button">Continue</button>
+      <a href="/about">Learn more</a>
     </div>
   ),
+}));
+
+vi.mock('@/components/shared/AboutPageContent', () => ({
+  AboutPageContent: () => <button type="button">Continue</button>,
 }));
 
 vi.mock('@/components/shared/SplashContent', () => ({ SplashContent: () => null }));
@@ -55,9 +62,8 @@ describe('#693 /create navbar for early access users', () => {
   it('1. anonymous user with onboarding done and a below-threshold city gets a navbar on /create, even before the splash flag is set', () => {
     completeOnboarding();
     for (const stage of ['stage1', 'stage2'] as const) {
-      const footer = shouldShowMobileFooter('/create', true, null, false, stage);
-      const navbar = shouldShowCityEarlyAccessNavbar('/create', true, false, null, stage);
-      expect(footer || navbar).toBe(true);
+      expect(shouldShowMobileFooter('/create', true, null, false, stage)).toBe(false);
+      expect(shouldShowCityEarlyAccessNavbar('/create', true, false, null, stage)).toBe(true);
     }
   });
 
@@ -93,14 +99,41 @@ describe('#693 /create navbar for early access users', () => {
     expect(shouldShowCityEarlyAccessNavbar('/', true, false, null, 'stage1')).toBe(false);
   });
 
-  it('6. clicking a button on the splash screen persists that the splash was seen', () => {
-    render(
-      <SplashProvider>
-        <MobileSplashScreen />
-      </SplashProvider>,
-    );
-    expect(localStorage.getItem('hasSeenSplashScreen')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(localStorage.getItem('hasSeenSplashScreen')).toBe('true');
+  describe('6. a button or link press on the splash screen dismisses it', () => {
+    function SplashState() {
+      const { isSplashVisible } = useSplash();
+      return <span data-testid="splash-visible">{String(isSplashVisible)}</span>;
+    }
+
+    function renderSplash() {
+      render(
+        <SplashProvider>
+          <SplashState />
+          <MobileSplashScreen />
+        </SplashProvider>,
+      );
+      expect(screen.getByTestId('splash-visible').textContent).toBe('true');
+    }
+
+    beforeEach(() => {
+      flow.currentState = 'splash';
+    });
+
+    it.each([
+      ['button', 'Continue'],
+      ['link', 'Learn more'],
+    ])('persists the flag and hides the splash after a %s press', (_kind, name) => {
+      renderSplash();
+      fireEvent.click(screen.getByText(name));
+      expect(localStorage.getItem('hasSeenSplashScreen')).toBe('true');
+      expect(screen.getByTestId('splash-visible').textContent).toBe('false');
+    });
+
+    it('does not dismiss from later flow states', () => {
+      flow.currentState = 'about';
+      renderSplash();
+      fireEvent.click(screen.getByText('Continue'));
+      expect(localStorage.getItem('hasSeenSplashScreen')).toBeNull();
+    });
   });
 });

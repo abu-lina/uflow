@@ -22,11 +22,8 @@ const ProviderSelectionModal = dynamic(
   { ssr: false },
 );
 
-interface MobileSplashScreenProps {
-  onContinue?: () => void;
-}
-
-function MobileSplashScreenContent() {
+export function MobileSplashScreen() {
+  const { isSplashVisible, dismissSplash } = useSplash();
   const [showProviderModal, setShowProviderModal] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -85,25 +82,40 @@ function MobileSplashScreenContent() {
     handleWaitlistComplete(token);
   };
 
-  useEffect(() => {
-    if (!isMounted || !isInitialized) return;
-  }, [currentState, isMounted, isInitialized, showProviderModal]);
+  // The first button or link press on the splash marks it as seen, so the navbar is not hidden again.
+  // Later states (about, waitlist, ...) are not the splash and must not dismiss it.
+  const withSplashDismiss = (node: React.ReactNode) => (
+    <div
+      className="contents"
+      onClickCapture={(e) => {
+        if (
+          isSplashVisible &&
+          currentState === 'splash' &&
+          (e.target as HTMLElement).closest('button, a')
+        ) {
+          dismissSplash();
+        }
+      }}
+    >
+      {node}
+    </div>
+  );
 
   // During SSR and initial hydration, show consistent content to prevent hydration mismatch
   if (!isMounted || !isInitialized) {
     // Show splash layout during initial render to match server
     // This prevents hydration mismatch
-    return (
+    return withSplashDismiss(
       <SplashLayout onContinue={handleContinue}>
         <SplashContent />
-      </SplashLayout>
+      </SplashLayout>,
     );
   }
 
   // Render based on current state using state machine
   // Use AnimatePresence for smooth transitions between states
 
-  return (
+  return withSplashDismiss(
     <AnimatePresence mode="wait">
       {currentState === 'loading' && (
         <motion.div
@@ -204,21 +216,6 @@ function MobileSplashScreenContent() {
           />
         </motion.div>
       )}
-    </AnimatePresence>
-  );
-}
-
-// The first button or link press marks the splash as seen, so the navbar is not hidden again.
-export function MobileSplashScreen(_props: MobileSplashScreenProps) {
-  const { dismissSplash } = useSplash();
-  return (
-    <div
-      className="contents"
-      onClickCapture={(e) => {
-        if ((e.target as HTMLElement).closest('button, a')) dismissSplash();
-      }}
-    >
-      <MobileSplashScreenContent />
-    </div>
+    </AnimatePresence>,
   );
 }

@@ -424,7 +424,7 @@ export const shouldShowCityEarlyAccessNavbar = (
     return false;
   }
 
-  // Show on: /, /city/*, /providers, /create (and subpages that don't match excluded patterns)
+  // Show on: /, /city/*, /providers, /create (not its subpages, see above)
   return true;
 };
 
