@@ -63,7 +63,8 @@ describe('#693 criterion 5: no navbar on / during splash, about and waitlist', (
   });
 
   it('keeps the Plan 063 navbar on / in the other flow states', () => {
-    for (const step of ['loading', 'success', 'earlyAccess', null] as const) {
+    localStorage.clear();
+    for (const step of ['loading', 'success', null] as const) {
       expect(shouldShowCityEarlyAccessNavbar('/', false, false, null, 'stage1', step)).toBe(true);
     }
   });
@@ -83,9 +84,9 @@ describe('#693 criterion 5: no navbar on / during splash, about and waitlist', (
     },
   );
 
-  it('RootClientLayout still shows the navbar on / in the earlyAccess state', () => {
+  it('RootClientLayout hides the navbar on / in the earlyAccess state (#700)', () => {
     mocks.flowState = 'earlyAccess';
     render(<RootClientLayout>content</RootClientLayout>);
-    expect(screen.getByTestId('mobile-footer-bar').getAttribute('data-mobile-ui')).toBe('navbar');
+    expect(screen.getByTestId('mobile-footer-bar').getAttribute('data-mobile-ui')).toBe('none');
   });
 });

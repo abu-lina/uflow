@@ -81,7 +81,8 @@ test('Home nav link hit-tests to itself across its full mobile target', async ({
     }),
   );
 
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  // `/` has no navbar in stage 1 since #700; /saved always shows the footer.
+  await page.goto('/saved', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('nav a[href="/"]:visible').first()).toBeVisible({ timeout: 15_000 });
 
   const hitTest = await page.evaluate(() => {

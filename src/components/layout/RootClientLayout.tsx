@@ -23,6 +23,7 @@ import {
   shouldShowMobileFooter,
   shouldShowCityEarlyAccessNavbar,
   isHiddenByOnboardingStep,
+  isHiddenByStage1EmptyState,
   shouldShowSubpageAction,
   getPageType,
 } from '@/utils/navigationUtils';
@@ -99,7 +100,9 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
 
   // When not yet mounted use 'none' so slot reserves space without showing wrong UI; after mount show correct one
   const mobileUiMode =
-    !isMounted || isHiddenByOnboardingStep(pathname, onboardingStep)
+    !isMounted ||
+    isHiddenByOnboardingStep(pathname, onboardingStep) ||
+    isHiddenByStage1EmptyState(pathname, stage)
       ? 'none'
       : forceMobileFooter
         ? 'footer'

@@ -174,14 +174,28 @@ export function hasCompletedOnboarding(): boolean {
   }
 }
 
-const ONBOARDING_STEPS_WITHOUT_NAVBAR = ['splash', 'about', 'waitlist'];
+const ONBOARDING_STEPS_WITHOUT_NAVBAR = ['splash', 'about', 'waitlist', 'earlyAccess'];
 
-/** On `/`, the onboarding steps splash, about and waitlist never show a navbar (#693). */
+/** On `/`, the onboarding steps splash, about, waitlist and earlyAccess never show a navbar (#693, #700). */
 export const isHiddenByOnboardingStep = (
   pathname: string,
   onboardingStep?: string | null,
 ): boolean =>
   pathname === '/' && !!onboardingStep && ONBOARDING_STEPS_WITHOUT_NAVBAR.includes(onboardingStep);
+
+/** The stage 1 city empty state ("<City> is currently being built") is a full-screen page without a navbar (#700). */
+export const isHiddenByStage1EmptyState = (
+  pathname: string,
+  stage?: 'stage1' | 'stage2' | 'stage3' | 'onboarding' | 'loading',
+): boolean => {
+  if (stage !== 'stage1') {
+    return false;
+  }
+  if (pathname === '/') {
+    return hasCompletedOnboarding();
+  }
+  return /^\/city\/[^/]+\/?$/.test(pathname);
+};
 
 /**
  * Determines if the current pathname should show the mobile footer bar
@@ -206,7 +220,10 @@ export const shouldShowMobileFooter = (
     return false;
   }
 
-  if (isHiddenByOnboardingStep(pathname, onboardingStep)) {
+  if (
+    isHiddenByOnboardingStep(pathname, onboardingStep) ||
+    isHiddenByStage1EmptyState(pathname, stage)
+  ) {
     return false;
   }
 
@@ -239,7 +256,11 @@ export const shouldShowMobileFooter = (
     }
 
     // Hide footer for create subpages (action menu will be shown instead)
-    if (pathname.startsWith('/create') && pathname !== '/create') {
+    if (
+      pathname.startsWith('/create') &&
+      pathname !== '/create' &&
+      pathname !== '/create/recommend'
+    ) {
       return false;
     }
 
@@ -283,7 +304,11 @@ export const shouldShowMobileFooter = (
   }
 
   // 6. Hide footer for create subpages (action menu will be shown instead)
-  if (pathname.startsWith('/create') && pathname !== '/create') {
+  if (
+    pathname.startsWith('/create') &&
+    pathname !== '/create' &&
+    pathname !== '/create/recommend'
+  ) {
     return false;
   }
 
@@ -375,7 +400,10 @@ export const shouldShowCityEarlyAccessNavbar = (
     return false;
   }
 
-  if (isHiddenByOnboardingStep(pathname, onboardingStep)) {
+  if (
+    isHiddenByOnboardingStep(pathname, onboardingStep) ||
+    isHiddenByStage1EmptyState(pathname, stage)
+  ) {
     return false;
   }
 
@@ -427,7 +455,6 @@ export const shouldShowCityEarlyAccessNavbar = (
     '/profile/providers/', // Profile provider detail pages
     '/create/media/images',
     '/create/media/social',
-    '/create/recommend', // Recommendation flow pages (have their own navigation)
     '/profile/edit',
     '/profile/delete',
   ];
@@ -437,7 +464,7 @@ export const shouldShowCityEarlyAccessNavbar = (
   }
 
   // Create subpages have their own action bar, same as shouldShowMobileFooter (#693)
-  if (pathname.startsWith('/create/')) {
+  if (pathname.startsWith('/create/') && pathname !== '/create/recommend') {
     return false;
   }
 

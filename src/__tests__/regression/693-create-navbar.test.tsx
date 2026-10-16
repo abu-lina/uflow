@@ -75,7 +75,7 @@ describe('#693 /create navbar for early access users', () => {
 
   it('3. /create subpages keep hiding the navbar', () => {
     completeOnboarding();
-    for (const path of ['/create/basics', '/create/recommend', '/create/media/images']) {
+    for (const path of ['/create/basics', '/create/media/images']) {
       for (const splash of [true, false]) {
         expect(shouldShowMobileFooter(path, splash, user, false, 'stage1')).toBe(false);
         expect(shouldShowCityEarlyAccessNavbar(path, splash, false, null, 'stage1')).toBe(false);
