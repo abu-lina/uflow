@@ -85,6 +85,6 @@ describe('CityStage1Content navbar invariant', () => {
       </RootClientLayout>,
     );
 
-    expect(screen.queryAllByTestId('city-early-access-navbar')).toHaveLength(0);
+    expect(document.querySelector('[data-mobile-ui]')?.getAttribute('data-mobile-ui')).toBe('none');
   });
 });
