@@ -1118,7 +1118,7 @@ export const de = {
       description:
         '{{city}} wächst im Early Access Schritt für Schritt gemeinsam mit der Ummah. Jede Empfehlung hilft, muslimische Angebote sichtbar zu machen.',
       suggestProvider: 'Anbieter vorschlagen',
-      exploreUmmahFlow: 'UmmahFlow entdecken',
+      exploreUmmahFlow: 'Ummah Flow entdecken',
       receiveUpdates: 'Updates zu {{city}} erhalten',
       subscribeSuccess: 'Du wirst benachrichtigt, wenn {{city}} mehr Anbieter hat.',
       subscribeError: 'Fehler beim Abonnieren. Bitte versuche es erneut.',
