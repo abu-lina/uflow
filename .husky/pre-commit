@@ -1,1 +1,2 @@
+bash scripts/check-staged-size.sh
 npx lint-staged
