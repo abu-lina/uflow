@@ -140,7 +140,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    console.error('[Subscribe City] Unexpected error:', error);
+    console.error('[Subscribe City] Unexpected error:', redactError(error));
 
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {

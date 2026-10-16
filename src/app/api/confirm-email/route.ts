@@ -185,7 +185,7 @@ export async function POST(request: Request) {
         .eq('id', tokenData.id);
 
       if (updateTokenError) {
-        console.error('Error updating token:', updateTokenError);
+        console.error('Error updating token:', redactError(updateTokenError));
         return NextResponse.json({ error: 'Failed to process confirmation' }, { status: 500 });
       }
     }
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
     );
 
     if (updateUserError) {
-      console.error('[SECURITY] Error updating user:', updateUserError);
+      console.error('[SECURITY] Error updating user:', redactError(updateUserError));
       return NextResponse.json({ error: 'Failed to confirm email' }, { status: 500 });
     }
 
@@ -215,7 +215,7 @@ export async function POST(request: Request) {
       message: 'Email confirmed successfully',
     });
   } catch (error) {
-    console.error('Email confirmation error:', error);
+    console.error('Email confirmation error:', redactError(error));
     return NextResponse.json({ error: 'Failed to confirm email' }, { status: 500 });
   }
 }

@@ -9,6 +9,10 @@ import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
+import { getCityMapPath } from '@/config/sectionFilters';
+import { STAGE2_MIN_PROVIDERS } from '@/hooks/useAppStage';
+import { getSelectedCityCoords } from '@/lib/utils/selected-city-coords';
+import { findNearestCityWithProviders } from '@/services/providers';
 
 // Dynamic import for modal (Plan 007: reduce shared bundle)
 const LegalLinksModal = dynamic(
@@ -45,6 +49,7 @@ export function CityEarlyAccessEmptyState({
   const { t } = useLanguage();
   const router = useRouter();
   const [showLegalModal, setShowLegalModal] = useState(false);
+  const [isExploring, setIsExploring] = useState(false);
 
   // Detect reduced motion preference
   const prefersReducedMotion =
@@ -62,6 +67,22 @@ export function CityEarlyAccessEmptyState({
     } else {
       router.push('/create/recommend');
     }
+  };
+
+  // #674: open the map of the nearest city above the threshold; all providers when none
+  const handleExplore = async () => {
+    setIsExploring(true);
+    let nearestCity: string | null = null;
+    try {
+      nearestCity = await findNearestCityWithProviders(
+        cityName,
+        STAGE2_MIN_PROVIDERS,
+        getSelectedCityCoords(),
+      );
+    } catch (error) {
+      console.error('[City Early Access] Nearest city lookup failed:', error);
+    }
+    router.push(getCityMapPath(nearestCity));
   };
 
   // TODO: Implement handleReceiveUpdates when receive updates button is enabled
@@ -200,6 +221,18 @@ export function CityEarlyAccessEmptyState({
               onClick={handleSuggestProvider}
             >
               {t('waitlist.cityEarlyAccess.suggestProvider')}
+            </Button>
+
+            {/* Secondary CTA: Explore UmmahFlow in the nearest city with providers (#674) */}
+            <Button
+              fullWidth
+              aria-label={t('waitlist.cityEarlyAccess.exploreUmmahFlow')}
+              className="h-12 justify-center rounded-md font-inter-tight text-base font-medium"
+              loading={isExploring}
+              variant="secondary"
+              onClick={handleExplore}
+            >
+              {t('waitlist.cityEarlyAccess.exploreUmmahFlow')}
             </Button>
 
             {/* Secondary CTA: Receive Updates - Temporarily hidden until functionality is implemented */}

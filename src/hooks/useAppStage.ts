@@ -18,6 +18,9 @@ export interface AppStageData {
 
 const PROVIDER_COUNT_CACHE_KEY = 'providerCountCache';
 
+/** Approved providers a city needs to leave stage 1 and show discovery. */
+export const STAGE2_MIN_PROVIDERS = 6;
+
 function getCachedProviderCount(cityName: string): number | null {
   try {
     const raw = localStorage.getItem(PROVIDER_COUNT_CACHE_KEY);
@@ -234,7 +237,7 @@ export function useAppStage(): AppStageData {
     // Determine Stage 1, Stage 2, or Stage 3 based on provider count
     if (providerCount !== undefined) {
       let newStage: AppStage;
-      if (providerCount < 6) {
+      if (providerCount < STAGE2_MIN_PROVIDERS) {
         newStage = 'stage1';
       } else if (providerCount < 15) {
         newStage = 'stage2';

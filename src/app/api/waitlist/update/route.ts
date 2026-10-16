@@ -70,7 +70,10 @@ export async function PATCH(request: Request) {
     const validation = waitlistUpdateSchema.safeParse(bodyWithToken);
 
     if (!validation.success) {
-      console.log('[Waitlist Update] Validation failed:', validation.error.issues);
+      console.log(
+        '[Waitlist Update] Validation failed:',
+        validation.error.issues.map(({ code, path }) => ({ code, path })),
+      );
       const firstError = validation.error.issues[0];
       const errorMessage = firstError?.message || 'Invalid request data';
       return NextResponse.json(

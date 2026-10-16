@@ -18,6 +18,7 @@ const mockGetCategoryById = vi.fn();
 
 vi.mock('@/services/providers', () => ({
   searchProvidersAndCommunityServices: (...args: unknown[]) => mockSearch(...args),
+  getCityCenter: async () => null,
 }));
 
 vi.mock('@/services/categories', () => ({

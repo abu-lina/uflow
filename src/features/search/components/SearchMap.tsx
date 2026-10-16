@@ -27,13 +27,21 @@ export interface MapPin {
   };
 }
 
+/** City the map opens on (#674): its center when known, else its pins. */
+export interface MapFocus {
+  key: string;
+  center: { lat: number; lng: number } | null;
+}
+
 interface SearchMapProps {
   userCoords?: { lat: number; lon: number } | null;
   pins: MapPin[];
+  focus?: MapFocus | null;
 }
 
 const DEFAULT_CENTER: [number, number] = [51.1657, 10.4515];
 const DEFAULT_ZOOM = 6;
+const CITY_ZOOM = 12;
 
 const p1 =
   'M3.9874 5.97345C3.9874 6.10393 3.95944 6.21286 3.90352 6.30024C3.84877 6.38878 3.77945 6.47091 3.69557 6.54664C3.60703 6.62586 3.49635 6.69517 3.36354 6.75459C3.23073 6.81401 3.08219 6.84371 2.91792 6.84371C2.76298 6.84371 2.63657 6.8175 2.53871 6.76508C2.44202 6.71265 2.37037 6.64158 2.32377 6.55188C2.27833 6.46217 2.25562 6.3614 2.25562 6.24956C2.25562 6.15403 2.27076 6.055 2.30105 5.95248C2.33134 5.84996 2.36687 5.75501 2.40765 5.66764C2.44959 5.5791 2.48687 5.50745 2.51949 5.45269C2.55328 5.39794 2.57308 5.37056 2.57891 5.37056C2.58823 5.37056 2.60221 5.37871 2.62085 5.39502C2.64065 5.41017 2.65055 5.4224 2.65055 5.43172C2.65055 5.43755 2.63657 5.46667 2.60861 5.5191C2.58182 5.57036 2.55502 5.63618 2.52823 5.71657C2.50143 5.79579 2.48803 5.88142 2.48803 5.97345C2.48803 6.10044 2.53405 6.19713 2.62609 6.26354C2.71812 6.33111 2.84511 6.3649 3.00705 6.3649C3.17364 6.3649 3.32509 6.34276 3.4614 6.29849C3.59771 6.25422 3.6944 6.20121 3.75149 6.13947C3.76314 6.12898 3.77246 6.10452 3.77945 6.06607C3.7876 6.02762 3.79168 5.99792 3.79168 5.97695C3.79168 5.92569 3.78527 5.85404 3.77246 5.762C3.75964 5.6688 3.74275 5.56453 3.72178 5.4492C3.70197 5.3327 3.67984 5.21503 3.65537 5.0962C3.63207 4.9762 3.60994 4.86495 3.58897 4.76242C3.56217 4.63194 3.53596 4.50671 3.51033 4.38671C3.48587 4.26671 3.46548 4.16011 3.44917 4.06691C3.43286 3.97255 3.4247 3.90032 3.4247 3.85022C3.4247 3.79547 3.43752 3.74071 3.46315 3.68596C3.48994 3.63004 3.52198 3.58344 3.55926 3.54615C3.59654 3.50887 3.63149 3.49023 3.66411 3.49023C3.66761 3.49023 3.68333 3.50654 3.71129 3.53916C3.73925 3.57062 3.77071 3.60848 3.80566 3.65275C3.84061 3.69586 3.8709 3.73489 3.89653 3.76984C3.92216 3.80362 3.93498 3.82343 3.93498 3.82925C3.93498 3.83391 3.92274 3.84673 3.89828 3.8677C3.87498 3.88867 3.8511 3.91721 3.82663 3.95333C3.80217 3.98944 3.78993 4.03255 3.78993 4.08264C3.78993 4.14439 3.79634 4.23642 3.80916 4.35875C3.82314 4.48107 3.84003 4.61855 3.85983 4.77116C3.87964 4.92378 3.89886 5.07814 3.9175 5.23425C3.93731 5.39036 3.95362 5.53366 3.96643 5.66414C3.98041 5.79462 3.9874 5.89773 3.9874 5.97345Z';
@@ -60,11 +68,12 @@ function getPinIcon(): L.DivIcon {
   return sharedPinIcon;
 }
 
-export function SearchMap({ userCoords = null, pins }: SearchMapProps) {
+export function SearchMap({ userCoords = null, pins, focus = null }: SearchMapProps) {
   const router = useRouter();
   const { t } = useLanguage();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const focusedKeyRef = useRef<string | null>(null);
   const userLat = userCoords?.lat ?? null;
   const userLon = userCoords?.lon ?? null;
 
@@ -130,6 +139,26 @@ export function SearchMap({ userCoords = null, pins }: SearchMapProps) {
       });
     }
   }, [userLat, userLon]);
+
+  // Open on the focused city once per city, so later pin loads don't undo panning.
+  const focusKey = focus?.key ?? null;
+  const focusLat = focus?.center?.lat ?? null;
+  const focusLng = focus?.center?.lng ?? null;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !focusKey || focusedKeyRef.current === focusKey) return;
+    if (focusLat !== null && focusLng !== null) {
+      map.setView([focusLat, focusLng], CITY_ZOOM);
+    } else if (pins.length > 0) {
+      map.fitBounds(L.latLngBounds(pins.map((pin) => [pin.lat, pin.lng] as [number, number])), {
+        padding: [48, 48],
+        maxZoom: CITY_ZOOM,
+      });
+    } else {
+      return;
+    }
+    focusedKeyRef.current = focusKey;
+  }, [focusKey, focusLat, focusLng, pins]);
 
   // Add/refresh markers whenever pins change
   useEffect(() => {

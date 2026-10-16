@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import { searchProvidersAndCommunityServices } from '@/services/providers';
+import { getCityCenter, searchProvidersAndCommunityServices } from '@/services/providers';
 import type { SearchResult } from '@/services/providers';
 import { getCategoryById } from '@/services/categories';
 import { inferSectionFromCategory, SECTION_META } from '@/config/sectionFilters';
@@ -74,6 +74,9 @@ export async function renderProvidersPage(opts: {
   let initialHasMore = false;
   let initialTotalCount = 0;
 
+  // #674: the map opens on the city in scope, so look up its center in parallel.
+  const mapCenterPromise = location ? getCityCenter(location) : Promise.resolve(null);
+
   try {
     const data = await searchProvidersAndCommunityServices(
       query,
@@ -92,6 +95,8 @@ export async function renderProvidersPage(opts: {
     console.error('[ProvidersPage] Server-side initial fetch failed:', error);
   }
 
+  const mapCenter = await mapCenterPromise;
+
   return (
     <Suspense fallback={null}>
       <ProvidersContent
@@ -104,6 +109,7 @@ export async function renderProvidersPage(opts: {
         }}
         initialFilters={filters}
         initialSection={section}
+        mapCenter={mapCenter}
         mapCity={routeCity}
       />
     </Suspense>
