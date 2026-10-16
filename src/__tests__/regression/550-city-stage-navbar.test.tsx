@@ -78,13 +78,13 @@ describe('CityStage1Content navbar invariant', () => {
     vi.clearAllMocks();
   });
 
-  it('renders exactly one mobile navbar on the city stage route', () => {
+  it('renders no mobile navbar on the stage 1 city route (#700)', () => {
     render(
       <RootClientLayout>
         <CityStage1Content cityName="Berlin" country="Germany" />
       </RootClientLayout>,
     );
 
-    expect(screen.getAllByTestId('city-early-access-navbar')).toHaveLength(1);
+    expect(screen.queryAllByTestId('city-early-access-navbar')).toHaveLength(0);
   });
 });
