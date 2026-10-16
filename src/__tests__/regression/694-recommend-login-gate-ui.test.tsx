@@ -106,13 +106,34 @@ describe('#694 AC6: recommend subpaths show the LoginGate to anonymous users', (
     fireEvent.click(screen.getByRole('button', { name: 'create.basics.goToLogin' }));
     expect(nav.push).toHaveBeenCalledWith(`/login?returnUrl=${encodeURIComponent(path)}`);
   });
+});
 
-  it.each([
-    ['category', SelectCategoryPage],
-    ['offers', SelectOffersPage],
-  ] as const)('a logged-in user on the %s step sees the step, not the gate', (_name, Page) => {
+describe('#694: the gate only shows once auth has resolved to no user', () => {
+  const pages = [
+    ['/create/recommend', RecommendPage, () => screen.getByTestId('recommend-form')],
+    [
+      '/create/recommend/category',
+      SelectCategoryPage,
+      () => screen.getByPlaceholderText('create.category.searchCategories'),
+    ],
+    [
+      '/create/recommend/offers',
+      SelectOffersPage,
+      () => screen.getByPlaceholderText('create.offers.searchPlaceholder'),
+    ],
+  ] as const;
+
+  it.each(pages)('a logged-in user on %s sees the step, not the gate', (_path, Page, step) => {
     auth.state = { user: { id: 'user-1' }, isLoading: false };
     render(<Page />);
+    expect(step()).toBeInTheDocument();
+    expect(screen.queryByText('create.basics.loginRequired')).not.toBeInTheDocument();
+  });
+
+  it.each(pages)('while auth is loading %s renders the step, not the gate', (_path, Page, step) => {
+    auth.state = { user: null, isLoading: true };
+    render(<Page />);
+    expect(step()).toBeInTheDocument();
     expect(screen.queryByText('create.basics.loginRequired')).not.toBeInTheDocument();
   });
 });
