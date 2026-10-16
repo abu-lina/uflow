@@ -106,11 +106,17 @@ describe('SearchContextBar', () => {
     expect(mockPush).toHaveBeenCalledWith('/search?section=ummah');
   });
 
-  it('navigates back to home when the left icon button is clicked', () => {
+  it('renders no back button or chevron icon', () => {
+    const { container } = render(<SearchContextBar searchTerm="Doner" section="food" />);
+
+    expect(screen.queryByRole('button', { name: 'Back to home' })).not.toBeInTheDocument();
+    expect(container.querySelector('.lucide-chevron-left')).toBeNull();
+  });
+
+  it('lets the input take the space the back button used, with no leftover left margin', () => {
     render(<SearchContextBar searchTerm="Doner" section="food" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to home' }));
-
-    expect(mockPush).toHaveBeenCalledWith('/');
+    const wrapper = screen.getByRole('searchbox').parentElement?.parentElement?.parentElement as HTMLElement;
+    expect(wrapper.className).not.toMatch(/(^|\s)(mx-2|ml-2)(\s|$)/);
   });
 });
