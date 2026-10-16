@@ -81,10 +81,7 @@ export async function POST(request: Request) {
         hasTokenData: !!tokenData,
       });
       return NextResponse.json(
-        {
-          error: 'Invalid or expired reset link',
-          details: tokenError?.message || 'Token not found',
-        },
+        { error: 'Invalid or expired reset link' },
         { status: 400 },
       );
     }
