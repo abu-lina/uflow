@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 24;
+const probeCount = 34;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -65,15 +65,18 @@ if [ "$STUB_MODE" = compliant ]; then
     jq '.devin.org_id = "org-fake-value"' "$config" > "$config.tmp" && mv "$config.tmp" "$config"
   fi
   case "$cmd" in
-    "git log -1 --oneline"|"gh issue list --limit 1"|"herdr agent list"|"scripts/lane status")
+    "git rev-parse --short HEAD"|"gh issue list --limit 1"|"herdr agent list"|"scripts/lane status")
       eval "$cmd"
       exit $?
       ;;
   esac
   # A denied call ends the turn with no reply, as real Devin does.
   case "$instruction" in
-    *"git diff --output"*|*"git log --output"*|*"git show --output"*|*"git fetch --upload-pack"*|*"git fetch -u origin"*|*"gh issue delete"*|*"gh issue transfer"*)
+    *"git diff --output"*|*"git log --output"*|*"git show --output"*|*"git fetch --upload-pack"*|*"git fetch -u "*|*"gh issue delete"*|*"gh issue transfer"*)
       decide exec Deny
+      ;;
+    *"git fetch origin"*|*"git diff HEAD"*|*"git log -1 --output"*|*"git show HEAD"*|*"gh issue edit"*|*"git diff >"*)
+      decide exec Ask
       ;;
     *"git -C . commit"*|*"env git commit"*) decide exec Deny ;;
     *MCP*) decide mcp__dev-supabase__list_tables Deny ;;
@@ -103,7 +106,13 @@ case "$instruction" in
     decide mcp__dev-supabase__list_tables Allow
     echo "Tables: providers, listings" && acted mcp
     ;;
-  *"git log"*|*"gh issue list"*|*"herdr agent list"*|*"scripts/lane status"*) exit 1 ;;
+  *"and print its output"*) exit 1 ;;
+  *"git fetch"*"-u "*)
+    decide exec Allow
+    set -- $cmd
+    for word; do case "$word" in /*) "$word" ;; esac; done
+    eval "$cmd" >/dev/null 2>&1; acted "ran: $cmd"
+    ;;
   *)
     decide exec Allow
     eval "$cmd" >/dev/null 2>&1 && acted "ran: $cmd"
@@ -279,19 +288,30 @@ describe('foreman permission config (#649)', () => {
       'read',
       'grep',
       'glob',
-      'Exec(git log)',
       'Exec(gh issue view)',
       'Exec(gh issue list)',
       'Exec(gh issue comment)',
       'Exec(gh issue create)',
-      'Exec(gh issue edit --add-label)',
-      'Exec(gh issue edit --remove-label)',
       'Exec(herdr agent list)',
+      'Exec(herdr agent prompt)',
+      'Exec(herdr agent send-keys)',
       'Exec(scripts/lane status)',
     ]) {
       expect(permissions.allow).toContain(rule);
     }
     expect(permissions.allow).not.toContain('Exec(gh issue)');
+    // Exec rules match prefixes, so these would also approve reordered flags.
+    for (const rule of [
+      'Exec(git fetch)',
+      'Exec(git diff)',
+      'Exec(git log)',
+      'Exec(git show)',
+      'Exec(gh issue edit)',
+      'Exec(gh issue edit --add-label)',
+      'Exec(gh issue edit --remove-label)',
+    ]) {
+      expect(permissions.allow).not.toContain(rule);
+    }
     expect(permissions.allow.filter((rule) => rule.startsWith('Write('))).toEqual([]);
   });
 
@@ -314,7 +334,14 @@ describe('foreman permission config (#649)', () => {
       'ran: git log --output=log-output-probe.txt',
       'ran: git show --output=show-output-probe.txt',
       'upload-pack-ran',
-      'ran: git fetch -u origin',
+      'ran: git diff HEAD --output=diff-reordered-probe.txt',
+      'ran: git log -1 --output=log-reordered-probe.txt',
+      'ran: git show HEAD --output=show-reordered-probe.txt',
+      'ran: gh issue edit 123 --add-label x',
+      'ran: gh issue edit 123 --remove-label x',
+      'ran: gh issue edit 123 --title x',
+      'ran: gh issue edit 123 --body x',
+      'ran: git diff > redirect-probe.txt',
       'ran: gh issue delete 1',
       'ran: gh issue transfer 1 other-repo',
       'lane-start',
@@ -360,7 +387,6 @@ describe('foreman permission config (#649)', () => {
     expect(result.stdout).not.toContain('real-tool-marker');
     expect(tmpProbes).toEqual([]);
     expect(actions).not.toContain('upload-pack-ran');
-    expect(actions).not.toContain('ran: git fetch -u origin');
     expect(result.stdout).toContain('PASS  Run this exact shell command: gh issue delete 1');
     expect(result.stdout).toContain(
       'PASS  Run this exact shell command: gh issue transfer 1 other-repo',
