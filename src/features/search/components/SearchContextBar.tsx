@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -48,8 +48,6 @@ export function SearchContextBar({
     setDraftQuery(searchTerm?.trim() ?? '');
   }, [searchTerm]);
 
-  const backHomeLabel = t('search.context.backToHome');
-
   const navigateWithQuery = (nextQuery: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete('section');
@@ -84,16 +82,7 @@ export function SearchContextBar({
     <div
       className={`flex items-center justify-between rounded-xl border border-gray-200 bg-white px-2.5 py-1.5 shadow-sm ${className}`}
     >
-      <button
-        aria-label={backHomeLabel}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-neutral-100 text-content-heading transition-colors hover:bg-neutral-200"
-        type="button"
-        onClick={() => router.push('/')}
-      >
-        <ChevronLeft aria-hidden="true" className="h-4 w-4" />
-      </button>
-
-      <div className="mx-2 min-w-0 flex-1">
+      <div className="mr-2 min-w-0 flex-1">
         <div className="flex min-w-0 items-center text-left text-sm font-medium text-[#585858]">
           <div className="flex min-w-0 flex-1 items-center">
             <input
