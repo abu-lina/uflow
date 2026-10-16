@@ -158,15 +158,12 @@ export async function shouldRedirectToWaitlist(
   // Security: The individual page components handle their own auth gates —
   // the recommend and owner flows show a login screen to anonymous users.
   if (!isAppLaunched && (pathname === '/create' || pathname.startsWith('/create/'))) {
-    // #415: recommending requires a logged-in user. Anonymous visitors get no
-    // early-access pass into the recommend flows; they are redirected like any
-    // other protected route. Token holders pass through to the page gate.
+    // #415: anonymous visitors get no early-access pass into the import flow.
+    // #694: /create/recommend(/*) is let through so anonymous visitors see the
+    // page LoginGate; POST /api/providers/recommend rejects them with a 401.
     if (
       !accessToken &&
-      (pathname === '/create/recommend' ||
-        pathname.startsWith('/create/recommend/') ||
-        pathname === '/create/import-osm' ||
-        pathname.startsWith('/create/import-osm/'))
+      (pathname === '/create/import-osm' || pathname.startsWith('/create/import-osm/'))
     ) {
       return true;
     }

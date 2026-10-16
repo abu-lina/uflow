@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ScrollablePageLayout } from '@/components/layout/ScrollablePageLayout';
 import { PageContent } from '@/components/layout/PageContent';
+import { LoginGate } from '@/components/shared/LoginGate';
 import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/providers/auth-provider';
 import { useFormData } from '@/providers/form-provider';
 import { getCategories } from '@/services/categories';
 import { shouldCreateCommunityService } from '@/utils/categoryUtils';
@@ -24,6 +26,7 @@ export default function SelectCategoryPage() {
   const router = useRouter();
   const { formData, updateFormData } = useFormData();
   const { t, language } = useLanguage();
+  const { user, isLoading: isAuthLoading } = useAuth();
 
   useEffect(() => {
     async function fetchCategories() {
@@ -70,6 +73,16 @@ export default function SelectCategoryPage() {
   const handleBack = () => {
     router.push('/create/recommend');
   };
+
+  if (!isAuthLoading && !user) {
+    return (
+      <LoginGate
+        createDesktopLayout
+        returnPath="/create/recommend/category"
+        title={t('create.recommend.selectCategory')}
+      />
+    );
+  }
 
   return (
     <ScrollablePageLayout createDesktopLayout>

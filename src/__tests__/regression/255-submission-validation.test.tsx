@@ -272,22 +272,17 @@ describe('C3b: login gate on recommend + import routes', () => {
     expect(gate).toContain('create.basics.loginRequired');
   });
 
-  it('middleware no longer lets anonymous visitors into the recommend flows', () => {
-    const src = readSrc('src/lib/middleware-utils.ts');
-    // The early-access /create/* pass-through now redirects to waitlist for
-    // recommend/import routes when there is no access token.
-    expect(src).toContain("pathname === '/create/recommend'");
-    expect(src).toContain("pathname === '/create/import-osm'");
-    expect(src).toContain('!accessToken');
-  });
-
-  it.each(['/create/recommend', '/create/import-osm'])(
-    'shouldRedirectToWaitlist(%s) redirects an anonymous visitor in early access',
-    async (pathname) => {
+  // #694: anonymous recommend visitors now reach the page LoginGate instead
+  // of being redirected; the import flow keeps the #415 redirect.
+  it.each([
+    ['/create/recommend', false],
+    ['/create/import-osm', true],
+  ])(
+    'shouldRedirectToWaitlist(%s) for an anonymous visitor in early access is %s',
+    async (pathname, redirects) => {
       const { shouldRedirectToWaitlist } = await import('@/lib/middleware-utils');
-      // app not launched, no access token, no waitlist token -> redirect
       await expect(shouldRedirectToWaitlist(pathname, false, undefined, undefined)).resolves.toBe(
-        true,
+        redirects,
       );
       // a logged-in visitor (access token present) still passes through to the page gate
       await expect(shouldRedirectToWaitlist(pathname, false, 'token', undefined)).resolves.toBe(
