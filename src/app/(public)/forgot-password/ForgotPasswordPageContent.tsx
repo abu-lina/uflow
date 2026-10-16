@@ -18,6 +18,7 @@ import { LinkButton } from '@/components/ui/LinkButton';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { resetPasswordWithLanguage } from '@/lib/auth';
+import { getSafeReturnUrl } from '@/utils/safeReturnUrl';
 
 export function ForgotPasswordPageContent() {
   const router = useRouter();
@@ -40,12 +41,7 @@ export function ForgotPasswordPageContent() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const returnUrl = searchParams.get('returnUrl');
-      if (returnUrl) {
-        router.replace(decodeURIComponent(returnUrl));
-      } else {
-        router.replace('/profile');
-      }
+      router.replace(getSafeReturnUrl(searchParams.get('returnUrl'), '/profile'));
     }
   }, [user, router, searchParams]);
 
@@ -101,7 +97,7 @@ export function ForgotPasswordPageContent() {
   };
 
   const handleBackToLogin = () => {
-    const returnUrl = searchParams.get('returnUrl');
+    const returnUrl = getSafeReturnUrl(searchParams.get('returnUrl'), null);
     if (returnUrl) {
       router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
     } else {

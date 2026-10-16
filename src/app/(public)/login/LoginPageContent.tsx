@@ -21,6 +21,7 @@ import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/providers/auth-provider';
 import { signInWithEmailConfirmation } from '@/lib/auth';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { getSafeReturnUrl } from '@/utils/safeReturnUrl';
 
 interface FormData {
   email: string;
@@ -51,12 +52,7 @@ export function LoginPageContent() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const returnUrl = searchParams.get('returnUrl');
-      if (returnUrl) {
-        router.replace(decodeURIComponent(returnUrl));
-      } else {
-        router.replace('/profile');
-      }
+      router.replace(getSafeReturnUrl(searchParams.get('returnUrl'), '/profile'));
     }
   }, [user, router, searchParams]);
 
@@ -115,7 +111,7 @@ export function LoginPageContent() {
   };
 
   const handleSignupClick = () => {
-    const returnUrl = searchParams.get('returnUrl');
+    const returnUrl = getSafeReturnUrl(searchParams.get('returnUrl'), null);
     if (returnUrl) {
       router.push(`/signup?returnUrl=${encodeURIComponent(returnUrl)}`);
     } else {
