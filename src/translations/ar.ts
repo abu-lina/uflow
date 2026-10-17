@@ -1087,7 +1087,7 @@ export const ar = {
       changeCity: 'غيّر المدينة',
       cityChanged: 'تم تغيير المدينة بنجاح',
       suggestProvider: 'اقترح مزود',
-      exploreUmmahFlow: 'استكشف UmmahFlow',
+      exploreUmmahFlow: 'استكشف Ummah Flow',
       receiveUpdates: 'تلقي تحديثات لـ {{city}}',
       subscribeSuccess: 'سيتم إشعارك عندما يكون لدى {{city}} المزيد من المزودين.',
       subscribeError: 'خطأ في الاشتراك. يرجى المحاولة مرة أخرى.',

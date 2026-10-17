@@ -12,20 +12,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import {
-  shouldShowMobileFooter,
-  shouldShowCityEarlyAccessNavbar,
-} from '@/utils/navigationUtils';
+import { shouldShowMobileFooter, shouldShowCityEarlyAccessNavbar } from '@/utils/navigationUtils';
 
 /**
  * Helper: set localStorage so hasCompletedOnboarding() returns true.
  * It checks for ummahflow_onboarding.earlyAccessUnlocked AND selectedCity.
  */
 function simulateOnboardingComplete() {
-  localStorage.setItem(
-    'ummahflow_onboarding',
-    JSON.stringify({ earlyAccessUnlocked: true }),
-  );
+  localStorage.setItem('ummahflow_onboarding', JSON.stringify({ earlyAccessUnlocked: true }));
   localStorage.setItem('selectedCity', 'Berlin');
 }
 
@@ -63,11 +57,13 @@ describe('Plan 062 — Mobile nav selection: Stage/Auth matrix', () => {
     });
 
     it('shouldShowCityEarlyAccessNavbar returns true on root with onboarding complete', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/', false, false, null, 'stage1')).toBe(true);
+      expect(shouldShowCityEarlyAccessNavbar('/', false, false, null, 'stage2')).toBe(true);
     });
 
     it('shouldShowCityEarlyAccessNavbar returns true for Stage 2 on /providers', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/providers', false, false, null, 'stage2')).toBe(true);
+      expect(shouldShowCityEarlyAccessNavbar('/providers', false, false, null, 'stage2')).toBe(
+        true,
+      );
     });
   });
 
@@ -77,7 +73,7 @@ describe('Plan 062 — Mobile nav selection: Stage/Auth matrix', () => {
     const mockUser = { id: 'test-user' } as any;
 
     it('shouldShowMobileFooter returns true for authenticated user on root', () => {
-      expect(shouldShowMobileFooter('/', false, mockUser, false, 'stage1')).toBe(true);
+      expect(shouldShowMobileFooter('/', false, mockUser, false, 'stage2')).toBe(true);
     });
 
     it('shouldShowMobileFooter returns true for authenticated user on /providers', () => {

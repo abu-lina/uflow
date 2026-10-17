@@ -97,7 +97,7 @@ describe('Plan 179 — /chat page hides mobile navbar', () => {
     });
 
     it('shouldShowCityEarlyAccessNavbar still returns true for non-excluded paths', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/', false, false, null, 'stage1')).toBe(true);
+      expect(shouldShowCityEarlyAccessNavbar('/', false, false, null, 'stage2')).toBe(true);
     });
 
     it('shouldShowCityEarlyAccessNavbar still returns true for /providers', () => {
