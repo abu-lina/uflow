@@ -19,17 +19,28 @@ interface LoginGateProps {
   returnPath: string;
   /** Opts create callers into the desktop contribution layout. */
   createDesktopLayout?: boolean;
+  /** Opt-in back chevron in the header; a path or callback, same as PageHeader's onBack. */
+  onBack?: string | (() => void);
 }
 
 /** Shared login-required screen for the create submission flows (#415). */
-export function LoginGate({ title, returnPath, createDesktopLayout = false }: LoginGateProps) {
+export function LoginGate({
+  title,
+  returnPath,
+  createDesktopLayout = false,
+  onBack,
+}: LoginGateProps) {
   const router = useRouter();
   const { t } = useLanguage();
   const returnUrl = encodeURIComponent(returnPath);
 
   return (
     <ScrollablePageLayout createDesktopLayout={createDesktopLayout}>
-      <PageHeader title={title} />
+      <PageHeader
+        title={title}
+        variant={onBack ? 'back-and-title' : 'title-only'}
+        onBack={onBack}
+      />
       <PageContent
         className={cn(
           'flex min-h-[60vh] items-center justify-center',
