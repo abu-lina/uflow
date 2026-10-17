@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 36;
+const probeCount = 35;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -370,21 +370,18 @@ describe('foreman permission config (#649)', () => {
     }
   });
 
-  it('accepts Ask for the --flag=value forms, which the deny rules do not match', () => {
+  it('accepts Ask for the --output= forms, which the deny rules do not match', () => {
     const script = readFileSync(verifyScript, 'utf8');
     for (const cmd of ['diff', 'log', 'show']) {
       expect(script).toContain(
         `git ${cmd} --output=${cmd}-output-probe.txt" path_absent_not_approved`,
       );
     }
-    expect(script).toContain(
-      'git fetch --upload-pack=$marker_script origin" path_absent_not_approved',
-    );
   });
 
-  it('AC3: no probe prompt repeats upload-pack in a form the provider refuses; those forms are config-tested', () => {
+  it('AC3: no model probe uses an --upload-pack form the provider refuses; those forms are config-tested', () => {
     const script = readFileSync(verifyScript, 'utf8');
-    expect(script).toContain('git fetch --upload-pack=$marker_script origin');
+    expect(script).not.toContain('git fetch --upload-pack=$marker_script origin');
     expect(script).not.toContain('git fetch --upload-pack $marker_script origin');
     expect(script).not.toContain('git fetch origin --upload-pack=$marker_script');
     expect(script).not.toMatch(/marker_script="[^"]*upload-pack/);
@@ -395,7 +392,7 @@ describe('foreman permission config (#649)', () => {
     };
     // "--upload-pack <path>" is covered by the space-separated deny rule.
     expect(permissions.deny).toContain('Exec(git fetch --upload-pack)');
-    // "git fetch origin --upload-pack=<path>" matches no deny rule, so no allow rule may cover git fetch.
+        // The "=" forms match no deny rule in Devin, so no allow rule may cover git fetch.
     expect(permissions.allow.filter((rule) => /^Exec\(git fetch/.test(rule))).toEqual([]);
     expect(permissions.allow).not.toContain('Exec(git)');
   });
