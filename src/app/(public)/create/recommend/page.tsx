@@ -61,7 +61,14 @@ function RecommendPageContent() {
   // Recommendations require a logged-in user (#415). Same lock screen the
   // owner flow uses on /create/basics: login, then return here.
   if (!isAuthLoading && !user) {
-    return <LoginGate createDesktopLayout returnPath="/create/recommend" title={pageTitle} />;
+    return (
+      <LoginGate
+        createDesktopLayout
+        returnPath="/create/recommend"
+        title={pageTitle}
+        onBack={handleBack}
+      />
+    );
   }
 
   return (

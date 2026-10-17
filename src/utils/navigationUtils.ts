@@ -256,11 +256,7 @@ export const shouldShowMobileFooter = (
     }
 
     // Hide footer for create subpages (action menu will be shown instead)
-    if (
-      pathname.startsWith('/create') &&
-      pathname !== '/create' &&
-      pathname !== '/create/recommend'
-    ) {
+    if (pathname.startsWith('/create') && pathname !== '/create') {
       return false;
     }
 
@@ -304,11 +300,7 @@ export const shouldShowMobileFooter = (
   }
 
   // 6. Hide footer for create subpages (action menu will be shown instead)
-  if (
-    pathname.startsWith('/create') &&
-    pathname !== '/create' &&
-    pathname !== '/create/recommend'
-  ) {
+  if (pathname.startsWith('/create') && pathname !== '/create') {
     return false;
   }
 
@@ -464,7 +456,7 @@ export const shouldShowCityEarlyAccessNavbar = (
   }
 
   // Create subpages have their own action bar, same as shouldShowMobileFooter (#693)
-  if (pathname.startsWith('/create/') && pathname !== '/create/recommend') {
+  if (pathname.startsWith('/create/')) {
     return false;
   }
 
