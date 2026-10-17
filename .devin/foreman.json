@@ -27,7 +27,8 @@
       "Exec(herdr agent prompt)",
       "Exec(herdr agent send-keys)",
       "Exec(herdr pane read)",
-      "Exec(scripts/lane status)"
+      "Exec(scripts/lane status)",
+      "Exec(scripts/review-bundle)"
     ],
     "ask": [
       "Exec(scripts/lane start)",
@@ -82,7 +83,11 @@
       "Exec(gh issue pin)",
       "Exec(gh issue lock)",
       "Exec(gh repo)",
-      "mcp__*"
+      "mcp__*",
+      "Read(~/.ssh/**)",
+      "Read(~/.config/devin/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.local/share/devin/**)"
     ]
   }
 }

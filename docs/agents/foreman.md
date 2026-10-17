@@ -18,14 +18,15 @@ Copilot defaults to Auto. To choose a model or reasoning effort for one session,
 
 These remote writes are intentional and limited to the listed steps:
 
-| Command                                        | Step and purpose                                                                                      |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `gh pr review`                                 | Step 5, post the merged review findings.                                                              |
-| `gh pr update-branch`                          | Step 6, update only the next PR after a merge.                                                        |
-| `herdr agent prompt`, `herdr agent send-keys`  | Steps 5 and later, send owner-approved answers and the review instruction only, never start new work. |
-| `gh issue comment`                             | Any step, post status replies and questions.                                                          |
-| `gh issue create`                              | Step 1, split an issue into sub-issues.                                                               |
-| `gh issue edit --add-label` / `--remove-label` | Step 1, label issues. Prompts the owner on every call; not auto-allowed in `.devin/foreman.json`.   |
+| Command                                        | Step and purpose                                                                                          |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `gh pr review`                                 | Step 5, post the merged review findings.                                                                  |
+| `scripts/review-bundle`                        | Step 5, write the PR diff, criteria and touched files to a temp file for the review subagents. Read-only. |
+| `gh pr update-branch`                          | Step 6, update only the next PR after a merge.                                                            |
+| `herdr agent prompt`, `herdr agent send-keys`  | Steps 5 and later, send owner-approved answers and the review instruction only, never start new work.     |
+| `gh issue comment`                             | Any step, post status replies and questions.                                                              |
+| `gh issue create`                              | Step 1, split an issue into sub-issues.                                                                   |
+| `gh issue edit --add-label` / `--remove-label` | Step 1, label issues. Prompts the owner on every call; not auto-allowed in `.devin/foreman.json`.         |
 
 ## Working log and checkpoints
 
@@ -152,14 +153,14 @@ herdr agent read lane-<issue> --source recent-unwrapped --lines 120
 
 ## 5. Trigger review
 
-When a lane reports done, run the review from `docs/agents/review.md` against the PR. Post the merged findings as one PR review. Tell the lane to address blocking and should-fix items:
+When a lane reports done, a review runs automatically; don't wait for the owner to ask. Run `scripts/review-bundle <pr>`, then start one subagent per role from `docs/agents/review.md` with the `reviewer` profile and give each the printed bundle path. Don't paste the diff into the prompts. Post the merged findings as one PR review. Tell the lane to address blocking and should-fix items:
 
 ```bash
 herdr agent send-keys lane-<issue> esc
 herdr agent prompt lane-<issue> "Address the blocking and should-fix review findings."
 ```
 
-Nits are the owner's call.
+Nits are the owner's call. Ask the owner only for decisions, and put a recommendation in every decision request.
 
 A missing learnings file at `docs/ai/learnings/<issue>.md` is a should-fix review finding.
 

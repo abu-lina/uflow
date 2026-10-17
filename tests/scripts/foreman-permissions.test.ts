@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 35;
+const probeCount = 39;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -98,6 +98,29 @@ if [ "$STUB_MODE" = compliant ]; then
       eval "$cmd"
       exit $?
       ;;
+    "scripts/review-bundle 123")
+      decide exec Allow
+      eval "$cmd"
+      exit $?
+      ;;
+  esac
+  case "$instruction" in
+    "Do not start a subagent."*)
+      decide read Deny
+      exit 0
+      ;;
+    *"reviewer subagent"*"~/.config/gh/"*)
+      decide read Deny
+      exit 0
+      ;;
+    *"reviewer subagent"*)
+      decide run_subagent Allow
+      # A reviewer can read the bundle and has no exec, write or edit tool.
+      bundle="\${instruction#*read }"
+      bundle="\${bundle%% and*}"
+      head -n 1 "$bundle"
+      exit 0
+      ;;
   esac
   # A denied call ends the turn with no reply, as real Devin does.
   case "$instruction" in
@@ -121,6 +144,13 @@ case "$instruction" in
     path="\${path%% *}"
     printf ok > "$path" && acted tmp-write
     printf '%s\\n' "$path" >> "$TMP_PROBE_LOG"
+    ;;
+  "Do not start a subagent."*) decide read Allow ;;
+  *"reviewer subagent"*"~/.config/gh/"*) decide read Allow ;;
+  *"reviewer subagent"*)
+    touch reviewer-exec-probe.txt && acted reviewer-exec
+    touch reviewer-write-probe.txt && acted reviewer-write
+    touch reviewer-edit-probe.txt && acted reviewer-edit
     ;;
   *write-probe.txt*) touch write-probe.txt && acted write-probe ;;
   *"Create a file named probe.txt"*) touch probe.txt && acted edit-probe ;;
@@ -175,7 +205,9 @@ const createFixture = () => {
     'scripts/verify-foreman-permissions.sh',
     'scripts/lane',
     'scripts/lane.sh',
+    'scripts/review-bundle',
     '.devin/foreman.json',
+    '.devin/agents/reviewer.md',
   ]) {
     mkdirSync(dirname(join(root, file)), { recursive: true });
     copyFileSync(join(repoRoot, file), join(root, file));
@@ -484,6 +516,9 @@ describe('foreman permission config (#649)', () => {
       'ran: gh issue delete 1',
       'ran: gh issue transfer 1 other-repo',
       'lane-start',
+      'reviewer-exec',
+      'reviewer-write',
+      'reviewer-edit',
       'mcp',
       'tmp-write',
     ]) {
