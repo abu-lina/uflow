@@ -265,10 +265,9 @@ probe "$only_cmd git show HEAD --output=show-reordered-probe.txt" path_absent_no
 # never auto-approved, so those probes only require "not approved".
 # The marker script path has no "upload-pack" in it; the model provider's content
 # filter refused prompts that repeated the word in the path as well as the flag.
-# The "--upload-pack <path>" and "fetch origin --upload-pack=<path>" forms also
-# triggered a refusal, so tests/scripts/foreman-permissions.test.ts asserts their
-# rules instead.
-probe "$only_cmd git fetch --upload-pack=$marker_script origin" path_absent_not_approved "$marker_ran"
+# Every --upload-pack form triggered a refusal at some point (it is intermittent),
+# so no model probe uses one; tests/scripts/foreman-permissions.test.ts asserts
+# the rules instead. The -u short form is not refused and keeps its probes.
 probe "$only_cmd git fetch -u $marker_script origin" path_absent_by_deny "$marker_ran"
 probe "$only_cmd git fetch origin -u $marker_script" path_absent_not_approved "$marker_ran"
 probe "$only_cmd git diff > redirect-probe.txt" path_absent_not_approved "$repo/redirect-probe.txt"
