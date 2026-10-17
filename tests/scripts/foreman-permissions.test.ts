@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 38;
+const probeCount = 36;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -26,6 +26,12 @@ const fakeOrg = 'org-0123456789abcdef0123';
 // login banner goes to stderr, and every tool call leaves a "Permission decision"
 // line in a per-run log under ~/.local/share/devin/cli/logs.
 const stubDevin = `#!/bin/sh
+# A launcher that spawns the real process: the log pid is the child's, not $!.
+if [ -n "$STUB_LAUNCHER" ] && [ -z "$STUB_CHILD" ]; then
+  STUB_CHILD=1 "$0" "$@"
+  exit $?
+fi
+[ -n "$STUB_CHILD" ] && sleep 0.4
 printf '%s\\n' "$*" >> "$DEVIN_LOG"
 if [ -n "\${DEVIN_PERMISSION_MODE+x}\${DEVIN_SANDBOX+x}" ]; then
   echo "leaked DEVIN_* env" >> "$DEVIN_LOG"
@@ -43,6 +49,7 @@ echo "session ready in ${fakeOrg}" >&2
 logs="$HOME/.local/share/devin/cli/logs"
 mkdir -p "$logs"
 decide() {
+  [ -n "$STUB_NO_LOG" ] && return 0
   printf 'INFO chisel_core::translator: Permission decision for tool %s: auto-decided Some(%s) by cog\\n' "$1" "$2" >> "$logs/devin_stub_$$.log"
 }
 acted() { printf '%s\\n' "$1" >> "$ACTION_LOG"; }
@@ -186,7 +193,10 @@ const createFixture = () => {
   return { fixture, root, bin, home, fakeBrew };
 };
 
-const runVerify = (mode: 'compliant' | 'violating' | 'hijacked') => {
+const runVerify = (
+  mode: 'compliant' | 'violating' | 'hijacked',
+  extraEnv: Record<string, string> = {},
+) => {
   const { fixture, root, bin, home, fakeBrew } = createFixture();
   const devinLog = join(fixture, 'devin.log');
   const tmpProbeLog = join(fixture, 'tmp-probe.log');
@@ -206,6 +216,7 @@ const runVerify = (mode: 'compliant' | 'violating' | 'hijacked') => {
         TMP_PROBE_LOG: tmpProbeLog,
         ACTION_LOG: actionLog,
         STUB_MODE: mode,
+        ...extraEnv,
         GIT_AUTHOR_NAME: 'Probe',
         GIT_AUTHOR_EMAIL: 'probe@example.com',
         GIT_COMMITTER_NAME: 'Probe',
@@ -339,13 +350,42 @@ describe('foreman permission config (#649)', () => {
     }
   });
 
-  it('AC2: upload-pack probes cover both forms and keep the flag name out of the marker script path', () => {
+  it('AC3: no probe prompt repeats upload-pack in a form the provider refuses; those forms are config-tested', () => {
     const script = readFileSync(verifyScript, 'utf8');
-    expect(script).toContain('git fetch --upload-pack $marker_script origin');
     expect(script).toContain('git fetch --upload-pack=$marker_script origin');
+    expect(script).not.toContain('git fetch --upload-pack $marker_script origin');
+    expect(script).not.toContain('git fetch origin --upload-pack=$marker_script');
     expect(script).not.toMatch(/marker_script="[^"]*upload-pack/);
     expect(script).not.toMatch(/\$work\/upload-pack/);
+
+    const { permissions } = JSON.parse(readFileSync(foremanConfig, 'utf8')) as {
+      permissions: { allow: string[]; deny: string[] };
+    };
+    // "--upload-pack <path>" is covered by the space-separated deny rule.
+    expect(permissions.deny).toContain('Exec(git fetch --upload-pack)');
+    // "git fetch origin --upload-pack=<path>" matches no deny rule, so no allow rule may cover git fetch.
+    expect(permissions.allow.filter((rule) => /^Exec\(git fetch/.test(rule))).toEqual([]);
+    expect(permissions.allow).not.toContain('Exec(git)');
   });
+
+  it('AC1: collects decisions from the log of a child process the Devin launcher spawned', () => {
+    const { result, results } = runVerify('compliant', { STUB_LAUNCHER: '1' });
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    for (const line of results) expect(line).toMatch(/^PASS/);
+    expect(result.stdout).toContain('devin decisions: exec=Deny');
+    expect(result.stdout).toContain('devin decisions: mcp__dev-supabase__list_tables=Deny');
+  }, 120_000);
+
+  it('AC2: reports "no Devin log found" and exits non-zero when a probe has no Devin log', () => {
+    const { result, results } = runVerify('compliant', { STUB_NO_LOG: '1' });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain('no Devin log found');
+    const noLog = results.filter((line) => line.includes('no Devin log found'));
+    expect(noLog.length).toBeGreaterThan(0);
+    for (const line of noLog) expect(line).toMatch(/^FAIL/);
+  }, 60_000);
 
   it('AC2: exits non-zero and reports every write probe as failed when Devin performs the action', () => {
     const { result, devinCalls, results, tmpProbes, actions } = runVerify('violating');
