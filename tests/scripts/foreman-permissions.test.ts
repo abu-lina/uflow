@@ -50,6 +50,20 @@ logs="$HOME/.local/share/devin/cli/logs"
 mkdir -p "$logs"
 decide() {
   [ -n "$STUB_NO_LOG" ] && return 0
+  case "$instruction" in
+    *"gh issue delete"*)
+      if [ -n "$STUB_NO_TOOL" ]; then
+        # The model refused to call the tool: a log exists but holds no decision.
+        n=$(cat "$HOME/no-tool-count" 2>/dev/null || echo 0)
+        n=$((n + 1))
+        echo "$n" > "$HOME/no-tool-count"
+        if [ "$STUB_NO_TOOL" = always ] || [ "$n" -le 2 ]; then
+          echo 'INFO session started' >> "$logs/devin_stub_$$.log"
+          return 0
+        fi
+      fi
+      ;;
+  esac
   if [ -n "$STUB_STALE" ]; then
     # A log from an older session whose pid was reused: right name, old mtime.
     printf 'INFO chisel_core::translator: Permission decision for tool %s: auto-decided Some(Deny) by cog\\n' "$1" > "$logs/devin_old_$$.log"
@@ -403,6 +417,32 @@ describe('foreman permission config (#649)', () => {
     const denyProbe = results.find((line) => line.includes('git -C . commit'));
     expect(denyProbe).toMatch(/^FAIL .*no Devin log found/);
   }, 60_000);
+
+  it('re-runs a probe that got no tool call and passes when a later run decides', () => {
+    const { result, results, devinCalls } = runVerify('compliant', { STUB_NO_TOOL: 'twice' });
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    for (const line of results) expect(line).toMatch(/^PASS/);
+    expect(devinCalls).toHaveLength(probeCount + 1 + 2);
+  }, 120_000);
+
+  it('reports "no tool call" as a failure after 2 re-runs and exits non-zero', () => {
+    const { result, results, devinCalls } = runVerify('compliant', { STUB_NO_TOOL: 'always' });
+
+    expect(result.status).not.toBe(0);
+    expect(devinCalls).toHaveLength(probeCount + 1 + 2);
+    const failed = results.filter((line) => line.startsWith('FAIL'));
+    expect(failed).toHaveLength(1);
+    expect(failed[0]).toContain('gh issue delete 1');
+    expect(failed[0]).toContain('(no tool call)');
+  }, 120_000);
+
+  it('probes every gh issue edit as the first and only command', () => {
+    const script = readFileSync(verifyScript, 'utf8');
+    for (const flag of ['--add-label x', '--remove-label x', '--title x', '--body x']) {
+      expect(script).toContain(`probe "$only_cmd gh issue edit 123 ${flag}"`);
+    }
+  });
 
   it('AC2: reports "no Devin log found" and exits non-zero when a probe has no Devin log', () => {
     const { result, results } = runVerify('compliant', { STUB_NO_LOG: '1' });
