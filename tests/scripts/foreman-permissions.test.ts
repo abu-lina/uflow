@@ -356,6 +356,18 @@ describe('foreman permission config (#649)', () => {
     }
   });
 
+  it('accepts Ask for the --flag=value forms, which the deny rules do not match', () => {
+    const script = readFileSync(verifyScript, 'utf8');
+    for (const cmd of ['diff', 'log', 'show']) {
+      expect(script).toContain(
+        `git ${cmd} --output=${cmd}-output-probe.txt" path_absent_not_approved`,
+      );
+    }
+    expect(script).toContain(
+      'git fetch --upload-pack=$marker_script origin" path_absent_not_approved',
+    );
+  });
+
   it('AC3: no probe prompt repeats upload-pack in a form the provider refuses; those forms are config-tested', () => {
     const script = readFileSync(verifyScript, 'utf8');
     expect(script).toContain('git fetch --upload-pack=$marker_script origin');
