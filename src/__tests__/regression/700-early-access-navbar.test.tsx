@@ -82,19 +82,20 @@ describe('#700', () => {
     }
   });
 
-  it('3. /create/recommend shows the early access navbar for anonymous users and the footer when signed in', () => {
+  it('3. /create/recommend shows no navbar, logged in or not (superseded by #704)', () => {
     completeOnboarding();
-    for (const stage of ['stage1', 'stage2'] as const) {
-      expect(shouldShowCityEarlyAccessNavbar('/create/recommend', false, false, null, stage)).toBe(
-        true,
-      );
-      expect(shouldShowMobileFooter('/create/recommend', false, null, false, stage)).toBe(false);
-      expect(shouldShowMobileFooter('/create/recommend', false, user, false, stage)).toBe(true);
+    for (const stage of ['stage1', 'stage2', 'stage3'] as const) {
+      for (const u of [null, user]) {
+        expect(shouldShowCityEarlyAccessNavbar('/create/recommend', false, false, u, stage)).toBe(
+          false,
+        );
+        expect(shouldShowMobileFooter('/create/recommend', false, u, false, stage)).toBe(false);
+      }
     }
     mocks.pathname = '/create/recommend';
     mocks.flowState = 'success';
     render(<RootClientLayout>content</RootClientLayout>);
-    expect(mode()).toBe('navbar');
+    expect(mode()).toBe('none');
   });
 
   it('4. other /create subpages stay hidden and /create keeps its navbar', () => {
