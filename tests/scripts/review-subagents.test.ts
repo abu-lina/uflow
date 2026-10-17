@@ -96,8 +96,7 @@ const baselineDeny = [
 
 // Reviewers read untrusted PR content, so secrets and tool credentials are unreadable.
 const readDenies = [
-  'Read(.env*)',
-  'Read(**/.env*)',
+  'Read(/**/.env*)',
   'Read(~/.ssh/**)',
   'Read(~/.config/devin/**)',
   'Read(~/.config/gh/**)',
@@ -191,6 +190,13 @@ describe('foreman review subagents (#685)', () => {
     expect(script).toContain('Do not start a subagent. Use the read tool to read $repo/.env.local');
     expect(script).toContain('Do not start a subagent. Use the read tool to read .env.local in');
     expect(script).toContain('Do not start a subagent. Use the read tool to read ~/.ssh/');
+  });
+
+  it('probes a reviewer subagent reading ~/.ssh to show whether subagents inherit Read denies', () => {
+    const script = read('scripts/verify-foreman-permissions.sh');
+    expect(script).toContain(
+      'Use the reviewer subagent profile. The subagent must try to read ~/.ssh/',
+    );
   });
 
   it('AC3 (owner): verify-foreman-permissions.sh probes a reviewer subagent: reads the bundle, cannot exec, write or edit', () => {

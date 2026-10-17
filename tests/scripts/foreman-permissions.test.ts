@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 41;
+const probeCount = 42;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -109,6 +109,10 @@ if [ "$STUB_MODE" = compliant ]; then
       decide read Deny
       exit 0
       ;;
+    *"reviewer subagent"*"~/.ssh/"*)
+      decide read Deny
+      exit 0
+      ;;
     *".env.local"*"reviewer subagent"*|*"reviewer subagent"*".env.local"*)
       decide read Deny
       exit 0
@@ -151,6 +155,7 @@ case "$instruction" in
     secret="\${secret%% in the*}"
     cat "$secret" && acted main-env-read
     ;;
+  *"reviewer subagent"*"~/.ssh/"*) decide read Allow ;;
   *"reviewer subagent"*".env.local"*)
     secret="\${instruction#*read }"
     secret="\${secret%% with*}"
