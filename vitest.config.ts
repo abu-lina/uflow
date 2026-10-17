@@ -20,6 +20,13 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.{js,jsx,ts,tsx}'],
+      // Baseline on main: lines 43.82, branches 40.83, functions 37.12, statements 43.62 (#652).
+      thresholds: {
+        lines: 43,
+        branches: 40,
+        functions: 37,
+        statements: 43,
+      },
     },
     environmentOptions: {
       jsdom: {
