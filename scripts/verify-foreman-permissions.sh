@@ -169,10 +169,10 @@ run_devin() {
       >"$decisions"
 }
 
-# Devin prints a login banner ("Logged in as <email>", "Organization: <org>",
-# "You're all set"); the output is pasted into the PR, so it never gets printed.
+# Devin prints a login banner ("✓ Logged in as <email>.", "✓ Organization: <org>",
+# "✓ You're all set"); the output is pasted into the PR, so it never gets printed.
 print_transcript() {
-  grep -Eiv '^[[:space:]]*(logged in as|organization:|you.re all set)' "$transcript" |
+  grep -Eiv '^[^[:alnum:]]*(logged in as|organization:|you.re all set)' "$transcript" |
     sed -E 's/org-[0-9a-f]{16,}/org-<redacted>/g; s/^/      | /'
 }
 
