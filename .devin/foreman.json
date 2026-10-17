@@ -83,7 +83,13 @@
       "Exec(gh issue pin)",
       "Exec(gh issue lock)",
       "Exec(gh repo)",
-      "mcp__*"
+      "mcp__*",
+      "Read(.env*)",
+      "Read(**/.env*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.config/devin/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.local/share/devin/**)"
     ]
   }
 }

@@ -2,7 +2,8 @@
 # Writes everything a review subagent needs about one PR into a single file and
 # prints its path: the diff, the linked issue's acceptance criteria and the
 # PR-head content of every touched file (#685). Read-only against GitHub; the
-# only write is the bundle, in a private directory under $TMPDIR.
+# only write is the bundle, in a private directory under $TMPDIR. Bundles are
+# left for the OS to clean up.
 #
 #   scripts/review-bundle <pr-number>
 #
