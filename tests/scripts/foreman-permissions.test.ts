@@ -50,6 +50,12 @@ logs="$HOME/.local/share/devin/cli/logs"
 mkdir -p "$logs"
 decide() {
   [ -n "$STUB_NO_LOG" ] && return 0
+  if [ -n "$STUB_STALE" ]; then
+    # A log from an older session whose pid was reused: right name, old mtime.
+    printf 'INFO chisel_core::translator: Permission decision for tool %s: auto-decided Some(Deny) by cog\\n' "$1" > "$logs/devin_old_$$.log"
+    touch -t 200001010000 "$logs/devin_old_$$.log"
+    return 0
+  fi
   printf 'INFO chisel_core::translator: Permission decision for tool %s: auto-decided Some(%s) by cog\\n' "$1" "$2" >> "$logs/devin_stub_$$.log"
 }
 acted() { printf '%s\\n' "$1" >> "$ACTION_LOG"; }
@@ -376,6 +382,15 @@ describe('foreman permission config (#649)', () => {
     expect(result.stdout).toContain('devin decisions: exec=Deny');
     expect(result.stdout).toContain('devin decisions: mcp__dev-supabase__list_tables=Deny');
   }, 120_000);
+
+  it('ignores a stale log from an older session that reused a sampled pid', () => {
+    const { result, results } = runVerify('compliant', { STUB_STALE: '1' });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).not.toContain('devin decisions: exec=Deny');
+    const denyProbe = results.find((line) => line.includes('git -C . commit'));
+    expect(denyProbe).toMatch(/^FAIL .*no Devin log found/);
+  }, 60_000);
 
   it('AC2: reports "no Devin log found" and exits non-zero when a probe has no Devin log', () => {
     const { result, results } = runVerify('compliant', { STUB_NO_LOG: '1' });
