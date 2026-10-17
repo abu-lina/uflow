@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 38;
+const probeCount = 35;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -26,6 +26,12 @@ const fakeOrg = 'org-0123456789abcdef0123';
 // login banner goes to stderr, and every tool call leaves a "Permission decision"
 // line in a per-run log under ~/.local/share/devin/cli/logs.
 const stubDevin = `#!/bin/sh
+# A launcher that spawns the real process: the log pid is the child's, not $!.
+if [ -n "$STUB_LAUNCHER" ] && [ -z "$STUB_CHILD" ]; then
+  STUB_CHILD=1 "$0" "$@"
+  exit $?
+fi
+[ -n "$STUB_CHILD" ] && sleep 0.4
 printf '%s\\n' "$*" >> "$DEVIN_LOG"
 if [ -n "\${DEVIN_PERMISSION_MODE+x}\${DEVIN_SANDBOX+x}" ]; then
   echo "leaked DEVIN_* env" >> "$DEVIN_LOG"
@@ -36,13 +42,34 @@ case "$instruction" in
   "Run this exact shell command"*) cmd="\${instruction#*: }" ;;
   *) cmd="" ;;
 esac
-echo "Logged in as ${fakeEmail}" >&2
-echo "Organization: ${fakeOrg}" >&2
-echo "You're all set" >&2
+echo "  ✓ Logged in as ${fakeEmail}." >&2
+echo "  ✓ Organization: ${fakeOrg}" >&2
+echo "  ✓ You're all set. Run devin to get started." >&2
 echo "session ready in ${fakeOrg}" >&2
 logs="$HOME/.local/share/devin/cli/logs"
 mkdir -p "$logs"
 decide() {
+  [ -n "$STUB_NO_LOG" ] && return 0
+  case "$instruction" in
+    *"gh issue delete"*)
+      if [ -n "$STUB_NO_TOOL" ]; then
+        # The model refused to call the tool: a log exists but holds no decision.
+        n=$(cat "$HOME/no-tool-count" 2>/dev/null || echo 0)
+        n=$((n + 1))
+        echo "$n" > "$HOME/no-tool-count"
+        if [ "$STUB_NO_TOOL" = always ] || [ "$n" -le 2 ]; then
+          echo 'INFO session started' >> "$logs/devin_stub_$$.log"
+          return 0
+        fi
+      fi
+      ;;
+  esac
+  if [ -n "$STUB_STALE" ]; then
+    # A log from an older session whose pid was reused: right name, old mtime.
+    printf 'INFO chisel_core::translator: Permission decision for tool %s: auto-decided Some(Deny) by cog\\n' "$1" > "$logs/devin_old_$$.log"
+    touch -t 200001010000 "$logs/devin_old_$$.log"
+    return 0
+  fi
   printf 'INFO chisel_core::translator: Permission decision for tool %s: auto-decided Some(%s) by cog\\n' "$1" "$2" >> "$logs/devin_stub_$$.log"
 }
 acted() { printf '%s\\n' "$1" >> "$ACTION_LOG"; }
@@ -186,7 +213,10 @@ const createFixture = () => {
   return { fixture, root, bin, home, fakeBrew };
 };
 
-const runVerify = (mode: 'compliant' | 'violating' | 'hijacked') => {
+const runVerify = (
+  mode: 'compliant' | 'violating' | 'hijacked',
+  extraEnv: Record<string, string> = {},
+) => {
   const { fixture, root, bin, home, fakeBrew } = createFixture();
   const devinLog = join(fixture, 'devin.log');
   const tmpProbeLog = join(fixture, 'tmp-probe.log');
@@ -206,6 +236,7 @@ const runVerify = (mode: 'compliant' | 'violating' | 'hijacked') => {
         TMP_PROBE_LOG: tmpProbeLog,
         ACTION_LOG: actionLog,
         STUB_MODE: mode,
+        ...extraEnv,
         GIT_AUTHOR_NAME: 'Probe',
         GIT_AUTHOR_EMAIL: 'probe@example.com',
         GIT_COMMITTER_NAME: 'Probe',
@@ -339,13 +370,86 @@ describe('foreman permission config (#649)', () => {
     }
   });
 
-  it('AC2: upload-pack probes cover both forms and keep the flag name out of the marker script path', () => {
+  it('accepts Ask for the --output= forms, which the deny rules do not match', () => {
     const script = readFileSync(verifyScript, 'utf8');
-    expect(script).toContain('git fetch --upload-pack $marker_script origin');
-    expect(script).toContain('git fetch --upload-pack=$marker_script origin');
+    for (const cmd of ['diff', 'log', 'show']) {
+      expect(script).toContain(
+        `git ${cmd} --output=${cmd}-output-probe.txt" path_absent_not_approved`,
+      );
+    }
+  });
+
+  it('AC3: no model probe uses an --upload-pack form the provider refuses; those forms are config-tested', () => {
+    const script = readFileSync(verifyScript, 'utf8');
+    expect(script).not.toContain('git fetch --upload-pack=$marker_script origin');
+    expect(script).not.toContain('git fetch --upload-pack $marker_script origin');
+    expect(script).not.toContain('git fetch origin --upload-pack=$marker_script');
     expect(script).not.toMatch(/marker_script="[^"]*upload-pack/);
     expect(script).not.toMatch(/\$work\/upload-pack/);
+
+    const { permissions } = JSON.parse(readFileSync(foremanConfig, 'utf8')) as {
+      permissions: { allow: string[]; deny: string[] };
+    };
+    // "--upload-pack <path>" is covered by the space-separated deny rule.
+    expect(permissions.deny).toContain('Exec(git fetch --upload-pack)');
+        // The "=" forms match no deny rule in Devin, so no allow rule may cover git fetch.
+    expect(permissions.allow.filter((rule) => /^Exec\(git fetch/.test(rule))).toEqual([]);
+    expect(permissions.allow).not.toContain('Exec(git)');
   });
+
+  it('AC1: collects decisions from the log of a child process the Devin launcher spawned', () => {
+    const { result, results } = runVerify('compliant', { STUB_LAUNCHER: '1' });
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    for (const line of results) expect(line).toMatch(/^PASS/);
+    expect(result.stdout).toContain('devin decisions: exec=Deny');
+    expect(result.stdout).toContain('devin decisions: mcp__dev-supabase__list_tables=Deny');
+  }, 120_000);
+
+  it('ignores a stale log from an older session that reused a sampled pid', () => {
+    const { result, results } = runVerify('compliant', { STUB_STALE: '1' });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).not.toContain('devin decisions: exec=Deny');
+    const denyProbe = results.find((line) => line.includes('git -C . commit'));
+    expect(denyProbe).toMatch(/^FAIL .*no Devin log found/);
+  }, 60_000);
+
+  it('re-runs a probe that got no tool call and passes when a later run decides', () => {
+    const { result, results, devinCalls } = runVerify('compliant', { STUB_NO_TOOL: 'twice' });
+
+    expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
+    for (const line of results) expect(line).toMatch(/^PASS/);
+    expect(devinCalls).toHaveLength(probeCount + 1 + 2);
+  }, 120_000);
+
+  it('reports "no tool call" as a failure after 2 re-runs and exits non-zero', () => {
+    const { result, results, devinCalls } = runVerify('compliant', { STUB_NO_TOOL: 'always' });
+
+    expect(result.status).not.toBe(0);
+    expect(devinCalls).toHaveLength(probeCount + 1 + 2);
+    const failed = results.filter((line) => line.startsWith('FAIL'));
+    expect(failed).toHaveLength(1);
+    expect(failed[0]).toContain('gh issue delete 1');
+    expect(failed[0]).toContain('(no tool call)');
+  }, 120_000);
+
+  it('probes every gh issue edit as the first and only command', () => {
+    const script = readFileSync(verifyScript, 'utf8');
+    for (const flag of ['--add-label x', '--remove-label x', '--title x', '--body x']) {
+      expect(script).toContain(`probe "$only_cmd gh issue edit 123 ${flag}"`);
+    }
+  });
+
+  it('AC2: reports "no Devin log found" and exits non-zero when a probe has no Devin log', () => {
+    const { result, results } = runVerify('compliant', { STUB_NO_LOG: '1' });
+
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain('no Devin log found');
+    const noLog = results.filter((line) => line.includes('no Devin log found'));
+    expect(noLog.length).toBeGreaterThan(0);
+    for (const line of noLog) expect(line).toMatch(/^FAIL/);
+  }, 60_000);
 
   it('AC2: exits non-zero and reports every write probe as failed when Devin performs the action', () => {
     const { result, devinCalls, results, tmpProbes, actions } = runVerify('violating');
