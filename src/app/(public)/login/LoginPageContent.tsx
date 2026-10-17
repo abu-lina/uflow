@@ -73,23 +73,23 @@ export function LoginPageContent() {
         // Handle specific error cases
         if (error.message === 'EMAIL_NOT_CONFIRMED') {
           // User exists but email is not confirmed
-          setError('Bitte überprüfe deine E-Mail und bestätige deine Registrierung vor der Anmeldung.');
+          setError(t('login.emailNotConfirmed'));
           setIsEmailConfirmationError(true);
           // Toast removed - inline EmailVerificationAlert provides clear feedback
         } else if (error.message === 'EMAIL_NOT_FOUND') {
           // Email doesn't exist in database
-          setError('Diese E-Mail-Adresse ist nicht registriert. Bitte erstelle zuerst ein Konto.');
+          setError(t('login.emailNotFound'));
           setIsEmailConfirmationError(false);
           
           // Toast removed - inline error message provides clear feedback
         } else {
           // Invalid credentials or other errors
-          setError('Ungültige E-Mail oder Passwort. Bitte versuche es erneut.');
+          setError(t('login.invalidCredentials'));
           setIsEmailConfirmationError(false);
           
           // Show generic error toast
-          toast.error('Anmeldung fehlgeschlagen', {
-            description: 'Bitte überprüfe deine Anmeldedaten und versuche es erneut.',
+          toast.error(t('login.loginFailedToast'), {
+            description: t('login.loginFailedDescription'),
             duration: 4000,
           });
         }
