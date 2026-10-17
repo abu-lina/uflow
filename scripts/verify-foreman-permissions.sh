@@ -31,6 +31,7 @@ config_copy="$work/config/foreman.json"
 preflight_config="$work/preflight.json"
 decisions="$work/decisions"
 pids="$work/pids"
+run_marker="$work/run-marker"
 devin_logs="$HOME/.local/share/devin/cli/logs"
 export GH_LOG="$work/gh.log" HERDR_LOG="$work/herdr.log"
 
@@ -138,6 +139,8 @@ run_devin() {
   # process, so the log pid can be a descendant of $!. Sampling the process tree
   # while the run is alive finds the probe's own log and still ignores logs from
   # other live Devin sessions.
+  # Logs older than this marker belong to an earlier session that reused a pid.
+  : >"$run_marker"
   (cd "$repo" && export SHELL="$zsh_bin" ZDOTDIR="$zdot" FOREMAN_PROBE_STUBS="$stubs" PATH="$stubs:$PATH" &&
     exec devin --config "$1" --respect-workspace-trust false -p "$2") >"$transcript" 2>&1 &
   local devin_pid=$!
@@ -154,7 +157,7 @@ run_devin() {
   local -a found=()
   while read -r pid; do
     for log in "$devin_logs"/devin_*_"$pid".log; do
-      [[ -f "$log" ]] && found+=("$log")
+      [[ -f "$log" && ! "$log" -ot "$run_marker" ]] && found+=("$log")
     done
   done < <(sort -u "$pids")
   log_found=0
