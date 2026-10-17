@@ -42,9 +42,9 @@ case "$instruction" in
   "Run this exact shell command"*) cmd="\${instruction#*: }" ;;
   *) cmd="" ;;
 esac
-echo "Logged in as ${fakeEmail}" >&2
-echo "Organization: ${fakeOrg}" >&2
-echo "You're all set" >&2
+echo "  ✓ Logged in as ${fakeEmail}." >&2
+echo "  ✓ Organization: ${fakeOrg}" >&2
+echo "  ✓ You're all set. Run devin to get started." >&2
 echo "session ready in ${fakeOrg}" >&2
 logs="$HOME/.local/share/devin/cli/logs"
 mkdir -p "$logs"
