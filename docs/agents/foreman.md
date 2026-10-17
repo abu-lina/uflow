@@ -25,7 +25,7 @@ These remote writes are intentional and limited to the listed steps:
 | `herdr agent prompt`, `herdr agent send-keys`  | Steps 5 and later, send owner-approved answers and the review instruction only, never start new work. |
 | `gh issue comment`                             | Any step, post status replies and questions.                                                          |
 | `gh issue create`                              | Step 1, split an issue into sub-issues.                                                               |
-| `gh issue edit --add-label` / `--remove-label` | Step 1, label issues.                                                                                 |
+| `gh issue edit --add-label` / `--remove-label` | Step 1, label issues. Prompts the owner on every call; not auto-allowed in `.devin/foreman.json`.   |
 
 ## Working log and checkpoints
 
@@ -65,6 +65,8 @@ gh issue list --state open --label ready \
 ```
 
 Until the backlog is re-labelled, also list `--label ready-for-agent` and treat it as `ready`.
+
+Label edits prompt the owner on every call. The foreman names the issue and label in chat before running the label edit, so the owner knows what the prompt is for.
 
 Filter:
 
