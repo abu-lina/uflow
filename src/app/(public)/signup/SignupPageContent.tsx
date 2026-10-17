@@ -21,6 +21,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { signUpWithLanguage } from '@/lib/auth';
 import { storePendingSignupEmail } from '@/lib/signup-session';
+import { getSafeReturnUrl } from '@/utils/safeReturnUrl';
 
 interface FormData {
   email: string;
@@ -94,12 +95,7 @@ export function SignupPageContent() {
             router.replace('/profile');
           });
       } else {
-        const returnUrl = searchParams.get('returnUrl');
-        if (returnUrl) {
-          router.replace(decodeURIComponent(returnUrl));
-        } else {
-          router.replace('/profile');
-        }
+        router.replace(getSafeReturnUrl(searchParams.get('returnUrl'), '/profile'));
       }
     }
   }, [user, router, searchParams]);
@@ -202,7 +198,7 @@ export function SignupPageContent() {
   };
 
   const handleLoginClick = () => {
-    const returnUrl = searchParams.get('returnUrl');
+    const returnUrl = getSafeReturnUrl(searchParams.get('returnUrl'), null);
     if (returnUrl) {
       router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
     } else {

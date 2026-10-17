@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { getSafeReturnUrl } from '@/utils/safeReturnUrl';
 
 interface FormData {
   password: string;
@@ -77,12 +78,7 @@ export function ResetPasswordPageContent() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const returnUrl = searchParams.get('returnUrl');
-      if (returnUrl) {
-        router.replace(decodeURIComponent(returnUrl));
-      } else {
-        router.replace('/profile');
-      }
+      router.replace(getSafeReturnUrl(searchParams.get('returnUrl'), '/profile'));
     }
   }, [user, router, searchParams]);
 
