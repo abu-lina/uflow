@@ -47,7 +47,11 @@ vi.mock('@/providers/form-provider', () => ({
   useFormData: () => ({ formData: {}, updateFormData: vi.fn(), setCreationMode: vi.fn() }),
 }));
 vi.mock('@/features/providers/StreamlinedRecommendForm', () => ({
-  StreamlinedRecommendForm: () => <div data-testid="recommend-form" />,
+  StreamlinedRecommendForm: () => (
+    <div data-testid="recommend-form">
+      <div data-testid="recommend-action-bar" />
+    </div>
+  ),
 }));
 
 import { RootClientLayout } from '@/components/layout/RootClientLayout';
@@ -85,7 +89,7 @@ describe('#704', () => {
       mocks.stage = stage;
       for (const search of ['', 'success=true']) {
         mocks.search = search;
-        for (const u of [null, { id: 'u1' }]) {
+        for (const u of [null, user]) {
           mocks.user = u;
           const { unmount } = render(<RootClientLayout>content</RootClientLayout>);
           expect(mode()).toBe('none');
@@ -103,7 +107,7 @@ describe('#704', () => {
         <RecommendPage />
       </RootClientLayout>,
     );
-    expect(screen.getByTestId('recommend-form')).toBeInTheDocument();
+    expect(screen.getByTestId('recommend-action-bar')).toBeVisible();
     expect(mode()).toBe('none');
   });
 
