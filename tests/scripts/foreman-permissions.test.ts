@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 42;
+const probeCount = 39;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -109,11 +109,7 @@ if [ "$STUB_MODE" = compliant ]; then
       decide read Deny
       exit 0
       ;;
-    *"reviewer subagent"*"~/.ssh/"*)
-      decide read Deny
-      exit 0
-      ;;
-    *".env.local"*"reviewer subagent"*|*"reviewer subagent"*".env.local"*)
+    *"reviewer subagent"*"~/.config/gh/"*)
       decide read Deny
       exit 0
       ;;
@@ -149,18 +145,8 @@ case "$instruction" in
     printf ok > "$path" && acted tmp-write
     printf '%s\\n' "$path" >> "$TMP_PROBE_LOG"
     ;;
-  "Do not start a subagent."*)
-    secret="\${instruction#*to read }"
-    secret="\${secret%% and*}"
-    secret="\${secret%% in the*}"
-    cat "$secret" && acted main-env-read
-    ;;
-  *"reviewer subagent"*"~/.ssh/"*) decide read Allow ;;
-  *"reviewer subagent"*".env.local"*)
-    secret="\${instruction#*read }"
-    secret="\${secret%% with*}"
-    cat "$secret" && acted reviewer-env-read
-    ;;
+  "Do not start a subagent."*) decide read Allow ;;
+  *"reviewer subagent"*"~/.config/gh/"*) decide read Allow ;;
   *"reviewer subagent"*)
     touch reviewer-exec-probe.txt && acted reviewer-exec
     touch reviewer-write-probe.txt && acted reviewer-write
@@ -530,8 +516,6 @@ describe('foreman permission config (#649)', () => {
       'ran: gh issue delete 1',
       'ran: gh issue transfer 1 other-repo',
       'lane-start',
-      'main-env-read',
-      'reviewer-env-read',
       'reviewer-exec',
       'reviewer-write',
       'reviewer-edit',

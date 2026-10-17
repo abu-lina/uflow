@@ -96,7 +96,6 @@ const baselineDeny = [
 
 // Reviewers read untrusted PR content, so secrets and tool credentials are unreadable.
 const readDenies = [
-  'Read(/**/.env*)',
   'Read(~/.ssh/**)',
   'Read(~/.config/devin/**)',
   'Read(~/.config/gh/**)',
@@ -179,24 +178,31 @@ describe('foreman review subagents (#685)', () => {
     expect(script).toContain('scripts/review-bundle 123');
   });
 
-  it('verify-foreman-permissions.sh probes that a reviewer subagent cannot read .env.local and that starting one needs no approval', () => {
+  it('verify-foreman-permissions.sh checks that starting a reviewer subagent needs no approval', () => {
     const script = read('scripts/verify-foreman-permissions.sh');
-    expect(script).toContain('.env.local');
     expect(script).toContain('run_subagent=Allow');
   });
 
-  it('diagnoses the Read denies with the main agent, by absolute path, relative path and under ~/.ssh', () => {
+  it('has no probe that reads .env.local, because Devin Read denies do not cover the workspace (#718)', () => {
     const script = read('scripts/verify-foreman-permissions.sh');
-    expect(script).toContain('Do not start a subagent. Use the read tool to read $repo/.env.local');
-    expect(script).toContain('Do not start a subagent. Use the read tool to read .env.local in');
-    expect(script).toContain('Do not start a subagent. Use the read tool to read ~/.ssh/');
+    expect(script).not.toContain('.env.local');
+    expect(foreman.permissions.deny.filter((rule) => rule.includes('.env'))).toEqual([]);
   });
 
-  it('probes a reviewer subagent reading ~/.ssh to show whether subagents inherit Read denies', () => {
+  it('probes the main agent and a reviewer subagent on denied ~/ paths, the subagent under ~/.config/gh', () => {
     const script = read('scripts/verify-foreman-permissions.sh');
+    expect(script).toContain('Do not start a subagent. Use the read tool to read ~/.ssh/');
     expect(script).toContain(
-      'Use the reviewer subagent profile. The subagent must try to read ~/.ssh/',
+      'Use the reviewer subagent profile. The subagent must try to read ~/.config/gh/foreman-probe-',
     );
+    expect(script).not.toContain('The subagent must try to read ~/.ssh/');
+  });
+
+  it('review.md documents that Read denies do not block files in the checkout, citing #718', () => {
+    const doc = read('docs/agents/review.md');
+    expect(doc).toContain('#718');
+    expect(doc).toMatch(/\.env/);
+    expect(doc).toMatch(/secrets? must never be in a checkout/i);
   });
 
   it('AC3 (owner): verify-foreman-permissions.sh probes a reviewer subagent: reads the bundle, cannot exec, write or edit', () => {
