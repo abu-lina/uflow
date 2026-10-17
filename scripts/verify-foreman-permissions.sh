@@ -30,6 +30,7 @@ snapshot="$work/foreman.json.snapshot"
 config_copy="$work/config/foreman.json"
 preflight_config="$work/preflight.json"
 decisions="$work/decisions"
+pids="$work/pids"
 devin_logs="$HOME/.local/share/devin/cli/logs"
 export GH_LOG="$work/gh.log" HERDR_LOG="$work/herdr.log"
 
@@ -77,6 +78,7 @@ printf '%s\n' '{"permissions":{"allow":["Exec(command -v)"]}}' >"$preflight_conf
 failures=0
 before=""
 devin_status=0
+log_found=1
 
 file_absent() { [[ ! -e "$repo/$1" ]]; }
 path_absent() { [[ ! -e "$1" ]]; }
@@ -122,17 +124,43 @@ report_config_changes() {
   cp "$config_copy" "$snapshot"
 }
 
+# Prints the pid and every descendant pid.
+process_tree() {
+  local pid
+  for pid in "$@"; do
+    echo "$pid"
+    process_tree $(pgrep -P "$pid")
+  done
+}
+
 run_devin() {
-  # exec keeps the devin process id equal to $!. Devin names its log
-  # devin_<time>_<pid>.log, so reading only that file ignores decisions from
+  # Devin names its log devin_<time>_<pid>.log. A launcher may spawn the real
+  # process, so the log pid can be a descendant of $!. Sampling the process tree
+  # while the run is alive finds the probe's own log and still ignores logs from
   # other live Devin sessions.
   (cd "$repo" && export SHELL="$zsh_bin" ZDOTDIR="$zdot" FOREMAN_PROBE_STUBS="$stubs" PATH="$stubs:$PATH" &&
     exec devin --config "$1" --respect-workspace-trust false -p "$2") >"$transcript" 2>&1 &
   local devin_pid=$!
+  : >"$pids"
+  (while kill -0 "$devin_pid" 2>/dev/null; do
+    process_tree "$devin_pid" >>"$pids"
+    sleep 0.1
+  done) &
+  local sampler_pid=$!
   wait "$devin_pid"
   devin_status=$?
+  wait "$sampler_pid"
+  local pid log
+  local -a found=()
+  while read -r pid; do
+    for log in "$devin_logs"/devin_*_"$pid".log; do
+      [[ -f "$log" ]] && found+=("$log")
+    done
+  done < <(sort -u "$pids")
+  log_found=0
+  [[ "${#found[@]}" -gt 0 ]] && log_found=1
   # Tool names and decisions only; the rest of the log can hold the login and org.
-  cat "$devin_logs"/devin_*_"$devin_pid".log 2>/dev/null |
+  { [[ "$log_found" == 1 ]] && cat "${found[@]}"; } 2>/dev/null |
     grep -oE 'Permission decision for tool [^: ]+: (auto-decided Some\([A-Za-z]+\)|prompting user)' |
     sed -E 's/^Permission decision for tool //; s/: auto-decided Some\(([A-Za-z]+)\)$/=\1/; s/: prompting user$/=Ask/' \
       >"$decisions"
@@ -151,7 +179,11 @@ report() {
   if "$@"; then
     printf 'PASS  %s\n' "$name"
   else
-    printf 'FAIL  %s\n' "$name"
+    if [[ "$log_found" == 1 ]]; then
+      printf 'FAIL  %s\n' "$name"
+    else
+      printf 'FAIL  %s (no Devin log found)\n' "$name"
+    fi
     failures=$((failures + 1))
   fi
   printf '      devin exit %s, assertion: %s\n' "$devin_status" "$*"
@@ -203,9 +235,10 @@ probe "$only_cmd git log -1 --output=log-reordered-probe.txt" path_absent_not_ap
 probe "$only_cmd git show HEAD --output=show-reordered-probe.txt" path_absent_not_approved "$repo/show-reordered-probe.txt"
 # The marker script path has no "upload-pack" in it; the model provider's content
 # filter refused prompts that repeated the word in the path as well as the flag.
+# The "--upload-pack <path>" and "fetch origin --upload-pack=<path>" forms also
+# triggered a refusal, so tests/scripts/foreman-permissions.test.ts asserts their
+# rules instead.
 probe "$only_cmd git fetch --upload-pack=$marker_script origin" path_absent_by_deny "$marker_ran"
-probe "$only_cmd git fetch --upload-pack $marker_script origin" path_absent_by_deny "$marker_ran"
-probe "$only_cmd git fetch origin --upload-pack=$marker_script" path_absent_not_approved "$marker_ran"
 probe "$only_cmd git fetch -u $marker_script origin" path_absent_by_deny "$marker_ran"
 probe "$only_cmd git fetch origin -u $marker_script" path_absent_not_approved "$marker_ran"
 probe "$only_cmd git diff > redirect-probe.txt" path_absent_not_approved "$repo/redirect-probe.txt"
@@ -227,6 +260,7 @@ probe "$print_cmd scripts/lane status" succeeds_with lane-stub-marker
 
 : >"$transcript"
 : >"$decisions"
+log_found=1
 devin_status=-
 report 'config copy permissions are unchanged after all probes' permissions_unchanged
 report 'committed .devin/foreman.json is unchanged after all probes' files_unchanged .devin/foreman.json
