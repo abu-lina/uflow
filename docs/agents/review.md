@@ -1,6 +1,10 @@
 # Review
 
-Reviews run as parallel subagents, one per role, against a single PR. Each reviewer reads the diff (`gh pr diff <pr>`), the issue's acceptance criteria, and only the files the diff touches plus their direct imports. Each returns a list of findings in the format below. The foreman (or whoever triggered the review) merges them.
+A review runs automatically when a lane reports done; the owner doesn't start it. Reviews run as parallel subagents with the `reviewer` profile (`.devin/agents/reviewer.md`), one per role, against a single PR. The profile has `read`, `grep` and `glob` only: no exec, write or edit, so a reviewer can't comment, label, push or merge.
+
+Reviewers can't run `gh pr diff`. The foreman runs `scripts/review-bundle <pr>` once. It prints the path of a bundle file holding the diff, the issue's acceptance criteria and the PR-head content of every touched file. Each reviewer reads that file and only the files the diff touches plus their direct imports, and returns a list of findings in the format below. The foreman (or whoever triggered the review) merges them.
+
+The foreman asks the owner only for decisions, and every decision request includes a recommendation.
 
 Parallel subagents are for review only. Implementation is one agent per lane.
 
@@ -87,7 +91,7 @@ gh pr review <pr> --comment --body-file review.md     # blocking present: --requ
 
 ## Reviewer rules
 
-- Read only the diff and its direct dependencies. Don't review the whole codebase.
+- Read only the bundle and the diff's direct dependencies. Don't review the whole codebase.
 - Don't propose rewrites or new features. Findings point at lines in the diff.
 - If a checklist item needs information you don't have (for example a DB constraint), say so as a `should-fix` with "verify" in the action column instead of guessing.
 - Return nothing but the finding lines. The merger needs no summary.

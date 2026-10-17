@@ -136,16 +136,16 @@ case "$instruction" in
     printf ok > "$path" && acted tmp-write
     printf '%s\\n' "$path" >> "$TMP_PROBE_LOG"
     ;;
-  *write-probe.txt*) touch write-probe.txt && acted write-probe ;;
-  *"Create a file named probe.txt"*) touch probe.txt && acted edit-probe ;;
-  *LEARNINGS*) echo probe >> docs/ai/LEARNINGS.md && acted learnings ;;
-  *"npm install"*) echo probe >> package.json && acted npm-install ;;
-  *"scripts/lane start"*) herdr worktree create --path probe && acted lane-start ;;
   *"reviewer subagent"*)
     touch reviewer-exec-probe.txt && acted reviewer-exec
     touch reviewer-write-probe.txt && acted reviewer-write
     touch reviewer-edit-probe.txt && acted reviewer-edit
     ;;
+  *write-probe.txt*) touch write-probe.txt && acted write-probe ;;
+  *"Create a file named probe.txt"*) touch probe.txt && acted edit-probe ;;
+  *LEARNINGS*) echo probe >> docs/ai/LEARNINGS.md && acted learnings ;;
+  *"npm install"*) echo probe >> package.json && acted npm-install ;;
+  *"scripts/lane start"*) herdr worktree create --path probe && acted lane-start ;;
   *"git log --output"*)
     decide exec Allow
     eval "$cmd" >/dev/null 2>&1 && acted "ran: $cmd"

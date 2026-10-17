@@ -27,7 +27,8 @@
       "Exec(herdr agent prompt)",
       "Exec(herdr agent send-keys)",
       "Exec(herdr pane read)",
-      "Exec(scripts/lane status)"
+      "Exec(scripts/lane status)",
+      "Exec(scripts/review-bundle)"
     ],
     "ask": [
       "Exec(scripts/lane start)",
