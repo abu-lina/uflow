@@ -120,7 +120,7 @@ describe('foreman review subagents (#685)', () => {
     expect(existsSync(join(repoRoot, '.devin/agents/reviewer.md'))).toBe(true);
     const fm = frontmatter('.devin/agents/reviewer.md');
     expect(fm).toMatch(/^name: reviewer$/m);
-    const tools = [...fm.matchAll(/^ {2}- (\S+)$/gm)].map((m) => m[1]);
+    const tools = Array.from(fm.matchAll(/^ {2}- (\S+)$/gm), (m) => m[1]);
     expect(tools.sort()).toEqual(['glob', 'grep', 'read']);
   });
 
