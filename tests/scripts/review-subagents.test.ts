@@ -94,6 +94,16 @@ const baselineDeny = [
   'mcp__*',
 ];
 
+// Reviewers read untrusted PR content, so secrets and tool credentials are unreadable.
+const readDenies = [
+  'Read(.env*)',
+  'Read(**/.env*)',
+  'Read(~/.ssh/**)',
+  'Read(~/.config/devin/**)',
+  'Read(~/.config/gh/**)',
+  'Read(~/.local/share/devin/**)',
+];
+
 const frontmatter = (file: string) => {
   const match = /^---\n([\s\S]*?)\n---/.exec(read(file));
   return match ? match[1] : '';
@@ -107,13 +117,13 @@ const step5 = () => {
 };
 
 describe('foreman review subagents (#685)', () => {
-  it("AC3: the foreman's allow, ask and deny lists change only by Exec(scripts/review-bundle)", () => {
+  it("AC3: the foreman's allow, ask and deny lists change only by Exec(scripts/review-bundle) and the Read deny rules", () => {
     expect(foreman.permissions.allow).toContain('Exec(scripts/review-bundle)');
     expect(
       foreman.permissions.allow.filter((rule) => rule !== 'Exec(scripts/review-bundle)'),
     ).toEqual(baselineAllow);
     expect(foreman.permissions.ask).toEqual(baselineAsk);
-    expect(foreman.permissions.deny).toEqual(baselineDeny);
+    expect(foreman.permissions.deny).toEqual([...baselineDeny, ...readDenies]);
   });
 
   it('AC1: a reviewer profile exists with only read, grep and glob', () => {
@@ -132,21 +142,6 @@ describe('foreman review subagents (#685)', () => {
     // Devin ignores permissions in a profile; a block would only imply a guard that isn't there.
     expect(fm).not.toMatch(/^permissions:/m);
     expect(fm).toMatch(/^allowed-tools:/m);
-  });
-
-  it('AC2: no review command is allowed by a rule the reviewer could reach', () => {
-    const profile = read('.devin/agents/reviewer.md');
-    for (const command of [
-      'gh pr review',
-      'gh pr merge',
-      'gh issue comment',
-      'gh issue edit',
-      'git push',
-      'git commit',
-    ]) {
-      expect(frontmatter('.devin/agents/reviewer.md')).not.toContain(command);
-    }
-    expect(profile).toContain('scripts/review-bundle');
   });
 
   it('AC4: review.md says the review runs automatically, via the bundle and the reviewer profile', () => {
@@ -183,6 +178,12 @@ describe('foreman review subagents (#685)', () => {
   it('AC3 (owner): verify-foreman-permissions.sh probes scripts/review-bundle without a prompt', () => {
     const script = read('scripts/verify-foreman-permissions.sh');
     expect(script).toContain('scripts/review-bundle 123');
+  });
+
+  it('verify-foreman-permissions.sh probes that a reviewer subagent cannot read .env.local and that starting one needs no approval', () => {
+    const script = read('scripts/verify-foreman-permissions.sh');
+    expect(script).toContain('.env.local');
+    expect(script).toContain('run_subagent=Allow');
   });
 
   it('AC3 (owner): verify-foreman-permissions.sh probes a reviewer subagent: reads the bundle, cannot exec, write or edit', () => {

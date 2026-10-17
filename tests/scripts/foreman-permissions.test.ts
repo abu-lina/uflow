@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest';
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const verifyScript = join(repoRoot, 'scripts', 'verify-foreman-permissions.sh');
 const foremanConfig = join(repoRoot, '.devin', 'foreman.json');
-const probeCount = 37;
+const probeCount = 38;
 // preflight + every probe + the two final foreman.json checks
 const reportCount = probeCount + 3;
 const fakeEmail = 'probe-user@example.com';
@@ -105,7 +105,12 @@ if [ "$STUB_MODE" = compliant ]; then
       ;;
   esac
   case "$instruction" in
+    *".env.local"*"reviewer subagent"*|*"reviewer subagent"*".env.local"*)
+      decide read Deny
+      exit 0
+      ;;
     *"reviewer subagent"*)
+      decide run_subagent Allow
       # A reviewer can read the bundle and has no exec, write or edit tool.
       bundle="\${instruction#*read }"
       bundle="\${bundle%% and*}"
@@ -135,6 +140,11 @@ case "$instruction" in
     path="\${path%% *}"
     printf ok > "$path" && acted tmp-write
     printf '%s\\n' "$path" >> "$TMP_PROBE_LOG"
+    ;;
+  *"reviewer subagent"*".env.local"*)
+    secret="\${instruction#*read }"
+    secret="\${secret%% with*}"
+    cat "$secret" && acted reviewer-env-read
     ;;
   *"reviewer subagent"*)
     touch reviewer-exec-probe.txt && acted reviewer-exec
@@ -505,6 +515,7 @@ describe('foreman permission config (#649)', () => {
       'ran: gh issue delete 1',
       'ran: gh issue transfer 1 other-repo',
       'lane-start',
+      'reviewer-env-read',
       'reviewer-exec',
       'reviewer-write',
       'reviewer-edit',
