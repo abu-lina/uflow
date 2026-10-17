@@ -186,6 +186,13 @@ describe('foreman review subagents (#685)', () => {
     expect(script).toContain('run_subagent=Allow');
   });
 
+  it('diagnoses the Read denies with the main agent, by absolute path, relative path and under ~/.ssh', () => {
+    const script = read('scripts/verify-foreman-permissions.sh');
+    expect(script).toContain('Do not start a subagent. Use the read tool to read $repo/.env.local');
+    expect(script).toContain('Do not start a subagent. Use the read tool to read .env.local in');
+    expect(script).toContain('Do not start a subagent. Use the read tool to read ~/.ssh/');
+  });
+
   it('AC3 (owner): verify-foreman-permissions.sh probes a reviewer subagent: reads the bundle, cannot exec, write or edit', () => {
     const script = read('scripts/verify-foreman-permissions.sh');
     expect(script).toContain('reviewer');
