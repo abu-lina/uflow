@@ -6,6 +6,21 @@
 #   foreman [copilot|devin] [model] start or focus the foreman
 #   lane_done <issue> [--force]           remove a merged lane
 #   lane_status                           one line per lane + stale workspaces
+#
+# Sourced by zsh, this file defines only thin wrappers that run scripts/lane,
+# so all logic runs under bash. scripts/lane sources it under bash for the
+# real functions below.
+
+if [ -n "${ZSH_VERSION:-}" ]; then
+  # The zsh-only expansion lives in eval so bash and shellcheck never parse it.
+  # shellcheck disable=SC2016
+  eval '_lane_wrapper_bin="${${(%):-%x}:A:h}/lane"'
+  function lane { "$_lane_wrapper_bin" start "$@"; }
+  function lane_done { "$_lane_wrapper_bin" done "$@"; }
+  function lane_status { "$_lane_wrapper_bin" status "$@"; }
+  function foreman { "$_lane_wrapper_bin" foreman "$@"; }
+  return 0
+fi
 
 _lane_root() {
   git rev-parse --show-toplevel 2>/dev/null
