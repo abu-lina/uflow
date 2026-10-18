@@ -49,7 +49,8 @@ _lane_setup_hooks() {
       return 0
       ;;
   esac
-  mkdir -p "$dir/${hooks%/*}" || return 1
+  [[ -e "$dir/$hooks" ]] && return 0
+  mkdir -p "$dir/$(dirname -- "$hooks")" || return 1
   cp -R "$root/$hooks" "$dir/$hooks"
 }
 

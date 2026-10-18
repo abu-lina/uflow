@@ -1362,6 +1362,46 @@ describe('lane worktree git hooks (#655)', () => {
     });
   });
 
+  it('copies a top-level hooks dir without nesting it', () => {
+    withLane(null, ({ fixture, root }) => {
+      mkdirSync(join(root, '.githooks'));
+      writeFileSync(join(root, '.githooks', 'pre-commit'), '#!/bin/sh\n');
+      git(root, 'config', 'core.hooksPath', '.githooks');
+      const target = join(fixture, 'target');
+      mkdirSync(target);
+      const bash = `${shellFunction('_lane_setup_hooks')}\n_lane_setup_hooks "$1" "$2"`;
+      const result = spawnSync('bash', ['-c', bash, 'bash', root, target], { encoding: 'utf8' });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readdirSync(join(target, '.githooks'))).toEqual(['pre-commit']);
+    });
+  });
+
+  it('leaves a hooks dir that already exists in the worktree untouched', () => {
+    withLane(null, ({ fixture, root }) => {
+      mkdirSync(join(root, '.githooks'));
+      writeFileSync(join(root, '.githooks', 'pre-commit'), '#!/bin/sh\n');
+      git(root, 'config', 'core.hooksPath', '.githooks');
+      const target = join(fixture, 'target');
+      mkdirSync(join(target, '.githooks'), { recursive: true });
+      const bash = `${shellFunction('_lane_setup_hooks')}\n_lane_setup_hooks "$1" "$2"`;
+      const result = spawnSync('bash', ['-c', bash, 'bash', root, target], { encoding: 'utf8' });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readdirSync(join(target, '.githooks'))).toEqual([]);
+    });
+  });
+
+  it('starts a lane without copying hooks when the relative hooksPath dir is missing', () => {
+    withLane(null, ({ fixture, root }) => {
+      git(root, 'config', 'core.hooksPath', 'missing/hooks');
+      const target = join(fixture, 'target');
+      mkdirSync(target);
+      const bash = `${shellFunction('_lane_setup_hooks')}\n_lane_setup_hooks "$1" "$2"`;
+      const result = spawnSync('bash', ['-c', bash, 'bash', root, target], { encoding: 'utf8' });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readdirSync(target)).toEqual([]);
+    });
+  });
+
   it('does not touch anything outside the worktree when core.hooksPath contains ..', () => {
     withLane(null, ({ root, dir }) => {
       const worktrees = join(root, '.worktrees');
