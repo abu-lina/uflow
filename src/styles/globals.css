@@ -448,8 +448,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    visibility: hidden;
-    pointer-events: none;
+    pointer-events: auto;
   }
 
   /* iOS Safari fix: restore pointer-events at the SLOT level when a nav is active.
@@ -459,16 +458,6 @@
      nav children are reachable on real iOS devices. */
   .mobile-bottom-ui-slot[data-mobile-ui='footer'],
   .mobile-bottom-ui-slot[data-mobile-ui='navbar'] {
-    pointer-events: auto;
-  }
-
-  .mobile-bottom-ui-slot[data-mobile-ui='footer'] .mobile-footer-bar-wrapper {
-    visibility: visible;
-    pointer-events: auto;
-  }
-
-  .mobile-bottom-ui-slot[data-mobile-ui='navbar'] .city-navbar-wrapper {
-    visibility: visible;
     pointer-events: auto;
   }
 
