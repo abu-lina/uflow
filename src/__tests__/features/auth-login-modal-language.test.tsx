@@ -51,7 +51,9 @@ async function resend() {
     target: { value: 'user@example.com' },
   });
   fireEvent.change(screen.getByLabelText('login.passwordLabel'), { target: { value: 'secret' } });
-  fireEvent.submit(screen.getByLabelText('login.emailLabel').closest('form')!);
+  const form = screen.getByLabelText('login.emailLabel').closest('form');
+  if (!form) throw new Error('login form not rendered');
+  fireEvent.submit(form);
   fireEvent.click(await screen.findByRole('button', { name: 'resend' }));
   await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
   const call = mockFetch.mock.calls.find(([u]) => u === '/api/send-auth-email');
