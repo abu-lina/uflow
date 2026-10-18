@@ -169,18 +169,22 @@ export function RootClientLayout({ children }: RootClientLayoutProps) {
         <DesktopFooter />
       </div>
 
-      {/* Mobile bottom UI slot: always in DOM with reserved height to prevent layout shift; visibility controlled by CSS */}
+      {/* Mobile bottom UI slot: always in DOM with reserved height to prevent layout shift; only the active nav is mounted */}
       <div
         className="mobile-bottom-ui-slot block md:hidden"
         data-mobile-ui={mobileUiMode}
         data-testid="mobile-footer-bar"
       >
-        <div className="mobile-footer-bar-wrapper">
-          <MobileFooterBar />
-        </div>
-        <div className="city-navbar-wrapper">
-          <CityEarlyAccessNavbar />
-        </div>
+        {mobileUiMode === 'footer' && (
+          <div className="mobile-footer-bar-wrapper">
+            <MobileFooterBar />
+          </div>
+        )}
+        {mobileUiMode === 'navbar' && (
+          <div className="city-navbar-wrapper">
+            <CityEarlyAccessNavbar />
+          </div>
+        )}
       </div>
 
       {/* Action button for subpages */}
