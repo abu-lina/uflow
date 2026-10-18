@@ -306,7 +306,7 @@ EOF
 # starts working; wait for it to settle, then re-send once.
 _lane_send_prompt() {
   local name="$1" pane="$2" prompt="$3" output
-  local -a prompt_args=(--wait --until working --until blocked --until done)
+  local -a prompt_args=(--wait --until working --until blocked --until 'done')
   output="$(herdr agent prompt "$name" "$prompt" "${prompt_args[@]}" 2>&1)" && return 0
   if [[ "$(printf '%s\n' "$output" | jq -r '.error.code // empty' 2>/dev/null)" != agent_prompt_stalled ]]; then
     printf 'could not send the prompt to %s (pane %s): %s\n' "$name" "$pane" "$output" >&2
