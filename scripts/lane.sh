@@ -43,8 +43,13 @@ _lane_setup_hooks() {
   local root="$1" dir="$2" hooks
   hooks="$(git -C "$root" config --get core.hooksPath)" || return 0
   [[ -n "$hooks" && "$hooks" != /* && -d "$root/$hooks" ]] || return 0
+  case "/$hooks/" in
+    */./* | */../*)
+      echo "skipping git hooks copy: core.hooksPath '$hooks' must not contain . or .. segments" >&2
+      return 0
+      ;;
+  esac
   mkdir -p "$dir/${hooks%/*}" || return 1
-  rm -rf "${dir:?}/$hooks"
   cp -R "$root/$hooks" "$dir/$hooks"
 }
 
