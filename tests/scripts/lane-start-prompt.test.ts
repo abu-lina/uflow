@@ -10,7 +10,7 @@ const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 const git = (root: string, ...args: string[]) =>
   execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
 
-type PromptOutcome = 'working' | 'stalled';
+type PromptOutcome = 'working' | 'stalled' | 'failed';
 
 // The stub answers the nth `agent prompt` call with the nth outcome.
 const startLane = (
@@ -74,6 +74,10 @@ case "$1 $2" in
   "agent prompt")
     n=$(grep -c '^agent prompt ' "$HERDR_LOG")
     outcome=$(printf '%s\\n' "$PROMPT_OUTCOMES" | cut -d, -f"$n")
+    if [ "$outcome" = failed ]; then
+      printf '%s\\n' '{"error":{"code":"agent_not_found","message":"agent_prompt_stalled is not this"}}' >&2
+      exit 1
+    fi
     if [ "$outcome" = stalled ]; then
       printf '%s\\n' '{"error":{"code":"agent_prompt_stalled","message":"no working state"}}' >&2
       exit 1
@@ -129,7 +133,10 @@ describe('lane start prompt race (#676)', () => {
         const secondPrompt =
           after.length - 1 - [...after].reverse().findIndex((c) => c.startsWith('agent prompt'));
         const between = after.slice(firstPrompt + 1, secondPrompt);
-        expect(between.some((c) => c.startsWith('agent wait lane-676'))).toBe(true);
+        const waits = between.filter((c) => c.startsWith('agent wait lane-676'));
+        expect(waits).toHaveLength(1);
+        expect(waits[0]).toContain('--until idle');
+        expect(after[firstPrompt]).toBe(after[secondPrompt]);
         expect(between.some((c) => /^agent (prompt|send-keys)/.test(c))).toBe(false);
       });
 
@@ -150,10 +157,22 @@ describe('lane start prompt race (#676)', () => {
     });
   }
 
+  it('a non-stall prompt failure exits non-zero without waiting or retrying', () => {
+    const { result, calls, output } = startLane('bash', ['failed', 'working']);
+    expect(result.status).not.toBe(0);
+    expect(prompts(calls)).toHaveLength(1);
+    expect(calls.some((c) => c.startsWith('agent wait'))).toBe(false);
+    expect(output).toContain('lane-676');
+    expect(output).toContain('pane-lane');
+  });
+
   it('Copilot path unchanged: one prompt, one agent start', () => {
     const { result, calls } = startLane('bash', ['working'], 'copilot');
     expect(result.status, result.stderr).toBe(0);
     expect(calls.filter((c) => c.startsWith('agent start'))).toHaveLength(1);
     expect(prompts(calls)).toHaveLength(1);
+    expect(prompts(calls)[0]).toMatch(
+      /^agent prompt lane-676 .+ --wait --until working --until blocked --until done$/,
+    );
   });
 });

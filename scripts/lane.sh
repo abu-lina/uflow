@@ -308,7 +308,7 @@ _lane_send_prompt() {
   local name="$1" pane="$2" prompt="$3" output
   local -a prompt_args=(--wait --until working --until blocked --until done)
   output="$(herdr agent prompt "$name" "$prompt" "${prompt_args[@]}" 2>&1)" && return 0
-  if [[ "$output" != *agent_prompt_stalled* ]]; then
+  if [[ "$(printf '%s\n' "$output" | jq -r '.error.code // empty' 2>/dev/null)" != agent_prompt_stalled ]]; then
     printf 'could not send the prompt to %s (pane %s): %s\n' "$name" "$pane" "$output" >&2
     return 1
   fi
