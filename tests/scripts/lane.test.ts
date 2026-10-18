@@ -1034,8 +1034,9 @@ esac
 
 type ForemanScenario = {
   agentGet: 'live' | 'dead' | 'other-error';
-  tabCreate?: 'ok' | 'fail';
+  tabCreate?: 'ok' | 'fail' | 'no-root-pane';
   agentStartError?: string;
+  workspaceId?: string | null;
 };
 
 const startBusy = (code: string) =>
@@ -1061,6 +1062,10 @@ const runForeman = (shell: 'bash' | 'zsh', scenario: ForemanScenario) => {
       readFileSync(new URL('../../.devin/foreman.json', import.meta.url)),
     );
     writeFileSync(join(fixture, 'agent-start-error.json'), scenario.agentStartError ?? '');
+    // Derived from the real tab create response with the root pane removed.
+    const tabWithoutRootPane = JSON.parse(herdrFixture('tab-create.json'));
+    delete tabWithoutRootPane.result.root_pane;
+    writeFileSync(join(fixture, 'tab-no-root-pane.json'), JSON.stringify(tabWithoutRootPane));
     // Synthetic: a Herdr failure other than agent_not_found, to prove liveness is never guessed.
     writeFileSync(
       join(fixture, 'other-error.json'),
@@ -1080,11 +1085,9 @@ case "$1 $2" in
       *) cat "$OTHER_ERROR" >&2; exit 1 ;;
     esac
     ;;
-  "agent list")
-    if [ "$AGENT_GET" = live ]; then cat "$FIXTURES/live-list.json"; else cat "$FIXTURES/dead-list.json"; fi
-    ;;
   "tab create")
     if [ "$TAB_CREATE" = fail ]; then cat "$FIXTURES/tab-create-error.json" >&2; exit 1; fi
+    if [ "$TAB_CREATE" = no-root-pane ]; then cat "$TAB_NO_ROOT_PANE"; exit 0; fi
     cat "$FIXTURES/tab-create.json"
     ;;
   "agent start")
@@ -1100,15 +1103,19 @@ esac
       ...process.env,
       PATH: `${bin}:${process.env.PATH}`,
       HERDR_LOG: log,
-      HERDR_WORKSPACE_ID: 'w1M',
       HERDR_PANE_ID: 'w1M:p1',
       FIXTURES: herdrFixtureDir,
+      TAB_NO_ROOT_PANE: join(fixture, 'tab-no-root-pane.json'),
       AGENT_GET: scenario.agentGet,
       OTHER_ERROR: join(fixture, 'other-error.json'),
       TAB_CREATE: scenario.tabCreate ?? 'ok',
       AGENT_START_ERROR: join(fixture, 'agent-start-error.json'),
       PROMPT_FILE: prompt,
     };
+    delete (env as Record<string, string | undefined>).HERDR_WORKSPACE_ID;
+    if (scenario.workspaceId !== null) {
+      (env as Record<string, string>).HERDR_WORKSPACE_ID = scenario.workspaceId ?? 'w1M';
+    }
     const laneSh = shellQuote(new URL('../../scripts/lane.sh', import.meta.url).pathname);
     const result =
       shell === 'bash'
@@ -1154,12 +1161,8 @@ describe('foreman restart (#650)', () => {
     const live = JSON.parse(herdrFixture('live-get.json'));
     expect(live.result.type).toBe('agent_info');
     expect(live.result.agent.agent_status).toMatch(/^(idle|working)$/);
-    const liveList = JSON.parse(herdrFixture('live-list.json'));
-    expect(liveList.result.agents.some((agent: { name?: string }) => agent.name)).toBe(true);
     const dead = JSON.parse(herdrFixture('dead-get.json'));
     expect(dead.error.code).toBe('agent_not_found');
-    const deadList = JSON.parse(herdrFixture('dead-list.json'));
-    expect(deadList.result.type).toBe('agent_list');
     const tab = JSON.parse(herdrFixture('tab-create.json'));
     expect(tab.result.root_pane.pane_id).toBeTruthy();
   });
@@ -1216,6 +1219,26 @@ describe('foreman restart (#650)', () => {
         const { result, calls } = runForeman(shell, { agentGet: 'dead', tabCreate: 'fail' });
         expect(result.status).not.toBe(0);
         expect(result.stderr).toContain('workspace_not_found');
+        expect(callsMatching(calls, 'agent start')).toEqual([]);
+        expect(callsMatching(calls, 'agent prompt')).toEqual([]);
+      });
+
+      it('exits non-zero and starts nothing when HERDR_WORKSPACE_ID is unset', () => {
+        const { result, calls } = runForeman(shell, { agentGet: 'dead', workspaceId: null });
+        expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain('HERDR_WORKSPACE_ID is not set');
+        for (const forbidden of ['tab create', 'agent start', 'agent prompt']) {
+          expect(callsMatching(calls, forbidden), forbidden).toEqual([]);
+        }
+      });
+
+      it('exits non-zero and starts nothing when tab create returns no root pane', () => {
+        const { result, calls } = runForeman(shell, {
+          agentGet: 'dead',
+          tabCreate: 'no-root-pane',
+        });
+        expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain('did not return a root pane');
         expect(callsMatching(calls, 'agent start')).toEqual([]);
         expect(callsMatching(calls, 'agent prompt')).toEqual([]);
       });
