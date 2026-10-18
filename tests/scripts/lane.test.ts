@@ -33,6 +33,9 @@ const shellFunction = (name: string) => {
 
 const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 
+const herdrFixtureDir = new URL('../fixtures/herdr/', import.meta.url).pathname;
+const herdrFixture = (name: string) => readFileSync(join(herdrFixtureDir, name), 'utf8');
+
 const ciBuildPlaceholder = (key: string) => {
   const match = ciWorkflow.match(
     new RegExp(`echo "${key}=\\$\\{${key}:-([^}]+)\\}" >> \\$GITHUB_ENV`),
@@ -221,7 +224,7 @@ esac
   });
 
   it('prints usage for missing and unknown subcommands', () => {
-    for (const command of ['', 'foreman']) {
+    for (const command of ['', 'bogus']) {
       const result = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} ${command}`], {
         encoding: 'utf8',
       });
@@ -885,12 +888,11 @@ esac
     expect(laneScript).toContain('No lanes open.');
   });
 
-  it('starts the default Devin foreman in the main workspace pane with Herdr skill context', () => {
+  it('starts the default Devin foreman with Herdr skill context', () => {
     expect(laneScript).toMatch(/foreman\(\)[\s\S]*?agent="\$\{1:-devin\}"/);
     expect(laneScript).toContain('claude-opus-5-5-high');
     expect(laneScript).toContain('herdr --skill');
     expect(laneScript).toContain('herdr agent start foreman');
-    expect(laneScript).toContain('herdr pane current');
   });
 
   it('foreman passes Devin a private 0600 copy of .devin/foreman.json via --config, never the committed file, and no bypassing permission mode', () => {
@@ -918,8 +920,8 @@ esac
           `#!/bin/sh
 printf '%s\\n' "$*" >> "$HERDR_LOG"
 case "$1 $2" in
-  "agent list") printf '%s\\n' '{"result":{"agents":[]}}' ;;
-  "pane current") printf '%s\\n' '{"result":{"pane":{"pane_id":"pane-main"}}}' ;;
+  "agent get") cat "$FIXTURES/dead-get.json" >&2; exit 1 ;;
+  "tab create") cat "$FIXTURES/tab-create.json" ;;
   "agent start")
     prev=""
     for arg; do
@@ -949,6 +951,9 @@ esac
               PATH: `${bin}:${process.env.PATH}`,
               TMPDIR: temp,
               HERDR_LOG: herdrLog,
+              HERDR_WORKSPACE_ID: 'w1M',
+              HERDR_PANE_ID: 'w1M:p1',
+              FIXTURES: herdrFixtureDir,
               CONFIG_SNAPSHOT: configSnapshot,
             },
           },
@@ -1024,5 +1029,250 @@ esac
     expect(setupDecisions).toContain('Ghostty');
     expect(setupDecisions).toContain('trustedFolders');
     expect(setupDecisions).toContain('allow-all-paths');
+  });
+});
+
+type ForemanScenario = {
+  agentGet: 'live' | 'dead' | 'other-error';
+  tabCreate?: 'ok' | 'fail' | 'no-root-pane';
+  agentStartError?: string;
+  workspaceId?: string | null;
+};
+
+const startBusy = (code: string) =>
+  JSON.stringify({
+    error: { code, message: 'agent target pane is not an available shell' },
+    id: 'cli:agent:start',
+  });
+
+const runForeman = (shell: 'bash' | 'zsh', scenario: ForemanScenario) => {
+  const fixture = realpathSync(mkdtempSync(join(tmpdir(), 'lane-foreman-restart-')));
+  const root = join(fixture, 'repo');
+  const bin = join(fixture, 'bin');
+  const log = join(fixture, 'herdr.log');
+  const prompt = join(fixture, 'prompt.txt');
+  const pathBefore = join(fixture, 'path-before');
+  const pathAfter = join(fixture, 'path-after');
+  try {
+    mkdirSync(join(root, '.devin'), { recursive: true });
+    mkdirSync(bin);
+    execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
+    writeFileSync(
+      join(root, '.devin', 'foreman.json'),
+      readFileSync(new URL('../../.devin/foreman.json', import.meta.url)),
+    );
+    writeFileSync(join(fixture, 'agent-start-error.json'), scenario.agentStartError ?? '');
+    // Derived from the real tab create response with the root pane removed.
+    const tabWithoutRootPane = JSON.parse(herdrFixture('tab-create.json'));
+    delete tabWithoutRootPane.result.root_pane;
+    writeFileSync(join(fixture, 'tab-no-root-pane.json'), JSON.stringify(tabWithoutRootPane));
+    // Synthetic: a Herdr failure other than agent_not_found, to prove liveness is never guessed.
+    writeFileSync(
+      join(fixture, 'other-error.json'),
+      '{"error":{"code":"socket_unavailable","message":"cannot reach herdr"},"id":"cli:agent:get"}',
+    );
+    writeFileSync(
+      join(bin, 'herdr'),
+      `#!/bin/sh
+if [ "$1" = --skill ]; then printf '%s\\n' 'HERDR-SKILL-TEXT'; exit 0; fi
+printf '%s\\n' "$*" | tr '\\n' ' ' >> "$HERDR_LOG"
+printf '\\n' >> "$HERDR_LOG"
+case "$1 $2" in
+  "agent get")
+    case "$AGENT_GET" in
+      live) cat "$FIXTURES/live-get.json" ;;
+      dead) cat "$FIXTURES/dead-get.json" >&2; exit 1 ;;
+      *) cat "$OTHER_ERROR" >&2; exit 1 ;;
+    esac
+    ;;
+  "tab create")
+    if [ "$TAB_CREATE" = fail ]; then cat "$FIXTURES/tab-create-error.json" >&2; exit 1; fi
+    if [ "$TAB_CREATE" = no-root-pane ]; then cat "$TAB_NO_ROOT_PANE"; exit 0; fi
+    cat "$FIXTURES/tab-create.json"
+    ;;
+  "agent start")
+    if [ -s "$AGENT_START_ERROR" ]; then cat "$AGENT_START_ERROR" >&2; exit 1; fi
+    ;;
+  "agent prompt") printf '%s' "$4" > "$PROMPT_FILE" ;;
+esac
+`,
+      { mode: 0o755 },
+    );
+
+    const env = {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      HERDR_LOG: log,
+      HERDR_PANE_ID: 'w1M:p1',
+      FIXTURES: herdrFixtureDir,
+      TAB_NO_ROOT_PANE: join(fixture, 'tab-no-root-pane.json'),
+      AGENT_GET: scenario.agentGet,
+      OTHER_ERROR: join(fixture, 'other-error.json'),
+      TAB_CREATE: scenario.tabCreate ?? 'ok',
+      AGENT_START_ERROR: join(fixture, 'agent-start-error.json'),
+      PROMPT_FILE: prompt,
+    };
+    delete (env as Record<string, string | undefined>).HERDR_WORKSPACE_ID;
+    if (scenario.workspaceId !== null) {
+      (env as Record<string, string>).HERDR_WORKSPACE_ID = scenario.workspaceId ?? 'w1M';
+    }
+    const laneSh = shellQuote(new URL('../../scripts/lane.sh', import.meta.url).pathname);
+    const result =
+      shell === 'bash'
+        ? spawnSync('bash', [laneEntrypoint, 'foreman'], { cwd: root, encoding: 'utf8', env })
+        : spawnSync(
+            'zsh',
+            [
+              '-f',
+              '-c',
+              `source ${laneSh}\nprintf '%s' "$PATH" > ${shellQuote(pathBefore)}\nforeman\nrc=$?\nprintf '%s' "$PATH" > ${shellQuote(pathAfter)}\nexit $rc`,
+            ],
+            { cwd: root, encoding: 'utf8', env },
+          );
+    const expectedPrompt = spawnSync('bash', ['-c', `source ${laneSh}\n_foreman_prompt`], {
+      cwd: root,
+      encoding: 'utf8',
+      env,
+    }).stdout.replace(/\n+$/, '');
+    return {
+      root,
+      result,
+      calls: existsSync(log)
+        ? readFileSync(log, 'utf8')
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => line.trim())
+        : [],
+      prompt: existsSync(prompt) ? readFileSync(prompt, 'utf8') : null,
+      expectedPrompt,
+      pathBefore: existsSync(pathBefore) ? readFileSync(pathBefore, 'utf8') : null,
+      pathAfter: existsSync(pathAfter) ? readFileSync(pathAfter, 'utf8') : null,
+    };
+  } finally {
+    rmSync(fixture, { recursive: true, force: true });
+  }
+};
+
+const callsMatching = (calls: string[], prefix: string) =>
+  calls.filter((call) => call.startsWith(prefix));
+
+describe('foreman restart (#650)', () => {
+  it('fixtures hold real Herdr output for a live and a dead foreman', () => {
+    const live = JSON.parse(herdrFixture('live-get.json'));
+    expect(live.result.type).toBe('agent_info');
+    expect(live.result.agent.agent_status).toMatch(/^(idle|working)$/);
+    const dead = JSON.parse(herdrFixture('dead-get.json'));
+    expect(dead.error.code).toBe('agent_not_found');
+    const tab = JSON.parse(herdrFixture('tab-create.json'));
+    expect(tab.result.root_pane.pane_id).toBeTruthy();
+  });
+
+  for (const shell of ['bash', 'zsh'] as const) {
+    describe(`under ${shell}`, () => {
+      it('focuses a live foreman once and starts nothing', () => {
+        const { result, calls } = runForeman(shell, { agentGet: 'live' });
+        expect(result.status, result.stderr).toBe(0);
+        expect(callsMatching(calls, 'agent focus foreman')).toHaveLength(1);
+        for (const forbidden of ['tab create', 'agent start', 'agent prompt']) {
+          expect(callsMatching(calls, forbidden), forbidden).toEqual([]);
+        }
+      });
+
+      it('checks liveness with agent get foreman, not a name match in agent list', () => {
+        const { calls } = runForeman(shell, { agentGet: 'dead' });
+        expect(callsMatching(calls, 'agent get foreman')).toHaveLength(1);
+        expect(callsMatching(calls, 'agent list')).toEqual([]);
+      });
+
+      it('does not focus a dead foreman and goes on to start a new one', () => {
+        const { result, calls } = runForeman(shell, { agentGet: 'dead' });
+        expect(result.status, result.stderr).toBe(0);
+        expect(callsMatching(calls, 'agent focus')).toEqual([]);
+        expect(callsMatching(calls, 'agent start foreman')).toHaveLength(1);
+        expect(callsMatching(calls, 'agent rename')).toEqual([]);
+      });
+
+      it('creates a labelled tab in the caller workspace and starts the agent in its root pane only', () => {
+        const { root, result, calls, prompt, expectedPrompt } = runForeman(shell, {
+          agentGet: 'dead',
+        });
+        expect(result.status, result.stderr).toBe(0);
+        expect(calls).toContain(`tab create --workspace w1M --cwd ${root} --label foreman --focus`);
+        const rootPane = JSON.parse(herdrFixture('tab-create.json')).result.root_pane.pane_id;
+        const [start] = callsMatching(calls, 'agent start foreman');
+        const args = start.split(' ');
+        expect(args[args.indexOf('--pane') + 1]).toBe(rootPane);
+        expect(start).not.toContain('w1M:p1');
+        expect(calls.join('\n')).not.toContain('pane current');
+        const order = [
+          'agent get foreman',
+          'tab create',
+          'agent start foreman',
+          'agent prompt foreman',
+        ].map((prefix) => calls.findIndex((call) => call.startsWith(prefix)));
+        expect(order.every((index) => index >= 0)).toBe(true);
+        expect([...order].sort((a, b) => a - b)).toEqual(order);
+        expect(prompt).toBe(expectedPrompt);
+      });
+
+      it('exits non-zero, prints Herdr error and never starts an agent when tab create fails', () => {
+        const { result, calls } = runForeman(shell, { agentGet: 'dead', tabCreate: 'fail' });
+        expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain('workspace_not_found');
+        expect(callsMatching(calls, 'agent start')).toEqual([]);
+        expect(callsMatching(calls, 'agent prompt')).toEqual([]);
+      });
+
+      it('exits non-zero and starts nothing when HERDR_WORKSPACE_ID is unset', () => {
+        const { result, calls } = runForeman(shell, { agentGet: 'dead', workspaceId: null });
+        expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain('HERDR_WORKSPACE_ID is not set');
+        for (const forbidden of ['tab create', 'agent start', 'agent prompt']) {
+          expect(callsMatching(calls, forbidden), forbidden).toEqual([]);
+        }
+      });
+
+      it('exits non-zero and starts nothing when tab create returns no root pane', () => {
+        const { result, calls } = runForeman(shell, {
+          agentGet: 'dead',
+          tabCreate: 'no-root-pane',
+        });
+        expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain('did not return a root pane');
+        expect(callsMatching(calls, 'agent start')).toEqual([]);
+        expect(callsMatching(calls, 'agent prompt')).toEqual([]);
+      });
+
+      for (const code of ['agent_pane_busy', 'agent_not_ready']) {
+        it(`exits non-zero naming the pane and sends no prompt on ${code}`, () => {
+          const { result, calls } = runForeman(shell, {
+            agentGet: 'dead',
+            agentStartError: startBusy(code),
+          });
+          const rootPane = JSON.parse(herdrFixture('tab-create.json')).result.root_pane.pane_id;
+          expect(result.status).not.toBe(0);
+          expect(result.stderr).toContain(rootPane);
+          expect(result.stderr).toContain(code);
+          expect(callsMatching(calls, 'agent prompt')).toEqual([]);
+        });
+      }
+
+      it('does not start a second foreman when liveness cannot be determined', () => {
+        const { result, calls } = runForeman(shell, { agentGet: 'other-error' });
+        expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain('socket_unavailable');
+        for (const forbidden of ['agent focus', 'tab create', 'agent start', 'agent prompt']) {
+          expect(callsMatching(calls, forbidden), forbidden).toEqual([]);
+        }
+      });
+    });
+  }
+
+  it('leaves PATH unchanged in the zsh caller', () => {
+    for (const agentGet of ['live', 'dead'] as const) {
+      const { pathBefore, pathAfter } = runForeman('zsh', { agentGet });
+      expect(pathBefore).toBeTruthy();
+      expect(pathAfter).toBe(pathBefore);
+    }
   });
 });
