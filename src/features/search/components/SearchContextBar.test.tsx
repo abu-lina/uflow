@@ -22,7 +22,6 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'sections.ummah': 'Ummah',
         'sections.stores': 'Stores',
         'search.context.edit': 'Edit search',
-        'search.context.backToHome': 'Back to home',
         'search.ariaLabel': 'Search in the Ummah',
         'suchen.accordions.woEmpty': 'Where?',
         'suchen.clearAll': 'Clear all',

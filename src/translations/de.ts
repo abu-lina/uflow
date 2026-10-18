@@ -180,7 +180,6 @@ export const de = {
     context: {
       allResults: 'Alle Ergebnisse',
       edit: 'Suche bearbeiten',
-      backToHome: 'Zur Startseite',
     },
   },
   suchen: {

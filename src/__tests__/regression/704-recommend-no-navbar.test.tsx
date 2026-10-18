@@ -113,16 +113,16 @@ describe('#704', () => {
 
   it('3. anonymous: the recommend login gate has a back chevron that goes to /', () => {
     render(<RecommendPage />);
-    fireEvent.click(screen.getByRole('button', { name: 'Zurück' }));
+    fireEvent.click(screen.getByRole('button', { name: 'common.back' }));
     expect(mocks.push).toHaveBeenCalledWith('/');
   });
 
   it('4. other LoginGate callers show no back button unless they opt in', () => {
     const { unmount } = render(<LoginGate returnPath="/create/basics" title="t" />);
-    expect(screen.queryByRole('button', { name: 'Zurück' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'common.back' })).not.toBeInTheDocument();
     unmount();
     render(<LoginGate returnPath="/create/basics" title="t" onBack="/" />);
-    expect(screen.getByRole('button', { name: 'Zurück' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'common.back' })).toBeInTheDocument();
   });
 
   it('5. /create keeps its navbar; other /create subpages and early steps show none', () => {
