@@ -808,7 +808,6 @@ esac
         'which',
         'diff',
         'grep',
-        'rg',
         'gh pr view',
         'gh pr diff',
         'gh run view',
@@ -819,7 +818,7 @@ esac
 
     it('criterion 2: keeps write and code-running commands off the allow list', () => {
       const allowed = allowedShell(startedArgs());
-      for (const cmd of ['sed', 'awk', 'tee', 'xargs', 'bash', 'sh', 'zsh', 'env', 'find']) {
+      for (const cmd of ['sed', 'awk', 'tee', 'xargs', 'bash', 'sh', 'zsh', 'env', 'find', 'rg']) {
         expect(allowed, cmd).not.toContain(cmd);
       }
     });

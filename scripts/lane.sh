@@ -249,7 +249,6 @@ EOF
       '--allow-tool=shell(which:*)'
       '--allow-tool=shell(diff:*)'
       '--allow-tool=shell(grep:*)'
-      '--allow-tool=shell(rg:*)'
       '--allow-tool=shell(gh pr view:*)'
       '--allow-tool=shell(gh pr diff:*)'
       '--allow-tool=shell(gh run view:*)'
