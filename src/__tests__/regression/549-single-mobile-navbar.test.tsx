@@ -72,6 +72,7 @@ describe('#549 single mobile navbar', () => {
     expect(screen.queryByTestId('city-nav')).not.toBeInTheDocument();
     unmount();
 
+    mocks.pathname = '/';
     mocks.flowState = 'earlyAccess';
     render(<RootClientLayout>content</RootClientLayout>);
     expect(navCount()).toBe(0);
