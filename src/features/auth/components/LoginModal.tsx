@@ -10,6 +10,7 @@ import { FormInput } from '@/components/ui/FormInput';
 import { FormInputGroup } from '@/components/ui/FormInputGroup';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { signInWithEmailConfirmation } from '@/lib/auth';
+import { toAuthEmailLanguage } from '@/lib/auth-email-language';
 import { useLanguage } from '@/providers/LanguageProvider';
 import EmailVerificationAlert from '@/components/ui/EmailVerificationAlert';
 
@@ -19,7 +20,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
@@ -116,7 +117,7 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
         body: JSON.stringify({
           to: formData.email,
           type: 'confirmSignup',
-          language: 'de',
+          language: toAuthEmailLanguage(language),
           confirmationUrl,
         }),
       });

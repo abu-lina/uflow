@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { toAuthEmailLanguage } from '@/lib/auth-email-language';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
@@ -312,7 +313,7 @@ export async function POST(request: Request) {
           body: JSON.stringify({
             to: email,
             type: 'confirmSignup',
-            language: language || 'en',
+            language: toAuthEmailLanguage(language),
             confirmationUrl,
           }),
         });

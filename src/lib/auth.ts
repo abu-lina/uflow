@@ -1,7 +1,7 @@
 'use client';
 
 import { supabase } from './supabase/client';
-import type { AuthEmailLanguage } from '@/lib/auth-email-language';
+import { toAuthEmailLanguage, type AuthEmailLanguage } from '@/lib/auth-email-language';
 import type { Language } from '@/translations';
 import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 
@@ -136,7 +136,7 @@ export const resetPasswordWithLanguage = async (email: string, language: Languag
         body: JSON.stringify({
           to: email,
           type: 'resetPassword',
-          language,
+          language: toAuthEmailLanguage(language),
           confirmationUrl: resetUrl,
         }),
       });
