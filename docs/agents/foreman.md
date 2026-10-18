@@ -82,12 +82,25 @@ Filter:
 Post the proposal in chat, not on GitHub:
 
 ```
-Lane A  #586  P1  area:i18n   fix/586-login-error-i18n   (3 criteria)
-Lane B  #550  P2  area:ui     fix/550-duplicate-navbar   (2 criteria)
-Lane C  #579  P3  area:deps   chore/579-remove-critters  (1 criterion)
+Lane A  #674  P1  area:search  fix/674-unify-home-discovery  (9 criteria)  devin claude-opus-5-5-high
+Lane B  #550  P2  area:ui      fix/550-duplicate-navbar      (2 criteria)  copilot low
+Lane C  #579  P3  area:deps    chore/579-remove-critters     (1 criterion) copilot low
 ```
 
 Two or three lanes. Stop and wait for approval. Don't start anything on your own.
+
+### Choose each lane's agent and model
+
+Pick one tier per issue and show it in the last column of the proposal.
+
+- **Strong** (`devin claude-opus-5-5-high`): any of these.
+  - 6 or more acceptance criteria.
+  - Runtime code in `area:auth`, `area:db` or `area:search`, or `type:security` on runtime code.
+  - A cross-cutting refactor.
+  - An expected diff over 200 non-test lines.
+- **Cheap** (`copilot low`): everything else, typically config, scripts or docs with 5 or fewer criteria.
+
+The owner can change any lane's tier when approving. The foreman uses the owner's choice, not the rubric's.
 
 ## 3. Start lanes
 
@@ -97,7 +110,14 @@ For each approved lane:
 scripts/lane start <issue> <slug> [copilot|devin] [model|reasoning-effort]
 ```
 
-`scripts/lane start` creates the linked branch with `gh issue develop`, creates and focuses the Herdr worktree, writes `.env.lane`, clones `node_modules`, and starts the agent in the returned root pane. It does not copy `.env.local`. Default agent is Copilot on Auto. Pass a model or reasoning effort as the fourth argument, for example `scripts/lane start 586 login copilot high`; Devin always treats it as a model.
+`scripts/lane start` creates the linked branch with `gh issue develop`, creates and focuses the Herdr worktree, writes `.env.lane`, clones `node_modules`, and starts the agent in the returned root pane. It does not copy `.env.local`. Pass the agent and model from the approved proposal. Without them the agent is Copilot on Auto. Devin always treats the model argument as a model.
+
+```bash
+# strong tier
+scripts/lane start 674 unify-home-discovery devin claude-opus-5-5-high
+# cheap tier
+scripts/lane start 579 remove-critters copilot low
+```
 
 First time on a machine, or after a long break: run one lane end to end before starting a second.
 
