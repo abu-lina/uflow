@@ -16,6 +16,7 @@ import { SecondaryButton } from '@/components/ui/SecondaryButton';
 import { Icon } from '@/components/ui/Icon';
 import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
 import { useLanguage } from '@/providers/LanguageProvider';
+import { toAuthEmailLanguage } from '@/lib/auth-email-language';
 import { readPendingSignupEmail } from '@/lib/signup-session';
 
 type ResendState = 'idle' | 'sending' | 'sent' | 'error';
@@ -63,7 +64,7 @@ export default function CheckEmailPage() {
         body: JSON.stringify({
           to: pendingEmail,
           type: 'confirmSignup',
-          language,
+          language: toAuthEmailLanguage(language),
           confirmationUrl,
         }),
       });

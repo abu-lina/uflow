@@ -31,6 +31,7 @@ import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
 import { getAllBookmarkedItems } from '@/services/providers';
 import { getFirstImageUrl, formatProviderAddress, getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE, parseCategoryImages, getCategoryCardBackgroundColor } from '@/utils/imageUtils';
+import { toAuthEmailLanguage } from '@/lib/auth-email-language';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { signInWithEmailConfirmation, signInWithMagicLink } from '@/lib/auth';
 import { useAppStage } from '@/hooks/useAppStage';
@@ -41,7 +42,7 @@ export default function SavedProvidersPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { searchQuery, setSearchQuery, selectedLocation, selectedSection } = useSearch();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { stage } = useAppStage();
   
   // Determine if we should use magic link (Stage 2) or password (Stage 3)
@@ -204,7 +205,7 @@ export default function SavedProvidersPage() {
         body: JSON.stringify({
           to: loginFormData.email,
           type: 'confirmSignup',
-          language: t('common.language') || 'de',
+          language: toAuthEmailLanguage(language),
           confirmationUrl,
         }),
       });
@@ -244,7 +245,7 @@ export default function SavedProvidersPage() {
     try {
       if (useMagicLink) {
         // Stage 2: Use magic link (email-only)
-        const { data, error } = await signInWithMagicLink(loginFormData.email, t('common.language') as 'en' | 'de' | 'ar' | 'tr' || 'de');
+        const { data, error } = await signInWithMagicLink(loginFormData.email, toAuthEmailLanguage(language));
         
         if (error) {
           if (error.message === 'EMAIL_NOT_CONFIRMED') {

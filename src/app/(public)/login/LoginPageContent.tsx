@@ -20,11 +20,9 @@ import { LinkButton } from '@/components/ui/LinkButton';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/providers/auth-provider';
 import { signInWithEmailConfirmation } from '@/lib/auth';
+import { toAuthEmailLanguage } from '@/lib/auth-email-language';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getSafeReturnUrl } from '@/utils/safeReturnUrl';
-
-// Locales accepted by /api/send-auth-email; others fall back to 'en'
-const EMAIL_LANGUAGES: string[] = ['en', 'de', 'ar', 'tr'];
 
 interface FormData {
   email: string;
@@ -166,7 +164,7 @@ export function LoginPageContent() {
         body: JSON.stringify({
           to: formData.email,
           type: 'confirmSignup',
-          language: EMAIL_LANGUAGES.includes(language) ? language : 'en',
+          language: toAuthEmailLanguage(language),
           confirmationUrl,
         }),
       });

@@ -1,6 +1,7 @@
 'use client';
 
 import { supabase } from './supabase/client';
+import type { AuthEmailLanguage } from '@/lib/auth-email-language';
 import type { Language } from '@/translations';
 import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 
@@ -241,7 +242,7 @@ export const signInWithEmailConfirmation = async (email: string, password: strin
  */
 export const signInWithMagicLink = async (
   email: string,
-  language: 'en' | 'de' | 'ar' | 'tr' = 'en',
+  language: AuthEmailLanguage = 'en',
 ) => {
   try {
     // Send magic link via our API (uses Resend for branded emails)
@@ -366,7 +367,7 @@ export const signInWithMagicLink = async (
  */
 export const signUpWithEmailOnly = async (
   email: string,
-  language: 'en' | 'de' | 'ar' | 'tr' = 'en',
+  language: AuthEmailLanguage = 'en',
   honeypot?: string,
   termsAccepted?: boolean,
   privacyAccepted?: boolean,
