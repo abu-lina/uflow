@@ -35,7 +35,6 @@ const createHuskyRepo = () => {
   git(root, 'config', 'user.email', 'lane-test@example.com');
   git(root, 'config', 'user.name', 'Lane Test');
   git(root, 'config', 'commit.gpgsign', 'false');
-  git(root, 'config', 'core.hooksPath', '.husky/_');
   writeFileSync(join(root, '.gitignore'), '.worktrees/\n.husky/_\n');
   writeFileSync(join(root, '.husky', 'pre-commit'), 'touch "$MARKER_DIR/hook-ran"\n');
   writeFileSync(join(root, '.husky', '_', 'pre-commit'), '#!/bin/sh\n. "$(dirname "$0")/h"\n', {
@@ -47,6 +46,7 @@ const createHuskyRepo = () => {
   );
   git(root, 'add', '.gitignore', '.husky/pre-commit');
   git(root, 'commit', '-m', 'init');
+  git(root, 'config', 'core.hooksPath', '.husky/_');
   return { fixture, root };
 };
 

@@ -37,6 +37,17 @@ _lane_check_main() {
   return 1
 }
 
+# A relative core.hooksPath (husky: .husky/_) resolves against each worktree root, and the
+# generated hooks directory is git-ignored, so a new worktree needs its own copy.
+_lane_setup_hooks() {
+  local root="$1" dir="$2" hooks
+  hooks="$(git -C "$root" config --get core.hooksPath)" || return 0
+  [[ -n "$hooks" && "$hooks" != /* && -d "$root/$hooks" ]] || return 0
+  mkdir -p "$dir/${hooks%/*}" || return 1
+  rm -rf "${dir:?}/$hooks"
+  cp -R "$root/$hooks" "$dir/$hooks"
+}
+
 _lane_type() {
   case "$(gh issue view "$1" --json labels --jq '[.labels[].name|select(startswith("type:"))][0]')" in
     type:feature) echo feat ;;
@@ -204,6 +215,7 @@ EOF
       cp -R "$root/node_modules" "$dir/node_modules" ||
       { echo "could not clone node_modules into $dir" >&2; return 1; }
   fi
+  _lane_setup_hooks "$root" "$dir" || { echo "could not copy git hooks into $dir" >&2; return 1; }
   echo "lane #$issue: $dir on $branch, port $port"
 
   agent_args=()
