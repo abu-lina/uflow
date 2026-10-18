@@ -75,6 +75,13 @@ _agent_model_args() {
   fi
 }
 
+_herdr_root_pane() {
+  local pane
+  pane="$(printf '%s\n' "$1" | jq -r '.result.root_pane.pane_id // empty')" || return 1
+  [[ -n "$pane" ]] || return 1
+  printf '%s\n' "$pane"
+}
+
 _herdr_workspace_id() {
   local json="$1" checkout_path="$2"
   printf '%s\n' "$json" |
@@ -129,8 +136,8 @@ foreman() {
   # The caller's pane is busy running this function, so the agent gets a fresh tab's root pane.
   tab_response="$(herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd "$root" --label foreman --focus 2>&1)" ||
     { printf 'could not create the foreman tab: %s\n' "$tab_response" >&2; return 1; }
-  pane="$(printf '%s\n' "$tab_response" | jq -r '.result.root_pane.pane_id // empty')"
-  [[ -n "$pane" ]] || { echo "Herdr did not return a root pane for the foreman tab" >&2; return 1; }
+  pane="$(_herdr_root_pane "$tab_response")" ||
+    { echo "Herdr did not return a root pane for the foreman tab" >&2; return 1; }
 
   start_output="$(herdr agent start foreman --kind "$agent" --pane "$pane" -- "${agent_args[@]}" 2>&1)" ||
     { printf 'could not start the foreman in pane %s: %s\n' "$pane" "$start_output" >&2; return 1; }
@@ -175,8 +182,8 @@ lane() {
     --path "$dir" \
     --label "#$issue $slug" \
     --focus)" || return 1
-  pane="$(printf '%s\n' "$worktree_result" | jq -r '.result.root_pane.pane_id // empty')"
-  [[ -n "$pane" ]] || { echo "Herdr did not return the new worktree's root pane" >&2; return 1; }
+  pane="$(_herdr_root_pane "$worktree_result")" ||
+    { echo "Herdr did not return the new worktree's root pane" >&2; return 1; }
 
   port="$(_lane_port "$issue")"
   cat >"$dir/.env.lane" <<EOF || { echo "could not write $dir/.env.lane" >&2; return 1; }
