@@ -185,6 +185,10 @@ lane() {
   pane="$(_herdr_root_pane "$worktree_result")" ||
     { echo "Herdr did not return the new worktree's root pane" >&2; return 1; }
 
+  # A branch created from origin/main tracks it; point it at the lane's own remote branch.
+  git -C "$dir" branch --set-upstream-to="origin/$branch" "$branch" >/dev/null ||
+    { echo "could not set upstream of $branch to origin/$branch" >&2; return 1; }
+
   port="$(_lane_port "$issue")"
   cat >"$dir/.env.lane" <<EOF || { echo "could not write $dir/.env.lane" >&2; return 1; }
 PORT=$port
