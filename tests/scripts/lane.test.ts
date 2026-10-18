@@ -779,6 +779,63 @@ esac
     }
   });
 
+  describe('Copilot lane read-only shell allow list (#660)', () => {
+    const startedArgs = () => {
+      const fixture = mkdtempSync(join(tmpdir(), 'lane-readonly-allow-'));
+      try {
+        const { herdrLog, result } = startCopilotLane(fixture);
+        expect(result.status, result.stderr).toBe(0);
+        return readFileSync(herdrLog, 'utf8').split('\n').filter(Boolean);
+      } finally {
+        rmSync(fixture, { recursive: true, force: true });
+      }
+    };
+    const allowedShell = (args: string[]) =>
+      args
+        .filter((arg) => arg.startsWith('--allow-tool=shell('))
+        .map((arg) => arg.slice('--allow-tool=shell('.length, -1).replace(/:\*$/, ''));
+
+    it('criterion 1: allows the read-only command set', () => {
+      const allowed = allowedShell(startedArgs());
+      for (const cmd of [
+        'pwd',
+        'ls',
+        'cat',
+        'head',
+        'tail',
+        'wc',
+        'command -v',
+        'which',
+        'diff',
+        'grep',
+        'gh pr view',
+        'gh pr diff',
+        'gh run view',
+      ]) {
+        expect(allowed, cmd).toContain(cmd);
+      }
+    });
+
+    it('criterion 2: keeps write and code-running commands off the allow list', () => {
+      const allowed = allowedShell(startedArgs());
+      for (const cmd of ['sed', 'awk', 'tee', 'xargs', 'bash', 'sh', 'zsh', 'env', 'find', 'rg']) {
+        expect(allowed, cmd).not.toContain(cmd);
+      }
+    });
+
+    it('criterion 3: keeps the existing deny rules', () => {
+      const args = startedArgs();
+      for (const rule of [
+        '--deny-tool=shell(git merge)',
+        '--deny-tool=shell(git rebase)',
+        '--deny-tool=write(.env.local)',
+        '--deny-tool=shell(gh pr merge)',
+      ]) {
+        expect(args).toContain(rule);
+      }
+    });
+  });
+
   it('defines CI placeholder values once and keeps them aligned with ci.yml', () => {
     const scriptFiles = filesUnder(new URL('../../scripts/', import.meta.url).pathname);
     for (const [name, key] of [
