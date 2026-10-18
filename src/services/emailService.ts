@@ -1,4 +1,6 @@
+import 'server-only';
 import { Resend } from 'resend';
+import type { AuthEmailLanguage } from '@/lib/auth-email-language';
 
 // Lazy-load Resend client to avoid build-time initialization
 let resendClient: Resend | null = null;
@@ -469,7 +471,7 @@ const templates = {
 export const sendAuthEmail = async (
   to: string,
   type: 'confirmSignup' | 'resetPassword' | 'magicLink',
-  language: 'en' | 'de' | 'ar' | 'tr',
+  language: AuthEmailLanguage,
   confirmationUrl: string
 ) => {
   // Fallback to 'en' if language is not available in templates

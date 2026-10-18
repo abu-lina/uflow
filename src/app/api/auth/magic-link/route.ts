@@ -13,6 +13,7 @@ import {
   isDisposableEmail,
   isSuspiciousTiming,
 } from '@/utils/security';
+import { toAuthEmailLanguage } from '@/lib/auth-email-language';
 import { sendAuthEmail } from '@/services/emailService';
 
 /**
@@ -338,9 +339,7 @@ export async function POST(request: Request) {
     console.log('[MAGIC LINK API] Magic link URL generated (email and token omitted)');
     
     // 11. Send branded email via Resend
-    const emailLanguage = (language === 'en' || language === 'de' || language === 'ar' || language === 'tr') 
-      ? language 
-      : 'de'; // Default to German
+    const emailLanguage = toAuthEmailLanguage(language);
     
     try {
       console.log('[MAGIC LINK API] Sending magic link email via Resend...');

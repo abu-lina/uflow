@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sendAuthEmail } from '@/services/emailService';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { isAuthEmailLanguage } from '@/lib/auth-email-language';
 import { redactError } from '@/lib/logging/redact-pii';
 
 export async function POST(request: Request) {
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
     }
     
     // Validate language
-    if (language !== 'en' && language !== 'de' && language !== 'ar' && language !== 'tr') {
+    if (!isAuthEmailLanguage(language)) {
       return NextResponse.json(
         { error: 'Invalid language' },
         { status: 400 }
