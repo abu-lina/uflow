@@ -644,6 +644,46 @@ esac
     }
   });
 
+  it('criterion 1: the new lane branch tracks origin/<branch>, never origin/main', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-upstream-'));
+    try {
+      const { root, result } = startCopilotLane(fixture);
+      expect(result.status).toBe(0);
+      const dir = join(root, '.worktrees', '640-placeholder-test');
+      const branch = git(dir, 'branch', '--show-current');
+
+      expect(branch).toBe('fix/640-placeholder-test');
+      expect(git(dir, 'rev-parse', '--abbrev-ref', `${branch}@{upstream}`)).toBe(
+        `origin/${branch}`,
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
+  it('criterion 2: with push.default=upstream a bare git push cannot update main', () => {
+    const fixture = mkdtempSync(join(tmpdir(), 'lane-push-upstream-'));
+    try {
+      const { root, result } = startCopilotLane(fixture);
+      expect(result.status).toBe(0);
+      git(root, 'config', 'push.default', 'upstream');
+      const dir = join(root, '.worktrees', '640-placeholder-test');
+      const branch = git(dir, 'branch', '--show-current');
+      const remoteMainBefore = git(root, 'ls-remote', 'origin', 'refs/heads/main');
+      writeFileSync(join(dir, 'lane-work.txt'), 'lane commit\n');
+      git(dir, 'add', 'lane-work.txt');
+      git(dir, 'commit', '-m', 'lane work');
+      spawnSync('git', ['-C', dir, 'push'], { encoding: 'utf8' });
+
+      expect(git(root, 'ls-remote', 'origin', 'refs/heads/main')).toBe(remoteMainBefore);
+      expect(git(root, 'ls-remote', 'origin', `refs/heads/${branch}`)).toContain(
+        git(dir, 'rev-parse', 'HEAD'),
+      );
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  });
+
   it('keeps learnings in the lane PR without a foreman follow-up commit', () => {
     expect(foremanGuide).toMatch(/lane's learning file lands in its PR/i);
     expect(foremanGuide).toMatch(/foreman edits no files after merge/i);
