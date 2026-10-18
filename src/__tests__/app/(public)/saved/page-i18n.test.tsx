@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const mocks = vi.hoisted(() => ({
+  language: 'ur',
   stage: 'stage3' as 'stage2' | 'stage3',
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -40,6 +41,7 @@ vi.mock('@/providers/search-provider', () => ({
 // Identity translator; interpolated params are appended so tests can verify them.
 vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({
+    language: mocks.language,
     t: (key: string, params?: Record<string, string>) =>
       params ? `${key}|${Object.values(params).join('|')}` : key,
   }),
@@ -130,6 +132,17 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
   describe('magic link (stage2)', () => {
     beforeEach(() => {
       mocks.stage = 'stage2';
+    });
+
+    it('passes the mapped auth-email language to signInWithMagicLink', async () => {
+      mocks.signInWithMagicLink.mockResolvedValue({ data: {}, error: null });
+      render(<SavedProvidersPage />);
+
+      submitWith('user@example.com');
+
+      await waitFor(() =>
+        expect(mocks.signInWithMagicLink).toHaveBeenCalledWith('user@example.com', 'en')
+      );
     });
 
     it('renders the magic-link-sent state and toast via translation keys', async () => {
@@ -234,6 +247,25 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
         'login.emailSentToast',
         expect.objectContaining({ description: 'login.emailSentDescription' })
       );
+    });
+
+    it('sends the mapped auth-email language when resending the confirmation', async () => {
+      mocks.signInWithEmailConfirmation.mockResolvedValue({
+        data: null,
+        error: { message: 'EMAIL_NOT_CONFIRMED' },
+      });
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ token: 'tok' }) })
+        .mockResolvedValueOnce({ ok: true });
+      vi.stubGlobal('fetch', fetchMock);
+      render(<SavedProvidersPage />);
+
+      submitWith('user@example.com', 'secret');
+      fireEvent.click(await screen.findByRole('button', { name: 'resend' }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(JSON.parse(fetchMock.mock.calls[1][1].body).language).toBe('en');
     });
 
     it('translates resend-confirmation failure', async () => {
