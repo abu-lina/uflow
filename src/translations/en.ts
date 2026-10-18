@@ -179,7 +179,6 @@ export const en = {
     context: {
       allResults: 'All results',
       edit: 'Edit search',
-      backToHome: 'Back to home',
     },
   },
   suchen: {

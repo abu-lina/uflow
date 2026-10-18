@@ -11,6 +11,10 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({ language: 'en', t: (key: string) => (key === 'common.back' ? 'Back' : key) }),
+}));
+
 const createPages = [
   'app/(public)/create/page.tsx',
   'app/(public)/create/basics/page.tsx',
@@ -65,7 +69,7 @@ describe('Plan 265 create desktop layout', () => {
     expect(main).toHaveClass('md:mx-auto', 'md:w-full', 'md:max-w-2xl');
     expect(content).toHaveClass('md:!mx-auto', 'md:!w-full', 'md:!max-w-2xl');
     expect(screen.getByRole('heading', { name: 'Create' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Zurück' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
   });
 
   it('leaves shared layout defaults unchanged when the create opt-in is omitted', () => {

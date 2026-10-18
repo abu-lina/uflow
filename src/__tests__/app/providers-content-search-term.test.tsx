@@ -124,7 +124,6 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'search.ariaLabel': 'Search',
         'search.context.allResults': 'All results',
         'search.context.edit': 'Edit',
-        'search.context.backToHome': 'Back to home',
         'suchen.clearAll': 'Clear',
       };
       return map[key] ?? key;

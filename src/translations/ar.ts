@@ -177,7 +177,6 @@ export const ar = {
     context: {
       allResults: 'جميع النتائج',
       edit: 'تعديل البحث',
-      backToHome: 'العودة إلى الرئيسية',
     },
   },
   suchen: {
