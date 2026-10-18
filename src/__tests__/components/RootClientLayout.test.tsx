@@ -154,18 +154,17 @@ describe('RootClientLayout Mobile Bottom Slot — Pointer-Events Regression (Pla
     expect(slot).toHaveAttribute('data-mobile-ui');
   });
 
-  it('should contain mobile-footer-bar-wrapper and city-navbar-wrapper elements', () => {
+  it('should mount only the wrapper matching data-mobile-ui', () => {
+    mockUseAppStage.mockReturnValue({ stage: 'stage2', isLoading: false });
     const { container } = render(
       <RootClientLayout>
         <div>Content</div>
       </RootClientLayout>,
     );
 
-    const footerWrapper = container.querySelector('.mobile-footer-bar-wrapper');
-    const navbarWrapper = container.querySelector('.city-navbar-wrapper');
-
-    expect(footerWrapper).toBeInTheDocument();
-    expect(navbarWrapper).toBeInTheDocument();
+    const slot = container.querySelector('.mobile-bottom-ui-slot');
+    const wrappers = slot?.querySelectorAll('.mobile-footer-bar-wrapper, .city-navbar-wrapper');
+    expect(wrappers?.length).toBe(slot?.getAttribute('data-mobile-ui') === 'none' ? 0 : 1);
   });
 
   it('should set data-mobile-ui to "none" before mount (hydration safety)', () => {
@@ -181,21 +180,6 @@ describe('RootClientLayout Mobile Bottom Slot — Pointer-Events Regression (Pla
     const slot = container.querySelector('.mobile-bottom-ui-slot');
     const mode = slot?.getAttribute('data-mobile-ui');
     expect(['none', 'footer', 'navbar']).toContain(mode);
-  });
-
-  it('should have wrappers as children of the mobile-bottom-ui-slot', () => {
-    const { container } = render(
-      <RootClientLayout>
-        <div>Content</div>
-      </RootClientLayout>,
-    );
-
-    const slot = container.querySelector('.mobile-bottom-ui-slot');
-    const footerWrapper = slot?.querySelector('.mobile-footer-bar-wrapper');
-    const navbarWrapper = slot?.querySelector('.city-navbar-wrapper');
-
-    expect(footerWrapper).toBeInTheDocument();
-    expect(navbarWrapper).toBeInTheDocument();
   });
 });
 
