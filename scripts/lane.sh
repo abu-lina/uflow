@@ -13,10 +13,9 @@
 
 if [ -n "${ZSH_VERSION:-}" ]; then
   # The zsh-only expansion lives in eval so bash and shellcheck never parse it.
-  # shellcheck disable=SC2016
-  eval '_lane_wrapper_bin="${${(%):-%x}:A:h}/lane"'
+  _lane_wrapper_bin="$(eval 'print -r -- ${${(%):-%x}:A:h}')/lane"
   function lane { "$_lane_wrapper_bin" start "$@"; }
-  function lane_done { "$_lane_wrapper_bin" done "$@"; }
+  function lane_done { "$_lane_wrapper_bin" 'done' "$@"; }
   function lane_status { "$_lane_wrapper_bin" status "$@"; }
   function foreman { "$_lane_wrapper_bin" foreman "$@"; }
   return 0
