@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useRef, useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/providers/LanguageProvider';
 import { CreateDesktopLayoutContext, ScrollContext } from './ScrollablePageLayout';
 
 type HeaderVariant =
@@ -82,6 +83,7 @@ export function PageHeader({
   scrollContainerRef,
 }: PageHeaderProps) {
   const router = useRouter();
+  const { t } = useLanguage();
   const headerRef = useRef<HTMLElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -219,7 +221,7 @@ export function PageHeader({
         {/* Back Button */}
         {shouldShowBackButton && onBack && (
           <button
-            aria-label="Zurück"
+            aria-label={t('common.back')}
             className="-ml-1 flex h-8 w-8 items-center justify-center"
             onClick={handleBack}
           >

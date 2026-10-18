@@ -177,7 +177,6 @@ export const ps = {
     context: {
       allResults: 'All results',
       edit: 'Edit search',
-      backToHome: 'کور ته بېرته',
     },
   },
   suchen: {

@@ -23,6 +23,9 @@ import { signInWithEmailConfirmation } from '@/lib/auth';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getSafeReturnUrl } from '@/utils/safeReturnUrl';
 
+// Locales accepted by /api/send-auth-email; others fall back to 'en'
+const EMAIL_LANGUAGES: string[] = ['en', 'de', 'ar', 'tr'];
+
 interface FormData {
   email: string;
   password: string;
@@ -32,7 +35,7 @@ export function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -163,7 +166,7 @@ export function LoginPageContent() {
         body: JSON.stringify({
           to: formData.email,
           type: 'confirmSignup',
-          language: 'en', // You can detect this from browser language
+          language: EMAIL_LANGUAGES.includes(language) ? language : 'en',
           confirmationUrl,
         }),
       });

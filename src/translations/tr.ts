@@ -177,7 +177,6 @@ export const tr = {
     context: {
       allResults: 'Tüm sonuçlar',
       edit: 'Aramayı düzenle',
-      backToHome: 'Ana sayfaya dön',
     },
   },
   suchen: {

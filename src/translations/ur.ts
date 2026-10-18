@@ -179,7 +179,6 @@ export const ur = {
     context: {
       allResults: 'All results',
       edit: 'Edit search',
-      backToHome: 'ہوم پر واپس جائیں',
     },
   },
   suchen: {
