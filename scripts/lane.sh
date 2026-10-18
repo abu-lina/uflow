@@ -75,6 +75,13 @@ _agent_model_args() {
   fi
 }
 
+_herdr_root_pane() {
+  local pane
+  pane="$(printf '%s\n' "$1" | jq -r '.result.root_pane.pane_id // empty')" || return 1
+  [[ -n "$pane" ]] || return 1
+  printf '%s\n' "$pane"
+}
+
 _herdr_workspace_id() {
   local json="$1" checkout_path="$2"
   printf '%s\n' "$json" |
@@ -94,7 +101,7 @@ _herdr_workspace_for_issue() {
 }
 
 foreman() {
-  local agent="${1:-devin}" model="${2:-}" root pane_response pane prompt agents config_dir
+  local agent="${1:-devin}" model="${2:-}" root get_output tab_response pane start_output prompt config_dir
   local -a agent_args
   agent_args=()
   [[ "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be copilot or devin" >&2; return 1; }
@@ -103,15 +110,14 @@ foreman() {
   root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
   [[ "$root" == */.worktrees/* ]] && { echo "run foreman from the main checkout, not a worktree" >&2; return 1; }
 
-  agents="$(herdr agent list)" || return 1
-  if printf '%s\n' "$agents" | jq -e '[.. | objects | select(.name? == "foreman")] | length > 0' >/dev/null; then
+  # Herdr can list a name for a dead agent, so ask for the agent itself: agent_not_found means no live foreman.
+  if get_output="$(herdr agent get foreman 2>&1)"; then
     herdr agent focus foreman
     return $?
   fi
-
-  pane_response="$(herdr pane current --current)" || return 1
-  pane="$(printf '%s\n' "$pane_response" | jq -r '.result.pane.pane_id // empty')"
-  [[ -n "$pane" ]] || { echo "Herdr did not return the current main-workspace pane" >&2; return 1; }
+  [[ "$(printf '%s\n' "$get_output" | jq -r '.error.code // empty' 2>/dev/null)" == agent_not_found ]] ||
+    { printf 'could not check for a running foreman: %s\n' "$get_output" >&2; return 1; }
+  [[ -n "${HERDR_WORKSPACE_ID:-}" ]] || { echo "HERDR_WORKSPACE_ID is not set; run foreman inside Herdr" >&2; return 1; }
 
   _agent_model_args "$agent" "$model" || return 1
   if [[ "$agent" == devin ]]; then
@@ -127,7 +133,14 @@ foreman() {
   fi
   prompt="$(_foreman_prompt)" || { echo "could not load the Herdr skill" >&2; return 1; }
 
-  herdr agent start foreman --kind "$agent" --pane "$pane" -- "${agent_args[@]}" || return 1
+  # The caller's pane is busy running this function, so the agent gets a fresh tab's root pane.
+  tab_response="$(herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd "$root" --label foreman --focus 2>&1)" ||
+    { printf 'could not create the foreman tab: %s\n' "$tab_response" >&2; return 1; }
+  pane="$(_herdr_root_pane "$tab_response")" ||
+    { echo "Herdr did not return a root pane for the foreman tab" >&2; return 1; }
+
+  start_output="$(herdr agent start foreman --kind "$agent" --pane "$pane" -- "${agent_args[@]}" 2>&1)" ||
+    { printf 'could not start the foreman in pane %s: %s\n' "$pane" "$start_output" >&2; return 1; }
   herdr agent prompt foreman "$prompt"
 }
 
@@ -169,8 +182,8 @@ lane() {
     --path "$dir" \
     --label "#$issue $slug" \
     --focus)" || return 1
-  pane="$(printf '%s\n' "$worktree_result" | jq -r '.result.root_pane.pane_id // empty')"
-  [[ -n "$pane" ]] || { echo "Herdr did not return the new worktree's root pane" >&2; return 1; }
+  pane="$(_herdr_root_pane "$worktree_result")" ||
+    { echo "Herdr did not return the new worktree's root pane" >&2; return 1; }
 
   port="$(_lane_port "$issue")"
   cat >"$dir/.env.lane" <<EOF || { echo "could not write $dir/.env.lane" >&2; return 1; }
