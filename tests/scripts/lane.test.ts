@@ -87,12 +87,13 @@ const createLaneRepo = (fixture: string) => {
   return { root, baseCommit: git(root, 'rev-parse', 'HEAD') };
 };
 
-const startCopilotLane = (fixture: string, rootEnv = '') => {
+const startCopilotLane = (fixture: string, rootEnv = '', prepareRoot?: (root: string) => void) => {
   const bin = join(fixture, 'bin');
   const herdrLog = join(fixture, 'herdr.log');
   const { root } = createLaneRepo(fixture);
   mkdirSync(bin);
   if (rootEnv) writeFileSync(join(root, '.env.local'), rootEnv);
+  prepareRoot?.(root);
   writeFileSync(
     join(bin, 'gh'),
     `#!/bin/sh
@@ -1314,5 +1315,149 @@ describe('foreman restart (#650)', () => {
       expect(pathBefore).toBeTruthy();
       expect(pathAfter).toBe(pathBefore);
     }
+  });
+});
+
+describe('lane worktree git hooks (#655)', () => {
+  // Mirrors husky 9: a tracked .husky/pre-commit plus a git-ignored, generated .husky/_ dispatcher.
+  const huskyRoot = (hooksPath: string | null) => (root: string) => {
+    mkdirSync(join(root, '.husky', '_'), { recursive: true });
+    writeFileSync(join(root, '.gitignore'), '.worktrees/\n.husky/_\n');
+    writeFileSync(join(root, '.husky', 'pre-commit'), 'touch "$MARKER_DIR/hook-ran"\n');
+    writeFileSync(join(root, '.husky', '_', 'pre-commit'), '#!/bin/sh\n. "$(dirname "$0")/h"\n', {
+      mode: 0o755,
+    });
+    writeFileSync(
+      join(root, '.husky', '_', 'h'),
+      '#!/bin/sh\ns=$(dirname "$(dirname "$0")")/$(basename "$0")\nsh -e "$s" "$@"\n',
+    );
+    git(root, 'add', '.gitignore', '.husky/pre-commit');
+    git(root, 'commit', '-m', 'husky');
+    git(root, 'push', '-q', 'origin', 'main');
+    if (hooksPath) git(root, 'config', 'core.hooksPath', hooksPath);
+  };
+
+  const commitIn = (cwd: string, markerDir: string) => {
+    mkdirSync(markerDir, { recursive: true });
+    writeFileSync(join(cwd, 'file.txt'), `${Math.random()}\n`);
+    git(cwd, 'add', 'file.txt');
+    execFileSync('git', ['-C', cwd, 'commit', '-m', 'change'], {
+      env: { ...process.env, MARKER_DIR: markerDir },
+      stdio: 'ignore',
+    });
+  };
+
+  const withLane = (
+    hooksPath: string | null,
+    check: (ctx: { fixture: string; root: string; dir: string; status: number | null }) => void,
+  ) => {
+    const fixture = realpathSync(mkdtempSync(join(tmpdir(), 'lane-hooks-')));
+    try {
+      const { root, result } = startCopilotLane(fixture, '', huskyRoot(hooksPath));
+      expect(result.status, result.stderr).toBe(0);
+      check({
+        fixture,
+        root,
+        dir: join(root, '.worktrees/640-placeholder-test'),
+        status: result.status,
+      });
+    } finally {
+      rmSync(fixture, { recursive: true, force: true });
+    }
+  };
+
+  it('criterion 1: a commit in a worktree made by lane start runs the pre-commit hook', () => {
+    withLane('.husky/_', ({ fixture, dir }) => {
+      commitIn(dir, join(fixture, 'markers'));
+      expect(existsSync(join(fixture, 'markers', 'hook-ran'))).toBe(true);
+    });
+  });
+
+  it('criterion 2: the main checkout keeps running hooks and keeps core.hooksPath', () => {
+    withLane('.husky/_', ({ fixture, root }) => {
+      commitIn(root, join(fixture, 'markers'));
+      expect(existsSync(join(fixture, 'markers', 'hook-ran'))).toBe(true);
+      expect(git(root, 'config', '--get', 'core.hooksPath')).toBe('.husky/_');
+    });
+  });
+
+  it('starts a lane without copying hooks when core.hooksPath is unset', () => {
+    withLane(null, ({ dir }) => {
+      expect(existsSync(join(dir, '.husky', '_'))).toBe(false);
+    });
+  });
+
+  it('starts a lane without copying hooks when core.hooksPath is absolute', () => {
+    withLane(null, ({ fixture, root }) => {
+      const absolute = join(fixture, 'abs-hooks');
+      mkdirSync(absolute);
+      writeFileSync(join(absolute, 'pre-commit'), '#!/bin/sh\n');
+      git(root, 'config', 'core.hooksPath', absolute);
+      const bash = `${shellFunction('_lane_setup_hooks')}\n_lane_setup_hooks "$1" "$2"`;
+      const target = join(fixture, 'target');
+      mkdirSync(target);
+      const result = spawnSync('bash', ['-c', bash, 'bash', root, target], { encoding: 'utf8' });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readdirSync(target)).toEqual([]);
+    });
+  });
+
+  it('copies a top-level hooks dir without nesting it', () => {
+    withLane(null, ({ fixture, root }) => {
+      mkdirSync(join(root, '.githooks'));
+      writeFileSync(join(root, '.githooks', 'pre-commit'), '#!/bin/sh\n');
+      git(root, 'config', 'core.hooksPath', '.githooks');
+      const target = join(fixture, 'target');
+      mkdirSync(target);
+      const bash = `${shellFunction('_lane_setup_hooks')}\n_lane_setup_hooks "$1" "$2"`;
+      const result = spawnSync('bash', ['-c', bash, 'bash', root, target], { encoding: 'utf8' });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readdirSync(join(target, '.githooks'))).toEqual(['pre-commit']);
+    });
+  });
+
+  it('leaves a hooks dir that already exists in the worktree untouched', () => {
+    withLane(null, ({ fixture, root }) => {
+      mkdirSync(join(root, '.githooks'));
+      writeFileSync(join(root, '.githooks', 'pre-commit'), '#!/bin/sh\n');
+      git(root, 'config', 'core.hooksPath', '.githooks');
+      const target = join(fixture, 'target');
+      mkdirSync(join(target, '.githooks'), { recursive: true });
+      const bash = `${shellFunction('_lane_setup_hooks')}\n_lane_setup_hooks "$1" "$2"`;
+      const result = spawnSync('bash', ['-c', bash, 'bash', root, target], { encoding: 'utf8' });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readdirSync(join(target, '.githooks'))).toEqual([]);
+    });
+  });
+
+  it('starts a lane without copying hooks when the relative hooksPath dir is missing', () => {
+    withLane(null, ({ fixture, root }) => {
+      git(root, 'config', 'core.hooksPath', 'missing/hooks');
+      const target = join(fixture, 'target');
+      mkdirSync(target);
+      const bash = `${shellFunction('_lane_setup_hooks')}\n_lane_setup_hooks "$1" "$2"`;
+      const result = spawnSync('bash', ['-c', bash, 'bash', root, target], { encoding: 'utf8' });
+      expect(result.status, result.stderr).toBe(0);
+      expect(readdirSync(target)).toEqual([]);
+    });
+  });
+
+  it('does not touch anything outside the worktree when core.hooksPath contains ..', () => {
+    withLane(null, ({ root, dir }) => {
+      const worktrees = join(root, '.worktrees');
+      git(root, 'config', 'core.hooksPath', '..');
+      const bash = `${shellFunction('_lane_setup_hooks')}\n_lane_setup_hooks "$1" "$2"`;
+      const result = spawnSync('bash', ['-c', bash, 'bash', root, dir], {
+        encoding: 'utf8',
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(existsSync(dir)).toBe(true);
+      expect(readdirSync(worktrees)).toEqual(['640-placeholder-test']);
+      git(root, 'config', 'core.hooksPath', '.husky/../..');
+      const nested = spawnSync('bash', ['-c', bash, 'bash', root, dir], { encoding: 'utf8' });
+      expect(nested.status, nested.stderr).toBe(0);
+      expect(existsSync(dir)).toBe(true);
+      expect(readdirSync(worktrees)).toEqual(['640-placeholder-test']);
+    });
   });
 });
