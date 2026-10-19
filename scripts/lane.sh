@@ -298,7 +298,24 @@ EOF
 
   herdr agent start "lane-$issue" --kind "$agent" --pane "$pane" -- "${agent_args[@]}" || return 1
   prompt="$(_lane_prompt "$issue")"
-  herdr agent prompt "lane-$issue" "$prompt"
+  _lane_send_prompt "lane-$issue" "$pane" "$prompt"
+}
+
+# `agent start` can report ready while the agent is still printing login lines, so the first
+# prompt may land in the shell. --wait reports agent_prompt_stalled when the agent never
+# starts working; wait for it to settle, then re-send once.
+_lane_send_prompt() {
+  local name="$1" pane="$2" prompt="$3" output
+  local -a prompt_args=(--wait --until working --until blocked --until 'done')
+  output="$(herdr agent prompt "$name" "$prompt" "${prompt_args[@]}" 2>&1)" && return 0
+  if [[ "$(printf '%s\n' "$output" | jq -r '.error.code // empty' 2>/dev/null)" != agent_prompt_stalled ]]; then
+    printf 'could not send the prompt to %s (pane %s): %s\n' "$name" "$pane" "$output" >&2
+    return 1
+  fi
+  herdr agent wait "$name" --until idle --timeout 60000 >/dev/null 2>&1 || true
+  output="$(herdr agent prompt "$name" "$prompt" "${prompt_args[@]}" 2>&1)" && return 0
+  printf '%s did not start working after the prompt was re-sent (pane %s): %s\n' "$name" "$pane" "$output" >&2
+  return 1
 }
 
 lane_done() {
