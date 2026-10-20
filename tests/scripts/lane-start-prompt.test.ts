@@ -1,14 +1,16 @@
-import { execFileSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-const laneEntrypoint = new URL('../../scripts/lane', import.meta.url).pathname;
-const laneSh = new URL('../../scripts/lane.sh', import.meta.url).pathname;
-const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
-const git = (root: string, ...args: string[]) =>
-  execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
+import {
+  createLaneRepo,
+  ghStub,
+  herdrWorktreeCreateCase,
+  laneEntrypoint,
+  laneSh,
+  shellQuote,
+} from './helpers/lane';
 
 type PromptOutcome = 'working' | 'stalled' | 'failed';
 
@@ -20,58 +22,18 @@ const startLane = (
 ) => {
   const fixture = realpathSync(mkdtempSync(join(tmpdir(), 'lane-start-prompt-')));
   try {
-    const root = join(fixture, 'repo');
-    const remote = join(fixture, 'origin.git');
     const bin = join(fixture, 'bin');
     const log = join(fixture, 'herdr.log');
-    mkdirSync(root);
+    const { root } = createLaneRepo(fixture);
     mkdirSync(bin);
-    execFileSync('git', ['init', '--bare', remote], { stdio: 'ignore' });
-    execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
-    git(root, 'config', 'user.email', 'lane-test@example.com');
-    git(root, 'config', 'user.name', 'Lane test');
-    writeFileSync(join(root, 'README.md'), 'fixture\n');
-    git(root, 'add', 'README.md');
-    git(root, 'commit', '-m', 'fixture');
-    git(root, 'remote', 'add', 'origin', remote);
-    execFileSync('git', ['-C', root, 'push', '-u', 'origin', 'main'], { stdio: 'ignore' });
 
-    writeFileSync(
-      join(bin, 'gh'),
-      `#!/bin/sh
-case "$1 $2" in
-  "issue view") printf '%s\\n' 'type:bugfix' ;;
-  "issue develop")
-    shift 2
-    while [ "$#" -gt 0 ]; do
-      if [ "$1" = --name ]; then branch="$2"; shift 2; else shift; fi
-    done
-    git -C "$REPO_ROOT" push -q origin "main:refs/heads/$branch"
-    ;;
-esac
-`,
-      { mode: 0o755 },
-    );
+    writeFileSync(join(bin, 'gh'), ghStub, { mode: 0o755 });
     writeFileSync(
       join(bin, 'herdr'),
       `#!/bin/sh
 printf '%s\\n' "$*" >> "$HERDR_LOG"
 case "$1 $2" in
-  "worktree create")
-    shift 2
-    while [ "$#" -gt 0 ]; do
-      case "$1" in
-        --cwd) repo="$2"; shift 2 ;;
-        --branch) branch="$2"; shift 2 ;;
-        --base) base="$2"; shift 2 ;;
-        --path) path="$2"; shift 2 ;;
-        *) shift ;;
-      esac
-    done
-    git -C "$repo" worktree add -b "$branch" "$path" "$base" >/dev/null || exit 1
-    printf '%s\\n' '{"result":{"root_pane":{"pane_id":"pane-lane"}}}'
-    ;;
-  "agent prompt")
+${herdrWorktreeCreateCase}  "agent prompt")
     n=$(grep -c '^agent prompt ' "$HERDR_LOG")
     outcome=$(printf '%s\\n' "$PROMPT_OUTCOMES" | cut -d, -f"$n")
     if [ "$outcome" = failed ]; then
