@@ -3,11 +3,9 @@ import { chmodSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { laneSh, shellQuote } from './helpers/lane';
 
-const laneSh = new URL('../../scripts/lane.sh', import.meta.url).pathname;
 const readme = readFileSync(new URL('../../scripts/README.md', import.meta.url), 'utf8');
-
-const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}'`;
 
 const zsh = (script: string, env: NodeJS.ProcessEnv = process.env) =>
   spawnSync('zsh', ['-f', '-c', script], { encoding: 'utf8', env });
