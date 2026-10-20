@@ -2,6 +2,10 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+// Fixture repos and every spawned lane command ignore the user's system and global git config.
+process.env.GIT_CONFIG_NOSYSTEM = '1';
+process.env.GIT_CONFIG_GLOBAL = '/dev/null';
+
 export const laneEntrypoint = new URL('../../../scripts/lane', import.meta.url).pathname;
 export const laneSh = new URL('../../../scripts/lane.sh', import.meta.url).pathname;
 
@@ -24,7 +28,7 @@ export const createLaneRepo = (fixture: string) => {
   git(root, 'commit', '-m', 'fixture');
   git(root, 'remote', 'add', 'origin', remote);
   execFileSync('git', ['-C', root, 'push', '-u', 'origin', 'main'], { stdio: 'ignore' });
-  return { root, baseCommit: git(root, 'rev-parse', 'HEAD') };
+  return { root };
 };
 
 // `gh issue develop` pushes main to the requested branch name in $REPO_ROOT's origin.

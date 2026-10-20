@@ -82,6 +82,7 @@ const startCopilotLane = (
   const tmuxLog = join(fixture, 'tmux.log');
   const { root } = createLaneRepo(fixture);
   mkdirSync(bin);
+  mkdirSync(join(fixture, 'tmp'));
   if (rootEnv) writeFileSync(join(root, '.env.local'), rootEnv);
   prepareRoot?.(root);
   writeStub(bin, 'gh', ghStub);
@@ -113,6 +114,7 @@ esac
       HERDR_CALLS: herdrCalls,
       GH_CALLS: ghCalls,
       TMUX_LOG: tmuxLog,
+      TMPDIR: join(fixture, 'tmp'),
       REPO_ROOT: root,
     },
   });
@@ -222,7 +224,7 @@ esac
       );
       writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
 
-      const result = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} status`], {
+      const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} status`], {
         cwd: new URL('../..', import.meta.url).pathname,
         encoding: 'utf8',
         env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, HERDR_LOG: herdrLog },
@@ -263,7 +265,7 @@ esac
         [link, nestedDirectory],
       ];
       for (const [path, cwd] of invocations) {
-        const result = spawnSync('zsh', ['-c', `${shellQuote(path)} status`], {
+        const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(path)} status`], {
           cwd,
           encoding: 'utf8',
           env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
@@ -278,7 +280,7 @@ esac
 
   it('prints usage for missing and unknown subcommands', () => {
     for (const command of ['', 'bogus']) {
-      const result = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} ${command}`], {
+      const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} ${command}`], {
         encoding: 'utf8',
       });
       expect(result.status).not.toBe(0);
@@ -305,16 +307,20 @@ esac
       writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
 
       const env = { ...process.env, PATH: `${bin}:${process.env.PATH}` };
-      const successful = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} status`], {
+      const successful = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} status`], {
         cwd: new URL('../..', import.meta.url).pathname,
         encoding: 'utf8',
         env,
       });
-      const startMissingIssue = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} start`], {
-        encoding: 'utf8',
-        env,
-      });
-      const failed = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} done`], {
+      const startMissingIssue = spawnSync(
+        'zsh',
+        ['-f', '-c', `${shellQuote(laneEntrypoint)} start`],
+        {
+          encoding: 'utf8',
+          env,
+        },
+      );
+      const failed = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} done`], {
         encoding: 'utf8',
         env,
       });
@@ -526,7 +532,7 @@ typeset -p workspace_id label path > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
       mkdirSync(join(root, '.worktrees', '636-fixture'), { recursive: true });
       writeStub(bin, 'jq', '#!/bin/sh\nprintf "workspace-636\\n"\n');
       writeStub(bin, 'herdr', `#!/bin/sh\nprintf '%s\\n' "$*" >> "$HERDR_LOG"\n`);
-      const result = spawnSync('zsh', ['-c', `${shellQuote(laneEntrypoint)} start 636`], {
+      const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} start 636`], {
         cwd: root,
         encoding: 'utf8',
         env: { ...process.env, PATH: `${bin}:/usr/bin:/bin`, HERDR_LOG: herdrLog },
@@ -1297,6 +1303,7 @@ const runForeman = (shell: 'bash' | 'zsh', scenario: ForemanScenario) => {
   try {
     mkdirSync(join(root, '.devin'), { recursive: true });
     mkdirSync(bin);
+    mkdirSync(join(fixture, 'tmp'));
     execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
     writeFileSync(
       join(root, '.devin', 'foreman.json'),
@@ -1344,6 +1351,7 @@ esac
       ...process.env,
       PATH: `${bin}:${process.env.PATH}`,
       HERDR_LOG: log,
+      TMPDIR: join(fixture, 'tmp'),
       HERDR_PANE_ID: 'w1M:p1',
       FIXTURES: herdrFixtureDir,
       TAB_NO_ROOT_PANE: join(fixture, 'tab-no-root-pane.json'),
