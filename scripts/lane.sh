@@ -284,6 +284,7 @@ EOF
       "sandbox": {
         "excluded": {
           "allow": [
+            "Exec(gh issue view)",
             "Exec(gh issue comment)",
             "Exec(gh pr create --draft)",
             "Exec(gh pr checks)",
@@ -293,7 +294,7 @@ EOF
       }
     }' > "$config_file") ||
       { echo "could not write Devin lane sandbox config" >&2; return 1; }
-    agent_args+=(--permission-mode accept-edits --sandbox --config "$config_file")
+    agent_args+=(--sandbox --config "$config_file")
   fi
 
   herdr agent start "lane-$issue" --kind "$agent" --pane "$pane" -- "${agent_args[@]}" || return 1
