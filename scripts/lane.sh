@@ -285,10 +285,10 @@ EOF
         "excluded": {
           "allow": [
             "Exec(gh issue view)",
+            "Exec(gh issue create)",
             "Exec(gh issue comment)",
             "Exec(gh pr create --draft)",
-            "Exec(gh pr checks)",
-            "Exec(gh pr view)"
+            "Exec(gh pr checks)"
           ]
         }
       }
