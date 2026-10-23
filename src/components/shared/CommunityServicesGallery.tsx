@@ -39,7 +39,7 @@ export function CommunityServicesGallery() {
     router.push(
       buildResultsUrl({
         section: 'ummah',
-        categorySlug: 'gemeinschaft-spenden',
+        categorySlug: 'community-support',
         categoryId: GEMEINSCHAFT_SPENDEN_CATEGORY_ID,
       }),
     );
