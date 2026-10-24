@@ -33,9 +33,10 @@ describe('#750 check-email vertical centring', () => {
     const heading = screen.getByText(en.signup.checkEmail.successTitle);
     const wrapper = heading.closest('.justify-center');
     expect(wrapper).not.toBeNull();
-    expect(wrapper!.className).toContain('flex-1');
-    expect(wrapper!.className).toContain('items-center');
-    expect(wrapper!.className).toContain('pb-16');
+    const classes = wrapper?.className ?? '';
+    expect(classes).toContain('flex-1');
+    expect(classes).toContain('items-center');
+    expect(classes).toContain('pb-16');
   });
 
   it('does not add a second bottom spacer that would shift the content up', () => {
