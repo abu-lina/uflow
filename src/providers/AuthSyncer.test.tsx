@@ -235,6 +235,11 @@ describe('AuthSyncer', () => {
       );
       return pending;
     }
+    const settle = (
+      pending: Map<string, (r: UserResult) => void>,
+      token: string,
+      result: UserResult,
+    ) => pending.get(token)?.(result);
     const valid: UserResult = { data: { user: { id: 'u1' } }, error: null };
     const invalid = (): UserResult => ({ data: { user: null }, error: foreignTokenError() });
 
@@ -248,9 +253,9 @@ describe('AuthSyncer', () => {
         second = emitAuthEvent('TOKEN_REFRESHED', newer);
       });
       await act(async () => {
-        pending.get(newer.access_token)!(valid);
+        settle(pending, newer.access_token, valid);
         await second;
-        pending.get(older.access_token)!(valid);
+        settle(pending, older.access_token, valid);
         await first;
       });
 
@@ -268,9 +273,9 @@ describe('AuthSyncer', () => {
         second = emitAuthEvent('TOKEN_REFRESHED', newer);
       });
       await act(async () => {
-        pending.get(newer.access_token)!(valid);
+        settle(pending, newer.access_token, valid);
         await second;
-        pending.get(older.access_token)!(invalid());
+        settle(pending, older.access_token, invalid());
         await first;
       });
 
@@ -287,7 +292,7 @@ describe('AuthSyncer', () => {
         await emitAuthEvent('SIGNED_OUT', null);
       });
       await act(async () => {
-        pending.get(older.access_token)!(valid);
+        settle(pending, older.access_token, valid);
         await first;
       });
 
