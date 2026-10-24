@@ -43,8 +43,17 @@ vi.mock('@/components/ui/Icon', () => ({
 }));
 
 vi.mock('@/components/ui/IconWithTitle', () => ({
-  IconWithTitle: ({ title, children }: { title: React.ReactNode; children?: React.ReactNode }) => (
+  IconWithTitle: ({
+    icon,
+    title,
+    children,
+  }: {
+    icon?: React.ReactNode;
+    title: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
     <div>
+      {icon}
       <h2>{title}</h2>
       {children}
     </div>
@@ -165,13 +174,21 @@ describe('Check-email success screen (issue #743)', () => {
     mockFetch.mockImplementation(() => okJson({ token: 'tok-1' }));
   });
 
-  it('AC1: shows a BarakAllahu feekum heading', () => {
+  it('AC1: shows a BarakAllahu feek heading, same as the recommend success screen', () => {
     render(<CheckEmailPage />);
-    const heading = screen.getByRole('heading', { name: /BarakAllahu feekum/i });
-    expect(heading).toBeTruthy();
+    const heading = screen.getByRole('heading', { name: 'BarakAllahu feek' });
+    expect(heading.textContent).toBe(en.create.recommend.successTitle);
+    expect(document.body.textContent).not.toMatch(/feekum/i);
   });
 
-  it('AC2: tells the user to open the inbox, confirm the email and check spam', () => {
+  it('AC1: the decorative heart icon is hidden from assistive tech', () => {
+    const { container } = render(<CheckEmailPage />);
+    const heart = container.querySelector('svg.lucide-heart');
+    expect(heart?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('AC2/AC7: after signup, the rendered screen tells the user to open the inbox, confirm the email and check spam', () => {
+    sessionStorage.setItem('signup-pending-email', 'new@example.com');
     render(<CheckEmailPage />);
     const text = document.body.textContent ?? '';
     expect(text).toMatch(/open your inbox/i);

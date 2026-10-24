@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
-// Material Symbols icon imports removed - using @iconify/react Icon component instead
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
@@ -91,7 +90,13 @@ export default function CheckEmailPage() {
         <div className="flex w-full flex-col">
           <TitleSection className="mb-10">
             <IconWithTitle
-              icon={<Heart className="h-full w-full text-content-heading" strokeWidth={2.5} />}
+              icon={
+                <Heart
+                  aria-hidden="true"
+                  className="h-full w-full text-content-heading"
+                  strokeWidth={2.5}
+                />
+              }
               size="large"
               title={t('signup.checkEmail.successTitle')}
             >

@@ -783,7 +783,7 @@ export const de = {
     afterConfirmationLogin: 'Nach Bestätigung anmelden',
     checkEmail: {
       pageTitle: 'E-Mail bestätigen',
-      successTitle: 'BarakAllahu feekum',
+      successTitle: 'BarakAllahu feek',
       title: 'Überprüfe dein E-Mail Postfach',
       description:
         'Wir haben dir eine Bestätigungs-E-Mail gesendet. Öffne dein Postfach und klicke auf den Link, um deine E-Mail zu bestätigen und dein Konto zu aktivieren.',

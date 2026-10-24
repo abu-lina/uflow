@@ -776,7 +776,7 @@ export const tr = {
     afterConfirmationLogin: 'Onay sonrası giriş yap',
     checkEmail: {
       pageTitle: 'E-postayı onayla',
-      successTitle: 'BarakAllahu feekum',
+      successTitle: 'BarakAllahu feek',
       title: 'E-posta kutunuzu kontrol edin',
       description:
         'Size bir onay e-postası gönderdik. Gelen kutunuzu açın ve e-postanızı onaylayıp hesabınızı etkinleştirmek için bağlantıya tıklayın.',

@@ -777,7 +777,7 @@ export const ps = {
     afterConfirmationLogin: 'د تایید وروسته ننوتل',
     checkEmail: {
       pageTitle: 'بریښنالیک تایید کړئ',
-      successTitle: 'بارک الله فيکم',
+      successTitle: 'BarakAllahu feek',
       title: 'خپل بریښنالیک ان باکس وګورئ',
       description:
         'موږ تاسو ته یو تایید بریښنالیک لیږلی دی. خپل ان باکس خلاص کړئ او خپل بریښنالیک تایید او حساب فعالولو لپاره په لینک کلیک وکړئ.',

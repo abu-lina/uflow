@@ -773,7 +773,7 @@ export const en = {
     afterConfirmationLogin: 'Login after confirmation',
     checkEmail: {
       pageTitle: 'Confirm email',
-      successTitle: 'BarakAllahu feekum',
+      successTitle: 'BarakAllahu feek',
       title: 'Check your email inbox',
       description:
         'We have sent you a confirmation email. Open your inbox and click the link to confirm your email and activate your account.',

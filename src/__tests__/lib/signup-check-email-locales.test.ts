@@ -18,5 +18,9 @@ describe('signup.checkEmail strings (issue #743 AC5)', () => {
         expect(checkEmail[key].trim().length).toBeGreaterThan(0);
       }
     });
+
+    it(`uses the same heading as the recommend success screen in ${code}`, () => {
+      expect(bundle.signup.checkEmail.successTitle).toBe(bundle.create.recommend.successTitle);
+    });
   }
 });

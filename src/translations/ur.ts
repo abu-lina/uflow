@@ -781,7 +781,7 @@ export const ur = {
     afterConfirmationLogin: 'تصدیق کے بعد لاگ ان',
     checkEmail: {
       pageTitle: 'ای میل کی تصدیق',
-      successTitle: 'بارک اللہ فیکم',
+      successTitle: 'بارک اللہ فیک',
       title: 'اپنا ای میل ان باکس چیک کریں',
       description:
         'ہم نے آپ کو ایک تصدیقی ای میل بھیجی ہے۔ اپنا ان باکس کھولیں اور اپنی ای میل کی تصدیق اور اکاؤنٹ فعال کرنے کے لیے لنک پر کلک کریں۔',
