@@ -139,6 +139,162 @@ describe('AuthSyncer', () => {
     });
   });
 
+  describe('transient network failures', () => {
+    it('getUser rejecting with a retryable error neither signs out nor syncs (auth state change)', async () => {
+      authMock.getUser.mockRejectedValue(new AuthRetryableFetchError('offline', 0));
+      render(<AuthSyncer />);
+      await act(() => emitAuthEvent('SIGNED_IN', session));
+
+      expect(authMock.signOut).not.toHaveBeenCalled();
+      expect(syncedCalls()).toHaveLength(0);
+    });
+
+    it('getUser rejecting with a retryable error neither signs out nor syncs (persisted session on load)', async () => {
+      authMock.getUser.mockRejectedValue(new AuthRetryableFetchError('offline', 0));
+      authState.current = { user: null, session };
+      render(<AuthSyncer />);
+
+      await waitFor(() => expect(authMock.getUser).toHaveBeenCalled());
+      await act(async () => {});
+      expect(authMock.signOut).not.toHaveBeenCalled();
+      expect(syncedCalls()).toHaveLength(0);
+    });
+
+    it('retries the same token after an inconclusive validation', async () => {
+      authMock.getUser.mockRejectedValueOnce(new AuthRetryableFetchError('offline', 0));
+      authMock.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+      render(<AuthSyncer />);
+      await act(() => emitAuthEvent('SIGNED_IN', session));
+      await act(() => emitAuthEvent('SIGNED_IN', session));
+
+      expect(syncedCalls()).toHaveLength(1);
+    });
+  });
+
+  describe('one sync path per access token', () => {
+    beforeEach(() => {
+      authMock.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+    });
+
+    it('validates and posts once when the session effect and the auth event carry the same token', async () => {
+      authState.current = { user: { id: 'u1' }, session };
+      render(<AuthSyncer />);
+      await act(() => emitAuthEvent('INITIAL_SESSION', session));
+      await act(() => emitAuthEvent('SIGNED_IN', session));
+      await act(async () => {});
+
+      expect(authMock.getUser).toHaveBeenCalledTimes(1);
+      expect(syncedCalls()).toHaveLength(1);
+    });
+
+    it('validates and posts once for concurrent events with the same token', async () => {
+      render(<AuthSyncer />);
+      await act(async () => {
+        await Promise.all([
+          emitAuthEvent('SIGNED_IN', session),
+          emitAuthEvent('SIGNED_IN', session),
+        ]);
+      });
+
+      expect(authMock.getUser).toHaveBeenCalledTimes(1);
+      expect(syncedCalls()).toHaveLength(1);
+    });
+
+    it('syncs again when the token changes', async () => {
+      render(<AuthSyncer />);
+      await act(() => emitAuthEvent('SIGNED_IN', session));
+      await act(() =>
+        emitAuthEvent('TOKEN_REFRESHED', { access_token: 'access-2', refresh_token: 'refresh-2' }),
+      );
+
+      expect(syncedCalls()).toHaveLength(2);
+    });
+
+    it('keeps one auth subscription across re-renders and expiry warnings', async () => {
+      fetchMock.mockResolvedValue({ ok: false, json: async () => ({ error: 'token expired' }) });
+      const { rerender } = render(<AuthSyncer />);
+      await act(() => emitAuthEvent('SIGNED_IN', session));
+      rerender(<AuthSyncer />);
+      await act(() =>
+        emitAuthEvent('TOKEN_REFRESHED', { access_token: 'a2', refresh_token: 'r2' }),
+      );
+
+      expect(authMock.onAuthStateChange).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('validation is bound to the current session', () => {
+    const older = { access_token: 'access-old', refresh_token: 'refresh-old' };
+    const newer = { access_token: 'access-new', refresh_token: 'refresh-new' };
+    type UserResult = { data: { user: unknown }; error: unknown };
+
+    function deferGetUser() {
+      const pending = new Map<string, (r: UserResult) => void>();
+      authMock.getUser.mockImplementation(
+        (token: string) => new Promise<UserResult>((resolve) => pending.set(token, resolve)),
+      );
+      return pending;
+    }
+    const valid: UserResult = { data: { user: { id: 'u1' } }, error: null };
+    const invalid = (): UserResult => ({ data: { user: null }, error: foreignTokenError() });
+
+    it('an older session that validates late never overwrites a newer session cookie', async () => {
+      const pending = deferGetUser();
+      render(<AuthSyncer />);
+      let first!: Promise<void>;
+      let second!: Promise<void>;
+      await act(async () => {
+        first = emitAuthEvent('SIGNED_IN', older);
+        second = emitAuthEvent('TOKEN_REFRESHED', newer);
+      });
+      await act(async () => {
+        pending.get(newer.access_token)!(valid);
+        await second;
+        pending.get(older.access_token)!(valid);
+        await first;
+      });
+
+      expect(syncedCalls()).toHaveLength(1);
+      expect(JSON.parse(syncedCalls()[0][1].body)).toEqual(newer);
+    });
+
+    it('an older session that fails validation late never signs out a newer session', async () => {
+      const pending = deferGetUser();
+      render(<AuthSyncer />);
+      let first!: Promise<void>;
+      let second!: Promise<void>;
+      await act(async () => {
+        first = emitAuthEvent('SIGNED_IN', older);
+        second = emitAuthEvent('TOKEN_REFRESHED', newer);
+      });
+      await act(async () => {
+        pending.get(newer.access_token)!(valid);
+        await second;
+        pending.get(older.access_token)!(invalid());
+        await first;
+      });
+
+      expect(authMock.signOut).not.toHaveBeenCalled();
+      expect(JSON.parse(syncedCalls()[0][1].body)).toEqual(newer);
+    });
+
+    it('a session that validates after sign-out is not written to cookies', async () => {
+      const pending = deferGetUser();
+      render(<AuthSyncer />);
+      let first!: Promise<void>;
+      await act(async () => {
+        first = emitAuthEvent('SIGNED_IN', older);
+        await emitAuthEvent('SIGNED_OUT', null);
+      });
+      await act(async () => {
+        pending.get(older.access_token)!(valid);
+        await first;
+      });
+
+      expect(syncedCalls()).toHaveLength(0);
+    });
+  });
+
   it('never logs access or refresh token values', async () => {
     vi.stubEnv('NODE_ENV', 'development');
     const spies = [
