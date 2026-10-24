@@ -214,6 +214,8 @@ export function ProvidersContent({
   // Shared map/discovery state: pins, view mode, open-now, header metrics
   const {
     pins,
+    pinsError,
+    pinsLoading,
     isOpenNow,
     setIsOpenNow,
     viewMode,
@@ -231,11 +233,10 @@ export function ProvidersContent({
       pathname,
       replace: router.replace,
     },
-    // #674: same section, city and filters as the list, so pins stay a subset of it
+    // #605: the city only sets the camera; pins come from every city
     {
       deferPinsUntilMapOpened: true,
       section,
-      city: scopeCity,
       filters: normalizedFilters,
     },
   );
@@ -363,6 +364,16 @@ export function ProvidersContent({
 
   // Plan 229: Extract totalCount from the first page of results (count is consistent across pages).
   const totalCount = data?.pages[0]?.totalCount;
+
+  // #605: the selected city has no providers. Loading and error never count as empty.
+  const cityIsEmpty =
+    !!scopeCity &&
+    !isLoading &&
+    !pinsLoading &&
+    !error &&
+    !!data &&
+    data.pages.every((p) => p.results.length === 0);
+  const mapStatus = error || pinsError ? 'error' : cityIsEmpty ? 'empty' : null;
 
   // Use React Query for bookmarks - includes both providers and community services
   const { data: bookmarkedProviderIds = [] } = useQuery({
@@ -721,6 +732,23 @@ export function ProvidersContent({
               pins={pins}
               userCoords={userCoords}
             />
+            {mapStatus && (
+              <div
+                className="pointer-events-none fixed inset-x-4 top-[40%] z-[30] mx-auto max-w-sm rounded-md bg-white p-4 text-center shadow-md"
+                role={mapStatus === 'error' ? 'alert' : 'status'}
+              >
+                <p className="font-semibold text-content-heading">
+                  {mapStatus === 'error'
+                    ? t('providers.errorTitle')
+                    : t('providers.noResultsFound')}
+                </p>
+                <p className="text-sm text-content-muted">
+                  {mapStatus === 'error'
+                    ? t('providers.errorLoading')
+                    : t('providers.noResultsDescription')}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
