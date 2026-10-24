@@ -211,6 +211,7 @@ export async function shouldRedirectToWaitlist(
   if (
     pathname === '/login' ||
     pathname === '/signup' ||
+    pathname === '/signup/check-email' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password' ||
     pathname.startsWith('/auth/')
