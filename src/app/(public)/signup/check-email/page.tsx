@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
-import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
 import { TitleSection } from '@/components/layout/TitleSection';
@@ -142,8 +141,6 @@ export default function CheckEmailPage() {
           </ContentSection>
         </div>
       </PageContentWrapper>
-
-      <BottomSpacer height="h-16" />
 
       <BottomActionNavbar
         height="h-16"
