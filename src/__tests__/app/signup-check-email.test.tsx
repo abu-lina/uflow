@@ -117,13 +117,21 @@ describe('Check-email page i18n (issue #577)', () => {
       expect(bodyText).not.toContain(word);
     }
 
-    expect(screen.getByTestId('page-header').textContent).toBe('Confirm email');
     expect(screen.getByText('Check your email inbox')).toBeTruthy();
     expect(screen.getByText(/confirmation email/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /Use a different email/i })).toBeTruthy();
     // The navbar button's accessible name is its aria-label, not its text
     expect(screen.getByRole('button', { name: /login after email confirmation/i })).toBeTruthy();
     expect(screen.getByText('Login after confirmation')).toBeTruthy();
+  });
+
+  it('renders no page header or back control (issue #748)', () => {
+    render(<CheckEmailPage />);
+
+    expect(screen.queryByTestId('page-header')).toBeNull();
+    expect(screen.queryByText('Confirm email')).toBeNull();
+    expect(screen.queryByRole('button', { name: /back/i })).toBeNull();
+    expect(screen.getByText('Check your email inbox')).toBeTruthy();
   });
 
   it('wires resend to the real endpoints instead of an alert', async () => {
