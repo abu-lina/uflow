@@ -783,9 +783,11 @@ export const de = {
     afterConfirmationLogin: 'Nach Bestätigung anmelden',
     checkEmail: {
       pageTitle: 'E-Mail bestätigen',
+      successTitle: 'BarakAllahu feekum',
       title: 'Überprüfe dein E-Mail Postfach',
       description:
-        'Wir haben dir eine Bestätigungs-E-Mail gesendet. Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.',
+        'Wir haben dir eine Bestätigungs-E-Mail gesendet. Öffne dein Postfach und klicke auf den Link, um deine E-Mail zu bestätigen und dein Konto zu aktivieren.',
+      spamHint: 'Nichts gefunden? Schau auch in deinem Spam-Ordner nach.',
       resendButton: 'E-Mail erneut senden',
       resendButtonLoading: 'Wird gesendet...',
       resendSuccess: 'Bestätigungs-E-Mail gesendet! Bitte überprüfe deinen Posteingang.',

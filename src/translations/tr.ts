@@ -458,7 +458,8 @@ export const tr = {
       success: 'Sağlayıcı başarıyla önerildi!',
       error: 'Öneri oluşturulurken hata oluştu. Lütfen tekrar deneyin.',
       retry: 'Tekrar dene',
-      sessionExpired: 'Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın; girdileriniz kaydedildi.',
+      sessionExpired:
+        'Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın; girdileriniz kaydedildi.',
       duplicateApproved: 'Bu sağlayıcı zaten listede.',
       duplicatePending: 'Bu sağlayıcı zaten önerildi ve inceleniyor.',
       viewExisting: 'Kaydı görüntüle',
@@ -775,9 +776,11 @@ export const tr = {
     afterConfirmationLogin: 'Onay sonrası giriş yap',
     checkEmail: {
       pageTitle: 'E-postayı onayla',
+      successTitle: 'BarakAllahu feekum',
       title: 'E-posta kutunuzu kontrol edin',
       description:
-        'Size bir onay e-postası gönderdik. Hesabınızı etkinleştirmek için lütfen e-postadaki bağlantıya tıklayın.',
+        'Size bir onay e-postası gönderdik. Gelen kutunuzu açın ve e-postanızı onaylayıp hesabınızı etkinleştirmek için bağlantıya tıklayın.',
+      spamHint: 'Bulamıyor musunuz? Spam klasörünüze de bakın.',
       resendButton: 'E-postayı tekrar gönder',
       resendButtonLoading: 'Gönderiliyor...',
       resendSuccess: 'Onay e-postası gönderildi! Lütfen gelen kutunuzu kontrol edin.',

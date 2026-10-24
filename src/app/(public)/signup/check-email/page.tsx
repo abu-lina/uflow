@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Heart } from 'lucide-react';
 // Material Symbols icon imports removed - using @iconify/react Icon component instead
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
@@ -90,17 +91,18 @@ export default function CheckEmailPage() {
         <div className="flex w-full flex-col">
           <TitleSection className="mb-10">
             <IconWithTitle
-              icon={
-                <Icon
-                  className="h-full w-full text-content-heading"
-                  icon="material-symbols:mail-outline"
-                />
-              }
+              icon={<Heart className="h-full w-full text-content-heading" strokeWidth={2.5} />}
               size="large"
-              title={t('signup.checkEmail.title')}
+              title={t('signup.checkEmail.successTitle')}
             >
+              <p className="mt-2 text-center text-base font-medium leading-normal text-content-heading">
+                {t('signup.checkEmail.title')}
+              </p>
               <p className="mt-2 text-center text-base leading-normal text-content">
                 {t('signup.checkEmail.description')}
+              </p>
+              <p className="mt-2 text-center text-sm leading-normal text-content-muted">
+                {t('signup.checkEmail.spamHint')}
               </p>
             </IconWithTitle>
           </TitleSection>
