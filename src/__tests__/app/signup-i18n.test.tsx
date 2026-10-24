@@ -215,4 +215,21 @@ describe('Signup page i18n (issue #577)', () => {
     expect(document.body.textContent).not.toContain('SOME_FUTURE_CODE');
     expect(document.body.textContent).not.toContain('some internal detail');
   });
+
+  // #743 AC7 + AC3: a successful signup goes to the confirm-email screen and
+  // never to a logged-in destination.
+  it('redirects to /signup/check-email after a successful signup and never to /login or /profile', async () => {
+    mockSignUp.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
+
+    const { container } = render(<SignupPageContent />);
+    fillValidForm(container);
+    fireEvent.click(screen.getByRole('button', { name: 'Sign up' }));
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith('/signup/check-email');
+    });
+    expect(mockPush).toHaveBeenCalledTimes(1);
+    expect(mockReplace).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('signup-pending-email')).toBe('new@example.com');
+  });
 });
