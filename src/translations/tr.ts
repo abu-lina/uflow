@@ -775,7 +775,6 @@ export const tr = {
     unexpectedError: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
     afterConfirmationLogin: 'Onay sonrası giriş yap',
     checkEmail: {
-      pageTitle: 'E-postayı onayla',
       successTitle: 'BarakAllahu feek',
       title: 'E-posta kutunuzu kontrol edin',
       description:

@@ -776,7 +776,6 @@ export const ps = {
     unexpectedError: 'یوه ناڅاپي ستونزه رامنځته شوه. مهرباني وکړئ بیا هڅه وکړئ.',
     afterConfirmationLogin: 'د تایید وروسته ننوتل',
     checkEmail: {
-      pageTitle: 'بریښنالیک تایید کړئ',
       successTitle: 'BarakAllahu feek',
       title: 'خپل بریښنالیک ان باکس وګورئ',
       description:

@@ -780,7 +780,6 @@ export const ur = {
     unexpectedError: 'ایک غیر متوقع خرابی پیش آئی۔ براہ کرم دوبارہ کوشش کریں۔',
     afterConfirmationLogin: 'تصدیق کے بعد لاگ ان',
     checkEmail: {
-      pageTitle: 'ای میل کی تصدیق',
       successTitle: 'بارک اللہ فیک',
       title: 'اپنا ای میل ان باکس چیک کریں',
       description:

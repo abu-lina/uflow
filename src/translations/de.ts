@@ -782,7 +782,6 @@ export const de = {
     unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.',
     afterConfirmationLogin: 'Nach Bestätigung anmelden',
     checkEmail: {
-      pageTitle: 'E-Mail bestätigen',
       successTitle: 'BarakAllahu feek',
       title: 'Überprüfe dein E-Mail Postfach',
       description:

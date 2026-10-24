@@ -768,7 +768,6 @@ export const ar = {
     unexpectedError: 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.',
     afterConfirmationLogin: 'تسجيل الدخول بعد التأكيد',
     checkEmail: {
-      pageTitle: 'تأكيد البريد الإلكتروني',
       successTitle: 'بارك الله فيك',
       title: 'تحقق من صندوق بريدك الإلكتروني',
       description:
