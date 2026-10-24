@@ -215,6 +215,7 @@ export function ProvidersContent({
   const {
     pins,
     pinsError,
+    pinsLoading,
     isOpenNow,
     setIsOpenNow,
     viewMode,
@@ -368,6 +369,7 @@ export function ProvidersContent({
   const cityIsEmpty =
     !!scopeCity &&
     !isLoading &&
+    !pinsLoading &&
     !error &&
     !!data &&
     data.pages.every((p) => p.results.length === 0);

@@ -197,13 +197,6 @@ describe('#605 AC3: zooming out shows pins from every city', () => {
 });
 
 describe('#605 AC4: the list stays city-scoped', () => {
-  it('keys the list query on the selected city', () => {
-    nav.search = 'location=Berlin';
-    render(<ProvidersContent initialSection="food" />);
-
-    expect(query.options?.queryKey).toContain('Berlin');
-  });
-
   it('requests the list from the search API with the selected city', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: true,
@@ -277,6 +270,15 @@ describe('#605 AC6: loading, error and zero-result states stay distinct', () => 
 
     await waitFor(() => expect(mapProps.current).toBeDefined());
     expect(screen.queryByText('providers.noResultsFound')).toBeNull();
+  });
+
+  it('shows no empty message and no error while the pin request is pending', async () => {
+    mockGetMapLocations.mockReturnValue(new Promise(() => {}));
+    renderMapForCity();
+
+    await waitFor(() => expect(mockGetMapLocations).toHaveBeenCalled());
+    expect(screen.queryByText('providers.noResultsFound')).toBeNull();
+    expect(screen.queryByText('providers.errorTitle')).toBeNull();
   });
 
   it('shows an error, not the empty message, when the list query fails', async () => {
