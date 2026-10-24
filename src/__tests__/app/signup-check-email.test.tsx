@@ -43,8 +43,17 @@ vi.mock('@/components/ui/Icon', () => ({
 }));
 
 vi.mock('@/components/ui/IconWithTitle', () => ({
-  IconWithTitle: ({ title, children }: { title: React.ReactNode; children?: React.ReactNode }) => (
+  IconWithTitle: ({
+    icon,
+    title,
+    children,
+  }: {
+    icon?: React.ReactNode;
+    title: React.ReactNode;
+    children?: React.ReactNode;
+  }) => (
     <div>
+      {icon}
       <h2>{title}</h2>
       {children}
     </div>
@@ -155,5 +164,113 @@ describe('Check-email page i18n (issue #577)', () => {
   it('does not render a dead resend control when no email is known', () => {
     render(<CheckEmailPage />);
     expect(screen.queryByRole('button', { name: /Resend email/i })).toBeNull();
+  });
+});
+
+describe('Check-email success screen (issue #743)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    mockFetch.mockImplementation(() => okJson({ token: 'tok-1' }));
+  });
+
+  it('AC1: shows a BarakAllahu feek heading, same as the recommend success screen', () => {
+    render(<CheckEmailPage />);
+    const heading = screen.getByRole('heading', { name: 'BarakAllahu feek' });
+    expect(heading.textContent).toBe(en.create.recommend.successTitle);
+    expect(document.body.textContent).not.toMatch(/feekum/i);
+  });
+
+  it('AC1: the decorative heart icon is hidden from assistive tech', () => {
+    const { container } = render(<CheckEmailPage />);
+    const heart = container.querySelector('svg.lucide-heart');
+    expect(heart?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('AC2/AC7: after signup, the rendered screen tells the user to open the inbox, confirm the email and check spam', () => {
+    sessionStorage.setItem('signup-pending-email', 'new@example.com');
+    render(<CheckEmailPage />);
+    const text = document.body.textContent ?? '';
+    expect(text).toMatch(/open your inbox/i);
+    expect(text).toMatch(/confirm your email/i);
+    expect(text).toMatch(/spam/i);
+  });
+
+  it('AC3: does not navigate anywhere or look logged in before confirmation', () => {
+    render(<CheckEmailPage />);
+    expect(mockPush).not.toHaveBeenCalled();
+    expect(screen.queryByText(/logged in|signed in|welcome back/i)).toBeNull();
+  });
+
+  it('AC4: resend and "use a different email" keep working on the same screen', async () => {
+    sessionStorage.setItem('signup-pending-email', 'user@example.com');
+    render(<CheckEmailPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Resend email/i }));
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith('/api/send-auth-email', expect.anything());
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Use a different email/i }));
+    expect(mockPush).toHaveBeenCalledWith('/signup');
+  });
+
+  it('AC6: shows a loading state while the resend is in flight', async () => {
+    sessionStorage.setItem('signup-pending-email', 'user@example.com');
+    let release: (value: Response) => void = () => {};
+    mockFetch.mockImplementationOnce(() => new Promise<Response>((resolve) => (release = resolve)));
+    render(<CheckEmailPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Resend email/i }));
+
+    const sending = await screen.findByRole('button', { name: /Sending/i });
+    expect((sending as HTMLButtonElement).disabled).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    release({ ok: false } as Response);
+    await screen.findByText(en.signup.checkEmail.resendFailed);
+  });
+
+  it('AC6: shows the resend error when the token request fails', async () => {
+    sessionStorage.setItem('signup-pending-email', 'user@example.com');
+    mockFetch.mockResolvedValueOnce({ ok: false } as Response);
+    render(<CheckEmailPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Resend email/i }));
+
+    expect(await screen.findByText(en.signup.checkEmail.resendFailed)).toBeTruthy();
+    expect(screen.queryByText(/Confirmation email sent/i)).toBeNull();
+  });
+
+  it('AC6: shows the resend error when sending the email fails', async () => {
+    sessionStorage.setItem('signup-pending-email', 'user@example.com');
+    mockFetch
+      .mockImplementationOnce(() => okJson({ token: 'tok-1' }))
+      .mockResolvedValueOnce({ ok: false } as Response);
+    render(<CheckEmailPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Resend email/i }));
+
+    expect(await screen.findByText(en.signup.checkEmail.resendFailed)).toBeTruthy();
+  });
+
+  it('AC6: shows the resend error when the request throws', async () => {
+    sessionStorage.setItem('signup-pending-email', 'user@example.com');
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetch.mockRejectedValueOnce(new Error('offline'));
+    render(<CheckEmailPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Resend email/i }));
+
+    expect(await screen.findByText(en.signup.checkEmail.resendFailed)).toBeTruthy();
+  });
+
+  it('AC6: shows the resend success message', async () => {
+    sessionStorage.setItem('signup-pending-email', 'user@example.com');
+    render(<CheckEmailPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Resend email/i }));
+
+    expect(await screen.findByText(en.signup.checkEmail.resendSuccess)).toBeTruthy();
   });
 });
