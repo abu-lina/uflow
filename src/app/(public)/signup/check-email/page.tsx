@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Heart } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
 import { BottomSpacer } from '@/components/layout/BottomSpacer';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { PageContentWrapper } from '@/components/layout/PageContentWrapper';
@@ -78,14 +76,6 @@ export default function CheckEmailPage() {
 
   return (
     <PageLayout hasBackground={false}>
-      <PageHeader
-        title={t('signup.checkEmail.pageTitle')}
-        variant="back-and-title"
-        onBack="/signup"
-      />
-
-      <HeaderSpacer />
-
       <PageContentWrapper centerVertically={true}>
         <div className="flex w-full flex-col">
           <TitleSection className="mb-10">

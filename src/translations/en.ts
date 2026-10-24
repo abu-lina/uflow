@@ -772,7 +772,6 @@ export const en = {
     unexpectedError: 'An unexpected error occurred. Please try again.',
     afterConfirmationLogin: 'Login after confirmation',
     checkEmail: {
-      pageTitle: 'Confirm email',
       successTitle: 'BarakAllahu feek',
       title: 'Check your email inbox',
       description:
