@@ -1366,8 +1366,11 @@ export const ar = {
       pork: 'لحم الخنزير',
       not_halal: 'غير حلال',
       halal_positive: 'ذُكر حلال',
+      no_maps_match: 'لا يوجد تطابق في خرائط جوجل',
     },
     source: {
+      google_maps_apify: 'خرائط جوجل',
+      delivery_menu: 'قائمة التوصيل',
       review: 'تقييم',
       attribute: 'خاصية المكان',
       menu: 'قائمة الطعام',

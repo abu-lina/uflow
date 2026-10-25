@@ -1374,8 +1374,11 @@ export const en = {
       pork: 'Pork',
       not_halal: 'Not halal',
       halal_positive: 'Halal mentioned',
+      no_maps_match: 'No Google Maps match',
     },
     source: {
+      google_maps_apify: 'Google Maps',
+      delivery_menu: 'Delivery menu',
       review: 'Review',
       attribute: 'Place attribute',
       menu: 'Menu',

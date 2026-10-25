@@ -1398,8 +1398,11 @@ export const de = {
       pork: 'Schweinefleisch',
       not_halal: 'Nicht halal',
       halal_positive: 'Halal erwähnt',
+      no_maps_match: 'Kein Google-Maps-Treffer',
     },
     source: {
+      google_maps_apify: 'Google Maps',
+      delivery_menu: 'Lieferdienst-Speisekarte',
       review: 'Bewertung',
       attribute: 'Ortsmerkmal',
       menu: 'Speisekarte',

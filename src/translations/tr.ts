@@ -1385,8 +1385,11 @@ export const tr = {
       pork: 'Domuz eti',
       not_halal: 'Helal değil',
       halal_positive: 'Helal belirtilmiş',
+      no_maps_match: 'Google Haritalar eşleşmesi yok',
     },
     source: {
+      google_maps_apify: 'Google Haritalar',
+      delivery_menu: 'Teslimat menüsü',
       review: 'Yorum',
       attribute: 'Mekan özelliği',
       menu: 'Menü',

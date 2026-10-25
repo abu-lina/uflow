@@ -3,10 +3,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 
 import { ProviderScreeningPanel, ProviderScreeningPanelSkeleton } from '../ProviderScreeningPanel';
-import type {
-  ProviderScreeningsResult,
-  ScreeningFlag,
-} from '@/features/admin/utils/provider-screenings';
+import type { ProviderScreeningsResult } from '@/features/admin/utils/provider-screenings';
+import type { ScreeningFlag } from '@/types/providerScreening';
 
 vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({
@@ -22,7 +20,7 @@ const flag = (over: Partial<ScreeningFlag> = {}): ScreeningFlag => ({
   term: 'bier',
   snippet: 'Frisches Bier vom Fass',
   url: 'https://example.com/menu',
-  source: 'menu',
+  source: 'delivery_menu',
   ...over,
 });
 
@@ -55,7 +53,7 @@ describe('ProviderScreeningPanel (#766)', () => {
     expect(within(item).getByText(`${K}.code.alcohol`)).toBeInTheDocument();
     expect(within(item).getByText('bier')).toBeInTheDocument();
     expect(within(item).getByText(/Frisches Bier vom Fass/)).toBeInTheDocument();
-    expect(within(item).getByText(`${K}.source.menu`)).toBeInTheDocument();
+    expect(within(item).getByText(`${K}.source.delivery_menu`)).toBeInTheDocument();
     const link = within(item).getByRole('link');
     expect(link).toHaveAttribute('href', 'https://example.com/menu');
     expect(link).toHaveAttribute('target', '_blank');
@@ -98,6 +96,31 @@ describe('ProviderScreeningPanel (#766)', () => {
       />,
     );
     expect(screen.getByTestId('screening-status')).toHaveAttribute('data-status', 'review');
+  });
+
+  it('AC2: a no_maps_match flag renders as a risk flag with its label and no empty term, snippet or link', () => {
+    render(
+      <ProviderScreeningPanel
+        result={ready({
+          status: 'review',
+          risks: [
+            flag({
+              code: 'no_maps_match',
+              term: '',
+              snippet: '',
+              url: '',
+              source: 'google_maps_apify',
+            }),
+          ],
+        })}
+      />,
+    );
+    const item = within(screen.getByTestId('screening-risks')).getByTestId('screening-risk-flag');
+    expect(within(item).getByText(`${K}.code.no_maps_match`)).toBeInTheDocument();
+    expect(within(item).getByText(`${K}.source.google_maps_apify`)).toBeInTheDocument();
+    expect(within(item).queryByText(new RegExp(`${K}.matchedTerm`))).not.toBeInTheDocument();
+    expect(within(item).queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('screening-positives')).not.toBeInTheDocument();
   });
 
   it('AC4: empty state says the provider is not screened yet', () => {

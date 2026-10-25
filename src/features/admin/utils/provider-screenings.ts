@@ -1,9 +1,4 @@
-import type {
-  ScreeningFlag,
-  ScreeningStatus,
-} from '@/features/providers/services/screening-scanner';
-
-export type { ScreeningFlag, ScreeningStatus };
+import type { ScreeningFlag, ScreeningStatus } from '@/types/providerScreening';
 
 export interface ScreeningRow {
   source: string;

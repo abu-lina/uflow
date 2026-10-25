@@ -1385,8 +1385,11 @@ export const ur = {
       pork: 'سور کا گوشت',
       not_halal: 'حلال نہیں',
       halal_positive: 'حلال کا ذکر',
+      no_maps_match: 'گوگل میپس پر کوئی مماثلت نہیں',
     },
     source: {
+      google_maps_apify: 'گوگل میپس',
+      delivery_menu: 'ڈیلیوری مینو',
       review: 'تبصرہ',
       attribute: 'مقام کی خصوصیت',
       menu: 'مینو',

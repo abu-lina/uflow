@@ -4,11 +4,8 @@ import { useId } from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 import { useLanguage } from '@/providers/LanguageProvider';
-import type {
-  ProviderScreeningsResult,
-  ScreeningFlag,
-  ScreeningStatus,
-} from '@/features/admin/utils/provider-screenings';
+import type { ProviderScreeningsResult } from '@/features/admin/utils/provider-screenings';
+import type { ScreeningFlag, ScreeningStatus } from '@/types/providerScreening';
 
 const STATUS_STYLES: Record<ScreeningStatus, string> = {
   flagged: 'border-red-300 bg-red-100 text-red-900',
@@ -49,11 +46,15 @@ function FlagList({
               <span className="font-semibold">{t(`adminScreening.code.${flag.code}`)}</span>
               <span className="text-neutral-600">{t(`adminScreening.source.${flag.source}`)}</span>
             </div>
-            <p className="mt-1 break-words">
-              <span className="text-neutral-600">{t('adminScreening.matchedTerm')}: </span>
-              <span className="font-medium">{flag.term}</span>
-            </p>
-            <blockquote className="mt-1 break-words text-neutral-700">{flag.snippet}</blockquote>
+            {flag.term ? (
+              <p className="mt-1 break-words">
+                <span className="text-neutral-600">{t('adminScreening.matchedTerm')}: </span>
+                <span className="font-medium">{flag.term}</span>
+              </p>
+            ) : null}
+            {flag.snippet ? (
+              <blockquote className="mt-1 break-words text-neutral-700">{flag.snippet}</blockquote>
+            ) : null}
             {href ? (
               <a
                 className="mt-2 inline-block break-all text-blue-700 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"

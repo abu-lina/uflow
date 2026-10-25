@@ -99,6 +99,19 @@ describe('getProviderScreenings (#766)', () => {
     expect(result.positives.map((f) => f.code)).toEqual(['halal_positive']);
   });
 
+  it('AC2: a no_maps_match row is kept as a risk flag and sets its status', async () => {
+    state.rows = [
+      row('google_maps_apify', 'review', '2026-10-03T00:00:00Z', [
+        { ...flag('no_maps_match', ''), snippet: '', url: '', source: 'google_maps_apify' },
+      ]),
+    ];
+    const result = await getProviderScreenings('p1');
+    if (result.state !== 'ready') throw new Error('expected ready');
+    expect(result.status).toBe('review');
+    expect(result.risks.map((f) => f.code)).toEqual(['no_maps_match']);
+    expect(result.positives).toEqual([]);
+  });
+
   it('AC3: a status that is not clear/review/flagged is treated as review, not green', async () => {
     state.rows = [row('website', 'bogus', '2026-10-03T00:00:00Z')];
     const result = await getProviderScreenings('p1');

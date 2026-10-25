@@ -1382,8 +1382,11 @@ export const ps = {
       pork: 'د خنزیر غوښه',
       not_halal: 'حلال نه دی',
       halal_positive: 'حلال یاد شوی',
+      no_maps_match: 'په ګوګل نقشو کې سمون نشته',
     },
     source: {
+      google_maps_apify: 'ګوګل نقشې',
+      delivery_menu: 'د وړاندې کولو مینو',
       review: 'تبصره',
       attribute: 'د ځای ځانګړتیا',
       menu: 'مینو',
