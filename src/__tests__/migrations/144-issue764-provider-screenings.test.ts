@@ -37,6 +37,8 @@ const SCHEMA = `
   GRANT USAGE ON SCHEMA public, auth TO anon, authenticated, service_role;
   GRANT SELECT ON public.users, public.providers TO anon, authenticated;
   GRANT ALL ON public.providers TO service_role;
+  -- Supabase hands every new public table to the API roles; the migration must narrow it.
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
 `;
 
 const ADMIN = '22222222-2222-2222-2222-222222222222';
@@ -51,9 +53,19 @@ async function rows<T>(sql: string, params: unknown[] = []): Promise<T[]> {
 }
 
 /** Run `fn` as a PostgREST role + JWT identity in a rolled-back transaction. */
-async function asCaller<T>(role: string, uid: string | null, fn: () => Promise<T>): Promise<T> {
+async function asCaller<T>(
+  role: string,
+  uid: string | null,
+  fn: () => Promise<T>,
+  claims: Record<string, unknown> = {},
+  setup = '',
+): Promise<T> {
   await db.exec('BEGIN');
   await rows(`SELECT set_config('request.jwt.claim.sub', $1, true)`, [uid ?? '']);
+  await rows(`SELECT set_config('request.jwt.claims', $1, true)`, [
+    JSON.stringify({ sub: uid, ...claims }),
+  ]);
+  if (setup) await db.exec(setup);
   await db.exec(`SET LOCAL ROLE ${role}`);
   try {
     return await fn();
@@ -83,7 +95,6 @@ describe('migration 144: provider_screenings (#764)', () => {
     );
     expect(existsSync(MIGRATION_PATH), 'migration 144 file exists').toBe(true);
     await db.exec(readFileSync(MIGRATION_PATH, 'utf-8'));
-    await db.exec('GRANT ALL ON public.provider_screenings TO anon, authenticated, service_role');
   });
 
   afterAll(async () => {
@@ -148,6 +159,30 @@ describe('migration 144: provider_screenings (#764)', () => {
       expect(idx.some((i) => /\(provider_id, created_at DESC\)/.test(i.indexdef))).toBe(true);
     });
 
+    it.each([`'{}'`, `'"x"'`, `'null'`, `'1'`])('rejects non-array flags %s', async (value) => {
+      await expect(
+        rows(
+          `INSERT INTO public.provider_screenings (provider_id, source, status, flags)
+           VALUES ($1,'website','clear', ${value}::jsonb)`,
+          [PROVIDER],
+        ),
+      ).rejects.toThrow(/check constraint/i);
+    });
+
+    it('accepts an array of flag objects', async () => {
+      await rows(
+        `INSERT INTO public.provider_screenings (provider_id, source, status, flags)
+         VALUES ($1,'website','review', $2::jsonb)`,
+        [
+          PROVIDER,
+          JSON.stringify([
+            { code: 'alcohol', term: 'bier', snippet: 's', url: 'https://x', source: 'website' },
+          ]),
+        ],
+      );
+      await rows(`DELETE FROM public.provider_screenings`);
+    });
+
     it('rejects a screening whose provider does not exist', async () => {
       await expect(insertScreening('bbbbbbbb-0000-0000-0000-000000000009')).rejects.toThrow(
         /foreign key/i,
@@ -178,29 +213,67 @@ describe('migration 144: provider_screenings (#764)', () => {
       const asUser = await asCaller('authenticated', USER, () =>
         rows('SELECT screening_id FROM public.provider_screenings'),
       );
-      const asAnon = await asCaller('anon', null, () =>
-        rows('SELECT screening_id FROM public.provider_screenings'),
-      );
       expect(asUser).toEqual([]);
-      expect(asAnon).toEqual([]);
+    });
+
+    it('ignores a forged JWT role=admin claim when public.users says user', async () => {
+      const forged = {
+        role: 'admin',
+        user_metadata: { role: 'admin' },
+        app_metadata: { role: 'admin' },
+      };
+      const res = await asCaller(
+        'authenticated',
+        USER,
+        () => rows('SELECT screening_id FROM public.provider_screenings'),
+        forged,
+      );
+      expect(res).toEqual([]);
+    });
+
+    it('grants the API roles only SELECT for authenticated and nothing for anon', async () => {
+      const grants = await rows<{ grantee: string; privilege_type: string }>(
+        `SELECT grantee, privilege_type FROM information_schema.role_table_grants
+         WHERE table_schema = 'public' AND table_name = 'provider_screenings'
+           AND grantee IN ('anon', 'authenticated', 'PUBLIC')`,
+      );
+      expect(grants).toEqual([{ grantee: 'authenticated', privilege_type: 'SELECT' }]);
+      await expect(
+        asCaller('anon', null, () => rows('SELECT screening_id FROM public.provider_screenings')),
+      ).rejects.toThrow(/permission denied/i);
     });
 
     it.each([
       ['regular user', USER],
       ['admin', ADMIN],
     ])('rejects insert, update and delete for an authenticated %s', async (_label, uid) => {
+      const denied = /permission denied/i;
       await expect(asCaller('authenticated', uid, () => insertScreening(PROVIDER))).rejects.toThrow(
-        /row-level security/i,
+        denied,
       );
-      // UPDATE/DELETE with no policy match zero rows instead of raising.
-      const updated = await asCaller('authenticated', uid, () =>
-        db.query(`UPDATE public.provider_screenings SET status = 'flagged'`),
-      );
-      const deleted = await asCaller('authenticated', uid, () =>
-        db.query(`DELETE FROM public.provider_screenings`),
+      await expect(
+        asCaller('authenticated', uid, () =>
+          db.query(`UPDATE public.provider_screenings SET status = 'flagged'`),
+        ),
+      ).rejects.toThrow(denied);
+      await expect(
+        asCaller('authenticated', uid, () => db.query(`DELETE FROM public.provider_screenings`)),
+      ).rejects.toThrow(denied);
+    });
+
+    it('still blocks writes through RLS if write privileges were granted back', async () => {
+      const regrant = 'GRANT INSERT, UPDATE, DELETE ON public.provider_screenings TO authenticated';
+      await expect(
+        asCaller('authenticated', ADMIN, () => insertScreening(PROVIDER), {}, regrant),
+      ).rejects.toThrow(/row-level security/i);
+      const updated = await asCaller(
+        'authenticated',
+        ADMIN,
+        () => db.query(`UPDATE public.provider_screenings SET status = 'flagged'`),
+        {},
+        regrant,
       );
       expect(updated.affectedRows).toBe(0);
-      expect(deleted.affectedRows).toBe(0);
     });
 
     it('lets the service role write', async () => {
