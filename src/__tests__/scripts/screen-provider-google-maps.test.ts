@@ -156,7 +156,7 @@ describe('#763 criterion 3: scanning and stored row', () => {
   });
 
   it('flags a place whose category names alcohol as review', async () => {
-    const m = place({ categoryName: 'Weinhandlung', reviews: [], additionalInfo: {} });
+    const m = place({ categoryName: 'Weinbar', reviews: [], additionalInfo: {} });
     const { summary, screenings } = run([provider()], async () => [m]);
     await summary;
     expect(screenings[0].status).toBe('review');

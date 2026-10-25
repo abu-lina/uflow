@@ -4,18 +4,21 @@ export interface ImageAttribution {
   photo_url: string;
 }
 
+export type ImageSource = 'unsplash' | 'google_maps_apify';
+
 export interface ImageCandidatePayloadInput {
   providerId: string;
   imageUrl: string;
   sourceCategory: string;
   attribution: ImageAttribution;
   currentUrls: string[];
+  source?: ImageSource;
 }
 
 export interface ImageCandidatePayload {
   provider_id: string;
-  source: 'unsplash';
-  source_service: 'unsplash';
+  source: ImageSource;
+  source_service: ImageSource;
   source_category: string;
   field_name: 'provider_images';
   enrichment_type: 'image';
@@ -309,7 +312,8 @@ export const CATEGORY_IMAGE_POOL: Record<string, [string, string, string]> = {
 };
 
 export function resolveCategoryImageQueries(categoryId: string | null | undefined): string[] {
-  const resolvedCategoryId = categoryId && CATEGORY_IMAGE_POOL[categoryId] ? categoryId : DEFAULT_CATEGORY_ID;
+  const resolvedCategoryId =
+    categoryId && CATEGORY_IMAGE_POOL[categoryId] ? categoryId : DEFAULT_CATEGORY_ID;
   return [...CATEGORY_IMAGE_POOL[resolvedCategoryId]];
 }
 
@@ -329,14 +333,14 @@ export function selectDeterministicPoolImage(providerId: string, imagePool: stri
 }
 
 export function createImageCandidatePayload(
-  input: ImageCandidatePayloadInput
+  input: ImageCandidatePayloadInput,
 ): ImageCandidatePayload {
   const mergedUrls = Array.from(new Set([...input.currentUrls, input.imageUrl]));
 
   return {
     provider_id: input.providerId,
-    source: 'unsplash',
-    source_service: 'unsplash',
+    source: input.source ?? 'unsplash',
+    source_service: input.source ?? 'unsplash',
     source_category: input.sourceCategory,
     field_name: 'provider_images',
     enrichment_type: 'image',
