@@ -30,8 +30,16 @@ import { useAuth } from '@/providers/auth-provider';
 import { useSearch } from '@/providers/search-provider';
 import { deleteBookmark } from '@/services/bookmarks';
 import { getAllBookmarkedItems } from '@/services/providers';
-import { getFirstImageUrl, formatProviderAddress, getAllTrustedImageUrlsWithFallback, PLACEHOLDER_IMAGE, parseCategoryImages, getCategoryCardBackgroundColor } from '@/utils/imageUtils';
+import {
+  getFirstImageUrl,
+  formatProviderAddress,
+  getAllTrustedImageUrlsWithFallback,
+  PLACEHOLDER_IMAGE,
+  parseCategoryImages,
+  getCategoryCardBackgroundColor,
+} from '@/utils/imageUtils';
 import { toAuthEmailLanguage } from '@/lib/auth-email-language';
+import { requestAuthEmail } from '@/lib/auth-email-client';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { signInWithEmailConfirmation, signInWithMagicLink } from '@/lib/auth';
 import { useAppStage } from '@/hooks/useAppStage';
@@ -44,10 +52,10 @@ export default function SavedProvidersPage() {
   const { searchQuery, setSearchQuery, selectedLocation, selectedSection } = useSearch();
   const { t, language } = useLanguage();
   const { stage } = useAppStage();
-  
+
   // Determine if we should use magic link (Stage 2) or password (Stage 3)
   const useMagicLink = stage === 'stage2';
-  
+
   // Login form state
   const [loginFormData, setLoginFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
@@ -58,7 +66,11 @@ export default function SavedProvidersPage() {
 
   // Use React Query for all bookmarked items (providers + community services)
   // Show cached data immediately while refetching in background
-  const { data: providers = [], isLoading, error: queryError } = useQuery({
+  const {
+    data: providers = [],
+    isLoading,
+    error: queryError,
+  } = useQuery({
     queryKey: ['saved-providers', user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -75,7 +87,6 @@ export default function SavedProvidersPage() {
     // Show cached data immediately while refetching
     placeholderData: (previousData) => previousData,
   });
-
 
   // Listen for bookmark change events to refresh the saved list
   useEffect(() => {
@@ -98,7 +109,7 @@ export default function SavedProvidersPage() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((provider) => {
         const nameMatch = provider.name?.toLowerCase().includes(query);
-        const addressMatch = 
+        const addressMatch =
           provider.address_street?.toLowerCase().includes(query) ||
           provider.address_city?.toLowerCase().includes(query);
         const categoryMatch = provider.category?.name_de?.toLowerCase().includes(query);
@@ -111,13 +122,13 @@ export default function SavedProvidersPage() {
     if (selectedLocation) {
       if (selectedLocation === 'Online') {
         // Filter for online businesses (no city)
-        filtered = filtered.filter((provider) => 
-          !provider.address_city || provider.address_city.trim() === ''
+        filtered = filtered.filter(
+          (provider) => !provider.address_city || provider.address_city.trim() === '',
         );
       } else {
         // Filter for specific city
-        filtered = filtered.filter((provider) => 
-          provider.address_city?.toLowerCase() === selectedLocation.toLowerCase()
+        filtered = filtered.filter(
+          (provider) => provider.address_city?.toLowerCase() === selectedLocation.toLowerCase(),
         );
       }
     }
@@ -125,43 +136,49 @@ export default function SavedProvidersPage() {
     return filtered;
   }, [providers, searchQuery, selectedLocation]);
 
-  const handleUnsave = useCallback(async (providerId: string, _isCommunityService: boolean) => {
-    if (!user) return;
-    
-    try {
-      const bookmarkQuery = supabase
-        .from('bookmarks')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('provider_id', providerId);
+  const handleUnsave = useCallback(
+    async (providerId: string, _isCommunityService: boolean) => {
+      if (!user) return;
 
-      const { data: bookmark, error: fetchError } = await bookmarkQuery.maybeSingle();
-      
-      if (fetchError) {
-        console.error('Error fetching bookmark:', fetchError);
-        return;
-      }
-      
-      if (bookmark) {
-        await deleteBookmark(bookmark.id);
-        
-        // Optimistically update both caches
-        queryClient.setQueryData(['saved-providers', user.id], (old: typeof providers = []) => 
-          old.filter((s) => s.id !== providerId)
-        );
-        
-        queryClient.setQueryData(['bookmarks', user.id], (old: string[] = []) =>
-          old.filter((id) => id !== providerId)
-        );
-      }
-    } catch (err) {
-      console.error(t('saved.errorRemovingItem'), err);
-    }
-  }, [user, queryClient, t]);
+      try {
+        const bookmarkQuery = supabase
+          .from('bookmarks')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('provider_id', providerId);
 
-  const handleProviderClick = useCallback((providerId: string, _isUmmah: boolean) => {
-    router.push(`/p/${providerId}`);
-  }, [router]);
+        const { data: bookmark, error: fetchError } = await bookmarkQuery.maybeSingle();
+
+        if (fetchError) {
+          console.error('Error fetching bookmark:', fetchError);
+          return;
+        }
+
+        if (bookmark) {
+          await deleteBookmark(bookmark.id);
+
+          // Optimistically update both caches
+          queryClient.setQueryData(['saved-providers', user.id], (old: typeof providers = []) =>
+            old.filter((s) => s.id !== providerId),
+          );
+
+          queryClient.setQueryData(['bookmarks', user.id], (old: string[] = []) =>
+            old.filter((id) => id !== providerId),
+          );
+        }
+      } catch (err) {
+        console.error(t('saved.errorRemovingItem'), err);
+      }
+    },
+    [user, queryClient, t],
+  );
+
+  const handleProviderClick = useCallback(
+    (providerId: string, _isUmmah: boolean) => {
+      router.push(`/p/${providerId}`);
+    },
+    [router],
+  );
 
   const handleResendConfirmation = useCallback(async () => {
     if (!loginFormData.email) {
@@ -173,44 +190,9 @@ export default function SavedProvidersPage() {
     setLoginError(null);
 
     try {
-      const tokenResponse = await fetch('/api/generate-confirmation-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: loginFormData.email,
-          type: 'signup',
-        }),
-      });
+      const sent = await requestAuthEmail(loginFormData.email, 'signup', language);
 
-      if (!tokenResponse.ok) {
-        setLoginError(t('login.confirmationEmailFailed'));
-        toast.error(t('login.emailFailedToast'), {
-          description: t('login.emailFailedDescription'),
-          duration: 4000,
-        });
-        return;
-      }
-
-      const { token } = await tokenResponse.json();
-      const siteUrl = (typeof window !== 'undefined' ? window.location.origin : '') || process.env.NEXT_PUBLIC_SITE_URL || '';
-      const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(loginFormData.email)}`;
-
-      const emailResponse = await fetch('/api/send-auth-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: loginFormData.email,
-          type: 'confirmSignup',
-          language: toAuthEmailLanguage(language),
-          confirmationUrl,
-        }),
-      });
-
-      if (emailResponse.ok) {
+      if (sent) {
         setLoginError(t('login.confirmationEmailSent'));
         setIsEmailConfirmationError(false);
         toast.success(t('login.emailSentToast'), {
@@ -234,99 +216,109 @@ export default function SavedProvidersPage() {
     } finally {
       setIsLoginLoading(false);
     }
-  }, [loginFormData.email, t]);
+  }, [loginFormData.email, language, t]);
 
-  const handleLoginSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoginLoading(true);
-    setLoginError(null);
-    setMagicLinkSent(false);
+  const handleLoginSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoginLoading(true);
+      setLoginError(null);
+      setMagicLinkSent(false);
 
-    try {
-      if (useMagicLink) {
-        // Stage 2: Use magic link (email-only)
-        const { data, error } = await signInWithMagicLink(loginFormData.email, toAuthEmailLanguage(language));
-        
-        if (error) {
-          if (error.message === 'EMAIL_NOT_CONFIRMED') {
-            setLoginError(t('login.emailNotConfirmed'));
-            setIsEmailConfirmationError(true);
-          } else if (error.message === 'EMAIL_NOT_FOUND') {
-            setLoginError(t('login.emailNotFound'));
-            setIsEmailConfirmationError(false);
-          } else {
-            const errorMessage = error.message || t('login.magicLinkFailedError');
-            setLoginError(errorMessage);
-            setIsEmailConfirmationError(false);
-            
-            // Show diagnostic URL if available
-            const diagnosticUrl = 'diagnosticUrl' in error && typeof error.diagnosticUrl === 'string' 
-              ? error.diagnosticUrl 
-              : undefined;
-            const toastDescription = diagnosticUrl 
-              ? t('login.magicLinkDiagnostic', { url: diagnosticUrl })
-              : t('login.emailFailedDescription');
-            
-            toast.error(t('login.magicLinkFailedToast'), {
-              description: toastDescription,
-              duration: 8000,
-            });
+      try {
+        if (useMagicLink) {
+          // Stage 2: Use magic link (email-only)
+          const { data, error } = await signInWithMagicLink(
+            loginFormData.email,
+            toAuthEmailLanguage(language),
+          );
+
+          if (error) {
+            if (error.message === 'EMAIL_NOT_CONFIRMED') {
+              setLoginError(t('login.emailNotConfirmed'));
+              setIsEmailConfirmationError(true);
+            } else if (error.message === 'EMAIL_NOT_FOUND') {
+              setLoginError(t('login.emailNotFound'));
+              setIsEmailConfirmationError(false);
+            } else {
+              const errorMessage = error.message || t('login.magicLinkFailedError');
+              setLoginError(errorMessage);
+              setIsEmailConfirmationError(false);
+
+              // Show diagnostic URL if available
+              const diagnosticUrl =
+                'diagnosticUrl' in error && typeof error.diagnosticUrl === 'string'
+                  ? error.diagnosticUrl
+                  : undefined;
+              const toastDescription = diagnosticUrl
+                ? t('login.magicLinkDiagnostic', { url: diagnosticUrl })
+                : t('login.emailFailedDescription');
+
+              toast.error(t('login.magicLinkFailedToast'), {
+                description: toastDescription,
+                duration: 8000,
+              });
+            }
+            return;
           }
-          return;
-        }
 
-        // Success - magic link sent
-        if (data) {
-          setMagicLinkSent(true);
-          toast.success(t('login.magicLinkSentTitle'), {
-            description: t('login.magicLinkSentDescription'),
-            duration: 5000,
-          });
-          // Clear email field
-          setLoginFormData({ email: '', password: '' });
-          setLoginError(null);
-          setIsEmailConfirmationError(false);
-        }
-      } else {
-        // Stage 3: Use password authentication
-        const { data, error } = await signInWithEmailConfirmation(loginFormData.email, loginFormData.password);
-        
-        if (error) {
-          if (error.message === 'EMAIL_NOT_CONFIRMED') {
-            setLoginError(t('login.emailNotConfirmed'));
-            setIsEmailConfirmationError(true);
-          } else if (error.message === 'EMAIL_NOT_FOUND') {
-            setLoginError(t('login.emailNotFound'));
-            setIsEmailConfirmationError(false);
-          } else {
-            setLoginError(t('login.invalidCredentials'));
-            setIsEmailConfirmationError(false);
-            toast.error(t('login.loginFailedToast'), {
-              description: t('login.loginFailedDescription'),
-              duration: 4000,
+          // Success - magic link sent
+          if (data) {
+            setMagicLinkSent(true);
+            toast.success(t('login.magicLinkSentTitle'), {
+              description: t('login.magicLinkSentDescription'),
+              duration: 5000,
             });
+            // Clear email field
+            setLoginFormData({ email: '', password: '' });
+            setLoginError(null);
+            setIsEmailConfirmationError(false);
           }
-          return;
-        }
+        } else {
+          // Stage 3: Use password authentication
+          const { data, error } = await signInWithEmailConfirmation(
+            loginFormData.email,
+            loginFormData.password,
+          );
 
-        // Success - user will be automatically updated via auth provider
-        // The page will re-render and show saved items
-        if (data) {
-          toast.success(t('login.loginSuccessToast'));
-          // Clear form
-          setLoginFormData({ email: '', password: '' });
-          setLoginError(null);
-          setIsEmailConfirmationError(false);
+          if (error) {
+            if (error.message === 'EMAIL_NOT_CONFIRMED') {
+              setLoginError(t('login.emailNotConfirmed'));
+              setIsEmailConfirmationError(true);
+            } else if (error.message === 'EMAIL_NOT_FOUND') {
+              setLoginError(t('login.emailNotFound'));
+              setIsEmailConfirmationError(false);
+            } else {
+              setLoginError(t('login.invalidCredentials'));
+              setIsEmailConfirmationError(false);
+              toast.error(t('login.loginFailedToast'), {
+                description: t('login.loginFailedDescription'),
+                duration: 4000,
+              });
+            }
+            return;
+          }
+
+          // Success - user will be automatically updated via auth provider
+          // The page will re-render and show saved items
+          if (data) {
+            toast.success(t('login.loginSuccessToast'));
+            // Clear form
+            setLoginFormData({ email: '', password: '' });
+            setLoginError(null);
+            setIsEmailConfirmationError(false);
+          }
         }
+      } catch (error) {
+        console.error('Login error:', error);
+        setLoginError(t('login.unexpectedError') || 'Ein unerwarteter Fehler ist aufgetreten.');
+        setIsEmailConfirmationError(false);
+      } finally {
+        setIsLoginLoading(false);
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      setLoginError(t('login.unexpectedError') || 'Ein unerwarteter Fehler ist aufgetreten.');
-      setIsEmailConfirmationError(false);
-    } finally {
-      setIsLoginLoading(false);
-    }
-  }, [loginFormData, useMagicLink, t]);
+    },
+    [loginFormData, useMagicLink, t],
+  );
 
   // Render empty state based on current state
   const renderEmptyState = () => {
@@ -351,7 +343,8 @@ export default function SavedProvidersPage() {
   // Show skeleton loaders in content area if loading and no cached data
   const showSkeleton = isLoading && providers.length === 0 && !queryError && !userLoading;
   const shouldShowSearchBar = showSkeleton || (!queryError && emptyStateType !== 'no_saved_items');
-  const shouldCenterWholePageContent = !showSkeleton && (!!queryError || emptyStateType === 'no_saved_items');
+  const shouldCenterWholePageContent =
+    !showSkeleton && (!!queryError || emptyStateType === 'no_saved_items');
 
   // Render login-required state with PageLayout (matches login page design)
   if (emptyStateType === 'login_required') {
@@ -370,7 +363,10 @@ export default function SavedProvidersPage() {
               {magicLinkSent ? (
                 <div className="flex w-full flex-col gap-4">
                   <div className="rounded-lg bg-green-50 p-4 text-center">
-                    <Icon className="mx-auto mb-2 h-8 w-8 text-green-600" icon="lucide:mail-check" />
+                    <Icon
+                      className="mx-auto mb-2 h-8 w-8 text-green-600"
+                      icon="lucide:mail-check"
+                    />
                     <p className="text-sm font-medium text-green-800">
                       {t('login.magicLinkSentTitle')}
                     </p>
@@ -400,7 +396,9 @@ export default function SavedProvidersPage() {
                       placeholder={t('login.emailPlaceholder') || 'Email eingeben'}
                       type="email"
                       value={loginFormData.email}
-                      onChange={(e) => setLoginFormData({ ...loginFormData, email: e.target.value })}
+                      onChange={(e) =>
+                        setLoginFormData({ ...loginFormData, email: e.target.value })
+                      }
                     />
                     {!useMagicLink && (
                       <FormInput
@@ -408,11 +406,19 @@ export default function SavedProvidersPage() {
                         disabled={isLoginLoading}
                         label={t('login.passwordLabel') || 'Passwort'}
                         placeholder={t('login.passwordPlaceholder') || 'Passwort eingeben'}
-                        rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        rightIcon={
+                          showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )
+                        }
                         type={showPassword ? 'text' : 'password'}
                         value={loginFormData.password}
                         variant="with-icon"
-                        onChange={(e) => setLoginFormData({ ...loginFormData, password: e.target.value })}
+                        onChange={(e) =>
+                          setLoginFormData({ ...loginFormData, password: e.target.value })
+                        }
                         onRightIconClick={() => setShowPassword(!showPassword)}
                       />
                     )}
@@ -447,7 +453,11 @@ export default function SavedProvidersPage() {
                       fullWidth
                       disabled={isLoginLoading}
                       loading={isLoginLoading}
-                      loadingText={useMagicLink ? t('login.magicLinkLoading') : t('login.loading') || 'Anmeldung...'}
+                      loadingText={
+                        useMagicLink
+                          ? t('login.magicLinkLoading')
+                          : t('login.loading') || 'Anmeldung...'
+                      }
                       type="submit"
                       variant="auth"
                     >
@@ -458,12 +468,12 @@ export default function SavedProvidersPage() {
                         <p className="text-center text-sm text-content">
                           {t('login.magicLinkDescription')}
                         </p>
-                        <p className="text-center text-xs text-content-muted mt-2">
+                        <p className="mt-2 text-center text-xs text-content-muted">
                           {t('legal.magicLinkConsent') || 'By continuing, you agree to our'}{' '}
                           <Link className="underline hover:text-primary" href="/terms">
                             {t('legal.termsOfService')}
-                          </Link>
-                          {' '}{t('legal.and')}{' '}
+                          </Link>{' '}
+                          {t('legal.and')}{' '}
                           <Link className="underline hover:text-primary" href="/privacy-policy">
                             {t('legal.privacyPolicy')}
                           </Link>
@@ -473,10 +483,7 @@ export default function SavedProvidersPage() {
                     )}
                     {!useMagicLink && (
                       <div className="text-center">
-                        <LinkButton
-                          type="button"
-                          onClick={() => router.push('/signup')}
-                        >
+                        <LinkButton type="button" onClick={() => router.push('/signup')}>
                           {t('login.noAccount') || 'Noch kein Konto?'}
                         </LinkButton>
                       </div>
@@ -494,13 +501,12 @@ export default function SavedProvidersPage() {
   // Render authenticated states with ScrollablePageLayout
   return (
     <ScrollablePageLayout>
-      <PageHeader 
-        title={t('saved.title')}
-        variant="title-only"
-      />
+      <PageHeader title={t('saved.title')} variant="title-only" />
 
-      <PageContent 
-        className={shouldCenterWholePageContent ? 'flex items-center justify-center min-h-[60vh]' : ''}
+      <PageContent
+        className={
+          shouldCenterWholePageContent ? 'flex min-h-[60vh] items-center justify-center' : ''
+        }
         maxWidth="full"
       >
         {shouldShowSearchBar && (
@@ -514,14 +520,17 @@ export default function SavedProvidersPage() {
 
         {showSkeleton ? (
           // Show skeleton grid while loading (only on true initial load with no cache)
-          <div className="grid w-full grid-cols-2 gap-4 mt-6 mobile-nav-spacing">
+          <div className="mobile-nav-spacing mt-6 grid w-full grid-cols-2 gap-4">
             {Array.from({ length: 6 }).map((_, index) => (
               <SkeletonCard key={index} />
             ))}
           </div>
         ) : queryError ? (
           <EmptyState
-            description={t('saved.errorLoadingDescription') || 'Failed to load your saved items. Please try again.'}
+            description={
+              t('saved.errorLoadingDescription') ||
+              'Failed to load your saved items. Please try again.'
+            }
             title={t('saved.errorLoading') || 'Error loading saved items'}
           />
         ) : emptyStateType === 'no_saved_items' ? (
@@ -530,32 +539,33 @@ export default function SavedProvidersPage() {
             title={t('saved.noSavedProviders')}
           />
         ) : emptyStateType === 'no_results' ? (
-          <div className="flex w-full min-h-[60vh] items-center justify-center">
+          <div className="flex min-h-[60vh] w-full items-center justify-center">
             <EmptyState
               description={t('saved.noResultsDescription')}
               title={t('saved.noResults')}
             />
           </div>
         ) : (
-          <ul 
+          <ul
             aria-label={t('saved.savedItemsList') || 'Saved items'}
-            className="grid w-full grid-cols-2 gap-4 mt-6 mobile-nav-spacing"
+            className="mobile-nav-spacing mt-6 grid w-full grid-cols-2 gap-4"
             role="list"
           >
             {filteredProviders.map((provider) => {
               const isUmmah = provider.listing_type === 'ummah';
               const fallbackUrls = getAllTrustedImageUrlsWithFallback(
                 provider.images,
-                provider.category?.category_images
+                provider.category?.category_images,
               );
               const imageUrl = fallbackUrls.length > 0 ? fallbackUrls[0] : PLACEHOLDER_IMAGE;
               const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
-              const isCategoryFallback = getFirstImageUrl(provider.images) === PLACEHOLDER_IMAGE && categoryUrls.length > 0;
+              const isCategoryFallback =
+                getFirstImageUrl(provider.images) === PLACEHOLDER_IMAGE && categoryUrls.length > 0;
               const categoryBgColor = isCategoryFallback
                 ? getCategoryCardBackgroundColor(provider.category_id, provider.id)
                 : undefined;
               const address = formatProviderAddress(provider.address_street, provider.address_city);
-              
+
               return (
                 <li key={provider.id}>
                   <SelectableCard

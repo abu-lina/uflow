@@ -12,6 +12,11 @@ import {
   validatePasswordComplexity,
   isSuspiciousTiming,
 } from '@/utils/security';
+import {
+  RESEND_CAPABILITY_HEADER,
+  issueResendCapability,
+  setResendCapabilityCookie,
+} from '@/lib/auth/resend-capability';
 
 /**
  * Check if request is in test mode (bypasses rate limiting)
@@ -309,7 +314,10 @@ export async function POST(request: Request) {
       try {
         const emailResponse = await fetch(`${siteUrl}/api/send-auth-email`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            [RESEND_CAPABILITY_HEADER]: issueResendCapability(email),
+          },
           body: JSON.stringify({
             to: email,
             type: 'confirmSignup',
@@ -335,11 +343,14 @@ export async function POST(request: Request) {
 
     console.log('[SIGNUP API] Signup complete for user:', data.user.id);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       userId: data.user.id,
       email: data.user.email,
     });
+    // Lets this browser resend the confirmation email (#746)
+    setResendCapabilityCookie(response, email);
+    return response;
   } catch (error) {
     console.error('[SIGNUP API] Unexpected error:', redactError(error));
     return NextResponse.json(

@@ -97,13 +97,18 @@ vi.mock('@/utils/security', () => ({
 }));
 
 // Mock crypto
-vi.mock('crypto', () => ({
-  default: {
-    randomBytes: vi.fn().mockReturnValue({
-      toString: () => 'mock-token-hex-value-1234567890abcdef',
-    }),
-  },
-}));
+vi.mock('crypto', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('crypto')>();
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      randomBytes: vi.fn().mockReturnValue({
+        toString: () => 'mock-token-hex-value-1234567890abcdef',
+      }),
+    },
+  };
+});
 
 // Set env vars
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
@@ -194,7 +199,9 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
     mockGetUserRole.mockResolvedValue('admin');
 
     mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValue({
-      data: { user: { id: 'target-user', email: 'target@test.com', user_metadata: { language: 'en' } } },
+      data: {
+        user: { id: 'target-user', email: 'target@test.com', user_metadata: { language: 'en' } },
+      },
       error: null,
     });
 
@@ -233,7 +240,11 @@ describe('F-049-01: /api/admin/set-role authorization gate', () => {
 describe('F-049-01b: /api/admin/set-role privilege escalation prevention', () => {
   let POST: (request: Request) => Promise<Response>;
 
-  function mockSupabaseChainForRoleUpdate(targetUser: { user_id: string; email: string; role: string }) {
+  function mockSupabaseChainForRoleUpdate(targetUser: {
+    user_id: string;
+    email: string;
+    role: string;
+  }) {
     mockSupabaseAdmin.auth.admin.getUserById.mockResolvedValue({
       data: { user: { id: targetUser.user_id, email: targetUser.email, user_metadata: {} } },
       error: null,
@@ -270,7 +281,11 @@ describe('F-049-01b: /api/admin/set-role privilege escalation prevention', () =>
   it('rejects moderator self-promoting to admin with 403', async () => {
     mockGetUserFromCookie.mockResolvedValue({ id: 'mod-123', email: 'mod@test.com' });
     mockGetUserRole.mockResolvedValue('moderator');
-    mockSupabaseChainForRoleUpdate({ user_id: 'mod-123', email: 'mod@test.com', role: 'moderator' });
+    mockSupabaseChainForRoleUpdate({
+      user_id: 'mod-123',
+      email: 'mod@test.com',
+      role: 'moderator',
+    });
 
     // No userId in body = defaults to caller's own ID
     const res = await POST(makeRequest({ role: 'admin' }));
@@ -289,7 +304,11 @@ describe('F-049-01b: /api/admin/set-role privilege escalation prevention', () =>
   it('rejects moderator demoting an admin with 403', async () => {
     mockGetUserFromCookie.mockResolvedValue({ id: 'mod-123', email: 'mod@test.com' });
     mockGetUserRole.mockResolvedValue('moderator');
-    mockSupabaseChainForRoleUpdate({ user_id: 'admin-789', email: 'admin@test.com', role: 'admin' });
+    mockSupabaseChainForRoleUpdate({
+      user_id: 'admin-789',
+      email: 'admin@test.com',
+      role: 'admin',
+    });
 
     const res = await POST(makeRequest({ userId: 'admin-789', role: 'user' }));
     expect(res.status).toBe(403);
@@ -298,7 +317,11 @@ describe('F-049-01b: /api/admin/set-role privilege escalation prevention', () =>
   it('rejects admin changing own role with 403', async () => {
     mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123', email: 'admin@test.com' });
     mockGetUserRole.mockResolvedValue('admin');
-    mockSupabaseChainForRoleUpdate({ user_id: 'admin-123', email: 'admin@test.com', role: 'admin' });
+    mockSupabaseChainForRoleUpdate({
+      user_id: 'admin-123',
+      email: 'admin@test.com',
+      role: 'admin',
+    });
 
     const res = await POST(makeRequest({ role: 'moderator' }));
     expect(res.status).toBe(403);
@@ -357,7 +380,7 @@ describe('F-049-02: /api/send-auth-email rate limiting', () => {
         type: 'confirmSignup',
         language: 'en',
         confirmationUrl: 'https://ummahflow.com/confirm?token=abc',
-      })
+      }),
     );
     expect(res.status).toBe(429);
   });
@@ -366,13 +389,18 @@ describe('F-049-02: /api/send-auth-email rate limiting', () => {
     mockCheckRateLimit.mockReturnValue(true);
     const { sendAuthEmail } = await import('@/services/emailService');
 
+    const { RESEND_CAPABILITY_HEADER, issueResendCapability } =
+      await import('@/lib/auth/resend-capability');
     const res = await POST(
-      makeRequest({
-        to: 'user@test.com',
-        type: 'confirmSignup',
-        language: 'en',
-        confirmationUrl: 'https://evil.com/phish?token=abc',
-      })
+      makeRequest(
+        {
+          to: 'user@test.com',
+          type: 'confirmSignup',
+          language: 'en',
+          confirmationUrl: 'https://evil.com/phish?token=abc',
+        },
+        { [RESEND_CAPABILITY_HEADER]: issueResendCapability('user@test.com') },
+      ),
     );
     // Must succeed (valid inputs, rate limit not exceeded)
     expect(res.status).toBe(200);
@@ -401,9 +429,7 @@ describe('F-049-02: /api/generate-confirmation-token rate limiting', () => {
   it('[post-fix] rejects when rate limited with 429', async () => {
     mockCheckRateLimit.mockReturnValue(false);
 
-    const res = await POST(
-      makeRequest({ email: 'user@test.com', type: 'signup' })
-    );
+    const res = await POST(makeRequest({ email: 'user@test.com', type: 'signup' }));
     expect(res.status).toBe(429);
   });
 });

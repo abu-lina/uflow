@@ -51,6 +51,10 @@ vi.mock('@/lib/rate-limit', () => ({
   getClientIdentifier: (request: Request) => `ip:${request.headers.get('x-real-ip') || 'unknown'}`,
 }));
 
+vi.mock('@/services/emailService', () => ({
+  sendAuthEmail: vi.fn(async () => ({ data: { id: 'email-1' }, error: null })),
+}));
+
 type Handler = (request: Request) => Promise<Response>;
 
 let confirmEmail: Handler;
@@ -188,24 +192,24 @@ describe('authentication routes do not log email or IP', () => {
 
     const success = await generateToken(
       request('generate-confirmation-token', {
-        userId: 'user-1',
         email: PROBE_EMAIL,
-        type: 'signup',
+        type: 'password_reset',
+        language: 'en',
       }),
     );
     expect(success.status).toBe(200);
 
     const invalid = await generateToken(
-      request('generate-confirmation-token', { userId: 'user-1', email: PROBE_EMAIL }),
+      request('generate-confirmation-token', { email: PROBE_EMAIL, language: 'en' }),
     );
     expect(invalid.status).toBe(400);
 
     mockCheckRateLimit.mockReturnValue(false);
     const limited = await generateToken(
       request('generate-confirmation-token', {
-        userId: 'user-1',
         email: PROBE_EMAIL,
-        type: 'signup',
+        type: 'password_reset',
+        language: 'en',
       }),
     );
     expect(limited.status).toBe(429);
