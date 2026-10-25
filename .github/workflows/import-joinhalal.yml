@@ -66,6 +66,7 @@ jobs:
   run:
     name: '${{ inputs.operation }} (${{ inputs.mode }})'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Checkout repository
@@ -94,25 +95,12 @@ jobs:
             echo "cli_args=--${OP} --${MODE}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run operation (Production)
-        if: inputs.environment == 'production'
+      - name: Run operation
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "🚀 Running JoinHalal [${{ inputs.operation }}] against PRODUCTION"
-          echo "   Mode: ${{ inputs.mode }}"
-          echo "   Args: ${{ steps.args.outputs.cli_args }}"
-          echo ""
-          npx tsx scripts/import-joinhalal.ts ${{ steps.args.outputs.cli_args }}
-
-      - name: Run operation (UAT)
-        if: inputs.environment == 'uat'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "🚀 Running JoinHalal [${{ inputs.operation }}] against UAT"
+          echo "🚀 Running JoinHalal [${{ inputs.operation }}] against ${{ inputs.environment }}"
           echo "   Mode: ${{ inputs.mode }}"
           echo "   Args: ${{ steps.args.outputs.cli_args }}"
           echo ""

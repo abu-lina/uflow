@@ -71,18 +71,12 @@ const summarise = (apply: string, limit: string, log: string | null): string =>
 
 describe('backfill-location-coords workflow (#760)', () => {
   it('finds every step the other tests rely on', () => {
-    const names = [
-      'Build CLI arguments',
-      'Run backfill (UAT)',
-      'Run backfill (Production)',
-      'Summary',
-    ];
+    const names = ['Build CLI arguments', 'Run backfill', 'Summary'];
     for (const name of names) expect(steps.has(name), name).toBe(true);
     for (const name of ['Build CLI arguments', 'Summary']) {
       expect(runScript(name).length, name).toBeGreaterThan(0);
     }
-    expect(envBlock('Run backfill (UAT)')).not.toBe('');
-    expect(envBlock('Run backfill (Production)')).not.toBe('');
+    expect(envBlock('Run backfill')).not.toBe('');
   });
 
   it('criterion 1: triggers on workflow_dispatch only, with environment, apply and limit inputs', () => {
@@ -98,27 +92,16 @@ describe('backfill-location-coords workflow (#760)', () => {
     expect(buildArgs('true', '')).toEqual({ status: 0, output: 'cli_args=--apply\n' });
     expect(buildArgs('false', '5')).toEqual({ status: 0, output: 'cli_args= --limit 5\n' });
     expect(buildArgs('true', '5')).toEqual({ status: 0, output: 'cli_args=--apply --limit 5\n' });
-    expect(step('Run backfill (UAT)')).toContain('scripts/backfill-location-coords.ts $CLI_ARGS');
-    expect(step('Run backfill (Production)')).toContain(
-      'scripts/backfill-location-coords.ts $CLI_ARGS',
-    );
+    expect(step('Run backfill')).toContain('scripts/backfill-location-coords.ts $CLI_ARGS');
   });
 
-  it('criterion 3: each environment step uses only its own secrets, with no fallback', () => {
-    const uat = envBlock('Run backfill (UAT)');
-    const prod = envBlock('Run backfill (Production)');
-    expect(uat).toContain('NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL }}');
-    expect(uat).toContain(
-      'SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY }}',
-    );
-    expect(prod).toContain('NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}');
-    expect(prod).toContain('SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}');
-    expect(uat).not.toMatch(/\|\|/);
-    expect(prod).not.toMatch(/\|\|/);
-    expect(uat).not.toMatch(/secrets\.(?!UAT_)/);
-    expect(prod).not.toMatch(/secrets\.UAT_/);
-    expect(step('Run backfill (UAT)')).toMatch(/if: inputs\.environment == 'uat'/);
-    expect(step('Run backfill (Production)')).toMatch(/if: inputs\.environment == 'production'/);
+  it('criterion 3: secrets come from the job environment, with no UAT_ prefix or fallback (#776)', () => {
+    const env = envBlock('Run backfill');
+    expect(wf).toMatch(/^ {4}environment: \$\{\{ inputs\.environment \}\}$/m);
+    expect(env).toContain('NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}');
+    expect(env).toContain('SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}');
+    expect(wf).not.toMatch(/secrets\.UAT_/);
+    expect(wf).not.toMatch(/secrets\.\w+ *\}\} *\|\|/);
   });
 
   it('criterion 4: rejects non-positive-integer limits before they reach the shell', () => {
@@ -181,7 +164,7 @@ describe('backfill-location-coords workflow (#760)', () => {
     for (const name of Array.from(steps.keys()))
       expect(runScript(name), name).not.toMatch(/secrets\./);
     const secretLines = wf.split('\n').filter((l) => /secrets\./.test(l));
-    expect(secretLines).toHaveLength(4);
+    expect(secretLines).toHaveLength(2);
     for (const l of secretLines) expect(l).toMatch(/^ {10}[A-Z_]+: \$\{\{ secrets\.[A-Z_]+ \}\}$/);
     expect(wf).not.toMatch(/echo .*(SERVICE_ROLE|SUPABASE_URL)/);
   });

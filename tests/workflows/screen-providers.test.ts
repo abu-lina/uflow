@@ -8,7 +8,10 @@ const wf = readFileSync(resolve(process.cwd(), '.github/workflows/screen-provide
 const runLines = wf
   .split('\n')
   .filter(
-    (l) => /\$\{\{/.test(l) && !/^\s*[A-Z_]+: \$\{\{/.test(l) && !/^\s*(if|group|name):/.test(l),
+    (l) =>
+      /\$\{\{/.test(l) &&
+      !/^\s*[A-Z_]+: \$\{\{/.test(l) &&
+      !/^\s*(if|group|name|environment):/.test(l),
   );
 
 describe('#763 screen-providers workflow', () => {
@@ -25,10 +28,12 @@ describe('#763 screen-providers workflow', () => {
     expect(wf).toMatch(/INPUT_LIMIT: \$\{\{ inputs\.limit \}\}/);
   });
 
-  it('uses UAT_ secrets for uat with no fallback to production secrets', () => {
-    expect(wf).toContain('secrets.UAT_NEXT_PUBLIC_SUPABASE_URL');
-    expect(wf).toContain('secrets.UAT_SUPABASE_SERVICE_ROLE_KEY');
-    expect(wf).not.toMatch(/UAT_[A-Z_]+ \}\} *\|\|/);
+  it('takes Supabase secrets from the job environment, with no UAT_ prefix or fallback (#776)', () => {
+    expect(wf).toMatch(/^ {4}environment: \$\{\{ inputs\.environment \}\}$/m);
+    expect(wf).toContain('secrets.NEXT_PUBLIC_SUPABASE_URL');
+    expect(wf).toContain('secrets.SUPABASE_SERVICE_ROLE_KEY');
+    expect(wf).not.toMatch(/secrets\.UAT_/);
+    expect(wf).not.toMatch(/secrets\.\w+ *\}\} *\|\|/);
     expect(wf).toContain('secrets.APIFY_API_TOKEN');
   });
 

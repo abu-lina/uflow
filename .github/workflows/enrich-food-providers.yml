@@ -33,6 +33,7 @@ on:
 jobs:
   enrich:
     runs-on: ubuntu-latest
+    environment: production
     timeout-minutes: 120
 
     steps:

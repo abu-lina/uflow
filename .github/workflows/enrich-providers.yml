@@ -64,6 +64,7 @@ jobs:
   enrich:
     name: 'enrich (${{ inputs.mode }}, ${{ inputs.source }}, limit=${{ inputs.limit }}, ${{ inputs.environment }})'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Checkout repository
@@ -98,29 +99,13 @@ jobs:
 
           echo "cli_args=$CLI_ARGS" >> "$GITHUB_OUTPUT"
 
-      - name: Run enrichment (Production)
-        if: inputs.environment == 'production'
+      - name: Run enrichment
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
         run: |
-          echo "🚀 Running Provider Enrichment against PRODUCTION"
-          echo "   Source: ${{ inputs.source }}"
-          echo "   Mode:   ${{ inputs.mode }}"
-          echo "   Limit:  ${{ inputs.limit }}"
-          echo "   Args:   ${{ steps.args.outputs.cli_args }}"
-          echo ""
-          npx tsx scripts/enrich-providers.ts ${{ steps.args.outputs.cli_args }}
-
-      - name: Run enrichment (UAT)
-        if: inputs.environment == 'uat'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
-        run: |
-          echo "🚀 Running Provider Enrichment against UAT"
+          echo "🚀 Running Provider Enrichment against ${{ inputs.environment }}"
           echo "   Source: ${{ inputs.source }}"
           echo "   Mode:   ${{ inputs.mode }}"
           echo "   Limit:  ${{ inputs.limit }}"
