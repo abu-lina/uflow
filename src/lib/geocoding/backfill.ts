@@ -82,13 +82,15 @@ export async function backfillCoordinates(opts: BackfillOptions): Promise<Backfi
   // Pass 1: location rows without coordinates.
   let cursor = '';
   while (remaining() > 0) {
-    const { data, error } = await supabase
+    let query = supabase
       .from('locations')
       .select(`location_id, ${ADDRESS}, providers!inner(listing_type, review_status)`)
       .eq('providers.listing_type', 'food')
       .in('providers.review_status', ['approved', 'pending'])
-      .or(MISSING_COORDS)
-      .gt('location_id', cursor)
+      .or(MISSING_COORDS);
+    // Postgres rejects '' as a uuid, so the first page has no cursor filter.
+    if (cursor) query = query.gt('location_id', cursor);
+    const { data, error } = await query
       .order('location_id', { ascending: true })
       .limit(Math.min(pageSize, remaining()));
     if (error) throw new Error(`Failed to load locations: ${error.message}`);
@@ -122,13 +124,14 @@ export async function backfillCoordinates(opts: BackfillOptions): Promise<Backfi
   // Pass 2: approved providers without any location row.
   let providerCursor = '';
   while (remaining() > 0) {
-    const { data, error } = await supabase
+    // No listing_type filter: the map serves every section (getMapLocations
+    // takes a section), so any approved provider needs a location row.
+    let query = supabase
       .from('providers')
       .select(`provider_id, ${ADDRESS}`)
-      .eq('review_status', 'approved')
-      .gt('provider_id', providerCursor)
-      .order('provider_id', { ascending: true })
-      .limit(pageSize);
+      .eq('review_status', 'approved');
+    if (providerCursor) query = query.gt('provider_id', providerCursor);
+    const { data, error } = await query.order('provider_id', { ascending: true }).limit(pageSize);
     if (error) throw new Error(`Failed to load providers: ${error.message}`);
     const providers = (data ?? []) as unknown as ProviderRow[];
     if (providers.length === 0) break;

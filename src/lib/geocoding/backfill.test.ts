@@ -102,4 +102,23 @@ describe('backfillCoordinates (#756 AC4)', () => {
     });
     expect(summary.updated).toBe(2);
   });
+
+  it("never filters with gt on an empty cursor (uuid columns reject '')", async () => {
+    const seen: RecordedQuery[] = [];
+    let page = 0;
+    const supabase = recordingSupabase((q) => {
+      seen.push(q);
+      if (q.table === 'providers') return { data: [] };
+      page += 1;
+      return { data: page === 1 ? [{ location_id: 'l1', ...addr }] : [] };
+    });
+    await backfillCoordinates({ supabase, geocode: async () => coords, apply: false, pageSize: 1 });
+    const gts = seen.flatMap((q) => q.filters.filter(([m]) => m === 'gt'));
+    expect(gts.every(([, args]) => args[1] !== '')).toBe(true);
+    const firstPage = seen.find((q) => q.table === 'locations');
+    const firstProviders = seen.find((q) => q.table === 'providers');
+    expect(firstPage && hasFilter(firstPage, 'gt')).toBe(false);
+    expect(firstProviders && hasFilter(firstProviders, 'gt')).toBe(false);
+    expect(gts).toHaveLength(1); // second locations page uses the real cursor 'l1'
+  });
 });
