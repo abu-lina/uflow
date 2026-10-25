@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync, readdirSync } from 'fs';
 import path from 'path';
 
+// Variable specifiers keep tsc from type-checking the scripts through this test.
+const MENUS_SCRIPT = '../../scripts/enrich-delivery-menus';
+const ONE_SCRIPT = '../../scripts/enrich-one-wolt';
+
 const fetchWoltRestaurant = vi.fn();
 
 vi.mock('../../src/lib/enrichment/delivery-platform/apify-wolt-client', () => ({
@@ -81,7 +85,7 @@ async function runMenus(flags: string[] = []): Promise<void> {
   const logs: string[] = [];
   vi.spyOn(console, 'log').mockImplementation((...a) => void logs.push(a.join(' ')));
   vi.resetModules();
-  await import('../../scripts/enrich-delivery-menus');
+  await import(/* @vite-ignore */ MENUS_SCRIPT);
   await vi.waitFor(() => expect(logs.some((l) => l.includes('Summary'))).toBe(true));
 }
 
@@ -174,7 +178,7 @@ describe('enrich-one-wolt apify_checked_at (#754)', () => {
     const logs: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((...a) => void logs.push(a.join(' ')));
     vi.resetModules();
-    await import('../../scripts/enrich-one-wolt');
+    await import(/* @vite-ignore */ ONE_SCRIPT);
     await vi.waitFor(() => expect(logs.some((l) => l.includes('Done'))).toBe(true));
     expect(checkedUpdates()).toHaveLength(1);
   });

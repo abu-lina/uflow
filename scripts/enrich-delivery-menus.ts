@@ -162,7 +162,7 @@ async function main(): Promise<void> {
   // Phase 1: Pre-check all providers for existing menus + opening hours
   // -----------------------------------------------------------------------
 
-  const providerIds = Array.from(new Set(batch.map((l) => l.provider_id)));
+  const providerIds = [...new Set(batch.map((l) => l.provider_id))];
 
   // -----------------------------------------------------------------------
   // Batch-query existing state (menu counts + opening hours)
@@ -317,9 +317,8 @@ async function main(): Promise<void> {
           // Apify calls are rate-limited; fetch always since we need something
           const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
 
-          await markApifyChecked(link);
-
           if (!result) {
+            await markApifyChecked(link);
             console.log('not found on Wolt');
             stats.skipped++;
             continue;
@@ -333,6 +332,7 @@ async function main(): Promise<void> {
 
           if (!fetchMenus && !hoursToWrite) {
             // We only needed hours and they're not available
+            await markApifyChecked(link);
             if (result.openingHours) {
               console.log('opening hours not available from Apify');
             } else {
@@ -342,13 +342,22 @@ async function main(): Promise<void> {
             continue;
           }
 
-          await writeResult(link, fetchMenus ? menusToWrite : [], hoursToWrite, isDryRun, stats);
+          const written = await writeResult(
+            link,
+            fetchMenus ? menusToWrite : [],
+            hoursToWrite,
+            isDryRun,
+            stats,
+          );
 
           // Write phone/website/address from Apify (additive only) — Fix 239-2
           if (!isDryRun) {
             await writeApifyContactFields(link.provider_id, result, stats);
             await writeApifyAddressFields(link.provider_id, result, stats);
           }
+
+          // Mark only after the writes, so a failed write is retried next run
+          if (written) await markApifyChecked(link);
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           console.log(`${prefix} ... Fetch failed: ${msg}`);
@@ -502,7 +511,7 @@ async function writeResult(
   openingHoursToWrite: Record<string, unknown> | null,
   isDryRun: boolean,
   stats: RunStats,
-): Promise<void> {
+): Promise<boolean> {
   const hasMenus = menuItems.length > 0;
 
   if (isDryRun) {
@@ -517,7 +526,7 @@ async function writeResult(
     if (hasMenus) stats.menuItemsWritten += menuItems.length;
     if (openingHoursToWrite) stats.openingHoursWritten++;
     stats.processed++;
-    return;
+    return true;
   }
 
   // Build payload
@@ -531,7 +540,7 @@ async function writeResult(
 
   if (Object.keys(p_data).length === 0) {
     stats.skipped++;
-    return;
+    return true;
   }
 
   const { error: rpcError } = await supabase.rpc('admin_update_provider', {
@@ -542,7 +551,7 @@ async function writeResult(
   if (rpcError) {
     console.log(`RPC write failed: ${rpcError.message}`);
     stats.failed++;
-    return;
+    return false;
   }
 
   await supabase
@@ -565,6 +574,7 @@ async function writeResult(
   if (hasMenus) stats.menuItemsWritten += menuItems.length;
   if (openingHoursToWrite) stats.openingHoursWritten++;
   stats.processed++;
+  return true;
 }
 
 // ---------------------------------------------------------------------------
