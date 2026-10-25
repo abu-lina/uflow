@@ -1370,6 +1370,31 @@ export const tr = {
     certificateInvalidType: 'Geçersiz dosya türü. Lütfen bir görsel veya PDF dosyası yükle.',
     certificateTooLarge: 'Dosya çok büyük. Sertifika en fazla 5 MB olabilir.',
   },
+  // #766: automated screening panel on the pending provider review page
+  adminScreening: {
+    title: 'Otomatik tarama',
+    status: { flagged: 'İşaretli', review: 'İnceleme gerekli', clear: 'Temiz' },
+    risksHeading: 'Risk işaretleri',
+    noRisks: 'Risk işareti bulunamadı.',
+    positivesHeading: 'Olumlu sinyaller',
+    positivesNote: 'Bunlar durumu değiştirmez.',
+    matchedTerm: 'Eşleşen terim',
+    openEvidence: 'Kanıtı aç (yeni sekmede açılır)',
+    code: {
+      alcohol: 'Alkol',
+      pork: 'Domuz eti',
+      not_halal: 'Helal değil',
+      halal_positive: 'Helal belirtilmiş',
+    },
+    source: {
+      review: 'Yorum',
+      attribute: 'Mekan özelliği',
+      menu: 'Menü',
+      website: 'Web sitesi',
+    },
+    empty: 'Henüz taranmadı.',
+    error: 'Tarama sonuçları yüklenemedi.',
+  },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
   adminHalalEdit: {

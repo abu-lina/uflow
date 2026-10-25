@@ -1,10 +1,14 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { getProviderById } from '@/services/providers';
 import { createSupabaseCallerClient } from '@/lib/supabase/server';
 import { getCommunityServicesForProvider } from '@/services/communityServices';
 import { ProviderDetailPageClient } from './ProviderDetailPageClient';
+import { ProviderScreeningPanelSkeleton } from '@/features/admin/components/ProviderScreeningPanel';
+import { ProviderScreeningSection } from '@/features/admin/components/ProviderScreeningSection';
+import { canViewScreenings } from '@/features/admin/services/provider-screenings.server';
 
 // Issue 533 — /p/<id> used to render a not-found page under HTTP 200 with
 // `index, follow`: the route never called notFound() server-side (the only
@@ -74,12 +78,23 @@ export default async function ProviderDetailPage({ params }: { params: Promise<{
     notFound();
   }
 
+  // Pending listings only; the role check runs before the Suspense boundary so
+  // non-admins (creators, owners) never see a skeleton for a panel they can't get.
+  const showScreening = provider.review_status === 'pending' && (await canViewScreenings());
+
   return (
     <ProviderDetailPageClient
       key={id}
       initialCommunityServices={communityServices}
       initialData={provider}
       providerId={id}
+      screeningSlot={
+        showScreening ? (
+          <Suspense fallback={<ProviderScreeningPanelSkeleton />}>
+            <ProviderScreeningSection providerId={id} />
+          </Suspense>
+        ) : undefined
+      }
     />
   );
 }

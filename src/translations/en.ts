@@ -1359,6 +1359,31 @@ export const en = {
     certificateInvalidType: 'Invalid file type. Please upload an image or a PDF file.',
     certificateTooLarge: 'File too large. The certificate may be at most 5 MB.',
   },
+  // #766: automated screening panel on the pending provider review page
+  adminScreening: {
+    title: 'Automated screening',
+    status: { flagged: 'Flagged', review: 'Needs review', clear: 'Clear' },
+    risksHeading: 'Risk flags',
+    noRisks: 'No risk flags found.',
+    positivesHeading: 'Positive signals',
+    positivesNote: 'These do not change the status.',
+    matchedTerm: 'Matched term',
+    openEvidence: 'Open evidence (opens in a new tab)',
+    code: {
+      alcohol: 'Alcohol',
+      pork: 'Pork',
+      not_halal: 'Not halal',
+      halal_positive: 'Halal mentioned',
+    },
+    source: {
+      review: 'Review',
+      attribute: 'Place attribute',
+      menu: 'Menu',
+      website: 'Website',
+    },
+    empty: 'Not screened yet.',
+    error: 'Could not load the screening results.',
+  },
   // Plan 255 (#415): admin halal edit sub-page
   adminHalalEdit: {
     title: 'Halal Check',

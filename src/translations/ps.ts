@@ -1367,6 +1367,31 @@ export const ps = {
     certificateInvalidType: 'د فایل بڼه سم نه ده. مهرباني وکړئ انځور یا PDF فایل پورته کړئ.',
     certificateTooLarge: 'فایل ډېر لوی دی. سند باید له 5 MB نه زیات نه وي.',
   },
+  // #766: automated screening panel on the pending provider review page
+  adminScreening: {
+    title: 'اتومات سکرینینګ',
+    status: { flagged: 'نخشه شوی', review: 'بیاکتنې ته اړتیا لري', clear: 'پاک' },
+    risksHeading: 'د خطر نخې',
+    noRisks: 'د خطر هیڅ نخه ونه موندل شوه.',
+    positivesHeading: 'مثبت نښې',
+    positivesNote: 'دا حالت نه بدلوي.',
+    matchedTerm: 'سمون لرونکې کلمه',
+    openEvidence: 'ثبوت پرانیزئ (په نوي ټب کې پرانیستل کیږي)',
+    code: {
+      alcohol: 'الکول',
+      pork: 'د خنزیر غوښه',
+      not_halal: 'حلال نه دی',
+      halal_positive: 'حلال یاد شوی',
+    },
+    source: {
+      review: 'تبصره',
+      attribute: 'د ځای ځانګړتیا',
+      menu: 'مینو',
+      website: 'ویب پاڼه',
+    },
+    empty: 'تر اوسه سکرین شوی نه دی.',
+    error: 'د سکرینینګ پایلې پورته نه شوې.',
+  },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
   adminHalalEdit: {

@@ -3,7 +3,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 
 import { ProviderScreeningPanel, ProviderScreeningPanelSkeleton } from '../ProviderScreeningPanel';
-import type { ProviderScreeningsResult } from '@/features/admin/utils/provider-screenings';
+import type {
+  ProviderScreeningsResult,
+  ScreeningFlag,
+} from '@/features/admin/utils/provider-screenings';
 
 vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({
@@ -14,7 +17,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
 
 const K = 'adminScreening';
 
-const flag = (over: Record<string, unknown> = {}) => ({
+const flag = (over: Partial<ScreeningFlag> = {}): ScreeningFlag => ({
   code: 'alcohol',
   term: 'bier',
   snippet: 'Frisches Bier vom Fass',
@@ -23,16 +26,23 @@ const flag = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-const ready = (over: Partial<Extract<ProviderScreeningsResult, { state: 'ready' }>> = {}) =>
-  ({ state: 'ready', status: 'flagged', risks: [flag()], positives: [], ...over }) as never;
+type Ready = Extract<ProviderScreeningsResult, { state: 'ready' }>;
+
+const ready = (over: Partial<Ready> = {}): Ready => ({
+  state: 'ready',
+  status: 'flagged',
+  risks: [flag()],
+  positives: [],
+  ...over,
+});
 
 describe('ProviderScreeningPanel (#766)', () => {
   it.each([
     ['flagged', 'red'],
     ['review', 'amber'],
     ['clear', 'green'],
-  ])('AC1: %s status renders a %s traffic light', (status, colour) => {
-    render(<ProviderScreeningPanel result={ready({ status: status as never, risks: [] })} />);
+  ] as const)('AC1: %s status renders a %s traffic light', (status, colour) => {
+    render(<ProviderScreeningPanel result={ready({ status, risks: [] })} />);
     const badge = screen.getByTestId('screening-status');
     expect(badge).toHaveTextContent(`${K}.status.${status}`);
     expect(badge).toHaveAttribute('data-status', status);
@@ -103,7 +113,7 @@ describe('ProviderScreeningPanel (#766)', () => {
 
   it('AC4: skeleton renders a loading placeholder', () => {
     render(<ProviderScreeningPanelSkeleton />);
-    expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
   });
 
   it('AC5: forbidden result renders nothing', () => {
