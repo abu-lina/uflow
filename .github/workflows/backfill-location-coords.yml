@@ -113,4 +113,6 @@ jobs:
             echo "| OK | $(count OK) |"
             echo "| MISS | $(count MISS) |"
             echo "| SKIP | $(count SKIP) |"
+            echo "| WOULD | $(count WOULD) |"
+            echo "| FAIL | $(count FAIL) |"
           } >> "$GITHUB_STEP_SUMMARY"
