@@ -488,6 +488,13 @@ describe('#746 confirmation-token and resend endpoints', () => {
       await settle();
       expect(mockLookup).toHaveBeenCalledWith(KNOWN_CONFIRMED);
     });
+
+    it('normalizes the email to lowercase before the lookup', async () => {
+      await generateToken(tokenRequest(KNOWN_CONFIRMED.toUpperCase(), 'password_reset'));
+      await settle();
+      expect(mockLookup).toHaveBeenCalledWith(KNOWN_CONFIRMED);
+      expect(mockSendAuthEmail).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('AC4: the server issues the resend capability', () => {
