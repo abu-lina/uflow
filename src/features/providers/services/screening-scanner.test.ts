@@ -23,6 +23,7 @@ describe('screening scanner', () => {
     for (const t of ['kein halal', 'not 100% halal', 'nicht zertifiziert']) {
       expect(codes(t), t).not.toContain('halal_positive');
     }
+    expect(codes('Halal ✓ not halal')).toEqual(['not_halal']);
     expect(codes('halal zertifiziert')).toEqual(['halal_positive', 'halal_positive']);
   });
 
@@ -34,6 +35,9 @@ describe('screening scanner', () => {
     expect(codes('Äbier')).toEqual([]);
     for (const t of ['Sektion', 'Sektor', 'Weinen', 'Schweinfurt', 'Speckstein', 'Bierä']) {
       expect(codes(t), t).toEqual([]);
+    }
+    for (const t of ['Weißwein', 'Weisswein', 'Rotwein', 'Glühwein', 'Gluehwein', 'Weizenbier']) {
+      expect(codes(t), t).toEqual(['alcohol']);
     }
     for (const t of ['Weinkarte', 'Biergarten', 'Schweinefleisch', 'Biere', 'Weinberg']) {
       expect(codes(t), t).toHaveLength(1);
@@ -58,6 +62,8 @@ describe('screening scanner', () => {
     ]) {
       expect(codes(t), t).toEqual([]);
     }
+    expect(scanText('Bier alkoholfrei und Wein', ctx).map((f) => f.term)).toEqual(['wein']);
+    expect(scanText('alkoholfrei und Wein', ctx).map((f) => f.term)).toEqual(['wein']);
   });
 
   it('4. scanProvider merges, dedupes and derives status', () => {
@@ -100,5 +106,10 @@ describe('screening scanner', () => {
     const long = 'Bier '.repeat(100_000);
     expect(() => scanText(long, ctx)).not.toThrow();
     expect(scanText('a '.repeat(150_000) + 'Bier', ctx)).toEqual([]);
+    for (const unit of ['Bier ', 'no no ', 'ohne x ', 'a '.repeat(10), 'halal ']) {
+      const start = Date.now();
+      scanText(unit.repeat(Math.ceil(210_000 / unit.length)), ctx);
+      expect(Date.now() - start, unit).toBeLessThan(2000);
+    }
   });
 });

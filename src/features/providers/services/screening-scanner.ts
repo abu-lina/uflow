@@ -38,6 +38,7 @@ function matchAll(re: RegExp, text: string): RegExpExecArray[] {
 
 const LEFT = String.raw`(?<![\p{L}\p{N}])`;
 const RIGHT = String.raw`(?![\p{L}\p{N}])`;
+const PREFIXES = String.raw`(?:weiß|weiss|rot|rosé|rose|glüh|glueh|weizen|pils|schaum|reis|dessert)?`;
 // A term matches alone, with a plural ending, or with a known compound ending
 // ("Bierhaus", "Weinkarte", "Schweinefleisch"); "Sektion" or "Schweinfurt" do not match.
 const ENDINGS = String.raw`(?:e?(?:haus|haeuser|häuser|karte|glas|gläser|flasche|flaschen|garten|brot|fleisch|bar|schorle|braten|berg)|s|e|es)?`;
@@ -63,7 +64,10 @@ function rule(
   terms: string[],
   suffix = '',
 ): { code: ScreeningCode; re: RegExp } {
-  return { code, re: new RegExp(`${LEFT}(${terms.join('|')})${ENDINGS}${RIGHT}${suffix}`, 'giu') };
+  return {
+    code,
+    re: new RegExp(`${LEFT}${PREFIXES}(${terms.join('|')})${ENDINGS}${RIGHT}${suffix}`, 'giu'),
+  };
 }
 
 const RULES = [
@@ -77,7 +81,7 @@ const SOFT_BREAK = /^[\s\S]*[.;:!?,\n]/;
 // Negators up to two tokens before a term, and "free" adjectives up to one token before.
 const NEGATOR_BEFORE = ci(String.raw`(?<!\p{L})(?:ohne|kein\w*|without|no)\s+(?:\p{L}+\s+){0,2}$`);
 const ADJECTIVE_BEFORE = ci(
-  String.raw`(?:non-?\s*alcoholic|alcohol[\s-]*free|alkohol[\s-]*frei\w*|alkoholarm\w*)\s+(?:\p{L}+\s+)?$`,
+  String.raw`(?:non-?\s*alcoholic|alcohol[\s-]*free|alkohol[\s-]*frei\w*|alkoholarm\w*)\s+$`,
 );
 const FALSE_FRIEND_BEFORE = ci(String.raw`(?<!\p{L})(?:root|ginger|non-?)\s*$`);
 const FREE_AFTER = ci(
@@ -136,7 +140,9 @@ export function scanText(text: string, { source, url }: ScanContext): ScreeningF
     push('not_halal', m[0].toLowerCase().replace(/\s+/g, ' '), m.index, m[0].length);
   }
   for (const m of matchAll(HALAL_POSITIVE_RE, input)) {
-    const inNegation = notHalalSpans.some(([s, e]) => m.index >= s && m.index < e);
+    const inNegation = notHalalSpans.some(
+      ([s, e]) => m.index < e + 24 && m.index + m[0].length > s - 24,
+    );
     if (!inNegation && !isHalalNegated(input, m.index))
       push('halal_positive', m[1].toLowerCase(), m.index, m[0].length);
   }
