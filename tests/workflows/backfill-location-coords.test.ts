@@ -11,7 +11,7 @@ describe('backfill-location-coords workflow (#760)', () => {
     expect(wf).toMatch(/^on:\n {2}workflow_dispatch:/m);
     expect(wf).not.toMatch(/^ {2}(push|pull_request|schedule):/m);
     expect(wf).toMatch(/environment:[\s\S]*?default: 'uat'[\s\S]*?- uat\n\s+- production/);
-    expect(wf).toMatch(/apply:[\s\S]*?type: boolean[\s\S]*?default: false/);
+    expect(wf).toMatch(/apply:[\s\S]*?default: false[\s\S]*?type: boolean/);
     expect(wf).toMatch(/limit:[\s\S]*?required: false/);
   });
 
