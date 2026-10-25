@@ -201,6 +201,7 @@ jobs:
               -e ADMIN_DEBUG_KEY="${{ steps.resolve-uat-env.outputs.admin_debug_key }}" \
               -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
+              -e APP_ENV=uat \
               -e MISTRAL_API_KEY="${{ steps.resolve-uat-env.outputs.mistral_api_key }}" \
               -v uflow-uat-image-cache:/app/.next/cache/images \
               --name uflow-uat-new \
@@ -256,6 +257,7 @@ jobs:
               -e ADMIN_DEBUG_KEY="${{ steps.resolve-uat-env.outputs.admin_debug_key }}" \
               -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
+              -e APP_ENV=uat \
               -e MISTRAL_API_KEY="${{ steps.resolve-uat-env.outputs.mistral_api_key }}" \
               -v uflow-uat-image-cache:/app/.next/cache/images \
               --name uflow-uat \
