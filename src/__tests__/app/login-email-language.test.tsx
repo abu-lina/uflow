@@ -56,7 +56,9 @@ vi.mock('@/components/ui/Button', () => ({
   ),
 }));
 vi.mock('@/components/ui/LinkButton', () => ({
-  LinkButton: ({ children }: { children: React.ReactNode }) => <button type="button">{children}</button>,
+  LinkButton: ({ children }: { children: React.ReactNode }) => (
+    <button type="button">{children}</button>
+  ),
 }));
 
 import { LoginPageContent } from '@/app/(public)/login/LoginPageContent';
@@ -71,9 +73,12 @@ async function resendAndGetEmailBody() {
   fireEvent.click(screen.getByRole('button', { name: 'Login' }));
   fireEvent.click(await screen.findByText('resend'));
   await waitFor(() => {
-    expect(fetchMock.mock.calls.some(([url]) => url === '/api/send-auth-email')).toBe(true);
+    expect(fetchMock.mock.calls.some(([url]) => url === '/api/generate-confirmation-token')).toBe(
+      true,
+    );
   });
-  const call = fetchMock.mock.calls.find(([url]) => url === '/api/send-auth-email')!;
+  expect(fetchMock.mock.calls.some(([url]) => url === '/api/send-auth-email')).toBe(false);
+  const call = fetchMock.mock.calls.find(([url]) => url === '/api/generate-confirmation-token')!;
   return JSON.parse(call[1].body as string);
 }
 
@@ -82,7 +87,7 @@ describe('Login email language (issue #719)', () => {
     vi.clearAllMocks();
     fetchMock.mockImplementation(async (url: string) => ({
       ok: true,
-      json: async () => (url === '/api/generate-confirmation-token' ? { token: 'tok' } : {}),
+      json: async () => (url === '/api/generate-confirmation-token' ? { success: true } : {}),
     }));
     vi.stubGlobal('fetch', fetchMock);
   });

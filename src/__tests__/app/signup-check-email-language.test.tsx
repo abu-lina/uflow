@@ -55,15 +55,15 @@ describe('check-email resend language (#722 AC3)', () => {
     vi.clearAllMocks();
     sessionStorage.clear();
     sessionStorage.setItem(SIGNUP_PENDING_EMAIL_KEY, 'new@example.com');
-    mockFetch.mockImplementation(() => okJson({ token: 'tok-1' }));
+    mockFetch.mockImplementation(() => okJson({ success: true }));
   });
 
   it('sends language "en" when the UI language is ur', async () => {
     render(<CheckEmailPage />);
     fireEvent.click(screen.getByText('signup.checkEmail.resendButton'));
 
-    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
-    const body = JSON.parse(mockFetch.mock.calls[1][1].body);
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.language).toBe('en');
   });
 });

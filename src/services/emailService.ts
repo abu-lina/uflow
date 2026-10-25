@@ -1,6 +1,7 @@
 import 'server-only';
 import { Resend } from 'resend';
 import type { AuthEmailLanguage } from '@/lib/auth-email-language';
+import { maskEmail, redactEmails } from '@/lib/logging/redact-pii';
 
 // Lazy-load Resend client to avoid build-time initialization
 let resendClient: Resend | null = null;
@@ -72,7 +73,7 @@ const templates = {
     </div>
   </div>
 </body>
-</html>`
+</html>`,
     },
     de: {
       subject: 'Willkommen bei Ummah Flow! Bitte bestätigen Sie Ihre E-Mail',
@@ -127,8 +128,8 @@ const templates = {
     </div>
   </div>
 </body>
-</html>`
-    }
+</html>`,
+    },
   },
   resetPassword: {
     en: {
@@ -185,7 +186,7 @@ const templates = {
     </div>
   </div>
 </body>
-</html>`
+</html>`,
     },
     de: {
       subject: 'Ummah Flow-Passwort zurücksetzen',
@@ -241,8 +242,8 @@ const templates = {
     </div>
   </div>
 </body>
-</html>`
-    }
+</html>`,
+    },
   },
   magicLink: {
     en: {
@@ -298,7 +299,7 @@ const templates = {
     </div>
   </div>
 </body>
-</html>`
+</html>`,
     },
     de: {
       subject: 'Bei Ummah Flow anmelden',
@@ -353,7 +354,7 @@ const templates = {
     </div>
   </div>
 </body>
-</html>`
+</html>`,
     },
     ar: {
       subject: 'تسجيل الدخول إلى Ummah Flow',
@@ -408,7 +409,7 @@ const templates = {
     </div>
   </div>
 </body>
-</html>`
+</html>`,
     },
     tr: {
       subject: "Ummah Flow'a giriş yapın",
@@ -463,51 +464,51 @@ const templates = {
     </div>
   </div>
 </body>
-</html>`
-    }
-  }
+</html>`,
+    },
+  },
 };
 
 export const sendAuthEmail = async (
   to: string,
   type: 'confirmSignup' | 'resetPassword' | 'magicLink',
   language: AuthEmailLanguage,
-  confirmationUrl: string
+  confirmationUrl: string,
 ) => {
   // Fallback to 'en' if language is not available in templates
   const availableLanguage = language in templates[type] ? language : 'en';
   const template = templates[type][availableLanguage as 'en' | 'de'];
   const resend = getResendClient();
-  
+
   try {
     const result = await resend.emails.send({
       from: 'noreply@ummahflow.com',
       to,
       subject: template.subject,
-      html: template.html.replace('{{CONFIRMATION_URL}}', confirmationUrl)
+      html: template.html.replace('{{CONFIRMATION_URL}}', confirmationUrl),
     });
-    
+
     // Log for debugging
     console.log('[RESEND EMAIL] Email sent successfully:', {
-      to,
+      to: maskEmail(to),
       type,
       emailId: result.data?.id,
-      error: result.error
+      error: result.error,
     });
-    
+
     // Resend returns { data: { id: string }, error: null } on success
     // or { data: null, error: { message: string } } on failure
     if (result.error) {
       throw new Error(`Resend API error: ${result.error.message || JSON.stringify(result.error)}`);
     }
-    
+
     return result;
   } catch (error) {
     console.error('[RESEND EMAIL] Failed to send email:', {
-      to,
+      to: maskEmail(to),
       type,
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      error: redactEmails(error instanceof Error ? error.message : String(error)),
+      stack: error instanceof Error && error.stack ? redactEmails(error.stack) : undefined,
     });
     throw error;
   }
