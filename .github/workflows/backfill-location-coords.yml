@@ -1,0 +1,123 @@
+# Backfill location coordinates for providers approved before #759.
+# Manual trigger only. Dry run by default; Nominatim allows 1 req/s, so runs never overlap.
+
+name: Backfill Location Coords
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'uat'
+        type: choice
+        options:
+          - uat
+          - production
+      apply:
+        description: 'Write coordinates (off = dry run)'
+        required: true
+        default: false
+        type: boolean
+      limit:
+        description: 'Max locations to process (positive integer, empty = all)'
+        required: false
+        type: number
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backfill-location-coords
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: 'backfill-location-coords (${{ inputs.environment }})'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CLI arguments
+        id: args
+        env:
+          INPUT_APPLY: ${{ inputs.apply }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+        run: |
+          CLI_ARGS=""
+          if [ "$INPUT_APPLY" = "true" ]; then
+            CLI_ARGS="--apply"
+          fi
+          if [ -n "$INPUT_LIMIT" ]; then
+            if ! printf '%s' "$INPUT_LIMIT" | grep -Eq '^[1-9][0-9]*$'; then
+              echo "::error::limit must be a positive integer, got '$INPUT_LIMIT'"
+              exit 1
+            fi
+            CLI_ARGS="$CLI_ARGS --limit $INPUT_LIMIT"
+          fi
+          echo "cli_args=$CLI_ARGS" >> "$GITHUB_OUTPUT"
+
+      - name: Run backfill (Production)
+        if: inputs.environment == 'production'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
+        run: |
+          set -o pipefail
+          # shellcheck disable=SC2086
+          npx tsx scripts/backfill-location-coords.ts $CLI_ARGS 2>&1 | tee "$RUNNER_TEMP/backfill.log"
+
+      - name: Run backfill (UAT)
+        if: inputs.environment == 'uat'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
+        run: |
+          set -o pipefail
+          # shellcheck disable=SC2086
+          npx tsx scripts/backfill-location-coords.ts $CLI_ARGS 2>&1 | tee "$RUNNER_TEMP/backfill.log"
+
+      - name: Summary
+        if: always()
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_APPLY: ${{ inputs.apply }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+        run: |
+          LOG="$RUNNER_TEMP/backfill.log"
+          count() { if [ -f "$LOG" ]; then grep -c "^$1 " "$LOG" || true; else echo 0; fi; }
+          MODE="dry-run"
+          [ "$INPUT_APPLY" = "true" ] && MODE="apply"
+          {
+            echo "## Backfill Location Coords"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Environment | $INPUT_ENVIRONMENT |"
+            echo "| Mode | $MODE |"
+            echo "| Limit | ${INPUT_LIMIT:-all} |"
+            echo "| OK | $(count OK) |"
+            echo "| MISS | $(count MISS) |"
+            echo "| SKIP | $(count SKIP) |"
+            echo "| WOULD | $(count WOULD) |"
+            echo "| FAIL | $(count FAIL) |"
+            [ -f "$LOG" ] || { echo ""; echo "No log produced."; }
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$(count FAIL)" -gt 0 ]; then
+            echo "::error::$(count FAIL) location(s) failed"
+            exit 1
+          fi
