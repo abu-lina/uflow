@@ -1,4 +1,6 @@
 import 'server-only';
+import { NOMINATIM_URL, NOMINATIM_USER_AGENT } from '@/lib/geocoding/nominatim';
+import { acquireNominatimSlot } from '@/lib/geocoding/nominatim.server';
 
 /**
  * Server-side city resolution for the recommend path (#606 rework).
@@ -21,16 +23,10 @@ import 'server-only';
  */
 
 export type CityGeocodeOutcome =
-  | { kind: 'resolved'; canonicalName: string }
-  | { kind: 'no_match' }
-  | { kind: 'unavailable' };
+  { kind: 'resolved'; canonicalName: string } | { kind: 'no_match' } | { kind: 'unavailable' };
 
-const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 /** Short bound: a hung lookup must not stall a submission. */
 const LOOKUP_TIMEOUT_MS = 4000;
-/** Nominatim usage policy: max 1 request per second. */
-const MIN_INTERVAL_MS = 1100;
-const USER_AGENT = 'UmmahFlow/1.0 (+https://ummahflow.com; recommend city check)';
 
 interface NominatimCityResult {
   name?: string;
@@ -39,26 +35,6 @@ interface NominatimCityResult {
     town?: string;
     village?: string;
   };
-}
-
-// Serialise requests through a promise chain and pace each one to the 1 req/s
-// policy. No dependency: submissions are rare, the wait is bounded.
-let lastRequestStartedAt = 0;
-let requestChain: Promise<void> = Promise.resolve();
-
-async function acquireRateLimitSlot(): Promise<void> {
-  const previous = requestChain;
-  let release!: () => void;
-  requestChain = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  await previous;
-  const waitMs = MIN_INTERVAL_MS - (Date.now() - lastRequestStartedAt);
-  if (waitMs > 0) {
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
-  lastRequestStartedAt = Date.now();
-  release();
 }
 
 /**
@@ -71,7 +47,7 @@ export async function lookupCanonicalCity(query: string): Promise<CityGeocodeOut
   if (!trimmed) return { kind: 'no_match' };
 
   try {
-    await acquireRateLimitSlot();
+    await acquireNominatimSlot();
     const response = await fetch(
       `${NOMINATIM_URL}?` +
         `format=json&` +
@@ -82,7 +58,7 @@ export async function lookupCanonicalCity(query: string): Promise<CityGeocodeOut
       {
         signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
         headers: {
-          'User-Agent': USER_AGENT,
+          'User-Agent': NOMINATIM_USER_AGENT,
           'Accept-Language': 'de,en',
         },
       },

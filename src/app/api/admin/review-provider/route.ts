@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudit';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
@@ -11,6 +11,7 @@ import {
   type HalalAttestationCheckResult,
   type HalalAttestationValueMap,
 } from '@/services/admin/halal-gate';
+import { ensureProviderCoordinates } from '@/features/providers/services/geocode-on-approval.server';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
 /**
@@ -167,6 +168,21 @@ export async function PATCH(request: Request) {
       user.id,
       validatedData.halal,
     );
+
+    // #756: approved providers need coordinates to appear on the map. Best
+    // effort; the helper logs its own failures and approval stays successful.
+    if (validatedData.reviewStatus === 'approved') {
+      const providerId = validatedData.providerId;
+      try {
+        // after(): a slow geocoder must not delay the approval response.
+        after(() => ensureProviderCoordinates(providerId));
+      } catch (geocodeError) {
+        logger.warn('geocode_on_approval_threw', {
+          providerId: validatedData.providerId,
+          error: geocodeError instanceof Error ? geocodeError.message : String(geocodeError),
+        });
+      }
+    }
 
     // Log admin action for audit
     await logAdminAction(
