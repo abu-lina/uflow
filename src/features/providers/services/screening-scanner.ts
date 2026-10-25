@@ -36,10 +36,11 @@ function matchAll(re: RegExp, text: string): RegExpExecArray[] {
   return out;
 }
 
-// Left boundary only, so compounds such as "Bierhaus" match and "Fiber" does not.
 const LEFT = String.raw`(?<![\p{L}\p{N}])`;
-const NEGATED_PREFIX = String.raw`(?<!(?<!\p{L})(?:ohne|kein|keine|without|no|root|ginger)\s+)`;
-const NEGATED_PREFIX_HYPHEN = String.raw`(?<!non-)`;
+const RIGHT = String.raw`(?![\p{L}\p{N}])`;
+// A term matches alone, with a plural ending, or with a known compound ending
+// ("Bierhaus", "Weinkarte", "Schweinefleisch"); "Sektion" or "Schweinfurt" do not match.
+const ENDINGS = String.raw`(?:e?(?:haus|haeuser|häuser|karte|glas|gläser|flasche|flaschen|garten|brot|fleisch|bar|schorle|braten|berg)|s|e|es)?`;
 
 const ALCOHOL_TERMS = [
   'bier',
@@ -62,20 +63,43 @@ function rule(
   terms: string[],
   suffix = '',
 ): { code: ScreeningCode; re: RegExp } {
-  return {
-    code,
-    re: new RegExp(
-      `${LEFT}${NEGATED_PREFIX_HYPHEN}${NEGATED_PREFIX}(${terms.join('|')})${suffix}`,
-      'giu',
-    ),
-  };
+  return { code, re: new RegExp(`${LEFT}(${terms.join('|')})${ENDINGS}${RIGHT}${suffix}`, 'giu') };
 }
 
 const RULES = [
-  // "alkoholfrei" / "alcohol-free" are negations, not alcohol.
-  rule('alcohol', ALCOHOL_TERMS, String.raw`(?!-?fre[ie])`),
+  // "alcohol free" / "alkohol-frei" are negations, not alcohol.
+  rule('alcohol', ALCOHOL_TERMS, String.raw`(?!(?:\s|-)*fre[ie])`),
   rule('pork', PORK_TERMS),
 ];
+
+const ci = (src: string) => new RegExp(src, 'iu');
+const SOFT_BREAK = /^[\s\S]*[.;:!?,\n]/;
+// Negators up to two tokens before a term, and "free" adjectives up to one token before.
+const NEGATOR_BEFORE = ci(String.raw`(?<!\p{L})(?:ohne|kein\w*|without|no)\s+(?:\p{L}+\s+){0,2}$`);
+const ADJECTIVE_BEFORE = ci(
+  String.raw`(?:non-?\s*alcoholic|alcohol[\s-]*free|alkohol[\s-]*frei\w*|alkoholarm\w*)\s+(?:\p{L}+\s+)?$`,
+);
+const FALSE_FRIEND_BEFORE = ci(String.raw`(?<!\p{L})(?:root|ginger|non-?)\s*$`);
+const FREE_AFTER = ci(
+  String.raw`^\s*[(\[]?\s*(?:alkohol[\s-]*frei|alcohol[\s-]*free|non-?\s*alcoholic|ohne\s+alkohol)`,
+);
+const HALAL_NEGATOR_BEFORE = ci(String.raw`(?<!\p{L})(?:kein\w*|nicht|not|no)\s+(?:100\s*%\s*)?$`);
+
+function isNegated(text: string, start: number, end: number): boolean {
+  const before = text.slice(Math.max(0, start - 60), start).replace(SOFT_BREAK, '');
+  const after = text.slice(end, end + 40).replace(/[.;:!?,\n][\s\S]*$/, '');
+  return (
+    NEGATOR_BEFORE.test(before) ||
+    ADJECTIVE_BEFORE.test(before) ||
+    FALSE_FRIEND_BEFORE.test(before) ||
+    FREE_AFTER.test(after)
+  );
+}
+
+function isHalalNegated(text: string, start: number): boolean {
+  const before = text.slice(Math.max(0, start - 20), start).replace(SOFT_BREAK, '');
+  return HALAL_NEGATOR_BEFORE.test(before);
+}
 
 const NOT_HALAL_RE = new RegExp(`${LEFT}(nicht|not)\\s+halal`, 'giu');
 const HALAL_POSITIVE_RE = new RegExp(`${LEFT}(halal|zertifiziert)`, 'giu');
@@ -100,7 +124,10 @@ export function scanText(text: string, { source, url }: ScanContext): ScreeningF
   }
 
   for (const { code, re } of RULES) {
-    for (const m of matchAll(re, input)) push(code, m[1].toLowerCase(), m.index, m[0].length);
+    for (const m of matchAll(re, input)) {
+      if (!isNegated(input, m.index, m.index + m[0].length))
+        push(code, m[1].toLowerCase(), m.index, m[0].length);
+    }
   }
 
   const notHalalSpans: Array<[number, number]> = [];
@@ -110,7 +137,8 @@ export function scanText(text: string, { source, url }: ScanContext): ScreeningF
   }
   for (const m of matchAll(HALAL_POSITIVE_RE, input)) {
     const inNegation = notHalalSpans.some(([s, e]) => m.index >= s && m.index < e);
-    if (!inNegation) push('halal_positive', m[1].toLowerCase(), m.index, m[0].length);
+    if (!inNegation && !isHalalNegated(input, m.index))
+      push('halal_positive', m[1].toLowerCase(), m.index, m[0].length);
   }
 
   return flags;
