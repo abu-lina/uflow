@@ -16,7 +16,7 @@ describe('resetPasswordWithLanguage email language (#722 review)', () => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     mockFetch.mockImplementation((url: string) =>
-      url === '/api/check-email-exists' ? json({ confirmed: true }) : json({ token: 'tok' })
+      url === '/api/check-email-exists' ? json({ confirmed: true }) : json({ success: true }),
     );
   });
 
@@ -26,7 +26,8 @@ describe('resetPasswordWithLanguage email language (#722 review)', () => {
     ['tr', 'tr'],
   ] as const)('sends %s as %s', async (ui, expected) => {
     await resetPasswordWithLanguage('user@example.com', ui);
-    const call = mockFetch.mock.calls.find(([u]) => u === '/api/send-auth-email');
+    const call = mockFetch.mock.calls.find(([u]) => u === '/api/generate-confirmation-token');
     expect(JSON.parse(call?.[1].body).language).toBe(expected);
+    expect(mockFetch.mock.calls.some(([u]) => u === '/api/send-auth-email')).toBe(false);
   });
 });

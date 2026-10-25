@@ -55,8 +55,9 @@ async function resend() {
   if (!form) throw new Error('login form not rendered');
   fireEvent.submit(form);
   fireEvent.click(await screen.findByRole('button', { name: 'resend' }));
-  await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
-  const call = mockFetch.mock.calls.find(([u]) => u === '/api/send-auth-email');
+  await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+  expect(mockFetch.mock.calls.some(([u]) => u === '/api/send-auth-email')).toBe(false);
+  const call = mockFetch.mock.calls.find(([u]) => u === '/api/generate-confirmation-token');
   return JSON.parse(call?.[1].body).language;
 }
 
@@ -64,9 +65,7 @@ describe('LoginModal resend language (#722 review)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.signIn.mockResolvedValue({ data: null, error: { message: 'EMAIL_NOT_CONFIRMED' } });
-    mockFetch
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ token: 'tok' }) })
-      .mockResolvedValueOnce({ ok: true });
+    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
   });
 
   it('sends en when the UI language is ur', async () => {
