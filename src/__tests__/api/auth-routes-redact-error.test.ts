@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PROBE_EMAIL, PROBE_IP, leakedValues, spyOnConsole } from '@/__tests__/utils/pii-probe';
 
+// Signs the resend capability the signup route issues (#746)
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'test-service-role-key';
+
 type Handler = (request: Request) => Promise<Response>;
 
 const mockMaybeSingle = vi.fn();
@@ -116,8 +119,14 @@ describe('AC2: auth route errors go through redactError (#669)', () => {
     const body = { token: 'reset-token', email: PROBE_EMAIL, password: 'abc123' };
 
     it.each([
-      ['updateTokenError', () => mockUpdateToken.mockResolvedValue({ error: probeError('update token') })],
-      ['updateUserError', () => mockUpdateUserById.mockResolvedValue({ error: probeError('update user') })],
+      [
+        'updateTokenError',
+        () => mockUpdateToken.mockResolvedValue({ error: probeError('update token') }),
+      ],
+      [
+        'updateUserError',
+        () => mockUpdateUserById.mockResolvedValue({ error: probeError('update user') }),
+      ],
       ['catch-all', () => mockMaybeSingle.mockRejectedValue(thrownProbeError('token lookup'))],
     ] as const)('%s', async (_name, arrange) => {
       arrange();
@@ -133,8 +142,14 @@ describe('AC2: auth route errors go through redactError (#669)', () => {
     const body = { token: 'confirm-token', email: PROBE_EMAIL };
 
     it.each([
-      ['updateTokenError', () => mockUpdateToken.mockResolvedValue({ error: probeError('update token') })],
-      ['updateUserError', () => mockUpdateUserById.mockResolvedValue({ error: probeError('update user') })],
+      [
+        'updateTokenError',
+        () => mockUpdateToken.mockResolvedValue({ error: probeError('update token') }),
+      ],
+      [
+        'updateUserError',
+        () => mockUpdateUserById.mockResolvedValue({ error: probeError('update user') }),
+      ],
       ['catch-all', () => mockMaybeSingle.mockRejectedValue(thrownProbeError('token lookup'))],
     ] as const)('%s', async (_name, arrange) => {
       arrange();
@@ -150,7 +165,8 @@ describe('AC2: auth route errors go through redactError (#669)', () => {
     it.each([
       [
         'listError',
-        () => mockListUsers.mockResolvedValue({ data: { users: [] }, error: probeError('listUsers') }),
+        () =>
+          mockListUsers.mockResolvedValue({ data: { users: [] }, error: probeError('listUsers') }),
         500,
       ],
       [

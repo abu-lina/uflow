@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PROBE_EMAIL, PROBE_IP, leakedValues, spyOnConsole } from '@/__tests__/utils/pii-probe';
+import { RESEND_CAPABILITY_HEADER, issueResendCapability } from '@/lib/auth/resend-capability';
+
+// Signs the resend capability the signup route issues (#746)
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'test-service-role-key';
 
 type Handler = (request: Request) => Promise<Response>;
 
@@ -39,7 +43,11 @@ let sendAuthEmail: Handler;
 function request(path: string, body: Record<string, unknown>): Request {
   return new Request(`http://localhost/api/${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-real-ip': PROBE_IP },
+    headers: {
+      'content-type': 'application/json',
+      'x-real-ip': PROBE_IP,
+      [RESEND_CAPABILITY_HEADER]: issueResendCapability(PROBE_EMAIL),
+    },
     body: JSON.stringify(body),
   });
 }
@@ -144,7 +152,11 @@ describe('auth email routes log no raw PII', () => {
 
     it('AC8: short password', async () => {
       const response = await resetPassword(
-        request('auth/reset-password', { token: 'reset-token', email: PROBE_EMAIL, password: 'abc' }),
+        request('auth/reset-password', {
+          token: 'reset-token',
+          email: PROBE_EMAIL,
+          password: 'abc',
+        }),
       );
       expect(response.status).toBe(400);
       expectNoProbeValues();
@@ -168,7 +180,7 @@ describe('auth email routes log no raw PII', () => {
     it.each([
       ['missing fields', { to: PROBE_EMAIL, language: 'en' }],
       ['invalid type', { to: PROBE_EMAIL, type: 'unsupported', language: 'en' }],
-      ['invalid language', { to: PROBE_EMAIL, type: 'magicLink', language: 'xx' }],
+      ['invalid language', { to: PROBE_EMAIL, type: 'confirmSignup', language: 'xx' }],
     ])('AC8: %s', async (_name, body) => {
       const response = await sendAuthEmail(request('send-auth-email', body));
       expect(response.status).toBe(400);
@@ -182,7 +194,7 @@ describe('auth email routes log no raw PII', () => {
         }),
       );
       const response = await sendAuthEmail(
-        request('send-auth-email', { to: PROBE_EMAIL, type: 'magicLink', language: 'en' }),
+        request('send-auth-email', { to: PROBE_EMAIL, type: 'confirmSignup', language: 'en' }),
       );
       expect(response.status).toBe(500);
       expectNoProbeValues();

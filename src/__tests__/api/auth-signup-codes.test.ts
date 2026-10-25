@@ -53,6 +53,9 @@ vi.mock('@/utils/security', () => ({
 
 import { POST } from '@/app/api/auth/signup/route';
 
+// Signs the resend capability the signup route issues (#746)
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'test-service-role-key';
+
 function makeRequest(body: Record<string, unknown>): Request {
   return new Request('http://localhost/api/auth/signup', {
     method: 'POST',

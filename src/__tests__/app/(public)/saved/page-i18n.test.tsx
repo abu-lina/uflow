@@ -141,7 +141,7 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       submitWith('user@example.com');
 
       await waitFor(() =>
-        expect(mocks.signInWithMagicLink).toHaveBeenCalledWith('user@example.com', 'en')
+        expect(mocks.signInWithMagicLink).toHaveBeenCalledWith('user@example.com', 'en'),
       );
     });
 
@@ -156,7 +156,7 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       expect(screen.getByRole('button', { name: 'common.retry' })).toBeInTheDocument();
       expect(mocks.toastSuccess).toHaveBeenCalledWith(
         'login.magicLinkSentTitle',
-        expect.objectContaining({ description: 'login.magicLinkSentDescription' })
+        expect.objectContaining({ description: 'login.magicLinkSentDescription' }),
       );
     });
 
@@ -172,7 +172,9 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       expect(await screen.findByText('login.magicLinkFailedError')).toBeInTheDocument();
       expect(mocks.toastError).toHaveBeenCalledWith(
         'login.magicLinkFailedToast',
-        expect.objectContaining({ description: 'login.magicLinkDiagnostic|https://diag.example/x' })
+        expect.objectContaining({
+          description: 'login.magicLinkDiagnostic|https://diag.example/x',
+        }),
       );
     });
 
@@ -185,13 +187,16 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       await waitFor(() =>
         expect(mocks.toastError).toHaveBeenCalledWith(
           'login.magicLinkFailedToast',
-          expect.objectContaining({ description: 'login.emailFailedDescription' })
-        )
+          expect.objectContaining({ description: 'login.emailFailedDescription' }),
+        ),
       );
     });
 
     it('translates EMAIL_NOT_FOUND', async () => {
-      mocks.signInWithMagicLink.mockResolvedValue({ data: null, error: { message: 'EMAIL_NOT_FOUND' } });
+      mocks.signInWithMagicLink.mockResolvedValue({
+        data: null,
+        error: { message: 'EMAIL_NOT_FOUND' },
+      });
       render(<SavedProvidersPage />);
 
       submitWith('user@example.com');
@@ -202,7 +207,10 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
 
   describe('password (stage3)', () => {
     it('translates invalid credentials message and toast', async () => {
-      mocks.signInWithEmailConfirmation.mockResolvedValue({ data: null, error: { message: 'Invalid' } });
+      mocks.signInWithEmailConfirmation.mockResolvedValue({
+        data: null,
+        error: { message: 'Invalid' },
+      });
       render(<SavedProvidersPage />);
 
       submitWith('user@example.com', 'wrong');
@@ -210,7 +218,7 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       expect(await screen.findByText('login.invalidCredentials')).toBeInTheDocument();
       expect(mocks.toastError).toHaveBeenCalledWith(
         'login.loginFailedToast',
-        expect.objectContaining({ description: 'login.loginFailedDescription' })
+        expect.objectContaining({ description: 'login.loginFailedDescription' }),
       );
     });
 
@@ -220,7 +228,9 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
 
       submitWith('user@example.com', 'secret');
 
-      await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledWith('login.loginSuccessToast'));
+      await waitFor(() =>
+        expect(mocks.toastSuccess).toHaveBeenCalledWith('login.loginSuccessToast'),
+      );
     });
 
     it('translates EMAIL_NOT_CONFIRMED and resend-confirmation success', async () => {
@@ -233,7 +243,7 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
         vi
           .fn()
           .mockResolvedValueOnce({ ok: true, json: async () => ({ token: 'tok' }) })
-          .mockResolvedValueOnce({ ok: true })
+          .mockResolvedValueOnce({ ok: true }),
       );
       render(<SavedProvidersPage />);
 
@@ -245,7 +255,7 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       expect(await screen.findByText('login.confirmationEmailSent')).toBeInTheDocument();
       expect(mocks.toastSuccess).toHaveBeenCalledWith(
         'login.emailSentToast',
-        expect.objectContaining({ description: 'login.emailSentDescription' })
+        expect.objectContaining({ description: 'login.emailSentDescription' }),
       );
     });
 
@@ -256,16 +266,16 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       });
       const fetchMock = vi
         .fn()
-        .mockResolvedValueOnce({ ok: true, json: async () => ({ token: 'tok' }) })
-        .mockResolvedValueOnce({ ok: true });
+        .mockResolvedValue({ ok: true, json: async () => ({ success: true }) });
       vi.stubGlobal('fetch', fetchMock);
       render(<SavedProvidersPage />);
 
       submitWith('user@example.com', 'secret');
       fireEvent.click(await screen.findByRole('button', { name: 'resend' }));
 
-      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-      expect(JSON.parse(fetchMock.mock.calls[1][1].body).language).toBe('en');
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+      expect(fetchMock.mock.calls[0][0]).toBe('/api/generate-confirmation-token');
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body).language).toBe('en');
     });
 
     it('translates resend-confirmation failure', async () => {
@@ -282,7 +292,7 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       expect(await screen.findByText('login.confirmationEmailFailed')).toBeInTheDocument();
       expect(mocks.toastError).toHaveBeenCalledWith(
         'login.emailFailedToast',
-        expect.objectContaining({ description: 'login.emailFailedDescription' })
+        expect.objectContaining({ description: 'login.emailFailedDescription' }),
       );
     });
 
@@ -301,8 +311,8 @@ describe('SavedProvidersPage login-required i18n (Code Review 264 HIGH-3)', () =
       await waitFor(() =>
         expect(mocks.toastError).toHaveBeenCalledWith(
           'login.errorOccurredToast',
-          expect.objectContaining({ description: 'login.errorOccurredDescription' })
-        )
+          expect.objectContaining({ description: 'login.errorOccurredDescription' }),
+        ),
       );
     });
 

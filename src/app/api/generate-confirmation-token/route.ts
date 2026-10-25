@@ -1,111 +1,164 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { maskEmail } from '@/lib/logging/redact-pii';
+import { maskEmail, redactError } from '@/lib/logging/redact-pii';
+import { isAuthEmailLanguage, type AuthEmailLanguage } from '@/lib/auth-email-language';
+import {
+  normalizeEmail,
+  readResendCapability,
+  verifyResendCapability,
+} from '@/lib/auth/resend-capability';
+import { sendAuthEmail } from '@/services/emailService';
+
+const HOUR_MS = 60 * 60 * 1000;
+const TOKEN_TTL_MS = 24 * HOUR_MS;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const SIGNUP_EMAIL_STORE = 'generate-confirmation-token-signup-email';
+const RESET_EMAIL_STORE = 'generate-confirmation-token-reset-email';
+
+type TokenType = 'signup' | 'password_reset';
+
+const FLOWS: Record<
+  TokenType,
+  {
+    mail: 'confirmSignup' | 'resetPassword';
+    path: string;
+    eligible: (confirmed: boolean) => boolean;
+  }
+> = {
+  signup: { mail: 'confirmSignup', path: '/auth/confirm', eligible: (confirmed) => !confirmed },
+  password_reset: {
+    mail: 'resetPassword',
+    path: '/reset-password',
+    eligible: (confirmed) => confirmed,
+  },
+};
+
+function isTokenType(value: unknown): value is TokenType {
+  return value === 'signup' || value === 'password_reset';
+}
+
+// Every request that passes validation gets this exact response, whether or not
+// the account exists, so the endpoint cannot be used as an enumeration oracle.
+const accepted = () => NextResponse.json({ success: true });
+
+// public.users mirrors auth.users (handle_new_user trigger, unique indexed lowercase email; owner
+// verified it matches lower(auth.users.email) for every row), so this is an O(1) lookup.
+// `email` is already normalized (trimmed, lowercased) by the caller.
+async function findUserByEmail(email: string) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data: row, error } = await supabaseAdmin
+    .from('users')
+    .select('user_id')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) throw error;
+  if (!row) return null;
+
+  const { data, error: userError } = await supabaseAdmin.auth.admin.getUserById(row.user_id);
+  if (userError) throw userError;
+  return data.user ?? null;
+}
+
+// after() keeps the work alive on serverless hosts. It throws outside a Next request scope
+// (unit tests), where a plain fire-and-forget is fine on the long-lived Node server we run.
+function defer(task: () => Promise<void>) {
+  try {
+    after(task);
+  } catch {
+    void task();
+  }
+}
+
+async function issueToken(email: string, type: TokenType, language: AuthEmailLanguage) {
+  const flow = FLOWS[type];
+  const user = await findUserByEmail(email);
+  if (!user || !flow.eligible(Boolean(user.email_confirmed_at))) {
+    console.log('[TOKEN] No token issued:', { type, email: maskEmail(email) });
+    return;
+  }
+
+  // Reset mail is unauthenticated, so the per-email cap only counts mail that is really sent.
+  // Counting requests would let anyone exhaust a victim's budget and block their real reset.
+  if (type === 'password_reset' && !checkRateLimit(email, 3, HOUR_MS, RESET_EMAIL_STORE)) {
+    console.warn('[TOKEN] Reset mail limit reached:', { email: maskEmail(email) });
+    return;
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const { error: insertError } = await getSupabaseAdmin()
+    .from('email_confirmation_tokens')
+    .insert({
+      user_id: user.id,
+      email,
+      token,
+      type,
+      expires_at: new Date(Date.now() + TOKEN_TTL_MS).toISOString(),
+      used: false,
+      created_at: new Date().toISOString(),
+    });
+  if (insertError) throw insertError;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
+  const url = `${siteUrl}${flow.path}?token=${token}&email=${encodeURIComponent(email)}`;
+  await sendAuthEmail(email, flow.mail, language, url);
+  console.log('[TOKEN] Token issued:', { type, email: maskEmail(email) });
+}
 
 export async function POST(request: Request) {
   try {
-    // F-049-02: Rate limit token generation (5 per hour per IP)
-    const identifier = getClientIdentifier(request);
-    if (!checkRateLimit(identifier, 5, 60 * 60 * 1000, 'generate-confirmation-token')) {
+    // F-049-02: rate limit per IP (5 per hour)
+    if (!checkRateLimit(getClientIdentifier(request), 5, HOUR_MS, 'generate-confirmation-token')) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
-    const { userId, email, type } = await request.json();
-    
-    // F-049-12: Omit PII (email) from logs
-    console.log('[TOKEN] Generation request:', { userId, type });
-    
-    if (!email || !type) {
-      console.error('[TOKEN] Missing required fields:', { userId, email: maskEmail(email), type });
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    const { email: rawEmail, type, language } = await request.json();
+
+    if (
+      typeof rawEmail !== 'string' ||
+      !EMAIL_PATTERN.test(rawEmail) ||
+      !isTokenType(type) ||
+      !isAuthEmailLanguage(language)
+    ) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+    const email = normalizeEmail(rawEmail);
+
+    if (type === 'signup') {
+      if (!verifyResendCapability(readResendCapability(request), email)) {
+        console.warn('[TOKEN] Signup token request without a valid capability');
+        return NextResponse.json({ error: 'Request not allowed' }, { status: 403 });
+      }
+      // The capability proves the caller owns this flow, so a per-email 429 leaks nothing.
+      if (!checkRateLimit(email, 3, HOUR_MS, SIGNUP_EMAIL_STORE)) {
+        return NextResponse.json(
+          { error: 'Rate limit exceeded. Please try again later.' },
+          { status: 429 },
+        );
+      }
     }
 
-    // Validate environment variables
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error('[TOKEN] Missing Supabase credentials');
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    // Generate a secure random token
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-    console.log('[TOKEN] Attempting to store token in database');
-
-    // Resolve user id if not provided by looking up via email
-    // Applies to both email confirmation and password reset flows
-    let finalUserId = userId;
-    if (!finalUserId) {
-      const supabaseAdmin = getSupabaseAdmin();
-      // Fallback to listUsers when getUserByEmail is unavailable in this SDK version
-      const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      if (userError) {
-        console.error('[TOKEN] Error listing users:', userError);
-        return NextResponse.json({ error: 'Failed to find user' }, { status: 500 });
-      }
-      const normalized = email.trim().toLowerCase();
-      const user = users.find(u => (u.email || '').trim().toLowerCase() === normalized);
-      if (!user) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
-      }
-      finalUserId = user.id;
-    }
-
-    // Store token in database for validation
-    const supabaseAdmin = getSupabaseAdmin();
-    const { error: insertError } = await supabaseAdmin
-      .from('email_confirmation_tokens')
-      .insert({
-        user_id: finalUserId,
-        email: email,
-        token: token,
-        type: type,
-        expires_at: expiresAt.toISOString(),
-        used: false,
-        created_at: new Date().toISOString()
-      });
-
-    if (insertError) {
-      console.error('[TOKEN] Database error:', {
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint,
-        code: insertError.code
-      });
-      return NextResponse.json(
-        { 
-          error: 'Failed to generate confirmation token',
-          details: insertError.message 
-        },
-        { status: 500 }
-      );
-    }
-
-    console.log('[TOKEN] Token generated successfully');
-
-    return NextResponse.json({ 
-      token,
-      expiresAt: expiresAt.toISOString()
-    });
-  } catch (error) {
-    console.error('[TOKEN] Unexpected error:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to generate confirmation token',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
+    // Lookup, insert and send run after the response so latency is the same for every account.
+    // Failures are logged only; surfacing them would reveal that the account exists.
+    defer(() =>
+      issueToken(email, type, language).catch((issueError) => {
+        console.error('[TOKEN] Failed to issue token:', redactError(issueError));
+      }),
     );
+
+    return accepted();
+  } catch (error) {
+    console.error('[TOKEN] Unexpected error:', redactError(error));
+    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
   }
 }
