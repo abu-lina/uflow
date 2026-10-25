@@ -1,5 +1,6 @@
 /**
- * Backfill missing location coordinates for approved and pending food providers.
+ * Backfill missing location coordinates for approved and pending food providers,
+ * and create a primary location for approved providers that have no location row (#756).
  *
  * Powers Plan 196 "Near me" search: search_food_near_me() can only return rows
  * whose locations have location_latitude / location_longitude. Seed/imported
@@ -26,7 +27,9 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('Missing required environment variables.');
-  console.error('  NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local');
+  console.error(
+    '  NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local',
+  );
   process.exit(1);
 }
 
@@ -94,7 +97,9 @@ async function geocode(row: LocationRow): Promise<{ lat: number; lon: number } |
 
     if (res.status === 429) {
       const backoff = RATE_LIMIT_MS * (attempt + 2);
-      console.warn(`  429 rate-limited, backing off ${backoff}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+      console.warn(
+        `  429 rate-limited, backing off ${backoff}ms (attempt ${attempt + 1}/${MAX_RETRIES})`,
+      );
       await sleep(backoff);
       continue;
     }
@@ -144,7 +149,9 @@ async function main(): Promise<void> {
   let failed = 0;
 
   for (const row of rows) {
-    const label = [row.address_street, row.address_zip, row.address_city].filter(Boolean).join(', ') || '(no address)';
+    const label =
+      [row.address_street, row.address_zip, row.address_city].filter(Boolean).join(', ') ||
+      '(no address)';
 
     if (!hasEnoughAddress(row)) {
       console.log(`SKIP  ${row.location_id} — insufficient address: ${label}`);
@@ -187,8 +194,77 @@ async function main(): Promise<void> {
     }
   }
 
+  // #756: approved providers with no locations row at all never reach the map.
+  // Insert a primary location from the provider's own address.
+  const { data: allLocs, error: allLocsError } = await supabase
+    .from('locations')
+    .select('provider_id');
+  if (allLocsError) {
+    console.error('Failed to load location provider ids:', allLocsError.message);
+    process.exit(1);
+  }
+  const withRow = new Set((allLocs ?? []).map((l: { provider_id: string }) => l.provider_id));
+  const { data: provData, error: provError } = await supabase
+    .from('providers')
+    .select('provider_id, address_street, address_zip, address_city, address_country')
+    .eq('review_status', 'approved');
+  if (provError) {
+    console.error('Failed to load providers:', provError.message);
+    process.exit(1);
+  }
+  type ProviderRow = Omit<LocationRow, 'location_id'> & { provider_id: string };
+  let rowless = ((provData ?? []) as ProviderRow[]).filter((p) => !withRow.has(p.provider_id));
+  if (LIMIT) rowless = rowless.slice(0, LIMIT);
+  console.log(`\nFound ${rowless.length} approved provider(s) without any location row.\n`);
+
+  for (const p of rowless) {
+    const label =
+      [p.address_street, p.address_zip, p.address_city].filter(Boolean).join(', ') ||
+      '(no address)';
+    const asRow = { location_id: p.provider_id, ...p };
+    if (!hasEnoughAddress(asRow)) {
+      console.log(`SKIP  provider ${p.provider_id} — insufficient address: ${label}`);
+      skipped += 1;
+      continue;
+    }
+    try {
+      const coords = await geocode(asRow);
+      await sleep(RATE_LIMIT_MS);
+      if (!coords) {
+        console.log(`MISS  provider ${p.provider_id} — no geocode match: ${label}`);
+        failed += 1;
+        continue;
+      }
+      if (DRY_RUN) {
+        console.log(`WOULD provider ${p.provider_id} — ${label} -> ${coords.lat}, ${coords.lon}`);
+        updated += 1;
+        continue;
+      }
+      const { error: insertError } = await supabase.from('locations').insert({
+        provider_id: p.provider_id,
+        address_street: p.address_street,
+        address_zip: p.address_zip,
+        address_city: p.address_city,
+        address_country: p.address_country,
+        location_latitude: coords.lat,
+        location_longitude: coords.lon,
+        is_primary: true,
+      });
+      if (insertError) {
+        console.log(`FAIL  provider ${p.provider_id} — insert error: ${insertError.message}`);
+        failed += 1;
+        continue;
+      }
+      console.log(`OK    provider ${p.provider_id} — ${label} -> ${coords.lat}, ${coords.lon}`);
+      updated += 1;
+    } catch (err) {
+      console.log(`FAIL  provider ${p.provider_id} — ${(err as Error).message}`);
+      failed += 1;
+    }
+  }
+
   console.log(
-    `\nDone. ${DRY_RUN ? 'would update' : 'updated'}: ${updated}, skipped: ${skipped}, failed: ${failed}, total: ${rows.length}`,
+    `\nDone. ${DRY_RUN ? 'would update' : 'updated'}: ${updated}, skipped: ${skipped}, failed: ${failed}, total: ${rows.length + rowless.length}`,
   );
   if (DRY_RUN && updated > 0) {
     console.log('Re-run with --apply to persist these coordinates.');
