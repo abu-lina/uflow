@@ -132,7 +132,12 @@ export function scanProvider(inputs: ScanInput[]): ScanResult {
   let status: ScreeningStatus = 'clear';
   if (flags.some((f) => isHaram(f) && (f.source === 'menu' || f.source === 'attribute'))) {
     status = 'flagged';
-  } else if (flags.some((f) => f.code === 'not_halal' || (isHaram(f) && f.source === 'review'))) {
+  } else if (
+    flags.some(
+      (f) =>
+        f.code === 'not_halal' || (isHaram(f) && (f.source === 'review' || f.source === 'website')),
+    )
+  ) {
     status = 'review';
   }
   return { status, flags };

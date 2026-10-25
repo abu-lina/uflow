@@ -52,7 +52,9 @@ describe('screening scanner', () => {
     expect(scanProvider([{ text: 'Wein', source: 'review', url: 'u2' }]).status).toBe('review');
     expect(scanProvider([{ text: 'not halal', source: 'menu', url: 'u3' }]).status).toBe('review');
     expect(scanProvider([{ text: 'halal', source: 'website', url: 'u4' }]).status).toBe('clear');
-    expect(scanProvider([{ text: 'Schinken', source: 'website', url: 'u4' }]).status).toBe('clear');
+    expect(scanProvider([{ text: 'Schinken', source: 'website', url: 'u4' }]).status).toBe(
+      'review',
+    );
   });
 
   it('5. structured attributes produce an alcohol flag with the attribute name', () => {
