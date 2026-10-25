@@ -47,12 +47,12 @@ function buildArgs(apply: string, limit: string) {
   return { status: r.status, output: readFileSync(out, 'utf8') };
 }
 
-function summarise(apply: string, limit: string, log: string) {
+function runSummary(apply: string, limit: string, log: string | null) {
   const dir = mkdtempSync(join(tmp, 's-'));
   const summary = join(dir, 'summary.md');
-  writeFileSync(join(dir, 'backfill.log'), log);
+  if (log !== null) writeFileSync(join(dir, 'backfill.log'), log);
   writeFileSync(summary, '');
-  spawnSync('bash', ['-c', runScript('Summary')], {
+  const r = spawnSync('bash', ['-c', runScript('Summary')], {
     env: {
       ...process.env,
       RUNNER_TEMP: dir,
@@ -63,10 +63,28 @@ function summarise(apply: string, limit: string, log: string) {
     },
     encoding: 'utf8',
   });
-  return readFileSync(summary, 'utf8');
+  return { status: r.status, summary: readFileSync(summary, 'utf8') };
 }
 
+const summarise = (apply: string, limit: string, log: string | null): string =>
+  runSummary(apply, limit, log).summary;
+
 describe('backfill-location-coords workflow (#760)', () => {
+  it('finds every step the other tests rely on', () => {
+    const names = [
+      'Build CLI arguments',
+      'Run backfill (UAT)',
+      'Run backfill (Production)',
+      'Summary',
+    ];
+    for (const name of names) expect(steps.has(name), name).toBe(true);
+    for (const name of ['Build CLI arguments', 'Summary']) {
+      expect(runScript(name).length, name).toBeGreaterThan(0);
+    }
+    expect(envBlock('Run backfill (UAT)')).not.toBe('');
+    expect(envBlock('Run backfill (Production)')).not.toBe('');
+  });
+
   it('criterion 1: triggers on workflow_dispatch only, with environment, apply and limit inputs', () => {
     expect(wf).toMatch(/^on:\n {2}workflow_dispatch:/m);
     expect(wf).not.toMatch(/^ {2}(push|pull_request|schedule):/m);
@@ -136,6 +154,20 @@ describe('backfill-location-coords workflow (#760)', () => {
     expect(out).toContain('| FAIL | 2 |');
     expect(summarise('false', '', '')).toMatch(/\| Mode \| dry-run \|[\s\S]*\| Limit \| all \|/);
     expect(step('Summary')).toMatch(/if: always\(\)/);
+  });
+
+  it('criterion 5: fails the job when any location failed, passes when none did', () => {
+    expect(runSummary('true', '', 'OK    loc-1 — a\nFAIL  loc-2 — boom\n').status).not.toBe(0);
+    expect(runSummary('false', '', 'WOULD loc-1 — a\nMISS  loc-2 — b\n').status).toBe(0);
+  });
+
+  it('criterion 5: reports zero counts and "No log produced" when the log is missing', () => {
+    const r = runSummary('false', '', null);
+    expect(r.status).toBe(0);
+    for (const k of ['OK', 'MISS', 'SKIP', 'WOULD', 'FAIL']) {
+      expect(r.summary).toContain(`| ${k} | 0 |`);
+    }
+    expect(r.summary).toContain('No log produced');
   });
 
   it('criterion 6: sets a timeout and a non-cancelling concurrency group', () => {

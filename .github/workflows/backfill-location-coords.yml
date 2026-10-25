@@ -99,7 +99,7 @@ jobs:
           INPUT_LIMIT: ${{ inputs.limit }}
         run: |
           LOG="$RUNNER_TEMP/backfill.log"
-          count() { [ -f "$LOG" ] && grep -c "^$1 " "$LOG" || true; }
+          count() { if [ -f "$LOG" ]; then grep -c "^$1 " "$LOG" || true; else echo 0; fi; }
           MODE="dry-run"
           [ "$INPUT_APPLY" = "true" ] && MODE="apply"
           {
@@ -115,4 +115,9 @@ jobs:
             echo "| SKIP | $(count SKIP) |"
             echo "| WOULD | $(count WOULD) |"
             echo "| FAIL | $(count FAIL) |"
+            [ -f "$LOG" ] || { echo ""; echo "No log produced."; }
           } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$(count FAIL)" -gt 0 ]; then
+            echo "::error::$(count FAIL) location(s) failed"
+            exit 1
+          fi
