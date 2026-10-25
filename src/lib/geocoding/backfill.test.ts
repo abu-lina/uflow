@@ -52,7 +52,8 @@ describe('backfillCoordinates (#756 AC4)', () => {
     const { supabase, writes } = setup();
     const geocode = vi.fn().mockResolvedValue(coords);
     await backfillCoordinates({ supabase, geocode, apply: true });
-    const update = writes.find((w) => w.action === 'update')!;
+    const update = writes.find((w) => w.action === 'update');
+    if (!update) throw new Error('expected an update');
     expect(update.values).toEqual({ location_latitude: 50.8, location_longitude: 12.9 });
     expect(hasFilter(update, 'or', 'location_latitude.is.null,location_longitude.is.null')).toBe(
       true,
@@ -79,7 +80,8 @@ describe('backfillCoordinates (#756 AC4)', () => {
       return { data: [] };
     });
     await backfillCoordinates({ supabase, geocode: async () => coords, apply: true });
-    const first = seen.find((q) => q.table === 'locations')!;
+    const first = seen.find((q) => q.table === 'locations');
+    if (!first) throw new Error('expected a locations query');
     expect(hasFilter(first, 'or', 'location_latitude.is.null,location_longitude.is.null')).toBe(
       true,
     );
