@@ -17,19 +17,27 @@ vi.mock('../../src/lib/enrichment/delivery-platform/ubereats-client', () => ({
 interface Update {
   table: string;
   values: Record<string, unknown>;
+  filters: Record<string, unknown>;
 }
 
 let updates: Update[] = [];
 let linkRows: Record<string, unknown>[] = [];
+let rpcError: { message: string } | null = null;
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
-    rpc: async () => ({ error: null }),
+    rpc: async () => ({ error: rpcError }),
     from: (table: string) => {
       const b: Record<string, unknown> = {};
-      for (const m of ['select', 'eq', 'in', 'limit', 'order', 'insert']) b[m] = () => b;
+      let current: Update | null = null;
+      for (const m of ['select', 'in', 'limit', 'order', 'insert']) b[m] = () => b;
+      b.eq = (col: string, val: unknown) => {
+        if (current) current.filters[col] = val;
+        return b;
+      };
       b.update = (values: Record<string, unknown>) => {
-        updates.push({ table, values });
+        current = { table, values, filters: {} };
+        updates.push(current);
         return b;
       };
       b.single = async () => ({
@@ -81,6 +89,7 @@ const checkedUpdates = () => updates.filter((u) => 'apify_checked_at' in u.value
 
 beforeEach(() => {
   updates = [];
+  rpcError = null;
   fetchWoltRestaurant.mockReset();
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'service';
@@ -108,6 +117,16 @@ describe('enrich-delivery-menus apify_checked_at (#754)', () => {
     fetchWoltRestaurant.mockResolvedValue(result);
     await runMenus();
     expect(checkedUpdates()).toHaveLength(1);
+    expect(checkedUpdates()[0].filters).toEqual({ provider_id: 'p1', platform: 'wolt' });
+  });
+
+  it('sets apify_checked_at only after the menu write, and not when the write fails', async () => {
+    linkRows = [woltRow(null)];
+    fetchWoltRestaurant.mockResolvedValue({ menuItems: [{ name_de: 'a' }], openingHours: null });
+    rpcError = { message: 'rpc down' };
+    await runMenus();
+    expect(fetchWoltRestaurant).toHaveBeenCalledTimes(1);
+    expect(checkedUpdates()).toHaveLength(0);
   });
 
   it('sets apify_checked_at when the restaurant is not found on Wolt', async () => {
