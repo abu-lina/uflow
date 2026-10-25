@@ -20,10 +20,23 @@ const query = {
   insert: vi.fn(async () => ({ error: null })),
 };
 
+const confirmedUser = {
+  id: 'user-1',
+  email: 'pii-probe@example.test',
+  email_confirmed_at: new Date().toISOString(),
+  user_metadata: {},
+};
+const usersQuery = {
+  select: vi.fn(() => usersQuery),
+  eq: vi.fn(() => usersQuery),
+  maybeSingle: vi.fn(async () => ({ data: { user_id: 'user-1' }, error: null })),
+};
+
 const admin = {
   auth: {
     admin: {
       updateUserById: vi.fn(async () => ({ error: null })),
+      getUserById: vi.fn(async () => ({ data: { user: confirmedUser }, error: null })),
       listUsers: vi.fn(async () => ({
         data: {
           users: [
@@ -39,7 +52,7 @@ const admin = {
       })),
     },
   },
-  from: vi.fn(() => query),
+  from: vi.fn((table: string) => (table === 'users' ? usersQuery : query)),
 };
 
 vi.mock('@/lib/supabase/admin', () => ({
@@ -49,6 +62,10 @@ vi.mock('@/lib/supabase/admin', () => ({
 vi.mock('@/lib/rate-limit', () => ({
   checkRateLimit: (...args: unknown[]) => mockCheckRateLimit(...args),
   getClientIdentifier: (request: Request) => `ip:${request.headers.get('x-real-ip') || 'unknown'}`,
+}));
+
+vi.mock('@/services/emailService', () => ({
+  sendAuthEmail: vi.fn(async () => ({ data: { id: 'email-1' }, error: null })),
 }));
 
 type Handler = (request: Request) => Promise<Response>;
@@ -97,6 +114,7 @@ describe('authentication routes do not log email or IP', () => {
       }),
     );
     expect(success.status).toBe(200);
+    await new Promise((resolve) => setTimeout(resolve, 20));
 
     const invalid = await resetPassword(
       request('auth/reset-password', {
@@ -188,24 +206,24 @@ describe('authentication routes do not log email or IP', () => {
 
     const success = await generateToken(
       request('generate-confirmation-token', {
-        userId: 'user-1',
         email: PROBE_EMAIL,
-        type: 'signup',
+        type: 'password_reset',
+        language: 'en',
       }),
     );
     expect(success.status).toBe(200);
 
     const invalid = await generateToken(
-      request('generate-confirmation-token', { userId: 'user-1', email: PROBE_EMAIL }),
+      request('generate-confirmation-token', { email: PROBE_EMAIL, language: 'en' }),
     );
     expect(invalid.status).toBe(400);
 
     mockCheckRateLimit.mockReturnValue(false);
     const limited = await generateToken(
       request('generate-confirmation-token', {
-        userId: 'user-1',
         email: PROBE_EMAIL,
-        type: 'signup',
+        type: 'password_reset',
+        language: 'en',
       }),
     );
     expect(limited.status).toBe(429);

@@ -1,7 +1,8 @@
 'use client';
 
 import { supabase } from './supabase/client';
-import { toAuthEmailLanguage, type AuthEmailLanguage } from '@/lib/auth-email-language';
+import { type AuthEmailLanguage } from '@/lib/auth-email-language';
+import { requestAuthEmail } from '@/lib/auth-email-client';
 import type { Language } from '@/translations';
 import { maskEmail, maskIp } from '@/lib/logging/redact-pii';
 
@@ -68,81 +69,13 @@ export const signUpWithLanguage = async (
 };
 
 export const resetPasswordWithLanguage = async (email: string, language: Language = 'en') => {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
-
   try {
-    // First, check if user exists and is confirmed
-    const response = await fetch('/api/check-email-exists', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      return {
-        error: {
-          message: 'Unable to verify email. Please try again.',
-        },
-      };
-    }
-
-    const { confirmed } = await response.json();
-
-    // F-049-04: The API now returns { confirmed: false } for both
-    // non-existent and unconfirmed accounts (enumeration-safe).
-    // Only confirmed accounts can proceed.
-    if (!confirmed) {
-      return {
-        error: {
-          message: 'EMAIL_NOT_FOUND',
-        },
-      };
-    }
-
-    // Generate reset token
-    const tokenResponse = await fetch('/api/generate-confirmation-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email,
-        type: 'password_reset',
-      }),
-    });
-
-    if (!tokenResponse.ok) {
-      const tokenData = await tokenResponse.json();
-      return {
-        error: {
-          message: tokenData.error || 'Failed to generate reset token',
-        },
-      };
-    }
-
-    const { token } = await tokenResponse.json();
-
-    // Send custom email via API route (keeps Resend key server-side)
-    const resetUrl = `${siteUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
-
+    // No account pre-check: the server answers identically for known and unknown emails, so the
+    // forgot-password form cannot be used to enumerate accounts (#746).
+    // The server mints the token and mails the link; the token never reaches the browser (#746)
     try {
-      const emailResponse = await fetch('/api/send-auth-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: email,
-          type: 'resetPassword',
-          language: toAuthEmailLanguage(language),
-          confirmationUrl: resetUrl,
-        }),
-      });
-
-      if (!emailResponse.ok) {
-        console.error('Failed to send reset email:', emailResponse.status);
+      const sent = await requestAuthEmail(email, 'password_reset', language);
+      if (!sent) {
         return {
           error: {
             message: 'Failed to send reset email. Please try again.',
@@ -240,10 +173,7 @@ export const signInWithEmailConfirmation = async (email: string, password: strin
  * For Stage 2 users - passwordless authentication
  * Uses Resend for branded email delivery
  */
-export const signInWithMagicLink = async (
-  email: string,
-  language: AuthEmailLanguage = 'en',
-) => {
+export const signInWithMagicLink = async (email: string, language: AuthEmailLanguage = 'en') => {
   try {
     // Send magic link via our API (uses Resend for branded emails)
     const response = await fetch('/api/auth/magic-link', {

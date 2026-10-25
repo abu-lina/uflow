@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PROBE_EMAIL, capturedLogArgs } from '@/__tests__/utils/pii-probe';
+import { RESEND_CAPABILITY_HEADER, issueResendCapability } from '@/lib/auth/resend-capability';
 
 const mockCheckRateLimit = vi.fn((..._args: unknown[]) => true);
 const mockGetClientIdentifier = vi.fn(
@@ -20,6 +21,9 @@ const mockSendWaitlistEmail = vi.fn((..._args: unknown[]): Promise<void> => Prom
 const mockSendAuthEmail = vi.fn((..._args: unknown[]) =>
   Promise.resolve({ data: { id: 'email-1' }, error: null }),
 );
+// Signs the resend capability the send-auth-email route requires (#746)
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= 'test-service-role-key';
+
 const EMAIL = PROBE_EMAIL;
 const IP = '203.0.113.77';
 
@@ -61,7 +65,11 @@ import { PATCH as updateWaitlist } from '@/app/api/waitlist/update/route';
 function request(path: string, body: Record<string, unknown>): Request {
   return new Request(`http://localhost/api/${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-real-ip': IP },
+    headers: {
+      'content-type': 'application/json',
+      'x-real-ip': IP,
+      [RESEND_CAPABILITY_HEADER]: issueResendCapability(EMAIL),
+    },
     body: JSON.stringify(body),
   });
 }

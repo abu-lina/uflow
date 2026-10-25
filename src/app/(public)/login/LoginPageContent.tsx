@@ -20,7 +20,7 @@ import { LinkButton } from '@/components/ui/LinkButton';
 import { Logo } from '@/components/ui/Logo';
 import { useAuth } from '@/providers/auth-provider';
 import { signInWithEmailConfirmation } from '@/lib/auth';
-import { toAuthEmailLanguage } from '@/lib/auth-email-language';
+import { requestAuthEmail } from '@/lib/auth-email-client';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getSafeReturnUrl } from '@/utils/safeReturnUrl';
 
@@ -44,7 +44,7 @@ export function LoginPageContent() {
   const [isEmailConfirmationError, setIsEmailConfirmationError] = useState(false);
 
   const handleInputChange = useCallback((field: keyof FormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -69,7 +69,7 @@ export function LoginPageContent() {
 
     try {
       const { data, error } = await signInWithEmailConfirmation(formData.email, formData.password);
-      
+
       if (error) {
         // Handle specific error cases
         if (error.message === 'EMAIL_NOT_CONFIRMED') {
@@ -81,13 +81,13 @@ export function LoginPageContent() {
           // Email doesn't exist in database
           setError(t('login.emailNotFound'));
           setIsEmailConfirmationError(false);
-          
+
           // Toast removed - inline error message provides clear feedback
         } else {
           // Invalid credentials or other errors
           setError(t('login.invalidCredentials'));
           setIsEmailConfirmationError(false);
-          
+
           // Show generic error toast
           toast.error(t('login.loginFailedToast'), {
             description: t('login.loginFailedDescription'),
@@ -130,49 +130,13 @@ export function LoginPageContent() {
     setError(null);
 
     try {
-      // Generate a secure confirmation token on the server
-      const tokenResponse = await fetch('/api/generate-confirmation-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          type: 'signup',
-        }),
-      });
+      // The server mints the token and mails the link; the browser never sees it (#746)
+      const sent = await requestAuthEmail(formData.email, 'signup', language);
 
-      if (!tokenResponse.ok) {
-        setError(t('login.confirmationEmailFailed'));
-        toast.error(t('login.emailFailedToast'), {
-          description: t('login.emailFailedDescription'),
-          duration: 4000,
-        });
-        return;
-      }
-
-      const { token } = await tokenResponse.json();
-      const siteUrl = (typeof window !== 'undefined' ? window.location.origin : '') || process.env.NEXT_PUBLIC_SITE_URL || '';
-      const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(formData.email)}`;
-
-      // Send confirmation email via server (keeps keys server-side)
-      const emailResponse = await fetch('/api/send-auth-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: formData.email,
-          type: 'confirmSignup',
-          language: toAuthEmailLanguage(language),
-          confirmationUrl,
-        }),
-      });
-
-      if (emailResponse.ok) {
+      if (sent) {
         setError(t('login.confirmationEmailSent'));
         setIsEmailConfirmationError(false);
-        
+
         // Show success toast
         toast.success(t('login.emailSentToast'), {
           description: t('login.emailSentDescription'),
@@ -180,7 +144,7 @@ export function LoginPageContent() {
         });
       } else {
         setError(t('login.confirmationEmailFailed'));
-        
+
         // Show error toast
         toast.error(t('login.emailFailedToast'), {
           description: t('login.emailFailedDescription'),
@@ -190,7 +154,7 @@ export function LoginPageContent() {
     } catch (error) {
       console.error('Resend confirmation error:', error);
       setError(t('login.confirmationEmailFailed'));
-      
+
       // Show error toast
       toast.error(t('login.errorOccurredToast'), {
         description: t('login.errorOccurredDescription'),
@@ -203,7 +167,7 @@ export function LoginPageContent() {
 
   return (
     <PageLayout hasBackground={false}>
-      <PageHeader 
+      <PageHeader
         rightIcon={<Logo className="h-12 w-12" height={48} width={48} />}
         title={t('login.title')}
         variant="title-and-icon"
@@ -223,87 +187,80 @@ export function LoginPageContent() {
         {/* Form Content with exact spacing structure */}
         <div className="flex w-full flex-col">
           <ContentSection>
-          <form className="flex w-full flex-col" onSubmit={handleSubmit}>
-            {/* Form Input Fields */}
-            <FormInputGroup gap="gap-3">
-              <FormInput
-                required
-                label={t('login.emailLabel')}
-                placeholder={t('login.emailPlaceholder')}
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-              />
-              <FormInput
-                required
-                label={t('login.passwordLabel')}
-                placeholder={t('login.passwordPlaceholder')}
-                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                variant="with-icon"
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                onRightIconClick={() => setShowPassword(!showPassword)}
-              />
-            </FormInputGroup>
+            <form className="flex w-full flex-col" onSubmit={handleSubmit}>
+              {/* Form Input Fields */}
+              <FormInputGroup gap="gap-3">
+                <FormInput
+                  required
+                  label={t('login.emailLabel')}
+                  placeholder={t('login.emailPlaceholder')}
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                />
+                <FormInput
+                  required
+                  label={t('login.passwordLabel')}
+                  placeholder={t('login.passwordPlaceholder')}
+                  rightIcon={
+                    showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />
+                  }
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  variant="with-icon"
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onRightIconClick={() => setShowPassword(!showPassword)}
+                />
+              </FormInputGroup>
 
-            {/* Error Messages */}
-            {error && (
-              <div className="mt-4">
-                {isEmailConfirmationError ? (
-                  <EmailVerificationAlert
-                    message={error}
-                    onResend={handleResendConfirmation}
-                  />
-                ) : (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
-                    <div className="flex items-start">
-                      <div className="flex-shrink-0">
-                        <AlertCircle className="h-5 w-5 text-danger" />
-                      </div>
-                      <div className="ml-3 flex-1">
-                        <p className="font-inter-tight text-sm leading-[19px] text-danger">
-                          {error}
-                        </p>
+              {/* Error Messages */}
+              {error && (
+                <div className="mt-4">
+                  {isEmailConfirmationError ? (
+                    <EmailVerificationAlert message={error} onResend={handleResendConfirmation} />
+                  ) : (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <AlertCircle className="h-5 w-5 text-danger" />
+                        </div>
+                        <div className="ml-3 flex-1">
+                          <p className="font-inter-tight text-sm leading-[19px] text-danger">
+                            {error}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
-            {/* Button and links with proper spacing (24px gap from form fields) */}
-            <div className="mt-6 flex flex-col space-y-3">
-              {/* Main Button */}
-              <Button
-                fullWidth
-                loading={isLoading}
-                loadingText={t('login.loginButtonLoading')}
-                type="submit"
-                variant="auth"
-              >
-                {t('login.loginButton')}
-              </Button>
-
-              {/* Forgot Password Link */}
-              <div className="text-center">
-                <LinkButton
-                  type="button"
-                  onClick={() => router.push('/forgot-password')}
+              {/* Button and links with proper spacing (24px gap from form fields) */}
+              <div className="mt-6 flex flex-col space-y-3">
+                {/* Main Button */}
+                <Button
+                  fullWidth
+                  loading={isLoading}
+                  loadingText={t('login.loginButtonLoading')}
+                  type="submit"
+                  variant="auth"
                 >
-                  {t('login.forgotPassword')}
+                  {t('login.loginButton')}
+                </Button>
+
+                {/* Forgot Password Link */}
+                <div className="text-center">
+                  <LinkButton type="button" onClick={() => router.push('/forgot-password')}>
+                    {t('login.forgotPassword')}
+                  </LinkButton>
+                </div>
+
+                {/* Link Button (12px gap from main button via space-y-3) */}
+                <LinkButton type="button" onClick={handleSignupClick}>
+                  {t('login.noAccount')}
                 </LinkButton>
               </div>
-
-              {/* Link Button (12px gap from main button via space-y-3) */}
-              <LinkButton
-                type="button"
-                onClick={handleSignupClick}
-              >
-                {t('login.noAccount')}
-              </LinkButton>
-            </div>
-          </form>
+            </form>
           </ContentSection>
         </div>
       </PageContentWrapper>

@@ -30,6 +30,7 @@ const supabase = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
 
 const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run');
+const isForce = args.includes('--force');
 const limitArg = getArgValue('--limit');
 const limit = limitArg ? parseInt(limitArg, 10) : undefined;
 const providerIdFilter = getArgValue('--provider-id');
@@ -63,6 +64,7 @@ interface DeliveryLinkRow {
   platform: 'wolt' | 'lieferando' | 'ubereats';
   platform_url: string;
   platform_slug: string | null;
+  apify_checked_at: string | null;
 }
 
 interface RunStats {
@@ -91,6 +93,7 @@ async function main(): Promise<void> {
       platform,
       platform_url,
       platform_slug,
+      apify_checked_at,
       providers!inner (
         provider_name,
         listing_type
@@ -122,6 +125,7 @@ async function main(): Promise<void> {
         platform: r.platform as 'wolt' | 'lieferando' | 'ubereats',
         platform_url: r.platform_url as string,
         platform_slug: (r.platform_slug as string) ?? null,
+        apify_checked_at: (r.apify_checked_at as string) ?? null,
       };
     })
     .sort((a, b) => a.provider_name.localeCompare(b.provider_name));
@@ -258,7 +262,12 @@ async function main(): Promise<void> {
     const hasHours = hasHoursMap.get(link.provider_id) ?? false;
 
     if (link.platform === 'wolt') {
-      // Always fetch from Apify — its data (with prices, descriptions,
+      if (link.apify_checked_at && !isForce && !providerIdFilter) {
+        process.stdout.write(`  ${link.provider_name} (wolt) ... already checked via Apify\n`);
+        immediateSkipped++;
+        continue;
+      }
+      // Fetch from Apify — its data (with prices, descriptions,
       // categories) is richer than joinhalal Speisen (names only).
       woltTasks.push({
         link,
@@ -309,6 +318,7 @@ async function main(): Promise<void> {
           const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
 
           if (!result) {
+            await markApifyChecked(link);
             console.log('not found on Wolt');
             stats.skipped++;
             continue;
@@ -322,6 +332,7 @@ async function main(): Promise<void> {
 
           if (!fetchMenus && !hoursToWrite) {
             // We only needed hours and they're not available
+            await markApifyChecked(link);
             if (result.openingHours) {
               console.log('opening hours not available from Apify');
             } else {
@@ -331,13 +342,22 @@ async function main(): Promise<void> {
             continue;
           }
 
-          await writeResult(link, fetchMenus ? menusToWrite : [], hoursToWrite, isDryRun, stats);
+          const written = await writeResult(
+            link,
+            fetchMenus ? menusToWrite : [],
+            hoursToWrite,
+            isDryRun,
+            stats,
+          );
 
           // Write phone/website/address from Apify (additive only) — Fix 239-2
           if (!isDryRun) {
             await writeApifyContactFields(link.provider_id, result, stats);
             await writeApifyAddressFields(link.provider_id, result, stats);
           }
+
+          // Mark only after the writes, so a failed write is retried next run
+          if (written) await markApifyChecked(link);
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           console.log(`${prefix} ... Fetch failed: ${msg}`);
@@ -460,6 +480,21 @@ async function main(): Promise<void> {
   }
 }
 
+// Records that Apify was called for this link so later runs skip it (not in dry-run).
+async function markApifyChecked(link: DeliveryLinkRow): Promise<void> {
+  if (isDryRun) return;
+  const { error } = await supabase
+    .from('provider_delivery_links')
+    .update({ apify_checked_at: new Date().toISOString() })
+    .eq('provider_id', link.provider_id)
+    .eq('platform', link.platform);
+  if (error) {
+    console.error(
+      `     ⚠️  apify_checked_at write failed for ${link.provider_id}: ${error.message}`,
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Helper: write menu items and/or opening hours to the database
 // ---------------------------------------------------------------------------
@@ -476,7 +511,7 @@ async function writeResult(
   openingHoursToWrite: Record<string, unknown> | null,
   isDryRun: boolean,
   stats: RunStats,
-): Promise<void> {
+): Promise<boolean> {
   const hasMenus = menuItems.length > 0;
 
   if (isDryRun) {
@@ -491,7 +526,7 @@ async function writeResult(
     if (hasMenus) stats.menuItemsWritten += menuItems.length;
     if (openingHoursToWrite) stats.openingHoursWritten++;
     stats.processed++;
-    return;
+    return true;
   }
 
   // Build payload
@@ -505,7 +540,7 @@ async function writeResult(
 
   if (Object.keys(p_data).length === 0) {
     stats.skipped++;
-    return;
+    return true;
   }
 
   const { error: rpcError } = await supabase.rpc('admin_update_provider', {
@@ -516,7 +551,7 @@ async function writeResult(
   if (rpcError) {
     console.log(`RPC write failed: ${rpcError.message}`);
     stats.failed++;
-    return;
+    return false;
   }
 
   await supabase
@@ -539,6 +574,7 @@ async function writeResult(
   if (hasMenus) stats.menuItemsWritten += menuItems.length;
   if (openingHoursToWrite) stats.openingHoursWritten++;
   stats.processed++;
+  return true;
 }
 
 // ---------------------------------------------------------------------------

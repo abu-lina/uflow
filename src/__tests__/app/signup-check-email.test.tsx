@@ -105,7 +105,7 @@ describe('Check-email page i18n (issue #577)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
-    mockFetch.mockImplementation(() => okJson({ token: 'tok-1' }));
+    mockFetch.mockImplementation(() => okJson({ success: true }));
     vi.spyOn(window, 'alert').mockImplementation(() => {});
   });
 
@@ -145,16 +145,11 @@ describe('Check-email page i18n (issue #577)', () => {
         '/api/generate-confirmation-token',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ email: 'user@example.com', type: 'signup' }),
+          body: JSON.stringify({ email: 'user@example.com', type: 'signup', language: 'en' }),
         }),
       );
     });
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith(
-        '/api/send-auth-email',
-        expect.objectContaining({ method: 'POST' }),
-      );
-    });
+    expect(mockFetch).not.toHaveBeenCalledWith('/api/send-auth-email', expect.anything());
     expect(window.alert).not.toHaveBeenCalled();
   });
 
@@ -179,7 +174,7 @@ describe('Check-email success screen (issue #743)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
-    mockFetch.mockImplementation(() => okJson({ token: 'tok-1' }));
+    mockFetch.mockImplementation(() => okJson({ success: true }));
   });
 
   it('AC1: shows a BarakAllahu feek heading, same as the recommend success screen', () => {
@@ -216,7 +211,7 @@ describe('Check-email success screen (issue #743)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Resend email/i }));
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/send-auth-email', expect.anything());
+      expect(mockFetch).toHaveBeenCalledWith('/api/generate-confirmation-token', expect.anything());
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Use a different email/i }));
@@ -239,7 +234,7 @@ describe('Check-email success screen (issue #743)', () => {
     await screen.findByText(en.signup.checkEmail.resendFailed);
   });
 
-  it('AC6: shows the resend error when the token request fails', async () => {
+  it('AC6: shows the resend error when the resend request fails', async () => {
     sessionStorage.setItem('signup-pending-email', 'user@example.com');
     mockFetch.mockResolvedValueOnce({ ok: false } as Response);
     render(<CheckEmailPage />);
@@ -248,18 +243,6 @@ describe('Check-email success screen (issue #743)', () => {
 
     expect(await screen.findByText(en.signup.checkEmail.resendFailed)).toBeTruthy();
     expect(screen.queryByText(/Confirmation email sent/i)).toBeNull();
-  });
-
-  it('AC6: shows the resend error when sending the email fails', async () => {
-    sessionStorage.setItem('signup-pending-email', 'user@example.com');
-    mockFetch
-      .mockImplementationOnce(() => okJson({ token: 'tok-1' }))
-      .mockResolvedValueOnce({ ok: false } as Response);
-    render(<CheckEmailPage />);
-
-    fireEvent.click(screen.getByRole('button', { name: /Resend email/i }));
-
-    expect(await screen.findByText(en.signup.checkEmail.resendFailed)).toBeTruthy();
   });
 
   it('AC6: shows the resend error when the request throws', async () => {

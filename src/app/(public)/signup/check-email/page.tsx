@@ -13,7 +13,7 @@ import { SecondaryButton } from '@/components/ui/SecondaryButton';
 import { Icon } from '@/components/ui/Icon';
 import { BottomActionNavbar } from '@/components/ui/BottomActionNavbar';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { toAuthEmailLanguage } from '@/lib/auth-email-language';
+import { requestAuthEmail } from '@/lib/auth-email-client';
 import { readPendingSignupEmail } from '@/lib/signup-session';
 
 type ResendState = 'idle' | 'sending' | 'sent' | 'error';
@@ -38,35 +38,9 @@ export default function CheckEmailPage() {
     setResendState('sending');
 
     try {
-      // Same resend flow as the login page: mint a confirmation token on the
-      // server, then send it through the email route that keeps keys server-side.
-      const tokenResponse = await fetch('/api/generate-confirmation-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: pendingEmail, type: 'signup' }),
-      });
-
-      if (!tokenResponse.ok) {
-        setResendState('error');
-        return;
-      }
-
-      const { token } = await tokenResponse.json();
-      const siteUrl = window.location.origin || process.env.NEXT_PUBLIC_SITE_URL || '';
-      const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(pendingEmail)}`;
-
-      const emailResponse = await fetch('/api/send-auth-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: pendingEmail,
-          type: 'confirmSignup',
-          language: toAuthEmailLanguage(language),
-          confirmationUrl,
-        }),
-      });
-
-      setResendState(emailResponse.ok ? 'sent' : 'error');
+      // The server mints the token and mails the link; the browser never sees it (#746)
+      const sent = await requestAuthEmail(pendingEmail, 'signup', language);
+      setResendState(sent ? 'sent' : 'error');
     } catch (error) {
       console.error('Resend confirmation error:', error);
       setResendState('error');

@@ -3,41 +3,48 @@ import { sendAuthEmail } from '@/services/emailService';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { isAuthEmailLanguage } from '@/lib/auth-email-language';
 import { redactError } from '@/lib/logging/redact-pii';
+import {
+  normalizeEmail,
+  readResendCapability,
+  verifyResendCapability,
+} from '@/lib/auth/resend-capability';
+
+const HOUR_MS = 60 * 60 * 1000;
 
 export async function POST(request: Request) {
   try {
-    // F-049-02: Rate limit email dispatch (5 per hour per IP)
-    const identifier = getClientIdentifier(request);
-    if (!checkRateLimit(identifier, 5, 60 * 60 * 1000, 'send-auth-email')) {
+    // F-049-02: rate limit per IP (5 per hour)
+    if (!checkRateLimit(getClientIdentifier(request), 5, HOUR_MS, 'send-auth-email')) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     const { to, type, language, confirmationUrl: _clientUrl } = await request.json();
-    
-    // Validate inputs (confirmationUrl no longer required from client)
-    if (!to || !type || !language) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+
+    if (typeof to !== 'string' || !to || !type || !language) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-    
-    // Validate email type
-    if (type !== 'confirmSignup' && type !== 'resetPassword' && type !== 'magicLink') {
-      return NextResponse.json(
-        { error: 'Invalid email type' },
-        { status: 400 }
-      );
+
+    // The resend capability only covers signup confirmation mail
+    if (type !== 'confirmSignup') {
+      return NextResponse.json({ error: 'Invalid email type' }, { status: 400 });
     }
-    
-    // Validate language
+
     if (!isAuthEmailLanguage(language)) {
+      return NextResponse.json({ error: 'Invalid language' }, { status: 400 });
+    }
+
+    if (!verifyResendCapability(readResendCapability(request), to)) {
+      return NextResponse.json({ error: 'Request not allowed' }, { status: 403 });
+    }
+
+    // Per-recipient limit on top of the per-IP one, so distributed clients cannot flood one inbox
+    if (!checkRateLimit(normalizeEmail(to), 3, HOUR_MS, 'send-auth-email-recipient')) {
       return NextResponse.json(
-        { error: 'Invalid language' },
-        { status: 400 }
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429 },
       );
     }
 
@@ -55,17 +62,12 @@ export async function POST(request: Request) {
         // Unparseable URL — fall back to siteUrl
       }
     }
-    
-    // Send email
-    const result = await sendAuthEmail(to, type, language, confirmationUrl);
-    
-    return NextResponse.json({ success: true, result }, { status: 200 });
+
+    await sendAuthEmail(to, type, language, confirmationUrl);
+
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('Failed to send auth email:', redactError(error));
-    return NextResponse.json(
-      { error: 'Failed to send email' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
   }
 }
-

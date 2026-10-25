@@ -10,7 +10,7 @@ import { FormInput } from '@/components/ui/FormInput';
 import { FormInputGroup } from '@/components/ui/FormInputGroup';
 import { LinkButton } from '@/components/ui/LinkButton';
 import { signInWithEmailConfirmation } from '@/lib/auth';
-import { toAuthEmailLanguage } from '@/lib/auth-email-language';
+import { requestAuthEmail } from '@/lib/auth-email-client';
 import { useLanguage } from '@/providers/LanguageProvider';
 import EmailVerificationAlert from '@/components/ui/EmailVerificationAlert';
 
@@ -82,47 +82,9 @@ export function LoginModal({ onClose, onSwitchMode }: LoginModalProps) {
     setError(null);
 
     try {
-      const tokenResponse = await fetch('/api/generate-confirmation-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          type: 'signup',
-        }),
-      });
+      const sent = await requestAuthEmail(formData.email, 'signup', language);
 
-      if (!tokenResponse.ok) {
-        setError(t('login.confirmationEmailFailed'));
-        toast.error(t('login.emailFailedToast'), {
-          description: t('login.emailFailedDescription'),
-          duration: 4000,
-        });
-        return;
-      }
-
-      const { token } = await tokenResponse.json();
-      const siteUrl =
-        (typeof window !== 'undefined' ? window.location.origin : '') ||
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        '';
-      const confirmationUrl = `${siteUrl}/auth/confirm?token=${token}&email=${encodeURIComponent(formData.email)}`;
-
-      const emailResponse = await fetch('/api/send-auth-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: formData.email,
-          type: 'confirmSignup',
-          language: toAuthEmailLanguage(language),
-          confirmationUrl,
-        }),
-      });
-
-      if (emailResponse.ok) {
+      if (sent) {
         setError(t('login.confirmationEmailSent'));
         setIsEmailConfirmationError(false);
         toast.success(t('login.emailSentToast'), {
