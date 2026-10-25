@@ -70,36 +70,8 @@ export const signUpWithLanguage = async (
 
 export const resetPasswordWithLanguage = async (email: string, language: Language = 'en') => {
   try {
-    // First, check if user exists and is confirmed
-    const response = await fetch('/api/check-email-exists', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      return {
-        error: {
-          message: 'Unable to verify email. Please try again.',
-        },
-      };
-    }
-
-    const { confirmed } = await response.json();
-
-    // F-049-04: The API now returns { confirmed: false } for both
-    // non-existent and unconfirmed accounts (enumeration-safe).
-    // Only confirmed accounts can proceed.
-    if (!confirmed) {
-      return {
-        error: {
-          message: 'EMAIL_NOT_FOUND',
-        },
-      };
-    }
-
+    // No account pre-check: the server answers identically for known and unknown emails, so the
+    // forgot-password form cannot be used to enumerate accounts (#746).
     // The server mints the token and mails the link; the token never reaches the browser (#746)
     try {
       const sent = await requestAuthEmail(email, 'password_reset', language);

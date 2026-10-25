@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { maskEmail, redactError } from '@/lib/logging/redact-pii';
-import { isAuthEmailLanguage } from '@/lib/auth-email-language';
+import { isAuthEmailLanguage, type AuthEmailLanguage } from '@/lib/auth-email-language';
 import {
   normalizeEmail,
   readResendCapability,
@@ -14,6 +14,9 @@ import { sendAuthEmail } from '@/services/emailService';
 const HOUR_MS = 60 * 60 * 1000;
 const TOKEN_TTL_MS = 24 * HOUR_MS;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const SIGNUP_EMAIL_STORE = 'generate-confirmation-token-signup-email';
+const RESET_EMAIL_STORE = 'generate-confirmation-token-reset-email';
 
 type TokenType = 'signup' | 'password_reset';
 
@@ -41,15 +44,56 @@ function isTokenType(value: unknown): value is TokenType {
 // the account exists, so the endpoint cannot be used as an enumeration oracle.
 const accepted = () => NextResponse.json({ success: true });
 
+// public.users mirrors auth.users (handle_new_user trigger, unique indexed email), so this is an
+// O(1) lookup instead of paging through auth.admin.listUsers.
 async function findUserByEmail(email: string) {
   const supabaseAdmin = getSupabaseAdmin();
-  const perPage = 1000;
-  for (let page = 1; ; page += 1) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
-    if (error) throw error;
-    const user = data.users.find((u) => normalizeEmail(u.email ?? '') === email);
-    if (user || data.users.length < perPage) return user ?? null;
+  const { data: row, error } = await supabaseAdmin
+    .from('users')
+    .select('user_id')
+    .eq('email', email)
+    .maybeSingle();
+  if (error) throw error;
+  if (!row) return null;
+
+  const { data, error: userError } = await supabaseAdmin.auth.admin.getUserById(row.user_id);
+  if (userError) throw userError;
+  return data.user ?? null;
+}
+
+async function issueToken(email: string, type: TokenType, language: AuthEmailLanguage) {
+  const flow = FLOWS[type];
+  const user = await findUserByEmail(email);
+  if (!user || !flow.eligible(Boolean(user.email_confirmed_at))) {
+    console.log('[TOKEN] No token issued:', { type, email: maskEmail(email) });
+    return;
   }
+
+  // Reset mail is unauthenticated, so the per-email cap only counts mail that is really sent.
+  // Counting requests would let anyone exhaust a victim's budget and block their real reset.
+  if (type === 'password_reset' && !checkRateLimit(email, 3, HOUR_MS, RESET_EMAIL_STORE)) {
+    console.warn('[TOKEN] Reset mail limit reached:', { email: maskEmail(email) });
+    return;
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const { error: insertError } = await getSupabaseAdmin()
+    .from('email_confirmation_tokens')
+    .insert({
+      user_id: user.id,
+      email,
+      token,
+      type,
+      expires_at: new Date(Date.now() + TOKEN_TTL_MS).toISOString(),
+      used: false,
+      created_at: new Date().toISOString(),
+    });
+  if (insertError) throw insertError;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
+  const url = `${siteUrl}${flow.path}?token=${token}&email=${encodeURIComponent(email)}`;
+  await sendAuthEmail(email, flow.mail, language, url);
+  console.log('[TOKEN] Token issued:', { type, email: maskEmail(email) });
 }
 
 export async function POST(request: Request) {
@@ -74,17 +118,18 @@ export async function POST(request: Request) {
     }
     const email = normalizeEmail(rawEmail);
 
-    if (type === 'signup' && !verifyResendCapability(readResendCapability(request), email)) {
-      console.warn('[TOKEN] Signup token request without a valid capability');
-      return NextResponse.json({ error: 'Request not allowed' }, { status: 403 });
-    }
-
-    // Per-email limit on top of the per-IP one, so distributed clients cannot flood one inbox
-    if (!checkRateLimit(`${type}:${email}`, 3, HOUR_MS, 'generate-confirmation-token-email')) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded. Please try again later.' },
-        { status: 429 },
-      );
+    if (type === 'signup') {
+      if (!verifyResendCapability(readResendCapability(request), email)) {
+        console.warn('[TOKEN] Signup token request without a valid capability');
+        return NextResponse.json({ error: 'Request not allowed' }, { status: 403 });
+      }
+      // The capability proves the caller owns this flow, so a per-email 429 leaks nothing.
+      if (!checkRateLimit(email, 3, HOUR_MS, SIGNUP_EMAIL_STORE)) {
+        return NextResponse.json(
+          { error: 'Rate limit exceeded. Please try again later.' },
+          { status: 429 },
+        );
+      }
     }
 
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -92,43 +137,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
-    let user;
-    try {
-      user = await findUserByEmail(email);
-    } catch (lookupError) {
-      console.error('[TOKEN] Error listing users:', redactError(lookupError));
-      return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
-    }
-
-    const flow = FLOWS[type];
-    if (!user || !flow.eligible(Boolean(user.email_confirmed_at))) {
-      console.log('[TOKEN] No token issued:', { type, email: maskEmail(email) });
-      return accepted();
-    }
-
-    // Failures past this point are logged only; surfacing them would reveal that the account exists.
-    try {
-      const token = crypto.randomBytes(32).toString('hex');
-      const { error: insertError } = await getSupabaseAdmin()
-        .from('email_confirmation_tokens')
-        .insert({
-          user_id: user.id,
-          email,
-          token,
-          type,
-          expires_at: new Date(Date.now() + TOKEN_TTL_MS).toISOString(),
-          used: false,
-          created_at: new Date().toISOString(),
-        });
-      if (insertError) throw insertError;
-
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
-      const url = `${siteUrl}${flow.path}?token=${token}&email=${encodeURIComponent(email)}`;
-      await sendAuthEmail(email, flow.mail, language, url);
-      console.log('[TOKEN] Token issued:', { type, email: maskEmail(email) });
-    } catch (issueError) {
+    // Lookup, insert and send run after the response so latency is the same for every account.
+    // Failures are logged only; surfacing them would reveal that the account exists.
+    void issueToken(email, type, language).catch((issueError) => {
       console.error('[TOKEN] Failed to issue token:', redactError(issueError));
-    }
+    });
 
     return accepted();
   } catch (error) {

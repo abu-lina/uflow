@@ -20,10 +20,23 @@ const query = {
   insert: vi.fn(async () => ({ error: null })),
 };
 
+const confirmedUser = {
+  id: 'user-1',
+  email: 'pii-probe@example.test',
+  email_confirmed_at: new Date().toISOString(),
+  user_metadata: {},
+};
+const usersQuery = {
+  select: vi.fn(() => usersQuery),
+  eq: vi.fn(() => usersQuery),
+  maybeSingle: vi.fn(async () => ({ data: { user_id: 'user-1' }, error: null })),
+};
+
 const admin = {
   auth: {
     admin: {
       updateUserById: vi.fn(async () => ({ error: null })),
+      getUserById: vi.fn(async () => ({ data: { user: confirmedUser }, error: null })),
       listUsers: vi.fn(async () => ({
         data: {
           users: [
@@ -39,7 +52,7 @@ const admin = {
       })),
     },
   },
-  from: vi.fn(() => query),
+  from: vi.fn((table: string) => (table === 'users' ? usersQuery : query)),
 };
 
 vi.mock('@/lib/supabase/admin', () => ({
@@ -101,6 +114,7 @@ describe('authentication routes do not log email or IP', () => {
       }),
     );
     expect(success.status).toBe(200);
+    await new Promise((resolve) => setTimeout(resolve, 20));
 
     const invalid = await resetPassword(
       request('auth/reset-password', {

@@ -206,6 +206,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fails before any user exists if the signing key is missing (#746)
+    const resendCapability = issueResendCapability(email);
+
     // Create user via Admin API - NO auto-login!
     console.log('[SIGNUP API] Creating user with Admin API...');
     // In test mode, auto-confirm email for convenience
@@ -316,7 +319,7 @@ export async function POST(request: Request) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            [RESEND_CAPABILITY_HEADER]: issueResendCapability(email),
+            [RESEND_CAPABILITY_HEADER]: resendCapability,
           },
           body: JSON.stringify({
             to: email,

@@ -14,17 +14,36 @@ const db = {
 const mockInsert = vi.fn(async (_row: Record<string, unknown>) => ({ error: db.insertError }));
 const mockSendAuthEmail = vi.fn();
 
+const mockLookup = vi.fn();
+
+// public.users is looked up by email, then auth.admin.getUserById supplies the confirmation state
 vi.mock('@/lib/supabase/admin', () => ({
   getSupabaseAdmin: () => ({
     auth: {
       admin: {
-        listUsers: async () => ({
-          data: { users: db.listError ? [] : db.users },
-          error: db.listError,
+        getUserById: async (id: string) => ({
+          data: { user: db.users.find((u) => u.id === id) ?? null },
+          error: null,
         }),
       },
     },
-    from: () => ({ insert: (row: Record<string, unknown>) => mockInsert(row) }),
+    from: (table: string) =>
+      table === 'users'
+        ? {
+            select: () => ({
+              eq: (_column: string, email: string) => ({
+                maybeSingle: async () => {
+                  mockLookup(email);
+                  const user = db.users.find((u) => u.email === email);
+                  return {
+                    data: db.listError || !user ? null : { user_id: user.id },
+                    error: db.listError,
+                  };
+                },
+              }),
+            }),
+          }
+        : { insert: (row: Record<string, unknown>) => mockInsert(row) },
   }),
 }));
 
@@ -36,6 +55,9 @@ type Handler = (request: Request) => Promise<Response>;
 let generateToken: Handler;
 let sendAuthEmailRoute: Handler;
 let capability: typeof import('@/lib/auth/resend-capability');
+
+// The route answers before it looks up, inserts or mails; wait for that background work
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
 
 let ipCounter = 0;
 function post(
@@ -171,6 +193,19 @@ describe('#746 confirmation-token and resend endpoints', () => {
         Date.now() - 2 * 60 * 60 * 1000,
       );
       expect(capability.verifyResendCapability(issued, KNOWN_UNCONFIRMED)).toBe(false);
+      const res = await generateToken(
+        new Request('http://localhost/api/generate-confirmation-token', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-real-ip': '198.51.100.251',
+            cookie: `${capability.RESEND_CAPABILITY_COOKIE}=${issued}`,
+          },
+          body: JSON.stringify({ email: KNOWN_UNCONFIRMED, type: 'signup', language: 'en' }),
+        }),
+      );
+      expect(res.status).toBe(403);
+      expect(mockInsert).not.toHaveBeenCalled();
     });
 
     it('signup: a valid capability stores a token and emails a server-built link, never returning the token', async () => {
@@ -178,6 +213,7 @@ describe('#746 confirmation-token and resend endpoints', () => {
         tokenRequest(KNOWN_UNCONFIRMED, 'signup', { capabilityFor: KNOWN_UNCONFIRMED }),
       );
       expect(res.status).toBe(200);
+      await settle();
       expect(mockInsert).toHaveBeenCalledTimes(1);
       const stored = mockInsert.mock.calls[0][0] as {
         token: string;
@@ -200,6 +236,7 @@ describe('#746 confirmation-token and resend endpoints', () => {
     it('password_reset: the token goes to the account owner by email and is never returned', async () => {
       const res = await generateToken(tokenRequest(KNOWN_CONFIRMED, 'password_reset'));
       expect(res.status).toBe(200);
+      await settle();
       const stored = mockInsert.mock.calls[0][0] as { token: string; type: string };
       expect(stored.type).toBe('password_reset');
       expect(JSON.stringify(await res.json())).not.toContain(stored.token);
@@ -211,6 +248,7 @@ describe('#746 confirmation-token and resend endpoints', () => {
 
     it('password_reset: unknown accounts get no token and no email', async () => {
       await generateToken(tokenRequest(UNKNOWN, 'password_reset'));
+      await settle();
       expect(mockInsert).not.toHaveBeenCalled();
       expect(mockSendAuthEmail).not.toHaveBeenCalled();
     });
@@ -252,14 +290,17 @@ describe('#746 confirmation-token and resend endpoints', () => {
       db.insertError = leaky;
       const res = await generateToken(tokenRequest(PROBE_EMAIL, 'password_reset'));
       expectGeneric(await res.json());
+      await settle();
       expectLogsRedacted();
     });
 
-    it('generate-confirmation-token: user lookup errors are generic', async () => {
+    it('generate-confirmation-token: user lookup errors are generic and logged redacted', async () => {
       db.listError = leaky;
       const res = await generateToken(tokenRequest(PROBE_EMAIL, 'password_reset'));
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(200);
       expectGeneric(await res.json());
+      await settle();
+      expect(capturedLogArgs().join('\n')).toContain('[TOKEN] Failed to issue token');
       expectLogsRedacted();
     });
 
@@ -272,6 +313,7 @@ describe('#746 confirmation-token and resend endpoints', () => {
       });
       const res = await generateToken(tokenRequest(PROBE_EMAIL, 'password_reset'));
       expectGeneric(await res.json());
+      await settle();
       expectLogsRedacted();
     });
 
@@ -366,14 +408,85 @@ describe('#746 confirmation-token and resend endpoints', () => {
       expect(statuses.slice(5)).toEqual([429, 429]);
     });
 
-    it('generate-confirmation-token limits per email across different IPs', async () => {
+    it('generate-confirmation-token limits signup resends per email across different IPs', async () => {
+      const statuses: number[] = [];
+      for (let i = 0; i < 5; i += 1) {
+        const res = await generateToken(
+          tokenRequest(KNOWN_UNCONFIRMED, 'signup', { capabilityFor: KNOWN_UNCONFIRMED }),
+        );
+        statuses.push(res.status);
+      }
+      expect(statuses).toEqual([200, 200, 200, 429, 429]);
+      await settle();
+      expect(mockSendAuthEmail).toHaveBeenCalledTimes(3);
+    });
+
+    it('password_reset: caps mail per account without a status that reveals the account', async () => {
       const statuses: number[] = [];
       for (let i = 0; i < 5; i += 1) {
         const res = await generateToken(tokenRequest(KNOWN_CONFIRMED, 'password_reset'));
         statuses.push(res.status);
       }
-      expect(statuses.slice(0, 3)).toEqual([200, 200, 200]);
-      expect(statuses.slice(3)).toEqual([429, 429]);
+      await settle();
+      expect(statuses).toEqual([200, 200, 200, 200, 200]);
+      expect(mockSendAuthEmail).toHaveBeenCalledTimes(3);
+    });
+
+    it('password_reset: requests for unknown accounts do not spend the per-email budget', async () => {
+      for (let i = 0; i < 5; i += 1) {
+        await generateToken(tokenRequest(UNKNOWN, 'password_reset'));
+      }
+      await settle();
+      db.users.push({
+        id: 'u-late',
+        email: UNKNOWN,
+        email_confirmed_at: '2026-01-01T00:00:00Z',
+      });
+      await generateToken(tokenRequest(UNKNOWN, 'password_reset'));
+      await settle();
+      expect(mockSendAuthEmail).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('AC1: response timing does not depend on the account', () => {
+    it('answers before the insert and the mail are done', async () => {
+      let releaseInsert: () => void = () => {};
+      mockInsert.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseInsert = () => resolve({ error: null });
+          }),
+      );
+      let releaseMail: () => void = () => {};
+      mockSendAuthEmail.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            releaseMail = () => resolve({ data: { id: 'mail-slow' }, error: null });
+          }),
+      );
+
+      const res = await generateToken(tokenRequest(KNOWN_CONFIRMED, 'password_reset'));
+      expect(res.status).toBe(200);
+      expect(mockSendAuthEmail).not.toHaveBeenCalled();
+
+      await vi.waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1));
+      releaseInsert();
+      await vi.waitFor(() => expect(mockSendAuthEmail).toHaveBeenCalledTimes(1));
+      releaseMail();
+    });
+
+    it('answers before the account lookup finishes', async () => {
+      const res = await generateToken(tokenRequest(KNOWN_CONFIRMED, 'password_reset'));
+      expect(res.status).toBe(200);
+      expect(mockSendAuthEmail).not.toHaveBeenCalled();
+      await settle();
+      expect(mockSendAuthEmail).toHaveBeenCalledTimes(1);
+    });
+
+    it('looks accounts up directly instead of paging through every user', async () => {
+      await generateToken(tokenRequest(KNOWN_CONFIRMED, 'password_reset'));
+      await settle();
+      expect(mockLookup).toHaveBeenCalledWith(KNOWN_CONFIRMED);
     });
   });
 
@@ -430,6 +543,10 @@ describe('#746 confirmation-token and resend endpoints', () => {
       const setCookie = res.headers.get('set-cookie') ?? '';
       expect(setCookie).toContain(`${cap.RESEND_CAPABILITY_COOKIE}=`);
       expect(setCookie.toLowerCase()).toContain('httponly');
+      expect(setCookie.toLowerCase()).toContain('samesite=lax');
+      expect(setCookie.toLowerCase()).toContain('secure');
+      expect(setCookie).toContain('Path=/api');
+      expect(setCookie).toContain('Max-Age=3600');
 
       const call = fetchMock.mock.calls.find(([url]) =>
         String(url).endsWith('/api/send-auth-email'),

@@ -6,8 +6,17 @@ import type { NextResponse } from 'next/server';
  * Server-issued capability proving the caller went through signup, or logged in
  * with valid credentials to an unconfirmed account. It is bound to one email,
  * HMAC-signed and short-lived, so the resend endpoints never act on a bare
- * email address. The key is derived from the existing service-role secret.
+ * email address.
+ *
+ * No dedicated secret exists for this, so the signing key is derived from
+ * SUPABASE_SERVICE_ROLE_KEY: key = HMAC-SHA256(serviceRoleKey, RESEND_KEY_LABEL),
+ * signature = HMAC-SHA256(key, payload). The label separates this use from every
+ * other use of the secret, so a signature minted here is worthless elsewhere.
+ * Rotating the service-role key invalidates outstanding capabilities (1h TTL),
+ * which only means a resend needs a fresh signup or login. Bump the label
+ * version to revoke all capabilities without rotating the secret.
  */
+const RESEND_KEY_LABEL = 'ummahflow:resend-capability:v1';
 export const RESEND_CAPABILITY_COOKIE = 'signup-resend';
 export const RESEND_CAPABILITY_HEADER = 'x-resend-capability';
 export const RESEND_CAPABILITY_TTL_MS = 60 * 60 * 1000;
@@ -19,7 +28,7 @@ export function normalizeEmail(email: string): string {
 function sign(payload: string): Buffer | null {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!secret) return null;
-  const key = createHmac('sha256', secret).update('resend-capability:v1').digest();
+  const key = createHmac('sha256', secret).update(RESEND_KEY_LABEL).digest();
   return createHmac('sha256', key).update(payload).digest();
 }
 

@@ -100,41 +100,31 @@ describe('signInWithEmailConfirmation — check-email-exists caller regression',
   });
 });
 
-describe('resetPasswordWithLanguage — check-email-exists caller regression', () => {
+describe('resetPasswordWithLanguage — no account pre-check', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
-  it('should proceed to generate token when API returns { confirmed: true } [post-fix PASSES]', async () => {
-    // 1st fetch: check-email-exists — confirmed user
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ confirmed: true, message: 'If this email is registered...' }),
-    );
-    // 2nd fetch: generate-confirmation-token mints the token and sends the email server-side (#746)
+  it('does not pre-check the account and calls only the token endpoint (#746)', async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse({ success: true }));
 
     const { resetPasswordWithLanguage } = await import('@/lib/auth');
     const result = await resetPasswordWithLanguage('confirmed@example.com', 'en');
 
-    // Must NOT return EMAIL_NOT_FOUND for a confirmed user
     expect(result.error).toBeNull();
-    // The client never handles the token or calls send-auth-email
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe('/api/generate-confirmation-token');
   });
 
-  it('should return EMAIL_NOT_FOUND when API returns { confirmed: false } [post-fix PASSES]', async () => {
-    // Unconfirmed or non-existent — same response per F-049-04
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ confirmed: false, message: 'If this email is registered...' }),
-    );
+  it('shows the same success for an unknown email, never EMAIL_NOT_FOUND (#746)', async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ success: true }));
 
     const { resetPasswordWithLanguage } = await import('@/lib/auth');
     const result = await resetPasswordWithLanguage('unknown@example.com', 'en');
 
-    expect(result.error?.message).toBe('EMAIL_NOT_FOUND');
-    // Must NOT attempt token generation
+    expect(result.error).toBeNull();
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });

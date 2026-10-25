@@ -146,7 +146,14 @@ export async function POST(request: Request) {
             { status: 403 },
           );
           // Valid credentials on an unconfirmed account: allow this browser to resend (#746)
-          setResendCapabilityCookie(unconfirmed, email);
+          try {
+            setResendCapabilityCookie(unconfirmed, email);
+          } catch (capabilityError) {
+            console.error(
+              '[LOGIN API] Could not issue resend capability:',
+              redactError(capabilityError),
+            );
+          }
           return unconfirmed;
         }
 
