@@ -1,5 +1,7 @@
 import 'server-only';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { geocodeAddress, hasEnoughAddress, type AddressFields } from '@/lib/geocoding/nominatim';
+import { acquireNominatimSlot } from '@/lib/geocoding/nominatim.server';
 import { logger } from '@/lib/logging/structuredLogger';
 
 /**
@@ -11,13 +13,6 @@ import { logger } from '@/lib/logging/structuredLogger';
 
 export type EnsureCoordinatesResult = 'has_coordinates' | 'geocoded' | 'no_address' | 'failed';
 
-interface AddressFields {
-  address_street: string | null;
-  address_zip: string | null;
-  address_city: string | null;
-  address_country: string | null;
-}
-
 interface LocationRow extends AddressFields {
   location_id: string;
   is_primary: boolean | null;
@@ -26,35 +21,6 @@ interface LocationRow extends AddressFields {
 }
 
 const ADDRESS_COLUMNS = 'address_street, address_zip, address_city, address_country';
-const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-const USER_AGENT = 'UmmahFlow/1.0 (+https://ummahflow.com; geocode on approval)';
-const TIMEOUT_MS = 5000;
-
-function hasEnoughAddress(a: AddressFields): boolean {
-  return Boolean((a.address_street?.trim() || a.address_zip?.trim()) && a.address_city?.trim());
-}
-
-async function geocodeAddress(a: AddressFields): Promise<{ lat: number; lon: number } | null> {
-  const params = new URLSearchParams({ format: 'jsonv2', limit: '1' });
-  if (a.address_street?.trim()) params.set('street', a.address_street.trim());
-  if (a.address_city?.trim()) params.set('city', a.address_city.trim());
-  if (a.address_zip?.trim()) params.set('postalcode', a.address_zip.trim());
-  params.set('country', a.address_country?.trim() || 'Germany');
-
-  const res = await fetch(`${NOMINATIM_URL}?${params.toString()}`, {
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-    headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-  });
-  if (!res.ok) throw new Error(`Geocoder HTTP ${res.status}`);
-
-  const results = (await res.json()) as Array<{ lat: string; lon: string }>;
-  if (!Array.isArray(results) || results.length === 0) return null;
-  const lat = Number.parseFloat(results[0].lat);
-  const lon = Number.parseFloat(results[0].lon);
-  const valid =
-    Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
-  return valid ? { lat, lon } : null;
-}
 
 export async function ensureProviderCoordinates(
   providerId: string,
@@ -91,7 +57,7 @@ export async function ensureProviderCoordinates(
       return 'no_address';
     }
 
-    const coords = await geocodeAddress(address);
+    const coords = await geocodeAddress(address, { beforeRequest: acquireNominatimSlot });
     if (!coords) {
       logger.warn('geocode_on_approval_no_match', { providerId });
       return 'failed';
@@ -114,7 +80,19 @@ export async function ensureProviderCoordinates(
         location_longitude: coords.lon,
         is_primary: true,
       });
-      if (error) throw error;
+      if (error?.code === '23505') {
+        // A primary row appeared since the read (create flow, admin edit):
+        // fill its coordinates instead of failing, unless it already has them.
+        const { error: raceError } = await admin
+          .from('locations')
+          .update({ location_latitude: coords.lat, location_longitude: coords.lon })
+          .eq('provider_id', providerId)
+          .eq('is_primary', true)
+          .is('location_latitude', null);
+        if (raceError) throw raceError;
+      } else if (error) {
+        throw error;
+      }
     }
     return 'geocoded';
   } catch (error) {

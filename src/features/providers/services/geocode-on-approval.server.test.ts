@@ -5,6 +5,8 @@ const state = vi.hoisted(() => ({
   provider: null as Record<string, unknown> | null,
   inserted: [] as Record<string, unknown>[],
   updated: [] as { values: Record<string, unknown>; id: string }[],
+  insertError: null as { code: string; message: string } | null,
+  raceUpdates: [] as Record<string, unknown>[],
 }));
 
 vi.mock('server-only', () => ({}));
@@ -22,10 +24,14 @@ vi.mock('@/lib/supabase/admin', () => ({
       }),
       insert: (row: Record<string, unknown>) => {
         state.inserted.push(row);
-        return Promise.resolve({ error: null });
+        return Promise.resolve({ error: state.insertError });
       },
       update: (values: Record<string, unknown>) => ({
-        eq: (_col: string, id: string) => {
+        eq: (col: string, id: string) => {
+          if (col === 'provider_id') {
+            state.raceUpdates.push(values);
+            return { eq: () => ({ is: () => Promise.resolve({ error: null }) }) };
+          }
           state.updated.push({ values, id });
           return Promise.resolve({ error: null });
         },
@@ -51,6 +57,8 @@ beforeEach(() => {
   state.provider = { ...address };
   state.inserted = [];
   state.updated = [];
+  state.insertError = null;
+  state.raceUpdates = [];
   mockFetch.mockReset();
   vi.mocked(logger.warn).mockClear();
   vi.stubGlobal('fetch', mockFetch);
@@ -116,5 +124,19 @@ describe('ensureProviderCoordinates (#756)', () => {
     expect(mockFetch).not.toHaveBeenCalled();
     expect(state.inserted).toHaveLength(0);
     expect(state.updated).toHaveLength(0);
+  });
+
+  it('on a unique-primary race (23505) it fills the existing primary row instead of failing', async () => {
+    state.insertError = { code: '23505', message: 'duplicate key' };
+    mockFetch.mockResolvedValue({ ok: true, status: 200, json: async () => hit });
+    await expect(ensureProviderCoordinates('p1')).resolves.toBe('geocoded');
+    expect(state.raceUpdates).toEqual([{ location_latitude: 50.83, location_longitude: 12.92 }]);
+  });
+
+  it('serialises geocoder calls through the shared rate-limit slot', async () => {
+    mockFetch.mockResolvedValue({ ok: true, status: 200, json: async () => hit });
+    const t0 = Date.now();
+    await Promise.all([ensureProviderCoordinates('p1'), ensureProviderCoordinates('p2')]);
+    expect(Date.now() - t0).toBeGreaterThanOrEqual(1000);
   });
 });

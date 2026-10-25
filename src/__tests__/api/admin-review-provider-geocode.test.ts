@@ -11,6 +11,10 @@ vi.mock('@/services/admin/halal-gate', async (importOriginal) => ({
   checkHalalAttestation: vi.fn(),
   getHalalAttestationValues: vi.fn(),
 }));
+vi.mock('next/server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/server')>()),
+  after: vi.fn(),
+}));
 vi.mock('@/features/providers/services/geocode-on-approval.server', () => ({
   ensureProviderCoordinates: vi.fn(),
 }));
@@ -28,6 +32,7 @@ vi.mock('@/lib/rate-limit', () => ({
   getClientIdentifier: vi.fn(() => 'user:admin'),
 }));
 
+import { after } from 'next/server';
 import { PATCH } from '@/app/api/admin/review-provider/route';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
@@ -58,20 +63,25 @@ beforeEach(() => {
 });
 
 describe('review-provider geocodes on approval (#756)', () => {
-  it('AC1: approval triggers coordinate resolution for the provider', async () => {
+  it('AC1: approval schedules coordinate resolution after the response', async () => {
     const res = await call('approved');
     expect(res.status).toBe(200);
+    expect(ensureProviderCoordinates).not.toHaveBeenCalled();
+    const task = vi.mocked(after).mock.calls[0][0] as () => Promise<unknown>;
+    await task();
     expect(ensureProviderCoordinates).toHaveBeenCalledWith(ID);
   });
 
-  it('AC2: approval still succeeds when coordinate resolution throws', async () => {
-    vi.mocked(ensureProviderCoordinates).mockRejectedValue(new Error('boom'));
+  it('AC2: approval still succeeds when scheduling coordinate resolution throws', async () => {
+    vi.mocked(after).mockImplementation(() => {
+      throw new Error('no request scope');
+    });
     const res = await call('approved');
     expect(res.status).toBe(200);
   });
 
   it('does not geocode on rejection', async () => {
     await call('rejected', { reviewFeedback: 'no' });
-    expect(ensureProviderCoordinates).not.toHaveBeenCalled();
+    expect(after).not.toHaveBeenCalled();
   });
 });
