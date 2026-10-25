@@ -54,7 +54,9 @@ describe('signInWithEmailConfirmation — check-email-exists caller regression',
 
   it('should proceed to signInWithPassword when API returns { confirmed: true } [post-fix PASSES]', async () => {
     // Simulate the NEW check-email-exists response shape (no `exists` field)
-    mockFetch.mockResolvedValueOnce(jsonResponse({ confirmed: true, message: 'If this email is registered...' }));
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ confirmed: true, message: 'If this email is registered...' }),
+    );
 
     // Simulate successful sign-in
     mockSignInWithPassword.mockResolvedValueOnce({
@@ -84,7 +86,9 @@ describe('signInWithEmailConfirmation — check-email-exists caller regression',
 
   it('should return EMAIL_NOT_FOUND when API returns { confirmed: false } [post-fix PASSES]', async () => {
     // Unconfirmed or non-existent user — same response per F-049-04
-    mockFetch.mockResolvedValueOnce(jsonResponse({ confirmed: false, message: 'If this email is registered...' }));
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ confirmed: false, message: 'If this email is registered...' }),
+    );
 
     const { signInWithEmailConfirmation } = await import('@/lib/auth');
     const result = await signInWithEmailConfirmation('unknown@example.com', 'password123');
@@ -105,24 +109,26 @@ describe('resetPasswordWithLanguage — check-email-exists caller regression', (
 
   it('should proceed to generate token when API returns { confirmed: true } [post-fix PASSES]', async () => {
     // 1st fetch: check-email-exists — confirmed user
-    mockFetch.mockResolvedValueOnce(jsonResponse({ confirmed: true, message: 'If this email is registered...' }));
-    // 2nd fetch: generate-confirmation-token — success
-    mockFetch.mockResolvedValueOnce(jsonResponse({ token: 'reset-token-abc' }));
-    // 3rd fetch: send-auth-email — success
-    mockFetch.mockResolvedValueOnce(jsonResponse({ id: 'email-id' }));
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ confirmed: true, message: 'If this email is registered...' }),
+    );
+    // 2nd fetch: generate-confirmation-token mints the token and sends the email server-side (#746)
+    mockFetch.mockResolvedValueOnce(jsonResponse({ success: true }));
 
     const { resetPasswordWithLanguage } = await import('@/lib/auth');
     const result = await resetPasswordWithLanguage('confirmed@example.com', 'en');
 
     // Must NOT return EMAIL_NOT_FOUND for a confirmed user
     expect(result.error).toBeNull();
-    // Should have called all three endpoints
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    // The client never handles the token or calls send-auth-email
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   it('should return EMAIL_NOT_FOUND when API returns { confirmed: false } [post-fix PASSES]', async () => {
     // Unconfirmed or non-existent — same response per F-049-04
-    mockFetch.mockResolvedValueOnce(jsonResponse({ confirmed: false, message: 'If this email is registered...' }));
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ confirmed: false, message: 'If this email is registered...' }),
+    );
 
     const { resetPasswordWithLanguage } = await import('@/lib/auth');
     const result = await resetPasswordWithLanguage('unknown@example.com', 'en');
