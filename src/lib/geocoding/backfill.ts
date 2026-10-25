@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { hasEnoughAddress, type AddressFields } from './nominatim';
+import { buildPrimaryLocationRow, hasEnoughAddress, type AddressFields } from './nominatim';
 
 /**
  * Backfill for #756, driven by scripts/backfill-location-coords.ts.
@@ -164,16 +164,9 @@ export async function backfillCoordinates(opts: BackfillOptions): Promise<Backfi
         summary.skipped += 1;
         continue;
       }
-      const { error: insertError } = await supabase.from('locations').insert({
-        provider_id: p.provider_id,
-        address_street: p.address_street,
-        address_zip: p.address_zip,
-        address_city: p.address_city,
-        address_country: p.address_country,
-        location_latitude: coords.lat,
-        location_longitude: coords.lon,
-        is_primary: true,
-      });
+      const { error: insertError } = await supabase
+        .from('locations')
+        .insert(buildPrimaryLocationRow(p.provider_id, p, coords));
       if (insertError) {
         log(`FAIL  provider ${p.provider_id} — insert error: ${insertError.message}`);
         summary.failed += 1;

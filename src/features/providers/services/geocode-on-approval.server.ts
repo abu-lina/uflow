@@ -1,6 +1,11 @@
 import 'server-only';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { geocodeAddress, hasEnoughAddress, type AddressFields } from '@/lib/geocoding/nominatim';
+import {
+  buildPrimaryLocationRow,
+  geocodeAddress,
+  hasEnoughAddress,
+  type AddressFields,
+} from '@/lib/geocoding/nominatim';
 import { acquireNominatimSlot } from '@/lib/geocoding/nominatim.server';
 import { logger } from '@/lib/logging/structuredLogger';
 
@@ -70,16 +75,9 @@ export async function ensureProviderCoordinates(
         .eq('location_id', target.location_id);
       if (error) throw error;
     } else {
-      const { error } = await admin.from('locations').insert({
-        provider_id: providerId,
-        address_street: address.address_street,
-        address_zip: address.address_zip,
-        address_city: address.address_city,
-        address_country: address.address_country,
-        location_latitude: coords.lat,
-        location_longitude: coords.lon,
-        is_primary: true,
-      });
+      const { error } = await admin
+        .from('locations')
+        .insert(buildPrimaryLocationRow(providerId, address, coords));
       if (error?.code === '23505') {
         // A primary row appeared since the read (create flow, admin edit):
         // fill its coordinates instead of failing, unless it already has them.

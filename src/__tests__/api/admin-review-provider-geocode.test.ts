@@ -38,6 +38,7 @@ import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { updateProviderReview } from '@/services/admin/providers';
 import { checkHalalAttestation } from '@/services/admin/halal-gate';
+import { logger } from '@/lib/logging/structuredLogger';
 import { ensureProviderCoordinates } from '@/features/providers/services/geocode-on-approval.server';
 
 const ID = '11111111-1111-4111-8111-111111111111';
@@ -78,6 +79,10 @@ describe('review-provider geocodes on approval (#756)', () => {
     });
     const res = await call('approved');
     expect(res.status).toBe(200);
+    expect(logger.warn).toHaveBeenCalledWith(
+      'geocode_on_approval_threw',
+      expect.objectContaining({ providerId: ID, error: 'no request scope' }),
+    );
   });
 
   it('does not geocode on rejection', async () => {

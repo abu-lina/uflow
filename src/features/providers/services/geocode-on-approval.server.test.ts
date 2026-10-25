@@ -5,6 +5,7 @@ const state = vi.hoisted(() => ({
   provider: null as Record<string, unknown> | null,
   inserted: [] as Record<string, unknown>[],
   updated: [] as { values: Record<string, unknown>; id: string }[],
+  locError: null as { message: string } | null,
   insertError: null as { code: string; message: string } | null,
   raceUpdates: [] as Record<string, unknown>[],
 }));
@@ -19,7 +20,7 @@ vi.mock('@/lib/supabase/admin', () => ({
       select: () => ({
         eq: () =>
           table === 'locations'
-            ? Promise.resolve({ data: state.locations, error: null })
+            ? Promise.resolve({ data: state.locations, error: state.locError })
             : { maybeSingle: () => Promise.resolve({ data: state.provider, error: null }) },
       }),
       insert: (row: Record<string, unknown>) => {
@@ -58,6 +59,7 @@ beforeEach(() => {
   state.inserted = [];
   state.updated = [];
   state.insertError = null;
+  state.locError = null;
   state.raceUpdates = [];
   mockFetch.mockReset();
   vi.mocked(logger.warn).mockClear();
@@ -138,5 +140,36 @@ describe('ensureProviderCoordinates (#756)', () => {
     const t0 = Date.now();
     await Promise.all([ensureProviderCoordinates('p1'), ensureProviderCoordinates('p2')]);
     expect(Date.now() - t0).toBeGreaterThanOrEqual(1000);
+  });
+
+  it('AC2: a provider without enough address is logged and not geocoded', async () => {
+    state.provider = {
+      address_street: null,
+      address_zip: null,
+      address_city: 'Chemnitz',
+      address_country: 'DE',
+    };
+    await expect(ensureProviderCoordinates('p1')).resolves.toBe('no_address');
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('AC2: a database read error is logged and returns failed', async () => {
+    state.locError = { message: 'db down' };
+    await expect(ensureProviderCoordinates('p1')).resolves.toBe('failed');
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('AC2: a non-OK geocoder response (429) is logged and returns failed', async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 429, json: async () => [] });
+    await expect(ensureProviderCoordinates('p1')).resolves.toBe('failed');
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('AC2: a non-23505 insert error is logged and returns failed', async () => {
+    state.insertError = { code: '42501', message: 'denied' };
+    mockFetch.mockResolvedValue({ ok: true, status: 200, json: async () => hit });
+    await expect(ensureProviderCoordinates('p1')).resolves.toBe('failed');
+    expect(logger.warn).toHaveBeenCalled();
   });
 });

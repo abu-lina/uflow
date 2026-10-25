@@ -57,3 +57,21 @@ export async function geocodeAddress(
   const lon = Number.parseFloat(results[0].lon);
   return isValidCoord(lat, lon) ? { lat, lon } : null;
 }
+
+/** The primary `locations` row written when a provider has none (#756). */
+export function buildPrimaryLocationRow(
+  providerId: string,
+  a: AddressFields,
+  coords: { lat: number; lon: number },
+) {
+  return {
+    provider_id: providerId,
+    address_street: a.address_street,
+    address_zip: a.address_zip,
+    address_city: a.address_city,
+    address_country: a.address_country,
+    location_latitude: coords.lat,
+    location_longitude: coords.lon,
+    is_primary: true,
+  };
+}
