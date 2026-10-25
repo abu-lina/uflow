@@ -1,0 +1,119 @@
+# Screen pending providers against Google Maps via Apify (#763).
+# Manual trigger only. Dry run by default; each place costs about $0.017 plus images, so runs never overlap.
+
+name: Screen Providers (Google Maps)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'uat'
+        type: choice
+        options:
+          - uat
+          - production
+      provider_id:
+        description: 'Provider UUID (empty = all pending providers not screened in the last 30 days)'
+        required: false
+        type: string
+      limit:
+        description: 'Max providers to process (positive integer, hard maximum 100)'
+        required: false
+        default: '10'
+        type: string
+      apply:
+        description: 'Write screenings and enrichment (off = dry run)'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: screen-providers
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    name: 'screen-providers (${{ inputs.environment }})'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CLI arguments
+        id: args
+        env:
+          INPUT_APPLY: ${{ inputs.apply }}
+        run: |
+          CLI_ARGS="--dry-run"
+          if [ "$INPUT_APPLY" = "true" ]; then
+            CLI_ARGS="--apply"
+          fi
+          echo "cli_args=$CLI_ARGS" >> "$GITHUB_OUTPUT"
+
+      - name: Run screening (Production)
+        if: inputs.environment == 'production'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+          INPUT_PROVIDER_ID: ${{ inputs.provider_id }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
+        run: |
+          set -o pipefail
+          npx tsx scripts/screen-provider-google-maps.ts "$CLI_ARGS" 2>&1 | tee "$RUNNER_TEMP/screen.log"
+
+      - name: Run screening (UAT)
+        if: inputs.environment == 'uat'
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+          INPUT_PROVIDER_ID: ${{ inputs.provider_id }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
+        run: |
+          set -o pipefail
+          npx tsx scripts/screen-provider-google-maps.ts "$CLI_ARGS" 2>&1 | tee "$RUNNER_TEMP/screen.log"
+
+      - name: Summary
+        if: always()
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_APPLY: ${{ inputs.apply }}
+        run: |
+          LOG="$RUNNER_TEMP/screen.log"
+          field() { v=$(grep '^SUMMARY ' "$LOG" 2>/dev/null | tail -1 | tr ' ' '\n' | grep "^$1=" | cut -d= -f2); echo "${v:-0}"; }
+          MODE="dry-run"
+          [ "$INPUT_APPLY" = "true" ] && MODE="apply"
+          {
+            echo "## Screen Providers (Google Maps)"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Environment | $INPUT_ENVIRONMENT |"
+            echo "| Mode | $MODE |"
+            echo "| Processed | $(field processed) |"
+            echo "| Flagged | $(field flagged) |"
+            echo "| Review | $(field review) |"
+            echo "| Clear | $(field clear) |"
+            echo "| Failed | $(field failed) |"
+            echo "| Estimated Apify cost | \$$(field cost_usd) |"
+            grep -q '^SUMMARY ' "$LOG" 2>/dev/null || { echo ""; echo "No summary produced."; }
+          } >> "$GITHUB_STEP_SUMMARY"
