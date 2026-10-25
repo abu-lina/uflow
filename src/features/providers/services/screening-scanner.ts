@@ -39,41 +39,76 @@ function matchAll(re: RegExp, text: string): RegExpExecArray[] {
 const LEFT = String.raw`(?<![\p{L}\p{N}])`;
 const RIGHT = String.raw`(?![\p{L}\p{N}])`;
 const PREFIXES = String.raw`(?:weiß|weiss|rot|rosé|rose|glüh|glueh|weizen|pils|schaum|reis|dessert)?`;
-// A term matches alone, with a plural ending, or with a known compound ending
-// ("Bierhaus", "Weinkarte", "Schweinefleisch"); "Sektion" or "Schweinfurt" do not match.
-const ENDINGS = String.raw`(?:e?(?:haus|haeuser|häuser|karte|glas|gläser|flasche|flaschen|garten|brot|fleisch|bar|schorle|braten|berg)|s|e|es)?`;
+// A term matches alone, with a plural/dative ending, or with a known compound ending
+// ("Bierhaus", "Weinkarten", "Rotweinen"); "Sektion" or "Weinen" (crying) do not match.
+const ENDINGS = String.raw`(?:e?(?:haus|haeuser|häuser|karte|glas|gläser|flasche|garten|brot|fleisch|bar|schorle|braten|berg)(?:n|en)?|s|e|es|n|en)?`;
+// Whole words that merely start like a term.
+const DENY = String.raw`(?!(?:weinen|sekten|schweinfurt\p{L}*|speckstein\p{L}*|speckled|schweinsteiger)${RIGHT})`;
 
-const ALCOHOL_TERMS = [
-  'bier',
-  'wein',
-  'sekt',
-  'spirituosen',
-  'cocktail',
-  'beer',
-  'wine',
-  'whisky',
-  'whiskey',
-  'vodka',
-  'alkohol',
-  'alcohol',
-];
-const PORK_TERMS = ['schwein', 'speck', 'schinken', 'pork', 'bacon'];
+interface TermSet {
+  // Match alone or with PREFIXES/ENDINGS.
+  terms: string[];
+  // Whole words only ("gin", "rum"; not "Ginger", "Rumpsteak").
+  exact?: string[];
+  // Stem plus any German compound tail ("Schweinshaxe", "Schweineschnitzel").
+  open?: string[];
+}
+
+const ALCOHOL: TermSet = {
+  terms: [
+    'bier',
+    'wein',
+    'sekt',
+    'spirituosen',
+    'cocktail',
+    'beer',
+    'wine',
+    'whisky',
+    'whiskey',
+    'vodka',
+    'wodka',
+    'prosecco',
+    'aperol',
+    'champagner',
+    'champagne',
+    'likör',
+    'likoer',
+    'liqueur',
+    'weinbrand',
+    'tequila',
+    'cognac',
+    'brandy',
+    'alkohol',
+    'alcohol',
+    String.raw`alkoholisch\p{L}*`,
+    String.raw`alkoholhaltig\p{L}*`,
+    'alcoholic',
+  ],
+  exact: ['gin', 'rum'],
+};
+const PORK: TermSet = {
+  terms: ['pork', 'bacon'],
+  open: ['schwein', 'speck', 'schinken'],
+};
 
 function rule(
   code: ScreeningCode,
-  terms: string[],
+  { terms, exact, open }: TermSet,
   suffix = '',
 ): { code: ScreeningCode; re: RegExp } {
+  const alternatives = [`${PREFIXES}(${terms.join('|')})${ENDINGS}${RIGHT}`];
+  if (exact) alternatives.push(`(${exact.join('|')})${RIGHT}`);
+  if (open) alternatives.push(`(${open.join('|')})(?:e|s|en)?\\p{L}*`);
   return {
     code,
-    re: new RegExp(`${LEFT}${PREFIXES}(${terms.join('|')})${ENDINGS}${RIGHT}${suffix}`, 'giu'),
+    re: new RegExp(`${LEFT}${DENY}(?:${alternatives.join('|')})${suffix}`, 'giu'),
   };
 }
 
 const RULES = [
   // "alcohol free" / "alkohol-frei" are negations, not alcohol.
-  rule('alcohol', ALCOHOL_TERMS, String.raw`(?!(?:\s|-)*fre[ie])`),
-  rule('pork', PORK_TERMS),
+  rule('alcohol', ALCOHOL, String.raw`(?!(?:\s|-)*fre[ie])`),
+  rule('pork', PORK),
 ];
 
 const ci = (src: string) => new RegExp(src, 'iu');
@@ -130,7 +165,7 @@ export function scanText(text: string, { source, url }: ScanContext): ScreeningF
   for (const { code, re } of RULES) {
     for (const m of matchAll(re, input)) {
       if (!isNegated(input, m.index, m.index + m[0].length))
-        push(code, m[1].toLowerCase(), m.index, m[0].length);
+        push(code, (m[1] || m[2] || m[3]).toLowerCase(), m.index, m[0].length);
     }
   }
 

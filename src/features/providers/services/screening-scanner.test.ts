@@ -39,6 +39,28 @@ describe('screening scanner', () => {
     for (const t of ['Weißwein', 'Weisswein', 'Rotwein', 'Glühwein', 'Gluehwein', 'Weizenbier']) {
       expect(codes(t), t).toEqual(['alcohol']);
     }
+    for (const t of [
+      'Prosecco',
+      'Aperol Spritz',
+      'Gin Tonic',
+      'Rum',
+      'Champagner',
+      'Likör',
+      'Weinbrand',
+      'alcoholic drinks',
+      'Alkoholische Getränke',
+    ]) {
+      expect(codes(t), t).toEqual(['alcohol']);
+    }
+    for (const t of ['Schweinshaxe', 'Schweineschnitzel', 'Schweinebauch', 'Schweinsbraten']) {
+      expect(codes(t), t).toEqual(['pork']);
+    }
+    for (const t of ['Ginger', 'Rumpsteak', 'Rumänien', 'Schweinsteiger', 'Speckled', 'Sekten']) {
+      expect(codes(t), t).toEqual([]);
+    }
+    for (const t of ['Weinkarten', 'Rotweinen', 'Bieren']) {
+      expect(codes(t), t).toEqual(['alcohol']);
+    }
     for (const t of ['Weinkarte', 'Biergarten', 'Schweinefleisch', 'Biere', 'Weinberg']) {
       expect(codes(t), t).toHaveLength(1);
     }
