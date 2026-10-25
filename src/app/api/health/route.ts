@@ -27,6 +27,13 @@ import { NextResponse } from 'next/server';
  *                 environment:
  *                   type: string
  *                   example: "production"
+ *                 appEnv:
+ *                   type: string
+ *                   enum: [uat, production, development]
+ *                 supabaseProjectRef:
+ *                   type: string
+ *                   nullable: true
+ *                   example: "abcd1234"
  *                 version:
  *                   type: string
  *                   example: "1.0.0"
@@ -46,6 +53,23 @@ import { NextResponse } from 'next/server';
  *                   type: string
  *                   format: date-time
  */
+const APP_ENVS = ['uat', 'production', 'development'] as const;
+
+function getAppEnv(): (typeof APP_ENVS)[number] {
+  const value = process.env.APP_ENV;
+  return APP_ENVS.find((env) => env === value) ?? 'development';
+}
+
+function getSupabaseProjectRef(): string | null {
+  try {
+    const { hostname } = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '');
+    if (hostname === '127.0.0.1' || hostname === 'localhost') return 'local';
+    return hostname.split('.')[0] || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET() {
   try {
     // Basic health check
@@ -54,18 +78,20 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: process.env.NODE_ENV,
+      appEnv: getAppEnv(),
+      supabaseProjectRef: getSupabaseProjectRef(),
       version: process.env.npm_package_version || '1.0.0',
     };
 
     return NextResponse.json(healthCheck, { status: 200 });
   } catch {
     return NextResponse.json(
-      { 
-        status: 'unhealthy', 
+      {
+        status: 'unhealthy',
         error: 'Health check failed',
-        timestamp: new Date().toISOString()
-      }, 
-      { status: 500 }
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 },
     );
   }
 }
