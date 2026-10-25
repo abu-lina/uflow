@@ -30,6 +30,7 @@ const supabase = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
 
 const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run');
+const isForce = args.includes('--force');
 const limitArg = getArgValue('--limit');
 const limit = limitArg ? parseInt(limitArg, 10) : undefined;
 const providerIdFilter = getArgValue('--provider-id');
@@ -63,6 +64,7 @@ interface DeliveryLinkRow {
   platform: 'wolt' | 'lieferando' | 'ubereats';
   platform_url: string;
   platform_slug: string | null;
+  apify_checked_at: string | null;
 }
 
 interface RunStats {
@@ -91,6 +93,7 @@ async function main(): Promise<void> {
       platform,
       platform_url,
       platform_slug,
+      apify_checked_at,
       providers!inner (
         provider_name,
         listing_type
@@ -122,6 +125,7 @@ async function main(): Promise<void> {
         platform: r.platform as 'wolt' | 'lieferando' | 'ubereats',
         platform_url: r.platform_url as string,
         platform_slug: (r.platform_slug as string) ?? null,
+        apify_checked_at: (r.apify_checked_at as string) ?? null,
       };
     })
     .sort((a, b) => a.provider_name.localeCompare(b.provider_name));
@@ -158,7 +162,7 @@ async function main(): Promise<void> {
   // Phase 1: Pre-check all providers for existing menus + opening hours
   // -----------------------------------------------------------------------
 
-  const providerIds = [...new Set(batch.map((l) => l.provider_id))];
+  const providerIds = Array.from(new Set(batch.map((l) => l.provider_id)));
 
   // -----------------------------------------------------------------------
   // Batch-query existing state (menu counts + opening hours)
@@ -258,7 +262,12 @@ async function main(): Promise<void> {
     const hasHours = hasHoursMap.get(link.provider_id) ?? false;
 
     if (link.platform === 'wolt') {
-      // Always fetch from Apify — its data (with prices, descriptions,
+      if (link.apify_checked_at && !isForce && !providerIdFilter) {
+        process.stdout.write(`  ${link.provider_name} (wolt) ... already checked via Apify\n`);
+        immediateSkipped++;
+        continue;
+      }
+      // Fetch from Apify — its data (with prices, descriptions,
       // categories) is richer than joinhalal Speisen (names only).
       woltTasks.push({
         link,
@@ -307,6 +316,8 @@ async function main(): Promise<void> {
 
           // Apify calls are rate-limited; fetch always since we need something
           const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
+
+          await markApifyChecked(link);
 
           if (!result) {
             console.log('not found on Wolt');
@@ -457,6 +468,21 @@ async function main(): Promise<void> {
 
   if (isDryRun) {
     console.log(`\n  Dry-run complete. Re-run without --dry-run to write.`);
+  }
+}
+
+// Records that Apify was called for this link so later runs skip it (not in dry-run).
+async function markApifyChecked(link: DeliveryLinkRow): Promise<void> {
+  if (isDryRun) return;
+  const { error } = await supabase
+    .from('provider_delivery_links')
+    .update({ apify_checked_at: new Date().toISOString() })
+    .eq('provider_id', link.provider_id)
+    .eq('platform', link.platform);
+  if (error) {
+    console.error(
+      `     ⚠️  apify_checked_at write failed for ${link.provider_id}: ${error.message}`,
+    );
   }
 }
 

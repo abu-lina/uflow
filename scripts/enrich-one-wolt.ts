@@ -18,7 +18,9 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const APIFY_TOKEN = process.env.APIFY_API_TOKEN;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !APIFY_TOKEN) {
-  console.error('Missing env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, APIFY_API_TOKEN');
+  console.error(
+    'Missing env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, APIFY_API_TOKEN',
+  );
   process.exit(1);
 }
 
@@ -43,11 +45,10 @@ async function main() {
     p_data.providers = { opening_hours: result.openingHours };
   }
 
-  const { error: rpcError } = await supabase
-    .rpc('admin_update_provider', {
-      p_provider_id: providerId,
-      p_data,
-    });
+  const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+    p_provider_id: providerId,
+    p_data,
+  });
 
   if (rpcError) {
     console.error(`RPC write failed: ${rpcError.message}`);
@@ -59,6 +60,7 @@ async function main() {
     .from('provider_delivery_links')
     .update({
       last_verified_at: new Date().toISOString(),
+      apify_checked_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq('provider_id', providerId)
