@@ -35,6 +35,7 @@ jobs:
   backfill:
     name: 'backfill-location-coords (${{ inputs.environment }})'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     timeout-minutes: 120
 
     steps:
@@ -69,22 +70,10 @@ jobs:
           fi
           echo "cli_args=$CLI_ARGS" >> "$GITHUB_OUTPUT"
 
-      - name: Run backfill (Production)
-        if: inputs.environment == 'production'
+      - name: Run backfill
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
-        run: |
-          set -o pipefail
-          # shellcheck disable=SC2086
-          npx tsx scripts/backfill-location-coords.ts $CLI_ARGS 2>&1 | tee "$RUNNER_TEMP/backfill.log"
-
-      - name: Run backfill (UAT)
-        if: inputs.environment == 'uat'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY }}
           CLI_ARGS: ${{ steps.args.outputs.cli_args }}
         run: |
           set -o pipefail

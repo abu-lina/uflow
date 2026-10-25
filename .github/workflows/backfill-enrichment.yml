@@ -63,6 +63,7 @@ jobs:
   backfill:
     name: 'backfill (${{ inputs.mode }}, ${{ inputs.source }}, limit=${{ inputs.limit }}, ${{ inputs.environment }})'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Checkout repository
@@ -89,27 +90,12 @@ jobs:
 
           echo "cli_args=$CLI_ARGS" >> "$GITHUB_OUTPUT"
 
-      - name: Run backfill (Production)
-        if: inputs.environment == 'production'
+      - name: Run backfill
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "Running Enrichment Backfill against PRODUCTION"
-          echo "   Source: ${{ inputs.source }}"
-          echo "   Mode:   ${{ inputs.mode }}"
-          echo "   Limit:  ${{ inputs.limit }}"
-          echo "   Args:   ${{ steps.args.outputs.cli_args }}"
-          echo ""
-          npx tsx scripts/backfill-enrichment.ts ${{ steps.args.outputs.cli_args }}
-
-      - name: Run backfill (UAT)
-        if: inputs.environment == 'uat'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "Running Enrichment Backfill against UAT"
+          echo "Running Enrichment Backfill against ${{ inputs.environment }}"
           echo "   Source: ${{ inputs.source }}"
           echo "   Mode:   ${{ inputs.mode }}"
           echo "   Limit:  ${{ inputs.limit }}"

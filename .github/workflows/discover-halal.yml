@@ -61,6 +61,7 @@ jobs:
     name: "Wolt Discovery (${{ inputs.mode || 'dry-run' }})"
     if: inputs.platform == 'wolt' || inputs.platform == 'both' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'production' }}
     timeout-minutes: 60
 
     steps:
@@ -94,24 +95,12 @@ jobs:
 
           echo "cli_args=$ARGS" >> "$GITHUB_OUTPUT"
 
-      - name: Run Wolt discovery (Production)
-        if: (inputs.environment || 'production') == 'production'
+      - name: Run Wolt discovery
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "Running Wolt discovery against PRODUCTION"
-          echo "  Args: ${{ steps.args.outputs.cli_args }}"
-          echo ""
-          npx tsx scripts/discover-wolt.ts ${{ steps.args.outputs.cli_args }}
-
-      - name: Run Wolt discovery (UAT)
-        if: (inputs.environment || 'production') == 'uat'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "Running Wolt discovery against UAT"
+          echo "Running Wolt discovery against ${{ inputs.environment || 'production' }}"
           echo "  Args: ${{ steps.args.outputs.cli_args }}"
           echo ""
           npx tsx scripts/discover-wolt.ts ${{ steps.args.outputs.cli_args }}
@@ -138,6 +127,7 @@ jobs:
     name: "Lieferando Import (${{ inputs.mode || 'dry-run' }})"
     if: inputs.platform == 'lieferando' || inputs.platform == 'both' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'production' }}
     timeout-minutes: 15
 
     steps:
@@ -183,24 +173,13 @@ jobs:
 
           echo "cli_args=$ARGS" >> "$GITHUB_OUTPUT"
 
-      - name: Run Lieferando import (Production)
-        if: steps.check.outputs.has_data == 'true' && (inputs.environment || 'production') == 'production'
+      - name: Run Lieferando import
+        if: steps.check.outputs.has_data == 'true'
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "Importing Lieferando data into PRODUCTION"
-          echo "  Args: ${{ steps.args.outputs.cli_args }}"
-          echo ""
-          npx tsx scripts/discover-lieferando.ts ${{ steps.args.outputs.cli_args }}
-
-      - name: Run Lieferando import (UAT)
-        if: steps.check.outputs.has_data == 'true' && (inputs.environment || 'production') == 'uat'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "Importing Lieferando data into UAT"
+          echo "Importing Lieferando data into ${{ inputs.environment || 'production' }}"
           echo "  Args: ${{ steps.args.outputs.cli_args }}"
           echo ""
           npx tsx scripts/discover-lieferando.ts ${{ steps.args.outputs.cli_args }}

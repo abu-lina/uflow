@@ -40,6 +40,7 @@ jobs:
   screen:
     name: 'screen-providers (${{ inputs.environment }})'
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     timeout-minutes: 120
 
     steps:
@@ -66,24 +67,10 @@ jobs:
           fi
           echo "cli_args=$CLI_ARGS" >> "$GITHUB_OUTPUT"
 
-      - name: Run screening (Production)
-        if: inputs.environment == 'production'
+      - name: Run screening
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
-          INPUT_LIMIT: ${{ inputs.limit }}
-          INPUT_PROVIDER_ID: ${{ inputs.provider_id }}
-          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
-        run: |
-          set -o pipefail
-          npx tsx scripts/screen-provider-google-maps.ts "$CLI_ARGS" 2>&1 | tee "$RUNNER_TEMP/screen.log"
-
-      - name: Run screening (UAT)
-        if: inputs.environment == 'uat'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY }}
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
           INPUT_LIMIT: ${{ inputs.limit }}
           INPUT_PROVIDER_ID: ${{ inputs.provider_id }}

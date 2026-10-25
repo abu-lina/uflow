@@ -50,6 +50,7 @@ jobs:
   import:
     name: Import Providers (${{ inputs.mode }}, limit=${{ inputs.limit }})
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
 
     steps:
       - name: Checkout repository
@@ -64,30 +65,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run import (Production)
-        if: inputs.environment == 'production'
+      - name: Run import
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          echo "🚀 Running MuslimBusiness import against PRODUCTION"
-          echo "   Mode: ${{ inputs.mode }}"
-          echo "   Limit: ${{ inputs.limit }}"
-          echo ""
-
-          if [ "${{ inputs.limit }}" = "all" ]; then
-            npx tsx scripts/import-muslimbusiness.ts --${{ inputs.mode }}
-          else
-            npx tsx scripts/import-muslimbusiness.ts --${{ inputs.mode }} --limit ${{ inputs.limit }}
-          fi
-
-      - name: Run import (UAT)
-        if: inputs.environment == 'uat'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.UAT_NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.UAT_SUPABASE_SERVICE_ROLE_KEY || secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "🚀 Running MuslimBusiness import against UAT"
+          echo "🚀 Running MuslimBusiness import against ${{ inputs.environment }}"
           echo "   Mode: ${{ inputs.mode }}"
           echo "   Limit: ${{ inputs.limit }}"
           echo ""

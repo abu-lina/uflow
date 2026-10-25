@@ -41,10 +41,10 @@ describe('#776 workflows use GitHub environments for Supabase secrets', () => {
 
     it('criterion 2: has no || fallback on Supabase secrets', () => {
       expect(wf).not.toMatch(
-        /secrets\.(NEXT_PUBLIC_SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY)[^}]*\|\|/,
+        /secrets\.(NEXT_PUBLIC_SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY)[^}\n]*\|\|/,
       );
       expect(wf).not.toMatch(
-        /\|\|[^}]*secrets\.(NEXT_PUBLIC_SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY)/,
+        /\|\|[^}\n]*secrets\.(NEXT_PUBLIC_SUPABASE_URL|SUPABASE_SERVICE_ROLE_KEY)/,
       );
     });
 
