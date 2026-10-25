@@ -1370,6 +1370,34 @@ export const ur = {
     certificateInvalidType: 'فائل کی قسم درست نہیں۔ براہ کرم تصویر یا PDF فائل اپ لوڈ کریں۔',
     certificateTooLarge: 'فائل بہت بڑی ہے۔ سرٹیفکیٹ زیادہ سے زیادہ 5 MB ہو سکتا ہے۔',
   },
+  // #766: automated screening panel on the pending provider review page
+  adminScreening: {
+    title: 'خودکار جانچ',
+    status: { flagged: 'نشان زد', review: 'جائزے کی ضرورت', clear: 'صاف' },
+    risksHeading: 'خطرے کے نشانات',
+    noRisks: 'خطرے کا کوئی نشان نہیں ملا۔',
+    positivesHeading: 'مثبت اشارے',
+    positivesNote: 'یہ حیثیت کو تبدیل نہیں کرتے۔',
+    matchedTerm: 'مماثل لفظ',
+    openEvidence: 'ثبوت کھولیں (نئے ٹیب میں کھلتا ہے)',
+    code: {
+      alcohol: 'الکحل',
+      pork: 'سور کا گوشت',
+      not_halal: 'حلال نہیں',
+      halal_positive: 'حلال کا ذکر',
+      no_maps_match: 'گوگل میپس پر کوئی مماثلت نہیں',
+    },
+    source: {
+      google_maps_apify: 'گوگل میپس',
+      delivery_menu: 'ڈیلیوری مینو',
+      review: 'تبصرہ',
+      attribute: 'مقام کی خصوصیت',
+      menu: 'مینو',
+      website: 'ویب سائٹ',
+    },
+    empty: 'ابھی جانچ نہیں ہوئی۔',
+    error: 'جانچ کے نتائج لوڈ نہیں ہو سکے۔',
+  },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
   adminHalalEdit: {

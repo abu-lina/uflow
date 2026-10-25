@@ -1383,6 +1383,34 @@ export const de = {
     certificateInvalidType: 'Ungültiger Dateityp. Bitte lade ein Bild oder eine PDF-Datei hoch.',
     certificateTooLarge: 'Datei zu groß. Das Zertifikat darf maximal 5 MB groß sein.',
   },
+  // #766: automated screening panel on the pending provider review page
+  adminScreening: {
+    title: 'Automatische Prüfung',
+    status: { flagged: 'Auffällig', review: 'Prüfen', clear: 'Unauffällig' },
+    risksHeading: 'Risikohinweise',
+    noRisks: 'Keine Risikohinweise gefunden.',
+    positivesHeading: 'Positive Signale',
+    positivesNote: 'Diese ändern den Status nicht.',
+    matchedTerm: 'Gefundener Begriff',
+    openEvidence: 'Beleg öffnen (öffnet in neuem Tab)',
+    code: {
+      alcohol: 'Alkohol',
+      pork: 'Schweinefleisch',
+      not_halal: 'Nicht halal',
+      halal_positive: 'Halal erwähnt',
+      no_maps_match: 'Kein Google-Maps-Treffer',
+    },
+    source: {
+      google_maps_apify: 'Google Maps',
+      delivery_menu: 'Lieferdienst-Speisekarte',
+      review: 'Bewertung',
+      attribute: 'Ortsmerkmal',
+      menu: 'Speisekarte',
+      website: 'Webseite',
+    },
+    empty: 'Noch nicht geprüft.',
+    error: 'Die Prüfergebnisse konnten nicht geladen werden.',
+  },
   // Plan 255 (#415): admin halal edit sub-page
   adminHalalEdit: {
     title: 'Halal Check',

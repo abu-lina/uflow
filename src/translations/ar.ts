@@ -1351,6 +1351,34 @@ export const ar = {
     certificateInvalidType: 'نوع الملف غير صالح. يرجى تحميل صورة أو ملف PDF.',
     certificateTooLarge: 'الملف كبير جدًا. يجب ألا يتجاوز حجم الشهادة 5 ميغابايت.',
   },
+  // #766: automated screening panel on the pending provider review page
+  adminScreening: {
+    title: 'الفحص التلقائي',
+    status: { flagged: 'مُبلَّغ عنه', review: 'يحتاج مراجعة', clear: 'سليم' },
+    risksHeading: 'علامات الخطر',
+    noRisks: 'لم يتم العثور على علامات خطر.',
+    positivesHeading: 'مؤشرات إيجابية',
+    positivesNote: 'هذه لا تغيّر الحالة.',
+    matchedTerm: 'المصطلح المطابق',
+    openEvidence: 'فتح الدليل (يفتح في علامة تبويب جديدة)',
+    code: {
+      alcohol: 'كحول',
+      pork: 'لحم الخنزير',
+      not_halal: 'غير حلال',
+      halal_positive: 'ذُكر حلال',
+      no_maps_match: 'لا يوجد تطابق في خرائط جوجل',
+    },
+    source: {
+      google_maps_apify: 'خرائط جوجل',
+      delivery_menu: 'قائمة التوصيل',
+      review: 'تقييم',
+      attribute: 'خاصية المكان',
+      menu: 'قائمة الطعام',
+      website: 'الموقع الإلكتروني',
+    },
+    empty: 'لم يتم الفحص بعد.',
+    error: 'تعذّر تحميل نتائج الفحص.',
+  },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
   adminHalalEdit: {

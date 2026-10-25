@@ -41,6 +41,8 @@ interface ProviderDetailPageClientProps {
   providerId: string;
   initialData?: Provider | null;
   initialCommunityServices?: CommunityService[];
+  /** Server-rendered admin screening panel; undefined unless the provider is pending. */
+  screeningSlot?: React.ReactNode;
 }
 
 /**
@@ -56,6 +58,7 @@ export function ProviderDetailPageClient({
   providerId,
   initialData,
   initialCommunityServices,
+  screeningSlot,
 }: ProviderDetailPageClientProps) {
   const router = useRouter();
   const { isAdmin } = useIsAdmin();
@@ -171,6 +174,7 @@ export function ProviderDetailPageClient({
     <>
       <div className="md:hidden">
         {renderReviewBanner('')}
+        {screeningSlot}
         <ProviderDetailPageComponent
           customActionButtons={
             isAdmin ? (
@@ -190,7 +194,12 @@ export function ProviderDetailPageClient({
           }
           initialCommunityServices={initialCommunityServices}
           provider={provider}
-          reviewBanner={renderReviewBanner('w-[1200px] rounded-t-[48px]')}
+          reviewBanner={
+            <>
+              {renderReviewBanner('w-[1200px] rounded-t-[48px]')}
+              {screeningSlot ? <div className="w-[1200px]">{screeningSlot}</div> : null}
+            </>
+          }
           onClose={handleModalClose}
         />
       )}
