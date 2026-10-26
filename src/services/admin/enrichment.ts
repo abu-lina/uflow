@@ -47,7 +47,7 @@ export interface PendingCandidatesResult {
  * Joins provider_name for display in admin UI.
  */
 export async function getPendingCandidates(
-  options: { providerId?: string; limit?: number; offset?: number } = {}
+  options: { providerId?: string; limit?: number; offset?: number } = {},
 ): Promise<PendingCandidatesResult> {
   const supabase = getSupabaseAdmin();
   const { providerId, limit = 50, offset = 0 } = options;
@@ -76,7 +76,7 @@ export async function getPendingCandidates(
       created_at,
       providers!inner(provider_name)
     `,
-      { count: 'exact' }
+      { count: 'exact' },
     )
     .eq('status', 'pending')
     .order('enriched_at', { ascending: false })
@@ -97,7 +97,7 @@ export async function getPendingCandidates(
       ...(row as unknown as EnrichmentCandidateRow),
       provider_name:
         (row.providers as { provider_name: string } | null)?.provider_name ?? 'Unknown',
-    })
+    }),
   );
 
   return { data: candidates, total: count ?? 0 };
@@ -111,7 +111,7 @@ export async function getPendingCandidates(
  */
 export async function approveCandidate(
   candidateId: string,
-  reviewerId: string
+  reviewerId: string,
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabaseAdmin();
 
@@ -145,6 +145,10 @@ export async function approveCandidate(
     };
   }
 
+  if (candidate.field_name === 'delivery_links') {
+    return applyDeliveryLinksCandidate(supabase, candidate, reviewerId);
+  }
+
   const isImageEnrichment =
     candidate.enrichment_type === 'image' && candidate.field_name === 'provider_images';
 
@@ -167,8 +171,8 @@ export async function approveCandidate(
         'urls' in value &&
         Array.isArray((value as { urls?: unknown }).urls)
       ) {
-        return ((value as { urls: unknown[] }).urls).filter(
-          (v): v is string => typeof v === 'string'
+        return (value as { urls: unknown[] }).urls.filter(
+          (v): v is string => typeof v === 'string',
         );
       }
 
@@ -217,11 +221,76 @@ export async function approveCandidate(
 }
 
 /**
+ * admin_update_provider replaces the whole delivery link set when delivery_links
+ * is sent, so the live links are read and merged first. An existing link for the
+ * same platform is never overwritten.
+ */
+async function applyDeliveryLinksCandidate(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  candidate: { id: string; provider_id: string; proposed_value: unknown },
+  reviewerId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const proposed = (
+    Array.isArray(candidate.proposed_value) ? candidate.proposed_value : []
+  ) as Array<{
+    platform?: string;
+  }>;
+  if (proposed.length === 0) {
+    return { success: false, error: 'Delivery candidate has no links to apply' };
+  }
+
+  const { data: existing, error: linksError } = await supabase
+    .from('provider_delivery_links')
+    .select('platform, platform_url, platform_slug, is_active')
+    .eq('provider_id', candidate.provider_id);
+
+  if (linksError) {
+    return {
+      success: false,
+      error: `Failed to load existing delivery links: ${linksError.message}`,
+    };
+  }
+
+  const current = (existing ?? []) as Array<{ platform: string }>;
+  const held = new Set(current.map((link) => link.platform));
+  const additions = proposed.filter((link) => !held.has(link.platform ?? ''));
+  if (additions.length === 0) {
+    const platforms = proposed.map((link) => link.platform).join(', ');
+    return {
+      success: false,
+      error: `Provider already has a delivery link for ${platforms}. Candidate left as pending.`,
+    };
+  }
+
+  const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+    p_provider_id: candidate.provider_id,
+    p_data: { delivery_links: [...current, ...additions] },
+  });
+  if (rpcError) {
+    return { success: false, error: `Failed to update delivery links: ${rpcError.message}` };
+  }
+
+  const { error: statusError } = await supabase
+    .from('enrichment_candidates')
+    .update({
+      status: 'applied',
+      reviewed_at: new Date().toISOString(),
+      reviewer_id: reviewerId,
+    })
+    .eq('id', candidate.id);
+  if (statusError) {
+    return { success: false, error: `Failed to update candidate status: ${statusError.message}` };
+  }
+
+  return { success: true };
+}
+
+/**
  * Reject a single enrichment candidate.
  */
 export async function rejectCandidate(
   candidateId: string,
-  reviewerId: string
+  reviewerId: string,
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabaseAdmin();
 
@@ -248,7 +317,7 @@ export async function rejectCandidate(
  */
 export async function bulkApproveByProvider(
   providerId: string,
-  reviewerId: string
+  reviewerId: string,
 ): Promise<{ approved: number; skipped: number; errors: string[] }> {
   const supabase = getSupabaseAdmin();
 
@@ -267,7 +336,9 @@ export async function bulkApproveByProvider(
     return {
       approved: 0,
       skipped: 0,
-      errors: ['Cannot enrich provider that now has an owner (provider_owner_id is set). Candidates left as pending.'],
+      errors: [
+        'Cannot enrich provider that now has an owner (provider_owner_id is set). Candidates left as pending.',
+      ],
     };
   }
 

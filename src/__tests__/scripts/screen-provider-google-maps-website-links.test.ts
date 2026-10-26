@@ -5,6 +5,7 @@ import {
   type ApifyPlace,
   type ScreeningProvider,
   type ScreeningStore,
+  type WebsiteLinkDeps,
 } from '../../../scripts/screen-provider-google-maps';
 
 const SITE = 'https://tevhid.example/';
@@ -78,7 +79,7 @@ async function run(
     fetchPlaces: async () => places,
     log: (m) => logs.push(m),
     options: { apply: opts.apply ?? true, limit: 10 },
-    websiteLinks: { fetchPage, existingPlatforms, stage },
+    websiteLinks: { fetchPage, existingPlatforms, stage } as unknown as WebsiteLinkDeps,
   });
   return { store, summary, fetchPage, stage, existingPlatforms, logs };
 }

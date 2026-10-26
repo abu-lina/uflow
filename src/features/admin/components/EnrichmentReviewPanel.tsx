@@ -70,7 +70,7 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
   const handleAction = async (
     action: 'approve' | 'reject' | 'bulk-approve',
     candidateId?: string,
-    providerId?: string
+    providerId?: string,
   ) => {
     const key = candidateId ?? providerId ?? action;
     setActionLoading(key);
@@ -106,7 +106,10 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
       acc[c.provider_id].candidates.push(c);
       return acc;
     },
-    {} as Record<string, { provider_name: string; provider_id: string; candidates: EnrichmentCandidate[] }>
+    {} as Record<
+      string,
+      { provider_name: string; provider_id: string; candidates: EnrichmentCandidate[] }
+    >,
   );
 
   if (loading) {
@@ -162,7 +165,9 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
               type="button"
               onClick={() => handleAction('bulk-approve', undefined, group.provider_id)}
             >
-              {actionLoading === group.provider_id ? 'Approving...' : `Approve All (${group.candidates.length})`}
+              {actionLoading === group.provider_id
+                ? 'Approving...'
+                : `Approve All (${group.candidates.length})`}
             </button>
           </div>
 
@@ -187,9 +192,16 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
                     </div>
                     <div>
                       <span className="text-xs text-gray-400">Proposed:</span>
-                      <div className="font-mono text-xs text-green-700">
-                        {formatValue(candidate.proposed_value)}
-                      </div>
+                      {candidate.field_name === 'delivery_links' ? (
+                        <DeliveryLinks
+                          sourceUrl={candidate.source_url}
+                          value={candidate.proposed_value}
+                        />
+                      ) : (
+                        <div className="font-mono text-xs text-green-700">
+                          {formatValue(candidate.proposed_value)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -229,6 +241,58 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
           >
             Load more
           </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const PLATFORM_LABELS: Record<string, string> = {
+  wolt: 'Wolt',
+  lieferando: 'Lieferando',
+  ubereats: 'Uber Eats',
+};
+
+function isHttpsUrl(value: unknown): value is string {
+  return typeof value === 'string' && /^https:\/\//i.test(value);
+}
+
+function DeliveryLinks({ value, sourceUrl }: { value: unknown; sourceUrl: string | null }) {
+  const links = Array.isArray(value)
+    ? (value as Array<{ platform?: string; platform_url?: unknown }>)
+    : [];
+  return (
+    <div className="space-y-1 text-xs">
+      {links.map((link, i) => (
+        <div key={`${link.platform}-${i}`} className="text-green-700">
+          <span className="font-medium">
+            {PLATFORM_LABELS[link.platform ?? ''] ?? link.platform ?? 'Unknown'}
+          </span>
+          {isHttpsUrl(link.platform_url) ? (
+            <a
+              className="ml-2 break-all font-mono underline"
+              href={link.platform_url}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {link.platform_url}
+            </a>
+          ) : (
+            <span className="ml-2 font-mono">{String(link.platform_url ?? '—')}</span>
+          )}
+        </div>
+      ))}
+      {isHttpsUrl(sourceUrl) && (
+        <div className="text-gray-500">
+          Found on{' '}
+          <a
+            className="break-all font-mono underline"
+            href={sourceUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {sourceUrl}
+          </a>
         </div>
       )}
     </div>
