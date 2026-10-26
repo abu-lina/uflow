@@ -64,7 +64,6 @@ describe('#777 deploy workflows use GitHub environments', () => {
       'RESEND_API_KEY',
       'TEST_API_KEY',
       'ADMIN_DEBUG_KEY',
-      'WEBHOOK_SECRET',
       'MISTRAL_API_KEY',
     ]) {
       expect(wf).toContain(`secrets.${name}`);

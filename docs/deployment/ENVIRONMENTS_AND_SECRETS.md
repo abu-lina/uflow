@@ -30,7 +30,8 @@ Set the same names in both the `uat` and `production` environments, with differe
 | `MISTRAL_API_KEY`                | Mistral console > API keys                                                                                                           |
 | `ADMIN_DEBUG_KEY`                | Generate: `openssl rand -hex 32`                                                                                                     |
 | `TEST_API_KEY`                   | Generate: `openssl rand -hex 16`; used by k6 tests in `tests/performance/` to bypass rate limits. Export it locally, never commit it |
-| `WEBHOOK_SECRET`                 | Generate: `openssl rand -hex 32`; must match the secret configured on the Supabase side                                              |
+
+`WEBHOOK_SECRET` is not a GitHub secret. Only the Supabase edge function `send-confirmation-email` reads it, as a Supabase function secret (`supabase secrets set`).
 
 ## Rotation
 
