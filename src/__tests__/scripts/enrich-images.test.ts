@@ -44,7 +44,7 @@ describe('stageImageCandidate', () => {
       },
     });
 
-    expect(outcome).toBe('skipped-existing');
+    expect(outcome).toEqual({ outcome: 'skipped-existing' });
     expect(insertSpy).not.toHaveBeenCalled();
   });
 
@@ -91,7 +91,52 @@ describe('stageImageCandidate', () => {
 
     const outcome = await stageImageCandidate(client as never, row);
 
-    expect(outcome).toBe('staged');
+    expect(outcome).toEqual({ outcome: 'staged' });
     expect(insertSpy).toHaveBeenCalledWith(row);
+  });
+
+  it('surfaces the Supabase error message and code when the insert fails', async () => {
+    const selectChain = {
+      eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+    const insertSpy = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: 'column "image_url" does not exist', code: '42703' },
+    });
+    const client = {
+      from: vi.fn(() => ({ select: vi.fn(() => selectChain), insert: insertSpy })),
+    };
+
+    const result = await stageImageCandidate(client as never, { provider_id: 'p' });
+
+    expect(result).toEqual({
+      outcome: 'failed',
+      error: { message: 'column "image_url" does not exist', code: '42703' },
+    });
+  });
+
+  it('surfaces the Supabase error message and code when the existence check fails', async () => {
+    const selectChain = {
+      eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({
+        data: null,
+        error: { message: 'permission denied for table enrichment_candidates', code: '42501' },
+      }),
+    };
+    const insertSpy = vi.fn();
+    const client = {
+      from: vi.fn(() => ({ select: vi.fn(() => selectChain), insert: insertSpy })),
+    };
+
+    const result = await stageImageCandidate(client as never, { provider_id: 'p' });
+
+    expect(result).toEqual({
+      outcome: 'failed',
+      error: { message: 'permission denied for table enrichment_candidates', code: '42501' },
+    });
+    expect(insertSpy).not.toHaveBeenCalled();
   });
 });

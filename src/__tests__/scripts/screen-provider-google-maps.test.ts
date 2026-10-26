@@ -60,7 +60,7 @@ function makeStore(providers: ScreeningProvider[]) {
     }),
     stageImages: vi.fn(async (row) => {
       imageRows.push(row);
-      return 'staged' as const;
+      return { outcome: 'staged' as const };
     }),
   };
   return { store, screenings, fieldWrites, imageRows };
@@ -250,6 +250,24 @@ describe('#763 criterion 9 and 10: images', () => {
       status: 'pending',
     });
     expect((imageRows[0].proposed_value as { urls: string[] }).urls).toEqual(many.slice(0, 5));
+  });
+
+  it('#791 logs the Supabase error message and code when staging fails', async () => {
+    const ctx = makeStore([provider()]);
+    ctx.store.stageImages = vi.fn(async () => ({
+      outcome: 'failed' as const,
+      error: { message: 'column "image_url" does not exist', code: '42703' },
+    }));
+    const logs: string[] = [];
+    await runScreening({
+      store: ctx.store,
+      fetchPlaces: async () => [place({ imageUrls: ['https://img/a.jpg'] })],
+      log: (m) => logs.push(m),
+      options: { apply: true, limit: 10 },
+    });
+    const warn = logs.find((l) => l.includes('image candidate not staged'));
+    expect(warn).toContain('column "image_url" does not exist');
+    expect(warn).toContain('42703');
   });
 
   it('includes images in the cost estimate', async () => {
