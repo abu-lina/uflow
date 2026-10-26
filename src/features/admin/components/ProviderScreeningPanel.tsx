@@ -128,6 +128,14 @@ export function ProviderScreeningPanel({ result }: { result: ProviderScreeningsR
                 <p className="text-sm text-neutral-700">{t('adminScreening.noRisks')}</p>
               )}
             </div>
+            {result.suggestNoAlcohol ? (
+              <p
+                className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900"
+                data-testid="screening-no-alcohol-suggestion"
+              >
+                {t('adminScreening.noAlcoholSuggestion')}
+              </p>
+            ) : null}
             {result.positives.length > 0 ? (
               <div data-testid="screening-positives">
                 <h3 className="text-sm font-semibold">{t('adminScreening.positivesHeading')}</h3>

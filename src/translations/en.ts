@@ -1365,6 +1365,8 @@ export const en = {
     status: { flagged: 'Flagged', review: 'Needs review', clear: 'Clear' },
     risksHeading: 'Risk flags',
     noRisks: 'No risk flags found.',
+    noAlcoholSuggestion:
+      'Suggestion: no alcohol found by Google Maps screening. Set "no alcohol" yourself if it applies.',
     positivesHeading: 'Positive signals',
     positivesNote: 'These do not change the status.',
     matchedTerm: 'Matched term',

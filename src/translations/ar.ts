@@ -1357,6 +1357,8 @@ export const ar = {
     status: { flagged: 'مُبلَّغ عنه', review: 'يحتاج مراجعة', clear: 'سليم' },
     risksHeading: 'علامات الخطر',
     noRisks: 'لم يتم العثور على علامات خطر.',
+    noAlcoholSuggestion:
+      'اقتراح: لم يعثر فحص خرائط جوجل على كحول. حدّد "بدون كحول" بنفسك إذا كان ينطبق.',
     positivesHeading: 'مؤشرات إيجابية',
     positivesNote: 'هذه لا تغيّر الحالة.',
     matchedTerm: 'المصطلح المطابق',

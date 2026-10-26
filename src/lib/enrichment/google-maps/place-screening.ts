@@ -103,7 +103,8 @@ function attributeTokens(place: ApifyPlace): string[] {
 export function screenPlace(match: PlaceMatch): ScreeningResult {
   const { place } = match;
   const mapsUrl = place.url ?? MAPS_SOURCE_URL;
-  const reviews = (place.reviews ?? []).slice(0, GOOGLE_MAPS_SETTINGS.maxReviews).map((r) => ({
+  const storedReviews = (place.reviews ?? []).slice(0, GOOGLE_MAPS_SETTINGS.maxReviews);
+  const reviews = storedReviews.map((r) => ({
     text: (r.text ?? '').slice(0, MAX_REVIEW_CHARS),
     stars: r.stars ?? null,
   }));
@@ -127,25 +128,20 @@ export function screenPlace(match: PlaceMatch): ScreeningResult {
     status,
     flags,
     raw: {
-      title: place.title,
-      url: place.url,
-      categoryName: place.categoryName,
-      categories: place.categories,
-      address: place.address,
-      postalCode: place.postalCode,
-      location: place.location,
-      website: place.website,
-      phone: place.phone,
-      instagrams: place.instagrams,
-      reviewsCount: place.reviewsCount,
-      reviews,
+      ...place,
+      reviews: storedReviews,
       attributes,
       match: { method: match.method, distance_m: match.distanceM },
     },
   };
 }
 
-export function noMatchScreening(placesReturned: number): ScreeningResult {
+const capReviews = (place: ApifyPlace): ApifyPlace =>
+  place.reviews
+    ? { ...place, reviews: place.reviews.slice(0, GOOGLE_MAPS_SETTINGS.maxReviews) }
+    : place;
+
+export function noMatchScreening(places: ApifyPlace[]): ScreeningResult {
   return {
     status: 'review',
     flags: [
@@ -157,7 +153,7 @@ export function noMatchScreening(placesReturned: number): ScreeningResult {
         source: 'google_maps',
       },
     ],
-    raw: { placesReturned },
+    raw: { placesReturned: places.length, places: places.map(capReviews) },
   };
 }
 
@@ -210,11 +206,52 @@ export function parseOpeningHours(list: ApifyPlace['openingHours']): OpeningHour
 
 export interface EnrichableProvider {
   provider_id: string;
+  provider_description: string | null;
   contact_phone: string | null;
   social_website: string | null;
   social_instagram: string | null;
   opening_hours: Record<string, unknown> | null;
+  address_street: string | null;
+  address_zip: string | null;
+  address_city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  has_parking: boolean | null;
+  family_friendly: boolean | null;
+  children_friendly: boolean | null;
   primaryLocationId: string | null;
+}
+
+const PARKING_RE = /parking|car park/i;
+const KIDS_RE = /\b(?:kids?|child(?:ren)?)\b/i;
+const FAMILY_RE = /family|good for kids/i;
+
+/** True only when a matching entry is explicitly true; missing or false data yields null, never false. */
+function explicitAttribute(place: ApifyPlace, keyPattern: RegExp): true | null {
+  for (const group of Object.values(place.additionalInfo ?? {})) {
+    for (const entry of group) {
+      for (const [key, value] of Object.entries(entry)) {
+        if (value === true && keyPattern.test(key)) return true;
+      }
+    }
+  }
+  return null;
+}
+
+const ZIP_CITY_RE = /^(\d{5})\s+(.+)$/;
+
+/** Splits "Street 1, 10115 Berlin, Germany"; returns nothing when no postcode part is found. */
+export function parseAddress(address: string | undefined): {
+  street: string | null;
+  zip: string | null;
+  city: string | null;
+} {
+  const parts = (address ?? '').split(',').map((p) => p.trim());
+  const zipIndex = parts.findIndex((p) => ZIP_CITY_RE.test(p));
+  if (zipIndex < 0) return { street: null, zip: null, city: null };
+  const [, zip, city] = ZIP_CITY_RE.exec(parts[zipIndex]) as RegExpExecArray;
+  const street = parts.slice(0, zipIndex).join(', ');
+  return { street: street || null, zip, city };
 }
 
 /** Candidates for every field the place can supply; apply logic keeps only the empty ones. */
@@ -224,18 +261,32 @@ export function buildFieldCandidates(
 ): EnrichmentCandidate[] {
   const sourceUrl = place.url ?? MAPS_SOURCE_URL;
   const hasHours = provider.opening_hours && Object.keys(provider.opening_hours).length > 0;
+  // Booleans default to false in the database, so only true counts as an existing value.
+  const flag = (current: boolean | null) => (current === true ? true : null);
   const proposals: Array<[string, unknown, unknown]> = [
+    ['provider_description', provider.provider_description, place.description?.trim()],
     ['social_website', provider.social_website, place.website],
     ['contact_phone', provider.contact_phone, place.phone],
     ['social_instagram', provider.social_instagram, place.instagrams?.[0]],
+    ['has_parking', flag(provider.has_parking), explicitAttribute(place, PARKING_RE)],
+    ['family_friendly', flag(provider.family_friendly), explicitAttribute(place, FAMILY_RE)],
+    ['children_friendly', flag(provider.children_friendly), explicitAttribute(place, KIDS_RE)],
   ];
-  // Hours live on the primary location; without its id the RPC would replace all locations.
+  // Hours and address live on the primary location; without its id the RPC would replace all locations.
   if (provider.primaryLocationId) {
-    proposals.push([
-      'opening_hours',
-      hasHours ? provider.opening_hours : null,
-      parseOpeningHours(place.openingHours),
-    ]);
+    const address = parseAddress(place.address);
+    proposals.push(
+      [
+        'opening_hours',
+        hasHours ? provider.opening_hours : null,
+        parseOpeningHours(place.openingHours),
+      ],
+      ['address_street', provider.address_street, address.street],
+      ['address_zip', provider.address_zip, place.postalCode || address.zip],
+      ['address_city', provider.address_city, address.city],
+      ['location_latitude', provider.latitude, place.location?.lat],
+      ['location_longitude', provider.longitude, place.location?.lng],
+    );
   }
 
   return proposals.map(([field_name, current, proposed]) => ({

@@ -22,6 +22,7 @@ export const GOOGLE_MAPS_SETTINGS = {
 
 export interface ApifyPlace {
   title?: string;
+  description?: string | null;
   url?: string;
   categoryName?: string;
   categories?: string[];

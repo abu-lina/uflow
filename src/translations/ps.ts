@@ -1373,6 +1373,8 @@ export const ps = {
     status: { flagged: 'نخشه شوی', review: 'بیاکتنې ته اړتیا لري', clear: 'پاک' },
     risksHeading: 'د خطر نخې',
     noRisks: 'د خطر هیڅ نخه ونه موندل شوه.',
+    noAlcoholSuggestion:
+      'وړاندیز: د ګوګل میپس سکرینینګ کې الکول ونه موندل شول. که پلی کیږي، "بې الکوله" پخپله وټاکئ.',
     positivesHeading: 'مثبت نښې',
     positivesNote: 'دا حالت نه بدلوي.',
     matchedTerm: 'سمون لرونکې کلمه',

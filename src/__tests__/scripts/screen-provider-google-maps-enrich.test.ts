@@ -234,36 +234,31 @@ describe('#792 missing data never sets a flag to false and never overwrites', ()
 });
 
 describe('#792 empty address and coordinate fields are filled', () => {
-  it('fills street, zip, city, latitude and longitude from address and location', async () => {
-    const p = provider({
-      address_street: null,
-      address_zip: null,
-      address_city: null,
-      latitude: null,
-      longitude: null,
+  const full = () =>
+    place({
+      address: 'Hauptstr. 1, 10115 Berlin, Germany',
+      location: { lat: 52.5201, lng: 13.4051 },
+      postalCode: '10115',
     });
-    const r = await run(p, [
-      place({
-        address: 'Hauptstr. 1, 10115 Berlin, Germany',
-        location: { lat: 52.5201, lng: 13.4051 },
-        postalCode: '10115',
-      }),
-    ]);
-    expect(r.providers).toMatchObject({
+
+  it('fills street, zip and city from address when the provider matched by coordinates', async () => {
+    const p = provider({ address_street: null, address_zip: null, address_city: null });
+    const r = await run(p, [full()]);
+    const expected = {
       address_street: 'Hauptstr. 1',
       address_zip: '10115',
       address_city: 'Berlin',
-      location_latitude: 52.5201,
-      location_longitude: 13.4051,
-    });
-    expect(r.locations[0]).toMatchObject({
-      location_id: 'loc1',
-      address_street: 'Hauptstr. 1',
-      address_zip: '10115',
-      address_city: 'Berlin',
-      location_latitude: 52.5201,
-      location_longitude: 13.4051,
-    });
+    };
+    expect(r.providers).toMatchObject(expected);
+    expect(r.locations[0]).toMatchObject({ location_id: 'loc1', ...expected });
+  });
+
+  it('fills latitude and longitude from location when the provider matched by name and postcode', async () => {
+    const p = provider({ latitude: null, longitude: null });
+    const r = await run(p, [full()]);
+    const expected = { location_latitude: 52.5201, location_longitude: 13.4051 };
+    expect(r.providers).toMatchObject(expected);
+    expect(r.locations[0]).toMatchObject({ location_id: 'loc1', ...expected });
   });
 });
 

@@ -1376,6 +1376,8 @@ export const tr = {
     status: { flagged: 'İşaretli', review: 'İnceleme gerekli', clear: 'Temiz' },
     risksHeading: 'Risk işaretleri',
     noRisks: 'Risk işareti bulunamadı.',
+    noAlcoholSuggestion:
+      'Öneri: Google Maps taramasında alkol bulunmadı. Geçerliyse "alkol yok" seçeneğini kendiniz işaretleyin.',
     positivesHeading: 'Olumlu sinyaller',
     positivesNote: 'Bunlar durumu değiştirmez.',
     matchedTerm: 'Eşleşen terim',

@@ -2,9 +2,11 @@
  * Screen providers against Google Maps via the Apify Google Maps Scraper (#763).
  *
  * For each provider it matches a Maps place, scans reviews/attributes/category/website,
- * and inserts a provider_screenings row. The same run fills empty provider fields
- * (website, phone, opening hours, Instagram) and stages images for providers without any.
- * Existing values are never overwritten.
+ * and inserts a provider_screenings row with the full Apify item in `raw`. Only providers
+ * whose status is `clear` also get empty public fields filled (description, website, phone,
+ * opening hours, Instagram, address, coordinates, parking/family/children flags) and images
+ * staged when they have none. Existing values are never overwritten, missing data never sets a
+ * flag to false, and no_alcohol and the halal fields are never written.
  *
  * Usage:
  *   npx tsx scripts/screen-provider-google-maps.ts --dry-run                 # default, writes nothing
@@ -48,8 +50,6 @@ const SCREENING_SOURCE = 'google_maps_apify';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface ScreeningProvider extends MatchableProvider, EnrichableProvider {
-  address_street: string | null;
-  address_city: string | null;
   imageUrls: string[];
 }
 
@@ -133,7 +133,7 @@ export async function runScreening(deps: {
       summary.estimatedCostUsd += estimateCostUsd(places.length, images);
 
       const match = matchPlace(provider, places);
-      const result = match ? screenPlace(match) : noMatchScreening(places.length);
+      const result = match ? screenPlace(match) : noMatchScreening(places);
       summary[result.status] += 1;
 
       const flagTerms = result.flags.map((f) => `${f.code}:${f.term}`).join(', ') || 'none';
@@ -151,7 +151,8 @@ export async function runScreening(deps: {
         });
       }
 
-      if (match) await enrich(provider, match.place);
+      // Public fields are written only for clear providers; everything else keeps its screening row only.
+      if (match && result.status === 'clear') await enrich(provider, match.place);
     } catch (err) {
       summary.failed += 1;
       log(`FAIL ${label}: ${err instanceof Error ? err.message : String(err)}`);
@@ -237,6 +238,10 @@ interface ProviderRow {
   address_street: string | null;
   address_zip: string | null;
   address_city: string | null;
+  provider_description: string | null;
+  has_parking: boolean | null;
+  family_friendly: boolean | null;
+  children_friendly: boolean | null;
   contact_phone: string | null;
   social_website: string | null;
   social_instagram: string | null;
@@ -247,11 +252,14 @@ interface ProviderRow {
     location_latitude: number | null;
     location_longitude: number | null;
     is_primary: boolean | null;
+    address_street: string | null;
+    address_zip: string | null;
+    address_city: string | null;
   }> | null;
 }
 
 const PROVIDER_COLUMNS =
-  'provider_id, provider_name, address_street, address_zip, address_city, contact_phone, social_website, social_instagram, opening_hours, provider_images, locations(location_id, location_latitude, location_longitude, is_primary)';
+  'provider_id, provider_name, address_street, address_zip, address_city, provider_description, has_parking, family_friendly, children_friendly, contact_phone, social_website, social_instagram, opening_hours, provider_images, locations(location_id, location_latitude, location_longitude, is_primary, address_street, address_zip, address_city)';
 
 function toScreeningProvider(row: ProviderRow): ScreeningProvider {
   const locations = row.locations ?? [];
@@ -259,9 +267,14 @@ function toScreeningProvider(row: ProviderRow): ScreeningProvider {
   return {
     provider_id: row.provider_id,
     provider_name: row.provider_name,
-    address_street: row.address_street,
-    address_zip: row.address_zip,
-    address_city: row.address_city,
+    // Display reads the primary location, so its address counts as an existing value.
+    address_street: row.address_street || primary?.address_street || null,
+    address_zip: row.address_zip || primary?.address_zip || null,
+    address_city: row.address_city || primary?.address_city || null,
+    provider_description: row.provider_description,
+    has_parking: row.has_parking,
+    family_friendly: row.family_friendly,
+    children_friendly: row.children_friendly,
     contact_phone: row.contact_phone,
     social_website: row.social_website,
     social_instagram: row.social_instagram,

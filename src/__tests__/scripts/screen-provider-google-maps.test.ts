@@ -19,6 +19,10 @@ const provider = (over: Partial<ScreeningProvider> = {}): ScreeningProvider => (
   address_street: 'Hauptstr. 1',
   address_zip: '10115',
   address_city: 'Berlin',
+  provider_description: null,
+  has_parking: false,
+  family_friendly: false,
+  children_friendly: false,
   contact_phone: null,
   social_website: null,
   social_instagram: null,
@@ -162,13 +166,12 @@ describe('#763 criterion 3: scanning and stored row', () => {
     expect(screenings[0].status).toBe('review');
   });
 
-  it('stores a trimmed raw without images and with reviews capped at 50', async () => {
+  it('stores the full item with reviews capped at 50 (#792)', async () => {
     const reviews = Array.from({ length: 80 }, (_, i) => ({ text: `ok ${i}`, stars: 4 }));
     const { summary, screenings } = run([provider()], async () => [place({ reviews })]);
     await summary;
     const raw = screenings[0].raw as Record<string, unknown>;
-    expect(JSON.stringify(raw)).not.toContain('img/1.jpg');
-    expect(raw).not.toHaveProperty('imageUrls');
+    expect(raw.imageUrls).toEqual(['https://img/1.jpg', 'https://img/2.jpg']);
     expect((raw.reviews as unknown[]).length).toBe(50);
   });
 });
