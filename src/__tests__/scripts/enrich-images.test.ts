@@ -10,7 +10,7 @@ describe('stageImageCandidate', () => {
     const selectChain = {
       eq: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockResolvedValue({ data: [{ candidate_id: 'existing' }], error: null }),
+      limit: vi.fn().mockResolvedValue({ data: [{ id: 'existing' }], error: null }),
     };
 
     const insertSpy = vi.fn();
@@ -141,6 +141,26 @@ describe('stageImageCandidate', () => {
       error: { message: 'permission denied for table enrichment_candidates', code: '42501' },
     });
     expect(insertSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('#791 root cause: existence check column', () => {
+  it('selects the id primary key, not candidate_id, from enrichment_candidates', async () => {
+    const selectSpy = vi.fn(() => ({
+      eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+    }));
+    const client = {
+      from: vi.fn(() => ({
+        select: selectSpy,
+        insert: vi.fn().mockResolvedValue({ error: null }),
+      })),
+    };
+
+    await stageImageCandidate(client as never, { provider_id: 'p' });
+
+    expect(selectSpy).toHaveBeenCalledWith('id, status');
   });
 });
 
