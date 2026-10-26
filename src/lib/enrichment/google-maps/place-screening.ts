@@ -9,6 +9,9 @@ import { GOOGLE_MAPS_SETTINGS, type ApifyPlace } from './apify-google-maps-clien
 
 export const MATCH_RADIUS_M = 100;
 const MAX_REVIEW_CHARS = 500;
+export const MAX_DESCRIPTION_CHARS = 2000;
+// Reviewer identity is third-party personal data; the stored item keeps the review content only.
+const REVIEWER_FIELDS = ['reviewerName', 'reviewerUrl', 'reviewerId'] as const;
 const MAPS_SOURCE_URL = 'https://www.google.com/maps';
 
 export interface MatchableProvider {
@@ -39,6 +42,10 @@ export interface ScreeningResult {
 }
 
 const MARKS_RE = new RegExp(String.raw`\p{M}`, 'gu');
+/** Description as written to the provider and scanned: trimmed and capped. */
+export const placeDescription = (place: ApifyPlace): string =>
+  (place.description ?? '').trim().slice(0, MAX_DESCRIPTION_CHARS);
+
 const NON_ALNUM_RE = new RegExp(String.raw`[^\p{L}\p{N}]`, 'gu');
 
 const normalise = (s: string | null | undefined): string =>
@@ -100,10 +107,23 @@ function attributeTokens(place: ApifyPlace): string[] {
   return tokens;
 }
 
+/** Reviews capped at maxReviews, without reviewer identity. */
+function storableReviews(place: ApifyPlace): NonNullable<ApifyPlace['reviews']> {
+  return (place.reviews ?? []).slice(0, GOOGLE_MAPS_SETTINGS.maxReviews).map((review) => {
+    const entries = Object.entries(review).filter(
+      ([key]) => !(REVIEWER_FIELDS as readonly string[]).includes(key),
+    );
+    return Object.fromEntries(entries) as NonNullable<ApifyPlace['reviews']>[number];
+  });
+}
+
+const storablePlace = (place: ApifyPlace): ApifyPlace =>
+  place.reviews ? { ...place, reviews: storableReviews(place) } : place;
+
 export function screenPlace(match: PlaceMatch): ScreeningResult {
   const { place } = match;
   const mapsUrl = place.url ?? MAPS_SOURCE_URL;
-  const storedReviews = (place.reviews ?? []).slice(0, GOOGLE_MAPS_SETTINGS.maxReviews);
+  const storedReviews = storableReviews(place);
   const reviews = storedReviews.map((r) => ({
     text: (r.text ?? '').slice(0, MAX_REVIEW_CHARS),
     stars: r.stars ?? null,
@@ -114,6 +134,8 @@ export function screenPlace(match: PlaceMatch): ScreeningResult {
   const inputs: ScanInput[] = [
     ...reviews.map((r) => ({ text: r.text, source: 'review' as const, url: mapsUrl })),
     { text: attributes.join(' '), source: 'attribute', url: mapsUrl },
+    // The description is published, so it must be screened like the website text.
+    { text: placeDescription(place), source: 'website', url: mapsUrl },
     {
       text: [place.title, place.categoryName, ...(place.categories ?? []), place.website]
         .filter(Boolean)
@@ -136,11 +158,6 @@ export function screenPlace(match: PlaceMatch): ScreeningResult {
   };
 }
 
-const capReviews = (place: ApifyPlace): ApifyPlace =>
-  place.reviews
-    ? { ...place, reviews: place.reviews.slice(0, GOOGLE_MAPS_SETTINGS.maxReviews) }
-    : place;
-
 export function noMatchScreening(places: ApifyPlace[]): ScreeningResult {
   return {
     status: 'review',
@@ -153,7 +170,7 @@ export function noMatchScreening(places: ApifyPlace[]): ScreeningResult {
         source: 'google_maps',
       },
     ],
-    raw: { placesReturned: places.length, places: places.map(capReviews) },
+    raw: { placesReturned: places.length, places: places.map(storablePlace) },
   };
 }
 
@@ -224,7 +241,7 @@ export interface EnrichableProvider {
 
 const PARKING_RE = /parking|car park/i;
 const KIDS_RE = /\b(?:kids?|child(?:ren)?)\b/i;
-const FAMILY_RE = /family|good for kids/i;
+const FAMILY_RE = /\bfamily[\s-]?(?:friendly|oriented)\b/i;
 
 /** True only when a matching entry is explicitly true; missing or false data yields null, never false. */
 function explicitAttribute(place: ApifyPlace, keyPattern: RegExp): true | null {
@@ -264,7 +281,7 @@ export function buildFieldCandidates(
   // Booleans default to false in the database, so only true counts as an existing value.
   const flag = (current: boolean | null) => (current === true ? true : null);
   const proposals: Array<[string, unknown, unknown]> = [
-    ['provider_description', provider.provider_description, place.description?.trim()],
+    ['provider_description', provider.provider_description, placeDescription(place)],
     ['social_website', provider.social_website, place.website],
     ['contact_phone', provider.contact_phone, place.phone],
     ['social_instagram', provider.social_instagram, place.instagrams?.[0]],

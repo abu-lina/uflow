@@ -122,13 +122,67 @@ describe('#792 provider_screenings.raw stores the full Apify place item', () => 
     expect(JSON.stringify(r.screenings[0].raw)).toContain('Kebab King');
   });
 
-  it('caps reviews at maxReviews without trimming their text', async () => {
-    const long = 'x'.repeat(900);
-    const reviews = Array.from({ length: 80 }, () => ({ text: long, stars: 4 }));
-    const r = await run(provider(), [place({ reviews })]);
-    const stored = (r.screenings[0].raw as { reviews: Array<{ text: string }> }).reviews;
-    expect(stored).toHaveLength(GOOGLE_MAPS_SETTINGS.maxReviews);
-    expect(stored[0].text).toBe(long);
+  it.each([
+    ['clear', (over: Partial<ApifyPlace>) => place(over)],
+    ['review', (over: Partial<ApifyPlace>) => place({ ...over, categoryName: 'Weinbar' })],
+    [
+      'flagged',
+      (over: Partial<ApifyPlace>) =>
+        place({ ...over, additionalInfo: { Offerings: [{ 'Serves beer': true }] } }),
+    ],
+    ['no_maps_match', (over: Partial<ApifyPlace>) => ({ ...unmatched(), ...over })],
+  ])(
+    'caps reviews at maxReviews without trimming their text for a %s provider',
+    async (name, make) => {
+      const long = 'x'.repeat(900);
+      const reviews = Array.from({ length: 80 }, () => ({ text: long, stars: 4 }));
+      const r = await run(provider(), [make({ reviews })]);
+      const raw = r.screenings[0].raw as Record<string, unknown>;
+      const stored = (
+        name === 'no_maps_match'
+          ? (raw.places as Array<{ reviews: Array<{ text: string }> }>)[0].reviews
+          : (raw.reviews as Array<{ text: string }>)
+      ) as Array<{ text: string }>;
+      expect(r.screenings[0].status).toBe(name === 'no_maps_match' ? 'review' : name);
+      expect(stored).toHaveLength(GOOGLE_MAPS_SETTINGS.maxReviews);
+      expect(stored[0].text).toBe(long);
+    },
+  );
+});
+
+describe('#792 reviewer identity is not stored in raw', () => {
+  const reviewWithReviewer = {
+    text: 'Great falafel',
+    stars: 5,
+    publishedAtDate: '2026-09-01T10:00:00.000Z',
+    likesCount: 2,
+    reviewerName: 'Jane Doe',
+    reviewerUrl: 'https://www.google.com/maps/contrib/1',
+    reviewerId: '1',
+  };
+
+  it.each([
+    ['clear', () => place({ reviews: [reviewWithReviewer] })],
+    ['review', () => place({ categoryName: 'Weinbar', reviews: [reviewWithReviewer] })],
+    ['no_maps_match', () => ({ ...unmatched(), reviews: [reviewWithReviewer] })],
+  ])('strips reviewerName, reviewerUrl and reviewerId for a %s provider', async (name, make) => {
+    const r = await run(provider(), [make()]);
+    const raw = r.screenings[0].raw as Record<string, unknown>;
+    const stored = (
+      name === 'no_maps_match'
+        ? (raw.places as Array<{ reviews: Array<Record<string, unknown>> }>)[0].reviews
+        : raw.reviews
+    ) as Array<Record<string, unknown>>;
+    expect(stored[0]).toEqual({
+      text: 'Great falafel',
+      stars: 5,
+      publishedAtDate: '2026-09-01T10:00:00.000Z',
+      likesCount: 2,
+    });
+    const serialised = JSON.stringify(r.screenings[0]);
+    for (const needle of ['Jane Doe', 'contrib/1', 'reviewerName', 'reviewerUrl', 'reviewerId']) {
+      expect(serialised).not.toContain(needle);
+    }
   });
 });
 
@@ -146,6 +200,22 @@ describe('#792 provider_description', () => {
   });
 });
 
+describe('#792 description is screened and capped before it is published', () => {
+  it('does not give clear to a description that mentions alcohol, and writes nothing', async () => {
+    const r = await run(provider(), [place({ description: 'Cozy bar with beer and wine.' })]);
+    expect(r.screenings[0].status).not.toBe('clear');
+    expect(r.screenings[0].flags).toContainEqual(
+      expect.objectContaining({ code: 'alcohol', source: 'website' }),
+    );
+    expect(r.store.applyFields).not.toHaveBeenCalled();
+  });
+
+  it('caps the published description at 2000 characters', async () => {
+    const r = await run(provider(), [place({ description: `  ${'a'.repeat(2500)}  ` })]);
+    expect(r.providers.provider_description).toBe('a'.repeat(2000));
+  });
+});
+
 describe('#792 has_parking, family_friendly and children_friendly', () => {
   it('sets has_parking true when additionalInfo explicitly lists parking', async () => {
     const r = await run(provider(), [
@@ -154,18 +224,20 @@ describe('#792 has_parking, family_friendly and children_friendly', () => {
     expect(r.providers.has_parking).toBe(true);
   });
 
-  it('sets family_friendly true from an explicit family entry', async () => {
+  it('sets only family_friendly from an explicit family-friendly entry', async () => {
     const r = await run(provider(), [
       place({ additionalInfo: { Crowd: [{ 'Family-friendly': true }] } }),
     ]);
     expect(r.providers.family_friendly).toBe(true);
+    expect(r.providers).not.toHaveProperty('children_friendly');
   });
 
-  it('sets children_friendly true from an explicit kids entry', async () => {
+  it('sets only children_friendly from an explicit good-for-kids entry', async () => {
     const r = await run(provider(), [
       place({ additionalInfo: { Children: [{ 'Good for kids': true }] } }),
     ]);
     expect(r.providers.children_friendly).toBe(true);
+    expect(r.providers).not.toHaveProperty('family_friendly');
   });
 
   it('never sets a flag from an entry that is false or absent', async () => {
@@ -218,12 +290,15 @@ describe('#792 missing data never sets a flag to false and never overwrites', ()
       address_street: 'Alt 2',
       address_zip: '20095',
       address_city: 'Hamburg',
+      latitude: 52.5204,
+      longitude: 13.405,
     });
     const r = await run(p, [
       place({
         description: 'Theirs',
         address: 'Hauptstr. 1, 10115 Berlin, Germany',
-        postalCode: '10115',
+        postalCode: '20095',
+        location: { lat: 52.5201, lng: 13.4051 },
         website: null,
         instagrams: [],
         openingHours: [],

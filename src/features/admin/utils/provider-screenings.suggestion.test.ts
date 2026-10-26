@@ -27,6 +27,23 @@ describe('#792 admin no-alcohol suggestion', () => {
     expect(result).toMatchObject({ suggestNoAlcohol: false });
   });
 
+  it('is not suggested when the status is review for a non-alcohol flag', () => {
+    const result = summarizeScreenings([maps('review', [flag('not_halal')])]);
+    expect(result).toMatchObject({ status: 'review', suggestNoAlcohol: false });
+  });
+
+  it('is not suggested when the provider is flagged for pork', () => {
+    const result = summarizeScreenings([maps('flagged', [flag('pork')])]);
+    expect(result).toMatchObject({ status: 'flagged', suggestNoAlcohol: false });
+  });
+
+  it('is not suggested when another source made the overall status review', () => {
+    const website = { ...maps('review', [flag('not_halal')]), source: 'website' };
+    expect(summarizeScreenings([maps('clear'), website])).toMatchObject({
+      suggestNoAlcohol: false,
+    });
+  });
+
   it('is not suggested when no Google Maps place matched', () => {
     const result = summarizeScreenings([maps('review', [flag('no_maps_match')])]);
     expect(result).toMatchObject({ suggestNoAlcohol: false });
