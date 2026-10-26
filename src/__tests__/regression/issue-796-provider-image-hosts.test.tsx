@@ -56,6 +56,9 @@ describe('#796 provider image hosts', () => {
     expect(isAllowedImageUrl(EVIL)).toBe(false);
     expect(isAllowedImageUrl('http://lh3.googleusercontent.com/x')).toBe(false);
     expect(isAllowedImageUrl('not a url')).toBe(false);
+    expect(isAllowedImageUrl('https://evilsupabase.co/x.jpg')).toBe(false);
+    expect(isAllowedImageUrl('https://supabase.co.evil.com/x.jpg')).toBe(false);
+    expect(isAllowedImageUrl('https://supabase.co/x.jpg')).toBe(false);
     expect(getAllTrustedImageUrls({ urls: [EVIL, LH3] })).toEqual([LH3]);
     renderModal(withImages([EVIL, LH3]));
     const srcs = renderedSources().join('\n');
