@@ -18,10 +18,10 @@ The TEST_API_KEY must be set in GitHub Secrets to enable test mode in UAT.
 2. Click **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
 4. Add the following secret:
-   - **Name**: `UAT_TEST_API_KEY`
-   - **Value**: `perf-test-2024-uat`
-   
-   (You can use any value you want, but remember it for Step 3)
+   - **Name**: `TEST_API_KEY` (in the `uat` environment)
+   - **Value**: a random string you generate, for example `openssl rand -hex 16`
+
+   (Keep it for Step 3)
 
 ### Step 2: Wait for Deployment
 
@@ -36,9 +36,7 @@ Once deployment is complete, run the tests locally:
 
 ```bash
 # Set the TEST_API_KEY to match what you set in GitHub Secrets
-export TEST_API_KEY=perf-test-2024-uat
-
-# Run the k6 authentication flow tests
+export TEST_API_KEY=<your-test-api-key> authentication flow tests
 k6 run tests/performance/auth-flow.js
 ```
 
@@ -47,6 +45,7 @@ k6 run tests/performance/auth-flow.js
 Check the UAT logs to confirm test mode is enabled:
 
 **Option A: Via GitHub Actions logs**
+
 1. Go to the "Deploy to UAT" workflow run
 2. Click on the "Deploy to UAT on Hetzner" step
 3. Look for log lines like:
@@ -56,6 +55,7 @@ Check the UAT logs to confirm test mode is enabled:
    - `[LOGIN API] ✅ Test mode enabled`
 
 **Option B: Via server logs (if you have SSH access)**
+
 ```bash
 # SSH to your Hetzner server
 ssh root@your-hetzner-server
@@ -67,6 +67,7 @@ docker logs -f uflow-uat | grep "LOGIN API\|SIGNUP API"
 ### Expected Results
 
 When test mode is working correctly:
+
 - ✅ No 403 "Access temporarily restricted" errors
 - ✅ No 429 "Too many login attempts" errors
 - ✅ Login tests pass using test-user-0 through test-user-99
@@ -85,10 +86,10 @@ The TEST_API_KEY environment variable isn't being passed to the container. Solut
    ssh root@your-hetzner-server
    docker stop uflow-uat
    docker rm uflow-uat
-   
+
    # Run container with TEST_API_KEY
    docker run -d -p 3001:3000 \
-     -e TEST_API_KEY=perf-test-2024-uat \
+     -e TEST_API_KEY="$TEST_API_KEY" \
      $(docker inspect uflow-uat:latest --format='{{range .Config.Env}}{{printf "-e %s " .}}{{end}}') \
      --name uflow-uat \
      --restart unless-stopped \
@@ -98,6 +99,7 @@ The TEST_API_KEY environment variable isn't being passed to the container. Solut
 ### If you see "Test mode active: false"
 
 The TEST_API_KEY values don't match. Ensure:
+
 - The value in GitHub Secret matches the value you're using locally
 - Both are exactly the same (case-sensitive)
 
@@ -113,28 +115,33 @@ The TEST_API_KEY values don't match. Ensure:
 ## Quick Reference
 
 ### Test API Key
-- **GitHub Secret Name**: `UAT_TEST_API_KEY`
-- **Recommended Value**: `perf-test-2024-uat`
-- **Local Export**: `export TEST_API_KEY=perf-test-2024-uat`
+
+- **GitHub Secret Name**: `TEST_API_KEY` (`uat` environment)
+- **Value**: generate your own; never commit it
+- **Local Export**: `export TEST_API_KEY=<your-test-api-key>`
 
 ### Test Users
+
 - **Count**: 100 users (test-user-0 through test-user-99)
 - **Email Pattern**: `test-user-{0-99}@example.com`
 - **Password**: `TestPassword123!`
 
 ### UAT URLs
+
 - **Main**: https://uat.ummahflow.com
 - **Health Check**: https://uat.ummahflow.com/api/health
 - **Login API**: https://uat.ummahflow.com/api/auth/login
 - **Signup API**: https://uat.ummahflow.com/api/auth/signup
 
 ### GitHub Actions
+
 - **Workflow**: Deploy to UAT
 - **URL**: https://github.com/abu-lina/uflow/actions
 
 ## Next Steps After Testing Works
 
 Once performance tests are passing:
+
 1. Review test results and metrics
 2. Adjust load scenarios if needed
 3. Run stress tests and spike tests

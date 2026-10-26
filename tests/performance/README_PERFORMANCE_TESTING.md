@@ -5,6 +5,7 @@
 Your application is production-ready. See [PRODUCTION_READINESS_REPORT.md](./PRODUCTION_READINESS_REPORT.md) for full analysis.
 
 **Key Findings:**
+
 - 100% success rate at expected load (10-30 concurrent users)
 - Response times 50-75% better than target thresholds
 - Zero critical errors or crashes
@@ -17,8 +18,8 @@ Your application is production-ready. See [PRODUCTION_READINESS_REPORT.md](./PRO
 ### Run Performance Tests
 
 ```bash
-# Set test API key
-export TEST_API_KEY=perf-test-2024-uat
+# Set test API key (value is the UAT TEST_API_KEY secret)
+export TEST_API_KEY=<your-test-api-key>
 
 # Run baseline test (10 users, 5 min)
 SCENARIO=baseline k6 run tests/performance/realistic-load-test.js
@@ -45,14 +46,14 @@ node tests/performance/recreate-test-users.js
 - **`realistic-load-test.js`** - Small-scale production tests (10-50 users)
   - Use this for production readiness testing
   - Scenarios: baseline, peak, stress
-  
+
 - **`auth-flow.js`** - Authentication testing only
   - Login, signup, session management
   - 100 test users available
-  
+
 - **`browsing-flow.js`** - Provider browsing tests
   - List providers, search, view details
-  
+
 - **`scenarios.js`** - Large-scale testing (100-500 users)
   - Use for future capacity planning
 
@@ -81,24 +82,24 @@ node tests/performance/recreate-test-users.js
 
 ## Performance Targets (Small-Scale Production)
 
-| Metric | Target | Actual (Peak Load) |
-|--------|--------|-------------------|
-| Response Time p95 | <1500ms | 402ms ✅ |
-| Response Time p99 | <3000ms | 622ms ✅ |
-| Login p95 | <1000ms | 409ms ✅ |
-| Search p95 | <800ms | 480ms ✅ |
-| Error Rate | <0.5% | 0.00% ✅ |
-| Success Rate | >99.5% | 100.00% ✅ |
+| Metric            | Target  | Actual (Peak Load) |
+| ----------------- | ------- | ------------------ |
+| Response Time p95 | <1500ms | 402ms ✅           |
+| Response Time p99 | <3000ms | 622ms ✅           |
+| Login p95         | <1000ms | 409ms ✅           |
+| Search p95        | <800ms  | 480ms ✅           |
+| Error Rate        | <0.5%   | 0.00% ✅           |
+| Success Rate      | >99.5%  | 100.00% ✅         |
 
 ---
 
 ## Capacity Limits
 
-| Load Level | Concurrent Users | Success Rate | Status |
-|------------|------------------|--------------|--------|
-| Normal | 10 users | 100.00% | ✅ Excellent |
-| Peak | 30 users | 100.00% | ✅ Excellent |
-| Stress | 50 users | 98.95% | ⚠️ Minor degradation |
+| Load Level | Concurrent Users | Success Rate | Status               |
+| ---------- | ---------------- | ------------ | -------------------- |
+| Normal     | 10 users         | 100.00%      | ✅ Excellent         |
+| Peak       | 30 users         | 100.00%      | ✅ Excellent         |
+| Stress     | 50 users         | 98.95%       | ⚠️ Minor degradation |
 
 **Recommendation:** Application is ready for production. Plan optimization when approaching 30+ regular concurrent users.
 
@@ -120,7 +121,7 @@ node tests/performance/verify-test-users.js
 
 ```bash
 # Make sure TEST_API_KEY is set
-export TEST_API_KEY=perf-test-2024-uat
+export TEST_API_KEY=<your-test-api-key>
 
 # Verify it's working
 echo $TEST_API_KEY
@@ -153,6 +154,7 @@ Fixed in utils.js. If you see this error, pull latest changes.
 ## Support
 
 For issues or questions:
+
 1. Check [PRODUCTION_READINESS_REPORT.md](./PRODUCTION_READINESS_REPORT.md)
 2. Review troubleshooting section above
 3. Check UAT server logs: `docker logs -f uflow-uat`

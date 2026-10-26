@@ -3,6 +3,7 @@
 ## Problem
 
 The performance tests are failing with:
+
 - **27.78% login success rate** (142 out of 511 attempts)
 - **100% auth error rate** (369 errors)
 - Error message: "Invalid email or password"
@@ -30,6 +31,7 @@ node tests/performance/check-auth-users.js
 ```
 
 This will show:
+
 - How many test users exist in `public.users` (should be 100)
 - How many test users exist in `auth.users` (Supabase Auth)
 - Which users are missing in Auth
@@ -55,6 +57,7 @@ node tests/performance/setup-test-users.js
 ```
 
 This will:
+
 - Create 100 test users (test-user-0 through test-user-99)
 - Confirm their emails
 - Set password to `TestPassword123!`
@@ -68,6 +71,7 @@ node tests/performance/verify-test-users.js
 ```
 
 You should see:
+
 - ✅ 100/100 users found
 - ✅ All users confirmed
 - ✅ All login tests passing
@@ -78,7 +82,7 @@ Once users are verified, run the tests:
 
 ```bash
 # Make sure TEST_API_KEY is set
-export TEST_API_KEY=perf-test-2024-uat
+export TEST_API_KEY=<your-test-api-key>
 
 # Run auth flow tests
 k6 run tests/performance/auth-flow.js
@@ -122,6 +126,7 @@ node tests/performance/setup-test-users.js
 ### If you see "User not found" errors:
 
 The login route's auto-confirm feature should handle this, but if it doesn't:
+
 1. Check that users actually exist in Supabase
 2. Verify the email format matches exactly
 3. Check Supabase logs for authentication errors
