@@ -297,7 +297,7 @@ export async function stageImageCandidate(
 ): Promise<StageCandidateResult> {
   const { data: existingRows, error: existingError } = await client
     .from('enrichment_candidates')
-    .select('candidate_id, status')
+    .select('id, status')
     .eq('provider_id', row.provider_id)
     .eq('field_name', row.field_name)
     .eq('source', row.source)
