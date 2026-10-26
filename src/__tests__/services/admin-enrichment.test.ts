@@ -199,7 +199,7 @@ describe('approveCandidate — ownership guard', () => {
       }
       if (table === 'providers') {
         providersCalls++;
-        if (providersCalls === 1) return ownershipChain;
+        if (providersCalls <= 2) return ownershipChain;
         return providerUpdateChain;
       }
       return candidateChain;

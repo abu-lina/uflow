@@ -25,7 +25,7 @@ const OLD_URL = `${SUPABASE_HOST}/storage/v1/object/public/provider-images/provi
 const CANDIDATE_ID = 'cand-001';
 const PROVIDER_ID = 'prov-001';
 
-function setup(imageUrls: string[] = [GOOGLE_URL]) {
+function setup(imageUrls: string[] = [GOOGLE_URL], recheckOwner: string | null = null) {
   const candidate = {
     id: CANDIDATE_ID,
     provider_id: PROVIDER_ID,
@@ -47,6 +47,11 @@ function setup(imageUrls: string[] = [GOOGLE_URL]) {
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: { provider_owner_id: null }, error: null }),
   };
+  const recheck = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: { provider_owner_id: recheckOwner }, error: null }),
+  };
   const providerUpdate = {
     update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) })),
   };
@@ -59,7 +64,8 @@ function setup(imageUrls: string[] = [GOOGLE_URL]) {
   mockFrom.mockImplementation((table: string) => {
     if (table === 'enrichment_candidates')
       return ++candidateCalls === 1 ? candidateFetch : candidateUpdate;
-    return ++providerCalls === 1 ? ownership : providerUpdate;
+    const n = ++providerCalls;
+    return n === 1 ? ownership : n === 2 ? recheck : providerUpdate;
   });
   return { providerUpdate, candidateUpdate };
 }
@@ -220,6 +226,7 @@ describe('approveCandidate: copy Google Maps images to storage (#797)', () => {
     expect(mockUpload.mock.calls[0][0]).toBe(firstPath);
     expect(firstPath).toContain(PROVIDER_ID);
     expect(firstPath).toContain(CANDIDATE_ID);
+    expect(firstPath).not.toMatch(/\.[a-z]+$/);
     expect(firstOpts.upsert).toBe(true);
   });
 
@@ -234,5 +241,114 @@ describe('approveCandidate: copy Google Maps images to storage (#797)', () => {
     expect(providerUpdate.update).toHaveBeenCalledWith(
       expect.objectContaining({ provider_images: { urls: [OLD_URL] } }),
     );
+  });
+
+  it('aborts a streamed body without content-length once it passes 5 MB', async () => {
+    const { providerUpdate } = setup();
+    const chunk = new Uint8Array(1024 * 1024);
+    let sent = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        sent++;
+        controller.enqueue(chunk);
+        if (sent > 50) controller.close();
+      },
+    });
+    fetchMock.mockResolvedValue(
+      new Response(stream, { status: 200, headers: { 'content-type': 'image/jpeg' } }),
+    );
+
+    const result = await approveCandidate(CANDIDATE_ID, 'admin-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/large/i);
+    expect(sent).toBeLessThan(20);
+    expect(mockUpload).not.toHaveBeenCalled();
+    expect(providerUpdate.update).not.toHaveBeenCalled();
+  });
+
+  it('uses the same storage key when a re-approval returns a different content type', async () => {
+    setup();
+    fetchMock.mockResolvedValue(imageResponse({ type: 'image/jpeg' }));
+    await approveCandidate(CANDIDATE_ID, 'admin-1');
+    setup();
+    fetchMock.mockResolvedValue(imageResponse({ type: 'image/webp' }));
+    await approveCandidate(CANDIDATE_ID, 'admin-1');
+
+    expect(mockUpload).toHaveBeenCalledTimes(2);
+    expect(mockUpload.mock.calls[1][0]).toBe(mockUpload.mock.calls[0][0]);
+  });
+
+  it('passes a timeout signal and rejects redirects', async () => {
+    setup();
+    fetchMock.mockResolvedValue(imageResponse());
+    await approveCandidate(CANDIDATE_ID, 'admin-1');
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(init.redirect).toBe('error');
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('fails and stays pending when the download times out', async () => {
+    const { providerUpdate, candidateUpdate } = setup();
+    fetchMock.mockRejectedValue(new DOMException('The operation timed out', 'TimeoutError'));
+
+    const result = await approveCandidate(CANDIDATE_ID, 'admin-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/timed out/i);
+    expect(providerUpdate.update).not.toHaveBeenCalled();
+    expect(candidateUpdate.update).not.toHaveBeenCalled();
+  });
+
+  it('fails and stays pending when the download redirects', async () => {
+    const { providerUpdate } = setup();
+    fetchMock.mockRejectedValue(new TypeError('fetch failed: unexpected redirect'));
+
+    const result = await approveCandidate(CANDIDATE_ID, 'admin-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/redirect/i);
+    expect(providerUpdate.update).not.toHaveBeenCalled();
+  });
+
+  it('runs the owner guard before any fetch', async () => {
+    setup();
+    mockFrom.mockReset();
+    const candidate = {
+      id: CANDIDATE_ID,
+      provider_id: PROVIDER_ID,
+      field_name: 'provider_images',
+      enrichment_type: 'image',
+      proposed_value: { urls: [GOOGLE_URL] },
+      current_value: { urls: [] },
+      status: 'pending',
+    };
+    mockFrom.mockImplementation((table: string) => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: table === 'providers' ? { provider_owner_id: 'owner-1' } : candidate,
+        error: null,
+      }),
+    }));
+
+    const result = await approveCandidate(CANDIDATE_ID, 'admin-1');
+
+    expect(result.success).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it('re-checks ownership after the copy and leaves the candidate pending if claimed', async () => {
+    const { providerUpdate, candidateUpdate } = setup([GOOGLE_URL], 'owner-2');
+    fetchMock.mockResolvedValue(imageResponse());
+
+    const result = await approveCandidate(CANDIDATE_ID, 'admin-1');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/claimed/i);
+    expect(providerUpdate.update).not.toHaveBeenCalled();
+    expect(candidateUpdate.update).not.toHaveBeenCalled();
   });
 });
