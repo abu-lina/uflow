@@ -83,6 +83,7 @@ describe('Provider detail enhancements (Plan 113)', () => {
     });
   });
 
+  // Renders the full detail page 11 times, which takes over 5s when the machine is loaded.
   it('[pre-fix FAILS] shows popup only for first 10 provider opens', async () => {
     for (let i = 0; i < 10; i += 1) {
       const { unmount } = render(<ProviderDetailPage provider={providerWithEnhancements} />);
@@ -98,5 +99,5 @@ describe('Provider detail enhancements (Plan 113)', () => {
     });
 
     expect(localStorage.getItem('uf_halal_popup_view_count')).toBe('10');
-  });
+  }, 30_000);
 });
