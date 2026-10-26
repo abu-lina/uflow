@@ -21,7 +21,7 @@ function fakeRequest(body = '<a href="https://wolt.com/x">x</a>') {
         end: () =>
           options.lookup(url.hostname, {}, (err: unknown, address: unknown, family: unknown) => {
             if (err) return req.emit('error', err);
-            const res = Object.assign(Readable.from([body]), {
+            const res = Object.assign(Readable.from([Buffer.from(body)]), {
               statusCode: 200,
               headers: { 'content-type': 'text/html' },
               connectedTo: { address, family },

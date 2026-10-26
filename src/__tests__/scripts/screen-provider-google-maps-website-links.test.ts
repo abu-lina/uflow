@@ -204,7 +204,7 @@ describe('#801 review: rejected candidates do not come back on the next run', ()
     });
     const held = await createWebsiteLinkDeps(client).existingPlatforms('p1');
 
-    expect([...held].sort()).toEqual(['ubereats', 'wolt']);
+    expect(Array.from(held).sort()).toEqual(['ubereats', 'wolt']);
     expect(filters).toContainEqual({
       table: 'enrichment_candidates',
       method: 'eq',

@@ -1,5 +1,8 @@
 import { lookup as dnsLookup } from 'node:dns/promises';
+import type { LookupFunction } from 'node:net';
 import { isIP } from 'node:net';
+import { request as httpsRequest } from 'node:https';
+import { Readable } from 'node:stream';
 
 export type DeliveryPlatform = 'wolt' | 'lieferando' | 'ubereats';
 
@@ -10,14 +13,19 @@ export interface WebsiteDeliveryLink {
 }
 
 // Limited to the platforms the provider_delivery_links CHECK constraint accepts.
+// takeaway.com and lieferando.com are left out: other brands/markets would be filed under the wrong platform.
 const PLATFORMS: Array<{
   platform: DeliveryPlatform;
-  host: string;
+  hosts: string[];
   slugPattern: RegExp;
 }> = [
-  { platform: 'wolt', host: 'wolt.com', slugPattern: /\/(?:restaurant|venue)\/([^/?#]+)/ },
-  { platform: 'lieferando', host: 'lieferando.de', slugPattern: /\/speisekarte\/([^/?#]+)/ },
-  { platform: 'ubereats', host: 'ubereats.com', slugPattern: /\/store\/([^/?#]+)/ },
+  { platform: 'wolt', hosts: ['wolt.com'], slugPattern: /\/(?:restaurant|venue)\/([^/?#]+)/ },
+  {
+    platform: 'lieferando',
+    hosts: ['lieferando.de', 'lieferando.at'],
+    slugPattern: /\/speisekarte\/([^/?#]+)/,
+  },
+  { platform: 'ubereats', hosts: ['ubereats.com'], slugPattern: /\/store\/([^/?#]+)/ },
 ];
 
 export const WEBSITE_SOURCE_PREFIX = 'provider_website';
@@ -27,7 +35,7 @@ export const DEFAULT_MAX_REDIRECTS = 3;
 
 function matchPlatform(hostname: string) {
   const host = hostname.toLowerCase();
-  return PLATFORMS.find((p) => host === p.host || host.endsWith(`.${p.host}`));
+  return PLATFORMS.find((p) => p.hosts.some((h) => host === h || host.endsWith(`.${h}`)));
 }
 
 function slugFrom(pattern: RegExp, pathname: string): string | null {
@@ -91,47 +99,126 @@ export function buildWebsiteDeliveryCandidate(
 
 export function isPrivateAddress(address: string): boolean {
   const ip = address.toLowerCase().replace(/^\[|\]$/g, '');
-  const mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
-  if (mapped) return isPrivateAddress(mapped[1]);
-  const mappedHex = ip.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
-  if (mappedHex) {
-    const hi = parseInt(mappedHex[1], 16);
-    const lo = parseInt(mappedHex[2], 16);
-    return isPrivateAddress(`${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`);
-  }
-
   const family = isIP(ip);
-  if (family === 4) {
-    const [a, b] = ip.split('.').map(Number);
-    return (
-      a === 0 ||
-      a === 10 ||
-      a === 127 ||
-      (a === 100 && b >= 64 && b <= 127) ||
-      (a === 169 && b === 254) ||
-      (a === 172 && b >= 16 && b <= 31) ||
-      (a === 192 && b === 168) ||
-      a >= 224
-    );
+  if (family === 4) return isPrivateV4(ip.split('.').map(Number));
+  if (family !== 6) return true;
+
+  const groups = expandV6(ip);
+  if (!groups) return true;
+  const embeddedV4 = (hi: number, lo: number) =>
+    isPrivateV4([hi >> 8, hi & 255, lo >> 8, lo & 255]);
+
+  // ::/96 (unspecified, loopback, IPv4-compatible) never carries public traffic.
+  if (groups.slice(0, 6).every((g) => g === 0)) return true;
+  // IPv4-mapped ::ffff:a.b.c.d
+  if (groups.slice(0, 5).every((g) => g === 0) && groups[5] === 0xffff) {
+    return embeddedV4(groups[6], groups[7]);
   }
-  if (family === 6) {
-    return (
-      ip === '::' || ip === '::1' || /^f[cd]/.test(ip) || /^fe[89ab]/.test(ip) || /^ff/.test(ip)
-    );
+  // NAT64 64:ff9b::/96
+  if (groups[0] === 0x64 && groups[1] === 0xff9b && groups.slice(2, 6).every((g) => g === 0)) {
+    return embeddedV4(groups[6], groups[7]);
   }
-  return true;
+  // 6to4 2002::/16 embeds the IPv4 address in the next 32 bits
+  if (groups[0] === 0x2002) return embeddedV4(groups[1], groups[2]);
+
+  return (
+    (groups[0] & 0xfe00) === 0xfc00 || // fc00::/7 unique local
+    (groups[0] & 0xffc0) === 0xfe80 || // fe80::/10 link local
+    (groups[0] & 0xff00) === 0xff00 // ff00::/8 multicast
+  );
+}
+
+function isPrivateV4([a, b]: number[]): boolean {
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    a >= 224
+  );
+}
+
+// Expands a valid IPv6 literal (incl. a trailing dotted IPv4) into eight 16-bit groups.
+function expandV6(ip: string): number[] | null {
+  let text = ip.replace(/%.*$/, '');
+  const dotted = text.match(/^(.*:)(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (dotted) {
+    const [, head, a, b, c, d] = dotted;
+    text = `${head}${((+a << 8) | +b).toString(16)}:${((+c << 8) | +d).toString(16)}`;
+  }
+  const [left, right, ...extra] = text.split('::');
+  if (extra.length > 0) return null;
+  const head = left ? left.split(':') : [];
+  const tail = right === undefined ? [] : right ? right.split(':') : [];
+  const missing = 8 - head.length - tail.length;
+  if (right === undefined ? missing !== 0 : missing < 1) return null;
+  const groups = [...head, ...Array<string>(right === undefined ? 0 : missing).fill('0'), ...tail];
+  const values = groups.map((g) => parseInt(g, 16));
+  return values.length === 8 && values.every((v) => Number.isInteger(v)) ? values : null;
 }
 
 export type HostLookup = (hostname: string) => Promise<Array<{ address: string }>>;
 
 const defaultLookup: HostLookup = (hostname) => dnsLookup(hostname, { all: true });
 
+type FetchLike = (
+  url: string,
+  init: { redirect: 'manual'; signal: AbortSignal; headers: Record<string, string> },
+) => Promise<Response>;
+
 export interface FetchPageOptions {
   timeoutMs?: number;
   maxBytes?: number;
   maxRedirects?: number;
-  fetchImpl?: typeof fetch;
+  fetchImpl?: FetchLike;
   lookup?: HostLookup;
+}
+
+// Validates at connect time and hands back the checked address, so the socket
+// cannot be pointed somewhere else by a second DNS answer (rebinding).
+function createGuardedLookup(lookup: HostLookup): LookupFunction {
+  return (hostname, options, callback) => {
+    lookup(hostname)
+      .then((addresses) => {
+        if (addresses.length === 0) throw new Error(`Host did not resolve: ${hostname}`);
+        if (addresses.some((a) => isPrivateAddress(a.address))) {
+          throw new Error(`Blocked private address for host: ${hostname}`);
+        }
+        const { address } = addresses[0];
+        const family = isIP(address);
+        if (options.all) callback(null, [{ address, family }]);
+        else callback(null, address, family);
+      })
+      .catch((err: unknown) => callback(err as Error, '', 4));
+  };
+}
+
+function createPinnedFetch(lookup: HostLookup): FetchLike {
+  const guarded = createGuardedLookup(lookup);
+  return (url, init) =>
+    new Promise<Response>((resolve, reject) => {
+      const req = httpsRequest(
+        new URL(url),
+        { method: 'GET', headers: init.headers, lookup: guarded, signal: init.signal },
+        (res) => {
+          const headers = new Headers();
+          for (const [name, value] of Object.entries(res.headers)) {
+            if (Array.isArray(value)) value.forEach((v) => headers.append(name, v));
+            else if (value !== undefined) headers.set(name, value);
+          }
+          const status = res.statusCode ?? 0;
+          const body = [204, 205, 304].includes(status)
+            ? null
+            : (Readable.toWeb(res) as ReadableStream<Uint8Array>);
+          resolve(new Response(body, { status, headers }));
+        },
+      );
+      req.on('error', reject);
+      req.end();
+    });
 }
 
 async function assertPublicHttps(url: URL, lookup: HostLookup): Promise<void> {
@@ -177,8 +264,8 @@ export async function fetchPublicPage(
     timeoutMs = DEFAULT_TIMEOUT_MS,
     maxBytes = DEFAULT_MAX_BYTES,
     maxRedirects = DEFAULT_MAX_REDIRECTS,
-    fetchImpl = fetch,
     lookup = defaultLookup,
+    fetchImpl = createPinnedFetch(lookup),
   } = options;
 
   const controller = new AbortController();
