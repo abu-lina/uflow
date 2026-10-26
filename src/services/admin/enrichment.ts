@@ -40,6 +40,107 @@ export interface PendingCandidatesResult {
   total: number;
 }
 
+// ─── Image copy (#797) ────────────────────────────────────────────────────────
+
+const IMAGE_BUCKET = 'provider-images';
+const COPY_ALLOWED_HOSTS = ['lh3.googleusercontent.com', 'gz0.googleusercontent.com'];
+const COPY_MAX_BYTES = 5 * 1024 * 1024;
+const COPY_TIMEOUT_MS = 10_000;
+const COPY_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+
+function isOnSupabaseHost(url: string): boolean {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return false;
+  try {
+    return new URL(url).host === new URL(base).host;
+  } catch {
+    return false;
+  }
+}
+
+async function readCapped(res: Response, maxBytes: number, tooLarge: string): Promise<Buffer> {
+  if (!res.body) throw new Error('Image download returned no body');
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > maxBytes) {
+      await reader.cancel();
+      throw new Error(tooLarge);
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks);
+}
+
+async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string }> {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`Invalid image URL: ${url}`);
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new Error(`Image URL must use HTTPS: ${url}`);
+  }
+  if (!COPY_ALLOWED_HOSTS.includes(parsed.hostname)) {
+    throw new Error(`Image host not allowed: ${parsed.hostname}`);
+  }
+
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(COPY_TIMEOUT_MS),
+    redirect: 'error',
+  });
+  if (!res.ok) {
+    throw new Error(`Image download failed with status ${res.status}`);
+  }
+
+  const contentType = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+  if (!COPY_ALLOWED_TYPES.includes(contentType)) {
+    throw new Error(`Unsupported image content type: ${contentType || 'none'}`);
+  }
+
+  const tooLarge = `Image too large (max ${COPY_MAX_BYTES / 1024 / 1024} MB)`;
+  if (Number(res.headers.get('content-length') ?? 0) > COPY_MAX_BYTES) {
+    throw new Error(tooLarge);
+  }
+  return { buffer: await readCapped(res, COPY_MAX_BYTES, tooLarge), contentType };
+}
+
+/**
+ * Copy non-Supabase image URLs into Storage. The key has no extension and is
+ * deterministic per provider and candidate, so re-approving overwrites the same
+ * object even if the response content type changes.
+ */
+async function copyImagesToStorage(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  urls: string[],
+  providerId: string,
+  candidateId: string,
+): Promise<string[]> {
+  const result: string[] = [];
+  for (let index = 0; index < urls.length; index++) {
+    const url = urls[index];
+    if (isOnSupabaseHost(url)) {
+      result.push(url);
+      continue;
+    }
+    const { buffer, contentType } = await downloadImage(url);
+    const path = `providers/${providerId}/${candidateId}-${index}`;
+    const { error } = await supabase.storage
+      .from(IMAGE_BUCKET)
+      .upload(path, buffer, { contentType, upsert: true });
+    if (error) {
+      throw new Error(`Image upload failed: ${error.message}`);
+    }
+    result.push(supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl);
+  }
+  return result;
+}
+
 // ─── Service Functions ────────────────────────────────────────────────────────
 
 /**
@@ -180,7 +281,35 @@ export async function approveCandidate(
     };
 
     const currentUrls = getUrls(candidate.current_value);
-    const proposedUrls = getUrls(candidate.proposed_value);
+    let proposedUrls: string[];
+    try {
+      proposedUrls = await copyImagesToStorage(
+        supabase,
+        getUrls(candidate.proposed_value),
+        candidate.provider_id,
+        candidate.id,
+      );
+    } catch (err) {
+      return {
+        success: false,
+        error: `${err instanceof Error ? err.message : 'Image copy failed'}. Candidate left as pending.`,
+      };
+    }
+
+    // The copy can be slow; re-check ownership so a claim in the meantime isn't overwritten.
+    const { data: ownerRecheck, error: recheckError } = await supabase
+      .from('providers')
+      .select('provider_owner_id')
+      .eq('provider_id', candidate.provider_id)
+      .single();
+    if (recheckError || !ownerRecheck || ownerRecheck.provider_owner_id !== null) {
+      return {
+        success: false,
+        error:
+          'Provider was claimed or could not be verified during image copy. Candidate left as pending.',
+      };
+    }
+
     const mergedUrls = Array.from(new Set([...currentUrls, ...proposedUrls]));
 
     providerUpdatePayload = {
