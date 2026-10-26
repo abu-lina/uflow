@@ -21,10 +21,7 @@ vi.mock('@/lib/supabase/admin', () => ({
   }),
 }));
 
-import {
-  approveCandidate,
-  bulkApproveByProvider,
-} from '@/services/admin/enrichment';
+import { approveCandidate, bulkApproveByProvider } from '@/services/admin/enrichment';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -143,6 +140,7 @@ describe('approveCandidate — ownership guard', () => {
   });
 
   it('applies image enrichment candidates for provider_images with append-only semantics', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://abcdefgh.supabase.co');
     const candidateChain = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -152,9 +150,18 @@ describe('approveCandidate — ownership guard', () => {
           enrichment_type: 'image',
           source_service: 'unsplash',
           source_category: 'Turkish',
-          image_url: 'https://cdn.example.com/new-image.webp',
-          proposed_value: { urls: ['https://cdn.example.com/new-image.webp'] },
-          current_value: { urls: ['https://cdn.example.com/old-image.webp'] },
+          image_url:
+            'https://abcdefgh.supabase.co/storage/v1/object/public/provider-images/new-image.webp',
+          proposed_value: {
+            urls: [
+              'https://abcdefgh.supabase.co/storage/v1/object/public/provider-images/new-image.webp',
+            ],
+          },
+          current_value: {
+            urls: [
+              'https://abcdefgh.supabase.co/storage/v1/object/public/provider-images/old-image.webp',
+            ],
+          },
         }),
         error: null,
       }),
@@ -206,11 +213,11 @@ describe('approveCandidate — ownership guard', () => {
       expect.objectContaining({
         provider_images: {
           urls: [
-            'https://cdn.example.com/old-image.webp',
-            'https://cdn.example.com/new-image.webp',
+            'https://abcdefgh.supabase.co/storage/v1/object/public/provider-images/old-image.webp',
+            'https://abcdefgh.supabase.co/storage/v1/object/public/provider-images/new-image.webp',
           ],
         },
-      })
+      }),
     );
   });
 });

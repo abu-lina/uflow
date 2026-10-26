@@ -99,7 +99,7 @@ describe('approveCandidate: copy Google Maps images to storage (#797)', () => {
     expect(result.success).toBe(true);
     expect(mockStorageFrom).toHaveBeenCalledWith('provider-images');
     expect(mockUpload).toHaveBeenCalledTimes(1);
-    const payload = providerUpdate.update.mock.calls[0][0] as {
+    const payload = (providerUpdate.update.mock.calls as unknown[][])[0][0] as {
       provider_images: { urls: string[] };
     };
     expect(payload.provider_images.urls).toHaveLength(2);

@@ -40,6 +40,98 @@ export interface PendingCandidatesResult {
   total: number;
 }
 
+// ─── Image copy (#797) ────────────────────────────────────────────────────────
+
+const IMAGE_BUCKET = 'provider-images';
+const COPY_ALLOWED_HOSTS = ['lh3.googleusercontent.com', 'gz0.googleusercontent.com'];
+const COPY_MAX_BYTES = 5 * 1024 * 1024;
+const COPY_TIMEOUT_MS = 10_000;
+const EXT_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'image/avif': 'avif',
+};
+
+function isOnSupabaseHost(url: string): boolean {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return false;
+  try {
+    return new URL(url).host === new URL(base).host;
+  } catch {
+    return false;
+  }
+}
+
+async function downloadImage(url: string): Promise<{ buffer: Buffer; contentType: string }> {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`Invalid image URL: ${url}`);
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new Error(`Image URL must use HTTPS: ${url}`);
+  }
+  if (!COPY_ALLOWED_HOSTS.includes(parsed.hostname)) {
+    throw new Error(`Image host not allowed: ${parsed.hostname}`);
+  }
+
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(COPY_TIMEOUT_MS),
+    redirect: 'error',
+  });
+  if (!res.ok) {
+    throw new Error(`Image download failed with status ${res.status}`);
+  }
+
+  const contentType = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+  if (!(contentType in EXT_BY_TYPE)) {
+    throw new Error(`Unsupported image content type: ${contentType || 'none'}`);
+  }
+
+  const tooLarge = `Image too large (max ${COPY_MAX_BYTES / 1024 / 1024} MB)`;
+  if (Number(res.headers.get('content-length') ?? 0) > COPY_MAX_BYTES) {
+    throw new Error(tooLarge);
+  }
+  const buffer = Buffer.from(await res.arrayBuffer());
+  if (buffer.length > COPY_MAX_BYTES) {
+    throw new Error(tooLarge);
+  }
+  return { buffer, contentType };
+}
+
+/**
+ * Copy non-Supabase image URLs into Storage. Path is deterministic per
+ * provider and candidate, so re-approving overwrites instead of duplicating.
+ */
+async function copyImagesToStorage(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  urls: string[],
+  providerId: string,
+  candidateId: string,
+): Promise<string[]> {
+  const result: string[] = [];
+  for (let index = 0; index < urls.length; index++) {
+    const url = urls[index];
+    if (isOnSupabaseHost(url)) {
+      result.push(url);
+      continue;
+    }
+    const { buffer, contentType } = await downloadImage(url);
+    const path = `providers/${providerId}/${candidateId}-${index}.${EXT_BY_TYPE[contentType]}`;
+    const { error } = await supabase.storage
+      .from(IMAGE_BUCKET)
+      .upload(path, buffer, { contentType, upsert: true });
+    if (error) {
+      throw new Error(`Image upload failed: ${error.message}`);
+    }
+    result.push(supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl);
+  }
+  return result;
+}
+
 // ─── Service Functions ────────────────────────────────────────────────────────
 
 /**
@@ -47,7 +139,7 @@ export interface PendingCandidatesResult {
  * Joins provider_name for display in admin UI.
  */
 export async function getPendingCandidates(
-  options: { providerId?: string; limit?: number; offset?: number } = {}
+  options: { providerId?: string; limit?: number; offset?: number } = {},
 ): Promise<PendingCandidatesResult> {
   const supabase = getSupabaseAdmin();
   const { providerId, limit = 50, offset = 0 } = options;
@@ -76,7 +168,7 @@ export async function getPendingCandidates(
       created_at,
       providers!inner(provider_name)
     `,
-      { count: 'exact' }
+      { count: 'exact' },
     )
     .eq('status', 'pending')
     .order('enriched_at', { ascending: false })
@@ -97,7 +189,7 @@ export async function getPendingCandidates(
       ...(row as unknown as EnrichmentCandidateRow),
       provider_name:
         (row.providers as { provider_name: string } | null)?.provider_name ?? 'Unknown',
-    })
+    }),
   );
 
   return { data: candidates, total: count ?? 0 };
@@ -111,7 +203,7 @@ export async function getPendingCandidates(
  */
 export async function approveCandidate(
   candidateId: string,
-  reviewerId: string
+  reviewerId: string,
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabaseAdmin();
 
@@ -167,8 +259,8 @@ export async function approveCandidate(
         'urls' in value &&
         Array.isArray((value as { urls?: unknown }).urls)
       ) {
-        return ((value as { urls: unknown[] }).urls).filter(
-          (v): v is string => typeof v === 'string'
+        return (value as { urls: unknown[] }).urls.filter(
+          (v): v is string => typeof v === 'string',
         );
       }
 
@@ -176,7 +268,20 @@ export async function approveCandidate(
     };
 
     const currentUrls = getUrls(candidate.current_value);
-    const proposedUrls = getUrls(candidate.proposed_value);
+    let proposedUrls: string[];
+    try {
+      proposedUrls = await copyImagesToStorage(
+        supabase,
+        getUrls(candidate.proposed_value),
+        candidate.provider_id,
+        candidate.id,
+      );
+    } catch (err) {
+      return {
+        success: false,
+        error: `${err instanceof Error ? err.message : 'Image copy failed'}. Candidate left as pending.`,
+      };
+    }
     const mergedUrls = Array.from(new Set([...currentUrls, ...proposedUrls]));
 
     providerUpdatePayload = {
@@ -221,7 +326,7 @@ export async function approveCandidate(
  */
 export async function rejectCandidate(
   candidateId: string,
-  reviewerId: string
+  reviewerId: string,
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = getSupabaseAdmin();
 
@@ -248,7 +353,7 @@ export async function rejectCandidate(
  */
 export async function bulkApproveByProvider(
   providerId: string,
-  reviewerId: string
+  reviewerId: string,
 ): Promise<{ approved: number; skipped: number; errors: string[] }> {
   const supabase = getSupabaseAdmin();
 
@@ -267,7 +372,9 @@ export async function bulkApproveByProvider(
     return {
       approved: 0,
       skipped: 0,
-      errors: ['Cannot enrich provider that now has an owner (provider_owner_id is set). Candidates left as pending.'],
+      errors: [
+        'Cannot enrich provider that now has an owner (provider_owner_id is set). Candidates left as pending.',
+      ],
     };
   }
 
