@@ -4,13 +4,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { laneSh, shellQuote } from './helpers/lane';
+import { spawnTestTimeoutMs } from './helpers/timeout';
 
 const readme = readFileSync(new URL('../../scripts/README.md', import.meta.url), 'utf8');
 
 const zsh = (script: string, env: NodeJS.ProcessEnv = process.env) =>
   spawnSync('zsh', ['-f', '-c', script], { encoding: 'utf8', env });
 
-describe('zsh wrappers for scripts/lane.sh', () => {
+describe('zsh wrappers for scripts/lane.sh', { timeout: spawnTestTimeoutMs }, () => {
   it('defines lane, lane_done, lane_status and foreman but no helper functions in zsh', () => {
     const result = zsh(`source ${shellQuote(laneSh)}
 for f in lane lane_done lane_status foreman; do

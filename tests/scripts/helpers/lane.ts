@@ -1,5 +1,14 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 // Fixture repos and every spawned lane command ignore the user's system and global git config.
@@ -14,10 +23,15 @@ export const shellQuote = (value: string) => `'${value.replaceAll("'", "'\\''")}
 export const git = (root: string, ...args: string[]) =>
   execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
 
-// A repo with one commit on main, pushed to a bare origin next to it.
-export const createLaneRepo = (fixture: string) => {
-  const root = join(fixture, 'repo');
-  const remote = join(fixture, 'origin.git');
+let template: { root: string; remote: string; dir: string } | undefined;
+
+// One repo with one commit on main, pushed to a bare origin next to it, built once per test
+// file. Fixtures copy it, which costs no process spawns.
+const laneRepoTemplate = () => {
+  if (template) return template;
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), 'lane-repo-template-')));
+  const root = join(dir, 'repo');
+  const remote = join(dir, 'origin.git');
   mkdirSync(root);
   execFileSync('git', ['init', '--bare', remote], { stdio: 'ignore' });
   execFileSync('git', ['init', '-b', 'main', root], { stdio: 'ignore' });
@@ -28,6 +42,19 @@ export const createLaneRepo = (fixture: string) => {
   git(root, 'commit', '-m', 'fixture');
   git(root, 'remote', 'add', 'origin', remote);
   execFileSync('git', ['-C', root, 'push', '-u', 'origin', 'main'], { stdio: 'ignore' });
+  process.on('exit', () => rmSync(dir, { recursive: true, force: true }));
+  template = { root, remote, dir };
+  return template;
+};
+
+export const createLaneRepo = (fixture: string) => {
+  const source = laneRepoTemplate();
+  const root = join(fixture, 'repo');
+  const remote = join(fixture, 'origin.git');
+  cpSync(source.root, root, { recursive: true });
+  cpSync(source.remote, remote, { recursive: true });
+  const configPath = join(root, '.git', 'config');
+  writeFileSync(configPath, readFileSync(configPath, 'utf8').replaceAll(source.remote, remote));
   return { root };
 };
 

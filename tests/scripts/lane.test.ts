@@ -24,6 +24,7 @@ import {
   shellQuote,
   writeStub,
 } from './helpers/lane';
+import { spawnTestTimeoutMs } from './helpers/timeout';
 
 const ciWorkflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
 const laneGuide = readFileSync(new URL('../../docs/agents/lane.md', import.meta.url), 'utf8');
@@ -205,7 +206,7 @@ esac
   return { root, dir, result, calls, lsofCalls };
 };
 
-describe('lane shell helpers', () => {
+describe('lane shell helpers', { timeout: spawnTestTimeoutMs }, () => {
   it('runs lane status from a non-interactive shell without loading shell startup files', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-entrypoint-'));
     const bin = join(fixture, 'bin');
@@ -1412,7 +1413,7 @@ esac
 const callsMatching = (calls: string[], prefix: string) =>
   calls.filter((call) => call.startsWith(prefix));
 
-describe('foreman restart (#650)', () => {
+describe('foreman restart (#650)', { timeout: spawnTestTimeoutMs }, () => {
   it('fixtures hold real Herdr output for a live and a dead foreman', () => {
     const live = JSON.parse(herdrFixture('live-get.json'));
     expect(live.result.type).toBe('agent_info');
@@ -1533,7 +1534,7 @@ describe('foreman restart (#650)', () => {
   });
 });
 
-describe('lane worktree git hooks (#655)', () => {
+describe('lane worktree git hooks (#655)', { timeout: spawnTestTimeoutMs }, () => {
   // Mirrors husky 9: a tracked .husky/pre-commit plus a git-ignored, generated .husky/_ dispatcher.
   const huskyRoot = (hooksPath: string | null) => (root: string) => {
     mkdirSync(join(root, '.husky', '_'), { recursive: true });
@@ -1676,7 +1677,7 @@ describe('lane worktree git hooks (#655)', () => {
   });
 });
 
-describe('lane and foreman agent options', () => {
+describe('lane and foreman agent options', { timeout: spawnTestTimeoutMs }, () => {
   const startArgs = (options: StartOptions) => {
     let args: string[] = [];
     withFixture('lane-agent-options-', (fixture) => {

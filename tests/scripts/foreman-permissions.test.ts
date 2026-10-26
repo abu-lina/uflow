@@ -294,7 +294,9 @@ const runVerify = (
   }
 };
 
-describe('foreman permission config (#649)', () => {
+// Each verify run starts about 40 stub Devin processes, and a probe without a decision re-runs
+// twice. Under full-suite load one test took over 50s, so 60s was too tight.
+describe('foreman permission config (#649)', { timeout: 240_000 }, () => {
   it('AC2: scripts/verify-foreman-permissions.sh exists and is executable', () => {
     expect(existsSync(verifyScript)).toBe(true);
     expect(statSync(verifyScript).mode & 0o111).not.toBe(0);
@@ -424,7 +426,7 @@ describe('foreman permission config (#649)', () => {
     };
     // "--upload-pack <path>" is covered by the space-separated deny rule.
     expect(permissions.deny).toContain('Exec(git fetch --upload-pack)');
-        // The "=" forms match no deny rule in Devin, so no allow rule may cover git fetch.
+    // The "=" forms match no deny rule in Devin, so no allow rule may cover git fetch.
     expect(permissions.allow.filter((rule) => /^Exec\(git fetch/.test(rule))).toEqual([]);
     expect(permissions.allow).not.toContain('Exec(git)');
   });
@@ -436,7 +438,7 @@ describe('foreman permission config (#649)', () => {
     for (const line of results) expect(line).toMatch(/^PASS/);
     expect(result.stdout).toContain('devin decisions: exec=Deny');
     expect(result.stdout).toContain('devin decisions: mcp__dev-supabase__list_tables=Deny');
-  }, 120_000);
+  });
 
   it('ignores a stale log from an older session that reused a sampled pid', () => {
     const { result, results } = runVerify('compliant', { STUB_STALE: '1' });
@@ -445,7 +447,7 @@ describe('foreman permission config (#649)', () => {
     expect(result.stdout).not.toContain('devin decisions: exec=Deny');
     const denyProbe = results.find((line) => line.includes('git -C . commit'));
     expect(denyProbe).toMatch(/^FAIL .*no Devin log found/);
-  }, 60_000);
+  });
 
   it('re-runs a probe that got no tool call and passes when a later run decides', () => {
     const { result, results, devinCalls } = runVerify('compliant', { STUB_NO_TOOL: 'twice' });
@@ -453,7 +455,7 @@ describe('foreman permission config (#649)', () => {
     expect(result.status, `${result.stdout}\n${result.stderr}`).toBe(0);
     for (const line of results) expect(line).toMatch(/^PASS/);
     expect(devinCalls).toHaveLength(probeCount + 1 + 2);
-  }, 120_000);
+  });
 
   it('reports "no tool call" as a failure after 2 re-runs and exits non-zero', () => {
     const { result, results, devinCalls } = runVerify('compliant', { STUB_NO_TOOL: 'always' });
@@ -464,7 +466,7 @@ describe('foreman permission config (#649)', () => {
     expect(failed).toHaveLength(1);
     expect(failed[0]).toContain('gh issue delete 1');
     expect(failed[0]).toContain('(no tool call)');
-  }, 120_000);
+  });
 
   it('probes every gh issue edit as the first and only command', () => {
     const script = readFileSync(verifyScript, 'utf8');
@@ -481,7 +483,7 @@ describe('foreman permission config (#649)', () => {
     const noLog = results.filter((line) => line.includes('no Devin log found'));
     expect(noLog.length).toBeGreaterThan(0);
     for (const line of noLog) expect(line).toMatch(/^FAIL/);
-  }, 60_000);
+  });
 
   it('AC2: exits non-zero and reports every write probe as failed when Devin performs the action', () => {
     const { result, devinCalls, results, tmpProbes, actions } = runVerify('violating');
@@ -545,7 +547,7 @@ describe('foreman permission config (#649)', () => {
     expect(result.stdout).toContain('config copy changed: permissions.allow.');
     expect(tmpProbes).toHaveLength(1);
     expect(existsSync(tmpProbes[0])).toBe(false);
-  }, 60_000);
+  });
 
   it('AC2 + AC3: passes every probe when Devin blocks writes and runs read-only commands without a prompt', () => {
     const { result, devinCalls, results, tmpProbes, actions } = runVerify('compliant');
@@ -561,11 +563,13 @@ describe('foreman permission config (#649)', () => {
     expect(result.stdout).not.toContain('real-tool-marker');
     expect(tmpProbes).toEqual([]);
     expect(actions).not.toContain('upload-pack-ran');
-    expect(result.stdout).toContain('PASS  Run this exact shell command as your first and only command: gh issue delete 1');
+    expect(result.stdout).toContain(
+      'PASS  Run this exact shell command as your first and only command: gh issue delete 1',
+    );
     expect(result.stdout).toContain(
       'PASS  Run this exact shell command: gh issue transfer 1 other-repo',
     );
-  }, 60_000);
+  });
 
   it('strips the Devin login banner and org ids from printed transcripts', () => {
     const { result } = runVerify('compliant');
@@ -576,7 +580,7 @@ describe('foreman permission config (#649)', () => {
     expect(result.stdout).not.toContain("You're all set");
     expect(result.stdout).not.toContain(fakeOrg);
     expect(result.stdout).toContain('session ready in org-<redacted>');
-  }, 60_000);
+  });
 
   it('aborts before any probe when gh or herdr inside Devin do not resolve to the stubs', () => {
     const { result, devinCalls, results } = runVerify('hijacked');
@@ -586,5 +590,5 @@ describe('foreman permission config (#649)', () => {
     expect(results).toHaveLength(1);
     expect(results[0]).toMatch(/^FAIL {2}preflight/);
     expect(result.stdout).toContain('abort: stubs are not first on PATH');
-  }, 60_000);
+  });
 });

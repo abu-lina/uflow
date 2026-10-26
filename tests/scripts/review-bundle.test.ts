@@ -13,6 +13,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { spawnTestTimeoutMs } from './helpers/timeout';
 
 const repoRoot = new URL('../..', import.meta.url).pathname;
 const bundleScript = join(repoRoot, 'scripts', 'review-bundle');
@@ -86,7 +87,7 @@ const run = (args: string[]) => {
   }
 };
 
-describe('scripts/review-bundle (#685)', () => {
+describe('scripts/review-bundle (#685)', { timeout: spawnTestTimeoutMs }, () => {
   it('is an executable bash script', () => {
     expect(existsSync(bundleScript)).toBe(true);
     expect(statSync(bundleScript).mode & 0o111).not.toBe(0);

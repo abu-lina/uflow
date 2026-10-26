@@ -11,10 +11,12 @@ const useQueryMock = vi.fn();
 
 let ProviderDetailSections: typeof PDS_Type;
 
+// The first import transforms the whole component tree. Under full-suite load on a shared
+// machine that takes longer than the 10s hook default.
 beforeAll(async () => {
   ProviderDetailSections = (await import('@/features/providers/components/ProviderDetailSections'))
     .ProviderDetailSections;
-});
+}, 60_000);
 
 vi.mock('@/features/providers/components/TrustBadgesSection', () => ({
   TrustBadgesSection: ({ badges, isLoading }: { badges: unknown[]; isLoading: boolean }) => (
