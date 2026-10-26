@@ -36,7 +36,7 @@ import {
 } from '../src/lib/enrichment/google-maps/place-screening';
 import { buildAutoApplyPayload } from '../src/lib/enrichment/auto-apply-payload';
 import { createImageCandidatePayload } from '../src/lib/enrichment/image-enrichment';
-import { stageImageCandidate } from './enrich-images';
+import { formatStageError, stageImageCandidate, type StageCandidateResult } from './enrich-images';
 
 export type { ApifyPlace };
 
@@ -65,7 +65,7 @@ export interface ScreeningStore {
   listProviders(opts: { providerId?: string; limit: number }): Promise<ScreeningProvider[]>;
   insertScreening(row: ScreeningRow): Promise<void>;
   applyFields(providerId: string, rpcPayload: Record<string, unknown>): Promise<void>;
-  stageImages(row: Record<string, unknown>): Promise<'staged' | 'skipped-existing' | 'failed'>;
+  stageImages(row: Record<string, unknown>): Promise<StageCandidateResult>;
 }
 
 export interface ScreeningSummary {
@@ -208,7 +208,8 @@ export async function runScreening(deps: {
         source_category: payload.source_category,
         attribution: payload.attribution,
       });
-      if (outcome === 'failed') log(`WARN ${label}: image candidate not staged`);
+      if (outcome.outcome === 'failed')
+        log(`WARN ${label}: image candidate not staged: ${formatStageError(outcome.error)}`);
     } catch (err) {
       log(`WARN ${label}: enrichment failed: ${err instanceof Error ? err.message : String(err)}`);
     }

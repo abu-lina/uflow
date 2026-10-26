@@ -226,6 +226,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'gz0.googleusercontent.com',
+      },
     ],
     formats: ['image/webp'],
     minimumCacheTTL: 3600,

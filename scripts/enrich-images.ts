@@ -18,14 +18,14 @@ const STORAGE_BUCKET = 'provider-images';
 const MANIFEST_PATH = 'enrichment/stock/pool-manifest.json';
 const LOCAL_MANIFEST_PATH = path.resolve(
   process.cwd(),
-  'scripts/.cache/enrichment-stock-pool-manifest.json'
+  'scripts/.cache/enrichment-stock-pool-manifest.json',
 );
 const UNSPLASH_BASE_URL = 'https://api.unsplash.com';
 const FETCH_DELAY_MS = 1400; // keeps demo-tier usage below 50/hr
 
 type Mode = 'curate' | 'assign';
 
-interface CliOptions {
+export interface CliOptions {
   mode: Mode;
   isWrite: boolean;
   isDryRun: boolean;
@@ -66,7 +66,21 @@ interface ProviderRow {
   provider_images: { urls?: string[] } | string[] | null;
 }
 
-type StageCandidateOutcome = 'staged' | 'skipped-existing' | 'failed';
+export interface StageError {
+  message: string;
+  code?: string;
+}
+
+export type StageCandidateResult =
+  { outcome: 'staged' | 'skipped-existing' } | { outcome: 'failed'; error: StageError };
+
+export function formatStageError(error: StageError): string {
+  return error.code ? `${error.message} (code ${error.code})` : error.message;
+}
+
+function toStageError(error: { message?: string; code?: string }): StageError {
+  return { message: error.message ?? 'unknown error', code: error.code };
+}
 
 let supabaseClient: SupabaseClient | null = null;
 
@@ -81,13 +95,15 @@ function parseCliOptions(args: string[]): CliOptions {
   if (!mode) {
     throw new Error(
       'Usage: npx tsx scripts/enrich-images.ts --curate [--write] [--per-category 5-10] [--categories id1,id2]\n' +
-        '   or: npx tsx scripts/enrich-images.ts --assign [--write] [--limit N]'
+        '   or: npx tsx scripts/enrich-images.ts --assign [--write] [--limit N]',
     );
   }
 
   const isWrite = args.includes('--write');
   const perCategoryArg = Number(getArgValue(args, '--per-category') ?? '5');
-  const perCategory = Number.isFinite(perCategoryArg) ? Math.max(5, Math.min(10, perCategoryArg)) : 5;
+  const perCategory = Number.isFinite(perCategoryArg)
+    ? Math.max(5, Math.min(10, perCategoryArg))
+    : 5;
   const limitArg = getArgValue(args, '--limit');
   const providerLimit = limitArg ? Math.max(1, parseInt(limitArg, 10)) : undefined;
 
@@ -110,7 +126,9 @@ function getSupabaseClient(): SupabaseClient {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Missing required env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
+    throw new Error(
+      'Missing required env vars: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY',
+    );
   }
 
   supabaseClient = createClient(supabaseUrl, serviceRoleKey, {
@@ -154,13 +172,13 @@ async function runCurate(options: CliOptions): Promise<void> {
 
   const estimatedSearchCalls = categories.reduce(
     (acc, categoryId) => acc + resolveCategoryImageQueries(categoryId).length,
-    0
+    0,
   );
 
   if (estimatedSearchCalls > 45) {
     throw new Error(
       `Selected categories estimate ${estimatedSearchCalls} search calls. Unsplash demo limit is 50/hour. ` +
-        'Use --categories with a smaller batch (recommended <= 15 queries per run).'
+        'Use --categories with a smaller batch (recommended <= 15 queries per run).',
     );
   }
 
@@ -215,7 +233,7 @@ async function runCurate(options: CliOptions): Promise<void> {
         console.warn(
           `Skipping photo ${photo.id} for category ${categoryId}: ${
             error instanceof Error ? error.message : String(error)
-          }`
+          }`,
         );
       }
     }
@@ -239,15 +257,15 @@ async function runCurate(options: CliOptions): Promise<void> {
   await mkdir(path.dirname(LOCAL_MANIFEST_PATH), { recursive: true });
   await writeFile(LOCAL_MANIFEST_PATH, manifestBody, 'utf8');
 
-  const { error: manifestError } = await getSupabaseClient().storage
-    .from(STORAGE_BUCKET)
+  const { error: manifestError } = await getSupabaseClient()
+    .storage.from(STORAGE_BUCKET)
     .upload(MANIFEST_PATH, manifestBody, {
       upsert: true,
     });
 
   if (manifestError) {
     console.warn(
-      `Storage manifest upload failed (${manifestError.message}). Continuing with local manifest at ${LOCAL_MANIFEST_PATH}.`
+      `Storage manifest upload failed (${manifestError.message}). Continuing with local manifest at ${LOCAL_MANIFEST_PATH}.`,
     );
   }
 
@@ -275,11 +293,11 @@ async function runCurate(options: CliOptions): Promise<void> {
 
 export async function stageImageCandidate(
   client: Pick<SupabaseClient, 'from'>,
-  row: Record<string, unknown>
-): Promise<StageCandidateOutcome> {
+  row: Record<string, unknown>,
+): Promise<StageCandidateResult> {
   const { data: existingRows, error: existingError } = await client
     .from('enrichment_candidates')
-    .select('candidate_id, status')
+    .select('id, status')
     .eq('provider_id', row.provider_id)
     .eq('field_name', row.field_name)
     .eq('source', row.source)
@@ -288,22 +306,22 @@ export async function stageImageCandidate(
     .limit(1);
 
   if (existingError) {
-    return 'failed';
+    return { outcome: 'failed', error: toStageError(existingError) };
   }
 
   if (Array.isArray(existingRows) && existingRows.length > 0) {
-    return 'skipped-existing';
+    return { outcome: 'skipped-existing' };
   }
 
   const { error: insertError } = await client.from('enrichment_candidates').insert(row);
   if (insertError) {
-    return 'failed';
+    return { outcome: 'failed', error: toStageError(insertError) };
   }
 
-  return 'staged';
+  return { outcome: 'staged' };
 }
 
-async function runAssign(options: CliOptions): Promise<void> {
+export async function runAssign(options: CliOptions): Promise<void> {
   const manifest = await loadManifest();
 
   let query = getSupabaseClient()
@@ -340,7 +358,7 @@ async function runAssign(options: CliOptions): Promise<void> {
 
     const selectedImage = selectDeterministicPoolImage(
       provider.provider_id,
-      categoryPool.map((item) => item.public_url)
+      categoryPool.map((item) => item.public_url),
     );
     const selectedMeta = categoryPool.find((item) => item.public_url === selectedImage);
 
@@ -360,7 +378,7 @@ async function runAssign(options: CliOptions): Promise<void> {
 
     if (!options.isWrite) {
       console.log(
-        `[dry-run] ${provider.provider_name} (${provider.provider_id}) -> ${selectedMeta.public_url}`
+        `[dry-run] ${provider.provider_name} (${provider.provider_id}) -> ${selectedMeta.public_url}`,
       );
       staged++;
       continue;
@@ -382,13 +400,15 @@ async function runAssign(options: CliOptions): Promise<void> {
       attribution: candidate.attribution,
     });
 
-    if (stageOutcome === 'failed') {
-      console.error(`Failed to stage candidate for ${provider.provider_id}`);
+    if (stageOutcome.outcome === 'failed') {
+      console.error(
+        `Failed to stage candidate for ${provider.provider_id}: ${formatStageError(stageOutcome.error)}`,
+      );
       skipped++;
       continue;
     }
 
-    if (stageOutcome === 'skipped-existing') {
+    if (stageOutcome.outcome === 'skipped-existing') {
       skipped++;
       continue;
     }
@@ -413,13 +433,13 @@ async function runAssign(options: CliOptions): Promise<void> {
   });
 
   console.log(
-    `Assign complete. staged=${staged}, skipped=${skipped}, mode=${options.isWrite ? 'write' : 'dry-run'}`
+    `Assign complete. staged=${staged}, skipped=${skipped}, mode=${options.isWrite ? 'write' : 'dry-run'}`,
   );
 }
 
 async function searchUnsplash(query: string): Promise<UnsplashPhoto[]> {
   const url = `${UNSPLASH_BASE_URL}/search/photos?query=${encodeURIComponent(
-    query
+    query,
   )}&per_page=10&orientation=landscape&content_filter=high`;
 
   const response = await fetch(url, {
@@ -466,8 +486,8 @@ async function uploadCuratedImage(categoryId: string, photo: UnsplashPhoto): Pro
   const bytes = new Uint8Array(await imageResponse.arrayBuffer());
   const storagePath = `enrichment/stock/${categoryId}/${photo.id}.webp`;
 
-  const { error: uploadError } = await getSupabaseClient().storage
-    .from(STORAGE_BUCKET)
+  const { error: uploadError } = await getSupabaseClient()
+    .storage.from(STORAGE_BUCKET)
     .upload(storagePath, bytes, {
       upsert: true,
       contentType: 'image/webp',
@@ -492,7 +512,9 @@ async function uploadCuratedImage(categoryId: string, photo: UnsplashPhoto): Pro
 }
 
 async function loadManifest(): Promise<PoolManifest> {
-  const { data, error } = await getSupabaseClient().storage.from(STORAGE_BUCKET).download(MANIFEST_PATH);
+  const { data, error } = await getSupabaseClient()
+    .storage.from(STORAGE_BUCKET)
+    .download(MANIFEST_PATH);
 
   if (!error && data) {
     const text = await data.text();
@@ -514,13 +536,13 @@ async function loadManifest(): Promise<PoolManifest> {
     }
 
     console.warn(
-      `Loaded local manifest fallback (${LOCAL_MANIFEST_PATH}) because storage manifest is unavailable.`
+      `Loaded local manifest fallback (${LOCAL_MANIFEST_PATH}) because storage manifest is unavailable.`,
     );
 
     return parsed;
   } catch {
     throw new Error(
-      `Failed to load curated manifest from storage (${MANIFEST_PATH}) and local cache (${LOCAL_MANIFEST_PATH}). Run --curate --write first.`
+      `Failed to load curated manifest from storage (${MANIFEST_PATH}) and local cache (${LOCAL_MANIFEST_PATH}). Run --curate --write first.`,
     );
   }
 }
@@ -553,7 +575,10 @@ const currentFile = path.resolve(fileURLToPath(import.meta.url));
 if (invokedFile === currentFile) {
   const options = parseCliOptions(process.argv.slice(2));
   main(options).catch((error) => {
-    console.error('Image enrichment failed:', error instanceof Error ? error.message : String(error));
+    console.error(
+      'Image enrichment failed:',
+      error instanceof Error ? error.message : String(error),
+    );
     process.exit(1);
   });
 }
