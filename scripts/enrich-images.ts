@@ -25,7 +25,7 @@ const FETCH_DELAY_MS = 1400; // keeps demo-tier usage below 50/hr
 
 type Mode = 'curate' | 'assign';
 
-interface CliOptions {
+export interface CliOptions {
   mode: Mode;
   isWrite: boolean;
   isDryRun: boolean;
@@ -321,7 +321,7 @@ export async function stageImageCandidate(
   return { outcome: 'staged' };
 }
 
-async function runAssign(options: CliOptions): Promise<void> {
+export async function runAssign(options: CliOptions): Promise<void> {
   const manifest = await loadManifest();
 
   let query = getSupabaseClient()
