@@ -63,6 +63,7 @@ async function nearest(
   return rows;
 }
 
+// Booting PGlite (WASM Postgres) can exceed the 10s hook default under full-suite load.
 beforeAll(async () => {
   db = new PGlite();
   await db.exec(SCHEMA);
@@ -78,7 +79,7 @@ beforeAll(async () => {
   await seedProviders('Köln', 3);
   await seedProviders('Atlantis', 10);
   await db.exec(MIGRATION);
-});
+}, 60_000);
 
 describe('migration 141: city coordinates', () => {
   it('adds numeric latitude and longitude to cities', async () => {

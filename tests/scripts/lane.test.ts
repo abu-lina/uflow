@@ -371,7 +371,7 @@ esac
       encoding: 'utf8',
     });
     expect(cleanResult.status, cleanFixture).toBe(0);
-  }, 30_000);
+  });
 
   it('criterion 1: runs all shell checks on defaults and only requested files', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lint-shell-criterion-1-'));
@@ -412,7 +412,7 @@ esac
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
-  }, 30_000);
+  });
 
   it('follows ShellCheck sources when linting scripts/lane alone', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lint-shell-source-'));

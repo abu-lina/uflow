@@ -82,6 +82,7 @@ const insertScreening = (providerId: string, source = 'website', status = 'clear
   ]);
 
 describe('migration 144: provider_screenings (#764)', () => {
+  // Booting PGlite (WASM Postgres) can exceed the 10s hook default under full-suite load.
   beforeAll(async () => {
     db = new PGlite();
     await db.exec(SCHEMA);
@@ -95,7 +96,7 @@ describe('migration 144: provider_screenings (#764)', () => {
     );
     expect(existsSync(MIGRATION_PATH), 'migration 144 file exists').toBe(true);
     await db.exec(readFileSync(MIGRATION_PATH, 'utf-8'));
-  });
+  }, 60_000);
 
   afterAll(async () => {
     await db?.close();

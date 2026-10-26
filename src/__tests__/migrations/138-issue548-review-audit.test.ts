@@ -128,6 +128,7 @@ async function foodRow(id = PROVIDER) {
   return rows[0];
 }
 
+// Booting PGlite (WASM Postgres) can exceed the 10s hook default under full-suite load.
 beforeAll(async () => {
   db = new PGlite();
   await db.exec(SCHEMA);
@@ -144,7 +145,7 @@ beforeAll(async () => {
   await db.exec(`INSERT INTO public.food_providers (provider_id) VALUES ('${PROVIDER}')`);
   await db.exec(`INSERT INTO public.store_providers (provider_id) VALUES ('${STORE_PROVIDER}')`);
   await db.exec(MIGRATION);
-});
+}, 60_000);
 
 describe('migration 138 — schema changes', () => {
   it('adds reviewed_by and reviewed_at as nullable columns', async () => {
