@@ -974,6 +974,21 @@ export const ur = {
       saveAria: 'تصاویر محفوظ کریں',
       success: 'تصاویر کامیابی سے اپ ڈیٹ ہو گئیں!',
       error: 'تصاویر محفوظ کرنے میں خرابی',
+      candidates: {
+        title: 'زیر التواء تصویری تجاویز',
+        loading: 'تجاویز لوڈ ہو رہی ہیں...',
+        openImage: 'تصویر کھولیں',
+        genericError: 'کچھ غلط ہو گیا',
+        alt: 'تصویری تجویز {{index}}',
+        approve: 'منظور کریں',
+        reject: 'مسترد کریں',
+        approveAria: 'تصویر {{index}} منظور کریں',
+        rejectAria: 'تصویر {{index}} مسترد کریں',
+        source: {
+          google_maps_apify: 'Google Maps',
+          unsplash: 'Unsplash',
+        },
+      },
     },
   },
   legal: {
