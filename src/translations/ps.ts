@@ -971,6 +971,21 @@ export const ps = {
       saveAria: 'انځورونه خوندي کړئ',
       success: 'انځورونه په بریالیتوب سره تازه شول!',
       error: 'د انځورونو خوندي کولو کې ستونزه',
+      candidates: {
+        title: 'د انتظار انځور وړاندیزونه',
+        loading: 'وړاندیزونه لوډ کیږي...',
+        openImage: 'انځور خلاص کړئ',
+        genericError: 'یو څه غلط شول',
+        alt: 'د انځور وړاندیز {{index}}',
+        approve: 'تایید',
+        reject: 'رد',
+        approveAria: 'انځور {{index}} تایید کړئ',
+        rejectAria: 'انځور {{index}} رد کړئ',
+        source: {
+          google_maps_apify: 'Google Maps',
+          unsplash: 'Unsplash',
+        },
+      },
     },
   },
   legal: {

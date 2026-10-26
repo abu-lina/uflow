@@ -967,6 +967,21 @@ export const en = {
       saveAria: 'Save images',
       success: 'Images successfully updated!',
       error: 'Error saving images',
+      candidates: {
+        title: 'Pending image suggestions',
+        loading: 'Loading suggestions...',
+        openImage: 'Open image',
+        genericError: 'Something went wrong',
+        alt: 'Image suggestion {{index}}',
+        approve: 'Approve',
+        reject: 'Reject',
+        approveAria: 'Approve image {{index}}',
+        rejectAria: 'Reject image {{index}}',
+        source: {
+          google_maps_apify: 'Google Maps',
+          unsplash: 'Unsplash',
+        },
+      },
     },
   },
   legal: {
