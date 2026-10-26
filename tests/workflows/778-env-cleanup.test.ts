@@ -38,4 +38,16 @@ describe('#778 environment cleanup', () => {
     expect(doc).toMatch(/repo(sitory)?[- ]level/i);
     expect(doc).toMatch(/environment[- ]level/i);
   });
+
+  it('criterion 2: enrich-provider route and its test are removed', () => {
+    expect(existsSync(resolve(root, 'src/app/api/webhooks/enrich-provider'))).toBe(false);
+  });
+
+  it.each(['deploy-uat.yml', 'deploy-hetzner.yml'])(
+    'criterion 2: %s no longer passes WEBHOOK_SECRET',
+    (file) => {
+      const wf = readFileSync(resolve(root, '.github/workflows', file), 'utf8');
+      expect(wf).not.toContain('WEBHOOK_SECRET');
+    },
+  );
 });
