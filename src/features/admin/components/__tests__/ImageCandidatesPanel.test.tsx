@@ -7,7 +7,11 @@ import { ImageCandidatesPanel } from '../ImageCandidatesPanel';
 vi.mock('@/providers/LanguageProvider', () => ({
   useLanguage: () => ({
     t: (key: string, vars?: Record<string, unknown>) =>
-      vars ? `${key} ${JSON.stringify(vars)}` : key,
+      key.endsWith('.source.google_maps_apify')
+        ? 'Google Maps'
+        : vars
+          ? `${key} ${JSON.stringify(vars)}`
+          : key,
   }),
 }));
 
@@ -78,9 +82,7 @@ describe('ImageCandidatesPanel (#795)', () => {
     render(<ImageCandidatesPanel providerId={PROVIDER_ID} />);
 
     const item = (await screen.findByRole('img')).closest('li') as HTMLElement;
-    expect(
-      within(item).getByText('editProvider.editImages.candidates.source.google_maps_apify'),
-    ).toBeTruthy();
+    expect(within(item).getByText('Google Maps')).toBeTruthy();
     expect(within(item).getByRole('button', { name: /candidates\.approve/ })).toBeTruthy();
     expect(within(item).getByRole('button', { name: /candidates\.reject/ })).toBeTruthy();
   });

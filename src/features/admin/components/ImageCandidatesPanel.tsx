@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import { useLanguage } from '@/providers/LanguageProvider';
+import { isAllowedImageUrl } from '@/utils/imageUtils';
 
 interface ImageCandidate {
   id: string;
@@ -20,6 +21,11 @@ interface ImageCandidatesPanelProps {
 
 const ENDPOINT = '/api/admin/enrichment/candidates';
 const THUMB_SIZE = 160;
+
+// Only http(s) URLs become links; anything else (e.g. javascript:) gets no href
+function safeHref(url: string | null): string | undefined {
+  return url && /^https?:\/\//i.test(url) ? url : undefined;
+}
 
 async function readError(res: Response): Promise<string> {
   const body = await res.json().catch(() => ({}));
@@ -79,6 +85,12 @@ export function ImageCandidatesPanel({ providerId, onApproved }: ImageCandidates
     }
   };
 
+  const sourceLabel = (source: string) => {
+    const key = `editProvider.editImages.candidates.source.${source}`;
+    const label = t(key);
+    return label === key ? source : label;
+  };
+
   if (forbidden) return null;
 
   if (loading) {
@@ -118,16 +130,31 @@ export function ImageCandidatesPanel({ providerId, onApproved }: ImageCandidates
       <ul className="grid grid-cols-2 gap-4">
         {candidates.map((c, idx) => (
           <li key={c.id} className="flex flex-col gap-2 rounded-[12px] border border-[#D4D4D4] p-2">
-            <Image
-              alt={t('editProvider.editImages.candidates.alt', { index: idx + 1 })}
-              className="rounded-[8px] object-cover"
-              height={THUMB_SIZE}
-              src={c.image_url as string}
-              width={THUMB_SIZE}
-            />
-            <span className="text-xs text-gray-500">
-              {t(`editProvider.editImages.candidates.source.${c.source}`)}
-            </span>
+            {isAllowedImageUrl(c.image_url) ? (
+              <Image
+                alt={t('editProvider.editImages.candidates.alt', { index: idx + 1 })}
+                className="rounded-[8px] object-cover"
+                height={THUMB_SIZE}
+                src={c.image_url}
+                width={THUMB_SIZE}
+              />
+            ) : (
+              <div
+                className="flex items-center justify-center rounded-[8px] bg-gray-100"
+                data-testid="image-candidate-placeholder"
+                style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
+              >
+                <a
+                  className="px-2 text-center text-xs text-blue-700 underline"
+                  href={safeHref(c.image_url)}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {t('editProvider.editImages.candidates.openImage')}
+                </a>
+              </div>
+            )}
+            <span className="text-xs text-gray-500">{sourceLabel(c.source)}</span>
             <div className="flex gap-2">
               <button
                 aria-label={t('editProvider.editImages.candidates.approveAria', { index: idx + 1 })}

@@ -977,6 +977,7 @@ export const ur = {
       candidates: {
         title: 'زیر التواء تصویری تجاویز',
         loading: 'تجاویز لوڈ ہو رہی ہیں...',
+        openImage: 'تصویر کھولیں',
         genericError: 'کچھ غلط ہو گیا',
         alt: 'تصویری تجویز {{index}}',
         approve: 'منظور کریں',

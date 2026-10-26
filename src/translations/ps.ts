@@ -974,6 +974,7 @@ export const ps = {
       candidates: {
         title: 'د انتظار انځور وړاندیزونه',
         loading: 'وړاندیزونه لوډ کیږي...',
+        openImage: 'انځور خلاص کړئ',
         genericError: 'یو څه غلط شول',
         alt: 'د انځور وړاندیز {{index}}',
         approve: 'تایید',

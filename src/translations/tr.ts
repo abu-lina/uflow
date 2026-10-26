@@ -973,6 +973,7 @@ export const tr = {
       candidates: {
         title: 'Bekleyen görsel önerileri',
         loading: 'Öneriler yükleniyor...',
+        openImage: 'Görseli aç',
         genericError: 'Bir şeyler ters gitti',
         alt: 'Görsel önerisi {{index}}',
         approve: 'Onayla',

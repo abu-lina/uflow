@@ -31,7 +31,9 @@ export default function EditImagesPage({ params }: { params: Promise<{ id: strin
         if (!error && data?.provider_images) {
           try {
             const parsed = JSON.parse(data.provider_images);
-            setExistingImageUrls(parsed.urls || []);
+            // merge so a URL approved before this load resolves is not dropped
+            const loaded: string[] = parsed.urls || [];
+            setExistingImageUrls((prev) => [...loaded, ...prev.filter((u) => !loaded.includes(u))]);
           } catch (parseError) {
             console.error('Error parsing images:', parseError);
           }

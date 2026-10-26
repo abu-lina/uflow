@@ -970,6 +970,7 @@ export const en = {
       candidates: {
         title: 'Pending image suggestions',
         loading: 'Loading suggestions...',
+        openImage: 'Open image',
         genericError: 'Something went wrong',
         alt: 'Image suggestion {{index}}',
         approve: 'Approve',

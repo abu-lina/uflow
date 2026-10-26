@@ -985,6 +985,7 @@ export const de = {
       candidates: {
         title: 'Ausstehende Bildvorschläge',
         loading: 'Vorschläge werden geladen...',
+        openImage: 'Bild öffnen',
         genericError: 'Etwas ist schiefgelaufen',
         alt: 'Bildvorschlag {{index}}',
         approve: 'Genehmigen',

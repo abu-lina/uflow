@@ -962,6 +962,7 @@ export const ar = {
       candidates: {
         title: 'اقتراحات الصور المعلقة',
         loading: 'جارٍ تحميل الاقتراحات...',
+        openImage: 'فتح الصورة',
         genericError: 'حدث خطأ ما',
         alt: 'اقتراح الصورة {{index}}',
         approve: 'موافقة',
