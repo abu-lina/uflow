@@ -27,8 +27,8 @@ function withImages(urls: string[], categoryUrls: string[] = []): Provider {
   } as unknown as Provider;
 }
 
-function renderedSources(container: HTMLElement): string[] {
-  return Array.from(container.querySelectorAll('img'))
+function renderedSources(): string[] {
+  return Array.from(document.body.querySelectorAll('img'))
     .map((img) => decodeURIComponent(img.getAttribute('src') ?? ''))
     .filter((src) => src.includes('http'));
 }
@@ -41,15 +41,15 @@ function renderModal(provider: Provider) {
 
 describe('#796 provider image hosts', () => {
   it('desktop modal shows lh3 and gz0 googleusercontent URLs', () => {
-    const { container } = renderModal(withImages([LH3, GZ0]));
-    const srcs = renderedSources(container).join('\n');
+    renderModal(withImages([LH3, GZ0]));
+    const srcs = renderedSources().join('\n');
     expect(srcs).toContain(LH3);
     expect(srcs).toContain(GZ0);
   });
 
   it('desktop modal still shows Supabase storage URLs', () => {
-    const { container } = renderModal(withImages([SUPA]));
-    expect(renderedSources(container).join('\n')).toContain(SUPA);
+    renderModal(withImages([SUPA]));
+    expect(renderedSources().join('\n')).toContain(SUPA);
   });
 
   it('filters hosts not in the next.config.js remotePatterns', () => {
@@ -57,8 +57,8 @@ describe('#796 provider image hosts', () => {
     expect(isAllowedImageUrl('http://lh3.googleusercontent.com/x')).toBe(false);
     expect(isAllowedImageUrl('not a url')).toBe(false);
     expect(getAllTrustedImageUrls({ urls: [EVIL, LH3] })).toEqual([LH3]);
-    const { container } = renderModal(withImages([EVIL, LH3]));
-    const srcs = renderedSources(container).join('\n');
+    renderModal(withImages([EVIL, LH3]));
+    const srcs = renderedSources().join('\n');
     expect(srcs).not.toContain(EVIL);
     expect(srcs).toContain(LH3);
   });
@@ -66,7 +66,9 @@ describe('#796 provider image hosts', () => {
   it('shared host list covers every https hostname in next.config.js remotePatterns', () => {
     const config = fs.readFileSync(path.join(process.cwd(), 'next.config.js'), 'utf8');
     const block = config.slice(config.indexOf('remotePatterns'), config.indexOf('formats:'));
-    const hosts = [...block.matchAll(/protocol: 'https',\s*hostname: '([^']+)'/g)].map((m) => m[1]);
+    const hosts = Array.from(block.matchAll(/protocol: 'https',\s*hostname: '([^']+)'/g)).map(
+      (m) => m[1],
+    );
     expect(hosts.length).toBeGreaterThan(0);
     expect([...ALLOWED_IMAGE_HOSTS].sort()).toEqual([...hosts].sort());
   });
@@ -80,16 +82,19 @@ describe('#796 provider image hosts', () => {
   });
 
   it('provider with no allowed URLs still gets the category fallback', () => {
-    const { container } = renderModal(withImages([EVIL], [CATEGORY_FALLBACK]));
-    const srcs = renderedSources(container).join('\n');
+    renderModal(withImages([EVIL], [CATEGORY_FALLBACK]));
+    const srcs = renderedSources().join('\n');
     expect(srcs).toContain(CATEGORY_FALLBACK);
     expect(srcs).not.toContain(EVIL);
   });
 
   it('desktop modal and mobile page show the same image set', () => {
     const provider = withImages([LH3, EVIL, SUPA, GZ0], [CATEGORY_FALLBACK]);
-    const desktop = renderedSources(renderModal(provider).container);
-    const mobile = renderedSources(render(<MobileProviderDetail provider={provider} />).container);
+    const desktopView = renderModal(provider);
+    const desktop = renderedSources();
+    desktopView.unmount();
+    render(<MobileProviderDetail provider={provider} />);
+    const mobile = renderedSources();
     const pick = (srcs: string[]) =>
       [LH3, GZ0, SUPA, EVIL].filter((u) => srcs.join('\n').includes(u)).sort();
     expect(pick(desktop)).toEqual([GZ0, LH3, SUPA].sort());

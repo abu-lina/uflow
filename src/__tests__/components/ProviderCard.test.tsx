@@ -81,7 +81,7 @@ describe('ProviderCard Component', () => {
       expect(providerImage).toBeInTheDocument();
       expect(providerImage).toHaveAttribute(
         'src',
-        'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+        'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg',
       );
     });
 
@@ -148,7 +148,9 @@ describe('ProviderCard Component', () => {
       const providerWithBothImages = {
         ...mockProvider,
         provider_images: JSON.stringify({
-          urls: ['https://mock-supabase-url.com/storage/v1/object/public/images/own-photo.jpg'],
+          urls: [
+            'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/own-photo.jpg',
+          ],
         }),
         category_id: '232c2870-7929-43eb-a909-6cac90203192', // Turkish — has static fallback images (real DB ID)
         category: {

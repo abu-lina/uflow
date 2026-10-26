@@ -49,7 +49,7 @@ describe('ProviderDetailModal Component', () => {
         community_service_id: 'cs-001',
         community_service_name: 'Zakat Foundation',
         community_service_images: [
-          'https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg',
+          'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/zakat.jpg',
         ],
         category: { name_de: 'Soziales', name_en: 'Social' },
         created_at: '2024-01-01T00:00:00Z',
@@ -111,7 +111,7 @@ describe('ProviderDetailModal Component', () => {
       expect(mainImage).toBeInTheDocument();
       expect(mainImage).toHaveAttribute(
         'src',
-        'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+        'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg',
       );
     });
 
@@ -162,7 +162,7 @@ describe('ProviderDetailModal Component', () => {
         const secondImage = screen.getByAltText('Bilal Moschee 2');
         expect(secondImage).toHaveAttribute(
           'src',
-          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-2.jpg',
+          'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/bilal-mosque-2.jpg',
         );
       });
     });
@@ -189,7 +189,7 @@ describe('ProviderDetailModal Component', () => {
         const firstImage = screen.getByAltText('Bilal Moschee 1');
         expect(firstImage).toHaveAttribute(
           'src',
-          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+          'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg',
         );
       });
     });
@@ -373,7 +373,7 @@ describe('ProviderDetailModal Component', () => {
         const secondImage = screen.getByAltText('Bilal Moschee 2');
         expect(secondImage).toHaveAttribute(
           'src',
-          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-2.jpg',
+          'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/bilal-mosque-2.jpg',
         );
       });
     });
@@ -398,7 +398,7 @@ describe('ProviderDetailModal Component', () => {
         const firstImage = screen.getByAltText('Bilal Moschee 1');
         expect(firstImage).toHaveAttribute(
           'src',
-          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+          'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg',
         );
       });
     });
@@ -419,7 +419,7 @@ describe('ProviderDetailModal Component', () => {
       const firstImage = screen.getByAltText('Bilal Moschee 1');
       expect(firstImage).toHaveAttribute(
         'src',
-        'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-1.jpg',
+        'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/bilal-mosque-1.jpg',
       );
     });
 
@@ -443,7 +443,7 @@ describe('ProviderDetailModal Component', () => {
         const lastImage = screen.getByAltText('Bilal Moschee 2');
         expect(lastImage).toHaveAttribute(
           'src',
-          'https://mock-supabase-url.com/storage/v1/object/public/images/bilal-mosque-2.jpg',
+          'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/bilal-mosque-2.jpg',
         );
       });
     });
@@ -547,7 +547,7 @@ describe('ProviderDetailModal Component', () => {
       community_service_id: 'cs-badges-001',
       community_service_name: 'Zakat Foundation',
       community_service_images: [
-        'https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg',
+        'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/zakat.jpg',
       ],
       category: { name_de: 'Soziales', name_en: 'Social' },
       created_at: '2024-01-01T00:00:00Z',
@@ -819,7 +819,7 @@ describe('ProviderDetailModal Component', () => {
         community_service_id: 'cs-001',
         community_service_name: 'Zakat Foundation',
         community_service_images: [
-          'https://mock-supabase-url.com/storage/v1/object/public/images/zakat.jpg',
+          'https://mock-supabase-url.supabase.co/storage/v1/object/public/images/zakat.jpg',
         ],
         category: { name_de: 'Soziales', name_en: 'Social' },
         created_at: '2024-01-01T00:00:00Z',

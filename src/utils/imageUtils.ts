@@ -11,13 +11,50 @@ export interface CategoryImageData {
 }
 
 export type ProviderImages = string | string[] | ImageData | null | undefined;
-export type CategoryImages = string | CategoryImageData | Record<string, unknown> | null | undefined;
+export type CategoryImages =
+  string | CategoryImageData | Record<string, unknown> | null | undefined;
 
 /**
  * Utility functions for handling image URLs and processing
  */
 
 export const PLACEHOLDER_IMAGE = '/images/placeholder.jpg';
+
+/**
+ * Hosts that `next/image` may load over https. Must mirror the https entries in
+ * `images.remotePatterns` of next.config.js (a test enforces this). A leading
+ * `**.` matches any subdomain, like in remotePatterns.
+ */
+export const ALLOWED_IMAGE_HOSTS: readonly string[] = [
+  '**.supabase.co',
+  'placehold.co',
+  'api.iconify.design',
+  'api.unisvg.com',
+  'api.simplesvg.com',
+  '**.cdninstagram.com',
+  '**.fbcdn.net',
+  'scontent.cdninstagram.com',
+  'maps.googleapis.com',
+  'lh3.googleusercontent.com',
+  'gz0.googleusercontent.com',
+];
+
+function matchesAllowedHost(hostname: string): boolean {
+  return ALLOWED_IMAGE_HOSTS.some((pattern) =>
+    pattern.startsWith('**.') ? hostname.endsWith(pattern.slice(2)) : hostname === pattern,
+  );
+}
+
+/** True when the URL is https and its host is in {@link ALLOWED_IMAGE_HOSTS}. */
+export function isAllowedImageUrl(url: unknown): url is string {
+  if (typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && matchesAllowedHost(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Extracts the first image URL from provider_images data
@@ -30,7 +67,7 @@ export function getFirstImageUrl(providerImages: ProviderImages): string {
 
   try {
     let imagesData: ImageData = {};
-    
+
     if (typeof providerImages === 'string') {
       imagesData = JSON.parse(providerImages);
       if (imagesData === null) return PLACEHOLDER_IMAGE;
@@ -43,7 +80,7 @@ export function getFirstImageUrl(providerImages: ProviderImages): string {
     ) {
       imagesData = providerImages;
     }
-    
+
     if (imagesData.urls && imagesData.urls.length > 0) {
       return imagesData.urls[0];
     }
@@ -51,12 +88,12 @@ export function getFirstImageUrl(providerImages: ProviderImages): string {
     console.error('Error parsing provider images:', error);
     return PLACEHOLDER_IMAGE;
   }
-  
+
   return PLACEHOLDER_IMAGE;
 }
 
 /**
- * Extracts all trusted image URLs from provider_images data
+ * Extracts all trusted image URLs (allowed hosts only) from provider_images data
  * @param providerImages - The provider_images field from database
  * @returns Array of image URLs
  */
@@ -65,7 +102,7 @@ export function getAllTrustedImageUrls(providerImages: ProviderImages): string[]
 
   try {
     let imagesData: ImageData = {};
-    
+
     if (typeof providerImages === 'string') {
       imagesData = JSON.parse(providerImages);
       if (imagesData === null) return [];
@@ -78,8 +115,8 @@ export function getAllTrustedImageUrls(providerImages: ProviderImages): string[]
     ) {
       imagesData = providerImages;
     }
-    
-    return imagesData.urls || [];
+
+    return Array.isArray(imagesData.urls) ? imagesData.urls.filter(isAllowedImageUrl) : [];
   } catch (error) {
     console.error('Error parsing provider images:', error);
     return [];
@@ -94,24 +131,24 @@ export function getAllTrustedImageUrls(providerImages: ProviderImages): string[]
  */
 export function getAllTrustedImageUrlsWithFallback(
   providerImages: ProviderImages,
-  categoryImages: CategoryImages
+  categoryImages: CategoryImages,
 ): string[] {
   // Priority 1: Get provider images
   const providerUrls = getAllTrustedImageUrls(providerImages);
-  
+
   // If we have provider images, return them
   if (providerUrls.length > 0) {
     return providerUrls;
   }
-  
+
   // Priority 2: Get category fallback images
   const categoryUrls = parseCategoryImages(categoryImages);
-  
+
   // If we have category images, return them
   if (categoryUrls.length > 0) {
     return categoryUrls;
   }
-  
+
   // Priority 3: Return empty array (will fallback to placeholder in component)
   return [];
 }
@@ -173,12 +210,12 @@ export function formatProviderAddress(street?: string | null, city?: string | nu
   if (!city) {
     return 'Online';
   }
-  
+
   // If we have both street and city, show both
   if (street && city) {
     return `${street}, ${city}`;
   }
-  
+
   // If only city, show just the city
   return city;
 }

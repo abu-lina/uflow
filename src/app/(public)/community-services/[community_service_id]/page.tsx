@@ -4,45 +4,23 @@ import { getCommunityServiceById } from '@/services/communityServices.server';
 
 import { CommunityServiceDetailPageClient } from './CommunityServiceDetailPageClient';
 import { ImagePreloader } from '@/components/community-services/ImagePreloader';
+import { isAllowedImageUrl } from '@/utils/imageUtils';
 
 // Helper function to get first image URL for preloading
-function getFirstImageUrl(communityService: { community_service_images?: string[] | null }): string | null {
-  if (!communityService.community_service_images || communityService.community_service_images.length === 0) {
-    return null;
-  }
-
-  // Check if images are from trusted domain (Supabase)
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!supabaseUrl) return null;
-
-  try {
-    const supabaseHostname = new URL(supabaseUrl).hostname;
-    const firstImage = communityService.community_service_images[0];
-    
-    if (!firstImage) return null;
-    
-    try {
-      const imageUrl = new URL(firstImage);
-      if (imageUrl.hostname === supabaseHostname) {
-        return firstImage;
-      }
-    } catch {
-      // Invalid URL, skip
-    }
-    
-    return null;
-  } catch {
-    return null;
-  }
+function getFirstImageUrl(communityService: {
+  community_service_images?: string[] | null;
+}): string | null {
+  const firstImage = communityService.community_service_images?.[0];
+  return isAllowedImageUrl(firstImage) ? firstImage : null;
 }
 
-export default async function CommunityServiceDetailPage({ 
-  params 
-}: { 
-  params: Promise<{ community_service_id: string }> 
+export default async function CommunityServiceDetailPage({
+  params,
+}: {
+  params: Promise<{ community_service_id: string }>;
 }) {
   const { community_service_id } = await params;
-  
+
   // Fetch the community service — pass nullable result to client (Plan 082: M1)
   // Do NOT call notFound() here; the client component handles null gracefully via
   // React Query, allowing re-fetch and proper loading/error states.
@@ -54,7 +32,9 @@ export default async function CommunityServiceDetailPage({
   return (
     <>
       {firstImageUrl && <ImagePreloader imageUrl={firstImageUrl} />}
-      <Suspense fallback={<div className="flex h-screen-fix items-center justify-center">Loading...</div>}>
+      <Suspense
+        fallback={<div className="h-screen-fix flex items-center justify-center">Loading...</div>}
+      >
         <CommunityServiceDetailPageClient
           communityServiceId={community_service_id}
           initialData={communityService}
@@ -63,4 +43,3 @@ export default async function CommunityServiceDetailPage({
     </>
   );
 }
-

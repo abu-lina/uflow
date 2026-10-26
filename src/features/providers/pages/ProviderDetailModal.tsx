@@ -35,6 +35,7 @@ import { HalalTrustPopup } from '@/features/providers/components/HalalTrustPopup
 import type { Location } from '@/types/location';
 import {
   PLACEHOLDER_IMAGE,
+  getAllTrustedImageUrls,
   getCategoryCardBackgroundColor,
   hashId,
   parseCategoryImages,
@@ -105,53 +106,10 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
       }
     },
   });
-  function hasUrls(obj: unknown): obj is { urls: string[] } {
-    return (
-      typeof obj === 'object' &&
-      obj !== null &&
-      Array.isArray((obj as { urls?: unknown }).urls) &&
-      (obj as { urls: unknown[] }).urls.every((u) => typeof u === 'string')
-    );
-  }
-
-  // Only allow images from trusted domains
-  function isTrustedUrl(url: string) {
-    try {
-      const { hostname } = new URL(url);
-      const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
-      return hostname === supabaseUrl.hostname;
-    } catch {
-      return false;
-    }
-  }
-
-  // Memoize image URL processing to avoid recomputation on every render
-  const providerImageUrls = useMemo(() => {
-    try {
-      if (!provider.provider_images) {
-        return [];
-      }
-      let imagesData: { urls?: string[] } = {};
-      if (typeof provider.provider_images === 'string') {
-        try {
-          imagesData = JSON.parse(provider.provider_images) as { urls?: string[] };
-        } catch {
-          imagesData = {};
-        }
-      } else if (Array.isArray(provider.provider_images)) {
-        imagesData.urls = provider.provider_images;
-      } else if (hasUrls(provider.provider_images)) {
-        imagesData = provider.provider_images;
-      }
-      if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
-        const trusted = imagesData.urls.filter(isTrustedUrl);
-        return trusted;
-      }
-      return [];
-    } catch {
-      return [];
-    }
-  }, [provider.provider_images]);
+  const providerImageUrls = useMemo(
+    () => getAllTrustedImageUrls(provider.provider_images),
+    [provider.provider_images],
+  );
 
   const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
   const categoryFallbackImageUrl =
