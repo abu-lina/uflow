@@ -1391,6 +1391,8 @@ export const ur = {
     status: { flagged: 'نشان زد', review: 'جائزے کی ضرورت', clear: 'صاف' },
     risksHeading: 'خطرے کے نشانات',
     noRisks: 'خطرے کا کوئی نشان نہیں ملا۔',
+    noAlcoholSuggestion:
+      'تجویز: گوگل میپس کی جانچ میں الکحل نہیں ملی۔ اگر لاگو ہو تو "الکحل نہیں" خود منتخب کریں۔',
     positivesHeading: 'مثبت اشارے',
     positivesNote: 'یہ حیثیت کو تبدیل نہیں کرتے۔',
     matchedTerm: 'مماثل لفظ',

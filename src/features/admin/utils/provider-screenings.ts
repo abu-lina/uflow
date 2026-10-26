@@ -16,6 +16,8 @@ export type ProviderScreeningsResult =
       status: ScreeningStatus;
       risks: ScreeningFlag[];
       positives: ScreeningFlag[];
+      /** Overall status is clear, Google Maps matched a place and found no alcohol; the admin decides on no_alcohol. */
+      suggestNoAlcohol?: boolean;
     };
 
 const SEVERITY: Record<ScreeningStatus, number> = { clear: 0, review: 1, flagged: 2 };
@@ -50,5 +52,10 @@ export function summarizeScreenings(rows: ScreeningRow[]): ProviderScreeningsRes
       (f.code === 'halal_positive' ? positives : risks).push(f);
     }
   }
-  return { state: 'ready', status, risks, positives };
+  // Only a clear Google Maps screening backs the suggestion; any other flag or status withholds it.
+  const suggestNoAlcohol =
+    status === 'clear' &&
+    latest.has('google_maps_apify') &&
+    !risks.some((f) => f.code === 'alcohol' || f.code === 'no_maps_match');
+  return { state: 'ready', status, risks, positives, suggestNoAlcohol };
 }

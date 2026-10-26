@@ -1404,6 +1404,8 @@ export const de = {
     status: { flagged: 'Auffällig', review: 'Prüfen', clear: 'Unauffällig' },
     risksHeading: 'Risikohinweise',
     noRisks: 'Keine Risikohinweise gefunden.',
+    noAlcoholSuggestion:
+      'Vorschlag: Die Google-Maps-Prüfung hat keinen Alkohol gefunden. Setze „kein Alkohol“ selbst, wenn es zutrifft.',
     positivesHeading: 'Positive Signale',
     positivesNote: 'Diese ändern den Status nicht.',
     matchedTerm: 'Gefundener Begriff',
