@@ -1,8 +1,8 @@
 /**
  * k6 Performance Testing Configuration
- * 
+ *
  * This configuration file sets up k6 for load testing the application.
- * 
+ *
  * Usage:
  *   k6 run --config k6.config.js tests/performance/scenarios.js
  */
@@ -10,35 +10,35 @@
 export const options = {
   // Summary output configuration
   summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)', 'p(99.9)', 'count'],
-  
+
   // Thresholds for performance metrics
   thresholds: {
     // Response time thresholds
     'http_req_duration{status:200}': ['p(95)<1000', 'p(99)<2000', 'avg<500'], // 95% < 1s, 99% < 2s, avg < 500ms
-    'http_req_waiting': ['p(95)<800'], // Time to First Byte < 800ms
-    
+    http_req_waiting: ['p(95)<800'], // Time to First Byte < 800ms
+
     // Error rate thresholds
-    'http_req_failed': ['rate<0.001'], // < 0.1% error rate
+    http_req_failed: ['rate<0.001'], // < 0.1% error rate
     'http_req_failed{status:5xx}': ['rate<0.0001'], // < 0.01% 5xx errors
-    
+
     // Throughput thresholds
-    'http_reqs': ['rate>20'], // At least 20 requests/second
+    http_reqs: ['rate>20'], // At least 20 requests/second
     'http_reqs{status:200}': ['rate>19'], // At least 19 successful requests/second
-    
+
     // Overall success rate
-    'checks': ['rate>0.99'], // > 99% of checks pass
+    checks: ['rate>0.99'], // > 99% of checks pass
   },
-  
+
   // Default tags for all requests
   tags: {
     environment: __ENV.ENV || 'staging',
     test_type: 'performance',
   },
-  
+
   // Output configuration
   summaryTimeUnit: 'ms',
   noConnectionReuse: false,
-  
+
   // Extend default options per scenario
   scenarios: {
     // Scenarios will be defined in individual test files
@@ -62,7 +62,9 @@ export const BASE_URL = __ENV.BASE_URL || 'https://uat.ummahflow.com';
 export const API_BASE_URL = `${BASE_URL}/api`;
 
 // Environment detection
-export const ENVIRONMENT = __ENV.ENV || (BASE_URL.includes('uat') ? 'uat' : BASE_URL.includes('localhost') ? 'local' : 'production');
+export const ENVIRONMENT =
+  __ENV.ENV ||
+  (BASE_URL.includes('uat') ? 'uat' : BASE_URL.includes('localhost') ? 'local' : 'production');
 
 // Test user credentials (should be set via environment variables)
 export const TEST_USER = {
@@ -91,6 +93,14 @@ export const TARGETS = {
 // Should be set via environment variable: TEST_API_KEY
 export const TEST_API_KEY = __ENV.TEST_API_KEY || null;
 
+// Call from setup(): without the key the server answers 403/429, which hides the real cause.
+export function requireTestApiKey() {
+  if (!TEST_API_KEY) {
+    throw new Error('TEST_API_KEY is not set. Run: export TEST_API_KEY=<your-test-api-key>');
+  }
+  return TEST_API_KEY;
+}
+
 // UAT-specific configuration
 export const UAT_CONFIG = {
   baseUrl: 'https://uat.ummahflow.com',
@@ -101,4 +111,3 @@ export const UAT_CONFIG = {
   maxConcurrentUsers: parseInt(__ENV.MAX_CONCURRENT_USERS || '500', 10),
   testDuration: __ENV.TEST_DURATION || '10m',
 };
-

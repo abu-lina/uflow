@@ -19,7 +19,7 @@
 
 import { check, sleep } from 'k6';
 import { Rate, Trend } from 'k6/metrics';
-import { BASE_URL, API_BASE_URL, TEST_API_KEY } from './k6.config.js';
+import { BASE_URL, API_BASE_URL, TEST_API_KEY, requireTestApiKey } from './k6.config.js';
 import {
   signup,
   login,
@@ -315,17 +315,13 @@ export default function () {
  * Setup function - runs once at start
  */
 export function setup() {
+  requireTestApiKey();
   console.log('='.repeat(80));
   console.log(`Starting ${scenario.toUpperCase()} load test`);
   console.log('='.repeat(80));
   console.log(`Target: ${BASE_URL}`);
-  console.log(`Test API Key: ${TEST_API_KEY ? 'Set' : 'NOT SET'}`);
+  console.log('Test API Key: Set');
   console.log('');
-
-  if (!TEST_API_KEY) {
-    console.warn('⚠️  WARNING: TEST_API_KEY not set. Rate limiting may cause failures.');
-    console.warn('   Set with: export TEST_API_KEY=<your-test-api-key>');
-  }
 
   // Verify health before starting
   const health = checkHealth();

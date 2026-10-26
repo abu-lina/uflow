@@ -20,10 +20,10 @@ Tests are still failing with rate limiting and IP blocking because:
 
 ## 🎯 What You Need to Do NOW
 
-### Step 1: Add GitHub Secret (Required)
+### Step 1: Add the `uat` environment secret (Required)
 
-1. Go to: https://github.com/abu-lina/uflow/settings/secrets/actions
-2. Click **New secret** in the `uat` environment
+1. Go to: https://github.com/abu-lina/uflow/settings/environments and open **uat**
+2. Click **Add environment secret**
 3. Add:
    - **Name**: `TEST_API_KEY`
    - **Value**: a random string you generate, for example `openssl rand -hex 16`
@@ -86,7 +86,7 @@ docker logs -f uflow-uat | grep "LOGIN API\|SIGNUP API"
 Look for:
 
 ```
-[LOGIN API] Test API key header received: perf-test...
+[LOGIN API] Test API key header received: <first-chars-of-your-key>...
 [LOGIN API] Expected key set: YES
 [LOGIN API] Test mode active: true
 [LOGIN API] ✅ Test mode enabled, bypassing security checks
@@ -110,7 +110,7 @@ This confirms:
 
 You're very close! Just need to:
 
-1. Add `UAT_TEST_API_KEY` secret to GitHub
+1. Add `TEST_API_KEY` as a secret in the `uat` GitHub environment
 2. Redeploy to UAT
 3. Run tests again
 

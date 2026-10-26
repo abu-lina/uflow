@@ -1,18 +1,24 @@
 /**
  * Authentication Flow Performance Tests
- * 
+ *
  * Tests user authentication flows including:
  * - User signup
  * - User login
  * - Session refresh
  * - Token validation
- * 
+ *
  * Load: 10-20% of total users (5,000-10,000/month)
  */
 
 import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
-import { BASE_URL, API_BASE_URL, options as baseOptions, TEST_API_KEY } from './k6.config.js';
+import {
+  BASE_URL,
+  API_BASE_URL,
+  options as baseOptions,
+  TEST_API_KEY,
+  requireTestApiKey,
+} from './k6.config.js';
 import { signup, login, checkHealth, randomSleep } from './utils.js';
 
 // Custom metrics
@@ -70,9 +76,9 @@ export const options = {
   },
   thresholds: {
     ...baseOptions.thresholds,
-    'auth_signup_success': ['rate>0.95'], // 95% signup success rate
-    'auth_login_success': ['rate>0.98'], // 98% login success rate
-    'auth_errors': ['rate<0.02'], // < 2% auth errors
+    auth_signup_success: ['rate>0.95'], // 95% signup success rate
+    auth_login_success: ['rate>0.98'], // 98% login success rate
+    auth_errors: ['rate<0.02'], // < 2% auth errors
     'http_req_duration{name:signup}': ['p(95)<2000'], // Signup can be slower
     'http_req_duration{name:login}': ['p(95)<1000'], // Login should be fast
   },
@@ -130,7 +136,7 @@ export function testSessionValidation(token) {
   if (!token) return false;
 
   const health = checkHealth();
-  
+
   return check(health, {
     'health check successful': () => health.healthy,
     'health check response time < 500ms': () => health.status < 500,
@@ -145,15 +151,26 @@ function getTestUserEmail(index) {
 }
 
 /**
+ * Fails fast when TEST_API_KEY is missing
+ */
+export function setup() {
+  requireTestApiKey();
+}
+
+/**
  * Main test function
  */
 export default function () {
   // Warn if TEST_API_KEY is not set (test mode won't work)
   if (!TEST_API_KEY) {
-    console.warn('[AUTH TEST] WARNING: TEST_API_KEY not set. Test mode will not be enabled on server.');
-    console.warn('[AUTH TEST] Set TEST_API_KEY environment variable to bypass rate limiting and IP blocking.');
+    console.warn(
+      '[AUTH TEST] WARNING: TEST_API_KEY not set. Test mode will not be enabled on server.',
+    );
+    console.warn(
+      '[AUTH TEST] Set TEST_API_KEY environment variable to bypass rate limiting and IP blocking.',
+    );
   }
-  
+
   // Health check first
   const health = checkHealth();
   check(health, {
@@ -170,27 +187,31 @@ export default function () {
     const testUserIndex = Math.floor(Math.random() * 100);
     const testEmail = getTestUserEmail(testUserIndex);
     const testPassword = 'TestPassword123!';
-    
+
     // Only attempt login if TEST_API_KEY is set (otherwise we'll hit rate limits)
     if (!TEST_API_KEY) {
-      console.warn(`[AUTH TEST] Skipping login test - TEST_API_KEY not set. Run: node tests/performance/setup-test-users.js to create test users first.`);
+      console.warn(
+        `[AUTH TEST] Skipping login test - TEST_API_KEY not set. Run: node tests/performance/setup-test-users.js to create test users first.`,
+      );
       sleep(waitRandom(1, 2));
       return;
     }
-    
+
     const token = testLogin(testEmail, testPassword);
-    
+
     if (token) {
       // Test session validation
       testSessionValidation(token);
-      
+
       // Simulate user session activity
       sleep(waitRandom(1, 3));
     } else {
       // If login failed, it might be because test users don't exist
       // Log a helpful message (but only once to avoid spam)
       if (__VU === 1 && __ITER === 0) {
-        console.warn(`[AUTH TEST] Login failed. Make sure test users exist. Run: node tests/performance/setup-test-users.js`);
+        console.warn(
+          `[AUTH TEST] Login failed. Make sure test users exist. Run: node tests/performance/setup-test-users.js`,
+        );
       }
     }
   }
@@ -203,4 +224,3 @@ export default function () {
 function waitRandom(min, max) {
   return Math.random() * (max - min) + min;
 }
-

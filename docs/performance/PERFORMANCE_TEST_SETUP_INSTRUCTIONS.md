@@ -10,13 +10,13 @@
 
 ## 🔑 Next Step: Configure TEST_API_KEY
 
-The TEST_API_KEY must be set in GitHub Secrets to enable test mode in UAT.
+The TEST_API_KEY must be set as a secret in the `uat` GitHub environment to enable test mode in UAT.
 
-### Step 1: Add GitHub Secret
+### Step 1: Add the environment secret
 
 1. Go to your GitHub repository: https://github.com/abu-lina/uflow
-2. Click **Settings** → **Secrets and variables** → **Actions**
-3. Click **New repository secret**
+2. Click **Settings** → **Environments** → **uat**
+3. Under **Environment secrets**, click **Add environment secret**
 4. Add the following secret:
    - **Name**: `TEST_API_KEY` (in the `uat` environment)
    - **Value**: a random string you generate, for example `openssl rand -hex 16`
@@ -35,8 +35,10 @@ Wait for the "Deploy to UAT" workflow to complete successfully (green checkmark)
 Once deployment is complete, run the tests locally:
 
 ```bash
-# Set the TEST_API_KEY to match what you set in GitHub Secrets
-export TEST_API_KEY=<your-test-api-key> authentication flow tests
+# Set the TEST_API_KEY to match what you set in the uat environment secret
+export TEST_API_KEY=<your-test-api-key>
+
+# Run the k6 authentication flow tests
 k6 run tests/performance/auth-flow.js
 ```
 
