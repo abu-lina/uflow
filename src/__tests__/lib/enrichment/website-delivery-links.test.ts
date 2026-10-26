@@ -96,6 +96,23 @@ describe('#801 only links to a fixed allow-list of platform hosts are staged', (
     expect(links).toEqual([]);
   });
 
+  it('accepts the Austrian Lieferando host but not other brands', () => {
+    const links = extractDeliveryLinksFromHtml(
+      html(
+        'https://www.lieferando.at/speisekarte/wiener-doener',
+        'https://www.takeaway.com/de/speisekarte/other',
+      ),
+      PAGE,
+    );
+    expect(links).toEqual([
+      {
+        platform: 'lieferando',
+        platform_url: 'https://www.lieferando.at/speisekarte/wiener-doener',
+        platform_slug: 'wiener-doener',
+      },
+    ]);
+  });
+
   it('accepts subdomains of allowed hosts and ignores relative links', () => {
     const links = extractDeliveryLinksFromHtml(
       html('https://order.wolt.com/de/deu/berlin/restaurant/x', '/speisekarte/local'),
@@ -123,16 +140,28 @@ describe('#801 fetch is https only and blocks private or internal addresses', ()
     'fe80::1',
     'fc00::1',
     '::ffff:127.0.0.1',
+    '::ffff:7f00:1',
+    '::127.0.0.1',
+    '::7f00:1',
+    '64:ff9b::7f00:1',
+    '64:ff9b::a00:1',
+    '2002:7f00:1::',
+    '2002:c0a8:101::1',
   ])('treats %s as private', (ip) => {
     expect(isPrivateAddress(ip)).toBe(true);
   });
 
-  it.each(['93.184.216.34', '8.8.8.8', '172.32.0.1', '2606:4700:4700::1111'])(
-    'treats %s as public',
-    (ip) => {
-      expect(isPrivateAddress(ip)).toBe(false);
-    },
-  );
+  it.each([
+    '93.184.216.34',
+    '8.8.8.8',
+    '172.32.0.1',
+    '2606:4700:4700::1111',
+    '64:ff9b::808:808',
+    '2002:808:808::1',
+    '::ffff:808:808',
+  ])('treats %s as public', (ip) => {
+    expect(isPrivateAddress(ip)).toBe(false);
+  });
 
   it('rejects http URLs without fetching', async () => {
     const fetchImpl = vi.fn();

@@ -1,6 +1,8 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  createWebsiteLinkDeps,
   runScreening,
   type ApifyPlace,
   type ScreeningProvider,
@@ -171,5 +173,47 @@ describe('#801 dry-run writes nothing', () => {
     const r = await run(provider(), [place()], { apply: false });
     expect(r.stage).not.toHaveBeenCalled();
     expect(r.logs.join('\n')).toContain('WOULD STAGE');
+  });
+});
+
+// Minimal chainable Supabase fake: every filter returns the builder, awaiting it yields the rows.
+function fakeClient(rows: Record<string, unknown[]>) {
+  const filters: Array<{ table: string; method: string; args: unknown[] }> = [];
+  const client = {
+    from(table: string) {
+      const builder: Record<string, unknown> = {
+        then: (resolve: (v: unknown) => void) => resolve({ data: rows[table] ?? [], error: null }),
+      };
+      for (const method of ['select', 'eq', 'like', 'in']) {
+        builder[method] = (...args: unknown[]) => {
+          filters.push({ table, method, args });
+          return builder;
+        };
+      }
+      return builder;
+    },
+  };
+  return { client: client as unknown as SupabaseClient, filters };
+}
+
+describe('#801 review: rejected candidates do not come back on the next run', () => {
+  it('treats a platform with a rejected provider_website candidate as already handled', async () => {
+    const { client, filters } = fakeClient({
+      provider_delivery_links: [{ platform: 'ubereats' }],
+      enrichment_candidates: [{ source: 'provider_website:wolt' }],
+    });
+    const held = await createWebsiteLinkDeps(client).existingPlatforms('p1');
+
+    expect([...held].sort()).toEqual(['ubereats', 'wolt']);
+    expect(filters).toContainEqual({
+      table: 'enrichment_candidates',
+      method: 'eq',
+      args: ['status', 'rejected'],
+    });
+    expect(filters).toContainEqual({
+      table: 'enrichment_candidates',
+      method: 'like',
+      args: ['source', 'provider_website:%'],
+    });
   });
 });
