@@ -959,6 +959,20 @@ export const ar = {
       saveAria: 'حفظ الصور',
       success: 'تم تحديث الصور بنجاح!',
       error: 'خطأ في حفظ الصور',
+      candidates: {
+        title: 'اقتراحات الصور المعلقة',
+        loading: 'جارٍ تحميل الاقتراحات...',
+        genericError: 'حدث خطأ ما',
+        alt: 'اقتراح الصورة {{index}}',
+        approve: 'موافقة',
+        reject: 'رفض',
+        approveAria: 'الموافقة على الصورة {{index}}',
+        rejectAria: 'رفض الصورة {{index}}',
+        source: {
+          google_maps_apify: 'Google Maps',
+          unsplash: 'Unsplash',
+        },
+      },
     },
   },
   legal: {

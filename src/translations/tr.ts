@@ -970,6 +970,20 @@ export const tr = {
       saveAria: 'Resimleri kaydet',
       success: 'Resimler başarıyla güncellendi!',
       error: 'Resimler kaydedilirken hata',
+      candidates: {
+        title: 'Bekleyen görsel önerileri',
+        loading: 'Öneriler yükleniyor...',
+        genericError: 'Bir şeyler ters gitti',
+        alt: 'Görsel önerisi {{index}}',
+        approve: 'Onayla',
+        reject: 'Reddet',
+        approveAria: '{{index}}. görseli onayla',
+        rejectAria: '{{index}}. görseli reddet',
+        source: {
+          google_maps_apify: 'Google Maps',
+          unsplash: 'Unsplash',
+        },
+      },
     },
   },
   legal: {

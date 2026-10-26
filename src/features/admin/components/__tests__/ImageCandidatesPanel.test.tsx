@@ -99,7 +99,7 @@ describe('ImageCandidatesPanel (#795)', () => {
     const [, init] = fetchMock.mock.calls[1];
     expect(init.method).toBe('POST');
     expect(JSON.parse(init.body)).toEqual({ action: 'approve', candidateId: 'c1' });
-    expect(onApproved).toHaveBeenCalledTimes(1);
+    expect(onApproved).toHaveBeenCalledWith('https://abc.supabase.co/storage/c1.jpg');
   });
 
   it('reject removes the thumbnail without changing the provider', async () => {

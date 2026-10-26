@@ -982,6 +982,20 @@ export const de = {
       saveAria: 'Bilder speichern',
       success: 'Bilder erfolgreich aktualisiert!',
       error: 'Fehler beim Speichern der Bilder',
+      candidates: {
+        title: 'Ausstehende Bildvorschläge',
+        loading: 'Vorschläge werden geladen...',
+        genericError: 'Etwas ist schiefgelaufen',
+        alt: 'Bildvorschlag {{index}}',
+        approve: 'Genehmigen',
+        reject: 'Ablehnen',
+        approveAria: 'Bild {{index}} genehmigen',
+        rejectAria: 'Bild {{index}} ablehnen',
+        source: {
+          google_maps_apify: 'Google Maps',
+          unsplash: 'Unsplash',
+        },
+      },
     },
   },
   legal: {
