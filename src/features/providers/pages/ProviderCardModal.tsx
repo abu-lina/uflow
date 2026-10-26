@@ -21,7 +21,7 @@ import {
   isAddressNavigable,
   normalizeWebsiteUrl,
 } from '@/utils/navigationUtils';
-import { PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { PLACEHOLDER_IMAGE, getAllTrustedImageUrls } from '@/utils/imageUtils';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { Skeleton } from '@/components/ui/skeleton/Skeleton';
 
@@ -122,47 +122,10 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
   const [isTransitioning, setIsTransitioning] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  function isTrustedUrl(url: string) {
-    try {
-      const { hostname } = new URL(url);
-      const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
-      return hostname === supabaseUrl.hostname;
-    } catch {
-      return false;
-    }
-  }
-
   // Memoize image URL processing to avoid recomputation on every render
   const allImageUrls = useMemo(() => {
-    try {
-      if (!provider.provider_images) {
-        return [PLACEHOLDER_IMAGE];
-      }
-      let imagesData: { urls?: string[] } = {};
-      if (typeof provider.provider_images === 'string') {
-        try {
-          imagesData = JSON.parse(provider.provider_images) as { urls?: string[] };
-        } catch {
-          imagesData = {};
-        }
-      } else if (Array.isArray(provider.provider_images)) {
-        imagesData.urls = provider.provider_images;
-      } else if (
-        typeof provider.provider_images === 'object' &&
-        provider.provider_images !== null &&
-        'urls' in provider.provider_images &&
-        Array.isArray((provider.provider_images as { urls?: unknown }).urls)
-      ) {
-        imagesData = provider.provider_images as { urls: string[] };
-      }
-      if (imagesData.urls && Array.isArray(imagesData.urls) && imagesData.urls.length > 0) {
-        const trusted = imagesData.urls.filter(isTrustedUrl);
-        return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
-      }
-      return [PLACEHOLDER_IMAGE];
-    } catch {
-      return [PLACEHOLDER_IMAGE];
-    }
+    const trusted = getAllTrustedImageUrls(provider.provider_images);
+    return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
   }, [provider.provider_images]);
 
   const mainImageUrl = allImageUrls[selectedImageIdx] || PLACEHOLDER_IMAGE;
@@ -732,23 +695,23 @@ export function ProviderCardModal({ open, onClose, provider }: ProviderCardModal
               </div>
             </div>
           </div>
-          </div>
-          {/* Sticky ProviderActionBar at the bottom on mobile */}
-          <div className="pb-safe fixed bottom-0 left-0 right-0 z-[120] bg-white px-6 pt-4 sm:hidden">
-            <ProviderActionBar
-              isSaved={isSaved}
-              phoneNumber={provider.contact_phone || undefined}
-              websiteUrl={
-                provider.social_website
-                  ? normalizeWebsiteUrl(provider.social_website) || undefined
-                  : undefined
-              }
-              onCall={handleCall}
-              onSave={handleSave}
-              onShare={handleShare}
-              onWebsite={handleWebsite}
-            />
-          </div>
+        </div>
+        {/* Sticky ProviderActionBar at the bottom on mobile */}
+        <div className="pb-safe fixed bottom-0 left-0 right-0 z-[120] bg-white px-6 pt-4 sm:hidden">
+          <ProviderActionBar
+            isSaved={isSaved}
+            phoneNumber={provider.contact_phone || undefined}
+            websiteUrl={
+              provider.social_website
+                ? normalizeWebsiteUrl(provider.social_website) || undefined
+                : undefined
+            }
+            onCall={handleCall}
+            onSave={handleSave}
+            onShare={handleShare}
+            onWebsite={handleWebsite}
+          />
+        </div>
       </div>
     </>,
     document.body,

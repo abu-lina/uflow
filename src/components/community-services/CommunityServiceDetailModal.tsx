@@ -35,6 +35,7 @@ import {
 import {
   getAllTrustedImageUrlsWithFallback,
   PLACEHOLDER_IMAGE,
+  isAllowedImageUrl,
   type CategoryImages,
 } from '@/utils/imageUtils';
 
@@ -68,17 +69,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
     },
   });
 
-  // Only allow images from trusted domains
-  function isTrustedUrl(url: string) {
-    try {
-      const { hostname } = new URL(url);
-      const supabaseUrl = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || '');
-      return hostname === supabaseUrl.hostname;
-    } catch {
-      return false;
-    }
-  }
-
   const allImageUrls = (() => {
     try {
       if (
@@ -87,7 +77,7 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
       ) {
         return [PLACEHOLDER_IMAGE];
       }
-      const trusted = communityService.community_service_images.filter(isTrustedUrl);
+      const trusted = communityService.community_service_images.filter(isAllowedImageUrl);
       return trusted.length > 0 ? trusted : [PLACEHOLDER_IMAGE];
     } catch {
       return [PLACEHOLDER_IMAGE];

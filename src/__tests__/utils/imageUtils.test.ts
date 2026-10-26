@@ -20,18 +20,18 @@ describe('getFirstImageUrl', () => {
   });
 
   it('parses valid JSON string and returns first URL', () => {
-    const input = '{"urls":["a.jpg","b.jpg"]}';
-    expect(getFirstImageUrl(input)).toBe('a.jpg');
+    const input = '{"urls":["https://x.supabase.co/a.jpg","https://x.supabase.co/b.jpg"]}';
+    expect(getFirstImageUrl(input)).toBe('https://x.supabase.co/a.jpg');
   });
 
   it('uses array as urls directly', () => {
-    const input: ProviderImages = ['a.jpg'];
-    expect(getFirstImageUrl(input)).toBe('a.jpg');
+    const input: ProviderImages = ['https://x.supabase.co/a.jpg'];
+    expect(getFirstImageUrl(input)).toBe('https://x.supabase.co/a.jpg');
   });
 
   it('extracts first url from object with urls array', () => {
-    const input: ProviderImages = { urls: ['a.jpg'] };
-    expect(getFirstImageUrl(input)).toBe('a.jpg');
+    const input: ProviderImages = { urls: ['https://x.supabase.co/a.jpg'] };
+    expect(getFirstImageUrl(input)).toBe('https://x.supabase.co/a.jpg');
   });
 
   it('returns PLACEHOLDER_IMAGE when urls array is empty', () => {
@@ -62,18 +62,21 @@ describe('getAllTrustedImageUrls', () => {
   });
 
   it('parses valid JSON string and returns urls', () => {
-    const input = '{"urls":["a.jpg","b.jpg"]}';
-    expect(getAllTrustedImageUrls(input)).toEqual(['a.jpg', 'b.jpg']);
+    const input = '{"urls":["https://x.supabase.co/a.jpg","https://x.supabase.co/b.jpg"]}';
+    expect(getAllTrustedImageUrls(input)).toEqual([
+      'https://x.supabase.co/a.jpg',
+      'https://x.supabase.co/b.jpg',
+    ]);
   });
 
   it('uses array directly', () => {
-    const input: ProviderImages = ['a.jpg'];
-    expect(getAllTrustedImageUrls(input)).toEqual(['a.jpg']);
+    const input: ProviderImages = ['https://x.supabase.co/a.jpg'];
+    expect(getAllTrustedImageUrls(input)).toEqual(['https://x.supabase.co/a.jpg']);
   });
 
   it('extracts urls from object with urls array', () => {
-    const input: ProviderImages = { urls: ['a.jpg'] };
-    expect(getAllTrustedImageUrls(input)).toEqual(['a.jpg']);
+    const input: ProviderImages = { urls: ['https://x.supabase.co/a.jpg'] };
+    expect(getAllTrustedImageUrls(input)).toEqual(['https://x.supabase.co/a.jpg']);
   });
 
   it('returns empty array when urls array is empty', () => {
