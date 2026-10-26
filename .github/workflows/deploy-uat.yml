@@ -176,7 +176,6 @@ jobs:
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
               -e TEST_API_KEY="${{ secrets.TEST_API_KEY }}" \
               -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
-              -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
               -e APP_ENV=uat \
               -e MISTRAL_API_KEY="${{ secrets.MISTRAL_API_KEY }}" \
@@ -232,7 +231,6 @@ jobs:
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
               -e TEST_API_KEY="${{ secrets.TEST_API_KEY }}" \
               -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
-              -e WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}" \
               -e DISABLE_PWA=false \
               -e APP_ENV=uat \
               -e MISTRAL_API_KEY="${{ secrets.MISTRAL_API_KEY }}" \

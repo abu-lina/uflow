@@ -1,12 +1,12 @@
 /**
  * Recreate Test Users Script
- * 
+ *
  * Completely deletes and recreates all test users to ensure a clean state
  * with correct passwords and confirmation status.
- * 
+ *
  * Usage:
  *   node tests/performance/recreate-test-users.js
- * 
+ *
  * Environment variables required:
  *   NEXT_PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
@@ -44,8 +44,8 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !SUPABASE_ANON_KEY) {
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 /**
@@ -55,32 +55,33 @@ async function findAllTestUsers() {
   const testUsers = [];
   let page = 1;
   const perPage = 1000;
-  
+
   console.log('🔍 Finding all test users...');
-  
+
   while (true) {
     const { data, error } = await supabase.auth.admin.listUsers({
       page,
-      perPage
+      perPage,
     });
-    
+
     if (error) {
       throw error;
     }
-    
-    const found = data.users.filter(u => 
-      u.email && u.email.startsWith(`${TEST_EMAIL_PREFIX}-`) && u.email.endsWith('@example.com')
+
+    const found = data.users.filter(
+      (u) =>
+        u.email && u.email.startsWith(`${TEST_EMAIL_PREFIX}-`) && u.email.endsWith('@example.com'),
     );
-    
+
     testUsers.push(...found);
-    
+
     if (data.users.length < perPage) {
       break;
     }
-    
+
     page++;
   }
-  
+
   console.log(`   Found ${testUsers.length} existing test users\n`);
   return testUsers;
 }
@@ -93,12 +94,12 @@ async function deleteAllTestUsers(users) {
     console.log('✓ No existing test users to delete\n');
     return;
   }
-  
+
   console.log(`🗑️  Deleting ${users.length} existing test users...`);
-  
+
   let deleted = 0;
   let failed = 0;
-  
+
   for (const user of users) {
     try {
       const { error } = await supabase.auth.admin.deleteUser(user.id);
@@ -113,7 +114,7 @@ async function deleteAllTestUsers(users) {
       failed++;
     }
   }
-  
+
   console.log(`   ✅ Deleted: ${deleted} users`);
   if (failed > 0) {
     console.log(`   ❌ Failed: ${failed} users`);
@@ -126,7 +127,7 @@ async function deleteAllTestUsers(users) {
  */
 async function createTestUser(index) {
   const email = `${TEST_EMAIL_PREFIX}-${index}@example.com`;
-  
+
   try {
     const { data, error } = await supabase.auth.admin.createUser({
       email,
@@ -136,14 +137,14 @@ async function createTestUser(index) {
         language: 'en',
         preferred_language: 'en',
         email_confirmed: true,
-        email_verified: true
-      }
+        email_verified: true,
+      },
     });
-    
+
     if (error) {
       return { email, success: false, error: error.message };
     }
-    
+
     return { email, success: true, id: data.user.id };
   } catch (error) {
     return { email, success: false, error: error.message };
@@ -155,23 +156,23 @@ async function createTestUser(index) {
  */
 async function createAllTestUsers() {
   console.log(`👥 Creating ${NUM_TEST_USERS} fresh test users...\n`);
-  
+
   const results = [];
   let created = 0;
   let failed = 0;
-  
+
   // Create in batches to avoid overwhelming the API
   const BATCH_SIZE = 10;
   for (let i = 0; i < NUM_TEST_USERS; i += BATCH_SIZE) {
     const batch = [];
-    for (let j = 0; j < BATCH_SIZE && (i + j) < NUM_TEST_USERS; j++) {
+    for (let j = 0; j < BATCH_SIZE && i + j < NUM_TEST_USERS; j++) {
       batch.push(createTestUser(i + j));
     }
-    
+
     const batchResults = await Promise.all(batch);
     results.push(...batchResults);
-    
-    batchResults.forEach(result => {
+
+    batchResults.forEach((result) => {
       if (result.success) {
         created++;
       } else {
@@ -179,21 +180,21 @@ async function createAllTestUsers() {
         console.error(`   ❌ ${result.email}: ${result.error}`);
       }
     });
-    
+
     const progress = Math.min(i + BATCH_SIZE, NUM_TEST_USERS);
     process.stdout.write(`\r   Progress: ${progress}/${NUM_TEST_USERS} users created...`);
-    
+
     // Small delay between batches to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  
+
   console.log('\n');
   console.log(`   ✅ Created: ${created} users`);
   if (failed > 0) {
     console.log(`   ❌ Failed: ${failed} users`);
   }
   console.log('');
-  
+
   return results;
 }
 
@@ -202,27 +203,27 @@ async function createAllTestUsers() {
  */
 async function verifyLogins(sampleSize = 10) {
   console.log(`🧪 Verifying login for ${sampleSize} sample users...\n`);
-  
+
   const supabaseAnon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   });
-  
+
   const results = [];
-  const testIndices = Array.from({ length: sampleSize }, (_, i) => 
-    Math.floor(Math.random() * NUM_TEST_USERS)
+  const testIndices = Array.from({ length: sampleSize }, (_, i) =>
+    Math.floor(Math.random() * NUM_TEST_USERS),
   );
-  
+
   for (const index of testIndices) {
     const email = `${TEST_EMAIL_PREFIX}-${index}@example.com`;
-    
+
     const { data, error } = await supabaseAnon.auth.signInWithPassword({
       email,
       password: TEST_PASSWORD,
     });
-    
+
     if (error) {
       console.log(`   ❌ ${email}: ${error.message}`);
       results.push({ email, success: false, error: error.message });
@@ -235,10 +236,10 @@ async function verifyLogins(sampleSize = 10) {
       results.push({ email, success: false, error: 'No session' });
     }
   }
-  
-  const successCount = results.filter(r => r.success).length;
+
+  const successCount = results.filter((r) => r.success).length;
   console.log(`\n   Login verification: ${successCount}/${sampleSize} successful\n`);
-  
+
   return successCount === sampleSize;
 }
 
@@ -248,51 +249,51 @@ async function verifyLogins(sampleSize = 10) {
 async function main() {
   console.log('🔄 Recreating Test Users for Performance Testing\n');
   console.log(`Environment: ${SUPABASE_URL}\n`);
-  
+
   try {
     // Step 1: Find existing test users
     const existingUsers = await findAllTestUsers();
-    
+
     // Step 2: Delete all existing test users
     await deleteAllTestUsers(existingUsers);
-    
+
     // Step 3: Wait briefly for deletion to propagate
     console.log('⏳ Waiting 10 seconds for deletion to propagate...\n');
-    await new Promise(resolve => setTimeout(resolve, 10000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 10000));
+
     // Step 4: Create fresh test users
     const creationResults = await createAllTestUsers();
-    
-    const successCount = creationResults.filter(r => r.success).length;
-    
+
+    const successCount = creationResults.filter((r) => r.success).length;
+
     if (successCount < NUM_TEST_USERS * 0.95) {
       console.log('❌ Creation failed for too many users. Aborting.');
       process.exit(1);
     }
-    
+
     // Step 5: Wait for Supabase to fully process new users
     console.log('⏳ Waiting 30 seconds for Supabase to process new users...\n');
-    await new Promise(resolve => setTimeout(resolve, 30000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 30000));
+
     // Step 6: Verify logins work
     const allLoginsWork = await verifyLogins(10);
-    
+
     if (!allLoginsWork) {
       console.log('⚠️  Some logins failed. Wait 5 minutes and try running verify-test-users.js');
       process.exit(1);
     }
-    
+
     // Success
     console.log('✅ Test users recreated successfully!\n');
     console.log('📋 Test User Information:');
     console.log(`   Count: ${successCount} users`);
-    console.log(`   Email pattern: ${TEST_EMAIL_PREFIX}-{0-${NUM_TEST_USERS-1}}@example.com`);
+    console.log(`   Email pattern: ${TEST_EMAIL_PREFIX}-{0-${NUM_TEST_USERS - 1}}@example.com`);
     console.log(`   Password: ${TEST_PASSWORD}`);
     console.log(`   All users are confirmed and ready for testing\n`);
     console.log('🚀 You can now run performance tests:\n');
-    console.log('   TEST_API_KEY=perf-test-2024-uat k6 run tests/performance/auth-flow.js');
-    console.log('   TEST_API_KEY=perf-test-2024-uat k6 run tests/performance/realistic-load-test.js\n');
-    
+    console.log('   (with TEST_API_KEY exported in your shell)');
+    console.log('   k6 run tests/performance/auth-flow.js');
+    console.log('   k6 run tests/performance/realistic-load-test.js\n');
   } catch (error) {
     console.error('❌ Fatal error:', error);
     process.exit(1);
@@ -300,7 +301,10 @@ async function main() {
 }
 
 // Run if executed directly
-if (import.meta.url === `file://${process.argv[1]}` || import.meta.url.endsWith('recreate-test-users.js')) {
+if (
+  import.meta.url === `file://${process.argv[1]}` ||
+  import.meta.url.endsWith('recreate-test-users.js')
+) {
   main();
 }
 
