@@ -14,6 +14,7 @@ env:
 jobs:
   deploy:
     name: Build & Deploy to Production
+    environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -83,7 +84,6 @@ jobs:
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
             NEXT_PUBLIC_SITE_URL=https://ummahflow.com
             NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
-            NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED=${{ secrets.NEXT_PUBLIC_FEATURE_ISAPPLAUNCHED }}
             DISABLE_PWA=false
           platforms: linux/amd64
 
