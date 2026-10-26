@@ -90,6 +90,7 @@ jobs:
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
             NEXT_PUBLIC_SITE_URL=https://uat.ummahflow.com
             NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+            NEXT_PUBLIC_VAPID_PUBLIC_KEY=${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
             DISABLE_PWA=false
           platforms: linux/amd64
 
@@ -174,6 +175,9 @@ jobs:
               -e NEXT_PUBLIC_SITE_URL="https://uat.ummahflow.com" \
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              -e NEXT_PUBLIC_VAPID_PUBLIC_KEY="${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" \
+              -e VAPID_PRIVATE_KEY="${{ secrets.VAPID_PRIVATE_KEY }}" \
+              -e VAPID_EMAIL="${{ secrets.VAPID_EMAIL }}" \
               -e TEST_API_KEY="${{ secrets.TEST_API_KEY }}" \
               -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
               -e DISABLE_PWA=false \
@@ -229,6 +233,9 @@ jobs:
               -e NEXT_PUBLIC_SITE_URL="https://uat.ummahflow.com" \
               -e NEXT_PUBLIC_TURNSTILE_SITE_KEY="${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}" \
               -e TURNSTILE_SECRET_KEY="${{ secrets.TURNSTILE_SECRET_KEY }}" \
+              -e NEXT_PUBLIC_VAPID_PUBLIC_KEY="${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}" \
+              -e VAPID_PRIVATE_KEY="${{ secrets.VAPID_PRIVATE_KEY }}" \
+              -e VAPID_EMAIL="${{ secrets.VAPID_EMAIL }}" \
               -e TEST_API_KEY="${{ secrets.TEST_API_KEY }}" \
               -e ADMIN_DEBUG_KEY="${{ secrets.ADMIN_DEBUG_KEY }}" \
               -e DISABLE_PWA=false \

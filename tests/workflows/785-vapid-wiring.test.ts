@@ -8,7 +8,7 @@ const deploys = ['deploy-uat.yml', 'deploy-hetzner.yml'];
 
 // A docker run command runs from "docker run" to the first line that doesn't end in a backslash.
 const dockerRuns = (wf: string): string[] =>
-  Array.from(wf.matchAll(/docker run[^\n]*(?:\\\n[^\n]*)*/g), (m) => m[0]);
+  Array.from(wf.matchAll(/docker run[^\n]*\\\n(?:[^\n]*\\\n)*[^\n]*/g), (m) => m[0]);
 
 const buildArgs = (wf: string): string => wf.match(/build-args: \|\n((?: {12}.+\n?)+)/)?.[1] ?? '';
 
