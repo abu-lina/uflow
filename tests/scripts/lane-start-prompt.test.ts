@@ -11,6 +11,7 @@ import {
   laneSh,
   shellQuote,
 } from './helpers/lane';
+import { spawnTestTimeoutMs } from './helpers/timeout';
 
 type PromptOutcome = 'working' | 'stalled' | 'failed';
 
@@ -82,7 +83,7 @@ const afterStart = (calls: string[]) =>
   calls.slice(calls.findIndex((c) => c.startsWith('agent start')) + 1);
 const prompts = (calls: string[]) => calls.filter((c) => c.startsWith('agent prompt'));
 
-describe('lane start prompt race (#676)', () => {
+describe('lane start prompt race (#676)', { timeout: spawnTestTimeoutMs }, () => {
   for (const shell of ['bash', 'zsh'] as const) {
     describe(shell, () => {
       it('no prompt before ready: a stalled first prompt waits for the agent and re-sends once', () => {

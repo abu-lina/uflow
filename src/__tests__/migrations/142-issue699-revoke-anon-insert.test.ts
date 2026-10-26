@@ -32,6 +32,7 @@ describe('migration 142: revoke anon INSERT on offers and needs (#699)', () => {
   let db: PGlite;
   let before: { authenticated: unknown; service_role: unknown; policies: unknown };
 
+  // Booting PGlite (WASM Postgres) can exceed the 10s hook default under full-suite load.
   beforeAll(async () => {
     db = new PGlite();
     await db.exec(SCHEMA);
@@ -42,7 +43,7 @@ describe('migration 142: revoke anon INSERT on offers and needs (#699)', () => {
       policies: (await policies()).rows,
     };
     await db.exec(MIGRATION);
-  });
+  }, 60_000);
 
   it('1. anon has no INSERT grant on offers or needs', async () => {
     const res = await db.query(

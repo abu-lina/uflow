@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { spawnTestTimeoutMs } from './helpers/timeout';
 
 const repoRoot = path.resolve(__dirname, '../..');
 const guard = path.join(repoRoot, 'scripts/check-staged-size.sh');
@@ -11,7 +12,7 @@ function checkIgnore(p: string): number {
   return spawnSync('git', ['check-ignore', '-q', '--', p], { cwd: repoRoot }).status ?? -1;
 }
 
-describe('media ignore rules', () => {
+describe('media ignore rules', { timeout: spawnTestTimeoutMs }, () => {
   it.each([
     'video/brand-video/public/audio/the-middle.mp3',
     'imports/The Middle (Nasheed Background) - Vocals Only Halal Beats Type #halaltrax - Halal Trax.mp3',
@@ -45,7 +46,7 @@ describe('media ignore rules', () => {
   });
 });
 
-describe('pre-commit size guard', () => {
+describe('pre-commit size guard', { timeout: spawnTestTimeoutMs }, () => {
   let dir: string;
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir, stdio: 'pipe' });
   const run = () => spawnSync('bash', [guard], { cwd: dir, encoding: 'utf8' });

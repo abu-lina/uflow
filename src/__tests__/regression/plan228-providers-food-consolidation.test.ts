@@ -17,6 +17,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { getFileInfo } from 'prettier';
 
 const ROOT = resolve(__dirname, '../../../');
 
@@ -342,13 +343,10 @@ describe('review findings: dead /providers checks removed', () => {
       );
     });
 
-    it('ignores public/manifest.json in Prettier', () => {
-      const fileInfo = JSON.parse(
-        execFileSync('npx', ['prettier', '--file-info', 'public/manifest.json'], {
-          cwd: ROOT,
-          encoding: 'utf-8',
-        }),
-      );
+    it('ignores public/manifest.json in Prettier', async () => {
+      const fileInfo = await getFileInfo(resolve(ROOT, 'public/manifest.json'), {
+        ignorePath: resolve(ROOT, '.prettierignore'),
+      });
       expect(fileInfo.ignored).toBe(true);
     });
   });

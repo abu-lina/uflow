@@ -115,6 +115,7 @@ const junctionCount = (providerId: string) =>
   );
 
 describe('migration 139 — provider_categories RLS (executed against Postgres)', () => {
+  // Booting PGlite (WASM Postgres) can exceed the 10s hook default under full-suite load.
   beforeAll(async () => {
     db = new PGlite();
     await db.exec(SCHEMA);
@@ -151,7 +152,7 @@ describe('migration 139 — provider_categories RLS (executed against Postgres)'
 
   afterAll(async () => {
     await db?.close();
-  });
+  }, 60_000);
 
   it('anonymous can SELECT junction rows of an approved provider (case 37)', async () => {
     const n = await asCaller('anon', null, async () => (await junctionCount(APPROVED))[0].n);
