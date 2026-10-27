@@ -24,11 +24,13 @@ const provider = (over: Partial<LinkProvider> = {}): LinkProvider => ({
   ...over,
 });
 
+type FetchPage = (url: string) => Promise<{ html: string; url: string }>;
+
 interface Opts {
   providers?: LinkProvider[];
   held?: Record<string, string[]>;
   apply?: boolean;
-  fetchPage?: ReturnType<typeof vi.fn>;
+  fetchPage?: FetchPage;
 }
 
 async function run(opts: Opts = {}) {
@@ -38,7 +40,7 @@ async function run(opts: Opts = {}) {
     existingPlatforms: vi.fn(async (id: string) => new Set(opts.held?.[id] ?? [])),
     writeLink,
   };
-  const fetchPage = opts.fetchPage ?? vi.fn(async () => ({ html: PAGE_HTML, url: SITE }));
+  const fetchPage = vi.fn(opts.fetchPage ?? (async () => ({ html: PAGE_HTML, url: SITE })));
   const logs: string[] = [];
   const summary = await runApplyLinks({
     store,
@@ -79,7 +81,7 @@ describe('apply website delivery links (#806)', () => {
   });
 
   it('2: ignores links the existing URL checks reject', async () => {
-    const fetchPage = vi.fn(async () => ({
+    const fetchPage = vi.fn<FetchPage>(async () => ({
       html: '<a href="http://wolt.com/de/deu/berlin/restaurant/x">x</a><a href="https://evil.example/wolt.com">y</a>',
       url: SITE,
     }));
@@ -115,7 +117,7 @@ describe('apply website delivery links (#806)', () => {
 
   it('7: a fetch failure logs a WARN and does not fail the run', async () => {
     const fetchPage = vi
-      .fn()
+      .fn<FetchPage>()
       .mockRejectedValueOnce(new Error('unable to verify the first certificate'))
       .mockResolvedValueOnce({ html: PAGE_HTML, url: SITE });
     const { summary, logs, writeLink } = await run({
