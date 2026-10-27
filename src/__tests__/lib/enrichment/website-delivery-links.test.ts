@@ -340,3 +340,34 @@ describe('#806 links written without review must point at one venue page', () =>
     ]);
   });
 });
+
+describe('#806 platform paths are anchored to the real venue URL shapes', () => {
+  const extract = (href: string) => extractDeliveryLinksFromHtml(html(href), PAGE);
+
+  it.each([
+    ['https://wolt.com/anything/restaurant/x'],
+    ['https://wolt.com/blog/de/deu/berlin/restaurant/x'],
+    ['https://wolt.com/de/deu/restaurant/x'],
+    ['https://wolt.com/de/deu/berlin/restaurant/'],
+    ['https://wolt.com/de/deu/berlin/restaurant/x/y'],
+    ['https://www.lieferando.de/foo/speisekarte/x'],
+    ['https://www.lieferando.de/speisekarte/'],
+    ['https://www.ubereats.com/a/b/store/x'],
+    ['https://www.ubereats.com/de/store/'],
+    ['https://wolt.com/de/deu/berlin/restaurant/%2e%2e'],
+    ['https://wolt.com/de/deu/berlin/restaurant/a%2Fb'],
+  ])('rejects %s', (href) => {
+    expect(extract(href)).toEqual([]);
+  });
+
+  it.each([
+    ['https://wolt.com/de/deu/berlin/restaurant/x', 'wolt', 'x'],
+    ['https://wolt.com/en/aut/vienna/venue/y', 'wolt', 'y'],
+    ['https://www.lieferando.de/speisekarte/z', 'lieferando', 'z'],
+    ['https://www.lieferando.at/speisekarte/z/', 'lieferando', 'z'],
+    ['https://www.ubereats.com/store/s/abc', 'ubereats', 's'],
+    ['https://www.ubereats.com/de-en/store/s/abc', 'ubereats', 's'],
+  ])('accepts %s', (href, platform, slug) => {
+    expect(extract(href)).toMatchObject([{ platform, platform_slug: slug }]);
+  });
+});
