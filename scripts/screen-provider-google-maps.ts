@@ -47,8 +47,8 @@ import {
   buildWebsiteDeliveryCandidate,
   extractDeliveryLinksFromHtml,
   fetchPublicPage,
-  WEBSITE_SOURCE_PREFIX,
 } from '../src/lib/enrichment/website-delivery-links';
+import { loadHeldPlatforms } from '../src/lib/enrichment/held-delivery-platforms';
 
 export type { ApifyPlace };
 
@@ -406,29 +406,12 @@ export function createSupabaseStore(supabase: SupabaseClient): ScreeningStore {
 export function createWebsiteLinkDeps(supabase: SupabaseClient): WebsiteLinkDeps {
   return {
     fetchPage: (url) => fetchPublicPage(url),
-    async existingPlatforms(providerId) {
-      const { data, error } = await supabase
-        .from('provider_delivery_links')
-        .select('platform')
-        .eq('provider_id', providerId);
-      if (error) throw new Error(`Failed to load delivery links: ${error.message}`);
-      const held = new Set((data ?? []).map((r) => r.platform as string));
-
-      // The stage dedupe ignores rejected rows; skip those platforms so a rejection sticks.
-      const { data: rejected, error: rejectedError } = await supabase
-        .from('enrichment_candidates')
-        .select('source')
-        .eq('provider_id', providerId)
-        .eq('field_name', 'delivery_links')
-        .eq('status', 'rejected')
-        .like('source', `${WEBSITE_SOURCE_PREFIX}:%`);
-      if (rejectedError)
-        throw new Error(`Failed to load rejected candidates: ${rejectedError.message}`);
-      for (const row of rejected ?? []) {
-        held.add((row.source as string).slice(WEBSITE_SOURCE_PREFIX.length + 1));
-      }
-      return held;
-    },
+    // The stage dedupe ignores rejected rows; skip those platforms so a rejection sticks.
+    existingPlatforms: (providerId) =>
+      loadHeldPlatforms(supabase, providerId, {
+        candidateStatus: 'rejected',
+        websiteSourceOnly: true,
+      }),
     stage: (row) => stageImageCandidate(supabase, row),
   };
 }

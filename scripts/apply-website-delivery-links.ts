@@ -7,7 +7,8 @@
  * skipped when the provider already has a provider_delivery_links row or any delivery_links
  * enrichment candidate (any status) for it, so reruns never duplicate, overwrite or resurrect a
  * rejected link. Fetch failures (for example an incomplete TLS chain) log a WARN and never fail
- * the run; fetchPublicPage keeps strict TLS and the SSRF guard.
+ * the run; fetchPublicPage keeps strict TLS and the SSRF guard. --limit counts providers that
+ * still lack a link, not providers scanned.
  *
  * Usage:
  *   npx tsx scripts/apply-website-delivery-links.ts --dry-run                 # default, writes nothing
@@ -23,16 +24,18 @@ import {
   DELIVERY_PLATFORMS,
   extractDeliveryLinksFromHtml,
   fetchPublicPage,
-  WEBSITE_SOURCE_PREFIX,
 } from '../src/lib/enrichment/website-delivery-links';
+import { loadHeldPlatforms } from '../src/lib/enrichment/held-delivery-platforms';
 
-const PAGE_SIZE = 200;
+export const PAGE_SIZE = 200;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface LinkProvider {
   provider_id: string;
   provider_name: string;
   social_website: string | null;
+  /** Platforms that already have a link row or a delivery_links candidate. */
+  held: Set<string>;
 }
 
 export interface DeliveryLinkRow {
@@ -44,8 +47,8 @@ export interface DeliveryLinkRow {
 }
 
 export interface LinkStore {
+  /** Approved providers with a website that still lack a link for at least one platform. */
   listProviders(opts: { providerId?: string; limit?: number }): Promise<LinkProvider[]>;
-  existingPlatforms(providerId: string): Promise<Set<string>>;
   writeLink(row: DeliveryLinkRow): Promise<void>;
 }
 
@@ -77,17 +80,16 @@ export async function runApplyLinks(deps: {
       summary.skipped += 1;
       continue;
     }
+    if (DELIVERY_PLATFORMS.every((p) => provider.held.has(p))) {
+      summary.skipped += 1;
+      continue;
+    }
     try {
-      const held = await store.existingPlatforms(provider.provider_id);
-      if (DELIVERY_PLATFORMS.every((p) => held.has(p))) {
-        summary.skipped += 1;
-        continue;
-      }
       summary.processed += 1;
 
       const page = await fetchPage(site);
       const found = extractDeliveryLinksFromHtml(page.html, page.url);
-      for (const link of found.filter((l) => !held.has(l.platform))) {
+      for (const link of found.filter((l) => !provider.held.has(l.platform))) {
         log(
           `  ${options.apply ? 'WRITE' : 'WOULD WRITE'} ${label}: ${link.platform} ${link.platform_url}`,
         );
@@ -114,9 +116,9 @@ export async function runApplyLinks(deps: {
 export function createSupabaseLinkStore(supabase: SupabaseClient): LinkStore {
   return {
     async listProviders({ providerId, limit }) {
-      const rows: LinkProvider[] = [];
+      const selected: LinkProvider[] = [];
       let cursor = '';
-      while (limit === undefined || rows.length < limit) {
+      while (limit === undefined || selected.length < limit) {
         let query = supabase
           .from('providers')
           .select('provider_id, provider_name, social_website')
@@ -128,42 +130,18 @@ export function createSupabaseLinkStore(supabase: SupabaseClient): LinkStore {
           .order('provider_id', { ascending: true })
           .limit(PAGE_SIZE);
         if (error) throw new Error(`Failed to load providers: ${error.message}`);
-        const page = (data ?? []) as LinkProvider[];
-        rows.push(...page);
-        if (page.length < PAGE_SIZE || providerId) break;
-        cursor = page[page.length - 1].provider_id;
-      }
-      return limit === undefined ? rows : rows.slice(0, limit);
-    },
+        const rows = (data ?? []) as Array<Omit<LinkProvider, 'held'>>;
 
-    async existingPlatforms(providerId) {
-      const { data, error } = await supabase
-        .from('provider_delivery_links')
-        .select('platform')
-        .eq('provider_id', providerId);
-      if (error) throw new Error(`Failed to load delivery links: ${error.message}`);
-      const held = new Set((data ?? []).map((r) => r.platform as string));
-
-      // Any status counts: pending is already in review, rejected must stay rejected.
-      const { data: candidates, error: candidateError } = await supabase
-        .from('enrichment_candidates')
-        .select('source, proposed_value')
-        .eq('provider_id', providerId)
-        .eq('field_name', 'delivery_links');
-      if (candidateError)
-        throw new Error(`Failed to load delivery candidates: ${candidateError.message}`);
-      for (const row of candidates ?? []) {
-        const source = String(row.source ?? '');
-        if (source.startsWith(`${WEBSITE_SOURCE_PREFIX}:`)) {
-          held.add(source.slice(WEBSITE_SOURCE_PREFIX.length + 1));
+        // The done-once check runs here so --limit counts providers still to do.
+        for (const row of rows) {
+          if (limit !== undefined && selected.length >= limit) break;
+          const held = await loadHeldPlatforms(supabase, row.provider_id);
+          if (!DELIVERY_PLATFORMS.every((p) => held.has(p))) selected.push({ ...row, held });
         }
-        if (Array.isArray(row.proposed_value)) {
-          for (const item of row.proposed_value as Array<{ platform?: unknown }>) {
-            if (typeof item?.platform === 'string') held.add(item.platform);
-          }
-        }
+        if (rows.length < PAGE_SIZE || providerId) break;
+        cursor = rows[rows.length - 1].provider_id;
       }
-      return held;
+      return selected;
     },
 
     async writeLink(row) {
