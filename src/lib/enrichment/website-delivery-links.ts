@@ -22,17 +22,17 @@ const PLATFORMS: Array<{
   {
     platform: 'wolt',
     hosts: ['wolt.com', 'www.wolt.com'],
-    slugPattern: /\/(?:restaurant|venue)\/([^/?#]+)/,
+    slugPattern: /^\/[a-z]{2}\/[a-z]{3}\/[^/]+\/(?:restaurant|venue)\/([^/]+)\/?$/,
   },
   {
     platform: 'lieferando',
     hosts: ['lieferando.de', 'www.lieferando.de', 'lieferando.at', 'www.lieferando.at'],
-    slugPattern: /\/speisekarte\/([^/?#]+)/,
+    slugPattern: /^\/speisekarte\/([^/]+)\/?$/,
   },
   {
     platform: 'ubereats',
     hosts: ['ubereats.com', 'www.ubereats.com'],
-    slugPattern: /\/store\/([^/?#]+)/,
+    slugPattern: /^(?:\/[a-z-]+)?\/store\/([^/]+)(?:\/[^/]+)*\/?$/,
   },
 ];
 
@@ -50,11 +50,13 @@ function matchPlatform(hostname: string) {
 function slugFrom(pattern: RegExp, pathname: string): string | null {
   const match = pathname.match(pattern);
   if (!match) return null;
+  let slug = match[1];
   try {
-    return decodeURIComponent(match[1]);
+    slug = decodeURIComponent(slug);
   } catch {
-    return match[1];
+    // keep the raw segment
   }
+  return slug === '.' || slug === '..' || slug.includes('/') ? null : slug;
 }
 
 export function extractDeliveryLinksFromHtml(html: string, pageUrl: string): WebsiteDeliveryLink[] {
