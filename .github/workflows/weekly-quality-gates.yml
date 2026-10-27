@@ -15,6 +15,7 @@ jobs:
     name: Lighthouse Performance & Accessibility
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment: production
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -190,6 +191,7 @@ jobs:
     name: Bundle Size Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: production
     env:
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
