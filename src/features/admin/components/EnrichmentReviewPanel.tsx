@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+import { DeliveryLinks } from '@/features/admin/components/DeliveryLinks';
+
 /**
  * EnrichmentReviewPanel — Plan 065, Milestone 3
  *
@@ -70,7 +72,7 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
   const handleAction = async (
     action: 'approve' | 'reject' | 'bulk-approve',
     candidateId?: string,
-    providerId?: string
+    providerId?: string,
   ) => {
     const key = candidateId ?? providerId ?? action;
     setActionLoading(key);
@@ -106,7 +108,10 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
       acc[c.provider_id].candidates.push(c);
       return acc;
     },
-    {} as Record<string, { provider_name: string; provider_id: string; candidates: EnrichmentCandidate[] }>
+    {} as Record<
+      string,
+      { provider_name: string; provider_id: string; candidates: EnrichmentCandidate[] }
+    >,
   );
 
   if (loading) {
@@ -162,7 +167,9 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
               type="button"
               onClick={() => handleAction('bulk-approve', undefined, group.provider_id)}
             >
-              {actionLoading === group.provider_id ? 'Approving...' : `Approve All (${group.candidates.length})`}
+              {actionLoading === group.provider_id
+                ? 'Approving...'
+                : `Approve All (${group.candidates.length})`}
             </button>
           </div>
 
@@ -187,9 +194,16 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
                     </div>
                     <div>
                       <span className="text-xs text-gray-400">Proposed:</span>
-                      <div className="font-mono text-xs text-green-700">
-                        {formatValue(candidate.proposed_value)}
-                      </div>
+                      {candidate.field_name === 'delivery_links' ? (
+                        <DeliveryLinks
+                          sourceUrl={candidate.source_url}
+                          value={candidate.proposed_value}
+                        />
+                      ) : (
+                        <div className="font-mono text-xs text-green-700">
+                          {formatValue(candidate.proposed_value)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

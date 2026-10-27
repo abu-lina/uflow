@@ -8,6 +8,10 @@
  * staged when they have none. Existing values are never overwritten, missing data never sets a
  * flag to false, and no_alcohol and the halal fields are never written.
  *
+ * For `clear` providers with a website it also reads that site (https only, timeout, size cap,
+ * private IPs blocked) and stages Lieferando/Wolt/Uber Eats links as pending
+ * `delivery_links` enrichment candidates for review in /dashboard/enrichment (#801).
+ *
  * Usage:
  *   npx tsx scripts/screen-provider-google-maps.ts --dry-run                 # default, writes nothing
  *   npx tsx scripts/screen-provider-google-maps.ts --apply --provider-id <uuid>
@@ -39,6 +43,12 @@ import {
 import { buildAutoApplyPayload } from '../src/lib/enrichment/auto-apply-payload';
 import { createImageCandidatePayload } from '../src/lib/enrichment/image-enrichment';
 import { formatStageError, stageImageCandidate, type StageCandidateResult } from './enrich-images';
+import {
+  buildWebsiteDeliveryCandidate,
+  extractDeliveryLinksFromHtml,
+  fetchPublicPage,
+  WEBSITE_SOURCE_PREFIX,
+} from '../src/lib/enrichment/website-delivery-links';
 
 export type { ApifyPlace };
 
@@ -66,6 +76,12 @@ export interface ScreeningStore {
   insertScreening(row: ScreeningRow): Promise<void>;
   applyFields(providerId: string, rpcPayload: Record<string, unknown>): Promise<void>;
   stageImages(row: Record<string, unknown>): Promise<StageCandidateResult>;
+}
+
+export interface WebsiteLinkDeps {
+  fetchPage: (url: string) => Promise<{ html: string; url: string }>;
+  existingPlatforms: (providerId: string) => Promise<Set<string>>;
+  stage: (row: Record<string, unknown>) => Promise<StageCandidateResult>;
 }
 
 export interface ScreeningSummary {
@@ -100,8 +116,9 @@ export async function runScreening(deps: {
   fetchPlaces: (provider: ScreeningProvider) => Promise<ApifyPlace[]>;
   log?: (message: string) => void;
   options: RunOptions;
+  websiteLinks?: WebsiteLinkDeps;
 }): Promise<ScreeningSummary> {
-  const { store, fetchPlaces, options } = deps;
+  const { store, fetchPlaces, options, websiteLinks } = deps;
   const log = deps.log ?? (() => undefined);
   const { apply } = options;
   const providers = await store.listProviders({
@@ -152,7 +169,10 @@ export async function runScreening(deps: {
       }
 
       // Public fields are written only for clear providers; everything else keeps its screening row only.
-      if (match && result.status === 'clear') await enrich(provider, match.place);
+      if (match && result.status === 'clear') {
+        await enrich(provider, match.place);
+        if (websiteLinks) await stageWebsiteLinks(provider, websiteLinks);
+      }
     } catch (err) {
       summary.failed += 1;
       log(`FAIL ${label}: ${err instanceof Error ? err.message : String(err)}`);
@@ -161,6 +181,36 @@ export async function runScreening(deps: {
 
   return summary;
 
+  // Reads the provider's own site; any failure only logs, it never fails the run.
+  async function stageWebsiteLinks(
+    provider: ScreeningProvider,
+    links: WebsiteLinkDeps,
+  ): Promise<void> {
+    const label = `${provider.provider_id} ${provider.provider_name}`;
+    const site = provider.social_website?.trim();
+    if (!site) return;
+    try {
+      const page = await links.fetchPage(site);
+      const found = extractDeliveryLinksFromHtml(page.html, page.url);
+      if (found.length === 0) return;
+      const held = await links.existingPlatforms(provider.provider_id);
+      for (const link of found.filter((l) => !held.has(l.platform))) {
+        log(
+          `  ${apply ? 'STAGE' : 'WOULD STAGE'} delivery link ${link.platform} ${link.platform_url}`,
+        );
+        if (!apply) continue;
+        const outcome = await links.stage(
+          buildWebsiteDeliveryCandidate(provider.provider_id, page.url, link),
+        );
+        if (outcome.outcome === 'failed')
+          log(`WARN ${label}: delivery candidate not staged: ${formatStageError(outcome.error)}`);
+      }
+    } catch (err) {
+      log(
+        `WARN ${label}: website links skipped: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
   async function enrich(provider: ScreeningProvider, place: ApifyPlace): Promise<void> {
     const label = `${provider.provider_id} ${provider.provider_name}`;
     try {
@@ -353,6 +403,36 @@ export function createSupabaseStore(supabase: SupabaseClient): ScreeningStore {
   };
 }
 
+export function createWebsiteLinkDeps(supabase: SupabaseClient): WebsiteLinkDeps {
+  return {
+    fetchPage: (url) => fetchPublicPage(url),
+    async existingPlatforms(providerId) {
+      const { data, error } = await supabase
+        .from('provider_delivery_links')
+        .select('platform')
+        .eq('provider_id', providerId);
+      if (error) throw new Error(`Failed to load delivery links: ${error.message}`);
+      const held = new Set((data ?? []).map((r) => r.platform as string));
+
+      // The stage dedupe ignores rejected rows; skip those platforms so a rejection sticks.
+      const { data: rejected, error: rejectedError } = await supabase
+        .from('enrichment_candidates')
+        .select('source')
+        .eq('provider_id', providerId)
+        .eq('field_name', 'delivery_links')
+        .eq('status', 'rejected')
+        .like('source', `${WEBSITE_SOURCE_PREFIX}:%`);
+      if (rejectedError)
+        throw new Error(`Failed to load rejected candidates: ${rejectedError.message}`);
+      for (const row of rejected ?? []) {
+        held.add((row.source as string).slice(WEBSITE_SOURCE_PREFIX.length + 1));
+      }
+      return held;
+    },
+    stage: (row) => stageImageCandidate(supabase, row),
+  };
+}
+
 async function main(): Promise<void> {
   dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
   const args = process.argv.slice(2);
@@ -382,6 +462,7 @@ async function main(): Promise<void> {
     fetchPlaces: (p) => fetchGoogleMapsPlaces(p, token),
     log: console.log,
     options: { apply, limit, providerId: providerId || undefined },
+    websiteLinks: createWebsiteLinkDeps(supabase),
   });
 
   console.log(

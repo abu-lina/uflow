@@ -7,6 +7,7 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { isAdminField } from '@/lib/enrichment/enrichment-fields';
+import { applyDeliveryLinksCandidate } from '@/services/admin/enrichment-delivery-links';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -244,6 +245,10 @@ export async function approveCandidate(
       success: false,
       error: `Cannot enrich provider that now has an owner (provider_owner_id is set). Candidate left as pending.`,
     };
+  }
+
+  if (candidate.field_name === 'delivery_links') {
+    return applyDeliveryLinksCandidate(supabase, candidate, reviewerId);
   }
 
   const isImageEnrichment =
