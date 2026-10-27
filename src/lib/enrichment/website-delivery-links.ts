@@ -19,14 +19,24 @@ const PLATFORMS: Array<{
   hosts: string[];
   slugPattern: RegExp;
 }> = [
-  { platform: 'wolt', hosts: ['wolt.com'], slugPattern: /\/(?:restaurant|venue)\/([^/?#]+)/ },
+  {
+    platform: 'wolt',
+    hosts: ['wolt.com', 'www.wolt.com'],
+    slugPattern: /^\/[a-z]{2}\/[a-z]{3}\/[^/]+\/(?:restaurant|venue)\/([^/]+)\/?$/,
+  },
   {
     platform: 'lieferando',
-    hosts: ['lieferando.de', 'lieferando.at'],
-    slugPattern: /\/speisekarte\/([^/?#]+)/,
+    hosts: ['lieferando.de', 'www.lieferando.de', 'lieferando.at', 'www.lieferando.at'],
+    slugPattern: /^\/speisekarte\/([^/]+)\/?$/,
   },
-  { platform: 'ubereats', hosts: ['ubereats.com'], slugPattern: /\/store\/([^/?#]+)/ },
+  {
+    platform: 'ubereats',
+    hosts: ['ubereats.com', 'www.ubereats.com'],
+    slugPattern: /^(?:\/[a-z-]+)?\/store\/([^/]+)(?:\/[^/]+)*\/?$/,
+  },
 ];
+
+export const DELIVERY_PLATFORMS: DeliveryPlatform[] = PLATFORMS.map((p) => p.platform);
 
 export const WEBSITE_SOURCE_PREFIX = 'provider_website';
 export const DEFAULT_TIMEOUT_MS = 8000;
@@ -34,18 +44,19 @@ export const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;
 export const DEFAULT_MAX_REDIRECTS = 3;
 
 function matchPlatform(hostname: string) {
-  const host = hostname.toLowerCase();
-  return PLATFORMS.find((p) => p.hosts.some((h) => host === h || host.endsWith(`.${h}`)));
+  return PLATFORMS.find((p) => p.hosts.includes(hostname.toLowerCase()));
 }
 
 function slugFrom(pattern: RegExp, pathname: string): string | null {
   const match = pathname.match(pattern);
   if (!match) return null;
+  let slug = match[1];
   try {
-    return decodeURIComponent(match[1]);
+    slug = decodeURIComponent(slug);
   } catch {
-    return match[1];
+    // keep the raw segment
   }
+  return slug === '.' || slug === '..' || slug.includes('/') ? null : slug;
 }
 
 export function extractDeliveryLinksFromHtml(html: string, pageUrl: string): WebsiteDeliveryLink[] {
@@ -60,13 +71,16 @@ export function extractDeliveryLinksFromHtml(html: string, pageUrl: string): Web
     } catch {
       continue;
     }
-    if (url.protocol !== 'https:') continue;
+    if (url.protocol !== 'https:' || url.username || url.password || url.port) continue;
     const entry = matchPlatform(url.hostname);
     if (!entry || found.has(entry.platform)) continue;
+    // Links can be written live, so a link must name one venue page, not a homepage or listing.
+    const slug = slugFrom(entry.slugPattern, url.pathname);
+    if (!slug) continue;
     found.set(entry.platform, {
       platform: entry.platform,
-      platform_url: url.toString(),
-      platform_slug: slugFrom(entry.slugPattern, url.pathname),
+      platform_url: `${url.origin}${url.pathname}`,
+      platform_slug: slug,
     });
   }
   return Array.from(found.values());
