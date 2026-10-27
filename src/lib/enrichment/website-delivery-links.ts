@@ -28,6 +28,8 @@ const PLATFORMS: Array<{
   { platform: 'ubereats', hosts: ['ubereats.com'], slugPattern: /\/store\/([^/?#]+)/ },
 ];
 
+export const DELIVERY_PLATFORMS: DeliveryPlatform[] = PLATFORMS.map((p) => p.platform);
+
 export const WEBSITE_SOURCE_PREFIX = 'provider_website';
 export const DEFAULT_TIMEOUT_MS = 8000;
 export const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;

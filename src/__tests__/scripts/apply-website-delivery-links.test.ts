@@ -124,7 +124,7 @@ describe('apply website delivery links (#806)', () => {
     });
 
     expect(logs.some((l) => l.startsWith('WARN') && l.includes('unable to verify'))).toBe(true);
-    expect(summary.failed).toBe(0);
+    expect(summary.warned).toBe(1);
     expect(written(writeLink).every((r) => r.provider_id === 'p2')).toBe(true);
     expect(writeLink).toHaveBeenCalledTimes(2);
   });
@@ -144,7 +144,7 @@ describe('apply website delivery links (#806)', () => {
     });
 
     expect(logs.some((l) => l.startsWith('WARN') && l.includes('insert failed'))).toBe(true);
-    expect(summary.failed).toBe(0);
+    expect(summary.warned).toBe(1);
   });
 
   it('8: dry run logs what it would write and writes nothing', async () => {
