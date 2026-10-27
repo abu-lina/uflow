@@ -113,12 +113,16 @@ describe('#801 only links to a fixed allow-list of platform hosts are staged', (
     ]);
   });
 
-  it('accepts subdomains of allowed hosts and ignores relative links', () => {
+  it('accepts the bare and www hosts, ignores other subdomains and relative links', () => {
     const links = extractDeliveryLinksFromHtml(
-      html('https://order.wolt.com/de/deu/berlin/restaurant/x', '/speisekarte/local'),
+      html(
+        'https://order.wolt.com/de/deu/berlin/restaurant/x',
+        'https://www.wolt.com/de/deu/berlin/restaurant/y',
+        '/speisekarte/local',
+      ),
       PAGE,
     );
-    expect(links.map((l) => l.platform)).toEqual(['wolt']);
+    expect(links.map((l) => l.platform_slug)).toEqual(['y']);
   });
 
   it('returns nothing for a page without anchors', () => {
@@ -295,5 +299,44 @@ describe('#801 fetch has a timeout and a response size cap', () => {
     await expect(
       fetchPublicPage(PAGE, { fetchImpl: notFound, lookup: publicLookup }),
     ).rejects.toThrow(/404/);
+  });
+});
+
+describe('#806 links written without review must point at one venue page', () => {
+  const extract = (...hrefs: string[]) => extractDeliveryLinksFromHtml(html(...hrefs), PAGE);
+
+  it.each([
+    ['a bare platform homepage', 'https://wolt.com/'],
+    ['a platform page without a venue slug', 'https://wolt.com/de/deu/berlin'],
+    ['a Lieferando homepage', 'https://www.lieferando.de/'],
+    ['an Uber Eats homepage', 'https://www.ubereats.com/de'],
+    ['a URL with a username', 'https://user@wolt.com/de/deu/berlin/restaurant/x'],
+    ['a URL with credentials', 'https://user:pw@wolt.com/de/deu/berlin/restaurant/x'],
+    ['a non-default port', 'https://wolt.com:8443/de/deu/berlin/restaurant/x'],
+  ])('rejects %s', (_label, href) => {
+    expect(extract(href)).toEqual([]);
+  });
+
+  it('skips an invalid platform link and keeps the first valid one', () => {
+    const links = extract('https://wolt.com/', 'https://wolt.com/de/deu/berlin/restaurant/good');
+    expect(links.map((l) => l.platform_slug)).toEqual(['good']);
+  });
+
+  it('stores a normalized URL without query or hash', () => {
+    const links = extract('https://wolt.com/de/deu/berlin/restaurant/x?utm_source=site&a=b#menu');
+    expect(links).toEqual([
+      {
+        platform: 'wolt',
+        platform_url: 'https://wolt.com/de/deu/berlin/restaurant/x',
+        platform_slug: 'x',
+      },
+    ]);
+  });
+
+  it('accepts the default https port written explicitly', () => {
+    const links = extract('https://wolt.com:443/de/deu/berlin/restaurant/x');
+    expect(links.map((l) => l.platform_url)).toEqual([
+      'https://wolt.com/de/deu/berlin/restaurant/x',
+    ]);
   });
 });
