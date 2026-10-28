@@ -2,8 +2,8 @@
  * Search Wolt, Lieferando and Uber Eats for approved providers that still lack a link (#807).
  * Fallback for providers whose website yielded no delivery links (#806).
  *
- * A result is accepted only when matchVenueToProvider says `match` (name plus street or zip plus
- * city); it is then written to provider_delivery_links. Ambiguous results are staged as pending
+ * A result is accepted only when matchVenueToProvider says `match` (name, street with house
+ * number, zip and city all agree); it is then written to provider_delivery_links. Ambiguous results are staged as pending
  * `delivery_links` candidates (source `platform_search:<platform>`). Each platform is searched once
  * per provider: a platform with a link row, any delivery_links candidate, or a row in
  * provider_platform_searches is skipped. A failed request logs a WARN and is not recorded, so it
@@ -12,8 +12,9 @@
  * not doubled), and never fails the run on a search error.
  *
  * Limits: each platform is searched with one call (Wolt: venues near the provider; Lieferando: the
- * provider's city page; Uber Eats: its search page), so a `no_match` can be a miss. It is kept as
- * final by default; --retry-no-match-after-days <n> searches such platforms again after n days.
+ * provider's city page; Uber Eats: its search page), so a `no_match` can be a miss. A `no_match`
+ * therefore expires after 30 days and the platform is searched again; change that with
+ * --retry-no-match-after-days <n>. Accepted and staged searches never expire.
  * Uber Eats results carry no address, so they can only be staged, never written.
  *
  * Usage:
@@ -52,6 +53,7 @@ import type { UberEatsClient } from '../src/lib/enrichment/delivery-platform/ube
 export const PAGE_SIZE = 200;
 export const PLATFORM_SEARCH_SOURCE_PREFIX = 'platform_search';
 const DEFAULT_DELAY_MS = 2000;
+export const DEFAULT_NO_MATCH_RETRY_DAYS = 30;
 const MIN_DELAY_MS = 500;
 const MAX_ERROR_LENGTH = 200;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -98,7 +100,7 @@ export interface SearchStore {
     providerId?: string;
     limit?: number;
     platforms: DeliveryPlatform[];
-    /** Treat `no_match` searches older than this many days as not done. */
+    /** Treat `no_match` searches older than this many days as not done (default 30). */
     retryNoMatchAfterDays?: number;
   }): Promise<SearchProviderRow[]>;
   writeLink(row: DeliveryLinkRow): Promise<void>;
@@ -123,7 +125,8 @@ export interface SearchSummary {
 type Searchers = Partial<Record<DeliveryPlatform, PlatformSearcher>>;
 
 /**
- * Same URL checks as website links (https, platform host, one venue page), plus the URL must
+ * Same URL checks as website links (https, platform host, no userinfo or port, anchored venue
+ * path), which extractDeliveryLinksFromHtml does for us, plus the URL must
  * already be in canonical form and carry the slug the search result named, so nothing extra
  * (query, fragment, another path) rides along into a live link.
  */
@@ -298,10 +301,9 @@ export async function runPlatformSearch(deps: {
 export function createSupabaseSearchStore(supabase: SupabaseClient): SearchStore {
   return {
     async listProviders({ providerId, limit, platforms, retryNoMatchAfterDays }) {
-      const retryBefore =
-        retryNoMatchAfterDays === undefined
-          ? null
-          : new Date(Date.now() - retryNoMatchAfterDays * DAY_MS).toISOString();
+      const retryBefore = new Date(
+        Date.now() - (retryNoMatchAfterDays ?? DEFAULT_NO_MATCH_RETRY_DAYS) * DAY_MS,
+      ).toISOString();
       const selected: SearchProviderRow[] = [];
       let cursor = '';
       while (limit === undefined || selected.length < limit) {
@@ -331,10 +333,7 @@ export function createSupabaseSearchStore(supabase: SupabaseClient): SearchStore
           if (searchedError) throw new Error(`Failed to load searches: ${searchedError.message}`);
           const searched = new Set(
             (searchedRows ?? [])
-              .filter(
-                (r) =>
-                  !(retryBefore && r.outcome === 'no_match' && String(r.searched_at) < retryBefore),
-              )
+              .filter((r) => !(r.outcome === 'no_match' && String(r.searched_at) < retryBefore))
               .map((r) => r.platform as string),
           );
           if (platforms.every((p) => held.has(p) || searched.has(p))) continue;

@@ -53,13 +53,13 @@ function indexOfSequence(haystack: string[], needle: string[]): number {
   return -1;
 }
 
-type AddressState = 'match' | 'weak' | 'none' | 'mismatch';
+type AddressState = 'match' | 'partial' | 'none' | 'mismatch';
 
 /**
- * `match`: street and house number agree, or the venue only gives a zip and it agrees.
- * `weak`: the zip agrees but the provider has no street or house number to check the
- * venue's street against. A venue that states a street must match it; a shared zip alone
- * is not enough.
+ * `match`: street, house number and zip all agree. Only this can be written without review.
+ * `partial`: nothing contradicts the provider but something could not be confirmed (no zip,
+ * zip-only venue, or the provider has no house number to check against).
+ * A venue that states a street must match it; a shared zip alone never settles that.
  */
 function compareAddress(provider: SearchProvider, venue: SearchVenue): AddressState {
   const venueTokens = addressTokens([venue.address, venue.zip].filter(Boolean).join(' '));
@@ -70,7 +70,7 @@ function compareAddress(provider: SearchProvider, venue: SearchVenue): AddressSt
   const zip = provider.zip?.trim();
   const zipMatches = !!zip && /^\d{5}$/.test(zip) && venueTokens.includes(zip);
 
-  if (!venueStatesStreet) return zipMatches ? 'match' : 'mismatch';
+  if (!venueStatesStreet) return zipMatches ? 'partial' : 'mismatch';
 
   const providerTokens = addressTokens(provider.street ?? '');
   const providerNumber = parseHouseNumber(providerTokens[providerTokens.length - 1]);
@@ -79,10 +79,13 @@ function compareAddress(provider: SearchProvider, venue: SearchVenue): AddressSt
 
   if (at >= 0 && providerNumber) {
     const venueNumber = parseHouseNumber(venueTokens[at + nameTokens.length]);
-    if (venueNumber) return sameHouseNumber(providerNumber, venueNumber) ? 'match' : 'mismatch';
+    if (venueNumber) {
+      if (!sameHouseNumber(providerNumber, venueNumber)) return 'mismatch';
+      return zipMatches ? 'match' : 'partial';
+    }
   }
   // Nothing to verify the venue's street against: a shared zip is only a weak signal.
-  return zipMatches && (!providerNumber || nameTokens.length === 0) ? 'weak' : 'mismatch';
+  return zipMatches && (!providerNumber || nameTokens.length === 0) ? 'partial' : 'mismatch';
 }
 
 function sameCity(provider: SearchProvider, venue: SearchVenue): boolean {
@@ -105,8 +108,9 @@ function namesAreRelated(a: string, b: string): boolean {
 /**
  * Decides whether a platform search result is the provider's venue.
  * `match` is safe to write; `ambiguous` is staged for review; `no_match` is dropped.
- * The city must agree. A strong name needs a street or zip match, a venue without an
- * address stays ambiguous, and a similar name only ever reaches `ambiguous`.
+ * The city must agree. `match` needs a strong name plus street, house number and zip; a
+ * strong name with a weaker or missing address is `ambiguous`, and a similar name only ever
+ * reaches `ambiguous` with a full address match.
  */
 export function matchVenueToProvider(provider: SearchProvider, venue: SearchVenue): MatchVerdict {
   if (!normalizeName(provider.name) || !normalizeName(venue.name ?? '')) return 'no_match';

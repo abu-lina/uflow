@@ -461,7 +461,8 @@ describe('search store (#807)', () => {
     expect(Array.from(byDefault[0].searched).sort()).toEqual(['lieferando', 'ubereats']);
 
     const wider = await store.listProviders({ platforms, retryNoMatchAfterDays: 90 });
-    expect(Array.from(wider[0].searched).sort()).toEqual(['lieferando', 'ubereats', 'wolt']);
+    // every platform counts as done again, so nothing is left to search
+    expect(wider).toEqual([]);
   });
 
   it('5: throws when a store query fails', async () => {
