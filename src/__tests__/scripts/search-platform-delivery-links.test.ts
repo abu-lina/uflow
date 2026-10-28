@@ -357,6 +357,35 @@ describe('platform delivery search (#807)', () => {
     expect(logs).toContain('  RECORD p1 Bistro Salam: wolt no match (0 venues, 0 valid links)');
   });
 
+  it.each(['lieferando', 'ubereats'] as const)(
+    'empty scrape: %s returning no venues warns and is not recorded, so it retries',
+    async (platform) => {
+      const { recordSearch, summary, logs } = await run({
+        providers: [provider()],
+        searchers: only(platform, async () => []),
+      });
+
+      expect(recordSearch).not.toHaveBeenCalled();
+      expect(summary.noMatch).toBe(0);
+      expect(summary.searched).toBe(0);
+      expect(summary.warned).toBe(1);
+      expect(logs).toContain(
+        `WARN p1 Bistro Salam: ${platform} returned no venues, not recorded (blocked or empty page)`,
+      );
+    },
+  );
+
+  it('empty scrape: a non-empty list with no match is still recorded for lieferando', async () => {
+    const { recordSearch } = await run({
+      providers: [provider()],
+      searchers: only('lieferando', async () => [
+        lieferandoVenue({ name: 'Pizza Roma', platform_slug: 'bistro-salam' }),
+      ]),
+    });
+
+    expect(recordSearch).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'no_match' }));
+  });
+
   it('diagnostics: a no-match line shows venue count, valid links and the closest name', async () => {
     const { logs } = await run({
       providers: [provider()],
