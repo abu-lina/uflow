@@ -1,0 +1,83 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  matchVenueToProvider,
+  type SearchProvider,
+  type SearchVenue,
+} from '@/lib/enrichment/platform-search-match';
+
+const provider: SearchProvider = {
+  name: 'Bistro Salam',
+  street: 'Hauptstraße 12',
+  zip: '10115',
+  city: 'Berlin',
+};
+
+const venue = (over: Partial<SearchVenue> = {}): SearchVenue => ({
+  name: 'Bistro Salam',
+  address: 'Hauptstraße 12, 10115 Berlin',
+  city: 'Berlin',
+  ...over,
+});
+
+describe('platform search matching (#807, criterion 2)', () => {
+  describe('match', () => {
+    it('accepts the same name, street and city', () => {
+      expect(matchVenueToProvider(provider, venue())).toBe('match');
+    });
+
+    it('accepts a name with a legal suffix and different casing', () => {
+      expect(matchVenueToProvider(provider, venue({ name: 'BISTRO SALAM Restaurant' }))).toBe(
+        'match',
+      );
+    });
+
+    it('accepts an abbreviated street spelling', () => {
+      expect(matchVenueToProvider(provider, venue({ address: 'Hauptstr. 12, 10115 Berlin' }))).toBe(
+        'match',
+      );
+    });
+
+    it('accepts a zip match when the street is missing from the venue address', () => {
+      expect(matchVenueToProvider(provider, venue({ address: '10115 Berlin' }))).toBe('match');
+    });
+  });
+
+  describe('near-miss', () => {
+    it('rejects the same city with a different street and zip', () => {
+      expect(matchVenueToProvider(provider, venue({ address: 'Nebenweg 3, 10999 Berlin' }))).toBe(
+        'no_match',
+      );
+    });
+
+    it('rejects an unrelated name at the same address', () => {
+      expect(matchVenueToProvider(provider, venue({ name: 'Pizza Roma' }))).toBe('no_match');
+    });
+
+    it('rejects the same street with a different house number and zip', () => {
+      expect(
+        matchVenueToProvider(provider, venue({ address: 'Hauptstraße 99, 10999 Berlin' })),
+      ).toBe('no_match');
+    });
+
+    it('marks a similar name with a matching address as ambiguous', () => {
+      expect(matchVenueToProvider(provider, venue({ name: 'Bistro Salaam Grill House' }))).toBe(
+        'ambiguous',
+      );
+    });
+
+    it('marks an exact name with no address on the venue as ambiguous', () => {
+      expect(matchVenueToProvider(provider, venue({ address: undefined }))).toBe('ambiguous');
+    });
+  });
+
+  describe('wrong city', () => {
+    it('rejects the same name, street and zip in another city', () => {
+      expect(matchVenueToProvider(provider, venue({ city: 'Hamburg' }))).toBe('no_match');
+    });
+
+    it('rejects when the provider has no city to compare', () => {
+      expect(matchVenueToProvider({ ...provider, city: null }, venue())).toBe('no_match');
+    });
+  });
+});
