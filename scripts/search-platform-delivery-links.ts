@@ -16,6 +16,9 @@
  * therefore expires after 30 days and the platform is searched again; change that with
  * --retry-no-match-after-days <n>. Accepted and staged searches never expire.
  * Uber Eats results carry no address, so they can only be staged, never written.
+ * Lieferando and Uber Eats are scraped with a browser; 0 venues there usually means a blocked or
+ * empty page (for example on a CI runner), so it logs a WARN and is not recorded. Wolt's API can
+ * answer "no venues here" for real, so that is recorded as a `no_match`.
  *
  * Usage:
  *   npx tsx scripts/search-platform-delivery-links.ts --dry-run                 # default, writes nothing
@@ -59,6 +62,7 @@ const MIN_DELAY_MS = 500;
 const MAX_ERROR_LENGTH = 200;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_STAGED_PER_PLATFORM = 3;
+const SCRAPED_PLATFORMS = new Set<DeliveryPlatform>(['lieferando', 'ubereats']);
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export type SearchOutcome = 'accepted' | 'staged' | 'no_match';
@@ -218,6 +222,13 @@ export async function runPlatformSearch(deps: {
         if (requests > 0) await sleep(delayMs);
         requests += 1;
         const venues = await searchers[platform]!(provider);
+        if (venues.length === 0 && SCRAPED_PLATFORMS.has(platform)) {
+          summary.warned += 1;
+          log(
+            `WARN ${label}: ${platform} returned no venues, not recorded (blocked or empty page)`,
+          );
+          continue;
+        }
         summary.searched += 1;
 
         const matches: Array<{ platform_url: string; platform_slug: string | null }> = [];
