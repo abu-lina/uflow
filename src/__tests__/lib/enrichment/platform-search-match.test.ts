@@ -61,7 +61,7 @@ describe('platform search matching (#807, criterion 2)', () => {
     });
 
     it('marks a similar name with a matching address as ambiguous', () => {
-      expect(matchVenueToProvider(provider, venue({ name: 'Bistro Salaam Grill House' }))).toBe(
+      expect(matchVenueToProvider(provider, venue({ name: 'Bistro Salam Grill' }))).toBe(
         'ambiguous',
       );
     });
