@@ -1,0 +1,74 @@
+name: Search Platform Delivery Links
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max providers to process (blank = all)'
+        required: false
+        default: '5'
+        type: string
+      platform:
+        description: 'Only this platform: wolt, lieferando or ubereats (blank = all)'
+        required: false
+        default: ''
+        type: string
+      provider_id:
+        description: 'Only this provider UUID (blank = all)'
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: 'Dry run only (preview, no writes)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Search platforms
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          LIMIT: ${{ inputs.limit }}
+          PLATFORM: ${{ inputs.platform }}
+          PROVIDER_ID: ${{ inputs.provider_id }}
+        run: |
+          ARGS=()
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Running in DRY RUN mode"
+          else
+            ARGS+=(--apply)
+            echo "Running in APPLY mode (writing)"
+          fi
+          [ -n "$LIMIT" ] && ARGS+=(--limit "$LIMIT")
+          [ -n "$PLATFORM" ] && ARGS+=(--platform "$PLATFORM")
+          [ -n "$PROVIDER_ID" ] && ARGS+=(--provider-id "$PROVIDER_ID")
+          npx tsx scripts/search-platform-delivery-links.ts "${ARGS[@]}" 2>&1 | tee /tmp/platform-search.log
+          exit "${PIPESTATUS[0]}"
+
+      - name: Upload run log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: platform-search-log-${{ github.run_id }}
+          path: /tmp/platform-search.log
+          retention-days: 30
