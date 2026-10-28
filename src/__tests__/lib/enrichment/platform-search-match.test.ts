@@ -60,8 +60,41 @@ describe('platform search matching (#807, criterion 2)', () => {
       ).toBe('no_match');
     });
 
+    it('rejects the same zip with a different street', () => {
+      expect(matchVenueToProvider(provider, venue({ address: 'Nebenweg 3, 10115 Berlin' }))).toBe(
+        'no_match',
+      );
+    });
+
+    it('rejects a provider street without a house number matching any house number', () => {
+      expect(
+        matchVenueToProvider(
+          { ...provider, street: 'Hauptstraße', zip: '10555' },
+          venue({ address: 'Hauptstraße 99, 10999 Berlin' }),
+        ),
+      ).toBe('no_match');
+    });
+
+    it('rejects the same street with a different house number suffix', () => {
+      expect(
+        matchVenueToProvider(
+          { ...provider, street: 'Hauptstraße 5a' },
+          venue({ address: 'Hauptstraße 5b, 10115 Berlin' }),
+        ),
+      ).toBe('no_match');
+    });
+
+    it('accepts a house number the venue lists without the suffix', () => {
+      expect(
+        matchVenueToProvider(
+          { ...provider, street: 'Hauptstr. 5a' },
+          venue({ address: 'Hauptstraße 5, 10999 Berlin' }),
+        ),
+      ).toBe('match');
+    });
+
     it('marks a similar name with a matching address as ambiguous', () => {
-      expect(matchVenueToProvider(provider, venue({ name: 'Bistro Salam Grill' }))).toBe(
+      expect(matchVenueToProvider(provider, venue({ name: 'Bistro Salaam Grill House' }))).toBe(
         'ambiguous',
       );
     });

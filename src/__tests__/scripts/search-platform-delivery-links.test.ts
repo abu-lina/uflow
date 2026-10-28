@@ -1,6 +1,9 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  createPlatformSearchers,
+  createSupabaseSearchStore,
   runPlatformSearch,
   type PlatformSearcher,
   type SearchOutcome,
@@ -25,6 +28,13 @@ const woltVenue = (over: Partial<SearchVenueResult> = {}): SearchVenueResult => 
   address: 'Hauptstraße 12, 10115 Berlin',
   city: 'Berlin',
   platform_url: 'https://wolt.com/de/deu/berlin/restaurant/bistro-salam',
+  platform_slug: 'bistro-salam',
+  ...over,
+});
+
+const lieferandoVenue = (over: Partial<SearchVenueResult> = {}): SearchVenueResult => ({
+  ...woltVenue(),
+  platform_url: 'https://www.lieferando.de/speisekarte/bistro-salam',
   platform_slug: 'bistro-salam',
   ...over,
 });
@@ -194,7 +204,7 @@ describe('platform delivery search (#807)', () => {
   it('4: a rerun does not search again, whatever the first outcome was', async () => {
     const providers = [provider()];
     const wolt = vi.fn(async () => [] as SearchVenueResult[]);
-    const lieferando = vi.fn(async () => [woltVenue()]);
+    const lieferando = vi.fn(async () => [lieferandoVenue()]);
     const searchers = { wolt, lieferando };
 
     await run({ providers, searchers });
@@ -204,16 +214,93 @@ describe('platform delivery search (#807)', () => {
     expect(lieferando).toHaveBeenCalledTimes(1);
   });
 
+  it('4: a platform whose search failed is searched again on the next run', async () => {
+    const providers = [provider()];
+    const wolt = vi
+      .fn<PlatformSearcher>()
+      .mockRejectedValueOnce(new Error('503 Service Unavailable'))
+      .mockResolvedValueOnce([woltVenue()]);
+
+    const first = await run({ providers, searchers: { wolt } });
+    expect(first.writeLink).not.toHaveBeenCalled();
+    expect(first.recordSearch).not.toHaveBeenCalled();
+
+    const second = await run({ providers, searchers: { wolt } });
+    expect(wolt).toHaveBeenCalledTimes(2);
+    expect(second.writeLink).toHaveBeenCalledWith(expect.objectContaining({ platform: 'wolt' }));
+  });
+
+  it('4: records no_match for an empty result so the platform is not searched again', async () => {
+    const providers = [provider()];
+    const wolt = vi.fn(async () => [] as SearchVenueResult[]);
+    const { recordSearch } = await run({ providers, searchers: { wolt } });
+    expect(recordSearch).toHaveBeenCalledWith({
+      provider_id: 'p1',
+      platform: 'wolt',
+      outcome: 'no_match',
+    });
+    await run({ providers, searchers: { wolt } });
+    expect(wolt).toHaveBeenCalledTimes(1);
+  });
+
+  it('5: a failing store write logs a WARN, is not recorded and does not stop the run', async () => {
+    const fakes = makeStore([provider()]);
+    fakes.writeLink.mockRejectedValueOnce(new Error('permission denied'));
+    const logs: string[] = [];
+    const summary = await runPlatformSearch({
+      store: fakes.store,
+      searchers: {
+        wolt: async () => [woltVenue()],
+        lieferando: async () => [lieferandoVenue()],
+      },
+      sleep: async () => undefined,
+      log: (m) => logs.push(m),
+      options: { apply: true, delayMs: 1000 },
+    });
+
+    expect(logs.some((l) => l.startsWith('WARN') && l.includes('permission denied'))).toBe(true);
+    expect(fakes.recordSearch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ platform: 'wolt' }),
+    );
+    expect(fakes.recordSearch).toHaveBeenCalledWith(
+      expect.objectContaining({ platform: 'lieferando', outcome: 'accepted' }),
+    );
+    expect(summary.warned).toBe(1);
+  });
+
+  it('5: truncates long error messages in the WARN log', async () => {
+    const { logs } = await run({
+      providers: [provider()],
+      searchers: {
+        wolt: async () => {
+          throw new Error('x'.repeat(5000));
+        },
+      },
+    });
+    expect(logs.find((l) => l.startsWith('WARN'))!.length).toBeLessThan(500);
+  });
+
+  it('2: ignores a matching venue whose URL carries a query, fragment or mismatched slug', async () => {
+    const { writeLink, stageCandidate } = await run({
+      providers: [provider()],
+      searchers: {
+        wolt: async () => [
+          woltVenue({
+            platform_url: 'https://wolt.com/de/deu/berlin/venue/bistro-salam?utm_source=x',
+          }),
+        ],
+        lieferando: async () => [lieferandoVenue({ platform_slug: 'another-slug' })],
+      },
+    });
+    expect(writeLink).not.toHaveBeenCalled();
+    expect(stageCandidate).not.toHaveBeenCalled();
+  });
+
   it('5: a search failure logs a WARN, is not recorded and does not stop the run', async () => {
     const wolt = vi.fn(async () => {
       throw new Error('429 Too Many Requests');
     });
-    const lieferando = vi.fn(async () => [
-      woltVenue({
-        platform_url: 'https://www.lieferando.de/speisekarte/bistro-salam',
-        platform_slug: 'bistro-salam',
-      }),
-    ]);
+    const lieferando = vi.fn(async () => [lieferandoVenue()]);
     const { recordSearch, writeLink, summary, logs } = await run({
       providers: [provider()],
       searchers: { wolt, lieferando },
@@ -251,8 +338,238 @@ describe('platform delivery search (#807)', () => {
     expect(writeLink).not.toHaveBeenCalled();
     expect(stageCandidate).not.toHaveBeenCalled();
     expect(recordSearch).not.toHaveBeenCalled();
-    expect(logs.some((l) => l.includes('WOULD WRITE') && l.includes('bistro-salam'))).toBe(true);
-    expect(logs.some((l) => l.includes('WOULD STAGE'))).toBe(true);
+    expect(logs).toContain(
+      '  WOULD WRITE p1 Bistro Salam: wolt https://wolt.com/de/deu/berlin/restaurant/bistro-salam',
+    );
+    expect(logs).toContain(
+      '  WOULD STAGE p2 Bistro Salam: wolt https://wolt.com/de/deu/berlin/restaurant/bistro-salam',
+    );
     expect(summary.written).toBe(0);
+  });
+});
+
+type Row = Record<string, unknown>;
+
+/** Minimal chainable stand-in for the Supabase query builder used by the store. */
+function fakeSupabase(tables: Record<string, Row[]>, failTable?: string) {
+  const upserts: Array<{ table: string; row: Row; options: unknown }> = [];
+  const from = (table: string) => {
+    let rows = [...(tables[table] ?? [])];
+    const q: Record<string, unknown> = {};
+    const chain = (fn: () => void) => () => {
+      fn();
+      return q;
+    };
+    q.select = chain(() => undefined);
+    q.eq = (col: string, val: unknown) => {
+      rows = rows.filter((r) => r[col] === val);
+      return q;
+    };
+    q.not = (col: string) => {
+      rows = rows.filter((r) => r[col] !== null && r[col] !== undefined);
+      return q;
+    };
+    q.gt = (col: string, val: string) => {
+      rows = rows.filter((r) => String(r[col]) > val);
+      return q;
+    };
+    q.like = () => q;
+    q.order = () => q;
+    q.limit = (n: number) => {
+      rows = rows.slice(0, n);
+      return q;
+    };
+    q.upsert = async (row: Row, options: unknown) => {
+      upserts.push({ table, row, options });
+      return { error: failTable === table ? { message: 'boom' } : null };
+    };
+    q.then = (resolve: (v: unknown) => unknown) =>
+      resolve(
+        failTable === table
+          ? { data: null, error: { message: 'boom' } }
+          : { data: rows, error: null },
+      );
+    return q;
+  };
+  return { client: { from } as unknown as SupabaseClient, upserts };
+}
+
+const DAY = 24 * 60 * 60 * 1000;
+const daysAgo = (n: number) => new Date(Date.now() - n * DAY).toISOString();
+const providerRow = (id: string) => ({
+  provider_id: id,
+  provider_name: 'Bistro Salam',
+  address_street: 'Hauptstraße 12',
+  address_zip: '10115',
+  address_city: 'Berlin',
+  location_latitude: '52.5',
+  location_longitude: '13.4',
+  review_status: 'approved',
+});
+
+describe('search store (#807)', () => {
+  const PLATFORMS = ['wolt', 'lieferando', 'ubereats'] as const;
+
+  it('4: loads approved providers with held and searched platforms and skips finished ones', async () => {
+    const { client } = fakeSupabase({
+      providers: [providerRow('p1'), providerRow('p2')],
+      provider_delivery_links: [{ provider_id: 'p1', platform: 'wolt' }],
+      enrichment_candidates: [],
+      provider_platform_searches: [
+        { provider_id: 'p1', platform: 'lieferando', outcome: 'no_match', searched_at: daysAgo(1) },
+        ...PLATFORMS.map((platform) => ({
+          provider_id: 'p2',
+          platform,
+          outcome: 'accepted',
+          searched_at: daysAgo(1),
+        })),
+      ],
+    });
+    const rows = await createSupabaseSearchStore(client).listProviders({
+      platforms: [...PLATFORMS],
+    });
+
+    expect(rows.map((r) => r.provider_id)).toEqual(['p1']);
+    expect([...rows[0].held]).toEqual(['wolt']);
+    expect([...rows[0].searched]).toEqual(['lieferando']);
+    expect(rows[0]).toMatchObject({ street: 'Hauptstraße 12', zip: '10115', latitude: 52.5 });
+  });
+
+  it('4: searches a no_match platform again only after the retry window, never an accepted one', async () => {
+    const tables = {
+      providers: [providerRow('p1')],
+      provider_delivery_links: [],
+      enrichment_candidates: [],
+      provider_platform_searches: [
+        { provider_id: 'p1', platform: 'wolt', outcome: 'no_match', searched_at: daysAgo(200) },
+        {
+          provider_id: 'p1',
+          platform: 'lieferando',
+          outcome: 'no_match',
+          searched_at: daysAgo(10),
+        },
+        { provider_id: 'p1', platform: 'ubereats', outcome: 'accepted', searched_at: daysAgo(200) },
+      ],
+    };
+    const { client } = fakeSupabase(tables);
+    const store = createSupabaseSearchStore(client);
+    const platforms = [...PLATFORMS];
+
+    const off = await store.listProviders({ platforms });
+    expect(off).toEqual([]);
+
+    const on = await store.listProviders({ platforms, retryNoMatchAfterDays: 90 });
+    expect([...on[0].searched].sort()).toEqual(['lieferando', 'ubereats']);
+  });
+
+  it('5: throws when a store query fails', async () => {
+    const { client } = fakeSupabase({ providers: [providerRow('p1')] }, 'providers');
+    await expect(
+      createSupabaseSearchStore(client).listProviders({ platforms: ['wolt'] }),
+    ).rejects.toThrow(/Failed to load providers: boom/);
+  });
+
+  it('4: recordSearch refreshes searched_at when a platform is searched again', async () => {
+    const { client, upserts } = fakeSupabase({});
+    await createSupabaseSearchStore(client).recordSearch({
+      provider_id: 'p1',
+      platform: 'wolt',
+      outcome: 'no_match',
+    });
+    expect(upserts[0].table).toBe('provider_platform_searches');
+    expect(upserts[0].options).toEqual({ onConflict: 'provider_id,platform' });
+    expect(upserts[0].row).toMatchObject({ provider_id: 'p1', platform: 'wolt' });
+    expect(typeof upserts[0].row.searched_at).toBe('string');
+  });
+
+  it('5: recordSearch throws when the write fails', async () => {
+    const { client } = fakeSupabase({}, 'provider_platform_searches');
+    await expect(
+      createSupabaseSearchStore(client).recordSearch({
+        provider_id: 'p1',
+        platform: 'wolt',
+        outcome: 'no_match',
+      }),
+    ).rejects.toThrow(/Failed to record search/);
+  });
+});
+
+describe('platform searchers (#807)', () => {
+  const geocoder = { geocode: vi.fn(async () => ({ lat: 1, lon: 2 })) };
+  const woltClient = {
+    searchVenuesByLocation: vi.fn(async () => ({
+      lat: 0,
+      lon: 0,
+      venues: [
+        { name: 'Bistro Salam', slug: 'bistro-salam', address: 'Hauptstraße 12', city: 'Berlin' },
+        { name: 'Evil', slug: '../x?y=1', address: 'Hauptstraße 12', city: 'Köln' },
+      ],
+    })),
+  };
+  const lieferandoClient = {
+    searchRestaurants: vi.fn(async () => [
+      {
+        name: 'Bistro Salam',
+        slug: 'bistro-salam',
+        city: 'Berlin',
+        address: 'Hauptstraße 12',
+        isActive: true,
+      },
+    ]),
+  };
+  const ubereatsClient = {
+    searchRestaurants: vi.fn(async () => [
+      {
+        name: 'Bistro Salam',
+        slug: 'bistro-salam',
+        rating: null,
+        estimatedDeliveryMinutes: null,
+        isActive: true,
+      },
+    ]),
+  };
+  const searchers = createPlatformSearchers({
+    wolt: woltClient,
+    lieferando: lieferandoClient,
+    ubereats: ubereatsClient,
+    geocoder,
+  } as unknown as Parameters<typeof createPlatformSearchers>[0]);
+
+  it('1: wolt searches around the provider coordinates and builds slugified, encoded URLs', async () => {
+    const venues = await searchers.wolt!(provider({ latitude: 52.5, longitude: 13.4 }));
+    expect(woltClient.searchVenuesByLocation).toHaveBeenCalledWith(52.5, 13.4);
+    expect(venues[0]).toMatchObject({
+      name: 'Bistro Salam',
+      address: 'Hauptstraße 12',
+      platform_url: 'https://wolt.com/de/deu/berlin/venue/bistro-salam',
+      platform_slug: 'bistro-salam',
+    });
+    expect(venues[1].platform_url).toBe('https://wolt.com/de/deu/koeln/venue/..%2Fx%3Fy%3D1');
+  });
+
+  it('1: wolt falls back to the city geocoder and fails when there are no coordinates', async () => {
+    await searchers.wolt!(provider());
+    expect(geocoder.geocode).toHaveBeenCalledWith('Berlin');
+    geocoder.geocode.mockResolvedValueOnce(null as never);
+    await expect(searchers.wolt!(provider())).rejects.toThrow(/no coordinates/);
+  });
+
+  it('1: lieferando searches the provider city and builds the speisekarte URL', async () => {
+    const [venue] = await searchers.lieferando!(provider());
+    expect(lieferandoClient.searchRestaurants).toHaveBeenCalledWith('Berlin');
+    expect(venue.platform_url).toBe('https://www.lieferando.de/speisekarte/bistro-salam');
+  });
+
+  it('2: ubereats results have no address, so an exact name match is staged, never written', async () => {
+    const fakes = makeStore([provider({ latitude: 52.5, longitude: 13.4 })]);
+    await runPlatformSearch({
+      store: fakes.store,
+      searchers: { ubereats: searchers.ubereats },
+      sleep: async () => undefined,
+      options: { apply: true, delayMs: 1000 },
+    });
+    expect(fakes.writeLink).not.toHaveBeenCalled();
+    expect(fakes.stageCandidate).toHaveBeenCalledTimes(1);
+    expect(fakes.recordSearch).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'staged' }));
   });
 });
