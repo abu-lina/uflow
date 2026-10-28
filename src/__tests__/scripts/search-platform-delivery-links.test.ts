@@ -430,8 +430,8 @@ describe('search store (#807)', () => {
     });
 
     expect(rows.map((r) => r.provider_id)).toEqual(['p1']);
-    expect([...rows[0].held]).toEqual(['wolt']);
-    expect([...rows[0].searched]).toEqual(['lieferando']);
+    expect(Array.from(rows[0].held)).toEqual(['wolt']);
+    expect(Array.from(rows[0].searched)).toEqual(['lieferando']);
     expect(rows[0]).toMatchObject({ street: 'Hauptstraße 12', zip: '10115', latitude: 52.5 });
   });
 
@@ -459,7 +459,7 @@ describe('search store (#807)', () => {
     expect(off).toEqual([]);
 
     const on = await store.listProviders({ platforms, retryNoMatchAfterDays: 90 });
-    expect([...on[0].searched].sort()).toEqual(['lieferando', 'ubereats']);
+    expect(Array.from(on[0].searched).sort()).toEqual(['lieferando', 'ubereats']);
   });
 
   it('5: throws when a store query fails', async () => {

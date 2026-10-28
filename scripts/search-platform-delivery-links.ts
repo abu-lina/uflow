@@ -8,12 +8,19 @@
  * per provider: a platform with a link row, any delivery_links candidate, or a row in
  * provider_platform_searches is skipped. A failed request logs a WARN and is not recorded, so it
  * retries on the next run. Uses the existing delivery-platform clients (public pages and
- * endpoints), waits --delay-ms between requests, and never fails the run on a search error.
+ * endpoints), waits --delay-ms between requests (the clients' own delay is off, so the wait is
+ * not doubled), and never fails the run on a search error.
+ *
+ * Limits: each platform is searched with one call (Wolt: venues near the provider; Lieferando: the
+ * provider's city page; Uber Eats: its search page), so a `no_match` can be a miss. It is kept as
+ * final by default; --retry-no-match-after-days <n> searches such platforms again after n days.
+ * Uber Eats results carry no address, so they can only be staged, never written.
  *
  * Usage:
  *   npx tsx scripts/search-platform-delivery-links.ts --dry-run                 # default, writes nothing
  *   npx tsx scripts/search-platform-delivery-links.ts --apply [--provider-id <uuid>] [--limit <n>]
  *     [--delay-ms <ms>] [--platform wolt|lieferando|ubereats]
+ *     [--retry-no-match-after-days <n>]
  *
  * Env: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
  */
@@ -28,14 +35,26 @@ import {
 } from '../src/lib/enrichment/website-delivery-links';
 import { loadHeldPlatforms } from '../src/lib/enrichment/held-delivery-platforms';
 import { matchVenueToProvider } from '../src/lib/enrichment/platform-search-match';
-import { StaticCityGeocoder } from '../src/lib/enrichment/delivery-platform/geocoder';
-import { createWoltClient } from '../src/lib/enrichment/delivery-platform/wolt-client';
+import { slugify } from '../src/lib/slugify';
+import {
+  StaticCityGeocoder,
+  type Geocoder,
+} from '../src/lib/enrichment/delivery-platform/geocoder';
+import {
+  createWoltClient,
+  type WoltClient,
+} from '../src/lib/enrichment/delivery-platform/wolt-client';
 import { createLieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-client';
 import { createUberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-client';
+import type { LieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-types';
+import type { UberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-types';
 
 export const PAGE_SIZE = 200;
 export const PLATFORM_SEARCH_SOURCE_PREFIX = 'platform_search';
 const DEFAULT_DELAY_MS = 2000;
+const MIN_DELAY_MS = 500;
+const MAX_ERROR_LENGTH = 200;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_STAGED_PER_PLATFORM = 3;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -79,6 +98,8 @@ export interface SearchStore {
     providerId?: string;
     limit?: number;
     platforms: DeliveryPlatform[];
+    /** Treat `no_match` searches older than this many days as not done. */
+    retryNoMatchAfterDays?: number;
   }): Promise<SearchProviderRow[]>;
   writeLink(row: DeliveryLinkRow): Promise<void>;
   stageCandidate(row: Record<string, unknown>): Promise<void>;
@@ -101,14 +122,24 @@ export interface SearchSummary {
 
 type Searchers = Partial<Record<DeliveryPlatform, PlatformSearcher>>;
 
-/** Applies the same URL checks as website links: https, platform host, one venue page. */
-function validateVenueLink(platform: DeliveryPlatform, rawUrl: string) {
-  if (/["'<>\s]/.test(rawUrl)) return null;
-  const link = extractDeliveryLinksFromHtml(`<a href="${rawUrl}">x</a>`, rawUrl).find(
-    (l) => l.platform === platform,
-  );
-  return link ?? null;
+/**
+ * Same URL checks as website links (https, platform host, one venue page), plus the URL must
+ * already be in canonical form and carry the slug the search result named, so nothing extra
+ * (query, fragment, another path) rides along into a live link.
+ */
+function validateVenueLink(platform: DeliveryPlatform, venue: SearchVenueResult) {
+  if (/["'<>\s]/.test(venue.platform_url)) return null;
+  const link = extractDeliveryLinksFromHtml(
+    `<a href="${venue.platform_url}">x</a>`,
+    venue.platform_url,
+  ).find((l) => l.platform === platform);
+  if (!link || link.platform_url !== venue.platform_url) return null;
+  if (!link.platform_slug || link.platform_slug !== venue.platform_slug) return null;
+  return link;
 }
+
+const errorMessage = (err: unknown) =>
+  (err instanceof Error ? err.message : String(err)).slice(0, MAX_ERROR_LENGTH);
 
 function buildSearchCandidate(
   providerId: string,
@@ -138,7 +169,13 @@ export async function runPlatformSearch(deps: {
   searchers: Searchers;
   sleep?: (ms: number) => Promise<void>;
   log?: (message: string) => void;
-  options: { apply: boolean; limit?: number; providerId?: string; delayMs?: number };
+  options: {
+    apply: boolean;
+    limit?: number;
+    providerId?: string;
+    delayMs?: number;
+    retryNoMatchAfterDays?: number;
+  };
 }): Promise<SearchSummary> {
   const { store, searchers, options } = deps;
   const log = deps.log ?? (() => undefined);
@@ -150,6 +187,7 @@ export async function runPlatformSearch(deps: {
     providerId: options.providerId,
     limit: options.limit,
     platforms,
+    retryNoMatchAfterDays: options.retryNoMatchAfterDays,
   });
   const summary: SearchSummary = {
     processed: 0,
@@ -181,7 +219,7 @@ export async function runPlatformSearch(deps: {
         const matches: Array<{ platform_url: string; platform_slug: string | null }> = [];
         const ambiguous: typeof matches = [];
         for (const venue of venues) {
-          const link = validateVenueLink(platform, venue.platform_url);
+          const link = validateVenueLink(platform, venue);
           if (!link) continue;
           const verdict = matchVenueToProvider(
             {
@@ -250,9 +288,7 @@ export async function runPlatformSearch(deps: {
         summary.noMatch += 1;
       } catch (err) {
         summary.warned += 1;
-        log(
-          `WARN ${label}: ${platform} search skipped: ${err instanceof Error ? err.message : String(err)}`,
-        );
+        log(`WARN ${label}: ${platform} search skipped: ${errorMessage(err)}`);
       }
     }
   }
@@ -261,7 +297,11 @@ export async function runPlatformSearch(deps: {
 
 export function createSupabaseSearchStore(supabase: SupabaseClient): SearchStore {
   return {
-    async listProviders({ providerId, limit, platforms }) {
+    async listProviders({ providerId, limit, platforms, retryNoMatchAfterDays }) {
+      const retryBefore =
+        retryNoMatchAfterDays === undefined
+          ? null
+          : new Date(Date.now() - retryNoMatchAfterDays * DAY_MS).toISOString();
       const selected: SearchProviderRow[] = [];
       let cursor = '';
       while (limit === undefined || selected.length < limit) {
@@ -286,10 +326,17 @@ export function createSupabaseSearchStore(supabase: SupabaseClient): SearchStore
           const held = await loadHeldPlatforms(supabase, row.provider_id);
           const { data: searchedRows, error: searchedError } = await supabase
             .from('provider_platform_searches')
-            .select('platform')
+            .select('platform, outcome, searched_at')
             .eq('provider_id', row.provider_id);
           if (searchedError) throw new Error(`Failed to load searches: ${searchedError.message}`);
-          const searched = new Set((searchedRows ?? []).map((r) => r.platform as string));
+          const searched = new Set(
+            (searchedRows ?? [])
+              .filter(
+                (r) =>
+                  !(retryBefore && r.outcome === 'no_match' && String(r.searched_at) < retryBefore),
+              )
+              .map((r) => r.platform as string),
+          );
           if (platforms.every((p) => held.has(p) || searched.has(p))) continue;
           selected.push({
             provider_id: row.provider_id,
@@ -324,27 +371,65 @@ export function createSupabaseSearchStore(supabase: SupabaseClient): SearchStore
     async recordSearch(row) {
       const { error } = await supabase
         .from('provider_platform_searches')
-        .upsert(row, { onConflict: 'provider_id,platform', ignoreDuplicates: true });
+        .upsert(
+          { ...row, searched_at: new Date().toISOString() },
+          { onConflict: 'provider_id,platform' },
+        );
       if (error) throw new Error(`Failed to record search: ${error.message}`);
     },
   };
 }
 
-const citySlug = (city: string) =>
-  city
-    .toLowerCase()
-    .replace(/ä/g, 'ae')
-    .replace(/ö/g, 'oe')
-    .replace(/ü/g, 'ue')
-    .replace(/ß/g, 'ss')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+async function coordsFor(provider: SearchProviderRow, geocoder: Pick<Geocoder, 'geocode'>) {
+  const coords =
+    provider.latitude != null && provider.longitude != null
+      ? { lat: provider.latitude, lon: provider.longitude }
+      : await geocoder.geocode(provider.city ?? '');
+  if (!coords) throw new Error(`no coordinates for city "${provider.city}"`);
+  return coords;
+}
 
-async function coordsFor(provider: SearchProviderRow, geocoder: StaticCityGeocoder) {
-  if (provider.latitude != null && provider.longitude != null) {
-    return { lat: provider.latitude, lon: provider.longitude };
-  }
-  return geocoder.geocode(provider.city ?? '');
+export function createPlatformSearchers(deps: {
+  wolt: Pick<WoltClient, 'searchVenuesByLocation'>;
+  lieferando: Pick<LieferandoClient, 'searchRestaurants'>;
+  ubereats: Pick<UberEatsClient, 'searchRestaurants'>;
+  geocoder: Pick<Geocoder, 'geocode'>;
+}): Required<Searchers> {
+  const { wolt, lieferando, ubereats, geocoder } = deps;
+  return {
+    async wolt(p) {
+      const { lat, lon } = await coordsFor(p, geocoder);
+      const { venues } = await wolt.searchVenuesByLocation(lat, lon);
+      return venues.map((v) => ({
+        name: v.name,
+        address: v.address,
+        city: v.city,
+        platform_url: `https://wolt.com/de/deu/${slugify(v.city || p.city || '')}/venue/${encodeURIComponent(v.slug)}`,
+        platform_slug: v.slug,
+      }));
+    },
+    async lieferando(p) {
+      const results = await lieferando.searchRestaurants(p.city ?? '');
+      return results.map((r) => ({
+        name: r.name,
+        address: r.address,
+        city: r.city,
+        platform_url: `https://www.lieferando.de/speisekarte/${encodeURIComponent(r.slug)}`,
+        platform_slug: r.slug,
+      }));
+    },
+    async ubereats(p) {
+      const { lat, lon } = await coordsFor(p, geocoder);
+      const results = await ubereats.searchRestaurants(p.city ?? '', lat, lon);
+      // Search results carry no address, so these can only be staged for review.
+      return results.map((r) => ({
+        name: r.name,
+        city: p.city,
+        platform_url: `https://www.ubereats.com/de/store/${encodeURIComponent(r.slug)}`,
+        platform_slug: r.slug,
+      }));
+    },
+  };
 }
 
 async function main(): Promise<void> {
@@ -362,8 +447,11 @@ async function main(): Promise<void> {
   if (rawLimit !== undefined && !/^[1-9]\d*$/.test(rawLimit))
     throw new Error(`limit must be a positive integer, got "${rawLimit}"`);
   const rawDelay = argValue('--delay-ms');
-  if (rawDelay !== undefined && !/^\d+$/.test(rawDelay))
-    throw new Error(`delay-ms must be a non-negative integer, got "${rawDelay}"`);
+  if (rawDelay !== undefined && (!/^\d+$/.test(rawDelay) || Number(rawDelay) < MIN_DELAY_MS))
+    throw new Error(`delay-ms must be an integer of at least ${MIN_DELAY_MS}, got "${rawDelay}"`);
+  const rawRetry = argValue('--retry-no-match-after-days');
+  if (rawRetry !== undefined && !/^[1-9]\d*$/.test(rawRetry))
+    throw new Error(`retry-no-match-after-days must be a positive integer, got "${rawRetry}"`);
   const onlyPlatform = argValue('--platform');
   if (onlyPlatform && !DELIVERY_PLATFORMS.includes(onlyPlatform as DeliveryPlatform))
     throw new Error(`platform must be one of ${DELIVERY_PLATFORMS.join(', ')}`);
@@ -378,46 +466,11 @@ async function main(): Promise<void> {
   const supabase = createClient(url, key, { auth: { persistSession: false } });
   const geocoder = new StaticCityGeocoder();
   const delayMs = rawDelay === undefined ? DEFAULT_DELAY_MS : Number(rawDelay);
-  const wolt = createWoltClient({ requestDelayMs: delayMs }, geocoder);
-  const lieferando = createLieferandoClient({ requestDelayMs: delayMs });
-  const ubereats = createUberEatsClient({ requestDelayMs: delayMs });
-
-  const all: Searchers = {
-    async wolt(p) {
-      const coords = await coordsFor(p, geocoder);
-      if (!coords) throw new Error(`no coordinates for city "${p.city}"`);
-      const { venues } = await wolt.searchVenuesByLocation(coords.lat, coords.lon);
-      return venues.map((v) => ({
-        name: v.name,
-        address: v.address,
-        city: v.city,
-        platform_url: `https://wolt.com/de/deu/${citySlug(v.city || p.city || '')}/venue/${v.slug}`,
-        platform_slug: v.slug,
-      }));
-    },
-    async lieferando(p) {
-      const results = await lieferando.searchRestaurants(p.city ?? '');
-      return results.map((r) => ({
-        name: r.name,
-        address: r.address,
-        city: r.city,
-        platform_url: `https://www.lieferando.de/speisekarte/${r.slug}`,
-        platform_slug: r.slug,
-      }));
-    },
-    async ubereats(p) {
-      const coords = await coordsFor(p, geocoder);
-      if (!coords) throw new Error(`no coordinates for city "${p.city}"`);
-      const results = await ubereats.searchRestaurants(p.city ?? '', coords.lat, coords.lon);
-      // Search results carry no address, so these can only be staged for review.
-      return results.map((r) => ({
-        name: r.name,
-        city: p.city,
-        platform_url: `https://www.ubereats.com/de/store/${r.slug}`,
-        platform_slug: r.slug,
-      }));
-    },
-  };
+  // The runner waits delayMs between searches; the clients' own delay stays off.
+  const wolt = createWoltClient({ requestDelayMs: 0 }, geocoder);
+  const lieferando = createLieferandoClient({ requestDelayMs: 0 });
+  const ubereats = createUberEatsClient({ requestDelayMs: 0 });
+  const all = createPlatformSearchers({ wolt, lieferando, ubereats, geocoder });
   const searchers: Searchers = onlyPlatform
     ? { [onlyPlatform]: all[onlyPlatform as DeliveryPlatform] }
     : all;
@@ -432,6 +485,7 @@ async function main(): Promise<void> {
         delayMs,
         limit: rawLimit === undefined ? undefined : Number(rawLimit),
         providerId: providerId || undefined,
+        retryNoMatchAfterDays: rawRetry === undefined ? undefined : Number(rawRetry),
       },
     });
     console.log(
