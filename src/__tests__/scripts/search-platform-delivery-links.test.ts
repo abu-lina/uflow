@@ -347,6 +347,32 @@ describe('platform delivery search (#807)', () => {
     );
     expect(summary.written).toBe(0);
   });
+
+  it('diagnostics: a no-match line says when the platform returned no venues', async () => {
+    const { logs } = await run({
+      providers: [provider()],
+      searchers: only('wolt', async () => []),
+    });
+
+    expect(logs).toContain('  RECORD p1 Bistro Salam: wolt no match (0 venues, 0 valid links)');
+  });
+
+  it('diagnostics: a no-match line shows venue count, valid links and the closest name', async () => {
+    const { logs } = await run({
+      providers: [provider()],
+      searchers: only('wolt', async () => [
+        woltVenue({ name: 'Pizza Roma', address: 'Hauptstraße 12, 10115 Berlin' }),
+        woltVenue({
+          name: 'Bistro Salam',
+          platform_url: 'https://evil.example/venue/bistro-salam',
+        }),
+      ]),
+    });
+
+    expect(logs).toContain(
+      '  RECORD p1 Bistro Salam: wolt no match (2 venues, 1 valid links, closest "Bistro Salam")',
+    );
+  });
 });
 
 type Row = Record<string, unknown>;
