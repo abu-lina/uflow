@@ -37,9 +37,33 @@ describe('platform search matching (#807, criterion 2)', () => {
         'match',
       );
     });
+  });
 
-    it('accepts a zip match when the street is missing from the venue address', () => {
-      expect(matchVenueToProvider(provider, venue({ address: '10115 Berlin' }))).toBe('match');
+  describe('stage for review (auto-write needs street, house number and zip)', () => {
+    it('stages a zip-only venue address', () => {
+      expect(matchVenueToProvider(provider, venue({ address: '10115 Berlin' }))).toBe('ambiguous');
+    });
+
+    it('stages a street and house number match without a zip', () => {
+      expect(matchVenueToProvider(provider, venue({ address: 'Hauptstraße 12' }))).toBe(
+        'ambiguous',
+      );
+    });
+
+    it('stages a street and house number match with a different zip', () => {
+      expect(
+        matchVenueToProvider(provider, venue({ address: 'Hauptstraße 12, 10999 Berlin' })),
+      ).toBe('ambiguous');
+    });
+
+    it('stages when the provider has no zip to confirm', () => {
+      expect(matchVenueToProvider({ ...provider, zip: null }, venue())).toBe('ambiguous');
+    });
+
+    it('stages when the provider has no house number to confirm', () => {
+      expect(matchVenueToProvider({ ...provider, street: 'Hauptstraße' }, venue())).toBe(
+        'ambiguous',
+      );
     });
   });
 
@@ -88,7 +112,7 @@ describe('platform search matching (#807, criterion 2)', () => {
       expect(
         matchVenueToProvider(
           { ...provider, street: 'Hauptstr. 5a' },
-          venue({ address: 'Hauptstraße 5, 10999 Berlin' }),
+          venue({ address: 'Hauptstraße 5, 10115 Berlin' }),
         ),
       ).toBe('match');
     });

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   createPlatformSearchers,
+  DEFAULT_NO_MATCH_RETRY_DAYS,
   createSupabaseSearchStore,
   runPlatformSearch,
   type PlatformSearcher,
@@ -277,7 +278,7 @@ describe('platform delivery search (#807)', () => {
         },
       },
     });
-    expect(logs.find((l) => l.startsWith('WARN'))!.length).toBeLessThan(500);
+    expect(logs.find((l) => l.startsWith('WARN'))?.length).toBeLessThan(500);
   });
 
   it('2: ignores a matching venue whose URL carries a query, fragment or mismatched slug', async () => {
@@ -435,31 +436,32 @@ describe('search store (#807)', () => {
     expect(rows[0]).toMatchObject({ street: 'Hauptstraße 12', zip: '10115', latitude: 52.5 });
   });
 
-  it('4: searches a no_match platform again only after the retry window, never an accepted one', async () => {
+  it('4: searches a no_match platform again after the default 30 days, never an accepted one', async () => {
     const tables = {
       providers: [providerRow('p1')],
       provider_delivery_links: [],
       enrichment_candidates: [],
       provider_platform_searches: [
-        { provider_id: 'p1', platform: 'wolt', outcome: 'no_match', searched_at: daysAgo(200) },
+        { provider_id: 'p1', platform: 'wolt', outcome: 'no_match', searched_at: daysAgo(31) },
         {
           provider_id: 'p1',
           platform: 'lieferando',
           outcome: 'no_match',
           searched_at: daysAgo(10),
         },
-        { provider_id: 'p1', platform: 'ubereats', outcome: 'accepted', searched_at: daysAgo(200) },
+        { provider_id: 'p1', platform: 'ubereats', outcome: 'accepted', searched_at: daysAgo(400) },
       ],
     };
     const { client } = fakeSupabase(tables);
     const store = createSupabaseSearchStore(client);
     const platforms = [...PLATFORMS];
 
-    const off = await store.listProviders({ platforms });
-    expect(off).toEqual([]);
+    expect(DEFAULT_NO_MATCH_RETRY_DAYS).toBe(30);
+    const byDefault = await store.listProviders({ platforms });
+    expect(Array.from(byDefault[0].searched).sort()).toEqual(['lieferando', 'ubereats']);
 
-    const on = await store.listProviders({ platforms, retryNoMatchAfterDays: 90 });
-    expect(Array.from(on[0].searched).sort()).toEqual(['lieferando', 'ubereats']);
+    const wider = await store.listProviders({ platforms, retryNoMatchAfterDays: 90 });
+    expect(Array.from(wider[0].searched).sort()).toEqual(['lieferando', 'ubereats', 'wolt']);
   });
 
   it('5: throws when a store query fails', async () => {
@@ -536,7 +538,7 @@ describe('platform searchers (#807)', () => {
   } as unknown as Parameters<typeof createPlatformSearchers>[0]);
 
   it('1: wolt searches around the provider coordinates and builds slugified, encoded URLs', async () => {
-    const venues = await searchers.wolt!(provider({ latitude: 52.5, longitude: 13.4 }));
+    const venues = await searchers.wolt(provider({ latitude: 52.5, longitude: 13.4 }));
     expect(woltClient.searchVenuesByLocation).toHaveBeenCalledWith(52.5, 13.4);
     expect(venues[0]).toMatchObject({
       name: 'Bistro Salam',
@@ -548,14 +550,14 @@ describe('platform searchers (#807)', () => {
   });
 
   it('1: wolt falls back to the city geocoder and fails when there are no coordinates', async () => {
-    await searchers.wolt!(provider());
+    await searchers.wolt(provider());
     expect(geocoder.geocode).toHaveBeenCalledWith('Berlin');
     geocoder.geocode.mockResolvedValueOnce(null as never);
-    await expect(searchers.wolt!(provider())).rejects.toThrow(/no coordinates/);
+    await expect(searchers.wolt(provider())).rejects.toThrow(/no coordinates/);
   });
 
   it('1: lieferando searches the provider city and builds the speisekarte URL', async () => {
-    const [venue] = await searchers.lieferando!(provider());
+    const [venue] = await searchers.lieferando(provider());
     expect(lieferandoClient.searchRestaurants).toHaveBeenCalledWith('Berlin');
     expect(venue.platform_url).toBe('https://www.lieferando.de/speisekarte/bistro-salam');
   });
