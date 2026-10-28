@@ -34,8 +34,8 @@ describe('search-platform-delivery-links workflow (#807)', () => {
 
   it('passes --apply only when dry_run is false', () => {
     expect(runStep).toBeDefined();
-    expect(runStep?.run).toMatch(/--apply/);
-    expect(runStep?.run).toMatch(/DRY_RUN.*=.*"?true"?/s);
+    expect(runStep?.run).toContain('--apply');
+    expect(runStep?.run).toContain('[ "$DRY_RUN" = "true" ]');
   });
 
   it('passes user inputs through env, never inline in the shell script', () => {
