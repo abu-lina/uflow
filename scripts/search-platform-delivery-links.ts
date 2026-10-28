@@ -37,6 +37,7 @@ import {
 import { loadHeldPlatforms } from '../src/lib/enrichment/held-delivery-platforms';
 import { matchVenueToProvider } from '../src/lib/enrichment/platform-search-match';
 import { slugify } from '../src/lib/slugify';
+import { stringSimilarity } from '../src/lib/enrichment/delivery-platform/provider-matcher';
 import {
   StaticCityGeocoder,
   type Geocoder,
@@ -221,9 +222,11 @@ export async function runPlatformSearch(deps: {
 
         const matches: Array<{ platform_url: string; platform_slug: string | null }> = [];
         const ambiguous: typeof matches = [];
+        let validLinks = 0;
         for (const venue of venues) {
           const link = validateVenueLink(platform, venue);
           if (!link) continue;
+          validLinks += 1;
           const verdict = matchVenueToProvider(
             {
               name: provider.provider_name,
@@ -280,7 +283,9 @@ export async function runPlatformSearch(deps: {
           continue;
         }
 
-        log(`  ${mode}RECORD ${label}: ${platform} no match`);
+        log(
+          `  ${mode}RECORD ${label}: ${platform} no match (${describeSearch(provider.provider_name, venues, validLinks)})`,
+        );
         if (options.apply) {
           await store.recordSearch({
             provider_id: provider.provider_id,
@@ -386,6 +391,24 @@ async function coordsFor(provider: SearchProviderRow, geocoder: Pick<Geocoder, '
       : await geocoder.geocode(provider.city ?? '');
   if (!coords) throw new Error(`no coordinates for city "${provider.city}"`);
   return coords;
+}
+
+function describeSearch(
+  providerName: string,
+  venues: SearchVenueResult[],
+  validLinks: number,
+): string {
+  const counts = `${venues.length} venues, ${validLinks} valid links`;
+  let closest: SearchVenueResult | undefined;
+  let best = -1;
+  for (const venue of venues) {
+    const score = stringSimilarity(providerName, venue.name);
+    if (score > best) {
+      best = score;
+      closest = venue;
+    }
+  }
+  return closest ? `${counts}, closest "${closest.name}"` : counts;
 }
 
 export function createPlatformSearchers(deps: {
