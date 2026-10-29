@@ -5,6 +5,8 @@ export interface SearchProvider {
   street: string | null;
   zip: string | null;
   city: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface SearchVenue {
@@ -12,13 +14,38 @@ export interface SearchVenue {
   address?: string | null;
   zip?: string | null;
   city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export type MatchVerdict = 'match' | 'ambiguous' | 'no_match';
 
 export const NAME_MATCH_THRESHOLD = 0.85;
 export const NAME_NEAR_THRESHOLD = 0.6;
+/** Wolt has no zip, so a venue this close to the provider's coordinates stands in for it. */
+export const NEAR_METERS = 250;
 const TOKEN_MATCH_THRESHOLD = 0.8;
+const EARTH_RADIUS_METERS = 6_371_000;
+
+function distanceMeters(provider: SearchProvider, venue: SearchVenue): number | null {
+  const { latitude: lat1, longitude: lon1 } = provider;
+  const { latitude: lat2, longitude: lon2 } = venue;
+  if (
+    typeof lat1 !== 'number' ||
+    typeof lon1 !== 'number' ||
+    typeof lat2 !== 'number' ||
+    typeof lon2 !== 'number' ||
+    ![lat1, lon1, lat2, lon2].every(Number.isFinite)
+  ) {
+    return null;
+  }
+  const rad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(a));
+}
 
 function addressTokens(value: string): string[] {
   return value
@@ -56,7 +83,9 @@ function indexOfSequence(haystack: string[], needle: string[]): number {
 type AddressState = 'match' | 'partial' | 'none' | 'mismatch';
 
 /**
- * `match`: street, house number and zip all agree. Only this can be written without review.
+ * `match`: street, house number and zip all agree, or, for a venue without a zip (Wolt), street and
+ * house number agree and the venue is within NEAR_METERS of the provider. Only this can be
+ * written without review.
  * `partial`: nothing contradicts the provider but something could not be confirmed (no zip,
  * zip-only venue, or the provider has no house number to check against).
  * A venue that states a street must match it; a shared zip alone never settles that.
@@ -81,7 +110,12 @@ function compareAddress(provider: SearchProvider, venue: SearchVenue): AddressSt
     const venueNumber = parseHouseNumber(venueTokens[at + nameTokens.length]);
     if (venueNumber) {
       if (!sameHouseNumber(providerNumber, venueNumber)) return 'mismatch';
-      return zipMatches ? 'match' : 'partial';
+      if (zipMatches) return 'match';
+      // No zip on the venue (Wolt): the same street and number must also be the same place.
+      const venueStatesZip = venueTokens.some((t) => /^\d{5}$/.test(t));
+      const meters = venueStatesZip ? null : distanceMeters(provider, venue);
+      if (meters !== null) return meters <= NEAR_METERS ? 'match' : 'mismatch';
+      return 'partial';
     }
   }
   // Nothing to verify the venue's street against: a shared zip is only a weak signal.
@@ -93,7 +127,8 @@ function sameCity(provider: SearchProvider, venue: SearchVenue): boolean {
   if (expected.length === 0) return false;
   const venueCity = addressTokens(venue.city ?? '');
   if (venueCity.length > 0) return venueCity.join(' ') === expected.join(' ');
-  return indexOfSequence(addressTokens(venue.address ?? ''), expected) >= 0;
+  // Wolt leaves the city empty: unknown is not a different city; street and place settle it.
+  return true;
 }
 
 /** Every token of the shorter name has a close counterpart in the longer one. */
@@ -108,7 +143,8 @@ function namesAreRelated(a: string, b: string): boolean {
 /**
  * Decides whether a platform search result is the provider's venue.
  * `match` is safe to write; `ambiguous` is staged for review; `no_match` is dropped.
- * The city must agree. `match` needs a strong name plus street, house number and zip; a
+ * A venue city that is given must agree; an empty one (Wolt) is unknown, not a mismatch.
+ * `match` needs a strong name plus a `match` address; a
  * strong name with a weaker or missing address is `ambiguous`, and a similar name only ever
  * reaches `ambiguous` with a full address match.
  */
