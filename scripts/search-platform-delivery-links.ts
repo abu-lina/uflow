@@ -225,22 +225,28 @@ export async function runPlatformSearch(deps: {
         if (requests > 0) await sleep(delayMs);
         requests += 1;
         const venues = await searchers[platform]!(provider);
-        if (venues.length === 0 && SCRAPED_PLATFORMS.has(platform)) {
+        const validated = venues.flatMap((venue) => {
+          const link = validateVenueLink(platform, venue);
+          return link ? [{ venue, link }] : [];
+        });
+        if (validated.length === 0 && SCRAPED_PLATFORMS.has(platform)) {
           summary.warned += 1;
           log(
-            `WARN ${label}: ${platform} returned no venues, not recorded (blocked or empty page)`,
+            `WARN ${label}: ${platform} returned ${venues.length === 0 ? 'no venues' : `${venues.length} venues, 0 valid links`}, not recorded (blocked or empty page)`,
           );
           continue;
         }
         summary.searched += 1;
+        if (platform === 'wolt' && (provider.latitude == null || provider.longitude == null)) {
+          log(
+            `WARN ${label}: wolt has no precise coordinates, using city centroid; the 250 m check cannot confirm a match`,
+          );
+        }
 
         const matches: Array<{ platform_url: string; platform_slug: string | null }> = [];
         const ambiguous: typeof matches = [];
-        let validLinks = 0;
-        for (const venue of venues) {
-          const link = validateVenueLink(platform, venue);
-          if (!link) continue;
-          validLinks += 1;
+        const validLinks = validated.length;
+        for (const { venue, link } of validated) {
           const verdict = matchVenueToProvider(
             {
               name: provider.provider_name,
@@ -251,6 +257,7 @@ export async function runPlatformSearch(deps: {
               longitude: provider.longitude,
             },
             venue,
+            platform,
           );
           const target = verdict === 'match' ? matches : verdict === 'ambiguous' ? ambiguous : null;
           target?.push({ platform_url: link.platform_url, platform_slug: link.platform_slug });

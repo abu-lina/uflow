@@ -122,13 +122,14 @@ function compareAddress(provider: SearchProvider, venue: SearchVenue): AddressSt
   return zipMatches && (!providerNumber || nameTokens.length === 0) ? 'partial' : 'mismatch';
 }
 
-function sameCity(provider: SearchProvider, venue: SearchVenue): boolean {
+type CityState = 'same' | 'unknown' | 'different';
+
+function compareCity(provider: SearchProvider, venue: SearchVenue): CityState {
   const expected = addressTokens(provider.city ?? '');
-  if (expected.length === 0) return false;
+  if (expected.length === 0) return 'different';
   const venueCity = addressTokens(venue.city ?? '');
-  if (venueCity.length > 0) return venueCity.join(' ') === expected.join(' ');
-  // Wolt leaves the city empty: unknown is not a different city; street and place settle it.
-  return true;
+  if (venueCity.length === 0) return 'unknown';
+  return venueCity.join(' ') === expected.join(' ') ? 'same' : 'different';
 }
 
 /** Every token of the shorter name has a close counterpart in the longer one. */
@@ -143,14 +144,21 @@ function namesAreRelated(a: string, b: string): boolean {
 /**
  * Decides whether a platform search result is the provider's venue.
  * `match` is safe to write; `ambiguous` is staged for review; `no_match` is dropped.
- * A venue city that is given must agree; an empty one (Wolt) is unknown, not a mismatch.
+ * A venue city that is given must agree; an empty one is unknown, not a mismatch. Only Wolt's
+ * empty city can still `match` (its coordinates settle the place); on any other platform an
+ * unknown city caps the verdict at `ambiguous`.
  * `match` needs a strong name plus a `match` address; a
  * strong name with a weaker or missing address is `ambiguous`, and a similar name only ever
  * reaches `ambiguous` with a full address match.
  */
-export function matchVenueToProvider(provider: SearchProvider, venue: SearchVenue): MatchVerdict {
+export function matchVenueToProvider(
+  provider: SearchProvider,
+  venue: SearchVenue,
+  platform?: string,
+): MatchVerdict {
   if (!normalizeName(provider.name) || !normalizeName(venue.name ?? '')) return 'no_match';
-  if (!sameCity(provider, venue)) return 'no_match';
+  const city = compareCity(provider, venue);
+  if (city === 'different') return 'no_match';
 
   const similarity = stringSimilarity(provider.name, venue.name);
   const strong = similarity >= NAME_MATCH_THRESHOLD;
@@ -159,6 +167,7 @@ export function matchVenueToProvider(provider: SearchProvider, venue: SearchVenu
 
   const address = compareAddress(provider, venue);
   if (address === 'mismatch') return 'no_match';
-  if (strong) return address === 'match' ? 'match' : 'ambiguous';
+  if (strong)
+    return address === 'match' && (city === 'same' || platform === 'wolt') ? 'match' : 'ambiguous';
   return address === 'match' ? 'ambiguous' : 'no_match';
 }
