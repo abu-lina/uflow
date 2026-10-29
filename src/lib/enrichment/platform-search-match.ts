@@ -1,3 +1,4 @@
+import type { DeliveryPlatform } from './website-delivery-links';
 import { normalizeName, stringSimilarity } from './delivery-platform/provider-matcher';
 
 export interface SearchProvider {
@@ -154,7 +155,7 @@ function namesAreRelated(a: string, b: string): boolean {
 export function matchVenueToProvider(
   provider: SearchProvider,
   venue: SearchVenue,
-  platform?: string,
+  platform?: DeliveryPlatform,
 ): MatchVerdict {
   if (!normalizeName(provider.name) || !normalizeName(venue.name ?? '')) return 'no_match';
   const city = compareCity(provider, venue);

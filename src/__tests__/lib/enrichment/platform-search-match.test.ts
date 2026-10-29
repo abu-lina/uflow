@@ -207,9 +207,12 @@ describe('empty venue city (#821, criterion 1)', () => {
     expect(matchVenueToProvider(provider, noCity, 'wolt')).toBe('match');
   });
 
-  it.each(['lieferando', 'ubereats'])('stages instead of matching for a %s venue', (platform) => {
-    expect(matchVenueToProvider(provider, noCity, platform)).toBe('ambiguous');
-  });
+  it.each(['lieferando', 'ubereats'] as const)(
+    'stages instead of matching for a %s venue',
+    (platform) => {
+      expect(matchVenueToProvider(provider, noCity, platform)).toBe('ambiguous');
+    },
+  );
 
   it('still matches a Lieferando venue that states the right city', () => {
     expect(matchVenueToProvider(provider, venue(), 'lieferando')).toBe('match');
