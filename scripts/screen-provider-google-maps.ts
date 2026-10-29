@@ -129,6 +129,21 @@ export function exitCodeFor(summary: ScreeningSummary): number {
   return summary.processed > 0 && summary.failed === summary.processed ? 1 : 0;
 }
 
+// Origin and path only: Maps links carry tracking tokens that must not reach the log.
+function describeUrls(hrefs: string[]): string {
+  return hrefs
+    .slice(0, 5)
+    .map((h) => {
+      try {
+        const u = new URL(h);
+        return `${u.origin}${u.pathname}`;
+      } catch {
+        return 'invalid URL';
+      }
+    })
+    .join(', ');
+}
+
 export async function runScreening(deps: {
   store: ScreeningStore;
   fetchPlaces: (provider: ScreeningProvider) => Promise<ApifyPlace[]>;
@@ -233,7 +248,9 @@ export async function runScreening(deps: {
     ].filter((h): h is string => typeof h === 'string');
     if (!order) log(`  ${label}: no order online data in the Maps result`);
     else if (pickDeliveryLinks(hrefs, sourceUrl).length === 0)
-      log(`  ${label}: order online data has no usable delivery link`);
+      log(
+        `  ${label}: order online data has no usable delivery link: ${describeUrls(hrefs) || 'no URLs'}`,
+      );
     for (const link of pickDeliveryLinks(hrefs, sourceUrl)) {
       if (candidates.some((c) => c.link.platform === link.platform)) continue;
       candidates.push({ link, sourceUrl, prefix: GOOGLE_ORDER_SOURCE_PREFIX });
