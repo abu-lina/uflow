@@ -78,6 +78,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export interface ScreeningProvider extends MatchableProvider, EnrichableProvider {
   imageUrls: string[];
   listingType?: string | null;
+  /** Set when the store already loaded them (missing-links listing), so the run does not fetch them again. */
+  heldPlatforms?: Set<string>;
 }
 
 export interface ScreeningRow {
@@ -228,9 +230,10 @@ export async function runScreening(deps: {
   // Paid add-on: only an applying run, on a food provider, with a delivery platform still missing.
   // A failed lookup means no add-on, never a failed provider.
   async function wantsOrderOnline(provider: ScreeningProvider): Promise<boolean> {
-    if (!apply || provider.listingType !== 'food' || !store.heldPlatforms) return false;
+    if (!apply || provider.listingType !== 'food') return false;
     try {
-      const held = await store.heldPlatforms(provider.provider_id);
+      const held = provider.heldPlatforms ?? (await store.heldPlatforms?.(provider.provider_id));
+      if (!held) return false;
       return DELIVERY_PLATFORMS.some((platform) => !held.has(platform));
     } catch (err) {
       log(
@@ -483,11 +486,13 @@ export function createSupabaseStore(supabase: SupabaseClient): ScreeningStore {
         const done = new Set((recent ?? []).map((r) => r.provider_id as string));
         for (const row of rows) {
           if (done.has(row.provider_id) || selected.length >= limit) continue;
+          const screeningProvider = toScreeningProvider(row);
           if (missingLinks) {
             const held = await loadHeldPlatforms(supabase, row.provider_id);
             if (DELIVERY_PLATFORMS.every((platform) => held.has(platform))) continue;
+            screeningProvider.heldPlatforms = held;
           }
-          selected.push(toScreeningProvider(row));
+          selected.push(screeningProvider);
         }
         if (rows.length < PAGE_SIZE) break;
       }
