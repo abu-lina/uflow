@@ -15,6 +15,10 @@
  * as `google_maps_order_online:<platform>` candidates, for platforms the site did not cover (#807).
  * The actor bills order online as a paid add-on (scrapeOrderOnline).
  *
+ * With --missing-links (workflow input mode=missing_links) it screens approved food providers that
+ * still miss a Wolt, Lieferando or Uber Eats link instead, stages order online and website links,
+ * and writes no provider fields.
+ *
  * Usage:
  *   npx tsx scripts/screen-provider-google-maps.ts --dry-run                 # default, writes nothing
  *   npx tsx scripts/screen-provider-google-maps.ts --apply --provider-id <uuid>
@@ -48,6 +52,7 @@ import { createImageCandidatePayload } from '../src/lib/enrichment/image-enrichm
 import { formatStageError, stageImageCandidate, type StageCandidateResult } from './enrich-images';
 import {
   buildWebsiteDeliveryCandidate,
+  DELIVERY_PLATFORMS,
   extractDeliveryLinksFromHtml,
   fetchPublicPage,
   GOOGLE_ORDER_SOURCE_PREFIX,
@@ -79,7 +84,11 @@ export interface ScreeningRow {
 }
 
 export interface ScreeningStore {
-  listProviders(opts: { providerId?: string; limit: number }): Promise<ScreeningProvider[]>;
+  listProviders(opts: {
+    providerId?: string;
+    limit: number;
+    missingLinks?: boolean;
+  }): Promise<ScreeningProvider[]>;
   insertScreening(row: ScreeningRow): Promise<void>;
   applyFields(providerId: string, rpcPayload: Record<string, unknown>): Promise<void>;
   stageImages(row: Record<string, unknown>): Promise<StageCandidateResult>;
@@ -104,6 +113,8 @@ export interface RunOptions {
   apply: boolean;
   limit: number;
   providerId?: string;
+  /** Approved food providers that still miss a delivery platform; stages links only. */
+  missingLinks?: boolean;
 }
 
 export function resolveLimit(raw: string | undefined): number {
@@ -131,6 +142,7 @@ export async function runScreening(deps: {
   const providers = await store.listProviders({
     providerId: options.providerId,
     limit: Math.min(options.limit, MAX_LIMIT),
+    ...(options.missingLinks ? { missingLinks: true } : {}),
   });
   const summary: ScreeningSummary = {
     processed: providers.length,
@@ -177,7 +189,8 @@ export async function runScreening(deps: {
 
       // Public fields are written only for clear providers; everything else keeps its screening row only.
       if (match && result.status === 'clear') {
-        await enrich(provider, match.place);
+        // Approved providers are live, so this mode never rewrites their public fields.
+        if (!options.missingLinks) await enrich(provider, match.place);
         if (websiteLinks) await stageDeliveryLinks(provider, match.place, websiteLinks);
       }
     } catch (err) {
@@ -380,7 +393,7 @@ function toScreeningProvider(row: ProviderRow): ScreeningProvider {
 
 export function createSupabaseStore(supabase: SupabaseClient): ScreeningStore {
   return {
-    async listProviders({ providerId, limit }) {
+    async listProviders({ providerId, limit, missingLinks }) {
       if (providerId) {
         const { data, error } = await supabase
           .from('providers')
@@ -394,10 +407,10 @@ export function createSupabaseStore(supabase: SupabaseClient): ScreeningStore {
       const selected: ScreeningProvider[] = [];
       let cursor = '';
       while (selected.length < limit) {
-        let query = supabase
-          .from('providers')
-          .select(PROVIDER_COLUMNS)
-          .eq('review_status', 'pending');
+        let query = supabase.from('providers').select(PROVIDER_COLUMNS);
+        query = missingLinks
+          ? query.eq('review_status', 'approved').eq('listing_type', 'food')
+          : query.eq('review_status', 'pending');
         if (cursor) query = query.gt('provider_id', cursor);
         const { data, error } = await query
           .order('provider_id', { ascending: true })
@@ -419,9 +432,12 @@ export function createSupabaseStore(supabase: SupabaseClient): ScreeningStore {
         if (recentError) throw new Error(`Failed to load screenings: ${recentError.message}`);
         const done = new Set((recent ?? []).map((r) => r.provider_id as string));
         for (const row of rows) {
-          if (!done.has(row.provider_id) && selected.length < limit) {
-            selected.push(toScreeningProvider(row));
+          if (done.has(row.provider_id) || selected.length >= limit) continue;
+          if (missingLinks) {
+            const held = await loadHeldPlatforms(supabase, row.provider_id);
+            if (DELIVERY_PLATFORMS.every((platform) => held.has(platform))) continue;
           }
+          selected.push(toScreeningProvider(row));
         }
         if (rows.length < PAGE_SIZE) break;
       }
@@ -475,6 +491,8 @@ async function main(): Promise<void> {
   };
 
   const limit = resolveLimit(argValue('--limit') ?? process.env.INPUT_LIMIT);
+  const missingLinks =
+    args.includes('--missing-links') || process.env.INPUT_MODE === 'missing_links';
   const providerId = (argValue('--provider-id') ?? process.env.INPUT_PROVIDER_ID ?? '').trim();
   if (providerId && !UUID_RE.test(providerId)) throw new Error('provider id must be a UUID');
 
@@ -488,12 +506,13 @@ async function main(): Promise<void> {
   }
 
   console.log(`Mode: ${apply ? 'APPLY (writing)' : 'DRY-RUN (no writes)'}`);
+  if (missingLinks) console.log('Selection: approved food providers missing a delivery link');
   const supabase = createClient(url, key, { auth: { persistSession: false } });
   const summary = await runScreening({
     store: createSupabaseStore(supabase),
     fetchPlaces: (p) => fetchGoogleMapsPlaces(p, token),
     log: console.log,
-    options: { apply, limit, providerId: providerId || undefined },
+    options: { apply, limit, providerId: providerId || undefined, missingLinks },
     websiteLinks: createWebsiteLinkDeps(supabase),
   });
 
