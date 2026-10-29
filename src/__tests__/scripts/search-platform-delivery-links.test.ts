@@ -461,10 +461,29 @@ const providerRow = (id: string) => ({
   location_latitude: '52.5',
   location_longitude: '13.4',
   review_status: 'approved',
+  listing_type: 'food',
 });
 
 describe('search store (#807)', () => {
   const PLATFORMS = ['wolt', 'lieferando', 'ubereats'] as const;
+
+  it('only loads food providers, not stores or other listing types', async () => {
+    const { client } = fakeSupabase({
+      providers: [
+        providerRow('p1'),
+        { ...providerRow('p2'), listing_type: 'store' },
+        { ...providerRow('p3'), listing_type: 'ummah' },
+      ],
+      provider_delivery_links: [],
+      enrichment_candidates: [],
+      provider_platform_searches: [],
+    });
+    const rows = await createSupabaseSearchStore(client).listProviders({
+      platforms: [...PLATFORMS],
+    });
+
+    expect(rows.map((r) => r.provider_id)).toEqual(['p1']);
+  });
 
   it('4: loads approved providers with held and searched platforms and skips finished ones', async () => {
     const { client } = fakeSupabase({
