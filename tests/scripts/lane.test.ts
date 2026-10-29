@@ -809,7 +809,8 @@ esac
       const { result, herdrLog } = startCopilotLane(fixture, '', undefined, { agent: 'devin' });
       expect(result.status, result.stderr).toBe(0);
       const args = argsAfterAgentStart(herdrLog);
-      expect(args.join(' ')).toContain('--permission-mode accept-edits --sandbox');
+      expect(args.some((arg) => arg.startsWith('--permission-mode'))).toBe(false);
+      expect(args).toContain('--sandbox');
       expect(args.filter((arg) => arg.startsWith('--allow-tool'))).toEqual([]);
     });
   });
@@ -944,10 +945,11 @@ esac
       const commonDir = git(root, 'rev-parse', '--path-format=absolute', '--git-common-dir');
       expect(config.permissions.allow).toEqual([`Write(${commonDir})`]);
       expect(config.sandbox.excluded.allow).toEqual([
+        'Exec(gh issue view)',
+        'Exec(gh issue create)',
         'Exec(gh issue comment)',
         'Exec(gh pr create --draft)',
         'Exec(gh pr checks)',
-        'Exec(gh pr view)',
       ]);
     });
   });
