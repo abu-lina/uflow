@@ -244,4 +244,25 @@ describe('#807 the log says why no order online link was staged', () => {
     ]);
     expect(r.logs.join('\n')).toContain('no usable delivery link');
   });
+
+  it('lists the rejected URLs without their query string', async () => {
+    const r = await run(provider(), [
+      place({
+        orderOnline: {
+          deliveries: [
+            {
+              name: 'Lieferando',
+              url: 'https://www.lieferando.de/en/menu/x?utm=1&rwg_token=secret',
+            },
+          ],
+          pickUps: [{ name: 'Own shop', orderUrl: 'https://shop.example/order?id=7' }],
+        },
+      }),
+    ]);
+    const log = r.logs.join('\n');
+    expect(log).toContain('https://www.lieferando.de/en/menu/x');
+    expect(log).toContain('https://shop.example/order');
+    expect(log).not.toContain('rwg_token');
+    expect(log).not.toContain('id=7');
+  });
 });
