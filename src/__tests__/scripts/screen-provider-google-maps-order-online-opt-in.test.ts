@@ -99,6 +99,18 @@ describe('#820 criterion 1: the order online add-on fires only for food provider
 });
 
 describe('#820 criterion 2: the check runs before the Apify call', () => {
+  it('uses the held platforms already on the provider instead of a second lookup', async () => {
+    const full = await run(
+      provider({ heldPlatforms: new Set(['wolt', 'lieferando', 'ubereats']) }),
+    );
+    expect(requested(full)).toBe(false);
+    expect(full.heldPlatforms).not.toHaveBeenCalled();
+
+    const partial = await run(provider({ heldPlatforms: new Set(['wolt']) }));
+    expect(requested(partial)).toBe(true);
+    expect(partial.heldPlatforms).not.toHaveBeenCalled();
+  });
+
   it('looks up held platforms before fetching places', async () => {
     const r = await run(provider());
     expect(r.calls).toEqual(['held', 'fetch']);

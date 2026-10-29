@@ -158,6 +158,20 @@ describe('#807 the store selects approved food providers that still miss a platf
     expect(on('eq', ['listing_type', 'food'])).toBe(true);
   });
 
+  it('#820 hands the held platforms it already loaded to the run, so they are fetched once', async () => {
+    const { client, calls } = fakeClient(rows);
+    const found = await createSupabaseStore(client).listProviders({
+      limit: 10,
+      missingLinks: true,
+    });
+    expect(Array.from(found.find((p) => p.provider_id === 'some')?.heldPlatforms ?? [])).toEqual([
+      'wolt',
+    ]);
+    expect(
+      calls.filter((c) => c.table === 'provider_delivery_links' && c.method === 'select'),
+    ).toHaveLength(rows.providers.length - 1);
+  });
+
   it('still selects pending providers by default', async () => {
     const { client, calls } = fakeClient(rows);
     await createSupabaseStore(client).listProviders({ limit: 10 });
