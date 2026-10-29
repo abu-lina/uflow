@@ -624,6 +624,67 @@ describe('platform searchers (#807)', () => {
     expect(venues[1].platform_url).toBe('https://wolt.com/de/deu/koeln/venue/..%2Fx%3Fy%3D1');
   });
 
+  it('1: wolt passes venue coordinates from the live [lon, lat] array and the typed shape', async () => {
+    woltClient.searchVenuesByLocation.mockResolvedValueOnce({
+      lat: 0,
+      lon: 0,
+      venues: [
+        { name: 'A', slug: 'a', address: 'Hauptstraße 12', city: '', location: [13.4, 52.5] },
+        {
+          name: 'B',
+          slug: 'b',
+          address: 'Hauptstraße 12',
+          city: '',
+          location: { coordinates: [13.5, 52.6] },
+        },
+        { name: 'C', slug: 'c', address: 'Hauptstraße 12', city: '' },
+      ],
+    } as never);
+    const venues = await searchers.wolt(provider({ latitude: 52.5, longitude: 13.4 }));
+    expect(venues[0]).toMatchObject({ latitude: 52.5, longitude: 13.4 });
+    expect(venues[1]).toMatchObject({ latitude: 52.6, longitude: 13.5 });
+    expect(venues[2].latitude).toBeUndefined();
+    expect(venues[0].platform_url).toBe('https://wolt.com/de/deu/berlin/venue/a');
+  });
+
+  it('2: a Wolt venue with an empty city, street, house number and nearby coordinates is written', async () => {
+    const fakes = makeStore([
+      provider({
+        provider_name: 'Bistro Salam',
+        street: 'Hauptstraße 12',
+        zip: '10115',
+        city: 'Berlin',
+        latitude: 52.5,
+        longitude: 13.4,
+      }),
+    ]);
+    woltClient.searchVenuesByLocation.mockResolvedValueOnce({
+      lat: 0,
+      lon: 0,
+      venues: [
+        {
+          name: 'Bistro Salam',
+          slug: 'bistro-salam',
+          address: 'Hauptstraße 12',
+          city: '',
+          location: [13.4005, 52.5002],
+        },
+      ],
+    } as never);
+    await runPlatformSearch({
+      store: fakes.store,
+      searchers: { wolt: searchers.wolt },
+      sleep: async () => undefined,
+      options: { apply: true, delayMs: 1000 },
+    });
+    expect(fakes.writeLink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        platform: 'wolt',
+        platform_url: 'https://wolt.com/de/deu/berlin/venue/bistro-salam',
+      }),
+    );
+  });
+
   it('1: wolt falls back to the city geocoder and fails when there are no coordinates', async () => {
     await searchers.wolt(provider());
     expect(geocoder.geocode).toHaveBeenCalledWith('Berlin');
