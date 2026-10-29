@@ -93,9 +93,9 @@ async function run(
 const staged = (stage: ReturnType<typeof vi.fn>) =>
   stage.mock.calls.map((c) => c[0] as Record<string, unknown>);
 
-describe('#807 the Maps request asks for the order online widget', () => {
-  it('sets scrapeOrderOnline in the actor input', () => {
-    expect(buildActorInput(provider()).scrapeOrderOnline).toBe(true);
+describe('#807 the Maps request asks for the order online widget when requested', () => {
+  it('sets scrapeOrderOnline in the actor input when the caller opts in (#820)', () => {
+    expect(buildActorInput(provider(), { scrapeOrderOnline: true }).scrapeOrderOnline).toBe(true);
   });
 });
 
@@ -215,7 +215,7 @@ describe('#807 a rejected Maps order candidate does not come back', () => {
         then: (resolve: (v: unknown) => void) =>
           resolve({ data: tables[table] ?? [], error: null }),
       };
-      for (const m of ['select', 'eq', 'like', 'in']) b[m] = () => b;
+      for (const m of ['select', 'eq', 'like', 'or', 'in']) b[m] = () => b;
       return b;
     };
     const client = { from: builder } as unknown as SupabaseClient;

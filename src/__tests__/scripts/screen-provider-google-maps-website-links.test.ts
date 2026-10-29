@@ -184,7 +184,7 @@ function fakeClient(rows: Record<string, unknown[]>) {
       const builder: Record<string, unknown> = {
         then: (resolve: (v: unknown) => void) => resolve({ data: rows[table] ?? [], error: null }),
       };
-      for (const method of ['select', 'eq', 'like', 'in']) {
+      for (const method of ['select', 'eq', 'like', 'or', 'in']) {
         builder[method] = (...args: unknown[]) => {
           filters.push({ table, method, args });
           return builder;
@@ -212,8 +212,8 @@ describe('#801 review: rejected candidates do not come back on the next run', ()
     });
     expect(filters).toContainEqual({
       table: 'enrichment_candidates',
-      method: 'like',
-      args: ['source', 'provider_website:%'],
+      method: 'or',
+      args: ['source.like.provider_website:%,source.like.google_maps_order_online:%'],
     });
   });
 });

@@ -4,6 +4,9 @@
  * Cost: about $0.017 per place on the Business plan, plus about $0.26 per 1,000 images.
  * One run per provider keeps failures isolated. All limits live in GOOGLE_MAPS_SETTINGS.
  * maxPlacesPerSearch is 1 so the hard cap of 100 providers per run is also a cap of 100 places.
+ *
+ * scrapeOrderOnline is a per-place paid add-on, so it is opt-in. The caller sets it only for an
+ * applying run on a food provider that still misses a delivery platform (see screen-provider-google-maps).
  */
 
 const APIFY_ACTOR_NAME = 'compass~crawler-google-places';
@@ -50,7 +53,16 @@ export interface SearchableProvider {
   address_city: string | null;
 }
 
-export function buildActorInput(provider: SearchableProvider) {
+export interface ActorOptions {
+  /** Per-place paid add-on that returns the Maps "order online" links. Off unless asked for. */
+  scrapeOrderOnline?: boolean;
+}
+
+/** `scrapeOrderOnline` is a per-place paid add-on; it stays off unless the caller opts in per provider. */
+export function buildActorInput(
+  provider: SearchableProvider,
+  { scrapeOrderOnline = false }: ActorOptions = {},
+) {
   const search = [
     provider.provider_name,
     provider.address_street,
@@ -67,7 +79,7 @@ export function buildActorInput(provider: SearchableProvider) {
     maxReviews: GOOGLE_MAPS_SETTINGS.maxReviews,
     maxImages: GOOGLE_MAPS_SETTINGS.maxImages,
     scrapeContacts: true,
-    scrapeOrderOnline: true,
+    scrapeOrderOnline,
     scrapeImageAuthors: false,
     skipClosedPlaces: false,
   };
@@ -77,6 +89,7 @@ export function buildActorInput(provider: SearchableProvider) {
 export async function fetchGoogleMapsPlaces(
   provider: SearchableProvider,
   apiToken: string,
+  options: ActorOptions = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<ApifyPlace[]> {
   const response = await fetchImpl(
@@ -84,7 +97,7 @@ export async function fetchGoogleMapsPlaces(
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiToken}` },
-      body: JSON.stringify(buildActorInput(provider)),
+      body: JSON.stringify(buildActorInput(provider, options)),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     },
   );

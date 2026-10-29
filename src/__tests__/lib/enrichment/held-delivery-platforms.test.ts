@@ -16,7 +16,7 @@ function fakeClient(rows: Record<string, unknown[]>, errors: Record<string, stri
               : { data: rows[table] ?? [], error: null },
           ),
       };
-      for (const method of ['select', 'eq', 'like']) {
+      for (const method of ['select', 'eq', 'like', 'or']) {
         builder[method] = (...args: unknown[]) => {
           filters.push({ table, method, args });
           return builder;
@@ -72,7 +72,7 @@ describe('#806 held delivery platforms (done-once check)', () => {
 
     const held = await loadHeldPlatforms(client, 'p1', {
       candidateStatus: 'rejected',
-      websiteSourceOnly: true,
+      sourcePrefix: 'provider_website',
     });
 
     expect(Array.from(held).sort()).toEqual(['ubereats', 'wolt']);
@@ -85,6 +85,48 @@ describe('#806 held delivery platforms (done-once check)', () => {
       table: 'enrichment_candidates',
       method: 'like',
       args: ['source', 'provider_website:%'],
+    });
+  });
+
+  it('#820 applies sourcePrefix on its own, without any other option', async () => {
+    const { client, filters } = fakeClient({
+      enrichment_candidates: [
+        { source: 'google_maps_order_online:wolt', proposed_value: [{ platform: 'ubereats' }] },
+      ],
+    });
+
+    const held = await loadHeldPlatforms(client, 'p1', {
+      sourcePrefix: 'google_maps_order_online',
+    });
+
+    expect(Array.from(held)).toEqual(['wolt']);
+    expect(filters).toContainEqual({
+      table: 'enrichment_candidates',
+      method: 'like',
+      args: ['source', 'google_maps_order_online:%'],
+    });
+  });
+
+  it('#820 covers several prefixes in a single candidate query', async () => {
+    const { client, filters } = fakeClient({
+      enrichment_candidates: [
+        { source: 'provider_website:wolt', proposed_value: null },
+        { source: 'google_maps_order_online:ubereats', proposed_value: null },
+      ],
+    });
+
+    const held = await loadHeldPlatforms(client, 'p1', {
+      sourcePrefix: ['provider_website', 'google_maps_order_online'],
+    });
+
+    expect(Array.from(held).sort()).toEqual(['ubereats', 'wolt']);
+    expect(
+      filters.filter((f) => f.table === 'enrichment_candidates' && f.method === 'select'),
+    ).toHaveLength(1);
+    expect(filters).toContainEqual({
+      table: 'enrichment_candidates',
+      method: 'or',
+      args: ['source.like.provider_website:%,source.like.google_maps_order_online:%'],
     });
   });
 
