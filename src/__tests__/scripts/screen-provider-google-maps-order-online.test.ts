@@ -223,3 +223,25 @@ describe('#807 a rejected Maps order candidate does not come back', () => {
     expect(Array.from(held)).toContain('wolt');
   });
 });
+
+describe('#807 the log says why no order online link was staged', () => {
+  it('reports a clear match whose place has no order online data', async () => {
+    const r = await run(provider(), [place({ orderOnline: undefined })]);
+    expect(r.logs.join('\n')).toContain('no order online data');
+  });
+
+  it('reports order online links skipped because the platform is already held', async () => {
+    const r = await run(provider(), [place()], { existing: ['wolt', 'ubereats'] });
+    const log = r.logs.join('\n');
+    expect(log).toContain('already held');
+    expect(log).toContain('wolt');
+    expect(log).toContain('ubereats');
+  });
+
+  it('reports order online data that holds no usable venue link', async () => {
+    const r = await run(provider(), [
+      place({ orderOnline: { deliveries: [{ name: 'Other', url: 'https://example.com/x' }] } }),
+    ]);
+    expect(r.logs.join('\n')).toContain('no usable delivery link');
+  });
+});

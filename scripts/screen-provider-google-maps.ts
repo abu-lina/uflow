@@ -218,6 +218,9 @@ export async function runScreening(deps: {
       ...(order?.deliveries ?? []).map((d) => d.url),
       ...(order?.pickUps ?? []).map((d) => d.orderUrl),
     ].filter((h): h is string => typeof h === 'string');
+    if (!order) log(`  ${label}: no order online data in the Maps result`);
+    else if (pickDeliveryLinks(hrefs, sourceUrl).length === 0)
+      log(`  ${label}: order online data has no usable delivery link`);
     for (const link of pickDeliveryLinks(hrefs, sourceUrl)) {
       if (candidates.some((c) => c.link.platform === link.platform)) continue;
       candidates.push({ link, sourceUrl, prefix: GOOGLE_ORDER_SOURCE_PREFIX });
@@ -226,6 +229,11 @@ export async function runScreening(deps: {
 
     try {
       const held = await links.existingPlatforms(provider.provider_id);
+      const skipped = candidates.filter((c) => held.has(c.link.platform));
+      if (skipped.length > 0)
+        log(
+          `  ${label}: already held, not staged: ${skipped.map((c) => c.link.platform).join(', ')}`,
+        );
       for (const { link, sourceUrl: from, prefix } of candidates.filter(
         (c) => !held.has(c.link.platform),
       )) {
