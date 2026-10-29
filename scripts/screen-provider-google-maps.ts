@@ -13,7 +13,10 @@
  * `delivery_links` enrichment candidates for review in /dashboard/enrichment (#801).
  * It also stages the Maps "order online" links (Wolt, Uber Eats, Lieferando) of the matched place
  * as `google_maps_order_online:<platform>` candidates, for platforms the site did not cover (#807).
- * The actor bills order online as a paid add-on (scrapeOrderOnline).
+ * The actor bills order online (scrapeOrderOnline) as a per-place paid add-on, so it is opt-in per
+ * provider (#820). It is requested only when the run applies, the provider's listing_type is `food`
+ * and at least one delivery platform (Wolt, Lieferando, Uber Eats) is still missing. That check runs
+ * before the Apify call. Dry runs, non-food providers and fully covered providers never pay for it.
  *
  * With --missing-links (workflow input mode=missing_links) it screens approved food providers that
  * still miss a Wolt, Lieferando or Uber Eats link instead, stages order online and website links,
@@ -34,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import {
   fetchGoogleMapsPlaces,
   GOOGLE_MAPS_SETTINGS,
+  type ActorOptions,
   type ApifyPlace,
 } from '../src/lib/enrichment/google-maps/apify-google-maps-client';
 import {
@@ -73,6 +77,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export interface ScreeningProvider extends MatchableProvider, EnrichableProvider {
   imageUrls: string[];
+  listingType?: string | null;
 }
 
 export interface ScreeningRow {
@@ -92,6 +97,8 @@ export interface ScreeningStore {
   insertScreening(row: ScreeningRow): Promise<void>;
   applyFields(providerId: string, rpcPayload: Record<string, unknown>): Promise<void>;
   stageImages(row: Record<string, unknown>): Promise<StageCandidateResult>;
+  /** Platforms the provider already holds; used to decide whether the order online add-on is worth paying for. */
+  heldPlatforms?(providerId: string): Promise<Set<string>>;
 }
 
 export interface WebsiteLinkDeps {
@@ -146,7 +153,7 @@ function describeUrls(hrefs: string[]): string {
 
 export async function runScreening(deps: {
   store: ScreeningStore;
-  fetchPlaces: (provider: ScreeningProvider) => Promise<ApifyPlace[]>;
+  fetchPlaces: (provider: ScreeningProvider, actorOptions?: ActorOptions) => Promise<ApifyPlace[]>;
   log?: (message: string) => void;
   options: RunOptions;
   websiteLinks?: WebsiteLinkDeps;
@@ -172,8 +179,9 @@ export async function runScreening(deps: {
     const label = `${provider.provider_id} ${provider.provider_name}`;
     try {
       let places: ApifyPlace[];
+      const scrapeOrderOnline = await wantsOrderOnline(provider);
       try {
-        places = await fetchPlaces(provider);
+        places = await fetchPlaces(provider, { scrapeOrderOnline });
       } catch (err) {
         summary.failed += 1;
         log(`FAIL ${label}: ${err instanceof Error ? err.message : String(err)}`);
@@ -206,7 +214,8 @@ export async function runScreening(deps: {
       if (match && result.status === 'clear') {
         // Approved providers are live, so this mode never rewrites their public fields.
         if (!options.missingLinks) await enrich(provider, match.place);
-        if (websiteLinks) await stageDeliveryLinks(provider, match.place, websiteLinks);
+        if (websiteLinks)
+          await stageDeliveryLinks(provider, match.place, websiteLinks, scrapeOrderOnline);
       }
     } catch (err) {
       summary.failed += 1;
@@ -216,12 +225,30 @@ export async function runScreening(deps: {
 
   return summary;
 
+  // Paid add-on: only an applying run, on a food provider, with a delivery platform still missing.
+  // A failed lookup means no add-on, never a failed provider.
+  async function wantsOrderOnline(provider: ScreeningProvider): Promise<boolean> {
+    if (!apply || provider.listingType !== 'food' || !store.heldPlatforms) return false;
+    try {
+      const held = await store.heldPlatforms(provider.provider_id);
+      return DELIVERY_PLATFORMS.some((platform) => !held.has(platform));
+    } catch (err) {
+      log(
+        `WARN ${provider.provider_id} ${provider.provider_name}: order online not requested, held lookup failed: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      return false;
+    }
+  }
+
   // Website links first, then Maps order online links for platforms the site did not cover.
   // Any failure only logs, it never fails the run.
   async function stageDeliveryLinks(
     provider: ScreeningProvider,
     place: ApifyPlace,
     links: WebsiteLinkDeps,
+    orderOnlineRequested: boolean,
   ): Promise<void> {
     const label = `${provider.provider_id} ${provider.provider_name}`;
     const candidates: Array<{ link: WebsiteDeliveryLink; sourceUrl: string; prefix: string }> = [];
@@ -246,7 +273,11 @@ export async function runScreening(deps: {
       ...(order?.deliveries ?? []).map((d) => d.url),
       ...(order?.pickUps ?? []).map((d) => d.orderUrl),
     ].filter((h): h is string => typeof h === 'string');
-    if (!order) log(`  ${label}: no order online data in the Maps result`);
+    if (!order)
+      log(
+        `  ${label}: no order online data in the Maps result` +
+          (orderOnlineRequested ? '' : ' (add-on not requested)'),
+      );
     else if (pickDeliveryLinks(hrefs, sourceUrl).length === 0)
       log(
         `  ${label}: order online data has no usable delivery link: ${describeUrls(hrefs) || 'no URLs'}`,
@@ -369,6 +400,7 @@ interface ProviderRow {
   social_instagram: string | null;
   opening_hours: Record<string, unknown> | null;
   provider_images: unknown;
+  listing_type?: string | null;
   locations: Array<{
     location_id: string;
     location_latitude: number | null;
@@ -381,7 +413,7 @@ interface ProviderRow {
 }
 
 const PROVIDER_COLUMNS =
-  'provider_id, provider_name, address_street, address_zip, address_city, provider_description, has_parking, family_friendly, children_friendly, contact_phone, social_website, social_instagram, opening_hours, provider_images, locations(location_id, location_latitude, location_longitude, is_primary, address_street, address_zip, address_city)';
+  'provider_id, provider_name, address_street, address_zip, address_city, provider_description, has_parking, family_friendly, children_friendly, contact_phone, social_website, social_instagram, opening_hours, provider_images, listing_type, locations(location_id, location_latitude, location_longitude, is_primary, address_street, address_zip, address_city)';
 
 function toScreeningProvider(row: ProviderRow): ScreeningProvider {
   const locations = row.locations ?? [];
@@ -402,6 +434,7 @@ function toScreeningProvider(row: ProviderRow): ScreeningProvider {
     social_instagram: row.social_instagram,
     opening_hours: row.opening_hours,
     imageUrls: extractImageUrls(row.provider_images),
+    listingType: row.listing_type ?? null,
     latitude: primary?.location_latitude ?? null,
     longitude: primary?.location_longitude ?? null,
     primaryLocationId: primary?.location_id ?? null,
@@ -475,6 +508,7 @@ export function createSupabaseStore(supabase: SupabaseClient): ScreeningStore {
     },
 
     stageImages: (row) => stageImageCandidate(supabase, row),
+    heldPlatforms: (providerId) => loadHeldPlatforms(supabase, providerId),
   };
 }
 
@@ -482,18 +516,11 @@ export function createWebsiteLinkDeps(supabase: SupabaseClient): WebsiteLinkDeps
   return {
     fetchPage: (url) => fetchPublicPage(url),
     // The stage dedupe ignores rejected rows; skip those platforms so a rejection sticks.
-    existingPlatforms: async (providerId) => {
-      const held = new Set<string>();
-      for (const sourcePrefix of [WEBSITE_SOURCE_PREFIX, GOOGLE_ORDER_SOURCE_PREFIX]) {
-        const platforms = await loadHeldPlatforms(supabase, providerId, {
-          candidateStatus: 'rejected',
-          websiteSourceOnly: true,
-          sourcePrefix,
-        });
-        platforms.forEach((p) => held.add(p));
-      }
-      return held;
-    },
+    existingPlatforms: (providerId) =>
+      loadHeldPlatforms(supabase, providerId, {
+        candidateStatus: 'rejected',
+        sourcePrefix: [WEBSITE_SOURCE_PREFIX, GOOGLE_ORDER_SOURCE_PREFIX],
+      }),
     stage: (row) => stageImageCandidate(supabase, row),
   };
 }
@@ -527,7 +554,7 @@ async function main(): Promise<void> {
   const supabase = createClient(url, key, { auth: { persistSession: false } });
   const summary = await runScreening({
     store: createSupabaseStore(supabase),
-    fetchPlaces: (p) => fetchGoogleMapsPlaces(p, token),
+    fetchPlaces: (p, actorOptions) => fetchGoogleMapsPlaces(p, token, actorOptions),
     log: console.log,
     options: { apply, limit, providerId: providerId || undefined, missingLinks },
     websiteLinks: createWebsiteLinkDeps(supabase),

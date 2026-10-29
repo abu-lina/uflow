@@ -115,7 +115,10 @@ describe('#820 criterion 2: the check runs before the Apify call', () => {
   });
 
   it('sends the option through to the actor request body', async () => {
-    const fetchImpl = vi.fn(async () => ({ ok: true, json: async () => [] }) as Response);
+    const fetchImpl = vi.fn(
+      async (_url: string | URL | Request, _init?: RequestInit) =>
+        ({ ok: true, json: async () => [] }) as Response,
+    );
     await fetchGoogleMapsPlaces(provider(), 'token', { scrapeOrderOnline: true }, fetchImpl);
     await fetchGoogleMapsPlaces(provider(), 'token', undefined, fetchImpl);
     const bodies = fetchImpl.mock.calls.map(

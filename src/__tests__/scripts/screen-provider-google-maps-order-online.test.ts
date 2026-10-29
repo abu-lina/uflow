@@ -215,7 +215,7 @@ describe('#807 a rejected Maps order candidate does not come back', () => {
         then: (resolve: (v: unknown) => void) =>
           resolve({ data: tables[table] ?? [], error: null }),
       };
-      for (const m of ['select', 'eq', 'like', 'in']) b[m] = () => b;
+      for (const m of ['select', 'eq', 'like', 'or', 'in']) b[m] = () => b;
       return b;
     };
     const client = { from: builder } as unknown as SupabaseClient;
