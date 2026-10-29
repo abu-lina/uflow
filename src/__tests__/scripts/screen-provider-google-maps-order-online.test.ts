@@ -119,8 +119,8 @@ describe('#807 order online links of a clear Maps match are staged as pending ca
       (x) => (x.proposed_value as Array<{ platform_url: string }>)[0].platform_url,
     );
     expect(urls.sort()).toEqual([
-      'https://www.ubereats.com/de/store/tevhid/XjwKnTcpW-u1VmF1KMQ0Sw',
       'https://wolt.com/de/deu/stuttgart/restaurant/tevhid',
+      'https://www.ubereats.com/de/store/tevhid/XjwKnTcpW-u1VmF1KMQ0Sw',
     ]);
   });
 

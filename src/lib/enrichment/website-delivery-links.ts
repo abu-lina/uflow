@@ -39,6 +39,7 @@ const PLATFORMS: Array<{
 export const DELIVERY_PLATFORMS: DeliveryPlatform[] = PLATFORMS.map((p) => p.platform);
 
 export const WEBSITE_SOURCE_PREFIX = 'provider_website';
+export const GOOGLE_ORDER_SOURCE_PREFIX = 'google_maps_order_online';
 export const DEFAULT_TIMEOUT_MS = 8000;
 export const DEFAULT_MAX_BYTES = 2 * 1024 * 1024;
 export const DEFAULT_MAX_REDIRECTS = 3;
@@ -59,41 +60,54 @@ function slugFrom(pattern: RegExp, pathname: string): string | null {
   return slug === '.' || slug === '..' || slug.includes('/') ? null : slug;
 }
 
-export function extractDeliveryLinksFromHtml(html: string, pageUrl: string): WebsiteDeliveryLink[] {
-  const found = new Map<DeliveryPlatform, WebsiteDeliveryLink>();
-  const anchor = /<a\s[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+/** Validates one href as a venue page on a supported platform; returns its canonical form or null. */
+export function classifyDeliveryUrl(href: string, baseUrl: string): WebsiteDeliveryLink | null {
+  let url: URL;
+  try {
+    url = new URL(href.trim(), baseUrl);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:' || url.username || url.password || url.port) return null;
+  const entry = matchPlatform(url.hostname);
+  if (!entry) return null;
+  // Links can be written live, so a link must name one venue page, not a homepage or listing.
+  const slug = slugFrom(entry.slugPattern, url.pathname);
+  if (!slug) return null;
+  return {
+    platform: entry.platform,
+    platform_url: `${url.origin}${url.pathname}`,
+    platform_slug: slug,
+  };
+}
 
-  for (const match of Array.from(html.matchAll(anchor))) {
-    const href = (match[1] ?? match[2] ?? '').trim().replace(/&amp;/g, '&');
-    let url: URL;
-    try {
-      url = new URL(href, pageUrl);
-    } catch {
-      continue;
-    }
-    if (url.protocol !== 'https:' || url.username || url.password || url.port) continue;
-    const entry = matchPlatform(url.hostname);
-    if (!entry || found.has(entry.platform)) continue;
-    // Links can be written live, so a link must name one venue page, not a homepage or listing.
-    const slug = slugFrom(entry.slugPattern, url.pathname);
-    if (!slug) continue;
-    found.set(entry.platform, {
-      platform: entry.platform,
-      platform_url: `${url.origin}${url.pathname}`,
-      platform_slug: slug,
-    });
+/** First valid link per platform, in the order given. */
+export function pickDeliveryLinks(hrefs: string[], baseUrl: string): WebsiteDeliveryLink[] {
+  const found = new Map<DeliveryPlatform, WebsiteDeliveryLink>();
+  for (const href of hrefs) {
+    const link = classifyDeliveryUrl(href, baseUrl);
+    if (link && !found.has(link.platform)) found.set(link.platform, link);
   }
   return Array.from(found.values());
+}
+
+export function extractDeliveryLinksFromHtml(html: string, pageUrl: string): WebsiteDeliveryLink[] {
+  const anchor = /<a\s[^>]*?href\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+  const hrefs = Array.from(html.matchAll(anchor)).map((m) =>
+    (m[1] ?? m[2] ?? '').trim().replace(/&amp;/g, '&'),
+  );
+  return pickDeliveryLinks(hrefs, pageUrl);
 }
 
 export function buildWebsiteDeliveryCandidate(
   providerId: string,
   sourceUrl: string,
   link: WebsiteDeliveryLink,
+  sourcePrefix: string = WEBSITE_SOURCE_PREFIX,
 ): Record<string, unknown> {
   return {
     provider_id: providerId,
-    source: `${WEBSITE_SOURCE_PREFIX}:${link.platform}`,
+    source: `${sourcePrefix}:${link.platform}`,
     source_url: sourceUrl,
     field_name: 'delivery_links',
     proposed_value: [
