@@ -4,8 +4,9 @@ import { WEBSITE_SOURCE_PREFIX } from './website-delivery-links';
 export interface HeldPlatformOptions {
   /** Only count candidates with this status (default: any status). */
   candidateStatus?: string;
-  /** Only count `provider_website:*` candidates (default: any source). */
+  /** Only count candidates whose source starts with `sourcePrefix` (default `provider_website`). */
   websiteSourceOnly?: boolean;
+  sourcePrefix?: string;
 }
 
 /**
@@ -24,21 +25,22 @@ export async function loadHeldPlatforms(
   if (error) throw new Error(`Failed to load delivery links: ${error.message}`);
   const held = new Set((data ?? []).map((r) => r.platform as string));
 
+  const prefix = options.sourcePrefix ?? WEBSITE_SOURCE_PREFIX;
   let query = supabase
     .from('enrichment_candidates')
     .select('source, proposed_value')
     .eq('provider_id', providerId)
     .eq('field_name', 'delivery_links');
   if (options.candidateStatus) query = query.eq('status', options.candidateStatus);
-  if (options.websiteSourceOnly) query = query.like('source', `${WEBSITE_SOURCE_PREFIX}:%`);
+  if (options.websiteSourceOnly) query = query.like('source', `${prefix}:%`);
   const { data: candidates, error: candidateError } = await query;
   if (candidateError)
     throw new Error(`Failed to load delivery candidates: ${candidateError.message}`);
 
   for (const row of candidates ?? []) {
     const source = String(row.source ?? '');
-    if (source.startsWith(`${WEBSITE_SOURCE_PREFIX}:`)) {
-      held.add(source.slice(WEBSITE_SOURCE_PREFIX.length + 1));
+    if (source.startsWith(`${prefix}:`)) {
+      held.add(source.slice(prefix.length + 1));
     }
     if (options.websiteSourceOnly || !Array.isArray(row.proposed_value)) continue;
     for (const item of row.proposed_value as Array<{ platform?: unknown } | null>) {

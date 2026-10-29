@@ -30,6 +30,10 @@ export interface ApifyPlace {
   postalCode?: string;
   location?: { lat: number; lng: number };
   website?: string | null;
+  orderOnline?: {
+    deliveries?: Array<{ name?: string; url?: string }>;
+    pickUps?: Array<{ name?: string; orderUrl?: string }>;
+  } | null;
   phone?: string | null;
   instagrams?: string[];
   openingHours?: Array<{ day: string; hours: string }>;
@@ -63,6 +67,7 @@ export function buildActorInput(provider: SearchableProvider) {
     maxReviews: GOOGLE_MAPS_SETTINGS.maxReviews,
     maxImages: GOOGLE_MAPS_SETTINGS.maxImages,
     scrapeContacts: true,
+    scrapeOrderOnline: true,
     scrapeImageAuthors: false,
     skipClosedPlaces: false,
   };

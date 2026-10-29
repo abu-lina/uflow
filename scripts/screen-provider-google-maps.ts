@@ -11,6 +11,9 @@
  * For `clear` providers with a website it also reads that site (https only, timeout, size cap,
  * private IPs blocked) and stages Lieferando/Wolt/Uber Eats links as pending
  * `delivery_links` enrichment candidates for review in /dashboard/enrichment (#801).
+ * It also stages the Maps "order online" links (Wolt, Uber Eats, Lieferando) of the matched place
+ * as `google_maps_order_online:<platform>` candidates, for platforms the site did not cover (#807).
+ * The actor bills order online as a paid add-on (scrapeOrderOnline).
  *
  * Usage:
  *   npx tsx scripts/screen-provider-google-maps.ts --dry-run                 # default, writes nothing
@@ -47,6 +50,10 @@ import {
   buildWebsiteDeliveryCandidate,
   extractDeliveryLinksFromHtml,
   fetchPublicPage,
+  GOOGLE_ORDER_SOURCE_PREFIX,
+  pickDeliveryLinks,
+  WEBSITE_SOURCE_PREFIX,
+  type WebsiteDeliveryLink,
 } from '../src/lib/enrichment/website-delivery-links';
 import { loadHeldPlatforms } from '../src/lib/enrichment/held-delivery-platforms';
 
@@ -171,7 +178,7 @@ export async function runScreening(deps: {
       // Public fields are written only for clear providers; everything else keeps its screening row only.
       if (match && result.status === 'clear') {
         await enrich(provider, match.place);
-        if (websiteLinks) await stageWebsiteLinks(provider, websiteLinks);
+        if (websiteLinks) await stageDeliveryLinks(provider, match.place, websiteLinks);
       }
     } catch (err) {
       summary.failed += 1;
@@ -181,33 +188,60 @@ export async function runScreening(deps: {
 
   return summary;
 
-  // Reads the provider's own site; any failure only logs, it never fails the run.
-  async function stageWebsiteLinks(
+  // Website links first, then Maps order online links for platforms the site did not cover.
+  // Any failure only logs, it never fails the run.
+  async function stageDeliveryLinks(
     provider: ScreeningProvider,
+    place: ApifyPlace,
     links: WebsiteLinkDeps,
   ): Promise<void> {
     const label = `${provider.provider_id} ${provider.provider_name}`;
+    const candidates: Array<{ link: WebsiteDeliveryLink; sourceUrl: string; prefix: string }> = [];
+
     const site = provider.social_website?.trim();
-    if (!site) return;
-    try {
-      const page = await links.fetchPage(site);
-      const found = extractDeliveryLinksFromHtml(page.html, page.url);
-      if (found.length === 0) return;
-      const held = await links.existingPlatforms(provider.provider_id);
-      for (const link of found.filter((l) => !held.has(l.platform))) {
+    if (site) {
+      try {
+        const page = await links.fetchPage(site);
+        for (const link of extractDeliveryLinksFromHtml(page.html, page.url)) {
+          candidates.push({ link, sourceUrl: page.url, prefix: WEBSITE_SOURCE_PREFIX });
+        }
+      } catch (err) {
         log(
-          `  ${apply ? 'STAGE' : 'WOULD STAGE'} delivery link ${link.platform} ${link.platform_url}`,
+          `WARN ${label}: website links skipped: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+    }
+
+    const sourceUrl = place.url ?? 'https://www.google.com/maps';
+    const order = place.orderOnline;
+    const hrefs = [
+      ...(order?.deliveries ?? []).map((d) => d.url),
+      ...(order?.pickUps ?? []).map((d) => d.orderUrl),
+    ].filter((h): h is string => typeof h === 'string');
+    for (const link of pickDeliveryLinks(hrefs, sourceUrl)) {
+      if (candidates.some((c) => c.link.platform === link.platform)) continue;
+      candidates.push({ link, sourceUrl, prefix: GOOGLE_ORDER_SOURCE_PREFIX });
+    }
+    if (candidates.length === 0) return;
+
+    try {
+      const held = await links.existingPlatforms(provider.provider_id);
+      for (const { link, sourceUrl: from, prefix } of candidates.filter(
+        (c) => !held.has(c.link.platform),
+      )) {
+        log(
+          `  ${apply ? 'STAGE' : 'WOULD STAGE'} delivery link ${link.platform} ${link.platform_url} (${prefix})`,
         );
         if (!apply) continue;
         const outcome = await links.stage(
-          buildWebsiteDeliveryCandidate(provider.provider_id, page.url, link),
+          buildWebsiteDeliveryCandidate(provider.provider_id, from, link, prefix),
         );
         if (outcome.outcome === 'failed')
           log(`WARN ${label}: delivery candidate not staged: ${formatStageError(outcome.error)}`);
       }
     } catch (err) {
       log(
-        `WARN ${label}: website links skipped: ${err instanceof Error ? err.message : String(err)}`,
+        `WARN ${label}: delivery links skipped: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
@@ -407,11 +441,18 @@ export function createWebsiteLinkDeps(supabase: SupabaseClient): WebsiteLinkDeps
   return {
     fetchPage: (url) => fetchPublicPage(url),
     // The stage dedupe ignores rejected rows; skip those platforms so a rejection sticks.
-    existingPlatforms: (providerId) =>
-      loadHeldPlatforms(supabase, providerId, {
-        candidateStatus: 'rejected',
-        websiteSourceOnly: true,
-      }),
+    existingPlatforms: async (providerId) => {
+      const held = new Set<string>();
+      for (const sourcePrefix of [WEBSITE_SOURCE_PREFIX, GOOGLE_ORDER_SOURCE_PREFIX]) {
+        const platforms = await loadHeldPlatforms(supabase, providerId, {
+          candidateStatus: 'rejected',
+          websiteSourceOnly: true,
+          sourcePrefix,
+        });
+        platforms.forEach((p) => held.add(p));
+      }
+      return held;
+    },
     stage: (row) => stageImageCandidate(supabase, row),
   };
 }
