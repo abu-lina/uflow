@@ -3,7 +3,8 @@
  * Fallback for providers whose website yielded no delivery links (#806).
  *
  * A result is accepted only when matchVenueToProvider says `match` (name, street with house
- * number, zip and city all agree); it is then written to provider_delivery_links. Ambiguous results are staged as pending
+ * number and zip agree; Wolt has no zip, so there the venue must be within 250 m of the
+ * provider's coordinates instead); it is then written to provider_delivery_links. Ambiguous results are staged as pending
  * `delivery_links` candidates (source `platform_search:<platform>`). Each platform is searched once
  * per provider: a platform with a link row, any delivery_links candidate, or a row in
  * provider_platform_searches is skipped. A failed request logs a WARN and is not recorded, so it
@@ -85,6 +86,8 @@ export interface SearchVenueResult {
   name: string;
   address?: string | null;
   city?: string | null;
+  latitude?: number;
+  longitude?: number;
   platform_url: string;
   platform_slug: string | null;
 }
@@ -244,6 +247,8 @@ export async function runPlatformSearch(deps: {
               street: provider.street,
               zip: provider.zip,
               city: provider.city,
+              latitude: provider.latitude,
+              longitude: provider.longitude,
             },
             venue,
           );
@@ -423,6 +428,16 @@ function describeSearch(
   return closest ? `${counts}, closest "${closest.name}"` : counts;
 }
 
+/** The live Wolt API sends location as [lon, lat]; the client types it as { coordinates }. */
+function woltCoordinates(location: unknown): { latitude?: number; longitude?: number } {
+  const pair = Array.isArray(location)
+    ? location
+    : (location as { coordinates?: unknown } | null | undefined)?.coordinates;
+  if (!Array.isArray(pair) || pair.length < 2) return {};
+  const [longitude, latitude] = pair;
+  return Number.isFinite(latitude) && Number.isFinite(longitude) ? { latitude, longitude } : {};
+}
+
 export function createPlatformSearchers(deps: {
   wolt: Pick<WoltClient, 'searchVenuesByLocation'>;
   lieferando: Pick<LieferandoClient, 'searchRestaurants'>;
@@ -438,6 +453,7 @@ export function createPlatformSearchers(deps: {
         name: v.name,
         address: v.address,
         city: v.city,
+        ...woltCoordinates(v.location),
         platform_url: `https://wolt.com/de/deu/${slugify(v.city || p.city || '')}/venue/${encodeURIComponent(v.slug)}`,
         platform_slug: v.slug,
       }));
