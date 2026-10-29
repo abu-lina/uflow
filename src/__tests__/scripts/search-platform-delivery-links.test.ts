@@ -375,6 +375,54 @@ describe('platform delivery search (#807)', () => {
     },
   );
 
+  it.each(['lieferando', 'ubereats'] as const)(
+    '#821 criterion 2: %s returning venues but zero valid links warns and is not recorded',
+    async (platform) => {
+      const { recordSearch, summary, logs } = await run({
+        providers: [provider()],
+        searchers: only(platform, async () => [
+          lieferandoVenue({ platform_url: 'https://evil.example/venue/bistro-salam' }),
+        ]),
+      });
+
+      expect(recordSearch).not.toHaveBeenCalled();
+      expect(summary.noMatch).toBe(0);
+      expect(summary.warned).toBe(1);
+      expect(logs.some((l) => l.startsWith(`WARN p1 Bistro Salam: ${platform}`))).toBe(true);
+    },
+  );
+
+  it('#821 criterion 2: wolt with zero valid links is still recorded as no_match', async () => {
+    const { recordSearch } = await run({
+      providers: [provider()],
+      searchers: only('wolt', async () => [
+        woltVenue({ platform_url: 'https://evil.example/venue/bistro-salam' }),
+      ]),
+    });
+
+    expect(recordSearch).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'no_match' }));
+  });
+
+  it('#821 criterion 3: wolt search logs when the provider has no precise coordinates', async () => {
+    const { logs } = await run({
+      providers: [provider({ latitude: null, longitude: null })],
+      searchers: only('wolt', async () => [woltVenue()]),
+    });
+
+    expect(
+      logs.some((l) => l.startsWith('WARN p1 Bistro Salam: wolt') && /coordinates/.test(l)),
+    ).toBe(true);
+  });
+
+  it('#821 criterion 3: no coordinates warning when the provider has coordinates', async () => {
+    const { logs } = await run({
+      providers: [provider({ latitude: 52.5, longitude: 13.4 })],
+      searchers: only('wolt', async () => [woltVenue()]),
+    });
+
+    expect(logs.some((l) => /coordinates/.test(l))).toBe(false);
+  });
+
   it('empty scrape: a non-empty list with no match is still recorded for lieferando', async () => {
     const { recordSearch } = await run({
       providers: [provider()],

@@ -140,6 +140,7 @@ describe('platform search matching (#807, criterion 2)', () => {
 
   // Wolt venues carry a street and house number plus coordinates, but no city and no zip.
   describe('Wolt-shaped venues (street, no city, no zip, coordinates)', () => {
+    const matchWolt = (p: SearchProvider, v: SearchVenue) => matchVenueToProvider(p, v, 'wolt');
     const geoProvider: SearchProvider = {
       name: 'Uncle Smash Ludwigsburg',
       street: 'Kirchstraße 26',
@@ -158,47 +159,59 @@ describe('platform search matching (#807, criterion 2)', () => {
     });
 
     it('writes on an exact name, street and house number within 250 m of the provider', () => {
-      expect(matchVenueToProvider(geoProvider, woltVenue())).toBe('match');
+      expect(matchWolt(geoProvider, woltVenue())).toBe('match');
     });
 
     it('does not treat an empty venue city as a different city', () => {
-      expect(matchVenueToProvider(geoProvider, woltVenue({ city: undefined }))).toBe('match');
+      expect(matchWolt(geoProvider, woltVenue({ city: undefined }))).toBe('match');
     });
 
     it('rejects the same street and number when the venue is far from the provider', () => {
-      expect(matchVenueToProvider(geoProvider, woltVenue({ latitude: 49.1, longitude: 9.4 }))).toBe(
+      expect(matchWolt(geoProvider, woltVenue({ latitude: 49.1, longitude: 9.4 }))).toBe(
         'no_match',
       );
     });
 
     it('stages when the venue has no coordinates to confirm the location', () => {
-      expect(
-        matchVenueToProvider(geoProvider, woltVenue({ latitude: undefined, longitude: undefined })),
-      ).toBe('ambiguous');
+      expect(matchWolt(geoProvider, woltVenue({ latitude: undefined, longitude: undefined }))).toBe(
+        'ambiguous',
+      );
     });
 
     it('stages when the provider has no coordinates', () => {
-      expect(
-        matchVenueToProvider({ ...geoProvider, latitude: null, longitude: null }, woltVenue()),
-      ).toBe('ambiguous');
+      expect(matchWolt({ ...geoProvider, latitude: null, longitude: null }, woltVenue())).toBe(
+        'ambiguous',
+      );
     });
 
     it('rejects a different house number even when the venue is nearby', () => {
-      expect(matchVenueToProvider(geoProvider, woltVenue({ address: 'Kirchstraße 27' }))).toBe(
-        'no_match',
-      );
+      expect(matchWolt(geoProvider, woltVenue({ address: 'Kirchstraße 27' }))).toBe('no_match');
     });
 
     it('does not let coordinates replace a zip the venue states and the provider contradicts', () => {
-      expect(
-        matchVenueToProvider(geoProvider, woltVenue({ address: 'Kirchstraße 26, 71635' })),
-      ).toBe('ambiguous');
+      expect(matchWolt(geoProvider, woltVenue({ address: 'Kirchstraße 26, 71635' }))).toBe(
+        'ambiguous',
+      );
     });
 
     it('stages a similar name with a nearby street match, never writes it', () => {
-      expect(matchVenueToProvider(geoProvider, woltVenue({ name: 'Uncle Smash Burger' }))).not.toBe(
-        'match',
-      );
+      expect(matchWolt(geoProvider, woltVenue({ name: 'Uncle Smash Burger' }))).not.toBe('match');
     });
+  });
+});
+
+describe('empty venue city (#821, criterion 1)', () => {
+  const noCity = venue({ city: '' });
+
+  it('matches for a Wolt venue', () => {
+    expect(matchVenueToProvider(provider, noCity, 'wolt')).toBe('match');
+  });
+
+  it.each(['lieferando', 'ubereats'])('stages instead of matching for a %s venue', (platform) => {
+    expect(matchVenueToProvider(provider, noCity, platform)).toBe('ambiguous');
+  });
+
+  it('still matches a Lieferando venue that states the right city', () => {
+    expect(matchVenueToProvider(provider, venue(), 'lieferando')).toBe('match');
   });
 });
