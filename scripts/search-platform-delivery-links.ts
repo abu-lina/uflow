@@ -1,5 +1,5 @@
 /**
- * Search Wolt, Lieferando and Uber Eats for approved providers that still lack a link (#807).
+ * Search Wolt, Lieferando and Uber Eats for approved food providers (listing_type 'food') that still lack a link (#807).
  * Fallback for providers whose website yielded no delivery links (#806).
  *
  * A result is accepted only when matchVenueToProvider says `match` (name, street with house
@@ -329,6 +329,7 @@ export function createSupabaseSearchStore(supabase: SupabaseClient): SearchStore
             'provider_id, provider_name, address_street, address_zip, address_city, location_latitude, location_longitude',
           )
           .eq('review_status', 'approved')
+          .eq('listing_type', 'food')
           .not('address_city', 'is', null);
         if (providerId) query = query.eq('provider_id', providerId);
         if (cursor) query = query.gt('provider_id', cursor);
