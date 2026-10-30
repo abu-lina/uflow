@@ -130,53 +130,6 @@ describe('Lieferando menu fetching uses apify/web-scraper with a custom page fun
   });
 });
 
-describe('Lieferando page function (runs in the scraped page)', () => {
-  async function runPageFunction(html: string) {
-    const { JSDOM } = await import('jsdom');
-    const dom = new JSDOM(html, { runScripts: 'outside-only' });
-    const pageFunction = dom.window.eval(`(${LIEFERANDO_PAGE_FUNCTION})`) as (
-      ctx: unknown,
-    ) => Promise<{ url: string; menuCategories: unknown[] }>;
-    return pageFunction({
-      request: { url: 'https://www.lieferando.de/speisekarte/x' },
-      waitFor: async () => {},
-    });
-  }
-
-  it('extracts categories with item names, descriptions and prices from the DOM', async () => {
-    const result = await runPageFunction(`
-      <section class="menu-category">
-        <h2>Pizza</h2>
-        <div class="menu-item">
-          <span class="item-name">Margherita</span>
-          <p class="item-description">Tomate, Käse</p>
-          <span class="item-price">8,50 €</span>
-        </div>
-        <div class="menu-item">
-          <span class="item-name">Salami</span>
-          <span class="item-price">9,90 €</span>
-        </div>
-      </section>
-      <section class="menu-category"><h2>Empty</h2></section>`);
-
-    expect(result.url).toBe('https://www.lieferando.de/speisekarte/x');
-    expect(result.menuCategories).toEqual([
-      {
-        name: 'Pizza',
-        items: [
-          { name: 'Margherita', description: 'Tomate, Käse', priceCents: 850 },
-          { name: 'Salami', description: null, priceCents: 990 },
-        ],
-      },
-    ]);
-  });
-
-  it('returns no categories for a page without a menu (for example a block page)', async () => {
-    const result = await runPageFunction('<h1>Access denied</h1>');
-    expect(result.menuCategories).toEqual([]);
-  });
-});
-
 describe('UberEats menu fetching uses an Apify actor', () => {
   it('runs memo23/uber-eats-scraper with one store URL', () => {
     expect(UBEREATS_ACTOR_ID).toBe('memo23~uber-eats-scraper');

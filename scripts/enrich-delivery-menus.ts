@@ -6,14 +6,22 @@
  * detectAlcohol() / detectPork(), so later platforms are never paid for.
  * A platform that returns zero items is recorded and the cascade moves on.
  *
- * All three platforms run through Apify (APIFY_API_TOKEN required):
+ * All three platforms run through Apify (APIFY_API_TOKEN required) and take ONE
+ * restaurant URL; nothing is searched by area or postal code:
  *
  *   wolt        teodor_banea/wolt-restaurant-menu-scraper
  *               input { mode: 'venueUrls', venueUrls: [{ url }], language: 'de' }
- *   lieferando  kamerozkan/german-delivery-menu-price-intelligence
- *               input { postalCodes: [], restaurantUrls: [url], includeMenus: true }
+ *   lieferando  apify/web-scraper with a custom page function
+ *               input { startUrls: [{ url: 'https://www.lieferando.de/speisekarte/<slug>' }],
+ *                       pageFunction, linkSelector: '', maxPagesPerCrawl: 1,
+ *                       proxyConfiguration: residential, country DE }
+ *               page function: finds menu categories (heading + items) in the DOM and
+ *               returns { url, menuCategories: [{ name, items: [{ name, description,
+ *               priceCents }] }] }. Same extraction as the former Playwright client, run on
+ *               Apify with proxy rotation. Source: apify-lieferando-page-function.ts
  *   ubereats    memo23/uber-eats-scraper
  *               input { startUrls: [{ url }], maxItems: 1, maxReviews: 0 }
+ *               output: one store row with menuItems[] { name, description, section, price }
  *
  * Flags:
  *   --platform wolt|lieferando|ubereats  bypass the cascade, call only that platform
