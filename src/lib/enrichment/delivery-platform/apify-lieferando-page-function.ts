@@ -23,7 +23,7 @@ export const LIEFERANDO_PAGE_FUNCTION = String.raw`async function pageFunction(c
 
   const toCents = (priceText) => {
     const parsed = parseFloat(priceText.replace(/[^\d,]/g, '').replace(',', '.'));
-    return isNaN(parsed) ? 0 : Math.round(parsed * 100);
+    return isNaN(parsed) ? null : Math.round(parsed * 100);
   };
 
   const menuCategories = [];

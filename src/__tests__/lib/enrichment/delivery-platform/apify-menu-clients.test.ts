@@ -74,7 +74,8 @@ describe('Lieferando menu fetching uses apify/web-scraper with a custom page fun
             name: 'Starters',
             items: [
               { name: 'Spring Rolls', description: 'Sweet chili', priceCents: 370 },
-              { name: 'Soup', description: null, priceCents: 0 },
+              { name: 'Soup', description: null, priceCents: null },
+              { name: 'Free Bread', description: null, priceCents: 0 },
             ],
           },
           { name: 'Drinks', items: [{ name: 'Beer', description: null, priceCents: 350 }] },
@@ -107,12 +108,20 @@ describe('Lieferando menu fetching uses apify/web-scraper with a custom page fun
         sort_order: 1,
       },
       {
+        name_de: 'Free Bread',
+        description_de: null,
+        category: 'Starters',
+        price_cents: 0,
+        is_available: true,
+        sort_order: 2,
+      },
+      {
         name_de: 'Beer',
         description_de: null,
         category: 'Drinks',
         price_cents: 350,
         is_available: true,
-        sort_order: 2,
+        sort_order: 3,
       },
     ]);
   });

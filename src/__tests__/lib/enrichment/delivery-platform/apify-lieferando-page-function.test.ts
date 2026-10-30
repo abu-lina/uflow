@@ -34,6 +34,13 @@ describe('Lieferando page function (runs in the scraped page)', () => {
           <span class="item-name">Salami</span>
           <span class="item-price">9,90 €</span>
         </div>
+        <div class="menu-item">
+          <span class="item-name">Wasser</span>
+        </div>
+        <div class="menu-item">
+          <span class="item-name">Brot</span>
+          <span class="item-price">0,00 €</span>
+        </div>
       </section>
       <section class="menu-category"><h2>Empty</h2></section>`);
 
@@ -44,6 +51,8 @@ describe('Lieferando page function (runs in the scraped page)', () => {
         items: [
           { name: 'Margherita', description: 'Tomate, Käse', priceCents: 850 },
           { name: 'Salami', description: null, priceCents: 990 },
+          { name: 'Wasser', description: null, priceCents: null },
+          { name: 'Brot', description: null, priceCents: 0 },
         ],
       },
     ]);

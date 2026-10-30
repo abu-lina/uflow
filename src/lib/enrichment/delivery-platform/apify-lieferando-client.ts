@@ -82,7 +82,7 @@ export async function fetchLieferandoMenu(
       name_de: item.name as string,
       description_de: item.description || null,
       category: cat.name || null,
-      price_cents: item.priceCents || null,
+      price_cents: item.priceCents ?? null,
       is_available: true,
       sort_order: i,
     }));
