@@ -12,7 +12,7 @@ import {
   type FetchedMenu,
 } from '../../../scripts/enrich-delivery-menus';
 
-type Platform = DeliveryLinkRow['platform'];
+type Platform = string;
 
 const link = (platform: Platform): DeliveryLinkRow => ({
   provider_id: 'p1',
@@ -44,41 +44,32 @@ const triedPlatforms = (fetchMenu: ReturnType<typeof fetcherReturning>) =>
   fetchMenu.mock.calls.map(([l]) => l.platform);
 
 describe('cascade order constant', () => {
-  it('is Wolt, then Lieferando, then UberEats', () => {
-    expect(MENU_CASCADE_ORDER).toEqual(['wolt', 'lieferando', 'ubereats']);
+  it('is Wolt, then UberEats (Lieferando is not in the cascade)', () => {
+    expect(MENU_CASCADE_ORDER).toEqual(['wolt', 'ubereats']);
   });
 });
 
 describe('menu cascade', () => {
   it('stops at Wolt when Wolt returns items', async () => {
-    const fetchMenu = fetcherReturning({ wolt: 3, lieferando: 5, ubereats: 7 });
+    const fetchMenu = fetcherReturning({ wolt: 3, ubereats: 7 });
     const result = await runMenuCascade({ links: allLinks(), fetchMenu });
 
     expect(triedPlatforms(fetchMenu)).toEqual(['wolt']);
     expect(result.winner?.link.platform).toBe('wolt');
     expect(result.attempts).toEqual([{ platform: 'wolt', itemCount: 3 }]);
-    expect(result.cascadeSkipped).toEqual(['lieferando', 'ubereats']);
-  });
-
-  it('falls through to Lieferando when Wolt returns zero items', async () => {
-    const fetchMenu = fetcherReturning({ wolt: 0, lieferando: 5, ubereats: 7 });
-    const result = await runMenuCascade({ links: allLinks(), fetchMenu });
-
-    expect(triedPlatforms(fetchMenu)).toEqual(['wolt', 'lieferando']);
-    expect(result.winner?.link.platform).toBe('lieferando');
-    expect(result.attempts).toEqual([
-      { platform: 'wolt', itemCount: 0 },
-      { platform: 'lieferando', itemCount: 5 },
-    ]);
     expect(result.cascadeSkipped).toEqual(['ubereats']);
   });
 
-  it('falls through to UberEats when Wolt and Lieferando both return zero items', async () => {
-    const fetchMenu = fetcherReturning({ wolt: 0, lieferando: 0, ubereats: 7 });
+  it('falls through to UberEats when Wolt returns zero items', async () => {
+    const fetchMenu = fetcherReturning({ wolt: 0, ubereats: 7 });
     const result = await runMenuCascade({ links: allLinks(), fetchMenu });
 
-    expect(triedPlatforms(fetchMenu)).toEqual(['wolt', 'lieferando', 'ubereats']);
+    expect(triedPlatforms(fetchMenu)).toEqual(['wolt', 'ubereats']);
     expect(result.winner?.link.platform).toBe('ubereats');
+    expect(result.attempts).toEqual([
+      { platform: 'wolt', itemCount: 0 },
+      { platform: 'ubereats', itemCount: 7 },
+    ]);
     expect(result.cascadeSkipped).toEqual([]);
   });
 
@@ -87,7 +78,25 @@ describe('menu cascade', () => {
     const result = await runMenuCascade({ links: allLinks(), fetchMenu });
 
     expect(result.winner).toBeNull();
-    expect(result.attempts).toHaveLength(3);
+    expect(result.attempts).toHaveLength(2);
+  });
+
+  it('never calls Lieferando and reports its link as unsupported', async () => {
+    const fetchMenu = fetcherReturning({ wolt: 0, ubereats: 0, lieferando: 9 });
+    const result = await runMenuCascade({ links: allLinks(), fetchMenu });
+
+    expect(triedPlatforms(fetchMenu)).not.toContain('lieferando');
+    expect(result.unsupported).toEqual(['lieferando']);
+  });
+
+  it('calls no platform for a provider that only has a Lieferando link', async () => {
+    const fetchMenu = fetcherReturning({ lieferando: 9 });
+    const result = await runMenuCascade({ links: [link('lieferando')], fetchMenu });
+
+    expect(fetchMenu).not.toHaveBeenCalled();
+    expect(result.winner).toBeNull();
+    expect(result.attempts).toEqual([]);
+    expect(result.unsupported).toEqual(['lieferando']);
   });
 
   it('continues to the next platform when a platform throws, and records the error', async () => {
@@ -97,27 +106,35 @@ describe('menu cascade', () => {
     });
     const result = await runMenuCascade({ links: allLinks(), fetchMenu });
 
-    expect(result.winner?.link.platform).toBe('lieferando');
+    expect(result.winner?.link.platform).toBe('ubereats');
     expect(result.attempts[0]).toEqual({ platform: 'wolt', itemCount: 0, error: 'actor down' });
   });
 
   it('only tries platforms the provider has a link for', async () => {
-    const fetchMenu = fetcherReturning({ lieferando: 4 });
+    const fetchMenu = fetcherReturning({ ubereats: 4 });
     const result = await runMenuCascade({
       links: [link('ubereats'), link('lieferando')],
       fetchMenu,
     });
 
-    expect(triedPlatforms(fetchMenu)).toEqual(['lieferando']);
-    expect(result.cascadeSkipped).toEqual(['ubereats']);
+    expect(triedPlatforms(fetchMenu)).toEqual(['ubereats']);
+    expect(result.cascadeSkipped).toEqual([]);
   });
 });
 
 describe('--platform flag', () => {
-  it('parses only known platforms', () => {
-    expect(parsePlatformFlag('ubereats')).toBe('ubereats');
-    expect(parsePlatformFlag(undefined)).toBeUndefined();
-    expect(() => parsePlatformFlag('doordash')).toThrow(/wolt\|lieferando\|ubereats/);
+  it('parses only wolt and ubereats', () => {
+    expect(parsePlatformFlag('ubereats')).toEqual({ platform: 'ubereats' });
+    expect(parsePlatformFlag('wolt')).toEqual({ platform: 'wolt' });
+    expect(parsePlatformFlag(undefined)).toEqual({});
+    expect(() => parsePlatformFlag('doordash')).toThrow(/wolt\|ubereats/);
+  });
+
+  it('warns and skips when lieferando is passed', () => {
+    const parsed = parsePlatformFlag('lieferando');
+    expect(parsed.platform).toBeUndefined();
+    expect(parsed.warning).toMatch(/lieferando/i);
+    expect(parsed.warning).toMatch(/Cloudflare/);
   });
 
   it('bypasses the cascade and calls only the forced platform', async () => {
@@ -147,23 +164,41 @@ describe('--platform flag', () => {
 
 describe('per-provider log line', () => {
   it('states tried platforms with item counts and cascade-skipped platforms', async () => {
-    const fetchMenu = fetcherReturning({ wolt: 0, lieferando: 5 });
+    const fetchMenu = fetcherReturning({ wolt: 3, ubereats: 5 });
     const result = await runMenuCascade({ links: allLinks(), fetchMenu });
 
     const line = formatCascadeLogLine('Doner House', result);
     expect(line).toContain('Doner House');
-    expect(line).toContain('tried: wolt (0 items), lieferando (5 items)');
+    expect(line).toContain('tried: wolt (3 items)');
     expect(line).toContain('skipped (cascade): ubereats');
+  });
+
+  it('states items per tried platform when the cascade falls through', async () => {
+    const fetchMenu = fetcherReturning({ wolt: 0, ubereats: 5 });
+    const result = await runMenuCascade({ links: allLinks(), fetchMenu });
+
+    expect(formatCascadeLogLine('Doner House', result)).toContain(
+      'tried: wolt (0 items), ubereats (5 items)',
+    );
   });
 
   it('includes platforms skipped by the pre-check and errors', async () => {
     const fetchMenu = vi.fn(async (): Promise<FetchedMenu> => {
       throw new Error('blocked');
     });
-    const result = await runMenuCascade({ links: [link('lieferando')], fetchMenu });
+    const result = await runMenuCascade({ links: [link('ubereats')], fetchMenu });
 
     const line = formatCascadeLogLine('Doner House', result, ['wolt']);
-    expect(line).toContain('lieferando (error: blocked)');
+    expect(line).toContain('ubereats (error: blocked)');
     expect(line).toContain('skipped (already checked): wolt');
+  });
+
+  it('explains why Lieferando links are skipped', async () => {
+    const fetchMenu = fetcherReturning({ wolt: 3 });
+    const result = await runMenuCascade({ links: allLinks(), fetchMenu });
+
+    expect(formatCascadeLogLine('Doner House', result)).toContain(
+      'skipped (lieferando: blocked by Cloudflare)',
+    );
   });
 });
