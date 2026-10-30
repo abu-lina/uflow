@@ -1,5 +1,7 @@
-import { runActorForItems } from '@/lib/enrichment/delivery-platform/apify-actor-run';
-import type { MenuItemRow } from '@/lib/enrichment/delivery-platform/apify-lieferando-client';
+import {
+  runActorForItems,
+  type MenuItemRow,
+} from '@/lib/enrichment/delivery-platform/apify-actor-run';
 
 /**
  * Apify UberEats menu scraper integration.
