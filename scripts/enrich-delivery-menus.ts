@@ -1,14 +1,53 @@
-import { createClient } from '@supabase/supabase-js';
+/**
+ * Enrich food providers with delivery-platform menu items (halal compliance input).
+ *
+ * Per provider the script walks MENU_CASCADE_ORDER and stops at the first
+ * platform that returns at least one menu item. One menu is enough for
+ * detectAlcohol() / detectPork(), so later platforms are never paid for.
+ * A platform that returns zero items is recorded and the cascade moves on.
+ *
+ * All three platforms run through Apify (APIFY_API_TOKEN required) and take ONE
+ * restaurant URL; nothing is searched by area or postal code:
+ *
+ *   wolt        teodor_banea/wolt-restaurant-menu-scraper
+ *               input { mode: 'venueUrls', venueUrls: [{ url }], language: 'de' }
+ *   lieferando  apify/web-scraper with a custom page function
+ *               input { startUrls: [{ url: 'https://www.lieferando.de/speisekarte/<slug>' }],
+ *                       pageFunction, linkSelector: '', maxPagesPerCrawl: 1,
+ *                       proxyConfiguration: residential, country DE }
+ *               page function: finds menu categories (heading + items) in the DOM and
+ *               returns { url, menuCategories: [{ name, items: [{ name, description,
+ *               priceCents }] }] }. Same extraction as the former Playwright client, run on
+ *               Apify with proxy rotation. Source: apify-lieferando-page-function.ts
+ *   ubereats    memo23/uber-eats-scraper
+ *               input { startUrls: [{ url }], maxItems: 1, maxReviews: 0 }
+ *               output: one store row with menuItems[] { name, description, section, price }
+ *
+ * Flags:
+ *   --platform wolt|lieferando|ubereats  bypass the cascade, call only that platform
+ *   --provider-id <id>   one provider (also re-checks platforms already checked)
+ *   --limit <n>          first n delivery links
+ *   --force              re-check platforms already checked via Apify
+ *   --dry-run            fetch and preview, write nothing
+ */
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
-import { createLieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-client';
-import { createUberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-client';
+import { fileURLToPath } from 'url';
 import {
   fetchWoltRestaurant,
   type ApifyWoltResult,
 } from '../src/lib/enrichment/delivery-platform/apify-wolt-client';
-import type { LieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-types';
-import type { UberEatsClient } from '../src/lib/enrichment/delivery-platform/ubereats-types';
+import {
+  fetchLieferandoMenu,
+  type MenuItemRow,
+} from '../src/lib/enrichment/delivery-platform/apify-lieferando-client';
+import { fetchUberEatsMenu } from '../src/lib/enrichment/delivery-platform/apify-ubereats-client';
+
+export type Platform = 'wolt' | 'lieferando' | 'ubereats';
+
+/** Order in which platforms are tried per provider; first one with items wins. */
+export const MENU_CASCADE_ORDER: readonly Platform[] = ['wolt', 'lieferando', 'ubereats'];
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
@@ -16,17 +55,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const APIFY_API_TOKEN = process.env.APIFY_API_TOKEN;
 
-if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error('Missing required environment variables.');
-  console.error(
-    '  NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local',
-  );
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
-  auth: { persistSession: false },
-});
+let supabase: SupabaseClient;
 
 const args = process.argv.slice(2);
 const isDryRun = args.includes('--dry-run');
@@ -40,31 +69,103 @@ function getArgValue(flag: string): string | undefined {
   return idx >= 0 && idx + 1 < args.length ? args[idx + 1] : undefined;
 }
 
-function extractSlug(url: string, platform: string): string {
-  try {
-    const parsed = new URL(url);
-    const segments = parsed.pathname.replace(/\/$/, '').split('/');
-
-    if (platform === 'wolt') {
-      const venueIdx = segments.indexOf('venue');
-      if (venueIdx >= 0 && venueIdx + 1 < segments.length) {
-        return segments[venueIdx + 1];
-      }
-    }
-
-    return segments[segments.length - 1] || '';
-  } catch {
-    return '';
+export function parsePlatformFlag(value: string | undefined): Platform | undefined {
+  if (value === undefined) return undefined;
+  if (!(MENU_CASCADE_ORDER as readonly string[]).includes(value)) {
+    throw new Error(`Invalid --platform "${value}". Use wolt|lieferando|ubereats.`);
   }
+  return value as Platform;
 }
 
-interface DeliveryLinkRow {
+export interface DeliveryLinkRow {
   provider_id: string;
   provider_name: string;
-  platform: 'wolt' | 'lieferando' | 'ubereats';
+  platform: Platform;
   platform_url: string;
   platform_slug: string | null;
   apify_checked_at: string | null;
+}
+
+export interface FetchedMenu {
+  menuItems: MenuItemRow[];
+  /** Set for Wolt only; carries hours/contact/address written alongside the menu. */
+  wolt?: ApifyWoltResult;
+}
+
+export interface CascadeAttempt {
+  platform: Platform;
+  itemCount: number;
+  error?: string;
+}
+
+export interface CascadeResult {
+  winner: { link: DeliveryLinkRow; menu: FetchedMenu } | null;
+  attempts: CascadeAttempt[];
+  /** Platforms with a link that were never called because an earlier one returned items. */
+  cascadeSkipped: Platform[];
+  forcedPlatform?: Platform;
+}
+
+/**
+ * Tries a provider's platform links in cascade order and stops at the first
+ * one that returns items. With forcedPlatform, only that platform is called.
+ * A thrown error counts as zero items for that platform; the cascade continues.
+ */
+export async function runMenuCascade(opts: {
+  links: DeliveryLinkRow[];
+  fetchMenu: (link: DeliveryLinkRow) => Promise<FetchedMenu>;
+  forcedPlatform?: Platform;
+}): Promise<CascadeResult> {
+  const { links, fetchMenu, forcedPlatform } = opts;
+  const order = forcedPlatform ? [forcedPlatform] : MENU_CASCADE_ORDER;
+  const candidates = order
+    .map((platform) => links.find((l) => l.platform === platform))
+    .filter((l): l is DeliveryLinkRow => l !== undefined);
+
+  const attempts: CascadeAttempt[] = [];
+  for (let i = 0; i < candidates.length; i++) {
+    const link = candidates[i];
+    try {
+      const menu = await fetchMenu(link);
+      attempts.push({ platform: link.platform, itemCount: menu.menuItems.length });
+      if (menu.menuItems.length > 0) {
+        return {
+          winner: { link, menu },
+          attempts,
+          cascadeSkipped: candidates.slice(i + 1).map((l) => l.platform),
+          forcedPlatform,
+        };
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      attempts.push({ platform: link.platform, itemCount: 0, error });
+    }
+  }
+
+  return { winner: null, attempts, cascadeSkipped: [], forcedPlatform };
+}
+
+export function formatCascadeLogLine(
+  providerName: string,
+  result: CascadeResult,
+  alreadyChecked: Platform[] = [],
+): string {
+  const tried = result.attempts.length
+    ? result.attempts
+        .map((a) =>
+          a.error ? `${a.platform} (error: ${a.error})` : `${a.platform} (${a.itemCount} items)`,
+        )
+        .join(', ')
+    : 'none';
+  const parts = [`${providerName}: tried: ${tried}`];
+  if (result.cascadeSkipped.length) {
+    parts.push(`skipped (cascade): ${result.cascadeSkipped.join(', ')}`);
+  }
+  if (alreadyChecked.length) {
+    parts.push(`skipped (already checked): ${alreadyChecked.join(', ')}`);
+  }
+  if (result.forcedPlatform) parts.push(`forced: ${result.forcedPlatform}`);
+  return `  ${parts.join(' | ')}`;
 }
 
 interface RunStats {
@@ -79,6 +180,25 @@ interface RunStats {
 }
 
 async function main(): Promise<void> {
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    console.error('Missing required environment variables.');
+    console.error(
+      '  NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local',
+    );
+    process.exit(1);
+  }
+  supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
+
+  let forcedPlatform: Platform | undefined;
+  try {
+    forcedPlatform = parsePlatformFlag(getArgValue('--platform'));
+  } catch (err) {
+    console.error((err as Error).message);
+    process.exit(1);
+  }
+
   const modeLabel = isDryRun ? 'DRY RUN (preview only)' : 'WRITE';
   console.log(`\n${'─'.repeat(50)}`);
   console.log(`  Delivery Menu Enrichment`);
@@ -122,7 +242,7 @@ async function main(): Promise<void> {
       return {
         provider_id: r.provider_id as string,
         provider_name: prov.provider_name as string,
-        platform: r.platform as 'wolt' | 'lieferando' | 'ubereats',
+        platform: r.platform as Platform,
         platform_url: r.platform_url as string,
         platform_slug: (r.platform_slug as string) ?? null,
         apify_checked_at: (r.apify_checked_at as string) ?? null,
@@ -130,8 +250,8 @@ async function main(): Promise<void> {
     })
     .sort((a, b) => a.provider_name.localeCompare(b.provider_name));
 
-  if (!APIFY_API_TOKEN && links.some((l) => l.platform === 'wolt')) {
-    console.error('APIFY_API_TOKEN is required for Wolt enrichment but not set in .env.local');
+  if (!APIFY_API_TOKEN && links.length > 0) {
+    console.error('APIFY_API_TOKEN is required for menu enrichment but not set in .env.local');
     process.exit(1);
   }
 
@@ -155,14 +275,11 @@ async function main(): Promise<void> {
     console.log('');
   }
 
-  let lieferandoClient: LieferandoClient | null = null;
-  let ubereatsClient: UberEatsClient | null = null;
-
   // -----------------------------------------------------------------------
   // Phase 1: Pre-check all providers for existing menus + opening hours
   // -----------------------------------------------------------------------
 
-  const providerIds = [...new Set(batch.map((l) => l.provider_id))];
+  const providerIds = Array.from(new Set(batch.map((l) => l.provider_id)));
 
   // -----------------------------------------------------------------------
   // Batch-query existing state (menu counts + opening hours)
@@ -243,221 +360,144 @@ async function main(): Promise<void> {
   const [menuCountMap, hasHoursMap] = await Promise.all([buildMenuCountMap(), buildHasHoursMap()]);
 
   // -----------------------------------------------------------------------
-  // Prepare tasks: classify each link by what work is needed
+  // Group links by provider and drop platforms that need no work
   // -----------------------------------------------------------------------
 
-  interface MenuTask {
-    link: DeliveryLinkRow;
-    fetchMenus: boolean; // true if menu items need fetching
-    fetchHours: boolean; // true if opening hours need fetching (Wolt only)
+  interface ProviderTask {
+    providerId: string;
+    providerName: string;
+    candidates: DeliveryLinkRow[];
+    alreadyChecked: Platform[];
+    fetchHours: boolean;
   }
 
-  const woltTasks: MenuTask[] = [];
-  const nonWoltTasks: MenuTask[] = [];
+  const byProvider = new Map<string, DeliveryLinkRow[]>();
+  for (const link of batch) {
+    byProvider.set(link.provider_id, [...(byProvider.get(link.provider_id) ?? []), link]);
+  }
+
+  const tasks: ProviderTask[] = [];
   let immediateSkipped = 0;
 
-  for (const link of batch) {
-    const existingCount = menuCountMap.get(link.provider_id) ?? 0;
-    const hasMenus = existingCount > 0;
-    const hasHours = hasHoursMap.get(link.provider_id) ?? false;
+  for (const [providerId, providerLinks] of Array.from(byProvider)) {
+    const providerName = providerLinks[0].provider_name;
+    const hasMenus = (menuCountMap.get(providerId) ?? 0) > 0;
+    const candidates: DeliveryLinkRow[] = [];
+    const alreadyChecked: Platform[] = [];
 
-    if (link.platform === 'wolt') {
-      if (link.apify_checked_at && !isForce && !providerIdFilter) {
-        process.stdout.write(`  ${link.provider_name} (wolt) ... already checked via Apify\n`);
-        immediateSkipped++;
-        continue;
+    for (const link of providerLinks) {
+      // Wolt data (prices, categories) is richer than existing joinhalal menus, so Wolt
+      // is only skipped once checked; other platforms are skipped when any menu exists.
+      const checked = link.apify_checked_at && !isForce && !providerIdFilter;
+      if (checked || (link.platform !== 'wolt' && hasMenus)) {
+        alreadyChecked.push(link.platform);
+      } else {
+        candidates.push(link);
       }
-      // Fetch from Apify — its data (with prices, descriptions,
-      // categories) is richer than joinhalal Speisen (names only).
-      woltTasks.push({
-        link,
-        fetchMenus: true,
-        fetchHours: !hasHours,
-      });
-    } else {
-      if (hasMenus) {
-        process.stdout.write(
-          `  ${link.provider_name} (${link.platform}) ... already has ${existingCount} menu item(s)\n`,
-        );
-        immediateSkipped++;
-        continue;
-      }
-      nonWoltTasks.push({
-        link,
-        fetchMenus: true,
-        fetchHours: false,
-      });
     }
+
+    if (candidates.length === 0) {
+      console.log(
+        `  ${providerName}: tried: none | skipped (already checked): ${alreadyChecked.join(', ')}`,
+      );
+      immediateSkipped++;
+      continue;
+    }
+
+    tasks.push({
+      providerId,
+      providerName,
+      candidates,
+      alreadyChecked,
+      fetchHours: !(hasHoursMap.get(providerId) ?? false),
+    });
   }
 
+  stats.total = byProvider.size;
   stats.skipped += immediateSkipped;
 
   console.log(
-    `\n  Pre-check: ${batch.length} links → ${immediateSkipped} skipped, ${woltTasks.length} Wolt, ${nonWoltTasks.length} non-Wolt\n`,
+    `\n  Pre-check: ${byProvider.size} providers → ${immediateSkipped} skipped, ${tasks.length} to fetch` +
+      `${forcedPlatform ? ` (forced platform: ${forcedPlatform})` : ` (cascade: ${MENU_CASCADE_ORDER.join(' → ')})`}\n`,
   );
 
   // -----------------------------------------------------------------------
-  // Phase 2: Process Wolt tasks concurrently (Apify calls are slow)
+  // Fetch menus per provider via the cascade, concurrently (Apify calls are slow)
   // -----------------------------------------------------------------------
 
   const CONCURRENCY = 5;
 
-  async function processWoltTasks(tasks: MenuTask[]): Promise<void> {
-    let idx = 0;
-
-    async function worker(): Promise<void> {
-      while (idx < tasks.length) {
-        const task = tasks[idx++];
-        const { link, fetchMenus, fetchHours } = task;
-        const prefix = `  ${link.provider_name} (${link.platform})`;
-
-        try {
-          process.stdout.write(`${prefix} ... `);
-
-          // Apify calls are rate-limited; fetch always since we need something
-          const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
-
-          if (!result) {
-            await markApifyChecked(link);
-            console.log('not found on Wolt');
-            stats.skipped++;
-            continue;
-          }
-
-          const menusToWrite = result.menuItems; // always fresh from Apify (used if fetchMenus true)
-          const hoursToWrite =
-            fetchHours && result.openingHours
-              ? (result.openingHours as unknown as Record<string, unknown>)
-              : null;
-
-          if (!fetchMenus && !hoursToWrite) {
-            // We only needed hours and they're not available
-            await markApifyChecked(link);
-            if (result.openingHours) {
-              console.log('opening hours not available from Apify');
-            } else {
-              console.log('opening hours not available from Apify');
-            }
-            stats.skipped++;
-            continue;
-          }
-
-          const written = await writeResult(
-            link,
-            fetchMenus ? menusToWrite : [],
-            hoursToWrite,
-            isDryRun,
-            stats,
-          );
-
-          // Write phone/website/address from Apify (additive only) — Fix 239-2
-          if (!isDryRun) {
-            await writeApifyContactFields(link.provider_id, result, stats);
-            await writeApifyAddressFields(link.provider_id, result, stats);
-          }
-
-          // Mark only after the writes, so a failed write is retried next run
-          if (written) await markApifyChecked(link);
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          console.log(`${prefix} ... Fetch failed: ${msg}`);
-          stats.failed++;
-        }
+  async function fetchMenu(link: DeliveryLinkRow): Promise<FetchedMenu> {
+    switch (link.platform) {
+      case 'wolt': {
+        const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
+        return result ? { menuItems: result.menuItems, wolt: result } : { menuItems: [] };
       }
+      case 'lieferando':
+        return { menuItems: await fetchLieferandoMenu(link.platform_url, APIFY_API_TOKEN!) };
+      case 'ubereats':
+        return { menuItems: await fetchUberEatsMenu(link.platform_url, APIFY_API_TOKEN!) };
     }
-
-    const workers = Array.from({ length: CONCURRENCY }, () => worker());
-    await Promise.allSettled(workers);
   }
 
-  await processWoltTasks(woltTasks);
-
-  // -----------------------------------------------------------------------
-  // Phase 3: Process non-Wolt tasks (Lieferando, UberEats) sequentially
-  // -----------------------------------------------------------------------
-
-  for (const task of nonWoltTasks) {
-    const { link } = task;
-    process.stdout.write(`  ${link.provider_name} (${link.platform}) ... `);
+  async function processTask(task: ProviderTask): Promise<void> {
+    const { providerId, providerName, candidates, alreadyChecked, fetchHours } = task;
 
     try {
-      let menuItems: Array<{
-        name_de: string;
-        description_de: string | null;
-        category: string | null;
-        price_cents: number | null;
-        is_available: boolean;
-        sort_order: number;
-      }> = [];
+      const result = await runMenuCascade({ links: candidates, fetchMenu, forcedPlatform });
+      console.log(formatCascadeLogLine(providerName, result, alreadyChecked));
 
-      if (link.platform === 'lieferando') {
-        const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
-        if (!slug) {
-          console.log('no slug could be extracted from URL');
-          stats.failed++;
-          continue;
+      // Zero items without an error is a final answer for that platform; errors are retried
+      for (const attempt of result.attempts) {
+        if (attempt.itemCount === 0 && !attempt.error) {
+          const link = candidates.find((l) => l.platform === attempt.platform);
+          if (link) await markApifyChecked(link);
         }
-
-        if (!lieferandoClient) {
-          lieferandoClient = createLieferandoClient();
-        }
-        const data = await lieferandoClient.getRestaurantPage(slug);
-        menuItems = data.menuCategories.flatMap((cat) =>
-          cat.items.map((item, i) => ({
-            name_de: item.name,
-            description_de: item.description || null,
-            category: cat.name,
-            price_cents: item.priceCents || null,
-            is_available: true,
-            sort_order: i,
-          })),
-        );
-      } else if (link.platform === 'ubereats') {
-        const slug = link.platform_slug || extractSlug(link.platform_url, link.platform);
-        if (!slug) {
-          console.log('no slug could be extracted from URL');
-          stats.failed++;
-          continue;
-        }
-
-        if (!ubereatsClient) {
-          ubereatsClient = createUberEatsClient();
-        }
-        const data = await ubereatsClient.getRestaurantPage(slug);
-        menuItems = data.menuCategories.flatMap((cat) =>
-          cat.items.map((item, i) => ({
-            name_de: item.name,
-            description_de: item.description || null,
-            category: cat.name,
-            price_cents: item.priceCents || null,
-            is_available: true,
-            sort_order: i,
-          })),
-        );
       }
 
-      if (menuItems.length === 0) {
-        console.log('no menu items found');
-        stats.skipped++;
-        continue;
+      if (!result.winner) {
+        if (result.attempts.length > 0 && result.attempts.every((a) => a.error)) stats.failed++;
+        else stats.skipped++;
+        return;
       }
 
-      await writeResult(link, menuItems, null, isDryRun, stats);
+      const { link, menu } = result.winner;
+      const hoursToWrite =
+        link.platform === 'wolt' && fetchHours && menu.wolt?.openingHours
+          ? (menu.wolt.openingHours as unknown as Record<string, unknown>)
+          : null;
+
+      const written = await writeResult(
+        link,
+        menu.menuItems,
+        hoursToWrite,
+        isDryRun,
+        stats,
+        `    ↳ ${providerName} (${link.platform})`,
+      );
+
+      // Write phone/website/address from Apify Wolt (additive only) — Fix 239-2
+      if (!isDryRun && menu.wolt) {
+        await writeApifyContactFields(providerId, menu.wolt, stats);
+        await writeApifyAddressFields(providerId, menu.wolt, stats);
+      }
+
+      // Mark only after the writes, so a failed write is retried next run
+      if (written) await markApifyChecked(link);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.log(`Fetch failed: ${msg}`);
+      console.log(`  ${providerName}: failed: ${msg}`);
       stats.failed++;
     }
   }
 
-  if (ubereatsClient) {
-    await ubereatsClient.close();
+  let nextTask = 0;
+  async function worker(): Promise<void> {
+    while (nextTask < tasks.length) {
+      await processTask(tasks[nextTask++]);
+    }
   }
-
-  const lieferandoAny = lieferandoClient as { close?: () => Promise<void> } | null;
-  if (lieferandoAny?.close) {
-    await lieferandoAny.close();
-  }
+  await Promise.allSettled(Array.from({ length: CONCURRENCY }, () => worker()));
 
   console.log(`\n${'─'.repeat(50)}`);
   console.log(`  Summary`);
@@ -511,6 +551,7 @@ async function writeResult(
   openingHoursToWrite: Record<string, unknown> | null,
   isDryRun: boolean,
   stats: RunStats,
+  label: string,
 ): Promise<boolean> {
   const hasMenus = menuItems.length > 0;
 
@@ -522,7 +563,7 @@ async function writeResult(
     } else {
       msg = 'opening hours only (would write)';
     }
-    console.log(msg);
+    console.log(`${label}: ${msg}`);
     if (hasMenus) stats.menuItemsWritten += menuItems.length;
     if (openingHoursToWrite) stats.openingHoursWritten++;
     stats.processed++;
@@ -549,7 +590,7 @@ async function writeResult(
   });
 
   if (rpcError) {
-    console.log(`RPC write failed: ${rpcError.message}`);
+    console.log(`${label}: RPC write failed: ${rpcError.message}`);
     stats.failed++;
     return false;
   }
@@ -570,7 +611,7 @@ async function writeResult(
   } else {
     msg = 'opening hours written';
   }
-  console.log(msg);
+  console.log(`${label}: ${msg}`);
   if (hasMenus) stats.menuItemsWritten += menuItems.length;
   if (openingHoursToWrite) stats.openingHoursWritten++;
   stats.processed++;
@@ -687,7 +728,9 @@ async function writeApifyAddressFields(
   }
 }
 
-main().catch((err) => {
-  console.error('Unhandled error:', err);
-  process.exit(1);
-});
+if (path.basename(process.argv[1] ?? '') === path.basename(fileURLToPath(import.meta.url))) {
+  main().catch((err) => {
+    console.error('Unhandled error:', err);
+    process.exit(1);
+  });
+}
