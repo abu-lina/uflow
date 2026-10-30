@@ -10,6 +10,15 @@
 const APIFY_BASE = 'https://api.apify.com/v2';
 const REQUEST_TIMEOUT_MS = 310_000;
 
+export interface MenuItemRow {
+  name_de: string;
+  description_de: string | null;
+  category: string | null;
+  price_cents: number | null;
+  is_available: boolean;
+  sort_order: number;
+}
+
 export async function runActorForItems<T>(
   actorId: string,
   input: Record<string, unknown>,

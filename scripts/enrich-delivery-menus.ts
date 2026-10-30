@@ -6,25 +6,22 @@
  * detectAlcohol() / detectPork(), so later platforms are never paid for.
  * A platform that returns zero items is recorded and the cascade moves on.
  *
- * All three platforms run through Apify (APIFY_API_TOKEN required) and take ONE
+ * Both platforms run through Apify (APIFY_API_TOKEN required) and take ONE
  * restaurant URL; nothing is searched by area or postal code:
  *
  *   wolt        teodor_banea/wolt-restaurant-menu-scraper
  *               input { mode: 'venueUrls', venueUrls: [{ url }], language: 'de' }
- *   lieferando  apify/web-scraper with a custom page function
- *               input { startUrls: [{ url: 'https://www.lieferando.de/speisekarte/<slug>' }],
- *                       pageFunction, linkSelector: '', maxPagesPerCrawl: 1,
- *                       proxyConfiguration: residential, country DE }
- *               page function: finds menu categories (heading + items) in the DOM and
- *               returns { url, menuCategories: [{ name, items: [{ name, description,
- *               priceCents }] }] }. Same extraction as the former Playwright client, run on
- *               Apify with proxy rotation. Source: apify-lieferando-page-function.ts
  *   ubereats    memo23/uber-eats-scraper
  *               input { startUrls: [{ url }], maxItems: 1, maxReviews: 0 }
  *               output: one store row with menuItems[] { name, description, section, price }
  *
+ * Lieferando is not in the cascade: Cloudflare managed challenges block direct and
+ * Apify-proxied access, and no actor or page function works reliably. Lieferando
+ * links are skipped with a log line (see UNSUPPORTED_PLATFORMS).
+ *
  * Flags:
- *   --platform wolt|lieferando|ubereats  bypass the cascade, call only that platform
+ *   --platform wolt|ubereats  bypass the cascade, call only that platform
+ *                        (lieferando warns and skips)
  *   --provider-id <id>   one provider (also re-checks platforms already checked)
  *   --limit <n>          first n delivery links
  *   --force              re-check platforms already checked via Apify
@@ -38,16 +35,18 @@ import {
   fetchWoltRestaurant,
   type ApifyWoltResult,
 } from '../src/lib/enrichment/delivery-platform/apify-wolt-client';
-import {
-  fetchLieferandoMenu,
-  type MenuItemRow,
-} from '../src/lib/enrichment/delivery-platform/apify-lieferando-client';
+import type { MenuItemRow } from '../src/lib/enrichment/delivery-platform/apify-actor-run';
 import { fetchUberEatsMenu } from '../src/lib/enrichment/delivery-platform/apify-ubereats-client';
 
-export type Platform = 'wolt' | 'lieferando' | 'ubereats';
+export type Platform = 'wolt' | 'ubereats';
 
 /** Order in which platforms are tried per provider; first one with items wins. */
-export const MENU_CASCADE_ORDER: readonly Platform[] = ['wolt', 'lieferando', 'ubereats'];
+export const MENU_CASCADE_ORDER: readonly Platform[] = ['wolt', 'ubereats'];
+
+/** Platforms we hold delivery links for but never call, with the reason shown in logs. */
+export const UNSUPPORTED_PLATFORMS: Readonly<Record<string, string>> = {
+  lieferando: 'blocked by Cloudflare',
+};
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
@@ -69,18 +68,25 @@ function getArgValue(flag: string): string | undefined {
   return idx >= 0 && idx + 1 < args.length ? args[idx + 1] : undefined;
 }
 
-export function parsePlatformFlag(value: string | undefined): Platform | undefined {
-  if (value === undefined) return undefined;
-  if (!(MENU_CASCADE_ORDER as readonly string[]).includes(value)) {
-    throw new Error(`Invalid --platform "${value}". Use wolt|lieferando|ubereats.`);
+export function parsePlatformFlag(value: string | undefined): {
+  platform?: Platform;
+  warning?: string;
+} {
+  if (value === undefined) return {};
+  if ((MENU_CASCADE_ORDER as readonly string[]).includes(value)) {
+    return { platform: value as Platform };
   }
-  return value as Platform;
+  const reason = UNSUPPORTED_PLATFORMS[value];
+  if (reason) {
+    return { warning: `--platform ${value} is not supported (${reason}); skipping.` };
+  }
+  throw new Error(`Invalid --platform "${value}". Use wolt|ubereats.`);
 }
 
 export interface DeliveryLinkRow {
   provider_id: string;
   provider_name: string;
-  platform: Platform;
+  platform: string;
   platform_url: string;
   platform_slug: string | null;
   apify_checked_at: string | null;
@@ -93,7 +99,7 @@ export interface FetchedMenu {
 }
 
 export interface CascadeAttempt {
-  platform: Platform;
+  platform: string;
   itemCount: number;
   error?: string;
 }
@@ -102,7 +108,9 @@ export interface CascadeResult {
   winner: { link: DeliveryLinkRow; menu: FetchedMenu } | null;
   attempts: CascadeAttempt[];
   /** Platforms with a link that were never called because an earlier one returned items. */
-  cascadeSkipped: Platform[];
+  cascadeSkipped: string[];
+  /** Platforms with a link that are outside the cascade (see UNSUPPORTED_PLATFORMS). */
+  unsupported: string[];
   forcedPlatform?: Platform;
 }
 
@@ -110,6 +118,7 @@ export interface CascadeResult {
  * Tries a provider's platform links in cascade order and stops at the first
  * one that returns items. With forcedPlatform, only that platform is called.
  * A thrown error counts as zero items for that platform; the cascade continues.
+ * Links for platforms outside the cascade are never called.
  */
 export async function runMenuCascade(opts: {
   links: DeliveryLinkRow[];
@@ -121,6 +130,9 @@ export async function runMenuCascade(opts: {
   const candidates = order
     .map((platform) => links.find((l) => l.platform === platform))
     .filter((l): l is DeliveryLinkRow => l !== undefined);
+  const unsupported = links
+    .map((l) => l.platform)
+    .filter((p) => !(MENU_CASCADE_ORDER as readonly string[]).includes(p));
 
   const attempts: CascadeAttempt[] = [];
   for (let i = 0; i < candidates.length; i++) {
@@ -133,6 +145,7 @@ export async function runMenuCascade(opts: {
           winner: { link, menu },
           attempts,
           cascadeSkipped: candidates.slice(i + 1).map((l) => l.platform),
+          unsupported,
           forcedPlatform,
         };
       }
@@ -142,13 +155,13 @@ export async function runMenuCascade(opts: {
     }
   }
 
-  return { winner: null, attempts, cascadeSkipped: [], forcedPlatform };
+  return { winner: null, attempts, cascadeSkipped: [], unsupported, forcedPlatform };
 }
 
 export function formatCascadeLogLine(
   providerName: string,
   result: CascadeResult,
-  alreadyChecked: Platform[] = [],
+  alreadyChecked: string[] = [],
 ): string {
   const tried = result.attempts.length
     ? result.attempts
@@ -163,6 +176,9 @@ export function formatCascadeLogLine(
   }
   if (alreadyChecked.length) {
     parts.push(`skipped (already checked): ${alreadyChecked.join(', ')}`);
+  }
+  for (const platform of result.unsupported) {
+    parts.push(`skipped (${platform}: ${UNSUPPORTED_PLATFORMS[platform] ?? 'unsupported'})`);
   }
   if (result.forcedPlatform) parts.push(`forced: ${result.forcedPlatform}`);
   return `  ${parts.join(' | ')}`;
@@ -193,7 +209,12 @@ async function main(): Promise<void> {
 
   let forcedPlatform: Platform | undefined;
   try {
-    forcedPlatform = parsePlatformFlag(getArgValue('--platform'));
+    const parsed = parsePlatformFlag(getArgValue('--platform'));
+    if (parsed.warning) {
+      console.warn(`  ${parsed.warning}`);
+      return;
+    }
+    forcedPlatform = parsed.platform;
   } catch (err) {
     console.error((err as Error).message);
     process.exit(1);
@@ -242,7 +263,7 @@ async function main(): Promise<void> {
       return {
         provider_id: r.provider_id as string,
         provider_name: prov.provider_name as string,
-        platform: r.platform as Platform,
+        platform: r.platform as string,
         platform_url: r.platform_url as string,
         platform_slug: (r.platform_slug as string) ?? null,
         apify_checked_at: (r.apify_checked_at as string) ?? null,
@@ -367,7 +388,7 @@ async function main(): Promise<void> {
     providerId: string;
     providerName: string;
     candidates: DeliveryLinkRow[];
-    alreadyChecked: Platform[];
+    alreadyChecked: string[];
     fetchHours: boolean;
   }
 
@@ -383,9 +404,14 @@ async function main(): Promise<void> {
     const providerName = providerLinks[0].provider_name;
     const hasMenus = (menuCountMap.get(providerId) ?? 0) > 0;
     const candidates: DeliveryLinkRow[] = [];
-    const alreadyChecked: Platform[] = [];
+    const alreadyChecked: string[] = [];
 
     for (const link of providerLinks) {
+      // Platforms outside the cascade always reach the cascade so their skip is logged.
+      if (link.platform in UNSUPPORTED_PLATFORMS) {
+        candidates.push(link);
+        continue;
+      }
       // Wolt data (prices, categories) is richer than existing joinhalal menus, so Wolt
       // is only skipped once checked; other platforms are skipped when any menu exists.
       const checked = link.apify_checked_at && !isForce && !providerIdFilter;
@@ -428,16 +454,14 @@ async function main(): Promise<void> {
   const CONCURRENCY = 5;
 
   async function fetchMenu(link: DeliveryLinkRow): Promise<FetchedMenu> {
-    switch (link.platform) {
-      case 'wolt': {
-        const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
-        return result ? { menuItems: result.menuItems, wolt: result } : { menuItems: [] };
-      }
-      case 'lieferando':
-        return { menuItems: await fetchLieferandoMenu(link.platform_url, APIFY_API_TOKEN!) };
-      case 'ubereats':
-        return { menuItems: await fetchUberEatsMenu(link.platform_url, APIFY_API_TOKEN!) };
+    if (link.platform === 'wolt') {
+      const result = await fetchWoltRestaurant(link.platform_url, APIFY_API_TOKEN!);
+      return result ? { menuItems: result.menuItems, wolt: result } : { menuItems: [] };
     }
+    if (link.platform === 'ubereats') {
+      return { menuItems: await fetchUberEatsMenu(link.platform_url, APIFY_API_TOKEN!) };
+    }
+    throw new Error(`No menu fetcher for platform ${link.platform}`);
   }
 
   async function processTask(task: ProviderTask): Promise<void> {
