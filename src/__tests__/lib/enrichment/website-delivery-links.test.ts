@@ -65,7 +65,7 @@ describe('#801 one candidate per platform with the source page URL', () => {
       field_name: 'delivery_links',
       source: 'provider_website:wolt',
       source_url: PAGE,
-      status: 'pending',
+      status: 'auto-applied',
       enrichment_type: 'data',
       proposed_value: [
         {

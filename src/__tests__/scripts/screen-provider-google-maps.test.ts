@@ -250,7 +250,7 @@ describe('#763 criterion 9 and 10: images', () => {
       provider_id: 'p1',
       field_name: 'provider_images',
       enrichment_type: 'image',
-      status: 'pending',
+      status: 'auto-applied',
     });
     expect((imageRows[0].proposed_value as { urls: string[] }).urls).toEqual(many.slice(0, 5));
   });

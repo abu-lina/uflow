@@ -119,7 +119,7 @@ export function buildWebsiteDeliveryCandidate(
       },
     ],
     current_value: null,
-    status: 'pending',
+    status: 'auto-applied',
     enriched_at: new Date().toISOString(),
     enrichment_type: 'data',
   };
