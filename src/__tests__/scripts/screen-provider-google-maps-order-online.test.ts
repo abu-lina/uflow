@@ -112,7 +112,7 @@ describe('#807 order online links of a clear Maps match are staged as pending ca
         provider_id: 'p1',
         field_name: 'delivery_links',
         source_url: MAPS_URL,
-        status: 'pending',
+        status: 'auto-applied',
       });
     }
     const urls = rows.map(

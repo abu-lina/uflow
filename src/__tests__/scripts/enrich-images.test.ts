@@ -3,7 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 const createClientMock = vi.hoisted(() => vi.fn());
 vi.mock('@supabase/supabase-js', () => ({ createClient: createClientMock }));
 
-import { formatStageError, runAssign, stageImageCandidate } from '../../../scripts/enrich-images';
+import {
+  formatStageError,
+  IMAGE_CANDIDATE_STATUS,
+  runAssign,
+  stageImageCandidate,
+} from '../../../scripts/enrich-images';
 
 describe('stageImageCandidate', () => {
   it('skips insert when a pending candidate already exists', async () => {
@@ -274,10 +279,15 @@ describe('stageImageCandidate status list', () => {
     };
   }
 
-  it('checks pending, approved and applied rows by default', async () => {
+  it('checks pending, approved, applied and auto-applied rows by default', async () => {
     const { client, inSpy } = clientWith([]);
     await stageImageCandidate(client as never, row);
-    expect(inSpy).toHaveBeenCalledWith('status', ['pending', 'approved', 'applied']);
+    expect(inSpy).toHaveBeenCalledWith('status', [
+      'pending',
+      'approved',
+      'applied',
+      'auto-applied',
+    ]);
   });
 
   it('checks the statuses passed in, so a rejected candidate can count as existing', async () => {
@@ -287,5 +297,11 @@ describe('stageImageCandidate status list', () => {
     });
     expect(inSpy).toHaveBeenCalledWith('status', ['pending', 'approved', 'applied', 'rejected']);
     expect(outcome).toEqual({ outcome: 'skipped-existing' });
+  });
+});
+
+describe('#837 image candidates are staged as auto-applied', () => {
+  it('uses the auto-applied status', () => {
+    expect(IMAGE_CANDIDATE_STATUS).toBe('auto-applied');
   });
 });
