@@ -1455,7 +1455,6 @@ export const ar = {
   // #839: enrichment tab split view (needs review + history)
   admin: {
     enrichment: {
-      title: 'مقترحات الإثراء',
       needsReview: 'بحاجة إلى مراجعة',
       history: 'السجل',
       historyEmpty: 'لا يوجد سجل بعد.',
@@ -1486,7 +1485,6 @@ export const ar = {
       retry: 'إعادة المحاولة',
       loadMore: 'تحميل المزيد',
       loadFailed: 'تعذّر تحميل المقترحات',
-      actionFailed: 'فشل الإجراء',
       pendingCount: '{{count}} قيد الانتظار',
     },
   },

@@ -1470,7 +1470,6 @@ export const ps = {
   // #839: enrichment tab split view (needs review + history)
   admin: {
     enrichment: {
-      title: 'د بډاینې وړاندیزونه',
       needsReview: 'بیاکتنې ته اړتیا لري',
       history: 'تاریخچه',
       historyEmpty: 'تر اوسه تاریخچه نشته.',
@@ -1501,7 +1500,6 @@ export const ps = {
       retry: 'بیا هڅه وکړئ',
       loadMore: 'نور بار کړئ',
       loadFailed: 'وړاندیزونه بار نه شول',
-      actionFailed: 'کړنه ناکامه شوه',
       pendingCount: '{{count}} په انتظار کې',
     },
   },

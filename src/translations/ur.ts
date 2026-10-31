@@ -1476,7 +1476,6 @@ export const ur = {
   // #839: enrichment tab split view (needs review + history)
   admin: {
     enrichment: {
-      title: 'افزودگی کی تجاویز',
       needsReview: 'جائزہ درکار ہے',
       history: 'تاریخچہ',
       historyEmpty: 'ابھی کوئی تاریخچہ نہیں۔',
@@ -1507,7 +1506,6 @@ export const ur = {
       retry: 'دوبارہ کوشش کریں',
       loadMore: 'مزید لوڈ کریں',
       loadFailed: 'تجاویز لوڈ نہیں ہو سکیں',
-      actionFailed: 'کارروائی ناکام رہی',
       pendingCount: '{{count}} زیر التواء',
     },
   },

@@ -1498,7 +1498,6 @@ export const de = {
   // #839: enrichment tab split view (needs review + history)
   admin: {
     enrichment: {
-      title: 'Anreicherungsvorschläge',
       needsReview: 'Zu prüfen',
       history: 'Verlauf',
       historyEmpty: 'Noch kein Verlauf.',
@@ -1529,7 +1528,6 @@ export const de = {
       retry: 'Erneut versuchen',
       loadMore: 'Mehr laden',
       loadFailed: 'Vorschläge konnten nicht geladen werden',
-      actionFailed: 'Aktion fehlgeschlagen',
       pendingCount: '{{count}} offen',
     },
   },

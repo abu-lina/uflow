@@ -1471,7 +1471,6 @@ export const en = {
   // #839: enrichment tab split view (needs review + history)
   admin: {
     enrichment: {
-      title: 'Enrichment candidates',
       needsReview: 'Needs review',
       history: 'History',
       historyEmpty: 'No history yet.',
@@ -1502,7 +1501,6 @@ export const en = {
       retry: 'Retry',
       loadMore: 'Load more',
       loadFailed: 'Failed to load candidates',
-      actionFailed: 'Action failed',
       pendingCount: '{{count}} pending',
     },
   },

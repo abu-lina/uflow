@@ -1475,7 +1475,6 @@ export const tr = {
   // #839: enrichment tab split view (needs review + history)
   admin: {
     enrichment: {
-      title: 'Zenginleştirme adayları',
       needsReview: 'İnceleme gerekiyor',
       history: 'Geçmiş',
       historyEmpty: 'Henüz geçmiş yok.',
@@ -1506,7 +1505,6 @@ export const tr = {
       retry: 'Tekrar dene',
       loadMore: 'Daha fazla yükle',
       loadFailed: 'Adaylar yüklenemedi',
-      actionFailed: 'İşlem başarısız',
       pendingCount: '{{count}} bekliyor',
     },
   },
