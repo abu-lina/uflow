@@ -37,6 +37,16 @@ export interface EnrichmentCandidateWithProvider extends EnrichmentCandidateRow 
   provider_name: string;
 }
 
+export interface HistoryCandidate extends EnrichmentCandidateWithProvider {
+  /** Email of the reviewer; null for auto-applied rows or when the account is gone. */
+  reviewer_email: string | null;
+}
+
+export interface HistoryCandidatesResult {
+  data: HistoryCandidate[];
+  total: number;
+}
+
 export interface PendingCandidatesResult {
   data: EnrichmentCandidateWithProvider[];
   total: number;
@@ -171,6 +181,7 @@ export async function getPendingCandidates(
       source_service,
       source_category,
       attribution,
+      evidence,
       status,
       enriched_at,
       reviewed_at,
@@ -202,6 +213,79 @@ export async function getPendingCandidates(
         (row.providers as { provider_name: string } | null)?.provider_name ?? 'Unknown',
     }),
   );
+
+  return { data: candidates, total: count ?? 0 };
+}
+
+/**
+ * Fetch reviewed candidates (auto-applied, applied, rejected, legacy approved),
+ * newest first, with provider name and reviewer email for the read-only audit trail.
+ */
+export async function getHistoryCandidates(
+  options: { providerId?: string; limit?: number; offset?: number } = {},
+): Promise<HistoryCandidatesResult> {
+  const supabase = getSupabaseAdmin();
+  const { providerId, limit = 50, offset = 0 } = options;
+
+  let query = supabase
+    .from('enrichment_candidates')
+    .select(
+      `
+      id,
+      provider_id,
+      source,
+      source_url,
+      field_name,
+      proposed_value,
+      current_value,
+      evidence,
+      status,
+      enriched_at,
+      reviewed_at,
+      reviewer_id,
+      run_id,
+      created_at,
+      providers!inner(provider_name)
+    `,
+      { count: 'exact' },
+    )
+    .neq('status', 'pending')
+    .order('enriched_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (providerId) {
+    query = query.eq('provider_id', providerId);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    throw new Error(`Failed to fetch candidate history: ${error.message}`);
+  }
+
+  const rows = (data ?? []) as unknown as (EnrichmentCandidateRow & {
+    providers: { provider_name: string } | null;
+  })[];
+
+  const reviewerIds = [
+    ...new Set(rows.map((r) => r.reviewer_id).filter((id): id is string => !!id)),
+  ];
+  const emails = new Map<string, string>();
+  if (reviewerIds.length > 0) {
+    const { data: users } = await supabase
+      .from('users')
+      .select('user_id, email')
+      .in('user_id', reviewerIds);
+    for (const u of (users ?? []) as { user_id: string; email: string | null }[]) {
+      if (u.email) emails.set(u.user_id, u.email);
+    }
+  }
+
+  const candidates: HistoryCandidate[] = rows.map(({ providers, ...row }) => ({
+    ...row,
+    provider_name: providers?.provider_name ?? 'Unknown',
+    reviewer_email: row.reviewer_id ? (emails.get(row.reviewer_id) ?? null) : null,
+  }));
 
   return { data: candidates, total: count ?? 0 };
 }
