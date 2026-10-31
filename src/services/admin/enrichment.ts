@@ -6,7 +6,7 @@
  */
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import { isAdminField } from '@/lib/enrichment/enrichment-fields';
+import { FOOD_PROVIDER_FIELDS, isAdminField } from '@/lib/enrichment/enrichment-fields';
 import { applyDeliveryLinksCandidate } from '@/services/admin/enrichment-delivery-links';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -325,10 +325,16 @@ export async function approveCandidate(
     };
   }
 
-  const { error: updateError } = await supabase
-    .from('providers')
-    .update(providerUpdatePayload)
-    .eq('provider_id', candidate.provider_id);
+  const isFoodProviderField = FOOD_PROVIDER_FIELDS.includes(candidate.field_name);
+  const { error: updateError } = isFoodProviderField
+    ? await supabase
+        .from('food_providers')
+        .update({ [candidate.field_name]: candidate.proposed_value })
+        .eq('provider_id', candidate.provider_id)
+    : await supabase
+        .from('providers')
+        .update(providerUpdatePayload)
+        .eq('provider_id', candidate.provider_id);
 
   if (updateError) {
     return { success: false, error: `Failed to update provider: ${updateError.message}` };
