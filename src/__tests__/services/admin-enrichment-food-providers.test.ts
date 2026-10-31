@@ -142,6 +142,7 @@ describe('#842 approve = apply for halal candidates', () => {
 
   it('leaves the candidate pending when the food_providers write fails', async () => {
     const writes = setupSupabase([candidate('c4', 'no_pork', true)]);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const base = mockFrom.getMockImplementation()!;
     mockFrom.mockImplementation((table: string) =>
       table === 'food_providers'
