@@ -103,7 +103,7 @@ describe('#801 a provider site with outbound delivery links stages one pending c
         provider_id: 'p1',
         field_name: 'delivery_links',
         source_url: SITE,
-        status: 'pending',
+        status: 'auto-applied',
       });
     }
   });

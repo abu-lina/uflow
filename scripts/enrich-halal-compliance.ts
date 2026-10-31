@@ -148,30 +148,66 @@ export function isBarCategory(place: ApifyPlace | null): boolean {
 
 /** Why the place says it serves alcohol, or null when it gives no definite indicator. */
 export function mapsAlcoholIndicator(place: ApifyPlace): string | null {
+  const [key] = mapsAlcoholAttributes(place);
+  return key ? `attribute "${key}"` : null;
+}
+
+/** Maps additionalInfo attribute names that definitely say the venue serves alcohol. */
+function mapsAlcoholAttributes(place: ApifyPlace): string[] {
+  const keys: string[] = [];
   for (const group of Object.values(place.additionalInfo ?? {})) {
     for (const entry of group) {
       for (const [key, value] of Object.entries(entry)) {
-        if (value === true && ALCOHOL_ATTRIBUTE_RE.test(key.trim())) return `attribute "${key}"`;
+        if (value === true && ALCOHOL_ATTRIBUTE_RE.test(key.trim())) keys.push(key);
       }
     }
   }
-  return null;
+  return keys;
 }
 
 interface Proposal {
   field: 'no_alcohol' | 'no_pork';
   value: boolean;
   sourceUrl: string;
+  evidence: Record<string, unknown>;
 }
 
-function proposalsFor(result: ComplianceResult, sourceUrl: string): Proposal[] {
+function proposalsFor(
+  result: ComplianceResult,
+  sourceUrl: string,
+  base: Record<string, unknown>,
+): Proposal[] {
   const proposals: Proposal[] = [];
+  const alcohol = (items: string[]) => ({
+    ...base,
+    matched_keywords: result.matchedAlcoholKeywords,
+    matched_items: items,
+  });
   if (result.alcoholSignal === 'definite_alcohol')
-    proposals.push({ field: 'no_alcohol', value: false, sourceUrl });
+    proposals.push({
+      field: 'no_alcohol',
+      value: false,
+      sourceUrl,
+      evidence: alcohol(result.matchedAlcoholItems),
+    });
   else if (result.alcoholSignal === 'definite_no_alcohol')
-    proposals.push({ field: 'no_alcohol', value: true, sourceUrl });
+    proposals.push({
+      field: 'no_alcohol',
+      value: true,
+      sourceUrl,
+      evidence: alcohol(result.matchedAlcoholItems),
+    });
   if (result.porkSignal === 'definite_pork')
-    proposals.push({ field: 'no_pork', value: false, sourceUrl });
+    proposals.push({
+      field: 'no_pork',
+      value: false,
+      sourceUrl,
+      evidence: {
+        ...base,
+        matched_keywords: result.matchedPorkKeywords,
+        matched_items: result.matchedPorkItems,
+      },
+    });
   return proposals;
 }
 
@@ -200,6 +236,7 @@ export async function runHalalCompliance(deps: {
     const steps: string[] = [];
     const outcomes: string[] = [];
     let barCategory = false;
+    let mapsCategory: string | null = null;
     try {
       let links = await store.loadDeliveryLinks(provider);
 
@@ -207,12 +244,24 @@ export async function runHalalCompliance(deps: {
         const place = await screenProvider(provider, { apply });
         steps.push(place ? 'maps: matched' : 'maps: no match');
         barCategory = isBarCategory(place);
+        mapsCategory = place?.categoryName ?? null;
         const indicator = place ? mapsAlcoholIndicator(place) : null;
         if (place && indicator) {
           steps.push(`alcohol indicator (${indicator})`, 'menu skipped');
           await stageAll(
             provider,
-            [{ field: 'no_alcohol', value: false, sourceUrl: place.url ?? MAPS_FALLBACK_URL }],
+            [
+              {
+                field: 'no_alcohol',
+                value: false,
+                sourceUrl: place.url ?? MAPS_FALLBACK_URL,
+                evidence: {
+                  maps_attributes: mapsAlcoholAttributes(place),
+                  maps_category: mapsCategory,
+                  source_platform: 'google_maps',
+                },
+              },
+            ],
             outcomes,
           );
           log(formatLine(provider, steps, outcomes));
@@ -226,6 +275,7 @@ export async function runHalalCompliance(deps: {
 
       let names = await store.loadMenuItemNames(provider.provider_id);
       let sourceUrl = links[0]?.platform_url ?? MAPS_FALLBACK_URL;
+      let sourcePlatform: string | null = links[0]?.platform ?? null;
       if (names.length > 0) {
         steps.push(`menu: ${names.length} stored items`);
       } else if (links.length > 0) {
@@ -233,6 +283,7 @@ export async function runHalalCompliance(deps: {
         if (cascade.winner) {
           names = cascade.winner.menu.menuItems.map((m) => m.name_de);
           sourceUrl = cascade.winner.link.platform_url;
+          sourcePlatform = cascade.winner.link.platform;
           steps.push(`menu: ${cascade.winner.link.platform} ${names.length} items`);
         } else {
           steps.push('menu: no items from any platform');
@@ -248,7 +299,14 @@ export async function runHalalCompliance(deps: {
             barCategory ? ' (bar category)' : ''
           }`,
         );
-        await stageAll(provider, proposalsFor(result, sourceUrl), outcomes);
+        await stageAll(
+          provider,
+          proposalsFor(result, sourceUrl, {
+            source_platform: sourcePlatform,
+            ...(barCategory ? { maps_category: mapsCategory } : {}),
+          }),
+          outcomes,
+        );
       }
       log(formatLine(provider, steps, outcomes));
       if (apply) await store.markScreened(provider.provider_id);
@@ -269,7 +327,7 @@ export async function runHalalCompliance(deps: {
     proposals: Proposal[],
     outcomes: string[],
   ): Promise<void> {
-    for (const { field, value, sourceUrl } of proposals) {
+    for (const { field, value, sourceUrl, evidence } of proposals) {
       const current = provider[field];
       const label = `${field}=${value}`;
       if (current === value) {
@@ -290,6 +348,7 @@ export async function runHalalCompliance(deps: {
         status: 'pending',
         enriched_at: new Date().toISOString(),
         enrichment_type: 'data',
+        evidence,
       });
       if (outcome.outcome === 'staged') summary.staged += 1;
       outcomes.push(

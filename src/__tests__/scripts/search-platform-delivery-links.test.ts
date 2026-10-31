@@ -124,7 +124,7 @@ describe('platform delivery search (#807)', () => {
     });
   });
 
-  it('3: stages an ambiguous match as a pending candidate instead of writing it', async () => {
+  it('3: stages an ambiguous match as an auto-applied candidate instead of writing it', async () => {
     const { writeLink, stageCandidate, recordSearch } = await run({
       providers: [provider()],
       searchers: only('wolt', async () => [woltVenue({ address: undefined })]),
@@ -137,7 +137,7 @@ describe('platform delivery search (#807)', () => {
       provider_id: 'p1',
       source: 'platform_search:wolt',
       field_name: 'delivery_links',
-      status: 'pending',
+      status: 'auto-applied',
       proposed_value: [
         expect.objectContaining({
           platform: 'wolt',

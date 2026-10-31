@@ -292,7 +292,8 @@ async function runCurate(options: CliOptions): Promise<void> {
 }
 
 /** Statuses that count as an existing candidate; callers can add 'rejected' so a rejection sticks. */
-const DEFAULT_EXISTING_STATUSES = ['pending', 'approved', 'applied'] as const;
+export const IMAGE_CANDIDATE_STATUS = 'auto-applied' as const;
+const DEFAULT_EXISTING_STATUSES = ['pending', 'approved', 'applied', 'auto-applied'] as const;
 
 export async function stageImageCandidate(
   client: Pick<SupabaseClient, 'from'>,
@@ -395,7 +396,7 @@ export async function runAssign(options: CliOptions): Promise<void> {
       field_name: candidate.field_name,
       proposed_value: candidate.proposed_value,
       current_value: candidate.current_value,
-      status: 'pending',
+      status: IMAGE_CANDIDATE_STATUS,
       enriched_at: new Date().toISOString(),
       enrichment_type: candidate.enrichment_type,
       image_url: candidate.image_url,

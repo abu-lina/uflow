@@ -9,7 +9,7 @@
  * flag to false, and no_alcohol and the halal fields are never written.
  *
  * For `clear` providers with a website it also reads that site (https only, timeout, size cap,
- * private IPs blocked) and stages Lieferando/Wolt/Uber Eats links as pending
+ * private IPs blocked) and stages Lieferando/Wolt/Uber Eats links as auto-applied
  * `delivery_links` enrichment candidates for review in /dashboard/enrichment (#801).
  * It also stages the Maps "order online" links (Wolt, Uber Eats, Lieferando) of the matched place
  * as `google_maps_order_online:<platform>` candidates, for platforms the site did not cover (#807).
@@ -357,7 +357,7 @@ export async function runScreening(deps: {
         field_name: payload.field_name,
         proposed_value: { urls },
         current_value: payload.current_value,
-        status: 'pending',
+        status: 'auto-applied',
         enriched_at: new Date().toISOString(),
         enrichment_type: payload.enrichment_type,
         image_url: urls[0],
