@@ -285,7 +285,7 @@ export function createSupabaseStore(supabase: SupabaseClient): ComplianceStore {
       let query = supabase
         .from('providers')
         .select('provider_id, provider_name, food_providers(no_alcohol, no_pork)')
-        .eq('review_status', 'approved')
+        .eq('review_status', 'pending')
         .eq('listing_type', 'food');
       if (providerId) query = query.eq('provider_id', providerId);
       const { data, error } = await query.order('provider_id', { ascending: true }).limit(limit);
