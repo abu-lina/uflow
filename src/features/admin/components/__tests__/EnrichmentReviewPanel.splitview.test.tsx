@@ -120,6 +120,11 @@ function mockApi(pending: Row[], history: Row[]) {
   return calls;
 }
 
+const postedBody = (calls: { init?: RequestInit }[]) => {
+  const post = calls.find((c) => c.init?.method === 'POST');
+  return JSON.parse(String(post?.init?.body ?? 'null'));
+};
+
 const needsReview = () => screen.getByRole('region', { name: 'Needs review' });
 const history = () => screen.getByTestId('enrichment-history');
 
@@ -199,8 +204,7 @@ describe('#839 enrichment tab split view', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Approve no_alcohol change' }));
 
     await waitFor(() => expect(calls.some((c) => c.init?.method === 'POST')).toBe(true));
-    const post = calls.find((c) => c.init?.method === 'POST')!;
-    expect(JSON.parse(String(post.init?.body))).toMatchObject({
+    expect(postedBody(calls)).toMatchObject({
       action: 'approve',
       candidateId: 'c-alcohol',
     });
@@ -213,8 +217,7 @@ describe('#839 enrichment tab split view', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Reject no_alcohol change' }));
 
     await waitFor(() => expect(calls.some((c) => c.init?.method === 'POST')).toBe(true));
-    const post = calls.find((c) => c.init?.method === 'POST')!;
-    expect(JSON.parse(String(post.init?.body))).toMatchObject({
+    expect(postedBody(calls)).toMatchObject({
       action: 'reject',
       candidateId: 'c-alcohol',
     });
@@ -227,8 +230,7 @@ describe('#839 enrichment tab split view', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Approve all (2)' }));
 
     await waitFor(() => expect(calls.some((c) => c.init?.method === 'POST')).toBe(true));
-    const post = calls.find((c) => c.init?.method === 'POST')!;
-    expect(JSON.parse(String(post.init?.body))).toMatchObject({
+    expect(postedBody(calls)).toMatchObject({
       action: 'bulk-approve',
       providerId: 'p1',
     });
