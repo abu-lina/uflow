@@ -6,7 +6,7 @@ status: accepted
 
 The halal compliance pipeline (`enrich-halal-compliance.ts`) screens food Providers for alcohol and pork signals. Without a guard, re-running the pipeline re-screens every pending Provider, wasting Apify calls on Providers already found clean. A `food_providers.halal_screened_at` timestamp marks each Provider as screened; the pipeline skips them until the timestamp is older than 90 days or `--force` is passed.
 
-Bar-type Google Maps categories (Bar, Pub, Cocktail bar, etc.) were initially treated as definitive alcohol indicators, triggering an early exit that staged `no_alcohol=false` without checking the menu. This is inaccurate: a venue categorised as a bar can be alcohol-free (e.g. a mocktail bar, a shisha bar miscategorised). Only the explicit `"Serves alcohol": true` Maps attribute remains a hard early exit; bar categories are downgraded to a soft signal passed into `detectCompliance()` alongside menu text.
+Bar-type Google Maps categories (Bar, Pub, Cocktail bar, etc.) were initially treated as definitive alcohol indicators, triggering an early exit that staged `no_alcohol=false` without checking the menu. This is inaccurate: a venue categorised as a bar can be alcohol-free (e.g. a mocktail bar, a shisha bar miscategorised). Only the explicit `"Serves alcohol": true` Maps attribute remains a hard early exit; bar categories are downgraded to a soft signal noted in the log line; `detectCompliance()` is unchanged.
 
 ## Considered options
 
@@ -28,6 +28,6 @@ Bar-type Google Maps categories (Bar, Pub, Cocktail bar, etc.) were initially tr
 - `listProviders` WHERE clause becomes `halal_screened_at IS NULL OR halal_screened_at < now() - interval '90 days'`, skipped when `--force` is set.
 - The timestamp is written at the end of processing, so a crash mid-pipeline leaves the Provider eligible for retry.
 - `--force` overwrites the timestamp with the current date after completion.
-- `ALCOHOL_CATEGORIES` is removed from the early-exit path. The set is passed to `detectCompliance()` as context instead.
+- `ALCOHOL_CATEGORIES` is removed from the early-exit path. The category is noted in the per-provider log line as metadata; `detectCompliance()` is unchanged.
 - The only hard early exit remaining is `"Serves alcohol": true` in Maps `additionalInfo`.
 - Existing tests for the bar-category early exit must be rewritten to expect menu fetching and compliance detection.
