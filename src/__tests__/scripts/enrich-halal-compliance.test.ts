@@ -123,7 +123,7 @@ describe('AC1: CLI flags and provider selection', () => {
 
     await createSupabaseStore(client).listProviders({ limit: 3 });
 
-    expect(calls).toContainEqual(['eq', 'review_status', 'approved']);
+    expect(calls).toContainEqual(['eq', 'review_status', 'pending']);
     expect(calls).toContainEqual(['eq', 'listing_type', 'food']);
   });
 });
