@@ -1,17 +1,19 @@
 # .github/workflows/discover-halal.yml
 #
 # Halal Discovery Pipeline (Plan 225)
-# Sweeps Wolt and Lieferando for halal restaurants in German cities,
-# deduplicates against existing providers, and imports new ones as pending.
+# Sweeps Wolt for halal restaurants in German cities, deduplicates against
+# existing providers, and imports new ones as pending. This finds new providers;
+# enrich-halal-compliance.yml screens existing ones. Lieferando discovery was
+# removed in #830 (blocked by Cloudflare since #828).
 #
 # Triggers:
 #   - Weekly schedule (Monday 06:00 UTC) in dry-run mode
-#   - Manual dispatch with configurable platform, mode, limit, environment
+#   - Manual dispatch with configurable mode, limit, environment
 #
 # Usage:
 #   1. Go to Actions > "Halal Discovery Pipeline"
 #   2. Click "Run workflow"
-#   3. Choose platform, mode, limit, and environment
+#   3. Choose mode, limit, and environment
 #   4. Review output in the workflow logs + step summary
 #
 # Security:
@@ -26,15 +28,6 @@ on:
     - cron: '0 6 * * 1' # Every Monday at 06:00 UTC
   workflow_dispatch:
     inputs:
-      platform:
-        description: 'Platform to scan'
-        required: true
-        default: 'both'
-        type: choice
-        options:
-          - both
-          - wolt
-          - lieferando
       mode:
         description: 'Execution mode'
         required: true
@@ -59,7 +52,6 @@ on:
 jobs:
   discover-wolt:
     name: "Wolt Discovery (${{ inputs.mode || 'dry-run' }})"
-    if: inputs.platform == 'wolt' || inputs.platform == 'both' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'production' }}
     timeout-minutes: 60
@@ -121,90 +113,4 @@ jobs:
           if [ "${{ inputs.mode }}" = "write" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Records inserted with \`review_status = 'pending'\`. Approve via admin moderation." >> $GITHUB_STEP_SUMMARY
-          fi
-
-  import-lieferando:
-    name: "Lieferando Import (${{ inputs.mode || 'dry-run' }})"
-    if: inputs.platform == 'lieferando' || inputs.platform == 'both' || github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment || 'production' }}
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Check for scrape data
-        id: check
-        run: |
-          if [ -f data/lieferando-halal.json ]; then
-            echo "has_data=true" >> "$GITHUB_OUTPUT"
-            echo "Found data/lieferando-halal.json"
-            cat data/lieferando-halal.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'  Scraped: {d[\"scraped_at\"]}'); print(f'  Restaurants: {d[\"total_restaurants\"]}')"
-          else
-            echo "has_data=false" >> "$GITHUB_OUTPUT"
-            echo "No data/lieferando-halal.json found."
-            echo "Run locally first: npx tsx scripts/discover-lieferando.ts --scrape"
-            echo "Then commit the file and push."
-          fi
-
-      - name: Setup Node.js
-        if: steps.check.outputs.has_data == 'true'
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install dependencies
-        if: steps.check.outputs.has_data == 'true'
-        run: npm ci
-
-      - name: Build CLI arguments
-        if: steps.check.outputs.has_data == 'true'
-        id: args
-        run: |
-          MODE="${{ inputs.mode || 'dry-run' }}"
-
-          if [ "$MODE" = "write" ] && [ "${{ github.event_name }}" != "schedule" ]; then
-            ARGS="--import data/lieferando-halal.json --write"
-          else
-            ARGS="--import data/lieferando-halal.json"
-          fi
-
-          echo "cli_args=$ARGS" >> "$GITHUB_OUTPUT"
-
-      - name: Run Lieferando import
-        if: steps.check.outputs.has_data == 'true'
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          echo "Importing Lieferando data into ${{ inputs.environment || 'production' }}"
-          echo "  Args: ${{ steps.args.outputs.cli_args }}"
-          echo ""
-          npx tsx scripts/discover-lieferando.ts ${{ steps.args.outputs.cli_args }}
-
-      - name: Step summary
-        if: always()
-        run: |
-          echo "## Lieferando Import" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.check.outputs.has_data }}" != "true" ]; then
-            echo "No scrape data found. Run locally:" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "npx tsx scripts/discover-lieferando.ts --scrape" >> $GITHUB_STEP_SUMMARY
-            echo "git add data/lieferando-halal.json && git commit -m 'data: lieferando scrape' && git push" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
-            echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Platform | Lieferando (from JSON) |" >> $GITHUB_STEP_SUMMARY
-            echo "| Environment | ${{ inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Mode | ${{ inputs.mode || 'dry-run' }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Triggered by | ${{ github.actor }} (${{ github.event_name }}) |" >> $GITHUB_STEP_SUMMARY
-            echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
-            if [ "${{ inputs.mode }}" = "write" ]; then
-              echo "" >> $GITHUB_STEP_SUMMARY
-              echo "Records inserted with \`review_status = 'pending'\`. Approve via admin moderation." >> $GITHUB_STEP_SUMMARY
-            fi
           fi

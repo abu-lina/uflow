@@ -59,7 +59,8 @@ describe('#830 discover-halal.yml', () => {
   const wf = read('discover-halal.yml');
 
   it('C1: has no Lieferando discovery path', () => {
-    expect(wf).not.toMatch(/lieferando/i);
+    const code = wf.replace(/^\s*#.*$/gm, '');
+    expect(code).not.toMatch(/lieferando/i);
   });
 
   it('C2: keeps the Wolt discovery job', () => {

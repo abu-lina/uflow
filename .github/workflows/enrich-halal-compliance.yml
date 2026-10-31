@@ -1,0 +1,104 @@
+# Halal compliance pipeline (#823, #830).
+# Chains Google Maps screening, menu fetch and alcohol/pork detection, then stages
+# no_alcohol / no_pork candidates for review in /dashboard/enrichment.
+# Dry-run is the default; --apply only runs when "apply" is selected.
+
+name: Enrich Halal Compliance
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Execution mode'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - apply
+      provider-id:
+        description: 'Single provider ID (blank = all eligible)'
+        required: false
+        default: ''
+        type: string
+      limit:
+        description: 'Max providers to process'
+        required: false
+        default: '50'
+        type: string
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - uat
+
+concurrency:
+  group: enrich-halal-compliance
+  cancel-in-progress: false
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run halal compliance enrichment
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_PROVIDER_ID: ${{ inputs.provider-id }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -o pipefail
+          if [ "$INPUT_MODE" = "apply" ]; then ARGS="--apply"; else ARGS="--dry-run"; fi
+          if [ -n "$INPUT_PROVIDER_ID" ]; then ARGS="$ARGS --provider-id $INPUT_PROVIDER_ID"; fi
+          if [ -n "$INPUT_LIMIT" ]; then ARGS="$ARGS --limit $INPUT_LIMIT"; fi
+          echo "$ARGS" > /tmp/args.txt
+          npx tsx scripts/enrich-halal-compliance.ts $ARGS 2>&1 | tee /tmp/halal-compliance.log
+
+      - name: Step summary
+        if: always()
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_MODE: ${{ inputs.mode }}
+        run: |
+          {
+            echo "## Halal Compliance Enrichment"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Environment | $INPUT_ENVIRONMENT |"
+            echo "| Mode | $INPUT_MODE |"
+            echo "| Args | \`$(cat /tmp/args.txt 2>/dev/null)\` |"
+            echo ""
+            echo "<details><summary>Last 60 log lines</summary>"
+            echo ""
+            echo '```'
+            tail -n 60 /tmp/halal-compliance.log 2>/dev/null
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload run log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: halal-compliance-log-${{ github.run_id }}
+          path: /tmp/halal-compliance.log
+          if-no-files-found: ignore
+          retention-days: 30

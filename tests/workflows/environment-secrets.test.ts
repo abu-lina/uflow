@@ -9,12 +9,13 @@ const withInput = [
   'backfill-enrichment.yml',
   'backfill-location-coords.yml',
   'discover-halal.yml',
+  'enrich-halal-compliance.yml',
   'enrich-providers.yml',
   'import-joinhalal.yml',
   'import-muslimbusiness.yml',
   'screen-providers.yml',
 ];
-const productionOnly = ['enrich-wolt.yml', 'enrich-food-providers.yml', 'enrich-one-provider.yml'];
+const productionOnly = ['enrich-food-providers.yml'];
 const listed = [...withInput, ...productionOnly];
 
 // Job-level keys sit at 4 spaces; dispatch inputs sit at 6, so they never match.
