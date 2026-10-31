@@ -127,6 +127,11 @@ const postedBody = (calls: { init?: RequestInit }[]) => {
 
 const needsReview = () => screen.getByRole('region', { name: 'Needs review' });
 const history = () => screen.getByTestId('enrichment-history');
+const openHistory = () => {
+  const details = history() as HTMLDetailsElement;
+  details.open = true;
+  fireEvent(details, new Event('toggle'));
+};
 
 describe('#839 enrichment tab split view', () => {
   afterEach(() => {
@@ -164,6 +169,8 @@ describe('#839 enrichment tab split view', () => {
     mockApi([pendingAlcohol], [autoApplied]);
     render(<EnrichmentReviewPanel />);
 
+    await waitFor(() => expect(needsReview()).toBeTruthy());
+    openHistory();
     await waitFor(() => expect(within(history()).getByText('Auto Place')).toBeTruthy());
     expect(within(history()).getByText('Auto-applied')).toBeTruthy();
     expect(within(needsReview()).queryByText('Auto Place')).toBeNull();
@@ -173,6 +180,8 @@ describe('#839 enrichment tab split view', () => {
     mockApi([], [applied, rejected]);
     render(<EnrichmentReviewPanel />);
 
+    await waitFor(() => expect(needsReview()).toBeTruthy());
+    openHistory();
     await waitFor(() => expect(within(history()).getByText('Applied Place')).toBeTruthy());
     const section = within(history());
     expect(section.getByText('Rejected Place')).toBeTruthy();
@@ -195,6 +204,63 @@ describe('#839 enrichment tab split view', () => {
     expect(details.tagName).toBe('DETAILS');
     expect(details.open).toBe(false);
     expect(within(details).getByText(/^History/)).toBeTruthy();
+  });
+
+  it('does not fetch history until History is first opened, then fetches it once', async () => {
+    const calls = mockApi([pendingAlcohol], [autoApplied]);
+    render(<EnrichmentReviewPanel />);
+
+    await waitFor(() => expect(needsReview()).toBeTruthy());
+    const historyCalls = () => calls.filter((c) => c.url.includes('view=history')).length;
+    expect(historyCalls()).toBe(0);
+
+    openHistory();
+    await waitFor(() => expect(within(history()).getByText('Auto Place')).toBeTruthy());
+    expect(historyCalls()).toBe(1);
+
+    (history() as HTMLDetailsElement).open = false;
+    fireEvent(history(), new Event('toggle'));
+    openHistory();
+    expect(historyCalls()).toBe(1);
+  });
+
+  it('refreshes an already opened History after an action', async () => {
+    const calls = mockApi([pendingAlcohol], [autoApplied]);
+    render(<EnrichmentReviewPanel />);
+
+    await waitFor(() => expect(needsReview()).toBeTruthy());
+    openHistory();
+    await waitFor(() => expect(within(history()).getByText('Auto Place')).toBeTruthy());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reject no_alcohol change' }));
+
+    await waitFor(() => expect(calls.filter((c) => c.url.includes('view=history')).length).toBe(2));
+    expect((history() as HTMLDetailsElement).open).toBe(true);
+  });
+
+  it('shows a retryable error inside History when the history request fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url.includes('view=history')
+          ? { ok: false, status: 500, json: async () => ({ error: 'history boom' }) }
+          : {
+              ok: true,
+              json: async () => ({
+                data: [pendingAlcohol],
+                pagination: { total: 1, limit: 50, offset: 0, hasMore: false },
+              }),
+            },
+      ),
+    );
+    render(<EnrichmentReviewPanel />);
+
+    await waitFor(() => expect(needsReview()).toBeTruthy());
+    openHistory();
+
+    expect(await within(history()).findByText(/history boom/)).toBeTruthy();
+    expect(within(history()).getByRole('button', { name: 'Retry' })).toBeTruthy();
+    expect(within(needsReview()).getByText('Tevhid')).toBeTruthy();
   });
 
   it('single-click Approve posts one approve action for that candidate', async () => {
@@ -241,6 +307,8 @@ describe('#839 enrichment tab split view', () => {
     const calls = mockApi([pendingAlcohol], [autoApplied]);
     render(<EnrichmentReviewPanel providerId="p1" />);
 
+    await waitFor(() => expect(needsReview()).toBeTruthy());
+    openHistory();
     await waitFor(() => expect(calls.length).toBeGreaterThanOrEqual(2));
     const urls = calls.map((c) => c.url);
     expect(urls.some((u) => u.includes('view=history') && u.includes('providerId=p1'))).toBe(true);

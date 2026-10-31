@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useId } from 'react';
+import { useState, useEffect, useCallback, useId, useRef } from 'react';
 
 import { DeliveryLinks } from '@/features/admin/components/DeliveryLinks';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -11,7 +11,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
  * "Needs review": all pending candidates grouped by provider, with the
  * pipeline's evidence for compliance candidates and approve/reject/bulk-approve.
  * "History" (collapsed): read-only audit trail of auto-applied, applied and
- * rejected candidates.
+ * rejected candidates, fetched the first time it is opened.
  */
 
 type Evidence = Record<string, unknown>;
@@ -40,6 +40,7 @@ interface PaginationInfo {
 }
 
 type View = 'pending' | 'history';
+type HistoryStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 interface CandidateList {
   items: EnrichmentCandidate[];
@@ -72,6 +73,9 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
   const { t } = useLanguage();
   const [pending, setPending] = useState<CandidateList>(EMPTY_LIST);
   const [history, setHistory] = useState<CandidateList>(EMPTY_LIST);
+  const [historyStatus, setHistoryStatus] = useState<HistoryStatus>('idle');
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const historyRequested = useRef(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -93,26 +97,43 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
     [providerId],
   );
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadHistory = useCallback(async () => {
+    setHistoryStatus('loading');
     try {
-      const [nextPending, nextHistory] = await Promise.all([
-        fetchPage('pending', 0),
-        fetchPage('history', 0),
-      ]);
-      setPending(nextPending);
-      setHistory(nextHistory);
+      setHistory(await fetchPage('history', 0));
+      setHistoryStatus('loaded');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '');
-    } finally {
-      setLoading(false);
+      setHistoryError(err instanceof Error ? err.message : '');
+      setHistoryStatus('error');
     }
   }, [fetchPage]);
 
+  /** Spinner only on the first load, so a refresh keeps the History section open. */
+  const fetchAll = useCallback(
+    async (showSpinner = false) => {
+      if (showSpinner) setLoading(true);
+      setError(null);
+      try {
+        setPending(await fetchPage('pending', 0));
+        if (historyRequested.current) await loadHistory();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchPage, loadHistory],
+  );
+
   useEffect(() => {
-    fetchAll();
+    fetchAll(true);
   }, [fetchAll]);
+
+  const handleHistoryToggle = (event: React.SyntheticEvent<HTMLDetailsElement>) => {
+    if (!event.currentTarget.open || historyRequested.current) return;
+    historyRequested.current = true;
+    loadHistory();
+  };
 
   const loadMore = async (view: View) => {
     const current = view === 'pending' ? pending : history;
@@ -121,7 +142,9 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
       const next = await fetchPage(view, current.items.length);
       setList({ items: [...current.items, ...next.items], pagination: next.pagination });
     } catch (err) {
-      setError(err instanceof Error ? err.message : '');
+      const message = err instanceof Error ? err.message : '';
+      if (view === 'history') setHistoryError(message);
+      else setError(message);
     }
   };
 
@@ -182,7 +205,7 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
         <button
           className="mt-2 text-sm text-red-600 underline"
           type="button"
-          onClick={() => fetchAll()}
+          onClick={() => fetchAll(true)}
         >
           {t('admin.enrichment.retry')}
         </button>
@@ -192,6 +215,7 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
 
   const pendingTotal = pending.pagination?.total ?? pending.items.length;
   const historyTotal = history.pagination?.total ?? history.items.length;
+  const historyReady = historyStatus === 'loaded' || history.items.length > 0;
 
   return (
     <div className="space-y-6">
@@ -288,15 +312,39 @@ export function EnrichmentReviewPanel({ providerId }: EnrichmentReviewPanelProps
       <details
         className="rounded-lg border border-gray-200 bg-white"
         data-testid="enrichment-history"
+        onToggle={handleHistoryToggle}
       >
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-gray-900">
-          <span>{t('admin.enrichment.history')}</span>{' '}
-          <span className="text-gray-500">({historyTotal})</span>
+          <span>{t('admin.enrichment.history')}</span>
+          {historyReady && <span className="ml-1 text-gray-500">({historyTotal})</span>}
         </summary>
 
-        {history.items.length === 0 ? (
+        {historyStatus === 'error' && (
+          <div className="px-4 pb-4">
+            <p className="text-sm text-red-700">
+              {t('admin.enrichment.error', {
+                message: historyError || t('admin.enrichment.loadFailed'),
+              })}
+            </p>
+            <button
+              className="mt-2 text-sm text-red-600 underline"
+              type="button"
+              onClick={() => loadHistory()}
+            >
+              {t('admin.enrichment.retry')}
+            </button>
+          </div>
+        )}
+
+        {historyStatus === 'loading' && history.items.length === 0 && (
+          <p className="px-4 pb-4 text-sm text-gray-500">{t('admin.enrichment.loading')}</p>
+        )}
+
+        {historyStatus === 'loaded' && history.items.length === 0 && (
           <p className="px-4 pb-4 text-sm text-gray-500">{t('admin.enrichment.historyEmpty')}</p>
-        ) : (
+        )}
+
+        {history.items.length > 0 && (
           <ul className="divide-y divide-gray-50 border-t border-gray-100">
             {history.items.map((candidate) => (
               <HistoryRow key={candidate.id} candidate={candidate} />
