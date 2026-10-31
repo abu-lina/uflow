@@ -247,3 +247,45 @@ describe('formatStageError', () => {
     expect(formatStageError({ message: 'boom', code: '42P01' })).toBe('boom (code 42P01)');
   });
 });
+
+describe('stageImageCandidate status list', () => {
+  const row = {
+    provider_id: 'p1',
+    source: 'halal_compliance',
+    field_name: 'no_alcohol',
+    enrichment_type: 'data',
+  };
+
+  function clientWith(existing: unknown[]) {
+    const inSpy = vi.fn().mockReturnThis();
+    const chain = {
+      eq: vi.fn().mockReturnThis(),
+      in: inSpy,
+      limit: vi.fn().mockResolvedValue({ data: existing, error: null }),
+    };
+    return {
+      inSpy,
+      client: {
+        from: vi.fn(() => ({
+          select: vi.fn(() => chain),
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        })),
+      },
+    };
+  }
+
+  it('checks pending, approved and applied rows by default', async () => {
+    const { client, inSpy } = clientWith([]);
+    await stageImageCandidate(client as never, row);
+    expect(inSpy).toHaveBeenCalledWith('status', ['pending', 'approved', 'applied']);
+  });
+
+  it('checks the statuses passed in, so a rejected candidate can count as existing', async () => {
+    const { client, inSpy } = clientWith([{ id: 'r1' }]);
+    const outcome = await stageImageCandidate(client as never, row, {
+      statuses: ['pending', 'approved', 'applied', 'rejected'],
+    });
+    expect(inSpy).toHaveBeenCalledWith('status', ['pending', 'approved', 'applied', 'rejected']);
+    expect(outcome).toEqual({ outcome: 'skipped-existing' });
+  });
+});
