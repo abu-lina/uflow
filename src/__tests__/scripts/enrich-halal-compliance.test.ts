@@ -279,3 +279,29 @@ describe('AC8: dry-run writes nothing', () => {
     expect(r.screenProvider).toHaveBeenCalledWith(expect.anything(), { apply: false });
   });
 });
+
+describe('staging keeps an owner rejection', () => {
+  it('counts a rejected candidate as existing and does not insert again', async () => {
+    const inSpy = vi.fn().mockReturnThis();
+    const insert = vi.fn();
+    const chain = {
+      eq: vi.fn().mockReturnThis(),
+      in: inSpy,
+      limit: vi.fn().mockResolvedValue({ data: [{ id: 'r1' }], error: null }),
+    };
+    const client = {
+      from: vi.fn(() => ({ select: vi.fn(() => chain), insert })),
+    } as unknown as SupabaseClient;
+
+    const outcome = await createSupabaseStore(client).stageCandidate({
+      provider_id: 'p1',
+      source: 'halal_compliance',
+      field_name: 'no_alcohol',
+      enrichment_type: 'data',
+    });
+
+    expect(inSpy).toHaveBeenCalledWith('status', expect.arrayContaining(['rejected']));
+    expect(outcome).toEqual({ outcome: 'skipped-existing' });
+    expect(insert).not.toHaveBeenCalled();
+  });
+});

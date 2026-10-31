@@ -47,11 +47,12 @@ import {
   type ApifyPlace,
 } from './screen-provider-google-maps';
 import { runMenuCascade, type DeliveryLinkRow, type FetchedMenu } from './enrich-delivery-menus';
-import type { StageCandidateResult } from './enrich-images';
+import { stageImageCandidate, type StageCandidateResult } from './enrich-images';
 
 export type { ApifyPlace, DeliveryLinkRow };
 
 const SOURCE = 'halal_compliance';
+const EXISTING_STATUSES = ['pending', 'approved', 'applied'];
 const MAPS_FALLBACK_URL = 'https://www.google.com/maps';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -319,25 +320,8 @@ export function createSupabaseStore(supabase: SupabaseClient): ComplianceStore {
     },
 
     // Rejected rows count as existing, so an owner's rejection sticks across runs.
-    async stageCandidate(row) {
-      const { data, error } = await supabase
-        .from('enrichment_candidates')
-        .select('id')
-        .eq('provider_id', row.provider_id)
-        .eq('field_name', row.field_name)
-        .eq('source', row.source)
-        .in('status', ['pending', 'approved', 'applied', 'rejected'])
-        .limit(1);
-      if (error) return { outcome: 'failed', error: { message: error.message, code: error.code } };
-      if ((data ?? []).length > 0) return { outcome: 'skipped-existing' };
-      const { error: insertError } = await supabase.from('enrichment_candidates').insert(row);
-      if (insertError)
-        return {
-          outcome: 'failed',
-          error: { message: insertError.message, code: insertError.code },
-        };
-      return { outcome: 'staged' };
-    },
+    stageCandidate: (row) =>
+      stageImageCandidate(supabase, row, { statuses: [...EXISTING_STATUSES, 'rejected'] }),
   };
 }
 
