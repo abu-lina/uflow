@@ -1,3 +1,8 @@
+# #830 review: the enrich-delivery-menus.ts step here and enrich-halal-compliance.yml overlap on
+# menu fetching but both stay. This workflow persists menus to food_menu and fills provider data
+# (menus, delivery links) for every source. enrich-halal-compliance.yml only stages no_alcohol /
+# no_pork candidates from menu text and writes nothing to food_menu.
+
 name: Food Provider Enrichment
 
 on:

@@ -1,3 +1,7 @@
+# #830 review: kept. tests/performance/run-tests.sh and its k6 scripts still exist. A passing run
+# can't be verified from a lane (needs STAGING_URL and TEST_* secrets); the owner should trigger
+# one manually before the next scheduled run.
+
 name: Performance Tests
 
 on:
