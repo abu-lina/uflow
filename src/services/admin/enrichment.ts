@@ -24,7 +24,8 @@ export interface EnrichmentCandidateRow {
   source_service?: string | null;
   source_category?: string | null;
   attribution?: unknown;
-  status: 'pending' | 'approved' | 'rejected' | 'applied';
+  evidence?: unknown;
+  status: 'pending' | 'approved' | 'rejected' | 'applied' | 'auto-applied';
   enriched_at: string;
   reviewed_at: string | null;
   reviewer_id: string | null;
