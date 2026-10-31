@@ -409,6 +409,16 @@ export const en = {
       browse: 'Browse all providers',
       home: 'Go to homepage',
     },
+    halal: {
+      pendingReview: 'Pending review',
+      tier: {
+        gold: 'Gold',
+        silver: 'Silver',
+        bronze: 'Bronze',
+        notHalal: 'Not halal',
+        notSet: 'Not set',
+      },
+    },
   },
   create: {
     title: 'Add Provider',

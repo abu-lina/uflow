@@ -1262,7 +1262,7 @@ describe('ProviderEditForm halal header pending review (#840)', () => {
   const foodProvider = {
     ...baseProvider,
     listing_type: 'food',
-    has_certificate: true,
+    food_providers: { has_certificate: true },
   } as unknown as Provider;
 
   beforeEach(() => {
