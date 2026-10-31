@@ -479,3 +479,39 @@ describe('staging keeps an owner rejection', () => {
     expect(insert).not.toHaveBeenCalled();
   });
 });
+
+describe('#838: evidence on staged candidates', () => {
+  const byField = (store: ComplianceStore, field: string) =>
+    stagedRows(store).find((r) => r.field_name === field) as Record<string, unknown>;
+
+  it('menu-based candidates carry the triggering item names, keywords and platform', async () => {
+    const r = await run({
+      menus: { wolt: menu('Bier', 'Schweinebraten', 'Falafel') },
+      place: null,
+    });
+    expect(byField(r.store, 'no_alcohol').evidence).toMatchObject({
+      matched_keywords: expect.arrayContaining(['Bier']),
+      matched_items: ['Bier'],
+      source_platform: 'wolt',
+    });
+    expect(byField(r.store, 'no_pork').evidence).toMatchObject({
+      matched_items: ['Schweinebraten'],
+      source_platform: 'wolt',
+    });
+  });
+
+  it('early exit on a Maps alcohol attribute puts the indicator in evidence', async () => {
+    const r = await run({
+      links: [[], []],
+      place: place({
+        categoryName: 'Bar',
+        additionalInfo: { Offerings: [{ 'Serves alcohol': true }] },
+      }),
+    });
+    expect(stagedRows(r.store)[0].evidence).toMatchObject({
+      maps_attributes: ['Serves alcohol'],
+      maps_category: 'Bar',
+      source_platform: 'google_maps',
+    });
+  });
+});
