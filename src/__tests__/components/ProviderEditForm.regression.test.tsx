@@ -1257,3 +1257,49 @@ describe('ProviderEditForm secondary categories (#254)', () => {
     expect(mockToastError).not.toHaveBeenCalledWith('Error updating provider');
   });
 });
+
+describe('ProviderEditForm halal header pending review (#840)', () => {
+  const foodProvider = {
+    ...baseProvider,
+    listing_type: 'food',
+    has_certificate: true,
+  } as unknown as Provider;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockCategoriesOrder.mockResolvedValue({ data: [], error: null });
+    mockCategoriesSelect.mockReturnValue({ order: mockCategoriesOrder });
+    mockProviderCommunityServicesSelectEq.mockResolvedValue({ data: [], error: null });
+    mockProviderCommunityServicesSelect.mockReturnValue({
+      eq: mockProviderCommunityServicesSelectEq,
+    });
+  });
+
+  it('shows "Pending review" when pending halal candidates exist', () => {
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        hasPendingHalalCandidates
+        provider={foodProvider}
+      />,
+    );
+    expect(screen.getByText('providers.halal.pendingReview')).toBeTruthy();
+  });
+
+  it('shows the normal tier when no pending halal candidates exist', () => {
+    render(<ProviderEditForm enableLocalStorage={false} provider={foodProvider} />);
+    expect(screen.getByText('providers.halal.tier.gold')).toBeTruthy();
+    expect(screen.queryByText('providers.halal.pendingReview')).toBeNull();
+  });
+
+  it('"Pending review" replaces the tier entirely', () => {
+    render(
+      <ProviderEditForm
+        enableLocalStorage={false}
+        hasPendingHalalCandidates
+        provider={foodProvider}
+      />,
+    );
+    expect(screen.queryByText('providers.halal.tier.gold')).toBeNull();
+  });
+});
