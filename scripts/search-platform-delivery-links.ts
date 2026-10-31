@@ -4,7 +4,7 @@
  *
  * A result is accepted only when matchVenueToProvider says `match` (name, street with house
  * number and zip agree; Wolt has no zip, so there the venue must be within 250 m of the
- * provider's coordinates instead); it is then written to provider_delivery_links. Ambiguous results are staged as pending
+ * provider's coordinates instead); it is then written to provider_delivery_links. Ambiguous results are staged as auto-applied
  * `delivery_links` candidates (source `platform_search:<platform>`). Each platform is searched once
  * per provider: a platform with a link row, any delivery_links candidate, or a row in
  * provider_platform_searches is skipped. A failed request logs a WARN and is not recorded, so it
@@ -169,7 +169,7 @@ function buildSearchCandidate(
       is_active: true,
     })),
     current_value: null,
-    status: 'pending',
+    status: 'auto-applied',
     enriched_at: new Date().toISOString(),
     enrichment_type: 'data',
   };
