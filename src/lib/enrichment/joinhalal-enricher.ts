@@ -74,7 +74,7 @@ export interface EnrichmentCandidate {
   field_name: string;
   proposed_value: unknown;
   current_value: unknown;
-  status?: 'pending' | 'approved' | 'rejected' | 'applied';
+  status?: 'pending' | 'approved' | 'rejected' | 'applied' | 'auto-applied';
 }
 
 export type ConflictType = 'no-change' | 'additive' | 'conflict';
