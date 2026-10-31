@@ -267,9 +267,9 @@ export async function getHistoryCandidates(
     providers: { provider_name: string } | null;
   })[];
 
-  const reviewerIds = [
-    ...new Set(rows.map((r) => r.reviewer_id).filter((id): id is string => !!id)),
-  ];
+  const reviewerIds = Array.from(
+    new Set(rows.map((r) => r.reviewer_id).filter((id): id is string => !!id)),
+  );
   const emails = new Map<string, string>();
   if (reviewerIds.length > 0) {
     const { data: users } = await supabase
