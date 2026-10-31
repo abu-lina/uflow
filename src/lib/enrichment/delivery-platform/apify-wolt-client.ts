@@ -84,11 +84,11 @@ export interface ApifyWoltResult {
  * Returns the default dataset ID on success, or throws on failure.
  */
 async function runActor(venueUrl: string, apiToken: string): Promise<string> {
-  const url = `${APIFY_BASE}/acts/${APIFY_ACTOR_NAME}/runs?token=${apiToken}&waitForFinish=120`;
+  const url = `${APIFY_BASE}/acts/${APIFY_ACTOR_NAME}/runs?waitForFinish=120`;
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiToken}` },
     body: JSON.stringify({
       mode: 'venueUrls',
       venueUrls: [{ url: venueUrl }],
@@ -122,9 +122,9 @@ async function runActor(venueUrl: string, apiToken: string): Promise<string> {
  * Fetch items from an Apify dataset.
  */
 async function getDatasetItems<T>(datasetId: string, apiToken: string): Promise<T[]> {
-  const url = `${APIFY_BASE}/datasets/${datasetId}/items?format=json&token=${apiToken}`;
+  const url = `${APIFY_BASE}/datasets/${datasetId}/items?format=json`;
 
-  const response = await fetch(url);
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${apiToken}` } });
   if (!response.ok) {
     throw new Error(`Apify dataset fetch failed: HTTP ${response.status}`);
   }

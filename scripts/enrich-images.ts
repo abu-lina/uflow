@@ -291,9 +291,13 @@ async function runCurate(options: CliOptions): Promise<void> {
   }
 }
 
+/** Statuses that count as an existing candidate; callers can add 'rejected' so a rejection sticks. */
+const DEFAULT_EXISTING_STATUSES = ['pending', 'approved', 'applied'] as const;
+
 export async function stageImageCandidate(
   client: Pick<SupabaseClient, 'from'>,
   row: Record<string, unknown>,
+  options: { statuses?: readonly string[] } = {},
 ): Promise<StageCandidateResult> {
   const { data: existingRows, error: existingError } = await client
     .from('enrichment_candidates')
@@ -302,7 +306,7 @@ export async function stageImageCandidate(
     .eq('field_name', row.field_name)
     .eq('source', row.source)
     .eq('enrichment_type', row.enrichment_type)
-    .in('status', ['pending', 'approved', 'applied'])
+    .in('status', [...(options.statuses ?? DEFAULT_EXISTING_STATUSES)])
     .limit(1);
 
   if (existingError) {
