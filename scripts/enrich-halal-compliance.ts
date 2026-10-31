@@ -284,13 +284,21 @@ export function createSupabaseStore(supabase: SupabaseClient): ComplianceStore {
     async listProviders({ providerId, limit }) {
       let query = supabase
         .from('providers')
-        .select('provider_id, provider_name, no_alcohol, no_pork')
+        .select('provider_id, provider_name, food_providers(no_alcohol, no_pork)')
         .eq('review_status', 'approved')
         .eq('listing_type', 'food');
       if (providerId) query = query.eq('provider_id', providerId);
       const { data, error } = await query.order('provider_id', { ascending: true }).limit(limit);
       if (error) throw new Error(`Failed to load providers: ${error.message}`);
-      return (data ?? []) as ComplianceProvider[];
+      return (data ?? []).map((row: Record<string, unknown>) => {
+        const fp = row.food_providers as { no_alcohol?: boolean; no_pork?: boolean } | null;
+        return {
+          provider_id: row.provider_id as string,
+          provider_name: row.provider_name as string,
+          no_alcohol: fp?.no_alcohol ?? null,
+          no_pork: fp?.no_pork ?? null,
+        };
+      });
     },
 
     async loadDeliveryLinks(provider) {
