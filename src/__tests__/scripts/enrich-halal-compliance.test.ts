@@ -1,5 +1,6 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createSupabaseStore,
@@ -53,6 +54,8 @@ interface Harness {
   place?: ApifyPlace | null;
   menus?: Record<string, ReturnType<typeof menu>>;
   apply?: boolean;
+  force?: boolean;
+  failLoadMenu?: boolean;
 }
 
 async function run(h: Harness = {}) {
@@ -62,8 +65,12 @@ async function run(h: Harness = {}) {
     loadDeliveryLinks: vi.fn(async () =>
       linkResponses.length > 1 ? (linkResponses.shift() as DeliveryLinkRow[]) : linkResponses[0],
     ),
-    loadMenuItemNames: vi.fn(async () => h.storedMenuNames ?? []),
+    loadMenuItemNames: vi.fn(async () => {
+      if (h.failLoadMenu) throw new Error('db down');
+      return h.storedMenuNames ?? [];
+    }),
     stageCandidate: vi.fn(async () => ({ outcome: 'staged' as const })),
+    markScreened: vi.fn(async () => undefined),
   };
   const screenProvider = vi.fn(async () => (h.place === undefined ? place() : h.place));
   const fetchMenu = vi.fn(async (link: DeliveryLinkRow) => h.menus?.[link.platform] ?? menu());
@@ -73,7 +80,7 @@ async function run(h: Harness = {}) {
     screenProvider,
     fetchMenu,
     log: (m) => logs.push(m),
-    options: { apply: h.apply ?? true, limit: 10 },
+    options: { apply: h.apply ?? true, limit: 10, force: h.force ?? false },
   });
   return { store, screenProvider, fetchMenu, logs, summary };
 }
@@ -110,21 +117,128 @@ describe('AC1: CLI flags and provider selection', () => {
   });
 
   it('the Supabase store lists approved food providers only', async () => {
-    const calls: Array<[string, ...unknown[]]> = [];
-    const builder: Record<string, unknown> = {};
-    for (const method of ['select', 'eq', 'order', 'limit', 'gt']) {
-      builder[method] = (...args: unknown[]) => {
-        calls.push([method, ...args]);
-        return builder;
-      };
-    }
-    builder.then = (resolve: (v: unknown) => void) => resolve({ data: [], error: null });
-    const client = { from: vi.fn(() => builder) } as unknown as SupabaseClient;
+    const { calls, client } = queryRecorder();
 
     await createSupabaseStore(client).listProviders({ limit: 3 });
 
     expect(calls).toContainEqual(['eq', 'review_status', 'pending']);
     expect(calls).toContainEqual(['eq', 'listing_type', 'food']);
+  });
+
+  it('--force is off by default and on with the flag', () => {
+    expect(parseCliArgs([]).force).toBe(false);
+    expect(parseCliArgs(['--apply', '--force']).force).toBe(true);
+  });
+});
+
+function queryRecorder() {
+  const calls: Array<[string, ...unknown[]]> = [];
+  const builder: Record<string, unknown> = {};
+  for (const method of ['select', 'eq', 'or', 'order', 'limit', 'gt', 'update']) {
+    builder[method] = (...args: unknown[]) => {
+      calls.push([method, ...args]);
+      return builder;
+    };
+  }
+  builder.then = (resolve: (v: unknown) => void) => resolve({ data: [], error: null });
+  const from = vi.fn(() => builder);
+  return { calls, from, client: { from } as unknown as SupabaseClient };
+}
+
+describe('AC834-1: migration adds halal_screened_at to food_providers', () => {
+  it('has a migration that adds the nullable timestamptz column', () => {
+    const file = readdirSync('supabase/migrations').find((f) => f.includes('issue834'));
+    expect(file).toBeDefined();
+    const sql = readFileSync(`supabase/migrations/${file}`, 'utf8');
+    expect(sql).toMatch(
+      /ALTER TABLE\s+(public\.)?food_providers\s+ADD COLUMN IF NOT EXISTS\s+halal_screened_at\s+timestamptz/i,
+    );
+  });
+});
+
+describe('AC834-2: pipeline skips providers screened within 90 days', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('the store only lists providers never screened or screened more than 90 days ago', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-31T12:00:00.000Z'));
+    const { calls, client } = queryRecorder();
+
+    await createSupabaseStore(client).listProviders({ limit: 3 });
+
+    const cutoff = new Date('2026-08-02T12:00:00.000Z').toISOString();
+    const or = calls.find((c) => c[0] === 'or');
+    expect(or?.[1]).toBe(`halal_screened_at.is.null,halal_screened_at.lt.${cutoff}`);
+    expect(or?.[2]).toEqual({ referencedTable: 'food_providers' });
+    const select = calls.find((c) => c[0] === 'select');
+    expect(select?.[1]).toMatch(/food_providers!inner\(/);
+  });
+});
+
+describe('AC834-3: --force re-screens regardless of timestamp', () => {
+  it('the store applies no screening-age filter when force is set', async () => {
+    const { calls, client } = queryRecorder();
+
+    await createSupabaseStore(client).listProviders({ limit: 3, force: true });
+
+    expect(calls.some((c) => c[0] === 'or')).toBe(false);
+  });
+
+  it('passes force through to listProviders', async () => {
+    const r = await run({ force: true });
+    expect(r.store.listProviders).toHaveBeenCalledWith(expect.objectContaining({ force: true }));
+  });
+
+  it('still stamps the timestamp after a forced pass', async () => {
+    const r = await run({ force: true });
+    expect(r.store.markScreened).toHaveBeenCalledWith('p1');
+  });
+});
+
+describe('AC834-4: halal_screened_at is stamped at the end of each provider pass', () => {
+  it('stamps after the full path', async () => {
+    const r = await run({ menus: { wolt: menu('Falafel Teller') } });
+    expect(r.store.markScreened).toHaveBeenCalledTimes(1);
+    expect(r.store.markScreened).toHaveBeenCalledWith('p1');
+  });
+
+  it('stamps after the "Serves alcohol" early exit', async () => {
+    const r = await run({
+      links: [[]],
+      place: place({ additionalInfo: { Offerings: [{ 'Serves alcohol': true }] } }),
+    });
+    expect(r.store.markScreened).toHaveBeenCalledWith('p1');
+  });
+
+  it('stamps only after staging finished', async () => {
+    const r = await run({ menus: { wolt: menu('Bier') } });
+    const staged = (r.store.stageCandidate as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
+    const stamped = (r.store.markScreened as ReturnType<typeof vi.fn>).mock.invocationCallOrder[0];
+    expect(stamped).toBeGreaterThan(staged);
+  });
+
+  it('does not stamp a provider whose pass crashed, so the next run retries it', async () => {
+    const r = await run({ failLoadMenu: true });
+    expect(r.summary.failed).toBe(1);
+    expect(r.store.markScreened).not.toHaveBeenCalled();
+  });
+
+  it('does not stamp in dry-run', async () => {
+    const r = await run({ apply: false, menus: { wolt: menu('Falafel Teller') } });
+    expect(r.store.markScreened).not.toHaveBeenCalled();
+  });
+
+  it('the Supabase store writes halal_screened_at on the provider food_providers row', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-10-31T12:00:00.000Z'));
+    const { calls, from, client } = queryRecorder();
+
+    await createSupabaseStore(client).markScreened('p1');
+    vi.useRealTimers();
+
+    expect(from).toHaveBeenCalledWith('food_providers');
+    expect(calls).toContainEqual(['update', { halal_screened_at: '2026-10-31T12:00:00.000Z' }]);
+    expect(calls).toContainEqual(['eq', 'provider_id', 'p1']);
   });
 });
 
@@ -176,14 +290,67 @@ describe('AC4: early exit on a definite Google Maps alcohol indicator', () => {
   });
 
   it.each(['Bar', 'Pub', 'Cocktail bar'])(
-    'stages no_alcohol=false for category "%s"',
+    'bar category "%s" does not exit early: the menu is always checked',
     async (c) => {
-      const r = await run({ links: [[]], place: place({ categoryName: c }) });
-      expect(r.fetchMenu).not.toHaveBeenCalled();
-      expect(stagedRows(r.store).map((row) => row.field_name)).toEqual(['no_alcohol']);
-      expect(stagedRows(r.store)[0].proposed_value).toBe(false);
+      const r = await run({
+        links: [[], [woltLink]],
+        place: place({ categoryName: c }),
+        menus: { wolt: menu('Falafel Teller') },
+      });
+      expect(r.fetchMenu).toHaveBeenCalledWith(woltLink);
+      expect(r.store.stageCandidate).not.toHaveBeenCalled();
     },
   );
+
+  it('a bar category alone never stages no_alcohol, even when stored menu items are ambiguous', async () => {
+    const r = await run({
+      links: [[]],
+      place: place({ categoryName: 'Bar' }),
+      storedMenuNames: ['Apfelsaft'],
+    });
+    expect(r.store.loadMenuItemNames).toHaveBeenCalled();
+    expect(r.store.stageCandidate).not.toHaveBeenCalled();
+  });
+
+  it('a bar with an alcohol menu stages no_alcohol=false from the menu', async () => {
+    const r = await run({
+      links: [[], [woltLink]],
+      place: place({ categoryName: 'Pub' }),
+      menus: { wolt: menu('Bier', 'Pommes') },
+    });
+    expect(stagedRows(r.store)).toEqual([
+      expect.objectContaining({ field_name: 'no_alcohol', proposed_value: false }),
+    ]);
+  });
+
+  it('a bar with an explicit alcohol-free menu stages no_alcohol=true: the menu wins', async () => {
+    const r = await run({
+      links: [[], [woltLink]],
+      place: place({ categoryName: 'Cocktail bar' }),
+      menus: { wolt: menu('Alkoholfreier Cocktail', 'Limonade') },
+    });
+    expect(stagedRows(r.store)).toEqual([
+      expect.objectContaining({ field_name: 'no_alcohol', proposed_value: true }),
+    ]);
+  });
+
+  it('logs the bar category as metadata on the signals step', async () => {
+    const r = await run({
+      links: [[], [woltLink]],
+      place: place({ categoryName: 'Bar' }),
+      menus: { wolt: menu('Falafel Teller') },
+    });
+    const line = r.logs.find((l) => l.includes('Tevhid Restaurant')) ?? '';
+    expect(line).toMatch(/signals alcohol=no_signal pork=no_signal \(bar category\)/);
+  });
+
+  it('does not log a bar category for a non-bar place', async () => {
+    const r = await run({
+      links: [[], [woltLink]],
+      menus: { wolt: menu('Falafel Teller') },
+    });
+    expect(r.logs.join('\n')).not.toMatch(/bar category/);
+  });
 
   it('does not exit early for an explicit "Serves alcohol: false"', async () => {
     const r = await run({
@@ -255,7 +422,10 @@ describe('AC7: one summary line per provider', () => {
   });
 
   it('says the menu was skipped on the early-exit path', async () => {
-    const r = await run({ links: [[]], place: place({ categoryName: 'Pub' }) });
+    const r = await run({
+      links: [[]],
+      place: place({ additionalInfo: { Offerings: [{ 'Serves alcohol': true }] } }),
+    });
     const lines = r.logs.filter((l) => l.includes('Tevhid Restaurant'));
     expect(lines).toHaveLength(1);
     expect(lines[0]).toMatch(/menu skipped/);
@@ -270,7 +440,11 @@ describe('AC8: dry-run writes nothing', () => {
   });
 
   it('never stages a candidate in dry-run, on the early-exit path', async () => {
-    const r = await run({ apply: false, links: [[]], place: place({ categoryName: 'Bar' }) });
+    const r = await run({
+      apply: false,
+      links: [[]],
+      place: place({ additionalInfo: { Offerings: [{ 'Serves alcohol': true }] } }),
+    });
     expect(r.store.stageCandidate).not.toHaveBeenCalled();
   });
 

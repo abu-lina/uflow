@@ -31,3 +31,13 @@ _Avoid_: category group, facet
 
 **Applicable Section**:
 Which Listing Type a Category may be used for, or `all` for Categories usable everywhere.
+
+### Enrichment and compliance
+
+**Screening**:
+An automated pass that checks a Provider's external signals (Google Maps attributes, delivery-platform menu text) for compliance markers such as alcohol and pork. Distinct from Review, which is a human decision on a staged enrichment candidate. Recorded by `food_providers.halal_screened_at`.
+_Avoid_: review, check, scan
+
+**Enrichment Candidate**:
+A proposed field change staged by an automated pipeline for human review. One row in `enrichment_candidates`, with status `pending` → `approved` / `rejected` → `applied`. The pipeline never writes Provider fields directly.
+_Avoid_: suggestion, proposal, enrichment row

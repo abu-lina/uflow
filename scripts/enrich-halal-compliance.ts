@@ -6,7 +6,9 @@
  *      when the provider holds no active delivery link yet. It stages delivery links for review
  *      and returns the matched place.
  *   2. Early exit: a definite alcohol indicator in the place's additionalInfo ("Alcohol",
- *      "Beer", "Wine", ...) or a bar/pub category stages no_alcohol=false and skips the menu.
+ *      "Beer", "Wine", ...) stages no_alcohol=false and skips the menu. A bar/pub category is
+ *      not definite (a bar can be alcohol-free); the menu is still checked and the category
+ *      is only noted in the log line.
  *   3. Menu item names from food_menu rows already written by enrich-delivery-menus.ts, or
  *      fetched through the same Wolt/Uber Eats cascade when none exist (nothing is written
  *      to food_menu here).
@@ -22,6 +24,11 @@
  *   npx tsx scripts/enrich-halal-compliance.ts --dry-run                  # default, writes nothing
  *   npx tsx scripts/enrich-halal-compliance.ts --apply --provider-id <uuid>
  *   npx tsx scripts/enrich-halal-compliance.ts --apply --limit 20
+ *   npx tsx scripts/enrich-halal-compliance.ts --apply --force            # ignore the 90-day guard
+ *
+ * Providers screened within the last 90 days (food_providers.halal_screened_at) are skipped;
+ * --force screens them again. The timestamp is written when a provider's pass finishes with
+ * --apply, so a crashed pass is retried on the next run.
  *
  * Dry runs still call Apify (Maps and menus) so the log shows what would happen; they stage nothing.
  *
@@ -54,12 +61,13 @@ export type { ApifyPlace, DeliveryLinkRow };
 const SOURCE = 'halal_compliance';
 const EXISTING_STATUSES = ['pending', 'approved', 'applied'];
 const MAPS_FALLBACK_URL = 'https://www.google.com/maps';
+const SCREENING_TTL_DAYS = 90;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Maps attribute keys that mean the venue serves alcohol (ApifyPlace.additionalInfo, English). */
 const ALCOHOL_ATTRIBUTE_RE = /^(?:serves )?(?:alcohol|beer|wine|cocktails|hard liquor|spirits)$/i;
 
-/** Maps categories of venues whose business is alcohol. Exact match on categoryName, lowercase. */
+/** Maps categories of venues whose business is alcohol. Exact match on categoryName, lowercase. Log metadata only. */
 const ALCOHOL_CATEGORIES: ReadonlySet<string> = new Set([
   'bar',
   'pub',
@@ -86,18 +94,26 @@ export interface ComplianceProvider {
 }
 
 export interface ComplianceStore {
-  listProviders(opts: { providerId?: string; limit: number }): Promise<ComplianceProvider[]>;
+  /** Skips providers screened within 90 days unless `force` is set. */
+  listProviders(opts: {
+    providerId?: string;
+    limit: number;
+    force?: boolean;
+  }): Promise<ComplianceProvider[]>;
   /** Active delivery links the provider holds. */
   loadDeliveryLinks(provider: ComplianceProvider): Promise<DeliveryLinkRow[]>;
   /** Item names of food_menu rows already written for the provider. */
   loadMenuItemNames(providerId: string): Promise<string[]>;
   stageCandidate(row: Record<string, unknown>): Promise<StageCandidateResult>;
+  /** Stamps food_providers.halal_screened_at with the current time. */
+  markScreened(providerId: string): Promise<void>;
 }
 
 export interface CliOptions {
   apply: boolean;
   limit: number;
   providerId?: string;
+  force: boolean;
 }
 
 export interface ComplianceSummary {
@@ -120,7 +136,14 @@ export function parseCliArgs(args: string[]): CliOptions {
     apply,
     limit: resolveLimit(value('--limit')),
     providerId: providerId || undefined,
+    force: args.includes('--force'),
   };
+}
+
+/** Whether the place's Maps category is a bar-type venue. A soft signal, never a verdict. */
+export function isBarCategory(place: ApifyPlace | null): boolean {
+  const category = place?.categoryName?.trim().toLowerCase();
+  return !!category && ALCOHOL_CATEGORIES.has(category);
 }
 
 /** Why the place says it serves alcohol, or null when it gives no definite indicator. */
@@ -132,8 +155,6 @@ export function mapsAlcoholIndicator(place: ApifyPlace): string | null {
       }
     }
   }
-  const category = place.categoryName?.trim();
-  if (category && ALCOHOL_CATEGORIES.has(category.toLowerCase())) return `category "${category}"`;
   return null;
 }
 
@@ -171,18 +192,21 @@ export async function runHalalCompliance(deps: {
   const providers = await store.listProviders({
     providerId: options.providerId,
     limit: options.limit,
+    force: options.force,
   });
   const summary: ComplianceSummary = { processed: providers.length, staged: 0, failed: 0 };
 
   for (const provider of providers) {
     const steps: string[] = [];
     const outcomes: string[] = [];
+    let barCategory = false;
     try {
       let links = await store.loadDeliveryLinks(provider);
 
       if (links.length === 0) {
         const place = await screenProvider(provider, { apply });
         steps.push(place ? 'maps: matched' : 'maps: no match');
+        barCategory = isBarCategory(place);
         const indicator = place ? mapsAlcoholIndicator(place) : null;
         if (place && indicator) {
           steps.push(`alcohol indicator (${indicator})`, 'menu skipped');
@@ -192,6 +216,7 @@ export async function runHalalCompliance(deps: {
             outcomes,
           );
           log(formatLine(provider, steps, outcomes));
+          if (apply) await store.markScreened(provider.provider_id);
           continue;
         }
         links = await store.loadDeliveryLinks(provider);
@@ -218,10 +243,15 @@ export async function runHalalCompliance(deps: {
 
       if (names.length > 0) {
         const result = detectCompliance(names);
-        steps.push(`signals alcohol=${result.alcoholSignal} pork=${result.porkSignal}`);
+        steps.push(
+          `signals alcohol=${result.alcoholSignal} pork=${result.porkSignal}${
+            barCategory ? ' (bar category)' : ''
+          }`,
+        );
         await stageAll(provider, proposalsFor(result, sourceUrl), outcomes);
       }
       log(formatLine(provider, steps, outcomes));
+      if (apply) await store.markScreened(provider.provider_id);
     } catch (err) {
       summary.failed += 1;
       log(
@@ -281,13 +311,19 @@ function formatLine(provider: ComplianceProvider, steps: string[], outcomes: str
 
 export function createSupabaseStore(supabase: SupabaseClient): ComplianceStore {
   return {
-    async listProviders({ providerId, limit }) {
+    async listProviders({ providerId, limit, force }) {
       let query = supabase
         .from('providers')
-        .select('provider_id, provider_name, food_providers(no_alcohol, no_pork)')
+        .select('provider_id, provider_name, food_providers!inner(no_alcohol, no_pork)')
         .eq('review_status', 'pending')
         .eq('listing_type', 'food');
       if (providerId) query = query.eq('provider_id', providerId);
+      if (!force) {
+        const cutoff = new Date(Date.now() - SCREENING_TTL_DAYS * 24 * 60 * 60 * 1000);
+        query = query.or(`halal_screened_at.is.null,halal_screened_at.lt.${cutoff.toISOString()}`, {
+          referencedTable: 'food_providers',
+        });
+      }
       const { data, error } = await query.order('provider_id', { ascending: true }).limit(limit);
       if (error) throw new Error(`Failed to load providers: ${error.message}`);
       return (data ?? []).map((row: Record<string, unknown>) => {
@@ -325,6 +361,14 @@ export function createSupabaseStore(supabase: SupabaseClient): ComplianceStore {
         .eq('provider_id', providerId);
       if (error) throw new Error(`Failed to load menu: ${error.message}`);
       return (data ?? []).map((r) => r.name_de as string).filter(Boolean);
+    },
+
+    async markScreened(providerId) {
+      const { error } = await supabase
+        .from('food_providers')
+        .update({ halal_screened_at: new Date().toISOString() })
+        .eq('provider_id', providerId);
+      if (error) throw new Error(`Failed to stamp halal_screened_at: ${error.message}`);
     },
 
     // Rejected rows count as existing, so an owner's rejection sticks across runs.
