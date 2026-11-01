@@ -35,9 +35,17 @@ Which Listing Type a Category may be used for, or `all` for Categories usable ev
 ### Enrichment and compliance
 
 **Screening**:
-An automated pass that checks a Provider's external signals (Google Maps attributes, delivery-platform menu text) for compliance markers such as alcohol and pork. Distinct from Review, which is a human decision on a staged enrichment candidate. Recorded by `food_providers.halal_screened_at`.
+An automated pass that checks a Provider's external signals (Google Maps attributes, delivery-platform menu text) for compliance markers such as alcohol and pork. Results are staged as Enrichment Candidates — auto-applied for high-trust fields, or pending Review for compliance fields. Recorded by `food_providers.halal_screened_at`.
 _Avoid_: review, check, scan
 
 **Enrichment Candidate**:
-A proposed field change staged by an automated pipeline for human review. One row in `enrichment_candidates`, with status `pending` → `approved` / `rejected` → `applied`. The pipeline never writes Provider fields directly.
+A record of a proposed field change produced by an automated pipeline. One row in `enrichment_candidates`. High-trust fields (delivery links, images) are auto-applied; compliance fields (`no_alcohol`, `no_pork`) require human Review before application. The pipeline never writes Provider fields directly — it writes candidates.
 _Avoid_: suggestion, proposal, enrichment row
+
+**Review**:
+A human decision on a pending Enrichment Candidate. The reviewer sees the evidence (source, matched keywords) and approves or rejects the proposed value. Approval immediately applies the value to the Provider.
+_Avoid_: screening, check
+
+**Trust Tier**:
+The confidence level assigned to an enrichment field type, determining whether it auto-applies or requires Review. Delivery links and images are high-trust (auto-applied). Compliance fields (`no_alcohol`, `no_pork`) are low-trust (reviewed). See ADR 0003.
+_Avoid_: confidence level, risk tier
