@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # Lane helpers for the foreman + crew workflow (docs/agents/foreman.md).
-# Source from ~/.zshrc:  source ~/Projects/uflow/scripts/lane.sh
+# Source from ~/.zshrc:  source ~/your-project/scripts/lane.sh
 #
 #   lane <issue> [slug] [copilot|devin] [model|effort]
 #   foreman [copilot|devin] [model] start or focus the foreman

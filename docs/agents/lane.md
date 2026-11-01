@@ -16,7 +16,7 @@ Stop and report if any of these hold:
 - the issue has no `ready` label (or, until re-labelled, no `ready-for-agent`)
 - the issue body has no Acceptance Criteria section, or the criteria can't be turned into tests
 - the cwd is not a `.worktrees/` folder
-- the issue needs a schema change you can't verify against Supabase (see `AGENTS.md`, "Verify DB schema")
+- the fix needs infrastructure changes not covered by the issue (schema migration, new service, credentials)
 
 Report by commenting on the issue (`gh issue comment <issue> --body "..."`) and ending your turn. Don't guess at missing criteria.
 
@@ -25,8 +25,7 @@ Read only what the issue needs. Start from the files the issue names, then follo
 ## 1. Red: tests from acceptance criteria
 
 - One test (or test block) per acceptance criterion. Name tests after the criterion, not after the implementation.
-- Put tests next to the code (`*.test.ts(x)`) or under `tests/`. Vitest runs in the `node` environment; Supabase is mocked in `src/__tests__/setup.ts`.
-- Run only your tests: `npx vitest run <path>`. They must fail for the right reason (missing behaviour, not a typo).
+- Put tests next to the code or under `tests/`. Run only your tests. They must fail for the right reason (missing behaviour, not a typo).
 - Commit the red tests alone:
 
 ```bash
@@ -34,12 +33,12 @@ git add <test files>
 git commit -m "test(<area>): failing tests for #<issue> acceptance criteria"
 ```
 
-If a criterion is UI-only and not unit-testable, say so in the commit body and cover it with a Playwright spec in `e2e/` instead. Playwright runs in CI; don't start a local Supabase for it.
+If a criterion is UI-only and not unit-testable, say so in the commit body and cover it with an end-to-end spec instead.
 
 ## 2. Green: smallest implementation
 
 - Make the red tests pass. Nothing else.
-- Follow the project rules in `AGENTS.md` (server/client components, tsvector, migrations in `supabase/migrations/`).
+- Follow the project rules in `AGENTS.md`.
 - Commit by explicit path: `git add <files>`, never `git add -A` or `git add .`.
 
 ## 3. Refactor
@@ -48,20 +47,13 @@ Only with green tests. Remove duplication you introduced, name things, delete de
 
 ## 4. Verify
 
-Run all four inside the worktree. All must pass before you push.
+Run all checks inside the worktree. All must pass before you push.
 
 ```bash
-npm run type-check
-npm run lint
-npx vitest run
-NEXT_PUBLIC_SUPABASE_URL=https://ci-build-test.supabase.co \
-NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ci_build_placeholder_not_a_real_key \
-npm run build
+bash scripts/verify
 ```
 
-If `.env.local` already exists, it contains these CI placeholders. Don't edit, commit, or replace them with real values. If it doesn't exist, don't create it. Build with the inline placeholders above; never request or use real credentials.
-
-If you need the dev server: `npm run dev` picks up `PORT` from `.env.lane` (export it first: `set -a; source .env.lane; set +a`). Never use port 3000 directly.
+If you need the dev server, export `PORT` from `.env.lane` first: `set -a; source .env.lane; set +a`. Never use port 3000 directly.
 
 ## 5. Push and PR
 

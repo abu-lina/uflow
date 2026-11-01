@@ -55,7 +55,7 @@ Include the scope of every standing approval; all standing approvals expire when
 herdr agent read foreman --source visible --lines 3 | grep -oE 'Context: [0-9]+k'
 ```
 
-If it is above 100k, append the checkpoint state to the log, tell the owner, and stop for a restart. Never restart mid-round while a lane is blocked. Until #650 merges, use its three manual restart commands; after it merges, use `scripts/lane foreman`.
+If it is above 100k, append the checkpoint state to the log, tell the owner, and stop for a restart. Never restart mid-round while a lane is blocked.
 
 ## 1. Pick issues
 
@@ -97,7 +97,7 @@ Pick one tier per issue and show it in the last column of the proposal.
 
 - **Strong** (`devin claude-opus-5-5-high`): any of these.
   - 6 or more acceptance criteria.
-  - Runtime code in `area:auth`, `area:db` or `area:search`, or `type:security` on runtime code.
+  - Runtime code in security-sensitive or data-sensitive areas, or `type:security` on runtime code.
   - A cross-cutting refactor.
   - An expected diff over 200 non-test lines.
 - **Cheap** (`copilot low`): everything else, typically config, scripts or docs with 5 or fewer criteria.
@@ -112,7 +112,7 @@ For each approved lane:
 scripts/lane start <issue> <slug> [copilot|devin] [model|reasoning-effort]
 ```
 
-`scripts/lane start` creates the linked branch with `gh issue develop`, creates and focuses the Herdr worktree, writes `.env.lane`, clones `node_modules`, and starts the agent in the returned root pane. It does not copy `.env.local`. Pass the agent and model from the approved proposal. Without them the agent is Copilot on Auto. Devin always treats the model argument as a model.
+`scripts/lane start` creates the linked branch with `gh issue develop`, creates and focuses the Herdr worktree, writes `.env.lane`, and starts the agent in the returned root pane. Pass the agent and model from the approved proposal. Without them the agent is Copilot on Auto. Devin always treats the model argument as a model.
 
 ```bash
 # strong tier
@@ -190,7 +190,7 @@ A missing learnings file at `docs/ai/learnings/<issue>.md` is a should-fix revie
 
 The owner merges, one PR at a time.
 
-**If the merge queue is enabled on `main`** (recommended; see ADR 0004): the owner validates a PR visually, then adds it to the queue on GitHub. GitHub runs CI on the simulated merge and merges automatically on green. Your job is to run `scripts/lane done <issue>` after each merge and monitor remaining lanes for blockers. Skip steps 2 and 3 below.
+**If the merge queue is enabled on `main`** (recommended; see `docs/agents/setup-decisions.md`): the owner validates a PR visually, then adds it to the queue on GitHub. GitHub runs CI on the simulated merge and merges automatically on green. Your job is to run `scripts/lane done <issue>` after each merge and monitor remaining lanes for blockers. Skip steps 2 and 3 below.
 
 **Without the merge queue**, your job after each merge:
 
@@ -206,17 +206,17 @@ The lane's learning file lands in its PR. The foreman edits no files after merge
 
 ## Command mapping
 
-| Task                   | Herdr command or helper                     |
-| ---------------------- | ------------------------------------------- |
-| Lane status            | `scripts/lane status`                       |
-| Reading a lane         | `herdr agent read lane-<issue>`             |
-| Sending keys to a lane | `herdr agent send-keys lane-<issue> <key>`  |
-| Starting a lane        | `scripts/lane start <issue> <slug> [copilot | devin] [model | reasoning-effort]` |
-| Cleaning up a lane     | `scripts/lane done <issue>`                 |
+| Task                   | Herdr command or helper                                                        |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| Lane status            | `scripts/lane status`                                                          |
+| Reading a lane         | `herdr agent read lane-<issue>`                                                |
+| Sending keys to a lane | `herdr agent send-keys lane-<issue> <key>`                                     |
+| Starting a lane        | `scripts/lane start <issue> <slug> [copilot\|devin] [model\|reasoning-effort]` |
+| Cleaning up a lane     | `scripts/lane done <issue>`                                                    |
 
 ## What you never do
 
-- Write code, run `npm run dev`, or edit files inside a worktree.
+- Write code, start a dev server, or edit files inside a worktree.
 - Start a lane without approval, or more than three at once.
 - Merge, rebase, or push anything.
 - Delete a worktree or branch without the checks in `scripts/lane done` passing.
