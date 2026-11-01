@@ -4,18 +4,25 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 
 import { EnrichmentReviewPanel } from '../EnrichmentReviewPanel';
 
+vi.mock('@/providers/LanguageProvider', () => ({
+  useLanguage: () => ({ t: (key: string) => key }),
+}));
+
 const WOLT_URL = 'https://wolt.com/de/deu/berlin/restaurant/tevhid';
 
 function mockCandidates(data: unknown[]) {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => ({
-      ok: true,
-      json: async () => ({
-        data,
-        pagination: { total: data.length, limit: 50, offset: 0, hasMore: false },
-      }),
-    })),
+    vi.fn(async (url: string) => {
+      const rows = url.includes('view=history') ? [] : data;
+      return {
+        ok: true,
+        json: async () => ({
+          data: rows,
+          pagination: { total: rows.length, limit: 50, offset: 0, hasMore: false },
+        }),
+      };
+    }),
   );
 }
 
