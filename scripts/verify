@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run all checks. All must pass before pushing. Called by lane.md step 4 and
+# pr-loop.md fix-CI step.
+
+set -euo pipefail
+
+npm run type-check
+npm run lint
+npx vitest run
+NEXT_PUBLIC_SUPABASE_URL=https://ci-build-test.supabase.co \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ci_build_placeholder_not_a_real_key \
+npm run build

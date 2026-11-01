@@ -45,3 +45,5 @@ The canonical vocabulary for this codebase. Use these terms in code, tests, issu
 **Issue Maturation** — the upstream step before a lane starts: a `/grill-with-docs` session that sharpens a rough idea into a GitHub issue with user-visible acceptance criteria and explicit out-of-scope boundaries.
 
 **Owner** — the solo product owner who validates features. Validates on the lane's localhost port (before merge) and on UAT (after merge) before authorising a production deploy.
+
+**Workflow Template** — the canonical lane/foreman process, maintained at `abu-lina/po-multi-agent-workflow` on GitHub. Synced into this project via `scripts/sync-workflow.sh`; init-only files (`AGENTS.md`, `scripts/verify`, `docs/agents/review.md`, `docs/agents/setup-decisions.md`) are customised per project and never overwritten by sync.
