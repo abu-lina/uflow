@@ -411,6 +411,16 @@ export const de = {
       browse: 'Alle Anbieter durchsuchen',
       home: 'Zur Startseite',
     },
+    halal: {
+      pendingReview: 'Prüfung ausstehend',
+      tier: {
+        gold: 'Gold',
+        silver: 'Silber',
+        bronze: 'Bronze',
+        notHalal: 'Nicht halal',
+        notSet: 'Nicht festgelegt',
+      },
+    },
   },
   create: {
     title: 'Anbieter hinzufügen',

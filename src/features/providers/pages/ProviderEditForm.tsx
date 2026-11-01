@@ -34,6 +34,8 @@ interface ProviderEditFormProps {
    *  Used by the community service edit adapter (D9) since CS are the initiatives themselves.
    *  Defaults to false — existing provider edit flows are unaffected. */
   hideSocialInitiatives?: boolean;
+  /** ADR 0003: unreviewed halal candidates exist, so the derived tier isn't trustworthy yet. */
+  hasPendingHalalCandidates?: boolean;
 }
 
 /** Exported form data shape so external save handlers can type their inputs. */
@@ -127,6 +129,7 @@ export function ProviderEditForm({
   localStoragePrefix = '',
   cancelUrl,
   hideSocialInitiatives = false,
+  hasPendingHalalCandidates = false,
 }: ProviderEditFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const websiteInputRef = useRef<HTMLInputElement>(null);
@@ -658,6 +661,16 @@ export function ProviderEditForm({
       setIsSubmitting(false);
     }
   };
+
+  const halalTier = formData.hasCertificate
+    ? 'gold'
+    : formData.noAlcohol || formData.noPork || formData.noGambling
+      ? formData.verificationMethod === 'onsite'
+        ? 'silver'
+        : 'bronze'
+      : formData.verificationMethod
+        ? 'notHalal'
+        : 'notSet';
 
   return (
     <form ref={formRef} className="flex flex-1 flex-col" onSubmit={handleSubmit}>
@@ -1200,15 +1213,13 @@ export function ProviderEditForm({
                     Halal Check
                   </span>
                   <div className="text-[15px] font-medium leading-[18px] text-[#272727]">
-                    {formData.hasCertificate
-                      ? 'Gold'
-                      : formData.noAlcohol || formData.noPork || formData.noGambling
-                        ? formData.verificationMethod === 'onsite'
-                          ? 'Silver'
-                          : 'Bronze'
-                        : formData.verificationMethod
-                          ? 'Not halal'
-                          : 'Not set'}
+                    {hasPendingHalalCandidates ? (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                        {t('providers.halal.pendingReview')}
+                      </span>
+                    ) : (
+                      t(`providers.halal.tier.${halalTier}`)
+                    )}
                   </div>
                 </div>
                 <Icon className="h-5 w-5 text-[#999999]" icon="material-symbols:chevron-right" />

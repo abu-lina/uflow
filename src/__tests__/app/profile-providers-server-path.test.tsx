@@ -14,6 +14,10 @@ vi.mock('@/services/providers', () => ({
   getProviderById: (...args: unknown[]) => mockGetProviderById(...args),
 }));
 
+vi.mock('@/services/admin/pendingHalalCandidates', () => ({
+  hasPendingHalalCandidates: async () => false,
+}));
+
 vi.mock('@/lib/supabase/server', () => ({
   createSupabaseServerClient: () => mockServerClient,
 }));
@@ -29,7 +33,9 @@ vi.mock('@/features/providers/pages/ProviderEditPage', () => ({
   ProviderEditPage: () => null,
 }));
 vi.mock('next/navigation', () => ({
-  notFound: vi.fn(() => { throw new Error('NEXT_NOT_FOUND'); }),
+  notFound: vi.fn(() => {
+    throw new Error('NEXT_NOT_FOUND');
+  }),
 }));
 
 const fakeProvider = {
@@ -48,9 +54,7 @@ describe('Profile provider detail page (M8 regression, unified module)', () => {
   });
 
   it('passes server client to getProviderById', async () => {
-    const mod = await import(
-      '@/app/(public)/profile/providers/[provider_id]/page'
-    );
+    const mod = await import('@/app/(public)/profile/providers/[provider_id]/page');
 
     await mod.default({ params: Promise.resolve({ provider_id: 'prov-1' }) });
 
@@ -66,9 +70,7 @@ describe('Profile provider edit page (M8 regression, unified module)', () => {
   });
 
   it('passes server client to getProviderById', async () => {
-    const mod = await import(
-      '@/app/(public)/profile/providers/[provider_id]/edit/page'
-    );
+    const mod = await import('@/app/(public)/profile/providers/[provider_id]/edit/page');
 
     await mod.default({ params: Promise.resolve({ provider_id: 'prov-1' }) });
 
