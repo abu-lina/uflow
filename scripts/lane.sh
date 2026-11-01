@@ -79,7 +79,7 @@ _lane_type() {
 
 _lane_prompt() {
   local issue="$1"
-  printf 'You are a lane. Read AGENTS.md, then docs/agents/lane.md, then work on GitHub issue #%s. Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, comment on the issue with the outcome, the blocker or the question, and the next step required from the owner.' "$issue"
+  printf 'You are a lane. Read AGENTS.md, then docs/agents/lane.md, then work on GitHub issue #%s. Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, update your Herdr workspace status to blocked or done so the owner is notified.' "$issue"
 }
 
 _foreman_prompt() {

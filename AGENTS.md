@@ -116,7 +116,7 @@ Production: https://ummahflow.com. UAT: https://uat.ummahflow.com (auto-deploys 
 
 ## Issues and labels
 
-GitHub Issues on `abu-lina/uflow` via `gh`. Labels: `P0`-`P3` priority, `ready` (has acceptance criteria, may be picked), `area:*` (lanes never share one), `type:*`. Details: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`. Use `gh issue view N --json title,body,labels,comments` (the `--comments` flag breaks on some `gh` versions).
+GitHub Issues on `abu-lina/uflow` via `gh`. Labels: `P0`-`P3` priority, `ready` (went through Issue Maturation; AC in "when I do X, I see Y" form; may be picked by a lane), `area:*` (lanes never share one), `type:*`. Details: `docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`. Use `gh issue view N --json title,body,labels,comments` (the `--comments` flag breaks on some `gh` versions).
 
 ## Learnings
 

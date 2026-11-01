@@ -69,6 +69,8 @@ Until the backlog is re-labelled, also list `--label ready-for-agent` and treat 
 
 Label edits prompt the owner on every call. The foreman names the issue and label in chat before running the label edit, so the owner knows what the prompt is for.
 
+Only propose lanes for issues labelled `ready`. `ready` means the issue went through a `/grill-with-docs` session and its acceptance criteria are in "when I do X, I see Y" form. Never propose a lane for an issue that skipped Issue Maturation — comment on the issue asking the owner to run a grill session first and skip it.
+
 Filter:
 
 - Must have an Acceptance Criteria section in the body. If not, comment asking for it and skip.
