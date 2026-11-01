@@ -412,6 +412,16 @@ export const ur = {
       browse: 'تمام فراہم کنندگان دیکھیں',
       home: 'صفحۂ اول پر جائیں',
     },
+    halal: {
+      pendingReview: 'جائزہ زیر التوا',
+      tier: {
+        gold: 'سونا',
+        silver: 'چاندی',
+        bronze: 'کانسی',
+        notHalal: 'حلال نہیں',
+        notSet: 'مقرر نہیں',
+      },
+    },
   },
   create: {
     title: 'فراہم کنندہ شامل کریں',

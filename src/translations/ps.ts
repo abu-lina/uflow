@@ -410,6 +410,16 @@ export const ps = {
       browse: 'ټول وړاندې کوونکي وګورئ',
       home: 'کورپاڼې ته لاړ شئ',
     },
+    halal: {
+      pendingReview: 'بیاکتنه په تمه',
+      tier: {
+        gold: 'سرین',
+        silver: 'سپین',
+        bronze: 'برانز',
+        notHalal: 'حلال نه دی',
+        notSet: 'نه دی ټاکل شوی',
+      },
+    },
   },
   create: {
     title: 'وړاندې کوونکی اضافه کړئ',

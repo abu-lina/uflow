@@ -408,6 +408,16 @@ export const tr = {
       browse: 'Tüm sağlayıcıları görüntüle',
       home: 'Ana sayfaya git',
     },
+    halal: {
+      pendingReview: 'İnceleme bekleniyor',
+      tier: {
+        gold: 'Altın',
+        silver: 'Gümüş',
+        bronze: 'Bronz',
+        notHalal: 'Helal değil',
+        notSet: 'Belirlenmedi',
+      },
+    },
   },
   create: {
     title: 'Sağlayıcı Ekle',

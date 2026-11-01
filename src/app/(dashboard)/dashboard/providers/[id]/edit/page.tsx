@@ -26,6 +26,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
   const queryClient = useQueryClient();
   const { t } = useLanguage();
   const [provider, setProvider] = useState<Provider | null>(null);
+  const [hasPendingHalal, setHasPendingHalal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; isLoading: boolean }>({
@@ -50,6 +51,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         }
         const data = await response.json();
         setProvider(data.data || data);
+        setHasPendingHalal(data.hasPendingHalalCandidates === true);
       } catch {
         setError('Failed to load provider');
       } finally {
@@ -274,6 +276,7 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
           <ProviderEditForm
             cancelUrl={`/p/${providerId}`}
             enableLocalStorage={true}
+            hasPendingHalalCandidates={hasPendingHalal}
             localStoragePrefix="admin_"
             provider={provider}
             subPageBaseUrl={`/dashboard/providers/${providerId}/edit`}

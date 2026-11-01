@@ -9,9 +9,13 @@ import { useLanguage } from '@/providers/LanguageProvider';
 
 interface ProviderEditPageProps {
   provider: Provider;
+  hasPendingHalalCandidates?: boolean;
 }
 
-export function ProviderEditPage({ provider }: ProviderEditPageProps) {
+export function ProviderEditPage({
+  provider,
+  hasPendingHalalCandidates = false,
+}: ProviderEditPageProps) {
   const router = useRouter();
   const { t } = useLanguage();
 
@@ -31,7 +35,11 @@ export function ProviderEditPage({ provider }: ProviderEditPageProps) {
       </div>
       <main className="flex flex-1 flex-col overflow-y-auto px-6 pb-4 md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
-          <ProviderEditForm provider={provider} onSave={handleSave} />
+          <ProviderEditForm
+            hasPendingHalalCandidates={hasPendingHalalCandidates}
+            provider={provider}
+            onSave={handleSave}
+          />
         </div>
       </main>
     </div>

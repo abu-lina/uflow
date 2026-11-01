@@ -407,6 +407,16 @@ export const ar = {
       browse: 'تصفح جميع المزودين',
       home: 'الذهاب إلى الصفحة الرئيسية',
     },
+    halal: {
+      pendingReview: 'قيد المراجعة',
+      tier: {
+        gold: 'ذهبي',
+        silver: 'فضي',
+        bronze: 'برونزي',
+        notHalal: 'غير حلال',
+        notSet: 'غير محدد',
+      },
+    },
   },
   create: {
     title: 'إضافة مزود',

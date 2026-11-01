@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { logAdminAction, getClientIp, getUserAgent } from '@/lib/audit/adminAudit';
 import { logger, getRequestMetadata } from '@/lib/logging/structuredLogger';
+import { hasPendingHalalCandidates } from '@/services/admin/pendingHalalCandidates';
 import { getProviderForAdmin, deleteProvider } from '@/services/admin/providers';
 import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
 
@@ -11,10 +12,7 @@ import { rateLimiters, getClientIdentifier } from '@/lib/rate-limit';
  * Fetch a single provider by ID for admin editing.
  * Only admins and moderators can access this endpoint.
  */
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { getUserFromCookie } = await import('@/lib/supabase/getUserFromCookie');
     const user = await getUserFromCookie();
@@ -25,13 +23,13 @@ export async function GET(
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to admin providers API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to admin providers API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -49,19 +47,19 @@ export async function GET(
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ data: provider });
+    return NextResponse.json({
+      data: provider,
+      hasPendingHalalCandidates: await hasPendingHalalCandidates(providerId),
+    });
   } catch (error) {
     logger.error(
       'Error in admin providers API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request) }
+      { ...getRequestMetadata(request) },
     );
 
-    return NextResponse.json(
-      { error: 'Failed to fetch provider' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch provider' }, { status: 500 });
   }
 }
 
@@ -72,10 +70,7 @@ export async function GET(
  * All child tables have ON DELETE CASCADE, so cleanup is automatic.
  * Only admins and moderators can access this endpoint.
  */
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { getUserFromCookie } = await import('@/lib/supabase/getUserFromCookie');
     const user = await getUserFromCookie();
@@ -86,28 +81,30 @@ export async function DELETE(
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to admin providers delete API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to admin providers delete API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // Rate limiting - 20 deletes per hour, 5 per minute per admin
     const identifier = getClientIdentifier(request, user.id);
-    const isRateLimited = !rateLimiters.adminReview.perHour(identifier) ||
-                          !rateLimiters.adminReview.perMinute(identifier);
+    const isRateLimited =
+      !rateLimiters.adminReview.perHour(identifier) ||
+      !rateLimiters.adminReview.perMinute(identifier);
     if (isRateLimited) {
-      logger.warn(
-        'Rate limit exceeded for admin providers delete API',
-        { userId: user.id, identifier, ...getRequestMetadata(request) }
-      );
+      logger.warn('Rate limit exceeded for admin providers delete API', {
+        userId: user.id,
+        identifier,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -131,16 +128,13 @@ export async function DELETE(
       {
         ipAddress: getClientIp(request),
         userAgent: getUserAgent(request),
-      }
+      },
     );
 
     return NextResponse.json({ data: { deleted: true } });
   } catch (error) {
     if (error instanceof Error && error.message === 'Provider not found') {
-      return NextResponse.json(
-        { error: 'Provider not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }
 
     // Get user for logging if available
@@ -157,16 +151,16 @@ export async function DELETE(
       'Error in admin providers delete API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request), userId }
+      { ...getRequestMetadata(request), userId },
     );
 
-    const errorMessage = process.env.NODE_ENV === 'production'
-      ? 'Failed to delete provider'
-      : error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      process.env.NODE_ENV === 'production'
+        ? 'Failed to delete provider'
+        : error instanceof Error
+          ? error.message
+          : 'Unknown error';
 
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
