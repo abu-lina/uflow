@@ -53,6 +53,22 @@ describe('HalalFindingsBanner (#841)', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 
+  it('stays hidden when the fetch rejects', async () => {
+    fetchMock.mockRejectedValue(new Error('network'));
+    render(<HalalFindingsBanner providerId="p1" />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
+  it('stays hidden when the response is not ok', async () => {
+    fetchMock.mockResolvedValue(new Response('', { status: 500 }));
+    render(<HalalFindingsBanner providerId="p1" />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByRole('link')).toBeNull();
+  });
+
   it('has i18n keys in all six locales', () => {
     for (const cat of [en, de, ar, tr, ur, ps]) {
       const b = (cat as unknown as Record<string, Record<string, Record<string, string>>>)
