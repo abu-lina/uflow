@@ -1418,6 +1418,10 @@ export const en = {
   adminHalalEdit: {
     title: 'Halal Check',
     uploading: 'Uploading...',
+    findingsBanner: {
+      text: 'Pipeline findings need review.',
+      link: 'Review findings',
+    },
     attestationWarning:
       'All three attestation questions must be confirmed before the entry can be approved.',
     existingCertificate: 'Existing certificate',

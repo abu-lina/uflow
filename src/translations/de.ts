@@ -1442,6 +1442,10 @@ export const de = {
   adminHalalEdit: {
     title: 'Halal Check',
     uploading: 'Wird hochgeladen...',
+    findingsBanner: {
+      text: 'Pipeline-Ergebnisse müssen geprüft werden.',
+      link: 'Ergebnisse prüfen',
+    },
     attestationWarning:
       'Alle drei Bezeugungsfragen müssen bestätigt sein, bevor der Eintrag freigegeben werden kann.',
     existingCertificate: 'Vorhandenes Zertifikat',

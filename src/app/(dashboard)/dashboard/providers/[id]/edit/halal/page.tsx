@@ -12,6 +12,7 @@ import {
   type HalalAttestationField,
 } from '@/components/shared/HalalAttestationFields';
 import { Button } from '@/components/ui/Button';
+import { HalalFindingsBanner } from '@/features/admin/components/HalalFindingsBanner';
 import { ApproveModal } from '@/features/admin/components/ApproveModal';
 import { RejectModal } from '@/features/admin/components/RejectModal';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -541,6 +542,7 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
       title={t('adminHalalEdit.title')}
     >
       <div className="flex flex-col gap-6">
+        <HalalFindingsBanner providerId={id} />
         {/* Section 1: Attestation Questions */}
         <div className="flex flex-col gap-4">
           <button
