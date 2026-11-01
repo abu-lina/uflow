@@ -74,9 +74,21 @@ gh pr create --draft --title "<type>: <summary>" --body "Closes #<issue>."
 
 Push only your own branch. Never merge, never push to `main`, never rebase or `git pull --rebase` unless the foreman or the owner asks.
 
-## 6. Report
+## 6. Self-review
 
-Post a comment on the issue every time you stop, not only when the PR is green and ready. The comment is the last action before leaving the lane, and the lane prompt tells you to do it before any stop-and-ask or blocked state.
+Run a review on the PR diff before reporting done:
+
+```
+/code-review --comment
+```
+
+This posts findings as inline PR comments. Address every `critical` and `should-fix` finding: fix the code, re-run step 4, re-push. List `nit` findings in the PR body under a "Nits" heading; they are the owner's call, not a blocker.
+
+Do not mark done until all blocking findings are addressed.
+
+## 7. Report
+
+Update your Herdr workspace status to `blocked` or `done` every time you stop, not only when the PR is green and ready. This is the owner's signal; do it as the last action before leaving the lane.
 
 - PR ready: include the PR number or URL, the green checks, which acceptance criteria are covered by which tests, anything out of scope you found, and one learning (what surprised you, one sentence).
 - Stopped after 3 failed CI attempts: include the exact command, the last failing error, the fix rounds already tried, and what you need the owner to decide or unblock.
@@ -88,7 +100,7 @@ Add `docs/ai/learnings/<issue>.md` to the PR. Include a short title, a one-sente
 
 ## Resume
 
-To continue a lane later, run `lane <issue>` again from the main checkout. It focuses the existing Herdr workspace. Then re-run step 0; the issue comments and `git log` are your state, nothing else.
+To continue a lane later, run `lane <issue>` again from the main checkout. It focuses the existing Herdr workspace. Then re-run step 0; the issue comments, `git log`, and inline PR review comments are your state, nothing else. If a PR exists, check its inline review comments for blocking findings before continuing.
 
 ## What you never do
 

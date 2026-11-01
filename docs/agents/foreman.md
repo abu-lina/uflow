@@ -188,13 +188,15 @@ A missing learnings file at `docs/ai/learnings/<issue>.md` is a should-fix revie
 
 ## 6. Merge order and updates
 
-The owner merges, one PR at a time. Your job after each merge:
+The owner merges, one PR at a time.
+
+**If the merge queue is enabled on `main`** (recommended; see ADR 0004): the owner validates a PR visually, then adds it to the queue on GitHub. GitHub runs CI on the simulated merge and merges automatically on green. Your job is to run `scripts/lane done <issue>` after each merge and monitor remaining lanes for blockers. Skip steps 2 and 3 below.
+
+**Without the merge queue**, your job after each merge:
 
 1. `scripts/lane done <issue>` for the merged lane.
-2. Pick the next PR in line and bring it up to date: `gh pr update-branch <pr>`. GitHub makes a merge commit from `main`; nothing is rebased. Lanes never do this themselves.
-3. Wait for its CI, then report.
-
-Only the next PR gets updated. The others stay as they are until their turn.
+2. Fan out `gh pr update-branch` to every remaining open PR simultaneously — not just the next one. GitHub makes a merge commit from `main`; nothing is rebased. Lanes never do this themselves.
+3. Report each PR's CI status as it resolves. The owner validates the next PR visually while CI runs in parallel.
 
 ## 7. Cleanup
 

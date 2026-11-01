@@ -42,12 +42,23 @@ The lane runs TDD (red → green → refactor → verify), opens a draft PR, and
 
 Trigger: Herdr notifies that the lane is `done` or `blocked`.
 
+When Herdr notifies `done`, the lane has already:
+
+- Passed all four checks (type-check, lint, vitest, build)
+- Run `/code-review --comment` on the PR diff and addressed all blocking findings
+
+Your job is visual validation only:
+
 - Open `localhost:<port>` in the browser (port = 3000 + issue % 1000).
 - Walk through every acceptance criterion from the issue.
-- If it passes: merge the PR (owner merges, one at a time).
+- If it passes: merge the PR (or add it to the merge queue if enabled — see below).
 - If it doesn't: comment on the Herdr workspace with what's wrong; lane continues.
 
 Notification channel: Herdr workspace status change. Not GitHub issue comments.
+
+#### Multi-lane: use the merge queue
+
+When running more than one lane, enable the GitHub merge queue on `main` (repository Settings → Branches → branch protection rule → Require merge queue). After visual validation passes, add each approved PR to the queue instead of merging directly. GitHub tests each PR against the updated `main` in sequence and merges automatically on green — no manual `gh pr update-branch` or CI babysitting.
 
 ### Phase 4 — UAT confirmation and production
 
@@ -62,6 +73,10 @@ Notification channel: Herdr workspace status change. Not GitHub issue comments.
 **GitHub comments vs Herdr for "ready" signal**: GitHub notifications arrive async and require switching context to the browser. Herdr is the active workspace; status changes surface inline.
 
 **Grill every issue vs just small ones**: grill everything. The cost of a short grill session (5–10 min) is lower than the cost of a wrong build (1–2 hours of lane time).
+
+**Lane self-review vs independent review**: the lane runs `/code-review --comment` on its own diff before marking done. This is slightly biased (same agent, same context) but fully automated — the owner never reviews code. The foreman path uses independent subagents on top of the lane's self-review for stronger isolation. In the solo path, the trade-off is accepted to keep the owner out of code decisions; for structural and security issues, self-review is effective regardless of who wrote the code.
+
+**Merge queue vs manual update-branch**: manually updating each lane after a merge requires CI babysitting across multiple rounds. The GitHub merge queue (repository Settings → Branches → branch protection → Require merge queue) eliminates the loop: the owner validates visually, adds the PR to the queue, and GitHub handles sequential CI and merge automatically. Enable it once; leave it on whenever running more than one lane.
 
 ## Consequences
 
