@@ -1411,6 +1411,10 @@ export const ar = {
   adminHalalEdit: {
     title: 'فحص الحلال',
     uploading: 'جارٍ التحميل…',
+    findingsBanner: {
+      text: 'نتائج المعالجة الآلية تحتاج إلى مراجعة.',
+      link: 'مراجعة النتائج',
+    },
     attestationWarning: 'يجب تأكيد أسئلة التوثيق الثلاثة كلها قبل الموافقة على الإدخال.',
     existingCertificate: 'الشهادة الموجودة',
     viewCertificate: 'عرض الشهادة',

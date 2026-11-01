@@ -1430,6 +1430,10 @@ export const ur = {
   adminHalalEdit: {
     title: 'حلال جانچ',
     uploading: 'اپ لوڈ ہو رہا ہے…',
+    findingsBanner: {
+      text: 'پائپ لائن کے نتائج کا جائزہ درکار ہے۔',
+      link: 'نتائج کا جائزہ لیں',
+    },
     attestationWarning: 'اندراج کی منظوری سے پہلے تینوں تصدیقی سوالات کی تصدیق ضروری ہے۔',
     existingCertificate: 'موجودہ سرٹیفکیٹ',
     viewCertificate: 'سرٹیفکیٹ دیکھیں',

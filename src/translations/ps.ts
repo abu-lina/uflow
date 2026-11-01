@@ -1427,6 +1427,10 @@ export const ps = {
   adminHalalEdit: {
     title: 'د حلال کتنه',
     uploading: 'پورته کېږي…',
+    findingsBanner: {
+      text: 'د پایپ لاین موندنې بیاکتنې ته اړتیا لري.',
+      link: 'موندنې وګورئ',
+    },
     attestationWarning: 'د انډول د تصویب نه مخکې ټولې درې تصدیقي پوښتنې باید تایید شوې وي.',
     existingCertificate: 'موجود سند',
     viewCertificate: 'سند وګورئ',

@@ -1430,6 +1430,10 @@ export const tr = {
   adminHalalEdit: {
     title: 'Helal kontrolü',
     uploading: 'Yükleniyor…',
+    findingsBanner: {
+      text: 'İşlem hattı bulguları incelenmeli.',
+      link: 'Bulguları incele',
+    },
     attestationWarning: 'Kayıt onaylanmadan önce üç onay sorusunun da doğrulanması gerekir.',
     existingCertificate: 'Mevcut sertifika',
     viewCertificate: 'Sertifikayı görüntüle',
