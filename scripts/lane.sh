@@ -2,8 +2,8 @@
 # Lane helpers for the foreman + crew workflow (docs/agents/foreman.md).
 # Source from ~/.zshrc:  source ~/your-project/scripts/lane.sh
 #
-#   lane <issue> [slug] [copilot|devin] [model|effort]
-#   foreman [copilot|devin] [model] start or focus the foreman
+#   lane <issue> [slug] [claude|copilot|devin] [model|effort]
+#   foreman [claude|copilot|devin] [model] start or focus the foreman
 #   lane_done <issue> [--force]           remove a merged lane
 #   lane_status                           one line per lane + stale workspaces
 #
@@ -135,7 +135,7 @@ foreman() {
   local agent="${1:-devin}" model="${2:-}" root get_output tab_response pane start_output prompt config_dir
   local -a agent_args
   agent_args=()
-  [[ "$agent" == copilot || "$agent" == devin || "$agent" == claude ]] || { echo "agent must be copilot, devin, or claude" >&2; return 1; }
+  [[ "$agent" == claude || "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be claude, copilot, or devin" >&2; return 1; }
   [[ "$agent" == devin && -z "$model" ]] && model="claude-opus-5-5-high"
 
   root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
@@ -174,9 +174,9 @@ foreman() {
 }
 
 lane() {
-  local issue="${1:-}" slug="${2:-}" agent="${3:-copilot}" model="${4:-}"
-  [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [copilot|devin] [model|effort]" >&2; return 1; }
-  [[ "$agent" == copilot || "$agent" == devin || "$agent" == claude ]] || { echo "agent must be copilot, devin, or claude" >&2; return 1; }
+  local issue="${1:-}" slug="${2:-}" agent="${3:-claude}" model="${4:-}"
+  [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [claude|copilot|devin] [model|effort]" >&2; return 1; }
+  [[ "$agent" == claude || "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be claude, copilot, or devin" >&2; return 1; }
 
   local root dir branch port workspace_json workspace_id worktree_result pane prompt base
   local -a agent_args
@@ -232,7 +232,7 @@ EOF
 
   agent_args=()
   _agent_model_args "$agent" "$model" || return 1
-  if [[ "$agent" == copilot ]]; then
+  if [[ "$agent" == claude || "$agent" == copilot ]]; then
     agent_args+=(
       --allow-tool=write
       '--allow-tool=shell(npm:*)'
