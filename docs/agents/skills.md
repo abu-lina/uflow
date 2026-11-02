@@ -45,6 +45,14 @@ Skip `/grill-with-docs` for bugs and chores — go straight to `/pm-brief`.
 | Every PR                                  | `mattpocock-skills:code-review` | Auto. Standards + spec, two-axis.               |
 | PRs touching auth, payments, or user data | `security-audit`                | Auto, scoped. Run in addition to the two above. |
 
+## Fallback: request doesn't fit a known stage
+
+If no skill in this table clearly covers the request:
+
+1. Run `/ask-matt` (mattpocock-skills) — maps any engineering or product request to the right skill in the flow.
+2. If `/ask-matt` doesn't match, run `/using-agent-skills` (obra/superpowers) — discovers the right skill across the full superpowers catalog.
+3. If neither finds a match, the domain is outside the installed skill set. Stop, surface the gap to the owner, and do not improvise.
+
 ## Strategy docs (on demand)
 
 Run when you need current strategic context. Output goes to `docs/strategy/<skill-name>.md` so all agents can reference it.
