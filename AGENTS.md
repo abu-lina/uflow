@@ -12,6 +12,10 @@ Foreman + crew. One GitHub issue = one worktree = one agent = one PR. Parallel w
 
 If none of these apply (an ad-hoc session in the main checkout), you still follow every rule below.
 
+## Skills
+
+See `docs/agents/skills.md` — full stage-to-skill mapping, install commands, and auto vs. on-demand triggers. That file is synced from the template repo so it stays current across all projects.
+
 ## Git rules
 
 1. Work only inside your own worktree. Never touch `main` or another lane's branch.

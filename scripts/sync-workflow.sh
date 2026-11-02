@@ -35,6 +35,7 @@ SYNC_FILES=(
   docs/agents/pr-loop.md
   docs/agents/triage.md
   docs/agents/diagnosing-bugs.md
+  docs/agents/skills.md
   scripts/lane
   scripts/lane.sh
   scripts/review-bundle
