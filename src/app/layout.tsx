@@ -37,10 +37,7 @@ interface RootLayoutProps {
 }
 
 export default async function RootLayout({ children }: RootLayoutProps) {
-  // Resolve identity + role server-side so first paint already carries the
-  // authoritative public.users role (#567). The client must not decide admin
-  // visibility off the self-writable user_metadata.role JWT claim.
-  const { user: initialUser, role: initialRole } = await getInitialAuth();
+  const { user: initialUser } = await getInitialAuth();
 
   const themeScript = `
     (function() {
@@ -76,7 +73,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
             strategy="afterInteractive"
           />
         )}
-        <ClientProviders initialRole={initialRole} initialUser={initialUser}>
+        <ClientProviders initialUser={initialUser}>
           {/* Desktop header only */}
           <div className="hidden md:block">
             <Header />
