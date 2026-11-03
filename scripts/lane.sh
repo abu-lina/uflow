@@ -79,7 +79,7 @@ _lane_type() {
 
 _lane_prompt() {
   local issue="$1"
-  printf 'You are a lane. Read AGENTS.md, then docs/agents/lane.md, then work on GitHub issue #%s. Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, update your Herdr workspace status to blocked or done so the owner is notified.' "$issue"
+  printf 'You are a lane. Read AGENTS.md, then docs/agents/lane.md, then work on GitHub issue #%s. Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, comment on the issue and update your Herdr workspace status to blocked or done so the owner is notified.' "$issue"
 }
 
 _foreman_prompt() {
@@ -174,13 +174,15 @@ foreman() {
   pane="$(_herdr_root_pane "$tab_response")" ||
     { echo "Herdr did not return a root pane for the foreman tab" >&2; return 1; }
 
-  start_output="$(herdr agent start foreman --kind "$agent" --pane "$pane" -- "${agent_args[@]}" 2>&1)" ||
+  local -a no_remote_flag=()
+  [[ "$agent" == copilot ]] && no_remote_flag=(--no-remote)
+  start_output="$(herdr agent start foreman --kind "$agent" --pane "$pane" "${no_remote_flag[@]}" -- "${agent_args[@]}" 2>&1)" ||
     { printf 'could not start the foreman in pane %s: %s\n' "$pane" "$start_output" >&2; return 1; }
   herdr agent prompt foreman "$prompt"
 }
 
 lane() {
-  local issue="${1:-}" slug="${2:-}" agent="${3:-claude}" model="${4:-}"
+  local issue="${1:-}" slug="${2:-}" agent="${3:-copilot}" model="${4:-}"
   [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [claude|copilot|devin] [model|effort]" >&2; return 1; }
   [[ "$agent" == claude || "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be claude, copilot, or devin" >&2; return 1; }
 
@@ -227,6 +229,8 @@ lane() {
 PORT=$port
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:$port
 EOF
+  (umask 177 && printf 'NEXT_PUBLIC_SUPABASE_URL=https://ci-build-test.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ci_build_placeholder_not_a_real_key\n' >"$dir/.env.local") ||
+    { echo "could not write $dir/.env.local" >&2; return 1; }
 
   if [[ -d "$root/node_modules" ]]; then
     cp -c -R "$root/node_modules" "$dir/node_modules" 2>/dev/null ||

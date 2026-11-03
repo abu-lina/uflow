@@ -9,7 +9,7 @@ Run `foreman` from the main checkout in its Herdr workspace. The helper starts a
 ## Start a session
 
 ```bash
-foreman [claude|copilot|devin] [model|reasoning-effort]
+foreman [copilot|devin] [model|reasoning-effort]
 ```
 
 - `claude` — Claude Code CLI. Defaults to Auto reasoning effort. Pass `low`, `medium`, `high`, `xhigh`, or `max` for effort; any other value selects a model.
