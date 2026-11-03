@@ -788,20 +788,22 @@ esac
       const { result, herdrLog } = startCopilotLane(fixture);
       expect(result.status, result.stderr).toBe(0);
       const args = argsAfterAgentStart(herdrLog);
-      for (const tool of [
-        '--allow-tool=write',
-        '--allow-tool=shell(npm:*)',
-        '--allow-tool=shell(npx:*)',
-        '--allow-tool=shell(git:*)',
-        '--allow-tool=shell(gh issue:*)',
-        '--allow-tool=shell(gh pr create)',
-        '--allow-tool=shell(gh pr checks)',
-        '--deny-tool=shell(git merge)',
-        '--deny-tool=shell(git rebase)',
-        '--deny-tool=write(.env.local)',
-        '--deny-tool=shell(gh pr merge)',
+      const allowedIdx = args.indexOf('--allowed-tools');
+      const disallowedIdx = args.indexOf('--disallowed-tools');
+      expect(allowedIdx, '--allowed-tools flag').toBeGreaterThan(-1);
+      expect(disallowedIdx, '--disallowed-tools flag').toBeGreaterThan(-1);
+      const allowed = args[allowedIdx + 1].split(',');
+      const disallowed = args[disallowedIdx + 1].split(',');
+      for (const tool of ['Write', 'Bash(npm *)', 'Bash(npx *)', 'Bash(git *)']) {
+        expect(allowed, tool).toContain(tool);
+      }
+      for (const rule of [
+        'Bash(git merge)',
+        'Bash(git rebase)',
+        'Write(.env.local)',
+        'Bash(gh pr merge)',
       ]) {
-        expect(args, tool).toContain(tool);
+        expect(disallowed, rule).toContain(rule);
       }
       expect(args).not.toContain('--sandbox');
     });
@@ -810,7 +812,7 @@ esac
       expect(result.status, result.stderr).toBe(0);
       const args = argsAfterAgentStart(herdrLog);
       expect(args.join(' ')).toContain('--permission-mode accept-edits --sandbox');
-      expect(args.filter((arg) => arg.startsWith('--allow-tool'))).toEqual([]);
+      expect(args.filter((arg) => arg.startsWith('--allowed-tools'))).toEqual([]);
     });
   });
 
@@ -859,7 +861,10 @@ esac
     try {
       const { herdrLog, result } = startCopilotLane(fixture);
       expect(result.status, result.stderr).toBe(0);
-      expect(readFileSync(herdrLog, 'utf8').split('\n')).toContain('--deny-tool=shell(pass-cli:*)');
+      const lines = readFileSync(herdrLog, 'utf8').split('\n');
+      const disallowedIdx = lines.indexOf('--disallowed-tools');
+      expect(disallowedIdx, '--disallowed-tools flag').toBeGreaterThan(-1);
+      expect(lines[disallowedIdx + 1]).toContain('Bash(pass-cli *)');
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
@@ -876,10 +881,14 @@ esac
         rmSync(fixture, { recursive: true, force: true });
       }
     };
-    const allowedShell = (args: string[]) =>
-      args
-        .filter((arg) => arg.startsWith('--allow-tool=shell('))
-        .map((arg) => arg.slice('--allow-tool=shell('.length, -1).replace(/:\*$/, ''));
+    const allowedShell = (args: string[]) => {
+      const idx = args.indexOf('--allowed-tools');
+      if (idx === -1) return [];
+      return args[idx + 1]
+        .split(',')
+        .filter((t) => t.startsWith('Bash('))
+        .map((t) => t.slice(5, -1).replace(/ \*$/, ''));
+    };
 
     it('criterion 1: allows the read-only command set', () => {
       const allowed = allowedShell(startedArgs());
@@ -911,13 +920,16 @@ esac
 
     it('criterion 3: keeps the existing deny rules', () => {
       const args = startedArgs();
+      const disallowedIdx = args.indexOf('--disallowed-tools');
+      expect(disallowedIdx, '--disallowed-tools flag').toBeGreaterThan(-1);
+      const disallowed = args[disallowedIdx + 1].split(',');
       for (const rule of [
-        '--deny-tool=shell(git merge)',
-        '--deny-tool=shell(git rebase)',
-        '--deny-tool=write(.env.local)',
-        '--deny-tool=shell(gh pr merge)',
+        'Bash(git merge)',
+        'Bash(git rebase)',
+        'Write(.env.local)',
+        'Bash(gh pr merge)',
       ]) {
-        expect(args).toContain(rule);
+        expect(disallowed, rule).toContain(rule);
       }
     });
   });
@@ -1729,7 +1741,7 @@ describe('lane and foreman agent options', { timeout: spawnTestTimeoutMs }, () =
   it('rejects an unknown foreman agent without calling Herdr', () => {
     const { result, calls } = runForeman('bash', { agentGet: 'dead', args: ['bogus'] });
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('agent must be copilot or devin');
+    expect(result.stderr).toContain('agent must be claude, copilot, or devin');
     expect(calls).toEqual([]);
   });
 
