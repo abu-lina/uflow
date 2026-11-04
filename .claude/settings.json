@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '/Users/NARAFIQ/Projects/uflow/.claude/hooks/fixed-proof-gate.sh'",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/fixed-proof-gate.sh\"",
             "timeout": 10
           }
         ]
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash '/Users/NARAFIQ/Projects/uflow/.claude/hooks/post-write-check.sh'",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/post-write-check.sh\"",
             "timeout": 10
           }
         ]
