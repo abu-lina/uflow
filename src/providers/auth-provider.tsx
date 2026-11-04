@@ -30,18 +30,12 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 interface AuthProviderProps {
   children: React.ReactNode;
   initialUser?: User | null;
-  /** Role resolved server-side from public.users for first paint. */
-  initialRole?: UserRole | null;
 }
 
-export function AuthProvider({
-  children,
-  initialUser = null,
-  initialRole = null,
-}: AuthProviderProps) {
+export function AuthProvider({ children, initialUser = null }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser);
   const [session, setSession] = useState<Session | null>(null);
-  const [role, setRole] = useState<UserRole | null>(initialUser ? initialRole : null);
+  const [role, setRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(initialUser === null);
   // Guards against a role fetch resolving after the user changed (sign-out
   // or a different account signed in while the query was in flight).

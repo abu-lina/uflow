@@ -18,7 +18,7 @@ Stop and report if any of these hold:
 - the cwd is not a `.worktrees/` folder
 - the fix needs infrastructure changes not covered by the issue (schema migration, new service, credentials)
 
-Report by commenting on the issue (`gh issue comment <issue> --body "..."`) and ending your turn. Don't guess at missing criteria.
+Leave a comment on the issue (`gh issue comment <issue> --body "..."`), then end your turn. Don't guess at missing criteria.
 
 **Hard bug path.** If the issue is a bug and you cannot reproduce it with a single failing test or script after a genuine attempt, stop before writing any production code. Post a comment with: (a) every repro step you tried and what happened, (b) what feedback loop you'd need to proceed (test harness, captured artifact, environment access), and (c) the exact question for the owner. The foreman routes hard bugs through the diagnosing-bugs discipline (see `docs/agents/diagnosing-bugs.md` if present) before the lane picks them up again.
 
@@ -52,8 +52,15 @@ Only with green tests. Remove duplication you introduced, name things, delete de
 Run all checks inside the worktree. All must pass before you push.
 
 ```bash
-bash scripts/verify
+npm run type-check
+npm run lint
+npx vitest run
+NEXT_PUBLIC_SUPABASE_URL=https://ci-build-test.supabase.co \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ci_build_placeholder_not_a_real_key \
+npm run build
 ```
+
+`.env.local` in this worktree contains these CI placeholders. Don't edit, commit, or replace them with real values.
 
 If you need the dev server, export `PORT` from `.env.lane` first: `set -a; source .env.lane; set +a`. Never use port 3000 directly.
 

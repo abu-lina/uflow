@@ -1,21 +1,19 @@
+import { cache as reactCache } from 'react';
 import { cookies as nextCookies } from 'next/headers';
 import { createSupabaseServerClient } from './server';
 
 import type { SupabaseUser } from '@/types/supabase-user';
 
-/**
- * Get user from cookie - tries multiple methods:
- * 1. Custom sb-access-token cookie (if app uses custom cookies)
- * 2. Supabase SSR client (if app uses standard Supabase SSR)
- */
-export async function getUserFromCookie(): Promise<SupabaseUser | null> {
+// react.cache is in @types/react 18.3 but not in the React 18.3.x runtime bundle.
+// Deduplication is best-effort: works in RSC environments, no-op elsewhere.
+async function resolveUserFromCookie(): Promise<SupabaseUser | null> {
   // First, try using Supabase SSR client (standard approach)
   try {
     const supabase = createSupabaseServerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    
+
     if (user) {
       return user as unknown as SupabaseUser;
     }
@@ -58,7 +56,7 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
 
     // If token expired (401 or 403 with expired message), try to refresh it
     const isTokenExpired = !res.ok && (res.status === 401 || res.status === 403);
-    
+
     if (isTokenExpired && refreshToken) {
       try {
         const refreshRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
@@ -73,12 +71,12 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
         });
 
         if (refreshRes.ok) {
-          const refreshData = await refreshRes.json() as { 
+          const refreshData = (await refreshRes.json()) as {
             access_token: string;
             refresh_token?: string;
             expires_in?: number;
           };
-          
+
           // Retry with new token
           res = await fetch(`${supabaseUrl}/auth/v1/user`, {
             headers: {
@@ -86,7 +84,7 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
               apikey: supabaseAnonKey,
             },
           });
-          
+
           // Note: In a real app, you'd want to update the cookies here
           // But since we're in a server component, we can't set cookies directly
           // The client-side should handle token refresh automatically
@@ -121,7 +119,8 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
           hasRefreshToken: !!refreshToken,
         });
       }
-      const reason = isTokenExpired && refreshToken ? 'token_expired_refresh_failed' : 'auth_api_error';
+      const reason =
+        isTokenExpired && refreshToken ? 'token_expired_refresh_failed' : 'auth_api_error';
       console.warn({ event: 'auth_outcome', result: 'no_user', reason });
       return null;
     }
@@ -137,3 +136,7 @@ export async function getUserFromCookie(): Promise<SupabaseUser | null> {
     return null;
   }
 }
+
+export const getUserFromCookie =
+  (reactCache as unknown as typeof reactCache | undefined)?.(resolveUserFromCookie) ??
+  resolveUserFromCookie;
