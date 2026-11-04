@@ -14,6 +14,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/NARAFIQ/Projects/uflow/.claude/hooks/post-write-check.sh'",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }
