@@ -94,11 +94,17 @@ PROMPT
 _agent_model_args() {
   local agent="$1" choice="$2"
   [[ -z "$choice" ]] && return 0
-  if [[ "$agent" == copilot || "$agent" == claude ]]; then
+  if [[ "$agent" == copilot ]]; then
     case "$choice" in
       none | minimal | low | medium | high | xhigh | max)
         agent_args+=(--reasoning-effort "$choice")
         ;;
+      *) agent_args+=(--model "$choice") ;;
+    esac
+  elif [[ "$agent" == claude ]]; then
+    # shortcut: --reasoning-effort not yet supported in all claude CLI builds; only model is passed
+    case "$choice" in
+      none | minimal | low | medium | high | xhigh | max) ;;
       *) agent_args+=(--model "$choice") ;;
     esac
   else
@@ -234,31 +240,8 @@ EOF
   _agent_model_args "$agent" "$model" || return 1
   if [[ "$agent" == claude || "$agent" == copilot ]]; then
     agent_args+=(
-      --allow-tool=write
-      '--allow-tool=shell(npm:*)'
-      '--allow-tool=shell(npx:*)'
-      '--allow-tool=shell(git:*)'
-      '--allow-tool=shell(gh issue:*)'
-      '--allow-tool=shell(gh pr create)'
-      '--allow-tool=shell(gh pr checks)'
-      '--allow-tool=shell(pwd:*)'
-      '--allow-tool=shell(ls:*)'
-      '--allow-tool=shell(cat:*)'
-      '--allow-tool=shell(head:*)'
-      '--allow-tool=shell(tail:*)'
-      '--allow-tool=shell(wc:*)'
-      '--allow-tool=shell(command -v:*)'
-      '--allow-tool=shell(which:*)'
-      '--allow-tool=shell(diff:*)'
-      '--allow-tool=shell(grep:*)'
-      '--allow-tool=shell(gh pr view:*)'
-      '--allow-tool=shell(gh pr diff:*)'
-      '--allow-tool=shell(gh run view:*)'
-      '--deny-tool=shell(git merge)'
-      '--deny-tool=shell(git rebase)'
-      '--deny-tool=shell(pass-cli:*)'
-      '--deny-tool=write(.env.local)'
-      '--deny-tool=shell(gh pr merge)')
+      --allowed-tools 'Write,Bash(npm *),Bash(npx *),Bash(git *),Bash(gh issue *),Bash(gh pr create),Bash(gh pr checks),Bash(pwd *),Bash(ls *),Bash(cat *),Bash(head *),Bash(tail *),Bash(wc *),Bash(command -v *),Bash(which *),Bash(diff *),Bash(grep *),Bash(gh pr view *),Bash(gh pr diff *),Bash(gh run view *)'
+      --disallowed-tools 'Bash(git merge),Bash(git rebase),Bash(pass-cli *),Write(.env.local),Bash(gh pr merge)')
   else
     local git_common_dir config_dir config_file
     git_common_dir="$(git -C "$root" rev-parse --path-format=absolute --git-common-dir)" ||
