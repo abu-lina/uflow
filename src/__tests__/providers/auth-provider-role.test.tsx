@@ -72,6 +72,7 @@ describe('AuthProvider role handling (#567)', () => {
     emitAuth('SIGNED_IN', makeSession(user));
 
     await vi.waitFor(() => expect(result.current.isAdmin).toBe(true));
+    expect(mocks.from).toHaveBeenCalledWith('users');
   });
 
   it('does not block initial render: isLoading false and role null before first auth event', () => {
