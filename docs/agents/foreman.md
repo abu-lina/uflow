@@ -12,11 +12,10 @@ Run `foreman` from the main checkout in its Herdr workspace. The helper starts a
 foreman [copilot|devin] [model|reasoning-effort]
 ```
 
-- `claude` — Claude Code CLI. Defaults to Auto reasoning effort. Pass `low`, `medium`, `high`, `xhigh`, or `max` for effort; any other value selects a model.
-- `copilot` — GitHub Copilot. Same effort/model argument rules as `claude`.
+- `copilot` — GitHub Copilot. Pass `low`, `medium`, `high`, `xhigh`, or `max` for reasoning effort; any other value selects a model.
 - `devin` — Devin AI. Always treats the argument as a model; defaults to `claude-opus-5-5-high`.
 
-Examples: `foreman claude high`, `foreman devin claude-opus-5-5-high`, `foreman copilot low`.
+Examples: `foreman devin claude-opus-5-5-high`, `foreman copilot low`.
 
 `foreman()` starts Devin in Normal mode with `--config` pointing to a private 0600 copy of `.devin/foreman.json` in a fresh `mktemp -d` directory under `$TMPDIR`. Devin writes state such as `org_id`, model, and "always allow" grants to that copy; the committed config stays unchanged, and each start begins from its rules. `--config` replaces `~/.config/devin/config.json`, it doesn't merge with it. The foreman can't write files, so pass issue and PR bodies with `--body`. The owner shouldn't click "always allow" inside a foreman session.
 
