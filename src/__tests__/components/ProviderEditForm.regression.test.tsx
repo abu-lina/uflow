@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mockPush,
@@ -244,6 +244,13 @@ const baseProvider: Provider = {
   show_address: true,
   description: null,
 };
+
+// vi.clearAllMocks() clears call history but not implementations, so this
+// default persists across all tests unless explicitly overridden in a beforeEach.
+beforeAll(() => {
+  mockEngagementsSelectEq.mockResolvedValue({ data: [], error: null });
+  mockEngagementsSelect.mockReturnValue({ eq: mockEngagementsSelectEq });
+});
 
 describe('ProviderEditForm regressions', () => {
   beforeEach(() => {
