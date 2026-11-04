@@ -146,7 +146,11 @@ imports/lottie/.temp-gif-frames/.flowbaby/
 
 # AI agent configuration directories (local tool installs, not project source)
 .agents/
-.claude/
+# .claude/ contents: team-wide settings.json and hooks/ are committed; everything else is local
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+!.claude/hooks/**
 .opencode/
 
 # Parallel lane worktrees (see docs/agents/lane.md)

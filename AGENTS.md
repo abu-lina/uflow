@@ -18,16 +18,24 @@ See `docs/agents/skills.md` — full stage-to-skill mapping, install commands, a
 
 ## Git rules
 
-1. Work only inside your own worktree. Never touch `main` or another lane's branch.
-2. Stage by explicit path: `git add <file>`. Never `git add -A`, `git add .` or `git commit -a`.
-3. Never commit `.env*` files, keys, tokens or anything that looks like a secret. If one slips into a diff, stop and report.
-4. Push only your own feature branch (`<type>/<issue>-<slug>`). Never push to `main`.
-5. Never merge, never rebase, never `git pull --rebase`, never force-push, unless the owner asks in this session. The owner merges, one PR at a time.
+1. MUST: Work only inside your own worktree. NEVER: touch `main` or another lane's branch.
+   why: a lane touching another lane's branch silently corrupts work in progress with no recovery path.
+2. NEVER: `git add -A`, `git add .` or `git commit -a`. Stage by explicit path: `git add <file>`.
+   why: broad staging has committed .env secrets and unrelated migration files in past incidents.
+3. NEVER: commit `.env*` files, keys, tokens or anything that looks like a secret. If one slips into a diff, stop and report.
+   why: secrets committed to git cannot be uncommitted — rotation is the only fix, which blocks the whole team.
+4. NEVER: push to `main`. Push only your own feature branch (`<type>/<issue>-<slug>`).
+   why: main auto-deploys to UAT; a direct push bypasses all review and CI gates.
+5. NEVER: merge, rebase, `git pull --rebase`, or force-push, unless the owner asks in this session. The owner merges, one PR at a time.
+   why: rebasing a shared branch rewrites history for every other lane tracking that branch.
 6. Open the PR as a draft at first push with `Closes #<issue>` in the body.
 7. Conventional commits: `fix:`, `feat:`, `refactor:`, `test:`, `chore:`, `docs:`, `ci:`. Scope is the `area:*` label without the prefix.
 8. Don't delete files you didn't create unless the issue asks for it. Don't bypass hooks (`--no-verify`).
 
 ## TDD
+
+MUST: follow the Red → Green → Refactor → Verify sequence exactly, in order, for every issue.
+why: skipping Red means you never prove the test can fail, so it proves nothing when it passes.
 
 1. **Red**: write failing tests from the issue's acceptance criteria, one per criterion, named after the criterion. Run only those tests; they must fail for the right reason. Commit them alone: `test(<area>): failing tests for #<issue>`.
 2. **Green**: the smallest change that passes. Nothing the tests don't demand.
@@ -45,11 +53,13 @@ npm run build
 
 If `.env.local` already exists, it contains these CI placeholders. Don't edit, commit, or replace them with real values. If it doesn't exist, don't create it. Build with the inline placeholders above; never request or use real credentials.
 
-Never make CI pass by skipping a test, loosening a type, raising lint limits or editing a workflow. Stop after 3 failed fix attempts on one check and report (`docs/agents/pr-loop.md`).
+NEVER: make CI pass by skipping a test, loosening a type, raising lint limits or editing a workflow.
+why: a green CI that doesn't test the real code is worse than a red CI — it gives false confidence while hiding the real failure.
+Stop after 3 failed fix attempts on one check and report (`docs/agents/pr-loop.md`).
 
 ## Context budget
 
-Target 100k tokens per session. Read the issue, then the files it names, then their direct imports. Don't read `docs/`, `agent-output/`, `CHANGELOG.md` or whole directories unless a failing test leads you there. Don't create plan documents; the issue and its comments are the only state. Summaries and reports are 25 lines or fewer.
+Target 100k tokens per session. Read the issue, then the files it names, then their direct imports. Don't read `docs/`, `agent-output/`, `CHANGELOG.md` or whole directories unless a failing test leads you there. NEVER: create plan documents inside lane work; the issue and its comments are the only lane state. (`tasks/` meta-workflow files are exempt — they are not lane state.) Summaries and reports are 25 lines or fewer.
 
 ## Stop and ask when
 
