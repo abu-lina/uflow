@@ -57,44 +57,66 @@ describe('AuthProvider role handling (#567)', () => {
     mocks.maybeSingle.mockResolvedValue({ data: { role: 'user' }, error: null });
   });
 
-  it('exposes the server-resolved DB role on first paint: admin in public.users, no JWT role claim', () => {
+  it('resolves admin role from public.users after onAuthStateChange fires', async () => {
     const user = makeUser('u-admin'); // user_metadata.role intentionally absent
+    mocks.maybeSingle.mockResolvedValueOnce({ data: { role: 'admin' }, error: null });
+
     const { result } = renderHook(() => useIsAdmin(), {
-      wrapper: ({ children }) => (
-        <AuthProvider initialRole="admin" initialUser={user}>
-          {children}
-        </AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider initialUser={user}>{children}</AuthProvider>,
     });
 
-    expect(result.current.isAdmin).toBe(true);
+    // role is deferred — null on first paint, not yet fetched
+    expect(result.current.isAdmin).toBe(false);
     expect(result.current.isLoading).toBe(false);
+
+    emitAuth('SIGNED_IN', makeSession(user));
+
+    await vi.waitFor(() => expect(result.current.isAdmin).toBe(true));
   });
 
-  it('does not trust a self-written user_metadata.role=admin when DB role is user', () => {
+  it('does not block initial render: isLoading false and role null before first auth event', () => {
+    const user = makeUser('u-fast');
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }) => <AuthProvider initialUser={user}>{children}</AuthProvider>,
+    });
+
+    // Synchronous assertions — role query deferred to onAuthStateChange,
+    // so first paint is never blocked waiting for the DB.
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.role).toBeNull();
+    expect(result.current.user).toBe(user);
+  });
+
+  it('does not trust a self-written user_metadata.role=admin when DB role is user', async () => {
     const forged = makeUser('u-user', { role: 'admin' });
-    const { result } = renderHook(() => useIsAdmin(), {
-      wrapper: ({ children }) => (
-        <AuthProvider initialRole="user" initialUser={forged}>
-          {children}
-        </AuthProvider>
-      ),
+    mocks.maybeSingle.mockResolvedValue({ data: { role: 'user' }, error: null });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
     });
 
-    expect(result.current.isAdmin).toBe(false);
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    emitAuth('SIGNED_IN', makeSession(forged));
+
+    // DB returns 'user'; user_metadata.role='admin' must never override it
+    await vi.waitFor(() => expect(result.current.role).toBe('user'));
+    expect(result.current.user?.id).toBe('u-user');
   });
 
-  it('keeps a non-admin non-admin', () => {
+  it('keeps a non-admin non-admin', async () => {
     const user = makeUser('u-plain');
-    const { result } = renderHook(() => useIsAdmin(), {
-      wrapper: ({ children }) => (
-        <AuthProvider initialRole="user" initialUser={user}>
-          {children}
-        </AuthProvider>
-      ),
+    mocks.maybeSingle.mockResolvedValue({ data: { role: 'user' }, error: null });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
     });
 
-    expect(result.current.isAdmin).toBe(false);
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    emitAuth('SIGNED_IN', makeSession(user));
+
+    await vi.waitFor(() => expect(result.current.role).toBe('user'));
+    expect(result.current.role).not.toBe('admin');
   });
 
   it('fetches the DB role for a session restored via getSession when initialUser is absent', async () => {
@@ -134,15 +156,15 @@ describe('AuthProvider role handling (#567)', () => {
 
   it('clears admin state on SIGNED_OUT', async () => {
     const user = makeUser('u-admin');
+    mocks.maybeSingle.mockResolvedValue({ data: { role: 'admin' }, error: null });
+
     const { result } = renderHook(() => useIsAdmin(), {
-      wrapper: ({ children }) => (
-        <AuthProvider initialRole="admin" initialUser={user}>
-          {children}
-        </AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
     });
 
-    expect(result.current.isAdmin).toBe(true);
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    emitAuth('SIGNED_IN', makeSession(user));
+    await vi.waitFor(() => expect(result.current.isAdmin).toBe(true));
 
     emitAuth('SIGNED_OUT', null);
 
@@ -151,15 +173,15 @@ describe('AuthProvider role handling (#567)', () => {
 
   it('clears the role when signOut() is called', async () => {
     const user = makeUser('u-admin');
+    mocks.maybeSingle.mockResolvedValue({ data: { role: 'admin' }, error: null });
+
     const { result } = renderHook(() => useAuth(), {
-      wrapper: ({ children }) => (
-        <AuthProvider initialRole="admin" initialUser={user}>
-          {children}
-        </AuthProvider>
-      ),
+      wrapper: ({ children }) => <AuthProvider>{children}</AuthProvider>,
     });
 
-    expect(result.current.role).toBe('admin');
+    await vi.waitFor(() => expect(result.current.isLoading).toBe(false));
+    emitAuth('SIGNED_IN', makeSession(user));
+    await vi.waitFor(() => expect(result.current.role).toBe('admin'));
 
     await act(async () => {
       await result.current.signOut();
