@@ -5,7 +5,9 @@ set -euo pipefail
 input=$(cat)
 cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // ""')
 
-sentinel="/tmp/.uflow-last-verified"
+root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+repo_name="$(basename "$root")"
+sentinel="/tmp/.${repo_name}-last-verified"
 
 # Track verification runs: touch sentinel so the gate can see them
 if printf '%s' "$cmd" | grep -qE '(npx vitest|npm (run )?(test|type-check|lint|build|check-all))'; then
