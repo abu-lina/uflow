@@ -91,7 +91,7 @@ REVIEW-SKILLS — run these on every PR before marking it ready:
 - mattpocock-skills:code-review — standards + spec
 - security-audit — PRs touching auth, payments, or user data
 
-FALLBACK — if no skill above clearly covers a step: /ask-matt, then /using-agent-skills, then stop and ask the owner.
+FALLBACK — if no skill above clearly covers a step: /using-agent-skills, then stop and ask the owner.
 
 Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, comment on the issue and update your Herdr workspace status to blocked or done so the owner is notified.' "$issue"
 }
@@ -116,7 +116,7 @@ _agent_model_args() {
       *) agent_args+=(--model "$choice") ;;
     esac
   elif [[ "$agent" == claude ]]; then
-    # shortcut: --reasoning-effort not yet supported in all claude CLI builds; only model is passed
+    # --reasoning-effort is not supported in Claude Code 2.1.x; skip effort levels silently
     case "$choice" in
       none | minimal | low | medium | high | xhigh | max) ;;
       *) agent_args+=(--model "$choice") ;;
@@ -155,7 +155,7 @@ foreman() {
   local agent="${1:-devin}" model="${2:-}" root get_output tab_response pane start_output prompt config_dir
   local -a agent_args
   agent_args=()
-  [[ "$agent" == claude || "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be claude, copilot, or devin" >&2; return 1; }
+  [[ "$agent" == copilot || "$agent" == devin || "$agent" == claude ]] || { echo "agent must be copilot, devin, or claude" >&2; return 1; }
   [[ "$agent" == devin && -z "$model" ]] && model="claude-opus-5-5-high"
 
   root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
@@ -197,8 +197,8 @@ foreman() {
 
 lane() {
   local issue="${1:-}" slug="${2:-}" agent="${3:-copilot}" model="${4:-}"
-  [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [claude|copilot|devin] [model|effort]" >&2; return 1; }
-  [[ "$agent" == claude || "$agent" == copilot || "$agent" == devin ]] || { echo "agent must be claude, copilot, or devin" >&2; return 1; }
+  [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [copilot|devin] [model|effort]" >&2; return 1; }
+  [[ "$agent" == copilot || "$agent" == devin || "$agent" == claude ]] || { echo "agent must be copilot, devin, or claude" >&2; return 1; }
 
   local root dir branch port workspace_json workspace_id worktree_result pane prompt base
   local -a agent_args
@@ -243,8 +243,6 @@ lane() {
 PORT=$port
 PLAYWRIGHT_BASE_URL=http://127.0.0.1:$port
 EOF
-  (umask 177 && printf 'NEXT_PUBLIC_SUPABASE_URL=https://ci-build-test.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ci_build_placeholder_not_a_real_key\n' >"$dir/.env.local") ||
-    { echo "could not write $dir/.env.local" >&2; return 1; }
 
   if [[ -d "$root/node_modules" ]]; then
     cp -c -R "$root/node_modules" "$dir/node_modules" 2>/dev/null ||
@@ -256,7 +254,34 @@ EOF
 
   agent_args=()
   _agent_model_args "$agent" "$model" || return 1
-  if [[ "$agent" == claude || "$agent" == copilot ]]; then
+  if [[ "$agent" == copilot ]]; then
+    agent_args+=(
+      --allow-tool=write
+      '--allow-tool=shell(npm:*)'
+      '--allow-tool=shell(npx:*)'
+      '--allow-tool=shell(git:*)'
+      '--allow-tool=shell(gh issue:*)'
+      '--allow-tool=shell(gh pr create)'
+      '--allow-tool=shell(gh pr checks)'
+      '--allow-tool=shell(pwd:*)'
+      '--allow-tool=shell(ls:*)'
+      '--allow-tool=shell(cat:*)'
+      '--allow-tool=shell(head:*)'
+      '--allow-tool=shell(tail:*)'
+      '--allow-tool=shell(wc:*)'
+      '--allow-tool=shell(command -v:*)'
+      '--allow-tool=shell(which:*)'
+      '--allow-tool=shell(diff:*)'
+      '--allow-tool=shell(grep:*)'
+      '--allow-tool=shell(gh pr view:*)'
+      '--allow-tool=shell(gh pr diff:*)'
+      '--allow-tool=shell(gh run view:*)'
+      '--deny-tool=shell(git merge)'
+      '--deny-tool=shell(git rebase)'
+      '--deny-tool=shell(pass-cli:*)'
+      '--deny-tool=write(.env.local)'
+      '--deny-tool=shell(gh pr merge)')
+  elif [[ "$agent" == claude ]]; then
     agent_args+=(
       --allowed-tools 'Write,Bash(npm *),Bash(npx *),Bash(git *),Bash(gh issue *),Bash(gh pr create),Bash(gh pr checks),Bash(pwd *),Bash(ls *),Bash(cat *),Bash(head *),Bash(tail *),Bash(wc *),Bash(command -v *),Bash(which *),Bash(diff *),Bash(grep *),Bash(gh pr view *),Bash(gh pr diff *),Bash(gh run view *)'
       --disallowed-tools 'Bash(git merge),Bash(git rebase),Bash(pass-cli *),Write(.env.local),Bash(gh pr merge)')

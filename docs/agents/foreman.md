@@ -12,10 +12,7 @@ Run `foreman` from the main checkout in its Herdr workspace. The helper starts a
 foreman [copilot|devin] [model|reasoning-effort]
 ```
 
-- `copilot` — GitHub Copilot. Pass `low`, `medium`, `high`, `xhigh`, or `max` for reasoning effort; any other value selects a model.
-- `devin` — Devin AI. Always treats the argument as a model; defaults to `claude-opus-5-5-high`.
-
-Examples: `foreman devin claude-opus-5-5-high`, `foreman copilot low`.
+Copilot defaults to Auto. To choose a model or reasoning effort for one session, pass it as the second argument, for example `foreman devin claude-opus-5-5-high` or `foreman copilot high`. For Copilot, `none`, `minimal`, `low`, `medium`, `high`, `xhigh` and `max` select reasoning effort; other values select a model. Devin always treats the argument as a model.
 
 `foreman()` starts Devin in Normal mode with `--config` pointing to a private 0600 copy of `.devin/foreman.json` in a fresh `mktemp -d` directory under `$TMPDIR`. Devin writes state such as `org_id`, model, and "always allow" grants to that copy; the committed config stays unchanged, and each start begins from its rules. `--config` replaces `~/.config/devin/config.json`, it doesn't merge with it. The foreman can't write files, so pass issue and PR bodies with `--body`. The owner shouldn't click "always allow" inside a foreman session.
 
@@ -102,8 +99,8 @@ Post the proposal in chat, not on GitHub:
 
 ```
 Lane A  #674  P1  area:search  fix/674-unify-home-discovery  (9 criteria)  devin claude-opus-5-5-high
-Lane B  #550  P2  area:ui      fix/550-duplicate-navbar      (2 criteria)  claude low
-Lane C  #579  P3  area:deps    chore/579-remove-critters     (1 criterion) claude low
+Lane B  #550  P2  area:ui      fix/550-duplicate-navbar      (2 criteria)  copilot low
+Lane C  #579  P3  area:deps    chore/579-remove-critters     (1 criterion) copilot low
 ```
 
 Two or three lanes. Stop and wait for approval. Don't start anything on your own.
@@ -117,7 +114,7 @@ Pick one tier per issue and show it in the last column of the proposal.
   - Runtime code in security-sensitive or data-sensitive areas, or `type:security` on runtime code.
   - A cross-cutting refactor.
   - An expected diff over 200 non-test lines.
-- **Cheap** (`claude low`): everything else, typically config, scripts or docs with 5 or fewer criteria.
+- **Cheap** (`copilot low`): everything else, typically config, scripts or docs with 5 or fewer criteria.
 
 The owner can change any lane's tier when approving. The foreman uses the owner's choice, not the rubric's.
 
@@ -126,7 +123,7 @@ The owner can change any lane's tier when approving. The foreman uses the owner'
 For each approved lane:
 
 ```bash
-scripts/lane start <issue> <slug> [claude|copilot|devin] [model|reasoning-effort]
+scripts/lane start <issue> <slug> [copilot|devin] [model|reasoning-effort]
 ```
 
 `scripts/lane start` creates the linked branch with `gh issue develop`, creates and focuses the Herdr worktree, writes `.env.lane`, and starts the agent in the returned root pane. Pass the agent and model from the approved proposal. Without them the agent is Copilot on Auto. Devin always treats the model argument as a model.
@@ -135,7 +132,7 @@ scripts/lane start <issue> <slug> [claude|copilot|devin] [model|reasoning-effort
 # strong tier
 scripts/lane start 674 unify-home-discovery devin claude-opus-5-5-high
 # cheap tier
-scripts/lane start 579 remove-critters claude low
+scripts/lane start 579 remove-critters copilot low
 ```
 
 First time on a machine, or after a long break: run one lane end to end before starting a second.
@@ -223,13 +220,13 @@ The lane's learning file lands in its PR. The foreman edits no files after merge
 
 ## Command mapping
 
-| Task                   | Herdr command or helper                                                                |
-| ---------------------- | -------------------------------------------------------------------------------------- |
-| Lane status            | `scripts/lane status`                                                                  |
-| Reading a lane         | `herdr agent read lane-<issue>`                                                        |
-| Sending keys to a lane | `herdr agent send-keys lane-<issue> <key>`                                             |
-| Starting a lane        | `scripts/lane start <issue> <slug> [claude\|copilot\|devin] [model\|reasoning-effort]` |
-| Cleaning up a lane     | `scripts/lane done <issue>`                                                            |
+| Task                   | Herdr command or helper                                                        |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| Lane status            | `scripts/lane status`                                                          |
+| Reading a lane         | `herdr agent read lane-<issue>`                                                |
+| Sending keys to a lane | `herdr agent send-keys lane-<issue> <key>`                                     |
+| Starting a lane        | `scripts/lane start <issue> <slug> [copilot\|devin] [model\|reasoning-effort]` |
+| Cleaning up a lane     | `scripts/lane done <issue>`                                                    |
 
 ## What you never do
 
