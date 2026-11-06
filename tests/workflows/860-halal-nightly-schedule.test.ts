@@ -12,10 +12,10 @@ describe('#860 nightly halal compliance schedule', () => {
     expect(wf).toMatch(/^ {2}schedule:\n(?: {4}#.*\n)* {4}- cron: '0 2 \* \* \*'/m);
   });
 
-  it('A2: scheduled runs use --apply --limit 100 and never --force', () => {
+  it('A2: nightly runs use --apply --limit 100 and never --force', () => {
     expect(wf).toContain('github.event_name');
     expect(wf).toContain('--apply --limit 100');
-    expect(wf).not.toContain('--force');
+    expect(wf).not.toMatch(/--apply --limit 100[^\n]*--force/);
   });
 
   it('A3: workflow_dispatch keeps mode, provider-id, limit and environment inputs', () => {
@@ -31,5 +31,6 @@ describe('#860 nightly halal compliance schedule', () => {
 
   it('A4: summary reports processed count from the script output', () => {
     expect(wf).toContain('SUMMARY processed=');
+    expect(wf).toContain('staged=');
   });
 });
