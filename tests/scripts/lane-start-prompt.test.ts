@@ -32,7 +32,8 @@ const startLane = (
     writeFileSync(
       join(bin, 'herdr'),
       `#!/bin/sh
-printf '%s\\n' "$*" >> "$HERDR_LOG"
+# The lane prompt spans several lines; log each call on one line.
+{ printf '%s' "$*" | tr '\\n' ' '; printf '\\n'; } >> "$HERDR_LOG"
 case "$1 $2" in
 ${herdrWorktreeCreateCase}  "agent prompt")
     n=$(grep -c '^agent prompt ' "$HERDR_LOG")
