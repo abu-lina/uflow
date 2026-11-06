@@ -6,6 +6,9 @@
 name: Enrich Halal Compliance
 
 on:
+  schedule:
+    # Nightly 02:00 UTC: screens providers with halal_screened_at IS NULL (90-day guard stays) (#860)
+    - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
       mode:
@@ -42,7 +45,7 @@ concurrency:
 jobs:
   enrich:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment: ${{ inputs.environment || 'production' }}
     timeout-minutes: 120
 
     steps:
@@ -60,22 +63,27 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
           INPUT_MODE: ${{ inputs.mode }}
           INPUT_PROVIDER_ID: ${{ inputs.provider-id }}
           INPUT_LIMIT: ${{ inputs.limit }}
         run: |
           set -o pipefail
-          if [ "$INPUT_MODE" = "apply" ]; then ARGS="--apply"; else ARGS="--dry-run"; fi
-          if [ -n "$INPUT_PROVIDER_ID" ]; then ARGS="$ARGS --provider-id $INPUT_PROVIDER_ID"; fi
-          if [ -n "$INPUT_LIMIT" ]; then ARGS="$ARGS --limit $INPUT_LIMIT"; fi
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            ARGS="--apply --limit 100"
+          else
+            if [ "$INPUT_MODE" = "apply" ]; then ARGS="--apply"; else ARGS="--dry-run"; fi
+            if [ -n "$INPUT_PROVIDER_ID" ]; then ARGS="$ARGS --provider-id $INPUT_PROVIDER_ID"; fi
+            if [ -n "$INPUT_LIMIT" ]; then ARGS="$ARGS --limit $INPUT_LIMIT"; fi
+          fi
           echo "$ARGS" > /tmp/args.txt
           npx tsx scripts/enrich-halal-compliance.ts $ARGS 2>&1 | tee /tmp/halal-compliance.log
 
       - name: Step summary
         if: always()
         env:
-          INPUT_ENVIRONMENT: ${{ inputs.environment }}
-          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment || 'production' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           {
             echo "## Halal Compliance Enrichment"
@@ -83,8 +91,9 @@ jobs:
             echo "| Field | Value |"
             echo "|-------|-------|"
             echo "| Environment | $INPUT_ENVIRONMENT |"
-            echo "| Mode | $INPUT_MODE |"
+            echo "| Trigger | $EVENT_NAME |"
             echo "| Args | \`$(cat /tmp/args.txt 2>/dev/null)\` |"
+            echo "| Result | $(grep -o 'SUMMARY processed=.*' /tmp/halal-compliance.log 2>/dev/null | tail -n 1) |"
             echo ""
             echo "<details><summary>Last 60 log lines</summary>"
             echo ""
