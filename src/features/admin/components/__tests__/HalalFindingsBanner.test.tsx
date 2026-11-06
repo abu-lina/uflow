@@ -35,6 +35,12 @@ describe('HalalFindingsBanner (#841)', () => {
     expect(fetchMock.mock.calls[0][0]).toContain('providerId=p1');
   });
 
+  it('appears for a pending no_gambling candidate (#862)', async () => {
+    respond([{ id: 'c1', field_name: 'no_gambling' }]);
+    render(<HalalFindingsBanner providerId="p1" />);
+    expect(await screen.findByText('adminHalalEdit.findingsBanner.text')).toBeTruthy();
+  });
+
   it('links to the enrichment tab', async () => {
     respond([{ id: 'c1', field_name: 'no_pork' }]);
     render(<HalalFindingsBanner providerId="p1" />);
