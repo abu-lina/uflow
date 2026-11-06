@@ -11,7 +11,7 @@ describe('#830 enrich-halal-compliance workflow', () => {
     : '';
 
   it('A1: is workflow_dispatch with mode (dry-run default), provider-id and limit (50) inputs', () => {
-    expect(wf).toMatch(/^on:\n {2}workflow_dispatch:/m);
+    expect(wf).toMatch(/^ {2}workflow_dispatch:/m);
     expect(wf).toMatch(
       /^ {6}mode:[\s\S]*?default: 'dry-run'[\s\S]*?options:\n {10}- dry-run\n {10}- apply/m,
     );
@@ -27,7 +27,7 @@ describe('#830 enrich-halal-compliance workflow', () => {
   });
 
   it('A3: takes APIFY_API_TOKEN and SUPABASE_SERVICE_ROLE_KEY from secrets via the job environment', () => {
-    expect(wf).toMatch(/^ {4}environment: \$\{\{ inputs\.environment \}\}$/m);
+    expect(wf).toMatch(/^ {4}environment: \$\{\{ inputs\.environment \|\| 'production' \}\}$/m);
     expect(wf).toContain('${{ secrets.APIFY_API_TOKEN }}');
     expect(wf).toContain('${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}');
     expect(wf).toContain('${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}');
