@@ -95,6 +95,17 @@ describe('getHalalReviewQueue', () => {
     );
   });
 
+  it('leaves owned providers out of the queue, since they cannot be confirmed', async () => {
+    await getHalalReviewQueue();
+    expect(calls).toContainEqual(
+      expect.objectContaining({
+        table: 'enrichment_candidates',
+        op: 'is',
+        args: ['providers.provider_owner_id', null],
+      }),
+    );
+  });
+
   it('returns an empty queue when nothing is pending', async () => {
     expect(await getHalalReviewQueue()).toEqual([]);
   });
@@ -156,6 +167,7 @@ describe('confirmHalalReview', () => {
 
   it('writes all three values to food_providers and marks pending halal candidates applied', async () => {
     results.providers = { data: { provider_owner_id: null }, error: null };
+    results.food_providers = { data: [{ provider_id: P1 }], error: null };
 
     const result = await confirmHalalReview(P1, values, 'admin-1');
 
@@ -178,6 +190,16 @@ describe('confirmHalalReview', () => {
         args: ['status', 'pending'],
       }),
     );
+  });
+
+  it('fails without touching candidates when no food_providers row was updated', async () => {
+    results.providers = { data: { provider_owner_id: null }, error: null };
+    results.food_providers = { data: [], error: null };
+
+    const result = await confirmHalalReview(P1, values, 'admin-1');
+
+    expect(result.success).toBe(false);
+    expect(calls.some((c) => c.table === 'enrichment_candidates' && c.op === 'update')).toBe(false);
   });
 
   it('refuses owned providers and changes nothing', async () => {

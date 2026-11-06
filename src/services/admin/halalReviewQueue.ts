@@ -38,6 +38,7 @@ export async function getHalalReviewQueue(): Promise<HalalReviewItem[]> {
     )
     .eq('status', 'pending')
     .in('field_name', [...HALAL_FIELDS])
+    .is('providers.provider_owner_id', null)
     .order('enriched_at', { ascending: true });
   if (error) throw new Error(`Failed to fetch halal review queue: ${error.message}`);
 
@@ -130,16 +131,20 @@ export async function confirmHalalReview(
     return { success: false, error: 'Cannot enrich provider that now has an owner' };
   }
 
-  const { error: updateError } = await supabase
+  const { data: updated, error: updateError } = await supabase
     .from('food_providers')
     .update({
       no_alcohol: values.no_alcohol,
       no_pork: values.no_pork,
       no_gambling: values.no_gambling,
     })
-    .eq('provider_id', providerId);
+    .eq('provider_id', providerId)
+    .select('provider_id');
   if (updateError)
     return { success: false, error: `Failed to update provider: ${updateError.message}` };
+  if (!updated || updated.length === 0) {
+    return { success: false, error: 'Provider has no food provider record to update' };
+  }
 
   const { error: statusError } = await supabase
     .from('enrichment_candidates')
