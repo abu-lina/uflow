@@ -49,7 +49,11 @@ export const SOURCE_ENRICHABLE_FIELDS: ReadonlyArray<string> = [
  * them to food_providers (#842). Kept apart from SOURCE_ENRICHABLE_FIELDS so
  * the joinhalal enricher doesn't start proposing them.
  */
-export const FOOD_PROVIDER_FIELDS: ReadonlyArray<string> = ['no_alcohol', 'no_pork'] as const;
+export const FOOD_PROVIDER_FIELDS: ReadonlyArray<string> = [
+  'no_alcohol',
+  'no_pork',
+  'no_gambling',
+] as const;
 
 const adminFieldSet = new Set(ADMIN_CONTROLLED_FIELDS);
 const sourceFieldSet = new Set([...SOURCE_ENRICHABLE_FIELDS, ...FOOD_PROVIDER_FIELDS]);

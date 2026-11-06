@@ -56,6 +56,7 @@ interface Harness {
   apply?: boolean;
   force?: boolean;
   failLoadMenu?: boolean;
+  stageOutcome?: 'staged' | 'skipped-existing';
 }
 
 async function run(h: Harness = {}) {
@@ -69,7 +70,7 @@ async function run(h: Harness = {}) {
       if (h.failLoadMenu) throw new Error('db down');
       return h.storedMenuNames ?? [];
     }),
-    stageCandidate: vi.fn(async () => ({ outcome: 'staged' as const })),
+    stageCandidate: vi.fn(async () => ({ outcome: h.stageOutcome ?? ('staged' as const) })),
     markScreened: vi.fn(async () => undefined),
   };
   const screenProvider = vi.fn(async () => (h.place === undefined ? place() : h.place));
@@ -513,5 +514,56 @@ describe('#838: evidence on staged candidates', () => {
       maps_category: 'Bar',
       source_platform: 'google_maps',
     });
+  });
+});
+
+describe('#862: no_gambling detection from Google Maps categories', () => {
+  const casino = place({ categoryName: 'Casino', categories: ['Casino', 'Restaurant'] });
+
+  it('stages no_gambling=false with the matched category when the place is a casino', async () => {
+    const r = await run({ links: [[], []], place: casino });
+    expect(stagedRows(r.store)).toContainEqual(
+      expect.objectContaining({
+        field_name: 'no_gambling',
+        proposed_value: false,
+        status: 'pending',
+        evidence: expect.objectContaining({ matched_category: 'casino' }),
+      }),
+    );
+  });
+
+  it('stages no_gambling=false even when the column already holds its default false', async () => {
+    const r = await run({ links: [[], []], place: casino });
+    expect(stagedRows(r.store).some((row) => row.field_name === 'no_gambling')).toBe(true);
+  });
+
+  it('stages nothing for gambling when no category matches', async () => {
+    const r = await run({ links: [[], []], place: place({ categories: ['Restaurant'] }) });
+    expect(stagedRows(r.store).some((row) => row.field_name === 'no_gambling')).toBe(false);
+    expect(r.logs[0]).toContain('gambling: none detected');
+  });
+
+  it('dry run logs the detection and writes nothing', async () => {
+    const r = await run({ apply: false, links: [[], []], place: casino });
+    expect(r.store.stageCandidate).not.toHaveBeenCalled();
+    expect(r.logs[0]).toContain('gambling: detected (casino)');
+  });
+
+  it('detects gambling before the alcohol early exit', async () => {
+    const r = await run({
+      links: [[], []],
+      place: place({
+        categories: ['Betting agency'],
+        additionalInfo: { Offerings: [{ 'Serves alcohol': true }] },
+      }),
+    });
+    const fields = stagedRows(r.store).map((row) => row.field_name);
+    expect(fields).toEqual(expect.arrayContaining(['no_alcohol', 'no_gambling']));
+  });
+
+  it('skips re-staging when a candidate already exists', async () => {
+    const r = await run({ links: [[], []], place: casino, stageOutcome: 'skipped-existing' });
+    expect(r.summary.staged).toBe(0);
+    expect(r.logs[0]).toContain('skip no_gambling=false (candidate exists)');
   });
 });

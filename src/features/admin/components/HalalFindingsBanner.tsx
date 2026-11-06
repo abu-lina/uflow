@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { useLanguage } from '@/providers/LanguageProvider';
 
-const HALAL_FIELDS = new Set(['no_alcohol', 'no_pork']);
+const HALAL_FIELDS = new Set(['no_alcohol', 'no_pork', 'no_gambling']);
 
 interface HalalFindingsBannerProps {
   providerId: string;
