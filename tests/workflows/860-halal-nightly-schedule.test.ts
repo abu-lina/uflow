@@ -31,5 +31,6 @@ describe('#860 nightly halal compliance schedule', () => {
 
   it('A4: summary reports processed count from the script output', () => {
     expect(wf).toContain('SUMMARY processed=');
+    expect(wf).toContain('staged=');
   });
 });

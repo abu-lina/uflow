@@ -76,6 +76,7 @@ jobs:
             if [ "$SCHEDULE" = "0 3 1 */3 *" ]; then
               ARGS="--apply --force --limit 500"
             else
+              # nightly 02:00 UTC (#860); also fallback for any unrecognised schedule
               ARGS="--apply --limit 100"
             fi
           else
@@ -100,7 +101,7 @@ jobs:
             echo "| Environment | $INPUT_ENVIRONMENT |"
             echo "| Trigger | $EVENT_NAME |"
             echo "| Args | \`$(cat /tmp/args.txt 2>/dev/null)\` |"
-            echo "| Result | $(grep -o 'SUMMARY processed=.*' /tmp/halal-compliance.log 2>/dev/null | tail -n 1) |"
+            echo "| Result | $(grep -oE 'SUMMARY processed=[0-9]+ staged=[0-9]+ failed=[0-9]+' /tmp/halal-compliance.log 2>/dev/null | tail -n 1) |"
             echo ""
             echo "<details><summary>Last 60 log lines</summary>"
             echo ""

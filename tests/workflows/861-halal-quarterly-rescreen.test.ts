@@ -12,7 +12,7 @@ describe('#861 quarterly halal re-screening schedule', () => {
     expect(wf).toMatch(/^ {4}- cron: '0 3 1 \*\/3 \*'$/m);
   });
 
-  it('AC1: the quarterly schedule passes --apply --force --limit 500', () => {
+  it('AC1 routing: quarterly schedule passes --apply --force --limit 500', () => {
     expect(wf).toContain('github.event.schedule');
     expect(wf).toContain('--apply --force --limit 500');
   });
@@ -24,5 +24,6 @@ describe('#861 quarterly halal re-screening schedule', () => {
 
   it('AC4: the step summary reports processed and staged counts', () => {
     expect(wf).toContain('SUMMARY processed=');
+    expect(wf).toContain('staged=');
   });
 });
