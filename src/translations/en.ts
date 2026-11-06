@@ -1415,6 +1415,22 @@ export const en = {
     error: 'Could not load the screening results.',
   },
   // Plan 255 (#415): admin halal edit sub-page
+  halalReview: {
+    title: 'Halal Review',
+    loading: 'Loading...',
+    loadError: 'Could not load the halal review queue.',
+    empty: 'No providers awaiting halal review.',
+    mapsMatch: 'Google Maps match',
+    openMaps: 'Open in Google Maps',
+    deliveryLinks: 'Delivery links',
+    flaggedItems: 'Flagged menu items',
+    none: 'None found',
+    noAlcohol: 'No alcohol sold?',
+    noPork: 'No pork sold?',
+    noGambling: 'No gambling?',
+    confirm: 'Confirm',
+    confirmError: 'Could not save. Try again.',
+  },
   adminHalalEdit: {
     title: 'Halal Check',
     uploading: 'Uploading...',

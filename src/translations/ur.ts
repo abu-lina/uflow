@@ -1427,6 +1427,22 @@ export const ur = {
   },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
+  halalReview: {
+    title: 'حلال جائزہ',
+    loading: 'لوڈ ہو رہا ہے...',
+    loadError: 'حلال جائزہ قطار لوڈ نہیں ہو سکی۔',
+    empty: 'حلال جائزے کے منتظر کوئی فراہم کنندہ نہیں۔',
+    mapsMatch: 'گوگل میپس میچ',
+    openMaps: 'گوگل میپس میں کھولیں',
+    deliveryLinks: 'ڈیلیوری لنکس',
+    flaggedItems: 'نشان زد مینو آئٹمز',
+    none: 'کچھ نہیں ملا',
+    noAlcohol: 'الکحل نہیں بکتی؟',
+    noPork: 'سور کا گوشت نہیں بکتا؟',
+    noGambling: 'جوا نہیں؟',
+    confirm: 'تصدیق کریں',
+    confirmError: 'محفوظ نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
+  },
   adminHalalEdit: {
     title: 'حلال جانچ',
     uploading: 'اپ لوڈ ہو رہا ہے…',

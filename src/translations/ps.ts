@@ -1424,6 +1424,22 @@ export const ps = {
   },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
+  halalReview: {
+    title: 'د حلالو بیاکتنه',
+    loading: 'بارېږي...',
+    loadError: 'د حلالو بیاکتنې کتار نه شو بار کېدلی.',
+    empty: 'هیڅ برابرونکی د حلالو بیاکتنې په انتظار کې نشته.',
+    mapsMatch: 'د ګوګل نقشې سره سمون',
+    openMaps: 'په ګوګل نقشو کې خلاص کړئ',
+    deliveryLinks: 'د لیږد لینکونه',
+    flaggedItems: 'نښه شوي مینو توکي',
+    none: 'هیڅ نه دي موندل شوي',
+    noAlcohol: 'الکول نه پلورل کېږي؟',
+    noPork: 'د سرو غوښه نه پلورل کېږي؟',
+    noGambling: 'قمار نشته؟',
+    confirm: 'تایید کړئ',
+    confirmError: 'خوندي نه شو. بیا هڅه وکړئ.',
+  },
   adminHalalEdit: {
     title: 'د حلال کتنه',
     uploading: 'پورته کېږي…',
