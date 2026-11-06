@@ -11,10 +11,7 @@ const listFiles = (directory: string): string[] =>
     return entry.isDirectory() ? listFiles(path) : entry.isFile() ? [path] : [];
   });
 
-const agentRuleFiles = [
-  'AGENTS.md',
-  ...listFiles('docs/agents'),
-];
+const agentRuleFiles = ['AGENTS.md', ...listFiles('docs/agents')];
 
 describe('agent documentation rules', () => {
   it('documents the foreman config, permissions, and intentional remote writes', () => {
@@ -82,13 +79,11 @@ describe('agent documentation rules', () => {
     expect(key).toBeTruthy();
     expect(agents).toContain(`NEXT_PUBLIC_SUPABASE_URL=${url}`);
     expect(agents).toContain(`NEXT_PUBLIC_SUPABASE_ANON_KEY=${key}`);
-    expect(lane).toContain(`NEXT_PUBLIC_SUPABASE_URL=${url}`);
-    expect(lane).toContain(`NEXT_PUBLIC_SUPABASE_ANON_KEY=${key}`);
     const buildCommand = `NEXT_PUBLIC_SUPABASE_URL=${url} \\\nNEXT_PUBLIC_SUPABASE_ANON_KEY=${key} \\\nnpm run build`;
     expect(agents).toContain(buildCommand);
-    expect(lane).toContain(buildCommand);
+    expect(read('scripts/verify')).toContain(buildCommand);
+    expect(lane).toContain('bash scripts/verify');
     expect(agents).toMatch(/\.env\.local.*placeholders/i);
-    expect(lane).toMatch(/\.env\.local.*placeholders/i);
     expect(agents).toMatch(/never receives or requests real credentials/i);
   });
 });

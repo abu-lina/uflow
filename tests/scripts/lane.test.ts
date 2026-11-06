@@ -37,14 +37,6 @@ const setupDecisions = readFileSync(
 const herdrFixtureDir = new URL('../fixtures/herdr/', import.meta.url).pathname;
 const herdrFixture = (name: string) => readFileSync(join(herdrFixtureDir, name), 'utf8');
 
-const ciBuildPlaceholder = (key: string) => {
-  const match = ciWorkflow.match(
-    new RegExp(`echo "${key}=\\$\\{${key}:-([^}]+)\\}" >> \\$GITHUB_ENV`),
-  );
-  if (!match) throw new Error(`Could not find ${key} CI build placeholder`);
-  return match[1];
-};
-
 const createLintStubs = (fixture: string) => {
   const bin = join(fixture, 'bin');
   const log = join(fixture, 'lint.log');
@@ -92,7 +84,7 @@ const startCopilotLane = (
     bin,
     'herdr',
     `#!/bin/sh
-printf '%s\\n' "$*" >> "$HERDR_CALLS"
+{ printf '%s' "$*" | tr '\\n' ' '; printf '\\n'; } >> "$HERDR_CALLS"
 case "$1 $2" in
 ${herdrWorktreeCreateCase}  "agent start")
     printf '%s\\n' 'agent start' >> "$HERDR_LOG"
@@ -140,7 +132,7 @@ const withFixture = (prefix: string, run: (fixture: string) => void) => {
   }
 };
 
-const baseWorktreeEntries = ['.env.lane', '.env.local', '.git', 'README.md'];
+const baseWorktreeEntries = ['.env.lane', '.git', 'README.md'];
 
 const commitFile = (root: string, file: string, contents: string, message: string) => {
   writeFileSync(join(root, file), contents);
@@ -788,22 +780,16 @@ esac
       const { result, herdrLog } = startCopilotLane(fixture);
       expect(result.status, result.stderr).toBe(0);
       const args = argsAfterAgentStart(herdrLog);
-      const allowedIdx = args.indexOf('--allowed-tools');
-      const disallowedIdx = args.indexOf('--disallowed-tools');
-      expect(allowedIdx, '--allowed-tools flag').toBeGreaterThan(-1);
-      expect(disallowedIdx, '--disallowed-tools flag').toBeGreaterThan(-1);
-      const allowed = args[allowedIdx + 1].split(',');
-      const disallowed = args[disallowedIdx + 1].split(',');
-      for (const tool of ['Write', 'Bash(npm *)', 'Bash(npx *)', 'Bash(git *)']) {
-        expect(allowed, tool).toContain(tool);
+      for (const tool of ['write', 'shell(npm:*)', 'shell(npx:*)', 'shell(git:*)']) {
+        expect(args, tool).toContain(`--allow-tool=${tool}`);
       }
       for (const rule of [
-        'Bash(git merge)',
-        'Bash(git rebase)',
-        'Write(.env.local)',
-        'Bash(gh pr merge)',
+        'shell(git merge)',
+        'shell(git rebase)',
+        'write(.env.local)',
+        'shell(gh pr merge)',
       ]) {
-        expect(disallowed, rule).toContain(rule);
+        expect(args, rule).toContain(`--deny-tool=${rule}`);
       }
       expect(args).not.toContain('--sandbox');
     });
@@ -816,23 +802,7 @@ esac
     });
   });
 
-  it('writes CI placeholder values to the new worktree .env.local with mode 0600', () => {
-    const fixture = mkdtempSync(join(tmpdir(), 'lane-placeholders-'));
-    try {
-      const { root, result } = startCopilotLane(fixture);
-      expect(result.status, result.stderr).toBe(0);
-      const envPath = join(root, '.worktrees/640-placeholder-test/.env.local');
-      expect(readFileSync(envPath, 'utf8')).toBe(
-        `NEXT_PUBLIC_SUPABASE_URL=${ciBuildPlaceholder('NEXT_PUBLIC_SUPABASE_URL')}\n` +
-          `NEXT_PUBLIC_SUPABASE_ANON_KEY=${ciBuildPlaceholder('NEXT_PUBLIC_SUPABASE_ANON_KEY')}\n`,
-      );
-      expect(statSync(envPath).mode & 0o777).toBe(0o600);
-    } finally {
-      rmSync(fixture, { recursive: true, force: true });
-    }
-  });
-
-  it('keeps the lane .env.local limited to the two public CI build variables', () => {
+  it('does not create or copy .env.local into the new worktree', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-env-allowlist-'));
     try {
       const { root, result } = startCopilotLane(
@@ -840,17 +810,7 @@ esac
         'SUPABASE_SERVICE_ROLE_KEY=owner-secret\nRESEND_API_KEY=owner-secret\n',
       );
       expect(result.status, result.stderr).toBe(0);
-      const laneEnv = readFileSync(
-        join(root, '.worktrees/640-placeholder-test/.env.local'),
-        'utf8',
-      );
-      expect(laneEnv).not.toContain('owner-secret');
-      expect(
-        laneEnv
-          .split('\n')
-          .filter(Boolean)
-          .map((line) => line.split('=')[0]),
-      ).toEqual(['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY']);
+      expect(existsSync(join(root, '.worktrees/640-placeholder-test/.env.local'))).toBe(false);
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
@@ -862,9 +822,7 @@ esac
       const { herdrLog, result } = startCopilotLane(fixture);
       expect(result.status, result.stderr).toBe(0);
       const lines = readFileSync(herdrLog, 'utf8').split('\n');
-      const disallowedIdx = lines.indexOf('--disallowed-tools');
-      expect(disallowedIdx, '--disallowed-tools flag').toBeGreaterThan(-1);
-      expect(lines[disallowedIdx + 1]).toContain('Bash(pass-cli *)');
+      expect(lines).toContain('--deny-tool=shell(pass-cli:*)');
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
@@ -882,12 +840,9 @@ esac
       }
     };
     const allowedShell = (args: string[]) => {
-      const idx = args.indexOf('--allowed-tools');
-      if (idx === -1) return [];
-      return args[idx + 1]
-        .split(',')
-        .filter((t) => t.startsWith('Bash('))
-        .map((t) => t.slice(5, -1).replace(/ \*$/, ''));
+      return args
+        .filter((a) => a.startsWith('--allow-tool=shell('))
+        .map((a) => a.slice('--allow-tool=shell('.length, -1).replace(/:\*$/, ''));
     };
 
     it('criterion 1: allows the read-only command set', () => {
@@ -920,16 +875,13 @@ esac
 
     it('criterion 3: keeps the existing deny rules', () => {
       const args = startedArgs();
-      const disallowedIdx = args.indexOf('--disallowed-tools');
-      expect(disallowedIdx, '--disallowed-tools flag').toBeGreaterThan(-1);
-      const disallowed = args[disallowedIdx + 1].split(',');
       for (const rule of [
-        'Bash(git merge)',
-        'Bash(git rebase)',
-        'Write(.env.local)',
-        'Bash(gh pr merge)',
+        'shell(git merge)',
+        'shell(git rebase)',
+        'write(.env.local)',
+        'shell(gh pr merge)',
       ]) {
-        expect(disallowed, rule).toContain(rule);
+        expect(args, rule).toContain(`--deny-tool=${rule}`);
       }
     });
   });
@@ -1274,7 +1226,7 @@ esac
   });
 
   it('keeps issue-comment reporting in the lane instructions', () => {
-    expect(laneGuide).toContain('comment on the issue');
+    expect(laneGuide).toContain('commenting on the issue');
     expect(foremanGuide).toContain('issue comments');
     withFixture('lane-prompt-comment-', (fixture) => {
       const { herdrCalls } = startCopilotLane(fixture);
@@ -1741,7 +1693,7 @@ describe('lane and foreman agent options', { timeout: spawnTestTimeoutMs }, () =
   it('rejects an unknown foreman agent without calling Herdr', () => {
     const { result, calls } = runForeman('bash', { agentGet: 'dead', args: ['bogus'] });
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('agent must be claude, copilot, or devin');
+    expect(result.stderr).toContain('agent must be copilot, devin, or claude');
     expect(calls).toEqual([]);
   });
 
