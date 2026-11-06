@@ -45,7 +45,7 @@ export async function getHalalReviewQueue(): Promise<HalalReviewItem[]> {
   for (const row of (data ?? []) as unknown as CandidateRow[]) {
     byProvider.set(row.provider_id, [...(byProvider.get(row.provider_id) ?? []), row]);
   }
-  const providerIds = [...byProvider.keys()];
+  const providerIds = Array.from(byProvider.keys());
   if (providerIds.length === 0) return [];
 
   const [current, links] = await Promise.all([
@@ -62,7 +62,7 @@ export async function getHalalReviewQueue(): Promise<HalalReviewItem[]> {
   if (current.error) throw new Error(`Failed to fetch food providers: ${current.error.message}`);
   if (links.error) throw new Error(`Failed to fetch delivery links: ${links.error.message}`);
 
-  return [...byProvider.entries()]
+  return Array.from(byProvider.entries())
     .map(([providerId, rows]) => {
       // Rows arrive oldest first, so later candidates overwrite earlier ones.
       const stored = (current.data ?? []).find((r) => r.provider_id === providerId);
