@@ -14,7 +14,7 @@
  *      to food_menu here).
  *   4. detectCompliance() on those names. Menu text is the only source; images are not checked.
  *
- * Results are staged as pending `no_alcohol` / `no_pork` enrichment candidates (source
+ * Results are staged as pending `no_alcohol` / `no_pork` / `no_gambling` enrichment candidates (source
  * `halal_compliance`) for owner review in /dashboard/enrichment. Nothing is applied. Staged:
  * a violation (definite alcohol or pork) as false, and an explicit alcohol-free menu signal as
  * true. A menu without pork keywords proves nothing, so it stages no no_pork=true. A value the
@@ -84,6 +84,15 @@ const ALCOHOL_CATEGORIES: ReadonlySet<string> = new Set([
   'brauerei',
   'night club',
   'nightclub',
+]);
+
+/** Google Maps categories of gambling venues, lowercase with underscores. */
+const GAMBLING_CATEGORIES: ReadonlySet<string> = new Set([
+  'casino',
+  'gambling',
+  'bookmaker',
+  'betting_agency',
+  'lottery',
 ]);
 
 export interface ComplianceProvider {
@@ -165,8 +174,21 @@ function mapsAlcoholAttributes(place: ApifyPlace): string[] {
   return keys;
 }
 
+/** The first Maps category that marks a gambling venue, normalised, or null. */
+export function mapsGamblingCategory(place: ApifyPlace | null): string | null {
+  const names = [place?.categoryName, ...(place?.categories ?? [])];
+  for (const name of names) {
+    const key = name
+      ?.trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, '_');
+    if (key && GAMBLING_CATEGORIES.has(key)) return key;
+  }
+  return null;
+}
+
 interface Proposal {
-  field: 'no_alcohol' | 'no_pork';
+  field: 'no_alcohol' | 'no_pork' | 'no_gambling';
   value: boolean;
   sourceUrl: string;
   evidence: Record<string, unknown>;
@@ -245,12 +267,30 @@ export async function runHalalCompliance(deps: {
         steps.push(place ? 'maps: matched' : 'maps: no match');
         barCategory = isBarCategory(place);
         mapsCategory = place?.categoryName ?? null;
+        const gambling = mapsGamblingCategory(place);
+        steps.push(gambling ? `gambling: detected (${gambling})` : 'gambling: none detected');
+        const gamblingProposals: Proposal[] =
+          place && gambling
+            ? [
+                {
+                  field: 'no_gambling',
+                  value: false,
+                  sourceUrl: place.url ?? MAPS_FALLBACK_URL,
+                  evidence: {
+                    matched_category: gambling,
+                    maps_category: mapsCategory,
+                    source_platform: 'google_maps',
+                  },
+                },
+              ]
+            : [];
         const indicator = place ? mapsAlcoholIndicator(place) : null;
         if (place && indicator) {
           steps.push(`alcohol indicator (${indicator})`, 'menu skipped');
           await stageAll(
             provider,
             [
+              ...gamblingProposals,
               {
                 field: 'no_alcohol',
                 value: false,
@@ -268,6 +308,7 @@ export async function runHalalCompliance(deps: {
           if (apply) await store.markScreened(provider.provider_id);
           continue;
         }
+        await stageAll(provider, gamblingProposals, outcomes);
         links = await store.loadDeliveryLinks(provider);
       } else {
         steps.push('maps: skipped (links held)');
@@ -328,7 +369,8 @@ export async function runHalalCompliance(deps: {
     outcomes: string[],
   ): Promise<void> {
     for (const { field, value, sourceUrl, evidence } of proposals) {
-      const current = provider[field];
+      // no_gambling defaults to false in the DB, so a stored false says nothing about screening.
+      const current = field === 'no_gambling' ? null : provider[field];
       const label = `${field}=${value}`;
       if (current === value) {
         outcomes.push(`skip ${label} (already set)`);
