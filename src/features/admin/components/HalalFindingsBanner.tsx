@@ -39,10 +39,7 @@ export function HalalFindingsBanner({ providerId }: HalalFindingsBannerProps) {
       role="status"
     >
       <span>{t('adminHalalEdit.findingsBanner.text')}</span>
-      <Link
-        className="font-medium underline"
-        href={`/dashboard/providers/${providerId}/edit/enrichment`}
-      >
+      <Link className="font-medium underline" href="/dashboard/halal-review">
         {t('adminHalalEdit.findingsBanner.link')}
       </Link>
     </div>

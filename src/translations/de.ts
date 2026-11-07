@@ -1439,6 +1439,22 @@ export const de = {
     error: 'Die Prüfergebnisse konnten nicht geladen werden.',
   },
   // Plan 255 (#415): admin halal edit sub-page
+  halalReview: {
+    title: 'Halal-Prüfung',
+    loading: 'Wird geladen...',
+    loadError: 'Die Halal-Prüfwarteschlange konnte nicht geladen werden.',
+    empty: 'Keine Anbieter warten auf die Halal-Prüfung.',
+    mapsMatch: 'Google-Maps-Treffer',
+    openMaps: 'In Google Maps öffnen',
+    deliveryLinks: 'Lieferlinks',
+    flaggedItems: 'Markierte Speisekarteneinträge',
+    none: 'Nichts gefunden',
+    noAlcohol: 'Kein Alkohol im Angebot?',
+    noPork: 'Kein Schweinefleisch im Angebot?',
+    noGambling: 'Kein Glücksspiel?',
+    confirm: 'Bestätigen',
+    confirmError: 'Speichern fehlgeschlagen. Bitte erneut versuchen.',
+  },
   adminHalalEdit: {
     title: 'Halal Check',
     uploading: 'Wird hochgeladen...',

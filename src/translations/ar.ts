@@ -1408,6 +1408,22 @@ export const ar = {
   },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
+  halalReview: {
+    title: 'مراجعة الحلال',
+    loading: 'جارٍ التحميل...',
+    loadError: 'تعذّر تحميل قائمة مراجعة الحلال.',
+    empty: 'لا يوجد مزودون بانتظار مراجعة الحلال.',
+    mapsMatch: 'نتيجة خرائط جوجل',
+    openMaps: 'افتح في خرائط جوجل',
+    deliveryLinks: 'روابط التوصيل',
+    flaggedItems: 'عناصر القائمة المُعلَّمة',
+    none: 'لم يتم العثور على شيء',
+    noAlcohol: 'لا يُباع الكحول؟',
+    noPork: 'لا يُباع لحم الخنزير؟',
+    noGambling: 'لا قمار؟',
+    confirm: 'تأكيد',
+    confirmError: 'تعذّر الحفظ. حاول مرة أخرى.',
+  },
   adminHalalEdit: {
     title: 'فحص الحلال',
     uploading: 'جارٍ التحميل…',

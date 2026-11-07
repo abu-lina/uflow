@@ -41,11 +41,11 @@ describe('HalalFindingsBanner (#841)', () => {
     expect(await screen.findByText('adminHalalEdit.findingsBanner.text')).toBeTruthy();
   });
 
-  it('links to the enrichment tab', async () => {
+  it('links to the halal review queue (#863)', async () => {
     respond([{ id: 'c1', field_name: 'no_pork' }]);
     render(<HalalFindingsBanner providerId="p1" />);
     const link = await screen.findByRole('link');
-    expect(link.getAttribute('href')).toBe('/dashboard/providers/p1/edit/enrichment');
+    expect(link.getAttribute('href')).toBe('/dashboard/halal-review');
   });
 
   it('does not appear when no pending halal candidates exist', async () => {

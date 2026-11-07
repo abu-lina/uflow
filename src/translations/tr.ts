@@ -1427,6 +1427,22 @@ export const tr = {
   },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
+  halalReview: {
+    title: 'Helal İnceleme',
+    loading: 'Yükleniyor...',
+    loadError: 'Helal inceleme kuyruğu yüklenemedi.',
+    empty: 'Helal incelemesi bekleyen sağlayıcı yok.',
+    mapsMatch: 'Google Haritalar eşleşmesi',
+    openMaps: "Google Haritalar'da aç",
+    deliveryLinks: 'Teslimat bağlantıları',
+    flaggedItems: 'İşaretlenen menü öğeleri',
+    none: 'Bulunamadı',
+    noAlcohol: 'Alkol satılmıyor mu?',
+    noPork: 'Domuz eti satılmıyor mu?',
+    noGambling: 'Kumar yok mu?',
+    confirm: 'Onayla',
+    confirmError: 'Kaydedilemedi. Tekrar deneyin.',
+  },
   adminHalalEdit: {
     title: 'Helal kontrolü',
     uploading: 'Yükleniyor…',
