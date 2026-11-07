@@ -12,6 +12,38 @@ Foreman + crew. One GitHub issue = one worktree = one agent = one PR. Parallel w
 
 If none of these apply (an ad-hoc session in the main checkout), you still follow every rule below.
 
+## Rex coordination lifecycle
+
+Rex is the terminal coordinator. When `$REX_SESSION` is set, every task goes through Rex — task inception through merge. Never run the full flow serially in one session.
+
+**Check first:** `echo $REX_SESSION` — if empty, Rex is not live; fall back to serial steps and tell the user.
+
+### At task inception
+
+When the user raises a bug, issue number, or feature request and you are in the main checkout:
+
+1. Create the worktree: `scripts/lane start <issue> <slug>` (or `lane <issue> <slug>` if the shell functions are loaded).
+2. Open a worker pane in that worktree:
+   ```bash
+   rex split -s "$REX_SESSION" --split=right -- bash -c "cd .worktrees/<issue>-<slug> && claude"
+   ```
+   Or dispatch via the Agent tool scoped to `.worktrees/<issue>-<slug>/` — either works.
+3. Stay as foreman. Never write code or edit source in this session.
+
+Do not write code here and then ask for review. The worker writes; the foreman coordinates.
+
+### At task completion
+
+When the worker confirms the branch is ready, or the user says "looks good on localhost":
+
+1. Dispatch a `code-reviewer` subagent (Agent tool, fresh context) scoped to the diff — not inline in this session.
+2. Open a CI monitor pane:
+   ```bash
+   rex split -s "$REX_SESSION" --split=bottom -- bash -c "gh run watch --exit-status"
+   ```
+3. Wait for both. Merge only when review is clean **and** CI passes.
+4. Report in one message: "merged ✓" or a blockers list. Nothing else.
+
 ## Skills
 
 See `docs/agents/skills.md` — full stage-to-skill mapping, install commands, and auto vs. on-demand triggers. That file is synced from the template repo so it stays current across all projects.
@@ -155,10 +187,19 @@ Applies to chat replies, docs, issues, PR descriptions.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Foreman config
+
+- **GitHub repo:** `abu-lina/uflow`
+- **Lane script:** `scripts/lane start <issue> <slug>`
+- **Skill buckets:** see `docs/agents/skills.md`
+- **Project-specific auto-skills:** `supabase` + `supabase-postgres-best-practices` (all backend lanes); `next-intl` patterns for `area:i18n`
+- **Issue labels:** see `docs/agents/triage-labels.md`
+- **Max parallel lanes:** 3 (no shared `area:*` labels)
