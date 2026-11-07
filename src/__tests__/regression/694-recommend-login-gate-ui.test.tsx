@@ -97,7 +97,7 @@ describe('#694 AC3: after login from the gate the user returns to /create/recomm
 
 describe('#694 AC6: recommend subpaths show the LoginGate to anonymous users', () => {
   it.each([
-    ['/create/recommend/category', SelectCategoryPage, 'create.category.searchCategories'],
+    // category is public (RLS USING true) — no gate; see #868
     ['/create/recommend/offers', SelectOffersPage, 'create.offers.searchPlaceholder'],
   ] as const)('%s renders the login-required screen', (path, Page, formMarker) => {
     render(<Page />);
