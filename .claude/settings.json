@@ -55,5 +55,8 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": ["Bash(pnpm exec tsc --noEmit *)", "mcp__atlassian__getJiraIssue"]
   }
 }
