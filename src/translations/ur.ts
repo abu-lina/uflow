@@ -1435,6 +1435,7 @@ export const ur = {
     title: 'Provider Review',
     loading: 'Loading review queue...',
     loadError: 'Could not load the provider review queue.',
+    emptyTitle: 'سب ہو گیا!',
     empty: 'No providers ready for review.',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',

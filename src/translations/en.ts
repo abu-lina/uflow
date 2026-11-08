@@ -1423,6 +1423,7 @@ export const en = {
     title: 'Provider Review',
     loading: 'Loading review queue...',
     loadError: 'Could not load the provider review queue.',
+    emptyTitle: 'All caught up!',
     empty: 'No providers ready for review.',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',

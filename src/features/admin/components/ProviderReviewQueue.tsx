@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Icon } from '@iconify/react';
 
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -155,12 +156,29 @@ export function ProviderReviewQueue() {
     );
   if (items === null)
     return (
-      <p className="text-sm text-content-muted" role="status">
-        {t('providerReview.loading')}
-      </p>
+      <div
+        aria-label={t('providerReview.loading')}
+        className="mx-auto max-w-4xl space-y-3"
+        role="status"
+      >
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="h-14 animate-pulse rounded-xl border border-neutral-200 bg-neutral-100"
+          />
+        ))}
+      </div>
     );
   if (items.length === 0)
-    return <p className="text-sm text-content-muted">{t('providerReview.empty')}</p>;
+    return (
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <Icon className="h-12 w-12 text-green-400" icon="material-symbols:check-circle-outline" />
+        <p className="font-inter-tight text-base font-semibold text-content-heading">
+          {t('providerReview.emptyTitle')}
+        </p>
+        <p className="text-sm text-content-muted">{t('providerReview.empty')}</p>
+      </div>
+    );
 
   return (
     <div className="mx-auto max-w-4xl space-y-3">
@@ -204,6 +222,14 @@ export function ProviderReviewQueue() {
                 >
                   {t(`adminScreening.status.${item.screening_status ?? 'clear'}`)}
                 </span>
+                <Icon
+                  className="ml-1 h-5 w-5 shrink-0 text-content-muted"
+                  icon={
+                    expanded
+                      ? 'material-symbols:keyboard-arrow-up'
+                      : 'material-symbols:keyboard-arrow-down'
+                  }
+                />
               </button>
 
               {/* Expanded detail */}

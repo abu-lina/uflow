@@ -15,6 +15,7 @@ export default function ProviderReviewPage() {
 
   return (
     <div className="h-screen-fix flex flex-col">
+      {/* Mobile header */}
       <PageHeader
         className="md:hidden"
         scrollContainerRef={scrollRef}
@@ -22,7 +23,8 @@ export default function ProviderReviewPage() {
         variant="back-and-title"
         onBack={() => router.push('/dashboard')}
       />
-      <div className="hidden md:flex md:items-center md:gap-2 md:px-6 md:py-4">
+      {/* Desktop title row — outside main so it doesn't scroll away */}
+      <div className="hidden md:flex md:items-center md:gap-2 md:px-8 md:pb-4 md:pt-[calc(var(--desktop-header-height,153px)+8px)]">
         <button
           className="text-content-secondary hover:text-content-heading"
           type="button"
@@ -34,7 +36,10 @@ export default function ProviderReviewPage() {
           {t('providerReview.title')}
         </h1>
       </div>
-      <main ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 pt-24 md:px-8 md:pt-6">
+      <main
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-4 pb-6 pt-24 md:px-8 md:pb-8 md:pt-0"
+      >
         <ProviderReviewQueue />
       </main>
     </div>

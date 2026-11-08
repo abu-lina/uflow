@@ -1432,6 +1432,7 @@ export const ps = {
     title: 'Provider Review',
     loading: 'Loading review queue...',
     loadError: 'Could not load the provider review queue.',
+    emptyTitle: 'ټول بشپړ شو!',
     empty: 'No providers ready for review.',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',

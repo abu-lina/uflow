@@ -1447,6 +1447,7 @@ export const de = {
     title: 'Provider Review',
     loading: 'Loading review queue...',
     loadError: 'Could not load the provider review queue.',
+    emptyTitle: 'Alles erledigt!',
     empty: 'No providers ready for review.',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',

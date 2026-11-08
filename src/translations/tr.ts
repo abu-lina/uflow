@@ -1435,6 +1435,7 @@ export const tr = {
     title: 'Provider Review',
     loading: 'Loading review queue...',
     loadError: 'Could not load the provider review queue.',
+    emptyTitle: 'Hepsi tamamlandı!',
     empty: 'No providers ready for review.',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',
