@@ -55,14 +55,15 @@ PO verifies on localhost. Any positive reply ("looks good", "ship it", "yes", "a
 
 ## Review (Stage 5)
 
-| When                                      | Skill                                    | Notes                                                                       |
-| ----------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------- |
-| Every PR (runs first)                     | `pm-ai-shipping:intended-vs-implemented` | Auto. Did the lane build what the issue asked?                              |
-| Every PR                                  | `impeccable`                             | Auto. Code quality pass.                                                    |
-| Every PR                                  | `mattpocock-skills:code-review`          | Auto. Standards + spec, two-axis.                                           |
-| PRs touching auth, payments, or user data | `security-audit`                         | Auto, scoped. Run in addition to the above.                                 |
-| Frontend / UI lanes                       | `ui-taste`                               | Auto for `area:ui`, `area:map`, `area:dashboard`. Aesthetic and UX quality. |
-| Frontend / UI lanes                       | `impeccable:impeccable-finish-reviewer`  | Auto for Frontend lanes. Correctness and completeness.                      |
+| When                  | Skill                                    | Notes                                                                       |
+| --------------------- | ---------------------------------------- | --------------------------------------------------------------------------- |
+| Every PR (runs first) | `pm-ai-shipping:intended-vs-implemented` | Auto. Did the lane build what the issue asked?                              |
+| Every PR              | `impeccable`                             | Auto. Code quality pass.                                                    |
+| Every PR              | `mattpocock-skills:code-review`          | Auto. Standards + spec, two-axis.                                           |
+| Every PR              | `security-audit`                         | Auto. Run in addition to the above.                                         |
+| Every PR              | `pm-ai-shipping:security-audit-static`   | Static security analysis — runs alongside security-audit                    |
+| Frontend / UI lanes   | `ui-taste`                               | Auto for `area:ui`, `area:map`, `area:dashboard`. Aesthetic and UX quality. |
+| Frontend / UI lanes   | `impeccable:impeccable-finish-reviewer`  | Auto for Frontend lanes. Correctness and completeness.                      |
 
 Dispatch all reviewers in parallel as subagents (Agent tool, fresh context, scoped to the diff). Wait for all results before opening the PR.
 

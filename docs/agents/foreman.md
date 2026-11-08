@@ -29,14 +29,6 @@ The foreman handles every mechanical step — from idea detection through auto-m
 
 3. Confirm you have `gh` authenticated to the correct repo.
 
-## Start a session
-
-```bash
-foreman [copilot|devin] [model|reasoning-effort]
-```
-
-The default is Devin on `claude-opus-5-5-high`; its prompt includes the Herdr skill from `herdr --skill`. Pass a model or reasoning effort as the second argument: `foreman copilot high` or `foreman devin claude-opus-5-5-high`.
-
 ## Stage 0 — Idea detection
 
 **Trigger:** PO describes something in chat in the main checkout.
@@ -52,7 +44,7 @@ The default is Devin on `claude-opus-5-5-high`; its prompt includes the Herdr sk
 
 **Skills:** `grill-with-docs` (= `grilling` + `mattpocock-skills:domain-modeling`), `superpowers:brainstorming`, `pm-execution:job-stories` or `pm-execution:write-stories`
 
-**Conditional (P0/P1 or area:auth/area:data):** `pm-execution:pre-mortem`, `pm-execution:test-scenarios`
+**Conditional (P0/P1 or area:auth/area:db):** `pm-execution:pre-mortem`, `pm-execution:test-scenarios`
 
 1. Auto-trigger `grill-with-docs` — relentless interview until frontier is empty.
 2. `superpowers:brainstorming` for exploring approaches during shaping.
@@ -63,11 +55,13 @@ The default is Devin on `claude-opus-5-5-high`; its prompt includes the Herdr sk
    - User-facing features → `pm-execution:job-stories`
    - Internal/infra → `pm-execution:write-stories`
    - No PRD unless PO explicitly requests one
-5. For P0/P1 or area:auth/area:data: run `pm-execution:pre-mortem` + `pm-execution:test-scenarios` before issue creation.
+5. For P0/P1 or area:auth/area:db: run `pm-execution:pre-mortem` + `pm-execution:test-scenarios` before issue creation.
 6. Apply labels: `ready`, `P<n>`, `area:<x>`, `type:<x>`.
 7. `gh issue create` with final ACs in body.
 
 ## Stage 2 — Lane start
+
+**No direct edits.** The foreman never edits files directly. All implementation — including doc fixes and chores — goes through `scripts/lane start <issue> <slug>` first. File reads for triage or status are fine.
 
 **Skills:** `mattpocock-skills:writing-for-agents`, `superpowers:writing-plans` (conditional)
 
@@ -98,7 +92,7 @@ The lane runs independently:
 5. When complete: lane runs `superpowers:finishing-a-development-branch` + `superpowers:verification-before-completion` (type-check, lint, vitest, build).
 6. Lane fires `handoff` skill → structured signal to foreman.
 
-**Foreman during implementation:** watch all active panes via Rex for block signals. Use issue comments as the primary record of lane decisions and progress. Never interrupt a lane that is running cleanly.
+**Foreman during implementation:** watch all active panes via Rex for block signals. Never interrupt a lane that is running cleanly.
 
 ## Stage 4 — Checkpoint
 
@@ -142,14 +136,15 @@ If code review forces a fix:
 
 1. Open PR (draft if still fixing, ready when clean):
    ```bash
-   gh pr create --title "..." --body "Closes #<issue>\n\n<summary>" --draft
+   gh pr create --title "..." --body "Closes #<issue>
+   ```
+
+<summary>" --draft
    ```
 2. Set auto-merge immediately:
-
    ```bash
    gh pr merge --auto --squash
    ```
-
    GitHub merges when all required status checks pass. No agent stays alive to watch.
 
 3. **On merge event:** foreman auto-rebases all other active lanes:
@@ -176,18 +171,6 @@ If code review forces a fix:
 - Format: rule + **Why:** + **How to apply:**
 
 Include the learning sentence in the PR body and final issue comment.
-
-The lane's learning file lands in its PR. The foreman edits no files after merge.
-
-## Command mapping
-
-| Task                   | Command                                                                       |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| Lane status            | `scripts/lane status`                                                         |
-| Reading a lane         | Rex pane output or `gh issue comment <issue>`                                 |
-| Sending keys to a lane | `rex send-keys -b <pane> <key>` or `herdr agent send-keys lane-<issue> <key>` |
-| Starting a lane        | `scripts/lane start <issue> <slug>`                                           |
-| Cleaning up a lane     | `scripts/lane done <issue>`                                                   |
 
 ## Parallel lanes
 
