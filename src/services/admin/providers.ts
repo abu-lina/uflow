@@ -142,7 +142,7 @@ export async function getReadyForReviewProviders(
     'user_created_id',
     'last_enriched_at',
     'provider_screenings!inner(status, flags)',
-    'enrichment_candidates(platform, url, status)',
+    'enrichment_candidates(field_name, proposed_value, source_url, status)',
   ].join(', ');
 
   const { data, error } = await supabase
@@ -150,7 +150,6 @@ export async function getReadyForReviewProviders(
     .select(fields)
     .eq('review_status', 'pending')
     .not('last_enriched_at', 'is', null)
-    .filter('enrichment_candidates.status', 'neq', 'pending')
     .order('created_at', { ascending: false })
     .range(pagination.offset, pagination.offset + pagination.limit - 1);
 
@@ -158,27 +157,45 @@ export async function getReadyForReviewProviders(
     throw new Error(`Failed to fetch review queue: ${error.message}`);
   }
 
+  // Count: omit enrichment filter — slight over-count is acceptable and avoids a subquery.
   const { count, error: countError } = await supabase
     .from('providers')
     .select('*', { count: 'exact', head: true })
     .eq('review_status', 'pending')
-    .not('last_enriched_at', 'is', null)
-    .filter('enrichment_candidates.status', 'neq', 'pending');
+    .not('last_enriched_at', 'is', null);
 
   if (countError) {
     console.error('Error fetching review queue count:', countError);
   }
 
+  const PLATFORM_LABELS: Record<string, string> = {
+    wolt_url: 'Wolt',
+    ubereats_url: 'Uber Eats',
+    google_place_url: 'Google Places',
+    website: 'Website',
+  };
+
+  function platformLabel(fieldName: string): string {
+    if (PLATFORM_LABELS[fieldName]) return PLATFORM_LABELS[fieldName];
+    // Generic: strip _url suffix and capitalise first letter
+    return fieldName.replace(/_url$/, '').replace(/^./, (c) => c.toUpperCase());
+  }
+
   const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
-  const mapped: ReadyForReviewProvider[] = rows.map((row) => {
+  const mapped = rows.map((row) => {
     const screenings =
       (row.provider_screenings as Array<{ status: string; flags: unknown[] }> | null) ?? [];
     const candidates =
       (row.enrichment_candidates as Array<{
-        platform: string;
-        url: string;
+        field_name: string;
+        proposed_value: unknown;
+        source_url: string | null;
         status: string;
       }> | null) ?? [];
+
+    // Exclude providers that still have pending enrichment candidates
+    // (PostgREST filter on a join doesn't exclude the parent row, so filter client-side)
+    if (candidates.some((c) => c.status === 'pending')) return null;
 
     // Derive worst screening status across all screening rows
     const statuses = screenings.map((s) => s.status);
@@ -192,10 +209,11 @@ export async function getReadyForReviewProviders(
     );
 
     const appliedLinks = candidates
-      .filter((c) => c.status === 'applied' || c.status === 'auto-applied')
-      .map((c) => ({ platform: c.platform, url: c.url }));
-
-    const halalPending = candidates.some((c) => c.status === 'pending');
+      .filter(
+        (c) =>
+          (c.status === 'applied' || c.status === 'auto-applied') && c.field_name.endsWith('_url'),
+      )
+      .map((c) => ({ platform: platformLabel(c.field_name), url: String(c.proposed_value) }));
 
     return {
       provider_id: row.provider_id as string,
@@ -213,12 +231,14 @@ export async function getReadyForReviewProviders(
       screening_status: screeningStatus,
       screening_flags: flags,
       enrichment_links: appliedLinks,
-      halal_pending: halalPending,
+      halal_pending: false,
     };
   });
 
+  const filtered = mapped.filter((r): r is ReadyForReviewProvider => r !== null);
+
   return {
-    data: mapped,
+    data: filtered,
     pagination: {
       total: count ?? 0,
       limit: pagination.limit,

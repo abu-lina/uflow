@@ -2,18 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { getReadyForReviewProviders } from '../providers';
 
-// Mock chained Supabase query builder
 const mockRange = vi.fn();
 const mockOrder = vi.fn();
 const mockNot = vi.fn();
-const mockFilter = vi.fn();
 const mockEq = vi.fn();
 const mockSelect = vi.fn();
 const mockFrom = vi.fn();
 const mockCountSelect = vi.fn();
 const mockCountEq = vi.fn();
 const mockCountNot = vi.fn();
-const mockCountFilter = vi.fn();
 
 vi.mock('@/lib/supabase/admin', () => ({
   getSupabaseAdmin: () => ({
@@ -26,21 +23,18 @@ describe('getReadyForReviewProviders', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // List query chain: .select().eq().not().filter().order().range()
+    // List query: .select().eq().not().order().range()
     mockRange.mockResolvedValue({ data: null, error: null });
     mockOrder.mockReturnValue({ range: mockRange });
-    mockFilter.mockReturnValue({ order: mockOrder });
-    mockNot.mockReturnValue({ filter: mockFilter });
+    mockNot.mockReturnValue({ order: mockOrder });
     mockEq.mockReturnValue({ not: mockNot });
     mockSelect.mockReturnValue({ eq: mockEq });
 
-    // Count query chain: .select().eq().not().filter()
-    mockCountFilter.mockResolvedValue({ count: null, error: null });
-    mockCountNot.mockReturnValue({ filter: mockCountFilter });
+    // Count query: .select().eq().not()
+    mockCountNot.mockResolvedValue({ count: null, error: null });
     mockCountEq.mockReturnValue({ not: mockCountNot });
     mockCountSelect.mockReturnValue({ eq: mockCountEq });
 
-    // from() returns different chains depending on call order
     let callCount = 0;
     mockFrom.mockImplementation(() => {
       callCount++;
@@ -59,7 +53,7 @@ describe('getReadyForReviewProviders', () => {
       enrichment_candidates: [],
     };
     mockRange.mockResolvedValue({ data: [rawRow], error: null });
-    mockCountFilter.mockResolvedValue({ count: 1, error: null });
+    mockCountNot.mockResolvedValue({ count: 1, error: null });
 
     const result = await getReadyForReviewProviders({ limit: 10, offset: 0 });
 
@@ -69,9 +63,68 @@ describe('getReadyForReviewProviders', () => {
     expect(result.pagination).toEqual({ total: 1, limit: 10, offset: 0, hasMore: false });
   });
 
+  it('filters out providers with pending enrichment_candidates client-side', async () => {
+    const rawRow = {
+      provider_id: 'p1',
+      provider_name: 'Halal Kitchen',
+      address_city: 'Berlin',
+      created_at: '2026-01-01T00:00:00Z',
+      review_status: 'pending',
+      provider_screenings: [{ status: 'clear', flags: [] }],
+      enrichment_candidates: [
+        {
+          field_name: 'wolt_url',
+          proposed_value: 'https://wolt.com/x',
+          source_url: null,
+          status: 'pending',
+        },
+      ],
+    };
+    mockRange.mockResolvedValue({ data: [rawRow], error: null });
+    mockCountNot.mockResolvedValue({ count: 1, error: null });
+
+    const result = await getReadyForReviewProviders({ limit: 10, offset: 0 });
+
+    expect(result.data).toEqual([]);
+  });
+
+  it('derives platform label and url from enrichment_candidates', async () => {
+    const rawRow = {
+      provider_id: 'p1',
+      provider_name: 'Halal Kitchen',
+      address_city: 'Berlin',
+      created_at: '2026-01-01T00:00:00Z',
+      review_status: 'pending',
+      provider_screenings: [{ status: 'clear', flags: [] }],
+      enrichment_candidates: [
+        {
+          field_name: 'wolt_url',
+          proposed_value: 'https://wolt.com/x',
+          source_url: null,
+          status: 'applied',
+        },
+        {
+          field_name: 'ubereats_url',
+          proposed_value: 'https://ue.com/y',
+          source_url: null,
+          status: 'auto-applied',
+        },
+      ],
+    };
+    mockRange.mockResolvedValue({ data: [rawRow], error: null });
+    mockCountNot.mockResolvedValue({ count: 1, error: null });
+
+    const result = await getReadyForReviewProviders({ limit: 10, offset: 0 });
+
+    expect(result.data[0].enrichment_links).toEqual([
+      { platform: 'Wolt', url: 'https://wolt.com/x' },
+      { platform: 'Uber Eats', url: 'https://ue.com/y' },
+    ]);
+  });
+
   it('returns empty list when no providers are ready', async () => {
     mockRange.mockResolvedValue({ data: [], error: null });
-    mockCountFilter.mockResolvedValue({ count: 0, error: null });
+    mockCountNot.mockResolvedValue({ count: 0, error: null });
 
     const result = await getReadyForReviewProviders({ limit: 10, offset: 0 });
 
@@ -89,8 +142,17 @@ describe('getReadyForReviewProviders', () => {
   });
 
   it('calculates hasMore correctly', async () => {
-    mockRange.mockResolvedValue({ data: Array(10).fill({}), error: null });
-    mockCountFilter.mockResolvedValue({ count: 25, error: null });
+    const rows = Array(10).fill({
+      provider_id: 'x',
+      provider_name: 'x',
+      address_city: null,
+      created_at: '2026-01-01T00:00:00Z',
+      review_status: 'pending',
+      provider_screenings: [],
+      enrichment_candidates: [],
+    });
+    mockRange.mockResolvedValue({ data: rows, error: null });
+    mockCountNot.mockResolvedValue({ count: 25, error: null });
 
     const result = await getReadyForReviewProviders({ limit: 10, offset: 0 });
 
