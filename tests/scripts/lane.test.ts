@@ -1679,7 +1679,7 @@ describe('lane and foreman agent options', { timeout: spawnTestTimeoutMs }, () =
     const args = foremanStart(['copilot', 'xhigh']);
     expect(args[args.indexOf('--kind') + 1]).toBe('copilot');
     expect(optionValue(args, '--reasoning-effort')).toBe('xhigh');
-    expect(args).toContain('--no-remote');
+    expect(args).not.toContain('--no-remote');
   });
 
   it('passes a model name to a Copilot foreman', () => {
