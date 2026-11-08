@@ -11,6 +11,7 @@ import {
 } from '@/features/providers/pages/ProviderEditForm';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { HeaderSpacer } from '@/components/layout/HeaderSpacer';
+import { Button } from '@/components/ui/Button';
 import { DeleteProviderModal } from '@/features/admin/components/DeleteProviderModal';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { normalizeWebsiteUrl } from '@/utils/navigationUtils';
@@ -318,44 +319,44 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
               onChange={(e) => setActionBar((prev) => ({ ...prev, feedback: e.target.value }))}
             />
             <div className="flex gap-2">
-              <button
-                className="rounded bg-red-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+              <Button
                 disabled={actionBar.busy || !actionBar.feedback.trim()}
-                type="button"
+                size="sm"
+                variant="danger"
                 onClick={() => handleReview('rejected')}
               >
                 {t('providerReview.submitReject')}
-              </button>
-              <button
-                className="rounded border border-gray-300 px-4 py-1.5 text-sm text-gray-700"
-                type="button"
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
                 onClick={() =>
                   setActionBar((prev) => ({ ...prev, rejecting: false, feedback: '', error: null }))
                 }
               >
                 {t('common.cancel')}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
           <div className="flex gap-2">
-            <button
-              className="rounded bg-green-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            <Button
               disabled={actionBar.busy || hasPendingHalal}
+              size="sm"
               title={hasPendingHalal ? t('providerReview.halalGateTooltip') : undefined}
-              type="button"
+              variant="primary"
               onClick={() => handleReview('approved')}
             >
               {t('providerReview.approve')}
-            </button>
-            <button
-              className="rounded bg-red-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+            </Button>
+            <Button
               disabled={actionBar.busy}
-              type="button"
+              size="sm"
+              variant="danger"
               onClick={() => setActionBar((prev) => ({ ...prev, rejecting: true, error: null }))}
             >
               {t('providerReview.reject')}
-            </button>
+            </Button>
           </div>
         )}
       </div>

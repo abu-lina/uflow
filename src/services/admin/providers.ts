@@ -115,6 +115,27 @@ export interface ReadyForReviewProvider extends PendingProvider {
   last_enriched_at: string | null;
 }
 
+const PLATFORM_LABELS: Record<string, string> = {
+  wolt_url: 'Wolt',
+  ubereats_url: 'Uber Eats',
+  google_place_url: 'Google Places',
+  website: 'Website',
+};
+
+function platformLabel(fieldName: string): string {
+  if (PLATFORM_LABELS[fieldName]) return PLATFORM_LABELS[fieldName];
+  return fieldName.replace(/_url$/, '').replace(/^./, (c) => c.toUpperCase());
+}
+
+function extractUrl(proposed_value: unknown): string {
+  if (typeof proposed_value === 'string') return proposed_value;
+  try {
+    return JSON.parse(String(proposed_value)) as string;
+  } catch {
+    return String(proposed_value);
+  }
+}
+
 /**
  * Get providers ready for admin review:
  * - review_status = 'pending'
@@ -164,6 +185,8 @@ export async function getReadyForReviewProviders(
 
   if (screeningsRes.error)
     throw new Error(`Failed to fetch screenings: ${screeningsRes.error.message}`);
+  if (candidatesRes.error)
+    throw new Error(`Failed to fetch candidates: ${candidatesRes.error.message}`);
 
   const screeningsByProvider = new Map<string, Array<{ status: string; flags: unknown[] }>>();
   for (const s of screeningsRes.data ?? []) {
@@ -192,18 +215,6 @@ export async function getReadyForReviewProviders(
     candidatesByProvider.set(c.provider_id, arr);
   }
 
-  const PLATFORM_LABELS: Record<string, string> = {
-    wolt_url: 'Wolt',
-    ubereats_url: 'Uber Eats',
-    google_place_url: 'Google Places',
-    website: 'Website',
-  };
-
-  function platformLabel(fieldName: string): string {
-    if (PLATFORM_LABELS[fieldName]) return PLATFORM_LABELS[fieldName];
-    return fieldName.replace(/_url$/, '').replace(/^./, (c) => c.toUpperCase());
-  }
-
   const mapped = providerRows.map((row) => {
     const screenings = screeningsByProvider.get(row.provider_id) ?? [];
     const candidates = candidatesByProvider.get(row.provider_id) ?? [];
@@ -230,7 +241,7 @@ export async function getReadyForReviewProviders(
         (c) =>
           (c.status === 'applied' || c.status === 'auto-applied') && c.field_name.endsWith('_url'),
       )
-      .map((c) => ({ platform: platformLabel(c.field_name), url: String(c.proposed_value) }));
+      .map((c) => ({ platform: platformLabel(c.field_name), url: extractUrl(c.proposed_value) }));
 
     return {
       provider_id: row.provider_id as string,

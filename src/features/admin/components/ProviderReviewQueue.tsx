@@ -260,17 +260,21 @@ export function ProviderReviewQueue() {
                         {t('providerReview.enrichmentLinks')}
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        {item.enrichment_links.map((link, i) => (
-                          <a
-                            key={i}
-                            className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm text-primary underline hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2"
-                            href={link.url}
-                            rel="noopener noreferrer"
-                            target="_blank"
-                          >
-                            {link.platform}
-                          </a>
-                        ))}
+                        {item.enrichment_links.map((link, i) => {
+                          const href = safeHref(link.url);
+                          if (!href) return null;
+                          return (
+                            <a
+                              key={i}
+                              className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm text-primary underline hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2"
+                              href={href}
+                              rel="noopener noreferrer"
+                              target="_blank"
+                            >
+                              {link.platform}
+                            </a>
+                          );
+                        })}
                       </div>
                     </section>
                   )}
@@ -305,8 +309,8 @@ export function ProviderReviewQueue() {
                                 <Button
                                   size="sm"
                                   variant={
-                                    val === null && halalAnswers[item.provider_id] !== undefined
-                                      ? 'secondary'
+                                    val === null && key in (halalAnswers[item.provider_id] ?? {})
+                                      ? 'cancel'
                                       : 'secondary'
                                   }
                                   onClick={() => setAnswer(item.provider_id, key, null)}
@@ -334,9 +338,6 @@ export function ProviderReviewQueue() {
                       <Button
                         disabled={busy || !halalComplete}
                         size="sm"
-                        title={
-                          !halalComplete ? t('providerReview.approveRequiresHalal') : undefined
-                        }
                         variant="primary"
                         onClick={() => approve(item)}
                       >
