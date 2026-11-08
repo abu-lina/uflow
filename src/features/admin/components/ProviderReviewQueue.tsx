@@ -291,32 +291,28 @@ export function ProviderReviewQueue() {
                           return (
                             <li key={key} className="flex items-center justify-between gap-3">
                               <span className="text-sm text-content">{t(labelKey)}</span>
-                              <div className="flex flex-wrap gap-1">
-                                <Button
-                                  size="sm"
-                                  variant={val === true ? 'primary' : 'secondary'}
+                              <div className="flex shrink-0 gap-1">
+                                <button
+                                  className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === true ? 'bg-primary text-white' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
+                                  type="button"
                                   onClick={() => setAnswer(item.provider_id, key, true)}
                                 >
                                   {t('providerReview.halalAnswerYes')}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={val === false ? 'danger' : 'secondary'}
+                                </button>
+                                <button
+                                  className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === false ? 'bg-danger text-white' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
+                                  type="button"
                                   onClick={() => setAnswer(item.provider_id, key, false)}
                                 >
                                   {t('providerReview.halalAnswerNo')}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={
-                                    val === null && key in (halalAnswers[item.provider_id] ?? {})
-                                      ? 'cancel'
-                                      : 'secondary'
-                                  }
+                                </button>
+                                <button
+                                  className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === null && key in (halalAnswers[item.provider_id] ?? {}) ? 'bg-neutral-300 text-content' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
+                                  type="button"
                                   onClick={() => setAnswer(item.provider_id, key, null)}
                                 >
                                   {t('providerReview.halalAnswerUnsure')}
-                                </Button>
+                                </button>
                               </div>
                             </li>
                           );
