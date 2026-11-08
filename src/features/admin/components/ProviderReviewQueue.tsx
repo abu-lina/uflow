@@ -5,16 +5,13 @@ import { Icon } from '@iconify/react';
 
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
-import type { ReadyForReviewProvider } from '@/services/admin/providers';
-
-type PaginatedResponse = {
-  data: ReadyForReviewProvider[];
-  pagination: { total: number; limit: number; offset: number; hasMore: boolean };
-};
+import type { PaginatedResult, ReadyForReviewProvider } from '@/services/admin/providers';
 
 // Fix 3: sentinel string for explicit "not sure" selection
 type HalalAnswer = boolean | 'unsure' | null;
 type HalalAnswers = { no_alcohol: HalalAnswer; no_pork: HalalAnswer; no_gambling: HalalAnswer };
+
+const EMPTY_HALAL: HalalAnswers = { no_alcohol: null, no_pork: null, no_gambling: null };
 
 const STATUS_STYLES: Record<string, string> = {
   flagged: 'border-red-300 bg-red-50 text-red-900',
@@ -65,13 +62,11 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
   const [actionError, setActionError] = useState<{ id: string; msg: string } | null>(null);
   const [halalAnswers, setHalalAnswers] = useState<Record<string, HalalAnswers>>({});
 
-  const getAnswers = (id: string): HalalAnswers =>
-    halalAnswers[id] ?? { no_alcohol: null, no_pork: null, no_gambling: null };
-
+  // Fix 1: read from prev in setter to avoid stale closure
   const setAnswer = (id: string, field: keyof HalalAnswers, value: HalalAnswer) => {
     setHalalAnswers((prev) => ({
       ...prev,
-      [id]: { ...getAnswers(id), [field]: value },
+      [id]: { ...(prev[id] ?? EMPTY_HALAL), [field]: value },
     }));
   };
 
@@ -80,7 +75,7 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
       const params = new URLSearchParams({ limit: '50', offset: String(nextOffset) });
       const res = await fetch(`/api/admin/providers/review-queue?${params}`);
       if (!res.ok) throw new Error('load failed');
-      const json: PaginatedResponse = await res.json();
+      const json: PaginatedResult<ReadyForReviewProvider> = await res.json();
       setItems((prev) => (append ? [...(prev ?? []), ...json.data] : json.data));
       setHasMore(json.pagination.hasMore);
       setOffset(nextOffset + json.data.length);
@@ -93,9 +88,10 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
     load(0, false);
   }, [load]);
 
+  // Fix 1: inline lookup from halalAnswers state directly — no stale closure
   const approve = useCallback(
     async (item: ReadyForReviewProvider) => {
-      const answers = getAnswers(item.provider_id);
+      const answers = halalAnswers[item.provider_id] ?? EMPTY_HALAL;
       if (!allHalalAnswered(answers)) return;
       setBusyId(item.provider_id);
       setActionError(null);
@@ -126,7 +122,6 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
         setBusyId(null);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [halalAnswers],
   );
 
@@ -159,7 +154,6 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
     [rejectFeedback],
   );
 
-  // Fix 6: centered error state with retry
   if (loadFailed)
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center" role="alert">
@@ -180,7 +174,6 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
       </div>
     );
 
-  // Fix 4: structured skeleton rows
   if (items === null)
     return (
       <div
@@ -217,22 +210,23 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-3">
-      {/* Fix 1: desktop title inside the queue column for guaranteed alignment */}
+      {/* Desktop title inside the queue column for guaranteed alignment */}
       <div className="hidden md:flex md:items-center md:gap-2 md:pb-4">
-        <button
-          className="text-content-secondary hover:text-content-heading"
-          type="button"
-          onClick={onBack ?? undefined}
-        >
-          <Icon className="h-6 w-6" icon="material-symbols:chevron-left" />
-        </button>
+        {onBack && (
+          <button
+            className="text-content-secondary rounded-md p-1 hover:bg-neutral-100 hover:text-content-heading"
+            type="button"
+            onClick={onBack}
+          >
+            <Icon className="h-6 w-6" icon="material-symbols:chevron-left" />
+          </button>
+        )}
         <h1 className="font-inter-tight text-2xl font-semibold text-content-heading">
           {t('providerReview.title')}
         </h1>
-        {/* Fix 2: count right-aligned */}
         <span className="ml-auto text-sm text-content-muted">
           {items.length}
-          {hasMore ? '+' : ''} pending
+          {hasMore ? '+' : ''} {t('providerReview.pendingCount')}
         </span>
       </div>
 
@@ -240,10 +234,12 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
         {items.map((item) => {
           const expanded = expandedId === item.provider_id;
           const rejecting = rejectingId === item.provider_id;
-          const busy = busyId === item.provider_id;
+          // Fix 6: any in-flight action disables all rows' action buttons
+          const busy = busyId !== null;
+          const isBusyRow = busyId === item.provider_id;
           const err = actionError?.id === item.provider_id ? actionError.msg : null;
           const statusStyle = STATUS_STYLES[item.screening_status ?? ''] ?? STATUS_STYLES.clear;
-          const answers = getAnswers(item.provider_id);
+          const answers = halalAnswers[item.provider_id] ?? EMPTY_HALAL;
           const halalComplete = allHalalAnswered(answers);
 
           return (
@@ -292,7 +288,6 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
                   {/* Screening flags */}
                   {item.screening_flags.length > 0 && (
                     <section>
-                      {/* Fix 7: uppercase tracking-wide section label */}
                       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-content-muted">
                         {t('providerReview.screeningFlags')}
                       </h3>
@@ -313,7 +308,7 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
                                 )}
                               </div>
                               {flag.snippet && (
-                                <blockquote className="mt-1 break-words text-sm text-content-muted">
+                                <blockquote className="mt-1 break-words border-l-2 border-neutral-300 pl-3 text-sm text-content-muted">
                                   {flag.snippet}
                                 </blockquote>
                               )}
@@ -337,7 +332,6 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
                   {/* Applied enrichment links */}
                   {item.enrichment_links.length > 0 && (
                     <section>
-                      {/* Fix 7 */}
                       <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-content-muted">
                         {t('providerReview.enrichmentLinks')}
                       </h3>
@@ -363,7 +357,6 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
 
                   {/* Halal attestation */}
                   <section>
-                    {/* Fix 7 */}
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-content-muted">
                       {t('providerReview.halalAttestation')}
                     </h3>
@@ -373,25 +366,36 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
                           const val = answers[key];
                           return (
                             <li key={key} className="flex items-center justify-between gap-3">
+                              {/* Fix 7: radio group semantics */}
                               <span className="text-sm text-content">{t(labelKey)}</span>
-                              <div className="flex shrink-0 gap-1">
+                              <div
+                                aria-label={t(labelKey)}
+                                className="flex shrink-0 gap-1"
+                                role="radiogroup"
+                              >
                                 <button
+                                  aria-checked={val === true}
                                   className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === true ? 'bg-primary text-white' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
+                                  role="radio"
                                   type="button"
                                   onClick={() => setAnswer(item.provider_id, key, true)}
                                 >
                                   {t('providerReview.halalAnswerYes')}
                                 </button>
                                 <button
+                                  aria-checked={val === false}
                                   className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === false ? 'bg-danger text-white' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
+                                  role="radio"
                                   type="button"
                                   onClick={() => setAnswer(item.provider_id, key, false)}
                                 >
                                   {t('providerReview.halalAnswerNo')}
                                 </button>
-                                {/* Fix 3: 'unsure' sentinel makes active state unambiguous */}
+                                {/* Fix 10: distinct amber tint for Not sure active state */}
                                 <button
-                                  className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === 'unsure' ? 'bg-neutral-300 text-content' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
+                                  aria-checked={val === 'unsure'}
+                                  className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === 'unsure' ? 'border border-amber-400 bg-amber-100 text-amber-800' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
+                                  role="radio"
                                   type="button"
                                   onClick={() => setAnswer(item.provider_id, key, 'unsure')}
                                 >
@@ -405,7 +409,7 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
                     </div>
                   </section>
 
-                  {/* Fix 5: halal hint directly below attestation, above actions */}
+                  {/* Halal hint directly below attestation, above actions */}
                   {!halalComplete && (
                     <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                       {t('providerReview.approveRequiresHalal')}
@@ -428,7 +432,7 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
                         variant="primary"
                         onClick={() => approve(item)}
                       >
-                        {t('providerReview.approve')}
+                        {isBusyRow ? '…' : t('providerReview.approve')}
                       </Button>
                       <Button
                         disabled={busy}
@@ -444,8 +448,13 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
                     </div>
                   ) : (
                     <div className="space-y-2">
+                      {/* Fix 8: visible label for reject textarea */}
+                      <label className="sr-only" htmlFor={`reject-feedback-${item.provider_id}`}>
+                        {t('providerReview.rejectPlaceholder')}
+                      </label>
                       <textarea
                         className="w-full rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-sm text-content placeholder:text-content-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        id={`reject-feedback-${item.provider_id}`}
                         placeholder={t('providerReview.rejectPlaceholder')}
                         rows={3}
                         value={rejectFeedback}
@@ -458,9 +467,10 @@ export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
                           variant="danger"
                           onClick={() => submitReject(item)}
                         >
-                          {t('providerReview.submitReject')}
+                          {isBusyRow ? '…' : t('providerReview.submitReject')}
                         </Button>
                         <Button
+                          disabled={busy}
                           size="sm"
                           variant="secondary"
                           onClick={() => {

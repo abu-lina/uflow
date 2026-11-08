@@ -1437,6 +1437,7 @@ export const tr = {
     loadError: 'Could not load the provider review queue.',
     emptyTitle: 'Hepsi tamamlandı!',
     empty: 'No providers ready for review.',
+    pendingCount: 'bekliyor',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',
     halalPendingNote: 'This provider has pending halal findings.',

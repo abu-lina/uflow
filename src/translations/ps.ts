@@ -1434,6 +1434,7 @@ export const ps = {
     loadError: 'Could not load the provider review queue.',
     emptyTitle: 'ټول بشپړ شو!',
     empty: 'No providers ready for review.',
+    pendingCount: 'پاتې',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',
     halalPendingNote: 'This provider has pending halal findings.',

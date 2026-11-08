@@ -27,10 +27,10 @@ const provider = {
 };
 
 function answerAllHalal() {
-  // Yes/No/Yes for no_alcohol, no_pork, no_gambling
-  fireEvent.click(screen.getAllByRole('button', { name: 'providerReview.halalAnswerYes' })[0]);
-  fireEvent.click(screen.getAllByRole('button', { name: 'providerReview.halalAnswerNo' })[1]);
-  fireEvent.click(screen.getAllByRole('button', { name: 'providerReview.halalAnswerYes' })[2]);
+  // Yes/No/Yes for no_alcohol, no_pork, no_gambling (pills use role="radio")
+  fireEvent.click(screen.getAllByRole('radio', { name: 'providerReview.halalAnswerYes' })[0]);
+  fireEvent.click(screen.getAllByRole('radio', { name: 'providerReview.halalAnswerNo' })[1]);
+  fireEvent.click(screen.getAllByRole('radio', { name: 'providerReview.halalAnswerYes' })[2]);
 }
 
 beforeEach(() => {

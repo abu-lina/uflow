@@ -1425,6 +1425,7 @@ export const en = {
     loadError: 'Could not load the provider review queue.',
     emptyTitle: 'All caught up!',
     empty: 'No providers ready for review.',
+    pendingCount: 'pending',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',
     halalPendingNote: 'This provider has pending halal findings.',

@@ -5,6 +5,7 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { sanitizeTextInput } from '@/utils/sanitizeInput';
+import { logger } from '@/lib/logging/structuredLogger';
 import type { AdminProviderWithExtensions } from '@/types/adminProvider';
 import type { Provider as CanonicalProvider } from '@/services/providers';
 
@@ -84,8 +85,9 @@ export async function getPendingProviders(
     .eq('review_status', status);
 
   if (countError) {
-    // Log but don't fail - count is not critical
-    console.error('Error fetching provider count:', countError);
+    logger.error('providers: count query failed (non-critical)', undefined, {
+      error: countError.message,
+    });
   }
 
   return {
@@ -101,8 +103,9 @@ export async function getPendingProviders(
 
 /**
  * Extend PendingProvider with fields needed in the review queue.
+ * contact_email omitted — not rendered in queue, avoid PII over-exposure.
  */
-export interface ReadyForReviewProvider extends PendingProvider {
+export interface ReadyForReviewProvider extends Omit<PendingProvider, 'contact_email'> {
   screening_status: 'clear' | 'review' | 'flagged' | null;
   screening_flags: Array<{
     code: string;
@@ -123,16 +126,17 @@ const PLATFORM_LABELS: Record<string, string> = {
 };
 
 function platformLabel(fieldName: string): string {
-  if (PLATFORM_LABELS[fieldName]) return PLATFORM_LABELS[fieldName];
+  if (fieldName in PLATFORM_LABELS) return PLATFORM_LABELS[fieldName];
   return fieldName.replace(/_url$/, '').replace(/^./, (c) => c.toUpperCase());
 }
 
-function extractUrl(proposed_value: unknown): string {
+function extractUrl(proposed_value: unknown): string | null {
   if (typeof proposed_value === 'string') return proposed_value;
   try {
-    return JSON.parse(String(proposed_value)) as string;
+    const parsed = JSON.parse(String(proposed_value));
+    return typeof parsed === 'string' ? parsed : null;
   } catch {
-    return String(proposed_value);
+    return null;
   }
 }
 
@@ -149,13 +153,15 @@ export async function getReadyForReviewProviders(
   const supabase = getSupabaseAdmin();
 
   // Step 1: fetch pending+enriched providers (no join — avoids schema cache issues)
+  // shortcut: full-table fetch before JS filter; replace with DB-side EXISTS subquery at scale
   const { data: providerRows, error } = await supabase
     .from('providers')
     .select(
-      'provider_id, provider_name, provider_images, category_id, address_city, contact_email, review_status, review_feedback, created_at, updated_at, user_created_id, last_enriched_at',
+      'provider_id, provider_name, provider_images, category_id, address_city, review_status, review_feedback, created_at, updated_at, user_created_id, last_enriched_at',
     )
     .eq('review_status', 'pending')
     .not('last_enriched_at', 'is', null)
+    .range(0, 999)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -241,7 +247,10 @@ export async function getReadyForReviewProviders(
         (c) =>
           (c.status === 'applied' || c.status === 'auto-applied') && c.field_name.endsWith('_url'),
       )
-      .map((c) => ({ platform: platformLabel(c.field_name), url: extractUrl(c.proposed_value) }));
+      .flatMap((c) => {
+        const url = extractUrl(c.proposed_value);
+        return url ? [{ platform: platformLabel(c.field_name), url }] : [];
+      });
 
     return {
       provider_id: row.provider_id as string,
@@ -249,7 +258,6 @@ export async function getReadyForReviewProviders(
       provider_images: row.provider_images as string | null,
       category_id: row.category_id as string | null,
       address_city: row.address_city as string | null,
-      contact_email: row.contact_email as string | null,
       review_status: row.review_status as PendingProvider['review_status'],
       review_feedback: row.review_feedback as string | null,
       created_at: row.created_at as string,

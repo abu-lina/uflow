@@ -1437,6 +1437,7 @@ export const ur = {
     loadError: 'Could not load the provider review queue.',
     emptyTitle: 'سب ہو گیا!',
     empty: 'No providers ready for review.',
+    pendingCount: 'زیر التواء',
     screeningFlags: 'Screening flags',
     enrichmentLinks: 'Enrichment links',
     halalPendingNote: 'This provider has pending halal findings.',
