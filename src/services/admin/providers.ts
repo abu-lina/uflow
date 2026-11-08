@@ -112,7 +112,6 @@ export interface ReadyForReviewProvider extends PendingProvider {
     source: string;
   }>;
   enrichment_links: Array<{ platform: string; url: string }>;
-  halal_pending: boolean;
   last_enriched_at: string | null;
 }
 
@@ -249,7 +248,6 @@ export async function getReadyForReviewProviders(
       screening_status: screeningStatus,
       screening_flags: flags,
       enrichment_links: appliedLinks,
-      halal_pending: false,
     };
   });
 

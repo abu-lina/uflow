@@ -24,8 +24,14 @@ const provider = {
   screening_status: 'clear',
   screening_flags: [],
   enrichment_links: [],
-  halal_pending: false,
 };
+
+function answerAllHalal() {
+  // Yes/No/Yes for no_alcohol, no_pork, no_gambling
+  fireEvent.click(screen.getAllByRole('button', { name: 'providerReview.halalAnswerYes' })[0]);
+  fireEvent.click(screen.getAllByRole('button', { name: 'providerReview.halalAnswerNo' })[1]);
+  fireEvent.click(screen.getAllByRole('button', { name: 'providerReview.halalAnswerYes' })[2]);
+}
 
 beforeEach(() => {
   fetchMock.mockReset();
@@ -67,17 +73,29 @@ describe('ProviderReviewQueue', () => {
     expect(screen.getByText('Berlin')).toBeTruthy();
   });
 
-  it('expands a row on click to show approve and reject buttons', async () => {
+  it('expands a row on click to show halal attestation and approve/reject buttons', async () => {
     fetchMock.mockResolvedValue(
       json({ data: [provider], pagination: { total: 1, limit: 50, offset: 0, hasMore: false } }),
     );
     render(<ProviderReviewQueue />);
     fireEvent.click(await screen.findByRole('button', { name: /Halal Kitchen/i }));
+    expect(screen.getByText('providerReview.halalAttestation')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'providerReview.approve' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'providerReview.reject' })).toBeTruthy();
   });
 
-  it('removes row on approve success', async () => {
+  it('approve is disabled until all halal questions are answered', async () => {
+    fetchMock.mockResolvedValue(
+      json({ data: [provider], pagination: { total: 1, limit: 50, offset: 0, hasMore: false } }),
+    );
+    render(<ProviderReviewQueue />);
+    fireEvent.click(await screen.findByRole('button', { name: /Halal Kitchen/i }));
+
+    const approveBtn = screen.getByRole('button', { name: 'providerReview.approve' });
+    expect((approveBtn as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('removes row on approve success after answering all halal questions', async () => {
     fetchMock
       .mockResolvedValueOnce(
         json({ data: [provider], pagination: { total: 1, limit: 50, offset: 0, hasMore: false } }),
@@ -86,12 +104,18 @@ describe('ProviderReviewQueue', () => {
 
     render(<ProviderReviewQueue />);
     fireEvent.click(await screen.findByRole('button', { name: /Halal Kitchen/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'providerReview.approve' }));
+    answerAllHalal();
+
+    const approveBtn = screen.getByRole('button', { name: 'providerReview.approve' });
+    expect((approveBtn as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(approveBtn);
 
     await waitFor(() => expect(screen.queryByText('Halal Kitchen')).toBeNull());
     const [url, init] = fetchMock.mock.calls[1];
     expect(url).toBe('/api/admin/review-provider');
-    expect(JSON.parse(init.body)).toMatchObject({ providerId: 'p1', reviewStatus: 'approved' });
+    const body = JSON.parse(init.body);
+    expect(body).toMatchObject({ providerId: 'p1', reviewStatus: 'approved' });
+    expect(body.halal).toBeDefined();
   });
 
   it('reject requires feedback text before submitting', async () => {
@@ -102,11 +126,8 @@ describe('ProviderReviewQueue', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Halal Kitchen/i }));
     fireEvent.click(screen.getByRole('button', { name: 'providerReview.reject' }));
 
-    // Textarea should appear
     const textarea = screen.getByRole('textbox');
     expect(textarea).toBeTruthy();
-
-    // Submit button should be disabled when textarea is empty
     const submitBtn = screen.getByRole('button', { name: 'providerReview.submitReject' });
     expect((submitBtn as HTMLButtonElement).disabled).toBe(true);
   });

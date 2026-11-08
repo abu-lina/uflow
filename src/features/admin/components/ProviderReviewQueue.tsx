@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import Link from 'next/link';
-
 import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { ReadyForReviewProvider } from '@/services/admin/providers';
@@ -13,11 +11,24 @@ type PaginatedResponse = {
   pagination: { total: number; limit: number; offset: number; hasMore: boolean };
 };
 
+type HalalAnswer = boolean | null;
+type HalalAnswers = { no_alcohol: HalalAnswer; no_pork: HalalAnswer; no_gambling: HalalAnswer };
+
 const STATUS_STYLES: Record<string, string> = {
   flagged: 'border-red-300 bg-red-50 text-red-900',
   review: 'border-amber-300 bg-amber-50 text-amber-900',
   clear: 'border-green-300 bg-green-50 text-green-900',
 };
+
+const HALAL_FIELDS: { key: keyof HalalAnswers; labelKey: string }[] = [
+  { key: 'no_alcohol', labelKey: 'providerReview.noAlcohol' },
+  { key: 'no_pork', labelKey: 'providerReview.noPork' },
+  { key: 'no_gambling', labelKey: 'providerReview.noGambling' },
+];
+
+function allHalalAnswered(answers: HalalAnswers): boolean {
+  return answers.no_alcohol !== null && answers.no_pork !== null && answers.no_gambling !== null;
+}
 
 function safeHref(url: string): string | null {
   try {
@@ -40,6 +51,17 @@ export function ProviderReviewQueue() {
   const [rejectFeedback, setRejectFeedback] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; msg: string } | null>(null);
+  const [halalAnswers, setHalalAnswers] = useState<Record<string, HalalAnswers>>({});
+
+  const getAnswers = (id: string): HalalAnswers =>
+    halalAnswers[id] ?? { no_alcohol: null, no_pork: null, no_gambling: null };
+
+  const setAnswer = (id: string, field: keyof HalalAnswers, value: HalalAnswer) => {
+    setHalalAnswers((prev) => ({
+      ...prev,
+      [id]: { ...getAnswers(id), [field]: value },
+    }));
+  };
 
   const load = useCallback(async (nextOffset: number, append: boolean) => {
     try {
@@ -59,28 +81,42 @@ export function ProviderReviewQueue() {
     load(0, false);
   }, [load]);
 
-  const approve = useCallback(async (item: ReadyForReviewProvider) => {
-    setBusyId(item.provider_id);
-    setActionError(null);
-    try {
-      const res = await fetch('/api/admin/review-provider', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ providerId: item.provider_id, reviewStatus: 'approved' }),
-      });
-      if (res.status === 422) {
-        setActionError({ id: item.provider_id, msg: 'providerReview.halalGate' });
-        return;
+  const approve = useCallback(
+    async (item: ReadyForReviewProvider) => {
+      const answers = getAnswers(item.provider_id);
+      if (!allHalalAnswered(answers)) return;
+      setBusyId(item.provider_id);
+      setActionError(null);
+      try {
+        const res = await fetch('/api/admin/review-provider', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            providerId: item.provider_id,
+            reviewStatus: 'approved',
+            halal: {
+              noAlcohol: answers.no_alcohol,
+              noPork: answers.no_pork,
+              noGambling: answers.no_gambling,
+            },
+          }),
+        });
+        if (res.status === 422) {
+          setActionError({ id: item.provider_id, msg: 'providerReview.halalGate' });
+          return;
+        }
+        if (!res.ok) throw new Error('approve failed');
+        setItems((prev) => (prev ?? []).filter((i) => i.provider_id !== item.provider_id));
+        setExpandedId(null);
+      } catch {
+        setActionError({ id: item.provider_id, msg: 'providerReview.actionError' });
+      } finally {
+        setBusyId(null);
       }
-      if (!res.ok) throw new Error('approve failed');
-      setItems((prev) => (prev ?? []).filter((i) => i.provider_id !== item.provider_id));
-      setExpandedId(null);
-    } catch {
-      setActionError({ id: item.provider_id, msg: 'providerReview.actionError' });
-    } finally {
-      setBusyId(null);
-    }
-  }, []);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [halalAnswers],
+  );
 
   const submitReject = useCallback(
     async (item: ReadyForReviewProvider) => {
@@ -135,6 +171,8 @@ export function ProviderReviewQueue() {
           const busy = busyId === item.provider_id;
           const err = actionError?.id === item.provider_id ? actionError.msg : null;
           const statusStyle = STATUS_STYLES[item.screening_status ?? ''] ?? STATUS_STYLES.clear;
+          const answers = getAnswers(item.provider_id);
+          const halalComplete = allHalalAnswered(answers);
 
           return (
             <li
@@ -237,34 +275,68 @@ export function ProviderReviewQueue() {
                     </section>
                   )}
 
-                  {/* Halal gate warning */}
-                  {item.halal_pending && (
-                    <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                      {t('providerReview.halalPendingNote')}{' '}
-                      <Link className="underline" href="/dashboard/halal-review">
-                        {t('providerReview.halalReviewLink')}
-                      </Link>
-                    </p>
-                  )}
+                  {/* Halal attestation */}
+                  <section>
+                    <h3 className="mb-3 font-inter-tight text-sm font-semibold text-content-heading">
+                      {t('providerReview.halalAttestation')}
+                    </h3>
+                    <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                      <ul className="space-y-3">
+                        {HALAL_FIELDS.map(({ key, labelKey }) => {
+                          const val = answers[key];
+                          return (
+                            <li key={key} className="flex items-center justify-between gap-3">
+                              <span className="text-sm text-content">{t(labelKey)}</span>
+                              <div className="flex gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant={val === true ? 'primary' : 'secondary'}
+                                  onClick={() => setAnswer(item.provider_id, key, true)}
+                                >
+                                  {t('providerReview.halalAnswerYes')}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={val === false ? 'danger' : 'secondary'}
+                                  onClick={() => setAnswer(item.provider_id, key, false)}
+                                >
+                                  {t('providerReview.halalAnswerNo')}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={
+                                    val === null && halalAnswers[item.provider_id] !== undefined
+                                      ? 'secondary'
+                                      : 'secondary'
+                                  }
+                                  onClick={() => setAnswer(item.provider_id, key, null)}
+                                >
+                                  {t('providerReview.halalAnswerUnsure')}
+                                </Button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </section>
 
                   {/* Error feedback */}
                   {err && (
                     <p className="text-sm text-red-800" role="alert">
-                      {t(err)}{' '}
-                      {err === 'providerReview.halalGate' && (
-                        <Link className="underline" href="/dashboard/halal-review">
-                          {t('providerReview.halalReviewLink')}
-                        </Link>
-                      )}
+                      {t(err)}
                     </p>
                   )}
 
                   {/* Actions */}
                   {!rejecting ? (
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <Button
-                        disabled={busy}
+                        disabled={busy || !halalComplete}
                         size="sm"
+                        title={
+                          !halalComplete ? t('providerReview.approveRequiresHalal') : undefined
+                        }
                         variant="primary"
                         onClick={() => approve(item)}
                       >
@@ -281,6 +353,11 @@ export function ProviderReviewQueue() {
                       >
                         {t('providerReview.reject')}
                       </Button>
+                      {!halalComplete && (
+                        <span className="text-xs text-content-muted">
+                          {t('providerReview.approveRequiresHalal')}
+                        </span>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-2">
