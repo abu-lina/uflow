@@ -50,7 +50,7 @@ jobs:
         run: npm ci --prefer-offline
 
       - name: Install zsh and ShellCheck
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y zsh shellcheck=0.9.0-1
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y zsh shellcheck
 
       - name: Lint shell helpers
         run: npm run lint:shell
