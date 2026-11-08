@@ -291,7 +291,7 @@ export function ProviderReviewQueue() {
                           return (
                             <li key={key} className="flex items-center justify-between gap-3">
                               <span className="text-sm text-content">{t(labelKey)}</span>
-                              <div className="flex gap-1.5">
+                              <div className="flex flex-wrap gap-1">
                                 <Button
                                   size="sm"
                                   variant={val === true ? 'primary' : 'secondary'}
