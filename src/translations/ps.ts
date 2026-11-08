@@ -34,6 +34,10 @@ export const ps = {
     contact: 'اړیکه',
     create: 'جوړول',
     saved: 'Gespeichert', // INTERIM de (#415)
+    admin: 'Admin',
+    providerReview: 'Provider Review',
+    halalReview: 'Halal Review',
+    enrichment: 'Enrichment',
   },
   auth: {
     login: 'ننوتل',
@@ -1424,6 +1428,24 @@ export const ps = {
   },
   // #548: fully translated — the halal check admin page renders this block
   // in every locale, so INTERIM German is no longer acceptable here.
+  providerReview: {
+    title: 'Provider Review',
+    loading: 'Loading review queue...',
+    loadError: 'Could not load the provider review queue.',
+    empty: 'No providers ready for review.',
+    screeningFlags: 'Screening flags',
+    enrichmentLinks: 'Enrichment links',
+    halalPendingNote: 'This provider has pending halal findings.',
+    halalReviewLink: 'Complete halal review',
+    approve: 'Approve',
+    reject: 'Reject',
+    submitReject: 'Submit rejection',
+    rejectPlaceholder: 'Reason for rejection (required)',
+    halalGate: 'Complete halal review first.',
+    halalGateTooltip: 'Complete halal review first',
+    actionError: 'Action failed. Please try again.',
+    loadMore: 'Load more',
+  },
   halalReview: {
     title: 'د حلالو بیاکتنه',
     loading: 'بارېږي...',

@@ -33,6 +33,39 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
     isOpen: false,
     isLoading: false,
   });
+  const [actionBar, setActionBar] = useState<{
+    busy: boolean;
+    rejecting: boolean;
+    feedback: string;
+    error: string | null;
+  }>({ busy: false, rejecting: false, feedback: '', error: null });
+
+  const handleReview = useCallback(
+    async (status: 'approved' | 'rejected') => {
+      if (status === 'rejected' && !actionBar.feedback.trim()) return;
+      setActionBar((prev) => ({ ...prev, busy: true, error: null }));
+      try {
+        const res = await fetch('/api/admin/review-provider', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            providerId,
+            reviewStatus: status,
+            ...(status === 'rejected' ? { reviewFeedback: actionBar.feedback.trim() } : {}),
+          }),
+        });
+        if (res.status === 422) {
+          setActionBar((prev) => ({ ...prev, busy: false, error: t('providerReview.halalGate') }));
+          return;
+        }
+        if (!res.ok) throw new Error('review failed');
+        router.push('/dashboard/providers/review');
+      } catch {
+        setActionBar((prev) => ({ ...prev, busy: false, error: t('providerReview.actionError') }));
+      }
+    },
+    [providerId, actionBar.feedback, router, t],
+  );
 
   useEffect(() => {
     async function loadProvider() {
@@ -271,6 +304,62 @@ export default function AdminProviderEditPage({ params }: AdminProviderEditPageP
         <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={`/food`} />
         <HeaderSpacer />
       </div>
+
+      {/* Persistent approve/reject action bar */}
+      <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white px-4 py-2 shadow-sm">
+        {actionBar.error && <p className="mb-1 text-xs text-red-600">{actionBar.error}</p>}
+        {actionBar.rejecting ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              className="w-full rounded border border-gray-300 p-2 text-sm"
+              placeholder={t('providerReview.rejectPlaceholder')}
+              rows={2}
+              value={actionBar.feedback}
+              onChange={(e) => setActionBar((prev) => ({ ...prev, feedback: e.target.value }))}
+            />
+            <div className="flex gap-2">
+              <button
+                className="rounded bg-red-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                disabled={actionBar.busy || !actionBar.feedback.trim()}
+                type="button"
+                onClick={() => handleReview('rejected')}
+              >
+                {t('providerReview.submitReject')}
+              </button>
+              <button
+                className="rounded border border-gray-300 px-4 py-1.5 text-sm text-gray-700"
+                type="button"
+                onClick={() =>
+                  setActionBar((prev) => ({ ...prev, rejecting: false, feedback: '', error: null }))
+                }
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              className="rounded bg-green-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+              disabled={actionBar.busy || hasPendingHalal}
+              title={hasPendingHalal ? t('providerReview.halalGateTooltip') : undefined}
+              type="button"
+              onClick={() => handleReview('approved')}
+            >
+              {t('providerReview.approve')}
+            </button>
+            <button
+              className="rounded bg-red-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+              disabled={actionBar.busy}
+              type="button"
+              onClick={() => setActionBar((prev) => ({ ...prev, rejecting: true, error: null }))}
+            >
+              {t('providerReview.reject')}
+            </button>
+          </div>
+        )}
+      </div>
+
       <main className="flex flex-1 flex-col overflow-y-auto px-6 pb-4 md:pt-[calc(var(--desktop-header-height,153px)+16px)]">
         <div className="w-full sm:mx-auto sm:max-w-2xl">
           <ProviderEditForm

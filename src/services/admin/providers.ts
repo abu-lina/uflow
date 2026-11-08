@@ -100,6 +100,135 @@ export async function getPendingProviders(
 }
 
 /**
+ * Extend PendingProvider with fields needed in the review queue.
+ */
+export interface ReadyForReviewProvider extends PendingProvider {
+  screening_status: 'clear' | 'review' | 'flagged' | null;
+  screening_flags: Array<{
+    code: string;
+    term: string | null;
+    snippet: string | null;
+    url: string;
+    source: string;
+  }>;
+  enrichment_links: Array<{ platform: string; url: string }>;
+  halal_pending: boolean;
+  last_enriched_at: string | null;
+}
+
+/**
+ * Get providers ready for admin review:
+ * - review_status = 'pending'
+ * - last_enriched_at IS NOT NULL
+ * - no enrichment_candidates with status = 'pending'
+ * - at least one provider_screenings row
+ */
+export async function getReadyForReviewProviders(
+  pagination: PaginationParams,
+): Promise<PaginatedResult<ReadyForReviewProvider>> {
+  const supabase = getSupabaseAdmin();
+
+  const fields = [
+    'provider_id',
+    'provider_name',
+    'provider_images',
+    'category_id',
+    'address_city',
+    'contact_email',
+    'review_status',
+    'review_feedback',
+    'created_at',
+    'updated_at',
+    'user_created_id',
+    'last_enriched_at',
+    'provider_screenings!inner(status, flags)',
+    'enrichment_candidates(platform, url, status)',
+  ].join(', ');
+
+  const { data, error } = await supabase
+    .from('providers')
+    .select(fields)
+    .eq('review_status', 'pending')
+    .not('last_enriched_at', 'is', null)
+    .filter('enrichment_candidates.status', 'neq', 'pending')
+    .order('created_at', { ascending: false })
+    .range(pagination.offset, pagination.offset + pagination.limit - 1);
+
+  if (error) {
+    throw new Error(`Failed to fetch review queue: ${error.message}`);
+  }
+
+  const { count, error: countError } = await supabase
+    .from('providers')
+    .select('*', { count: 'exact', head: true })
+    .eq('review_status', 'pending')
+    .not('last_enriched_at', 'is', null)
+    .filter('enrichment_candidates.status', 'neq', 'pending');
+
+  if (countError) {
+    console.error('Error fetching review queue count:', countError);
+  }
+
+  const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
+  const mapped: ReadyForReviewProvider[] = rows.map((row) => {
+    const screenings =
+      (row.provider_screenings as Array<{ status: string; flags: unknown[] }> | null) ?? [];
+    const candidates =
+      (row.enrichment_candidates as Array<{
+        platform: string;
+        url: string;
+        status: string;
+      }> | null) ?? [];
+
+    // Derive worst screening status across all screening rows
+    const statuses = screenings.map((s) => s.status);
+    let screeningStatus: 'clear' | 'review' | 'flagged' | null = null;
+    if (statuses.includes('flagged')) screeningStatus = 'flagged';
+    else if (statuses.includes('review')) screeningStatus = 'review';
+    else if (statuses.length > 0) screeningStatus = 'clear';
+
+    const flags = screenings.flatMap(
+      (s) => (s.flags ?? []) as ReadyForReviewProvider['screening_flags'],
+    );
+
+    const appliedLinks = candidates
+      .filter((c) => c.status === 'applied' || c.status === 'auto-applied')
+      .map((c) => ({ platform: c.platform, url: c.url }));
+
+    const halalPending = candidates.some((c) => c.status === 'pending');
+
+    return {
+      provider_id: row.provider_id as string,
+      provider_name: row.provider_name as string,
+      provider_images: row.provider_images as string | null,
+      category_id: row.category_id as string | null,
+      address_city: row.address_city as string | null,
+      contact_email: row.contact_email as string | null,
+      review_status: row.review_status as PendingProvider['review_status'],
+      review_feedback: row.review_feedback as string | null,
+      created_at: row.created_at as string,
+      updated_at: row.updated_at as string,
+      user_created_id: row.user_created_id as string | null,
+      last_enriched_at: row.last_enriched_at as string | null,
+      screening_status: screeningStatus,
+      screening_flags: flags,
+      enrichment_links: appliedLinks,
+      halal_pending: halalPending,
+    };
+  });
+
+  return {
+    data: mapped,
+    pagination: {
+      total: count ?? 0,
+      limit: pagination.limit,
+      offset: pagination.offset,
+      hasMore: (count ?? 0) > pagination.offset + pagination.limit,
+    },
+  };
+}
+
+/**
  * Halal answers submitted from the admin halal check page (#548).
  * CamelCase here; translated to the extension-table column names for the
  * RPC. Key PRESENCE is meaningful: an absent key leaves the stored column
