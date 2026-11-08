@@ -128,44 +128,69 @@ export async function getReadyForReviewProviders(
 ): Promise<PaginatedResult<ReadyForReviewProvider>> {
   const supabase = getSupabaseAdmin();
 
-  const fields = [
-    'provider_id',
-    'provider_name',
-    'provider_images',
-    'category_id',
-    'address_city',
-    'contact_email',
-    'review_status',
-    'review_feedback',
-    'created_at',
-    'updated_at',
-    'user_created_id',
-    'last_enriched_at',
-    'provider_screenings!inner(status, flags)',
-    'enrichment_candidates(field_name, proposed_value, source_url, status)',
-  ].join(', ');
-
-  const { data, error } = await supabase
+  // Step 1: fetch pending+enriched providers (no join — avoids schema cache issues)
+  const { data: providerRows, error } = await supabase
     .from('providers')
-    .select(fields)
+    .select(
+      'provider_id, provider_name, provider_images, category_id, address_city, contact_email, review_status, review_feedback, created_at, updated_at, user_created_id, last_enriched_at',
+    )
     .eq('review_status', 'pending')
     .not('last_enriched_at', 'is', null)
-    .order('created_at', { ascending: false })
-    .range(pagination.offset, pagination.offset + pagination.limit - 1);
+    .order('created_at', { ascending: false });
 
   if (error) {
     throw new Error(`Failed to fetch review queue: ${error.message}`);
   }
 
-  // Count: omit enrichment filter — slight over-count is acceptable and avoids a subquery.
-  const { count, error: countError } = await supabase
-    .from('providers')
-    .select('*', { count: 'exact', head: true })
-    .eq('review_status', 'pending')
-    .not('last_enriched_at', 'is', null);
+  if (!providerRows || providerRows.length === 0) {
+    return {
+      data: [],
+      pagination: { total: 0, limit: pagination.limit, offset: pagination.offset, hasMore: false },
+    };
+  }
 
-  if (countError) {
-    console.error('Error fetching review queue count:', countError);
+  const allIds = providerRows.map((p) => p.provider_id);
+
+  // Step 2: fetch screenings and candidates in parallel
+  const [screeningsRes, candidatesRes] = await Promise.all([
+    supabase
+      .from('provider_screenings')
+      .select('provider_id, status, flags')
+      .in('provider_id', allIds),
+    supabase
+      .from('enrichment_candidates')
+      .select('provider_id, field_name, proposed_value, source_url, status')
+      .in('provider_id', allIds),
+  ]);
+
+  if (screeningsRes.error)
+    throw new Error(`Failed to fetch screenings: ${screeningsRes.error.message}`);
+
+  const screeningsByProvider = new Map<string, Array<{ status: string; flags: unknown[] }>>();
+  for (const s of screeningsRes.data ?? []) {
+    const arr = screeningsByProvider.get(s.provider_id) ?? [];
+    arr.push({ status: s.status, flags: (s.flags as unknown[]) ?? [] });
+    screeningsByProvider.set(s.provider_id, arr);
+  }
+
+  const candidatesByProvider = new Map<
+    string,
+    Array<{
+      field_name: string;
+      proposed_value: unknown;
+      source_url: string | null;
+      status: string;
+    }>
+  >();
+  for (const c of candidatesRes.data ?? []) {
+    const arr = candidatesByProvider.get(c.provider_id) ?? [];
+    arr.push({
+      field_name: c.field_name,
+      proposed_value: c.proposed_value,
+      source_url: c.source_url,
+      status: c.status,
+    });
+    candidatesByProvider.set(c.provider_id, arr);
   }
 
   const PLATFORM_LABELS: Record<string, string> = {
@@ -177,24 +202,17 @@ export async function getReadyForReviewProviders(
 
   function platformLabel(fieldName: string): string {
     if (PLATFORM_LABELS[fieldName]) return PLATFORM_LABELS[fieldName];
-    // Generic: strip _url suffix and capitalise first letter
     return fieldName.replace(/_url$/, '').replace(/^./, (c) => c.toUpperCase());
   }
 
-  const rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
-  const mapped = rows.map((row) => {
-    const screenings =
-      (row.provider_screenings as Array<{ status: string; flags: unknown[] }> | null) ?? [];
-    const candidates =
-      (row.enrichment_candidates as Array<{
-        field_name: string;
-        proposed_value: unknown;
-        source_url: string | null;
-        status: string;
-      }> | null) ?? [];
+  const mapped = providerRows.map((row) => {
+    const screenings = screeningsByProvider.get(row.provider_id) ?? [];
+    const candidates = candidatesByProvider.get(row.provider_id) ?? [];
 
-    // Exclude providers that still have pending enrichment candidates
-    // (PostgREST filter on a join doesn't exclude the parent row, so filter client-side)
+    // Must have at least one screening row
+    if (screenings.length === 0) return null;
+
+    // Exclude if any enrichment candidate is still pending
     if (candidates.some((c) => c.status === 'pending')) return null;
 
     // Derive worst screening status across all screening rows
@@ -237,13 +255,17 @@ export async function getReadyForReviewProviders(
 
   const filtered = mapped.filter((r): r is ReadyForReviewProvider => r !== null);
 
+  // Apply pagination after client-side filtering
+  const total = filtered.length;
+  const page = filtered.slice(pagination.offset, pagination.offset + pagination.limit);
+
   return {
-    data: filtered,
+    data: page,
     pagination: {
-      total: count ?? 0,
+      total,
       limit: pagination.limit,
       offset: pagination.offset,
-      hasMore: (count ?? 0) > pagination.offset + pagination.limit,
+      hasMore: pagination.offset + pagination.limit < total,
     },
   };
 }

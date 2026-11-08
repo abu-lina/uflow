@@ -4,14 +4,16 @@ import { useRouter } from 'next/navigation';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProviderReviewQueue } from '@/features/admin/components/ProviderReviewQueue';
+import { useLanguage } from '@/providers/LanguageProvider';
 
 export default function ProviderReviewPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   return (
     <div className="h-screen-fix flex flex-col">
       <PageHeader
-        title="Provider Review"
+        title={t('providerReview.title')}
         variant="back-and-title"
         onBack={() => router.push('/dashboard')}
       />

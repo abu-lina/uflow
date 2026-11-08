@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
+import { Button } from '@/components/ui/Button';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { ReadyForReviewProvider } from '@/services/admin/providers';
 
@@ -13,9 +14,9 @@ type PaginatedResponse = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  flagged: 'border-red-300 bg-red-100 text-red-900',
-  review: 'border-amber-300 bg-amber-100 text-amber-900',
-  clear: 'border-green-300 bg-green-100 text-green-900',
+  flagged: 'border-red-300 bg-red-50 text-red-900',
+  review: 'border-amber-300 bg-amber-50 text-amber-900',
+  clear: 'border-green-300 bg-green-50 text-green-900',
 };
 
 function safeHref(url: string): string | null {
@@ -110,12 +111,23 @@ export function ProviderReviewQueue() {
     [rejectFeedback],
   );
 
-  if (loadFailed) return <p role="alert">{t('providerReview.loadError')}</p>;
-  if (items === null) return <p role="status">{t('providerReview.loading')}</p>;
-  if (items.length === 0) return <p>{t('providerReview.empty')}</p>;
+  if (loadFailed)
+    return (
+      <p className="text-sm text-red-800" role="alert">
+        {t('providerReview.loadError')}
+      </p>
+    );
+  if (items === null)
+    return (
+      <p className="text-sm text-content-muted" role="status">
+        {t('providerReview.loading')}
+      </p>
+    );
+  if (items.length === 0)
+    return <p className="text-sm text-content-muted">{t('providerReview.empty')}</p>;
 
   return (
-    <div className="space-y-3">
+    <div className="mx-auto max-w-4xl space-y-3">
       <ul className="space-y-3">
         {items.map((item) => {
           const expanded = expandedId === item.provider_id;
@@ -125,10 +137,14 @@ export function ProviderReviewQueue() {
           const statusStyle = STATUS_STYLES[item.screening_status ?? ''] ?? STATUS_STYLES.clear;
 
           return (
-            <li key={item.provider_id} className="rounded-lg border border-gray-200 bg-white">
+            <li
+              key={item.provider_id}
+              className="rounded-xl border border-neutral-200 bg-white shadow-sm"
+            >
+              {/* Row header — always visible */}
               <button
                 aria-expanded={expanded}
-                className="flex w-full items-center justify-between gap-2 px-4 py-3 text-start"
+                className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-start sm:flex-nowrap"
                 type="button"
                 onClick={() => {
                   setExpandedId(expanded ? null : item.provider_id);
@@ -137,45 +153,59 @@ export function ProviderReviewQueue() {
                   setActionError(null);
                 }}
               >
-                <span className="font-medium">{item.provider_name}</span>
-                <span className="text-sm text-gray-500">{item.address_city}</span>
-                <span className="text-xs text-gray-400">
+                <span className="min-w-0 flex-1 truncate font-inter-tight text-base font-semibold text-content-heading">
+                  {item.provider_name}
+                </span>
+                <span className="shrink-0 text-sm text-content-muted">{item.address_city}</span>
+                <span className="shrink-0 text-xs text-content-muted">
                   {new Date(item.created_at).toLocaleDateString()}
                 </span>
-                <span className={`rounded border px-2 py-0.5 text-xs font-medium ${statusStyle}`}>
+                <span
+                  className={`shrink-0 rounded-full border px-3 py-0.5 text-xs font-medium ${statusStyle}`}
+                  data-status={item.screening_status}
+                >
                   {t(`adminScreening.status.${item.screening_status ?? 'clear'}`)}
                 </span>
               </button>
 
+              {/* Expanded detail */}
               {expanded && (
-                <div className="space-y-4 border-t border-gray-100 px-4 py-3 text-sm">
+                <div className="space-y-5 border-t border-neutral-100 px-4 py-4">
                   {/* Screening flags */}
                   {item.screening_flags.length > 0 && (
                     <section>
-                      <h3 className="mb-2 font-medium">{t('providerReview.screeningFlags')}</h3>
+                      <h3 className="mb-2 font-inter-tight text-sm font-semibold text-content-heading">
+                        {t('providerReview.screeningFlags')}
+                      </h3>
                       <ul className="space-y-2">
                         {item.screening_flags.map((flag, i) => {
                           const href = safeHref(flag.url);
                           return (
                             <li
                               key={`${flag.code}-${i}`}
-                              className="rounded border border-neutral-200 bg-neutral-50 p-2 text-xs"
+                              className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm"
                             >
-                              <span className="font-semibold">{flag.code}</span>
-                              {flag.term && (
-                                <span className="ml-2 text-neutral-600">{flag.term}</span>
-                              )}
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className="font-semibold text-content-heading">
+                                  {flag.code}
+                                </span>
+                                {flag.term && (
+                                  <span className="text-content-muted">{flag.term}</span>
+                                )}
+                              </div>
                               {flag.snippet && (
-                                <p className="mt-1 text-neutral-500">{flag.snippet}</p>
+                                <blockquote className="mt-1 break-words text-sm text-content-muted">
+                                  {flag.snippet}
+                                </blockquote>
                               )}
                               {href && (
                                 <a
-                                  className="mt-1 block break-all text-blue-700 underline"
+                                  className="mt-2 inline-block text-sm text-primary underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                                   href={href}
                                   rel="noopener noreferrer"
                                   target="_blank"
                                 >
-                                  {href}
+                                  {t('adminScreening.openEvidence')}
                                 </a>
                               )}
                             </li>
@@ -188,27 +218,28 @@ export function ProviderReviewQueue() {
                   {/* Applied enrichment links */}
                   {item.enrichment_links.length > 0 && (
                     <section>
-                      <h3 className="mb-2 font-medium">{t('providerReview.enrichmentLinks')}</h3>
-                      <ul className="flex flex-wrap gap-2">
+                      <h3 className="mb-2 font-inter-tight text-sm font-semibold text-content-heading">
+                        {t('providerReview.enrichmentLinks')}
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
                         {item.enrichment_links.map((link, i) => (
-                          <li key={i}>
-                            <a
-                              className="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-800 underline"
-                              href={link.url}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                            >
-                              {link.platform}
-                            </a>
-                          </li>
+                          <a
+                            key={i}
+                            className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm text-primary underline hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2"
+                            href={link.url}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            {link.platform}
+                          </a>
                         ))}
-                      </ul>
+                      </div>
                     </section>
                   )}
 
-                  {/* Halal findings */}
+                  {/* Halal gate warning */}
                   {item.halal_pending && (
-                    <p className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                    <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
                       {t('providerReview.halalPendingNote')}{' '}
                       <Link className="underline" href="/dashboard/halal-review">
                         {t('providerReview.halalReviewLink')}
@@ -216,9 +247,9 @@ export function ProviderReviewQueue() {
                     </p>
                   )}
 
-                  {/* Error message */}
+                  {/* Error feedback */}
                   {err && (
-                    <p className="text-xs text-red-600">
+                    <p className="text-sm text-red-800" role="alert">
                       {t(err)}{' '}
                       {err === 'providerReview.halalGate' && (
                         <Link className="underline" href="/dashboard/halal-review">
@@ -229,61 +260,59 @@ export function ProviderReviewQueue() {
                   )}
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-2">
-                    {!rejecting ? (
-                      <div className="flex gap-2">
-                        <button
-                          className="rounded bg-green-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                          disabled={busy}
-                          type="button"
-                          onClick={() => approve(item)}
+                  {!rejecting ? (
+                    <div className="flex gap-3">
+                      <Button
+                        disabled={busy}
+                        size="sm"
+                        variant="primary"
+                        onClick={() => approve(item)}
+                      >
+                        {t('providerReview.approve')}
+                      </Button>
+                      <Button
+                        disabled={busy}
+                        size="sm"
+                        variant="danger"
+                        onClick={() => {
+                          setRejectingId(item.provider_id);
+                          setRejectFeedback('');
+                        }}
+                      >
+                        {t('providerReview.reject')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <textarea
+                        className="w-full rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-sm text-content placeholder:text-content-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        placeholder={t('providerReview.rejectPlaceholder')}
+                        rows={3}
+                        value={rejectFeedback}
+                        onChange={(e) => setRejectFeedback(e.target.value)}
+                      />
+                      <div className="flex gap-3">
+                        <Button
+                          disabled={busy || !rejectFeedback.trim()}
+                          size="sm"
+                          variant="danger"
+                          onClick={() => submitReject(item)}
                         >
-                          {t('providerReview.approve')}
-                        </button>
-                        <button
-                          className="rounded bg-red-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                          disabled={busy}
-                          type="button"
+                          {t('providerReview.submitReject')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           onClick={() => {
-                            setRejectingId(item.provider_id);
+                            setRejectingId(null);
                             setRejectFeedback('');
                           }}
                         >
-                          {t('providerReview.reject')}
-                        </button>
+                          {t('common.cancel')}
+                        </Button>
                       </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <textarea
-                          className="w-full rounded border border-gray-300 p-2 text-sm"
-                          placeholder={t('providerReview.rejectPlaceholder')}
-                          rows={3}
-                          value={rejectFeedback}
-                          onChange={(e) => setRejectFeedback(e.target.value)}
-                        />
-                        <div className="flex gap-2">
-                          <button
-                            className="rounded bg-red-600 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                            disabled={busy || !rejectFeedback.trim()}
-                            type="button"
-                            onClick={() => submitReject(item)}
-                          >
-                            {t('providerReview.submitReject')}
-                          </button>
-                          <button
-                            className="rounded border border-gray-300 px-4 py-1.5 text-sm text-gray-700"
-                            type="button"
-                            onClick={() => {
-                              setRejectingId(null);
-                              setRejectFeedback('');
-                            }}
-                          >
-                            {t('common.cancel')}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </li>
@@ -292,13 +321,11 @@ export function ProviderReviewQueue() {
       </ul>
 
       {hasMore && (
-        <button
-          className="mt-4 w-full rounded border border-gray-300 py-2 text-sm text-gray-700"
-          type="button"
-          onClick={() => load(offset, true)}
-        >
-          {t('providerReview.loadMore')}
-        </button>
+        <div className="flex justify-center pt-2">
+          <Button size="sm" variant="secondary" onClick={() => load(offset, true)}>
+            {t('providerReview.loadMore')}
+          </Button>
+        </div>
       )}
     </div>
   );
