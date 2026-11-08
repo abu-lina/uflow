@@ -12,7 +12,8 @@ type PaginatedResponse = {
   pagination: { total: number; limit: number; offset: number; hasMore: boolean };
 };
 
-type HalalAnswer = boolean | null;
+// Fix 3: sentinel string for explicit "not sure" selection
+type HalalAnswer = boolean | 'unsure' | null;
 type HalalAnswers = { no_alcohol: HalalAnswer; no_pork: HalalAnswer; no_gambling: HalalAnswer };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -40,8 +41,18 @@ function safeHref(url: string): string | null {
   }
 }
 
+// Map 'unsure' sentinel to null for the API (null = not sure in DB)
+function halalApiValue(val: HalalAnswer): boolean | null {
+  if (val === 'unsure') return null;
+  return val;
+}
+
+interface ProviderReviewQueueProps {
+  onBack?: () => void;
+}
+
 /** Admin queue: providers that passed enrichment and screening — ready for final review. */
-export function ProviderReviewQueue() {
+export function ProviderReviewQueue({ onBack }: ProviderReviewQueueProps) {
   const { t } = useLanguage();
   const [items, setItems] = useState<ReadyForReviewProvider[] | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -96,9 +107,9 @@ export function ProviderReviewQueue() {
             providerId: item.provider_id,
             reviewStatus: 'approved',
             halal: {
-              noAlcohol: answers.no_alcohol,
-              noPork: answers.no_pork,
-              noGambling: answers.no_gambling,
+              noAlcohol: halalApiValue(answers.no_alcohol),
+              noPork: halalApiValue(answers.no_pork),
+              noGambling: halalApiValue(answers.no_gambling),
             },
           }),
         });
@@ -148,12 +159,28 @@ export function ProviderReviewQueue() {
     [rejectFeedback],
   );
 
+  // Fix 6: centered error state with retry
   if (loadFailed)
     return (
-      <p className="text-sm text-red-800" role="alert">
-        {t('providerReview.loadError')}
-      </p>
+      <div className="flex flex-col items-center gap-3 py-16 text-center" role="alert">
+        <Icon className="h-12 w-12 text-red-400" icon="material-symbols:error-outline" />
+        <p className="font-inter-tight text-base font-semibold text-content-heading">
+          {t('providerReview.loadError')}
+        </p>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            setLoadFailed(false);
+            load(0, false);
+          }}
+        >
+          {t('common.retry')}
+        </Button>
+      </div>
     );
+
+  // Fix 4: structured skeleton rows
   if (items === null)
     return (
       <div
@@ -164,11 +191,19 @@ export function ProviderReviewQueue() {
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="h-14 animate-pulse rounded-xl border border-neutral-200 bg-neutral-100"
-          />
+            className="animate-pulse rounded-xl border border-neutral-200 bg-white px-4 py-3"
+          >
+            <div className="flex items-center gap-4">
+              <div className="h-4 w-40 rounded bg-neutral-200" />
+              <div className="h-3 w-16 rounded bg-neutral-100" />
+              <div className="h-3 w-20 rounded bg-neutral-100" />
+              <div className="ml-auto h-5 w-14 rounded-full bg-neutral-200" />
+            </div>
+          </div>
         ))}
       </div>
     );
+
   if (items.length === 0)
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
@@ -182,6 +217,25 @@ export function ProviderReviewQueue() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-3">
+      {/* Fix 1: desktop title inside the queue column for guaranteed alignment */}
+      <div className="hidden md:flex md:items-center md:gap-2 md:pb-4">
+        <button
+          className="text-content-secondary hover:text-content-heading"
+          type="button"
+          onClick={onBack ?? undefined}
+        >
+          <Icon className="h-6 w-6" icon="material-symbols:chevron-left" />
+        </button>
+        <h1 className="font-inter-tight text-2xl font-semibold text-content-heading">
+          {t('providerReview.title')}
+        </h1>
+        {/* Fix 2: count right-aligned */}
+        <span className="ml-auto text-sm text-content-muted">
+          {items.length}
+          {hasMore ? '+' : ''} pending
+        </span>
+      </div>
+
       <ul className="space-y-3">
         {items.map((item) => {
           const expanded = expandedId === item.provider_id;
@@ -238,7 +292,8 @@ export function ProviderReviewQueue() {
                   {/* Screening flags */}
                   {item.screening_flags.length > 0 && (
                     <section>
-                      <h3 className="mb-2 font-inter-tight text-sm font-semibold text-content-heading">
+                      {/* Fix 7: uppercase tracking-wide section label */}
+                      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-content-muted">
                         {t('providerReview.screeningFlags')}
                       </h3>
                       <ul className="space-y-2">
@@ -282,7 +337,8 @@ export function ProviderReviewQueue() {
                   {/* Applied enrichment links */}
                   {item.enrichment_links.length > 0 && (
                     <section>
-                      <h3 className="mb-2 font-inter-tight text-sm font-semibold text-content-heading">
+                      {/* Fix 7 */}
+                      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-content-muted">
                         {t('providerReview.enrichmentLinks')}
                       </h3>
                       <div className="flex flex-wrap gap-2">
@@ -307,7 +363,8 @@ export function ProviderReviewQueue() {
 
                   {/* Halal attestation */}
                   <section>
-                    <h3 className="mb-3 font-inter-tight text-sm font-semibold text-content-heading">
+                    {/* Fix 7 */}
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-content-muted">
                       {t('providerReview.halalAttestation')}
                     </h3>
                     <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
@@ -332,10 +389,11 @@ export function ProviderReviewQueue() {
                                 >
                                   {t('providerReview.halalAnswerNo')}
                                 </button>
+                                {/* Fix 3: 'unsure' sentinel makes active state unambiguous */}
                                 <button
-                                  className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === null && key in (halalAnswers[item.provider_id] ?? {}) ? 'bg-neutral-300 text-content' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
+                                  className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${val === 'unsure' ? 'bg-neutral-300 text-content' : 'bg-neutral-100 text-content-muted hover:bg-neutral-200'}`}
                                   type="button"
-                                  onClick={() => setAnswer(item.provider_id, key, null)}
+                                  onClick={() => setAnswer(item.provider_id, key, 'unsure')}
                                 >
                                   {t('providerReview.halalAnswerUnsure')}
                                 </button>
@@ -346,6 +404,13 @@ export function ProviderReviewQueue() {
                       </ul>
                     </div>
                   </section>
+
+                  {/* Fix 5: halal hint directly below attestation, above actions */}
+                  {!halalComplete && (
+                    <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      {t('providerReview.approveRequiresHalal')}
+                    </p>
+                  )}
 
                   {/* Error feedback */}
                   {err && (
@@ -376,11 +441,6 @@ export function ProviderReviewQueue() {
                       >
                         {t('providerReview.reject')}
                       </Button>
-                      {!halalComplete && (
-                        <span className="text-xs text-content-muted">
-                          {t('providerReview.approveRequiresHalal')}
-                        </span>
-                      )}
                     </div>
                   ) : (
                     <div className="space-y-2">

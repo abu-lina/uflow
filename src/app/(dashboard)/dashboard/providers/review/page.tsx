@@ -2,7 +2,6 @@
 
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Icon } from '@iconify/react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProviderReviewQueue } from '@/features/admin/components/ProviderReviewQueue';
@@ -15,7 +14,7 @@ export default function ProviderReviewPage() {
 
   return (
     <div className="h-screen-fix flex flex-col">
-      {/* Mobile header */}
+      {/* Mobile header — hidden on desktop; desktop title is rendered inside the queue */}
       <PageHeader
         className="md:hidden"
         scrollContainerRef={scrollRef}
@@ -23,23 +22,11 @@ export default function ProviderReviewPage() {
         variant="back-and-title"
         onBack={() => router.push('/dashboard')}
       />
-      {/* Desktop title row — outside main so it doesn't scroll away */}
-      <div className="hidden md:block md:px-4 md:pb-2 md:pt-[calc(var(--desktop-header-height,153px)+8px)]">
-        <div className="mx-auto flex max-w-4xl items-center gap-2">
-          <button
-            className="text-content-secondary hover:text-content-heading"
-            type="button"
-            onClick={() => router.push('/dashboard')}
-          >
-            <Icon className="h-6 w-6" icon="material-symbols:chevron-left" />
-          </button>
-          <h1 className="font-inter-tight text-2xl font-semibold text-content-heading">
-            {t('providerReview.title')}
-          </h1>
-        </div>
-      </div>
-      <main ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 pt-24 md:pb-8 md:pt-0">
-        <ProviderReviewQueue />
+      <main
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-4 pb-6 pt-24 md:pt-[calc(var(--desktop-header-height,153px)+16px)]"
+      >
+        <ProviderReviewQueue onBack={() => router.push('/dashboard')} />
       </main>
     </div>
   );
