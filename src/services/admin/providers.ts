@@ -5,6 +5,7 @@
 
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { sanitizeTextInput } from '@/utils/sanitizeInput';
+import { logger } from '@/lib/logging/structuredLogger';
 import type { AdminProviderWithExtensions } from '@/types/adminProvider';
 import type { Provider as CanonicalProvider } from '@/services/providers';
 
@@ -84,8 +85,9 @@ export async function getPendingProviders(
     .eq('review_status', status);
 
   if (countError) {
-    // Log but don't fail - count is not critical
-    console.error('Error fetching provider count:', countError);
+    logger.error('providers: count query failed (non-critical)', undefined, {
+      error: countError.message,
+    });
   }
 
   return {
@@ -95,6 +97,192 @@ export async function getPendingProviders(
       limit: pagination.limit,
       offset: pagination.offset,
       hasMore: (count || 0) > pagination.offset + pagination.limit,
+    },
+  };
+}
+
+/**
+ * Extend PendingProvider with fields needed in the review queue.
+ * contact_email omitted — not rendered in queue, avoid PII over-exposure.
+ */
+export interface ReadyForReviewProvider extends Omit<PendingProvider, 'contact_email'> {
+  screening_status: 'clear' | 'review' | 'flagged' | null;
+  screening_flags: Array<{
+    code: string;
+    term: string | null;
+    snippet: string | null;
+    url: string;
+    source: string;
+  }>;
+  enrichment_links: Array<{ platform: string; url: string }>;
+  last_enriched_at: string | null;
+}
+
+const PLATFORM_LABELS: Record<string, string> = {
+  wolt_url: 'Wolt',
+  ubereats_url: 'Uber Eats',
+  google_place_url: 'Google Places',
+  website: 'Website',
+};
+
+function platformLabel(fieldName: string): string {
+  if (fieldName in PLATFORM_LABELS) return PLATFORM_LABELS[fieldName];
+  return fieldName.replace(/_url$/, '').replace(/^./, (c) => c.toUpperCase());
+}
+
+function extractUrl(proposed_value: unknown): string | null {
+  if (typeof proposed_value === 'string') return proposed_value;
+  try {
+    const parsed = JSON.parse(String(proposed_value));
+    return typeof parsed === 'string' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get providers ready for admin review:
+ * - review_status = 'pending'
+ * - last_enriched_at IS NOT NULL
+ * - no enrichment_candidates with status = 'pending'
+ * - at least one provider_screenings row
+ */
+export async function getReadyForReviewProviders(
+  pagination: PaginationParams,
+): Promise<PaginatedResult<ReadyForReviewProvider>> {
+  const supabase = getSupabaseAdmin();
+
+  // Step 1: fetch pending+enriched providers (no join — avoids schema cache issues)
+  // shortcut: full-table fetch before JS filter; replace with DB-side EXISTS subquery at scale
+  const { data: providerRows, error } = await supabase
+    .from('providers')
+    .select(
+      'provider_id, provider_name, provider_images, category_id, address_city, review_status, review_feedback, created_at, updated_at, user_created_id, last_enriched_at',
+    )
+    .eq('review_status', 'pending')
+    .not('last_enriched_at', 'is', null)
+    .range(0, 999)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to fetch review queue: ${error.message}`);
+  }
+
+  if (!providerRows || providerRows.length === 0) {
+    return {
+      data: [],
+      pagination: { total: 0, limit: pagination.limit, offset: pagination.offset, hasMore: false },
+    };
+  }
+
+  const allIds = providerRows.map((p) => p.provider_id);
+
+  // Step 2: fetch screenings and candidates in parallel
+  const [screeningsRes, candidatesRes] = await Promise.all([
+    supabase
+      .from('provider_screenings')
+      .select('provider_id, status, flags')
+      .in('provider_id', allIds),
+    supabase
+      .from('enrichment_candidates')
+      .select('provider_id, field_name, proposed_value, source_url, status')
+      .in('provider_id', allIds),
+  ]);
+
+  if (screeningsRes.error)
+    throw new Error(`Failed to fetch screenings: ${screeningsRes.error.message}`);
+  if (candidatesRes.error)
+    throw new Error(`Failed to fetch candidates: ${candidatesRes.error.message}`);
+
+  const screeningsByProvider = new Map<string, Array<{ status: string; flags: unknown[] }>>();
+  for (const s of screeningsRes.data ?? []) {
+    const arr = screeningsByProvider.get(s.provider_id) ?? [];
+    arr.push({ status: s.status, flags: (s.flags as unknown[]) ?? [] });
+    screeningsByProvider.set(s.provider_id, arr);
+  }
+
+  const candidatesByProvider = new Map<
+    string,
+    Array<{
+      field_name: string;
+      proposed_value: unknown;
+      source_url: string | null;
+      status: string;
+    }>
+  >();
+  for (const c of candidatesRes.data ?? []) {
+    const arr = candidatesByProvider.get(c.provider_id) ?? [];
+    arr.push({
+      field_name: c.field_name,
+      proposed_value: c.proposed_value,
+      source_url: c.source_url,
+      status: c.status,
+    });
+    candidatesByProvider.set(c.provider_id, arr);
+  }
+
+  const mapped = providerRows.map((row) => {
+    const screenings = screeningsByProvider.get(row.provider_id) ?? [];
+    const candidates = candidatesByProvider.get(row.provider_id) ?? [];
+
+    // Must have at least one screening row
+    if (screenings.length === 0) return null;
+
+    // Exclude if any enrichment candidate is still pending
+    if (candidates.some((c) => c.status === 'pending')) return null;
+
+    // Derive worst screening status across all screening rows
+    const statuses = screenings.map((s) => s.status);
+    let screeningStatus: 'clear' | 'review' | 'flagged' | null = null;
+    if (statuses.includes('flagged')) screeningStatus = 'flagged';
+    else if (statuses.includes('review')) screeningStatus = 'review';
+    else if (statuses.length > 0) screeningStatus = 'clear';
+
+    const flags = screenings.flatMap(
+      (s) => (s.flags ?? []) as ReadyForReviewProvider['screening_flags'],
+    );
+
+    const appliedLinks = candidates
+      .filter(
+        (c) =>
+          (c.status === 'applied' || c.status === 'auto-applied') && c.field_name.endsWith('_url'),
+      )
+      .flatMap((c) => {
+        const url = extractUrl(c.proposed_value);
+        return url ? [{ platform: platformLabel(c.field_name), url }] : [];
+      });
+
+    return {
+      provider_id: row.provider_id as string,
+      provider_name: row.provider_name as string,
+      provider_images: row.provider_images as string | null,
+      category_id: row.category_id as string | null,
+      address_city: row.address_city as string | null,
+      review_status: row.review_status as PendingProvider['review_status'],
+      review_feedback: row.review_feedback as string | null,
+      created_at: row.created_at as string,
+      updated_at: row.updated_at as string,
+      user_created_id: row.user_created_id as string | null,
+      last_enriched_at: row.last_enriched_at as string | null,
+      screening_status: screeningStatus,
+      screening_flags: flags,
+      enrichment_links: appliedLinks,
+    };
+  });
+
+  const filtered = mapped.filter((r): r is ReadyForReviewProvider => r !== null);
+
+  // Apply pagination after client-side filtering
+  const total = filtered.length;
+  const page = filtered.slice(pagination.offset, pagination.offset + pagination.limit);
+
+  return {
+    data: page,
+    pagination: {
+      total,
+      limit: pagination.limit,
+      offset: pagination.offset,
+      hasMore: pagination.offset + pagination.limit < total,
     },
   };
 }

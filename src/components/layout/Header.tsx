@@ -276,6 +276,35 @@ export function Header() {
                     </button>
                     {dropdownOpen && (
                       <div className="absolute right-0 top-full z-40 mt-1 w-48 rounded-lg bg-white py-1 shadow-lg ring-1 ring-black/5">
+                        {isAdmin && (
+                          <>
+                            <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                              {t('navigation.admin')}
+                            </p>
+                            <Link
+                              className="block px-4 py-2 text-left text-base hover:bg-neutral-50"
+                              href="/dashboard/providers/review"
+                              onClick={() => setDropdownOpen(false)}
+                            >
+                              {t('navigation.providerReview')}
+                            </Link>
+                            <Link
+                              className="block px-4 py-2 text-left text-base hover:bg-neutral-50"
+                              href="/dashboard/halal-review"
+                              onClick={() => setDropdownOpen(false)}
+                            >
+                              {t('navigation.halalReview')}
+                            </Link>
+                            <Link
+                              className="block px-4 py-2 text-left text-base hover:bg-neutral-50"
+                              href="/dashboard/enrichment"
+                              onClick={() => setDropdownOpen(false)}
+                            >
+                              {t('navigation.enrichment')}
+                            </Link>
+                            <hr className="my-1 border-neutral-100" />
+                          </>
+                        )}
                         <button
                           className="block w-full px-4 py-2 text-left text-base hover:bg-neutral-50"
                           onClick={() => {
