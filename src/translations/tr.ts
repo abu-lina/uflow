@@ -1347,7 +1347,7 @@ export const tr = {
       },
     },
     admin: {
-      declaredNonCompliant: 'Uygun değil olarak işaretlendi',
+      declaredNonCompliant: 'Başarısız',
       unanswered: 'Yanıtlanmadı',
       // INTERIM de (#415): pending human translation
       declaredNotHalal: 'Nicht halal',
@@ -1366,6 +1366,8 @@ export const tr = {
     submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
     rejectedBanner:
       'Diese Einreichung wurde abgelehnt. Sie ist nur für dich und Moderator:innen sichtbar.',
+    pendingReviewAdmin: 'Bu liste inceleme bekliyor.',
+    rejectedBannerAdmin: 'Bu liste reddedildi.',
     // Issue 547: post-submit status screen for quick create
     submittedTitle: 'Einreichung erhalten',
     submittedBody:

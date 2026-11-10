@@ -1328,7 +1328,7 @@ export const ar = {
       },
     },
     admin: {
-      declaredNonCompliant: 'مُدرج كغير مطابق',
+      declaredNonCompliant: 'فشل',
       unanswered: 'بدون إجابة',
       // INTERIM de (#415): pending human translation
       declaredNotHalal: 'Nicht halal',
@@ -1347,6 +1347,8 @@ export const ar = {
     submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
     rejectedBanner:
       'Diese Einreichung wurde abgelehnt. Sie ist nur für dich und Moderator:innen sichtbar.',
+    pendingReviewAdmin: 'هذا الإدراج قيد المراجعة.',
+    rejectedBannerAdmin: 'تم رفض هذا الإدراج.',
     // Issue 547: post-submit status screen for quick create
     submittedTitle: 'Einreichung erhalten',
     submittedBody:

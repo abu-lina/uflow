@@ -146,10 +146,12 @@ export function ProviderDetailPageClient({
     return notFound();
   }
 
-  // Issue 547 — a non-approved row only reaches this point for its creator,
-  // owner or an admin; say why the page is up so it doesn't read as live.
-  const reviewBannerText =
-    provider.review_status === 'rejected'
+  // Issue 547/882 — admins see neutral reviewer copy; submitters see the original.
+  const reviewBannerText = isAdmin
+    ? provider.review_status === 'rejected'
+      ? t('submissionStatus.rejectedBannerAdmin')
+      : t('submissionStatus.pendingReviewAdmin')
+    : provider.review_status === 'rejected'
       ? t('submissionStatus.rejectedBanner')
       : t('submissionStatus.awaitingReview');
 
