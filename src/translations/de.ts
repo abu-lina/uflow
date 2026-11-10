@@ -1360,7 +1360,7 @@ export const de = {
       },
     },
     admin: {
-      declaredNonCompliant: 'Als nicht konform angegeben',
+      declaredNonCompliant: 'Nicht bestanden',
       unanswered: 'Nicht beantwortet',
       declaredNotHalal: 'Nicht halal',
       attestationIncomplete: 'Halal-Angaben unvollständig',
@@ -1380,6 +1380,8 @@ export const de = {
     submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
     rejectedBanner:
       'Diese Einreichung wurde abgelehnt. Sie ist nur für dich und Moderator:innen sichtbar.',
+    pendingReviewAdmin: 'Dieser Eintrag wartet auf Prüfung.',
+    rejectedBannerAdmin: 'Dieser Eintrag wurde abgelehnt.',
     // Issue 547: post-submit status screen for quick create
     submittedTitle: 'Einreichung erhalten',
     submittedBody:

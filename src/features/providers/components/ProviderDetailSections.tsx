@@ -259,7 +259,10 @@ export function ProviderDetailSections({
   // Only surface the admin warning when something was actually declared, and
   // distinguish "said no" (false) from "not sure" (null) in the headline.
   const showNotHalal =
-    !sealTier && isAdmin && (deniedAttestations.length > 0 || unansweredAttestations.length > 0);
+    !sealTier &&
+    isAdmin &&
+    provider.review_status === 'approved' &&
+    (deniedAttestations.length > 0 || unansweredAttestations.length > 0);
 
   return (
     <div className="flex flex-col gap-4 self-stretch">

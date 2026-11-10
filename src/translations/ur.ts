@@ -1347,7 +1347,7 @@ export const ur = {
       },
     },
     admin: {
-      declaredNonCompliant: 'غیر مطابق قرار دیا گیا',
+      declaredNonCompliant: 'ناکام',
       unanswered: 'جواب نہیں دیا گیا',
       // INTERIM de (#415): pending human translation
       declaredNotHalal: 'Nicht halal',
@@ -1366,6 +1366,8 @@ export const ur = {
     submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
     rejectedBanner:
       'Diese Einreichung wurde abgelehnt. Sie ist nur für dich und Moderator:innen sichtbar.',
+    pendingReviewAdmin: 'یہ فہرست زیر جائزہ ہے۔',
+    rejectedBannerAdmin: 'یہ فہرست مسترد کر دی گئی۔',
     // Issue 547: post-submit status screen for quick create
     submittedTitle: 'Einreichung erhalten',
     submittedBody:

@@ -1344,7 +1344,7 @@ export const ps = {
       },
     },
     admin: {
-      declaredNonCompliant: 'د نه سمون په توګه ثبت شوی',
+      declaredNonCompliant: 'ناکام',
       unanswered: 'ځواب نه دی شوی',
       // INTERIM de (#415): pending human translation
       declaredNotHalal: 'Nicht halal',
@@ -1363,6 +1363,8 @@ export const ps = {
     submittedToast: 'Eingereicht! Dein Eintrag wartet jetzt auf Prüfung.',
     rejectedBanner:
       'Diese Einreichung wurde abgelehnt. Sie ist nur für dich und Moderator:innen sichtbar.',
+    pendingReviewAdmin: 'دا لیست د بیاکتنې په انتظار ده.',
+    rejectedBannerAdmin: 'دا لیست رد شوې ده.',
     // Issue 547: post-submit status screen for quick create
     submittedTitle: 'Einreichung erhalten',
     submittedBody:

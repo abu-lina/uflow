@@ -7,6 +7,14 @@ import { mockProviders } from '@/__tests__/mocks/providerData';
 import type { ProviderDetailSections as PDS_Type } from '@/features/providers/components/ProviderDetailSections';
 import { BadgeKey, EntityType, TrustLevel } from '@/types/badges';
 
+const { mockIsAdmin } = vi.hoisted(() => ({
+  mockIsAdmin: vi.fn(() => ({ isAdmin: false, isLoading: false })),
+}));
+
+vi.mock('@/hooks/useIsAdmin', () => ({
+  useIsAdmin: () => mockIsAdmin(),
+}));
+
 const useQueryMock = vi.fn();
 
 let ProviderDetailSections: typeof PDS_Type;
@@ -38,6 +46,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 describe('ProviderDetailSections', () => {
   beforeEach(() => {
     useQueryMock.mockReset();
+    mockIsAdmin.mockReturnValue({ isAdmin: false, isLoading: false });
     localStorage.setItem('preferred-language', 'en');
   });
 
@@ -591,5 +600,77 @@ describe('ProviderDetailSections', () => {
 
     expect(container.firstElementChild).toHaveClass('gap-4');
     expect(container.firstElementChild).not.toHaveClass('gap-8');
+  });
+
+  it('[AC3] hides halal admin warning for pending (non-approved) providers', () => {
+    mockIsAdmin.mockReturnValue({ isAdmin: true, isLoading: false });
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{
+          ...mockProviders[0],
+          review_status: 'pending',
+          listing_type: 'food',
+          verification_method: 'online',
+          no_alcohol: false,
+          offers: [],
+          needs: [],
+        }}
+      />,
+    );
+
+    expect(screen.queryByText('Admin only')).not.toBeInTheDocument();
+    expect(screen.queryByText('Not halal')).not.toBeInTheDocument();
+  });
+
+  it('[AC3] shows halal admin warning for approved providers', () => {
+    mockIsAdmin.mockReturnValue({ isAdmin: true, isLoading: false });
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{
+          ...mockProviders[0],
+          review_status: 'approved',
+          listing_type: 'food',
+          verification_method: 'online',
+          no_alcohol: false,
+          offers: [],
+          needs: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText('Admin only')).toBeInTheDocument();
+    expect(screen.getByText('Not halal')).toBeInTheDocument();
+  });
+
+  it('[AC4] uses "Failed" label instead of "Declared non-compliant" for denied attestations', () => {
+    mockIsAdmin.mockReturnValue({ isAdmin: true, isLoading: false });
+    useQueryMock.mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    render(
+      <ProviderDetailSections
+        badges={[]}
+        isLoadingBadges={false}
+        provider={{
+          ...mockProviders[0],
+          review_status: 'approved',
+          listing_type: 'food',
+          verification_method: 'online',
+          no_alcohol: false,
+          offers: [],
+          needs: [],
+        }}
+      />,
+    );
+
+    expect(screen.getByText(/Failed/)).toBeInTheDocument();
+    expect(screen.queryByText(/Declared non-compliant/)).not.toBeInTheDocument();
   });
 });

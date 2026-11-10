@@ -1337,7 +1337,7 @@ export const en = {
       },
     },
     admin: {
-      declaredNonCompliant: 'Declared non-compliant',
+      declaredNonCompliant: 'Failed',
       unanswered: 'Not answered',
       declaredNotHalal: 'Not halal',
       attestationIncomplete: 'Halal details incomplete',
@@ -1356,6 +1356,8 @@ export const en = {
     pendingBadge: 'Under review',
     submittedToast: 'Submitted! Your entry is now awaiting review.',
     rejectedBanner: 'This submission was rejected. It is only visible to you and moderators.',
+    pendingReviewAdmin: 'This listing is pending review.',
+    rejectedBannerAdmin: 'This listing was rejected.',
     // Issue 547: post-submit status screen for quick create
     submittedTitle: 'Submission received',
     submittedBody:
