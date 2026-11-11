@@ -411,4 +411,23 @@ describe('ProofTierCard', () => {
     expect(activeSteps).toHaveLength(1);
     expect(activeSteps[0].getAttribute('data-tier')).toBe('gold');
   });
+
+  it('[TDD gate] certificate-only gold hides silver check items', () => {
+    render(
+      <ProofTierCard
+        certificateUrl="https://cdn.example.com/cert.pdf"
+        hasCertificate={true}
+        reviewStatus="approved"
+        verificationMethod="online"
+      />,
+    );
+    // Silver is "completed" state-wise but its onsite checks should not render
+    expect(
+      screen.queryByText('providerDetail.proofTier.checkMenuReviewedOnsite'),
+    ).not.toBeInTheDocument();
+    // Gold's own checks still render
+    expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
+    // Bronze checks still render (bronze is always earned)
+    expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
+  });
 });
