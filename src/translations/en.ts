@@ -1227,11 +1227,11 @@ export const en = {
       whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'How do we check?',
       howWeCheckBronze:
-        "We review the provider's online menu and publicly available information to check for halal indicators.",
+        "We check the provider's website, Google listing, and delivery app profiles for halal claims and indicators.",
       howWeCheckSilver:
-        'In addition to online screening, we visit the location in person and verify halal practices on-site.',
+        'In addition to online screening, we visit the location, talk to the owner, inspect the menu on-site, and check supplier labels.',
       howWeCheckGold:
-        'The provider holds a halal certificate issued by a recognized authority, which we verify and keep on file.',
+        'We request the halal certificate directly from the provider and contact the issuing authority to confirm its validity.',
       disclaimer:
         'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
       comingSoonSlaughter: 'Halal slaughter verification – coming soon',

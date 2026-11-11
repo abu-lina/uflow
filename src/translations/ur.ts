@@ -1235,11 +1235,11 @@ export const ur = {
       whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'ہم کیسے جانچتے ہیں؟',
       howWeCheckBronze:
-        "We review the provider's online menu and publicly available information to check for halal indicators.",
+        'ہم فراہم کنندہ کی ویب سائٹ، گوگل لسٹنگ، اور ڈلیوری ایپ پروفائلز میں حلال دعووں اور اشاروں کی جانچ کرتے ہیں۔',
       howWeCheckSilver:
-        'In addition to online screening, we visit the location in person and verify halal practices on-site.',
+        'آن لائن جانچ کے علاوہ، ہم مقام کا دورہ کرتے ہیں، مالک سے بات کرتے ہیں، مینو کا موقع پر معائنہ کرتے ہیں، اور سپلائر لیبلز کی جانچ کرتے ہیں۔',
       howWeCheckGold:
-        'The provider holds a halal certificate issued by a recognized authority, which we verify and keep on file.',
+        'ہم حلال سرٹیفکیٹ براہ راست فراہم کنندہ سے حاصل کرتے ہیں اور اس کی صداقت کی تصدیق کے لیے جاری کرنے والے ادارے سے رابطہ کرتے ہیں۔',
       disclaimer:
         'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
       comingSoonSlaughter: 'حلال ذبیحہ کی تصدیق – جلد آرہا ہے',

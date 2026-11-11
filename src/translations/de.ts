@@ -1249,11 +1249,11 @@ export const de = {
       whatsMissing: 'Was fehlt noch für {{nextTier}}',
       howWeCheck: 'Wie prüfen wir?',
       howWeCheckBronze:
-        'Wir prüfen die Online-Speisekarte und öffentlich verfügbare Informationen des Anbieters auf Halal-Indikatoren.',
+        'Wir prüfen die Webseite des Anbieters, den Google-Eintrag und Lieferapp-Profile auf Halal-Angaben und -Hinweise.',
       howWeCheckSilver:
-        'Zusätzlich zur Online-Prüfung besuchen wir den Standort persönlich und überprüfen die Halal-Praktiken vor Ort.',
+        'Zusätzlich zur Online-Prüfung besuchen wir den Standort, sprechen mit dem Inhaber, prüfen die Speisekarte vor Ort und kontrollieren Lieferantenetiketten.',
       howWeCheckGold:
-        'Der Anbieter besitzt ein Halal-Zertifikat einer anerkannten Stelle, das wir prüfen und aufbewahren.',
+        'Wir fordern das Halal-Zertifikat direkt vom Anbieter an und kontaktieren die ausstellende Behörde, um die Gültigkeit zu bestätigen.',
       disclaimer:
         'Diese Prüfung spiegelt unsere Bewertung zum Zeitpunkt der Verifizierung wider. Jeder Verbraucher ist selbst dafür verantwortlich, eine informierte Entscheidung darüber zu treffen, ob er einem Anbieter vertraut.',
       comingSoonSlaughter: 'Halal-Schlachtung Verifizierung – demnächst verfügbar',

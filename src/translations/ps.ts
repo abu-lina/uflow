@@ -1232,11 +1232,11 @@ export const ps = {
       whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'موږ څنګه ازموینه کوو؟',
       howWeCheckBronze:
-        "We review the provider's online menu and publicly available information to check for halal indicators.",
+        'موږ د چمتو کوونکي ویب پاڼه، ګوګل لیست، او د رسولو اپلیکیشن پروفایلونه د حلالو ادعاوو او نښو لپاره ګورو.',
       howWeCheckSilver:
-        'In addition to online screening, we visit the location in person and verify halal practices on-site.',
+        'د آنلاین معاینې سربیره، موږ ځای ته ورځو، له خاوند سره خبرې کوو، مینو په ځای کې ګورو، او د عرضه کوونکو لیبلونه چیک کوو.',
       howWeCheckGold:
-        'The provider holds a halal certificate issued by a recognized authority, which we verify and keep on file.',
+        'موږ د حلال تصدیق لیک مستقیم له چمتو کوونکي څخه غوښتنه کوو او د هغې اعتبار تایید کولو لپاره د صادرې ادارې سره اړیکه نیسو.',
       disclaimer:
         'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
       comingSoonSlaughter: 'د حلال ذبح تایید – ډیر ژر راځي',

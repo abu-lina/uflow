@@ -1216,11 +1216,11 @@ export const ar = {
       whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'كيف نتحقق؟',
       howWeCheckBronze:
-        "We review the provider's online menu and publicly available information to check for halal indicators.",
+        'نتحقق من موقع المزوّد الإلكتروني وملفه على Google وملفات تطبيقات التوصيل بحثًا عن ادعاءات ومؤشرات حلال.',
       howWeCheckSilver:
-        'In addition to online screening, we visit the location in person and verify halal practices on-site.',
+        'بالإضافة إلى الفحص عبر الإنترنت، نزور الموقع ونتحدث مع المالك ونفحص القائمة ميدانيًا ونتحقق من ملصقات الموردين.',
       howWeCheckGold:
-        'The provider holds a halal certificate issued by a recognized authority, which we verify and keep on file.',
+        'نطلب شهادة الحلال مباشرة من المزوّد ونتواصل مع الجهة المصدرة للتأكد من صلاحيتها.',
       disclaimer:
         'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
       comingSoonSlaughter: 'التحقق من الذبح الحلال – قريباً',
