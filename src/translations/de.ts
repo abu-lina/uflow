@@ -1231,7 +1231,7 @@ export const de = {
         'Dieser Anbieter wurde {{highlight}}Vor Ort{{/highlight}} geprüft und hat ein {{highlight}}Halal-Zertifikat{{/highlight}} nachgewiesen.',
       summaryGoldCertOnly:
         'Dieser Anbieter wurde {{highlight}}Online{{/highlight}} geprüft und hat ein {{highlight}}Halal-Zertifikat{{/highlight}} nachgewiesen.',
-      whatWeVerified: 'Was wir geprüft haben',
+      whatWeVerified: 'Was wir geprüft haben?',
       checkMenuReviewed: 'Speisekarte online geprüft',
       checkMenuReviewedOnsite: 'Vor Ort geprüftes Menü',
       checkSellsNoAlcohol: 'Verkauft kein Alkohol',
@@ -1243,10 +1243,16 @@ export const de = {
       checkCertificateOnFile: 'Halal-Zertifikat liegt vor',
       checkOnsiteVisit: 'Vor-Ort-Besuch durchgeführt',
       checkOwnerConfirmed: 'Inhaber hat Halal-Praxis bestätigt',
-      tierLabelBronze: 'Bronze – Online geprüft',
-      tierLabelSilver: 'Silber – Vor-Ort geprüft',
-      tierLabelGold: 'Gold – Zertifikat verifiziert',
+      whatsMissing: 'Was fehlt noch für {{nextTier}}?',
       howWeCheck: 'Wie prüfen wir?',
+      howWeCheckBronze:
+        'Wir prüfen die Webseite des Anbieters, den Google-Eintrag und Lieferapp-Profile auf Halal-Angaben und -Hinweise.',
+      howWeCheckSilver:
+        'Zusätzlich zur Online-Prüfung besuchen wir den Standort, sprechen mit dem Inhaber, prüfen die Speisekarte vor Ort und kontrollieren Lieferantenetiketten.',
+      howWeCheckGold:
+        'Wir fordern das Halal-Zertifikat direkt vom Anbieter an und kontaktieren die ausstellende Behörde, um die Gültigkeit zu bestätigen.',
+      disclaimer:
+        'Diese Prüfung spiegelt unsere Bewertung zum Zeitpunkt der Verifizierung wider. Jeder Verbraucher ist selbst dafür verantwortlich, eine informierte Entscheidung darüber zu treffen, ob er einem Anbieter vertraut.',
       comingSoonSlaughter: 'Halal-Schlachtung Verifizierung – demnächst verfügbar',
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },

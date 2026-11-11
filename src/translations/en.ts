@@ -1209,7 +1209,7 @@ export const en = {
         'This provider was checked {{highlight}}on-site{{/highlight}} and has provided a {{highlight}}Halal certificate{{/highlight}}.',
       summaryGoldCertOnly:
         'This provider was checked {{highlight}}online{{/highlight}} and has provided a {{highlight}}Halal certificate{{/highlight}}.',
-      whatWeVerified: 'What we verified',
+      whatWeVerified: 'What we verified?',
       checkMenuReviewed: 'Menu reviewed online',
       checkMenuReviewedOnsite: 'Menu reviewed onsite',
       checkSellsNoAlcohol: 'Sells no Alcohol',
@@ -1217,14 +1217,20 @@ export const en = {
       checkClaimsMeatHalal: 'Claims meat is halal',
       checkSellsProcessNoAlcohol: 'Sells and process no Alcohol',
       checkSellsProcessNoPork: 'Sells and process no pork',
-      checkMeatIsHalal: 'meat is halal',
+      checkMeatIsHalal: 'Meat is halal-certified',
       checkCertificateOnFile: 'Halal certificate on file',
       checkOnsiteVisit: 'On-site visit completed',
       checkOwnerConfirmed: 'Owner confirmed halal practices',
-      tierLabelBronze: 'Bronze – Online Checked',
-      tierLabelSilver: 'Silver – On-site Checked',
-      tierLabelGold: 'Gold – Certificate Verified',
+      whatsMissing: "What's missing for {{nextTier}}?",
       howWeCheck: 'How do we check?',
+      howWeCheckBronze:
+        "We check the provider's website, Google listing, and delivery app profiles for halal claims and indicators.",
+      howWeCheckSilver:
+        'In addition to online screening, we visit the location, talk to the owner, inspect the menu on-site, and check supplier labels.',
+      howWeCheckGold:
+        'We request the halal certificate directly from the provider and contact the issuing authority to confirm its validity.',
+      disclaimer:
+        'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
       comingSoonSlaughter: 'Halal slaughter verification – coming soon',
       pendingReview: "This provider's halal status is pending review by our team.",
     },

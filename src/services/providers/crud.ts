@@ -94,7 +94,9 @@ export async function getProviderById(
         getBadgesForEntity(id, EntityType.PROVIDER, client),
         supabase
           .from('food_providers')
-          .select('verification_method, has_certificate, no_alcohol, no_pork, no_gambling')
+          .select(
+            'verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling',
+          )
           .eq('provider_id', id)
           .maybeSingle(),
         supabase.from('store_providers').select('no_gambling').eq('provider_id', id).maybeSingle(),

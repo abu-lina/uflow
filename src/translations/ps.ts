@@ -1214,7 +1214,7 @@ export const ps = {
         'دا چمتو کوونکی {{highlight}}په ځای{{/highlight}} تایید شوی دی او د {{highlight}}حلال سند{{/highlight}} وړاندې کړی دی.',
       summaryGoldCertOnly:
         'دا چمتو کوونکی {{highlight}}آنلاین{{/highlight}} تایید شوی دی او د {{highlight}}حلال سند{{/highlight}} وړاندې کړی دی.',
-      whatWeVerified: 'موږ څه تایید کړل',
+      whatWeVerified: 'موږ څه تایید کړل؟',
       checkMenuReviewed: 'مېنو آنلاین وکتل شو',
       checkMenuReviewedOnsite: 'مینو په ځای کې وکتل شو',
       checkSellsNoAlcohol: 'الکول نه پلوري',
@@ -1226,10 +1226,16 @@ export const ps = {
       checkCertificateOnFile: 'د حلال سند په دوسیه کې شته',
       checkOnsiteVisit: 'په ځای لیدنه ترسره شوه',
       checkOwnerConfirmed: 'مالک د حلال کړنې تایید کړې',
-      tierLabelBronze: 'برانز – آنلاین وکتل شوی',
-      tierLabelSilver: 'سلور – په ځای وکتل شوی',
-      tierLabelGold: 'ګولډ – سند تایید شوی',
+      whatsMissing: 'د {{nextTier}} لپاره څه نشته؟',
       howWeCheck: 'موږ څنګه ازموینه کوو؟',
+      howWeCheckBronze:
+        'موږ د چمتو کوونکي ویب پاڼه، ګوګل لیست، او د رسولو اپلیکیشن پروفایلونه د حلالو ادعاوو او نښو لپاره ګورو.',
+      howWeCheckSilver:
+        'د آنلاین معاینې سربیره، موږ ځای ته ورځو، له خاوند سره خبرې کوو، مینو په ځای کې ګورو، او د عرضه کوونکو لیبلونه چیک کوو.',
+      howWeCheckGold:
+        'موږ د حلال تصدیق لیک مستقیم له چمتو کوونکي څخه غوښتنه کوو او د هغې اعتبار تایید کولو لپاره د صادرې ادارې سره اړیکه نیسو.',
+      disclaimer:
+        'دا ازموینه زموږ د تایید په وخت کې زموږ بیاکتنه منعکسوي. هر مصرف کوونکی پخپله مسؤل دی چې پریکړه وکړي آیا چمتو کوونکي باندې باور لري که نه.',
       comingSoonSlaughter: 'د حلال ذبح تایید – ډیر ژر راځي',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

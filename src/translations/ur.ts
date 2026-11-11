@@ -1217,7 +1217,7 @@ export const ur = {
         'اس فراہم کنندہ کی {{highlight}}موقع پر{{/highlight}} جانچ کی گئی اور انہوں نے {{highlight}}حلال سرٹیفیکیٹ{{/highlight}} فراہم کیا۔',
       summaryGoldCertOnly:
         'اس فراہم کنندہ کی {{highlight}}آن لائن{{/highlight}} جانچ کی گئی اور انہوں نے {{highlight}}حلال سرٹیفیکیٹ{{/highlight}} فراہم کیا۔',
-      whatWeVerified: 'ہم نے کیا تصدیق کی',
+      whatWeVerified: 'ہم نے کیا تصدیق کی؟',
       checkMenuReviewed: 'مینیو آن لائن جائزہ لیا گیا',
       checkMenuReviewedOnsite: 'مینو کا موقع پر جائزہ لیا گیا',
       checkSellsNoAlcohol: 'شراب نہیں بیچتا',
@@ -1229,10 +1229,16 @@ export const ur = {
       checkCertificateOnFile: 'حلال سرٹیفیکیٹ دستیاب ہے',
       checkOnsiteVisit: 'موقع پر دورہ مکمل کیا گیا',
       checkOwnerConfirmed: 'مالک نے حلال طریقوں کی تصدیق کی',
-      tierLabelBronze: 'برانز – آن لائن جانچا گیا',
-      tierLabelSilver: 'سلور – موقع پر جانچا گیا',
-      tierLabelGold: 'گولڈ – سرٹیفکیٹ تصدیق شدہ',
+      whatsMissing: '{{nextTier}} کے لیے کیا کمی ہے؟',
       howWeCheck: 'ہم کیسے جانچتے ہیں؟',
+      howWeCheckBronze:
+        'ہم فراہم کنندہ کی ویب سائٹ، گوگل لسٹنگ، اور ڈلیوری ایپ پروفائلز میں حلال دعووں اور اشاروں کی جانچ کرتے ہیں۔',
+      howWeCheckSilver:
+        'آن لائن جانچ کے علاوہ، ہم مقام کا دورہ کرتے ہیں، مالک سے بات کرتے ہیں، مینو کا موقع پر معائنہ کرتے ہیں، اور سپلائر لیبلز کی جانچ کرتے ہیں۔',
+      howWeCheckGold:
+        'ہم حلال سرٹیفکیٹ براہ راست فراہم کنندہ سے حاصل کرتے ہیں اور اس کی صداقت کی تصدیق کے لیے جاری کرنے والے ادارے سے رابطہ کرتے ہیں۔',
+      disclaimer:
+        'یہ جانچ تصدیق کے وقت ہمارے جائزے کی عکاسی کرتی ہے۔ ہر صارف خود ذمہ دار ہے کہ وہ فراہم کنندہ پر اعتماد کرے یا نہ کرے۔',
       comingSoonSlaughter: 'حلال ذبیحہ کی تصدیق – جلد آرہا ہے',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
