@@ -1213,7 +1213,14 @@ export const ar = {
       tierLabelBronze: 'برونز – تم التحقق أونلاين',
       tierLabelSilver: 'فضي – تم التحقق ميدانياً',
       tierLabelGold: 'ذهبي – شهادة موثقة',
+      whatsMissing: "What's missing for {nextTier}",
       howWeCheck: 'كيف نتحقق؟',
+      howWeCheckBronze:
+        'We screen online sources — Google, Instagram, delivery platforms like Wolt and Uber Eats — and review menus for forbidden items.',
+      howWeCheckSilver:
+        'In addition to online screening, we visit the location in person, inspect the kitchen and storage, and verify halal practices on-site.',
+      howWeCheckGold:
+        'We verify the halal certificate is authentic, on file, and current. For providers with onsite verification, we also confirm practices during the visit.',
       comingSoonSlaughter: 'التحقق من الذبح الحلال – قريباً',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

@@ -1232,7 +1232,14 @@ export const tr = {
       tierLabelBronze: 'Bronz – Çevrimiçi Kontrol Edildi',
       tierLabelSilver: 'Gümüş – Yerinde Kontrol Edildi',
       tierLabelGold: 'Altın – Sertifika Doğrulandı',
+      whatsMissing: "What's missing for {nextTier}",
       howWeCheck: 'Nasıl kontrol ediyoruz?',
+      howWeCheckBronze:
+        'We screen online sources — Google, Instagram, delivery platforms like Wolt and Uber Eats — and review menus for forbidden items.',
+      howWeCheckSilver:
+        'In addition to online screening, we visit the location in person, inspect the kitchen and storage, and verify halal practices on-site.',
+      howWeCheckGold:
+        'We verify the halal certificate is authentic, on file, and current. For providers with onsite verification, we also confirm practices during the visit.',
       comingSoonSlaughter: 'Helal kesim doğrulaması – yakında',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

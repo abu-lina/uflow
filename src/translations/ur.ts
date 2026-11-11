@@ -1232,7 +1232,14 @@ export const ur = {
       tierLabelBronze: 'برانز – آن لائن جانچا گیا',
       tierLabelSilver: 'سلور – موقع پر جانچا گیا',
       tierLabelGold: 'گولڈ – سرٹیفکیٹ تصدیق شدہ',
+      whatsMissing: "What's missing for {nextTier}",
       howWeCheck: 'ہم کیسے جانچتے ہیں؟',
+      howWeCheckBronze:
+        'We screen online sources — Google, Instagram, delivery platforms like Wolt and Uber Eats — and review menus for forbidden items.',
+      howWeCheckSilver:
+        'In addition to online screening, we visit the location in person, inspect the kitchen and storage, and verify halal practices on-site.',
+      howWeCheckGold:
+        'We verify the halal certificate is authentic, on file, and current. For providers with onsite verification, we also confirm practices during the visit.',
       comingSoonSlaughter: 'حلال ذبیحہ کی تصدیق – جلد آرہا ہے',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

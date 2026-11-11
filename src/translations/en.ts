@@ -1224,7 +1224,14 @@ export const en = {
       tierLabelBronze: 'Bronze – Online Checked',
       tierLabelSilver: 'Silver – On-site Checked',
       tierLabelGold: 'Gold – Certificate Verified',
+      whatsMissing: "What's missing for {nextTier}",
       howWeCheck: 'How do we check?',
+      howWeCheckBronze:
+        'We screen online sources — Google, Instagram, delivery platforms like Wolt and Uber Eats — and review menus for forbidden items.',
+      howWeCheckSilver:
+        'In addition to online screening, we visit the location in person, inspect the kitchen and storage, and verify halal practices on-site.',
+      howWeCheckGold:
+        'We verify the halal certificate is authentic, on file, and current. For providers with onsite verification, we also confirm practices during the visit.',
       comingSoonSlaughter: 'Halal slaughter verification – coming soon',
       pendingReview: "This provider's halal status is pending review by our team.",
     },

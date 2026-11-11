@@ -1246,7 +1246,14 @@ export const de = {
       tierLabelBronze: 'Bronze – Online geprüft',
       tierLabelSilver: 'Silber – Vor-Ort geprüft',
       tierLabelGold: 'Gold – Zertifikat verifiziert',
+      whatsMissing: 'Was fehlt noch für {nextTier}',
       howWeCheck: 'Wie prüfen wir?',
+      howWeCheckBronze:
+        'Wir prüfen Online-Quellen — Google, Instagram, Lieferplattformen wie Wolt und Uber Eats — und kontrollieren die Speisekarte auf verbotene Zutaten.',
+      howWeCheckSilver:
+        'Zusätzlich zur Online-Prüfung besuchen wir den Standort persönlich, inspizieren Küche und Lager und überprüfen die Halal-Praktiken vor Ort.',
+      howWeCheckGold:
+        'Wir prüfen, ob das Halal-Zertifikat echt, vorhanden und aktuell ist. Bei Anbietern mit Vor-Ort-Prüfung bestätigen wir die Praktiken auch beim Besuch.',
       comingSoonSlaughter: 'Halal-Schlachtung Verifizierung – demnächst verfügbar',
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
