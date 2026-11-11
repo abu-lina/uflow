@@ -1210,9 +1210,11 @@ export const ar = {
       checkCertificateOnFile: 'شهادة حلال محفوظة',
       checkOnsiteVisit: 'تمت زيارة الموقع',
       checkOwnerConfirmed: 'المالك أكد ممارسات الحلال',
-      whatIsThis: 'كيف نتحقق؟',
-      explanation:
-        'كل إدراج في Ummah Flow يفي بمتطلبات الحلال لدينا. مستوى الثقة يوضح مدى دقة تأكيدنا لذلك.',
+      tierLabelBronze: 'برونز – تم التحقق أونلاين',
+      tierLabelSilver: 'فضي – تم التحقق ميدانياً',
+      tierLabelGold: 'ذهبي – شهادة موثقة',
+      howWeCheck: 'كيف نتحقق؟',
+      comingSoonSlaughter: 'التحقق من الذبح الحلال – قريباً',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },

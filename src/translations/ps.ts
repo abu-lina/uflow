@@ -1226,9 +1226,11 @@ export const ps = {
       checkCertificateOnFile: 'د حلال سند په دوسیه کې شته',
       checkOnsiteVisit: 'په ځای لیدنه ترسره شوه',
       checkOwnerConfirmed: 'مالک د حلال کړنې تایید کړې',
-      whatIsThis: 'موږ څنګه ازموینه کوو؟',
-      explanation:
-        'په Ummah Flow کې هر لېست زموږ د حلال شرطونه پوره کوي. د باور کچه ښيي چې موږ دا څومره ښه تایید کړی دی.',
+      tierLabelBronze: 'برانز – آنلاین وکتل شوی',
+      tierLabelSilver: 'سلور – په ځای وکتل شوی',
+      tierLabelGold: 'ګولډ – سند تایید شوی',
+      howWeCheck: 'موږ څنګه ازموینه کوو؟',
+      comingSoonSlaughter: 'د حلال ذبح تایید – ډیر ژر راځي',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },

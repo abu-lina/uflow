@@ -1243,9 +1243,11 @@ export const de = {
       checkCertificateOnFile: 'Halal-Zertifikat liegt vor',
       checkOnsiteVisit: 'Vor-Ort-Besuch durchgeführt',
       checkOwnerConfirmed: 'Inhaber hat Halal-Praxis bestätigt',
-      whatIsThis: 'Wie prüfen wir?',
-      explanation:
-        'Jeder Eintrag auf Ummah Flow erfüllt unsere Halal-Anforderungen. Die Vertrauensstufe zeigt, wie gründlich wir das bestätigt haben.',
+      tierLabelBronze: 'Bronze – Online geprüft',
+      tierLabelSilver: 'Silber – Vor-Ort geprüft',
+      tierLabelGold: 'Gold – Zertifikat verifiziert',
+      howWeCheck: 'Wie prüfen wir?',
+      comingSoonSlaughter: 'Halal-Schlachtung Verifizierung – demnächst verfügbar',
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
     trustBadges: {

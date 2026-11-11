@@ -1229,9 +1229,11 @@ export const ur = {
       checkCertificateOnFile: 'حلال سرٹیفیکیٹ دستیاب ہے',
       checkOnsiteVisit: 'موقع پر دورہ مکمل کیا گیا',
       checkOwnerConfirmed: 'مالک نے حلال طریقوں کی تصدیق کی',
-      whatIsThis: 'ہم کیسے جانچتے ہیں؟',
-      explanation:
-        'Ummah Flow پر ہر لسٹنگ ہماری حلال ضروریات پوری کرتی ہے۔ اعتماد کی سطح بتاتی ہے کہ ہم نے اسے کتنی اچھی طرح تصدیق کیا۔',
+      tierLabelBronze: 'برانز – آن لائن جانچا گیا',
+      tierLabelSilver: 'سلور – موقع پر جانچا گیا',
+      tierLabelGold: 'گولڈ – سرٹیفکیٹ تصدیق شدہ',
+      howWeCheck: 'ہم کیسے جانچتے ہیں؟',
+      comingSoonSlaughter: 'حلال ذبیحہ کی تصدیق – جلد آرہا ہے',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
