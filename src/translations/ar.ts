@@ -1216,11 +1216,13 @@ export const ar = {
       whatsMissing: "What's missing for {nextTier}",
       howWeCheck: 'كيف نتحقق؟',
       howWeCheckBronze:
-        'We screen online sources — Google, Instagram, delivery platforms like Wolt and Uber Eats — and review menus for forbidden items.',
+        "We review the provider's online menu and publicly available information to check for halal indicators.",
       howWeCheckSilver:
-        'In addition to online screening, we visit the location in person, inspect the kitchen and storage, and verify halal practices on-site.',
+        'In addition to online screening, we visit the location in person and verify halal practices on-site.',
       howWeCheckGold:
-        'We verify the halal certificate is authentic, on file, and current. For providers with onsite verification, we also confirm practices during the visit.',
+        'The provider holds a halal certificate issued by a recognized authority, which we verify and keep on file.',
+      disclaimer:
+        'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
       comingSoonSlaughter: 'التحقق من الذبح الحلال – قريباً',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

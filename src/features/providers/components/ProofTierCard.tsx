@@ -473,9 +473,12 @@ export function ProofTierCard({
       </button>
 
       {isExpanded ? (
-        <p className="mt-2 text-sm text-content">
-          {t(`providerDetail.proofTier.howWeCheck${capitalize(tier)}`)}
-        </p>
+        <div className="mt-2 space-y-2">
+          <p className="text-sm text-content">
+            {t(`providerDetail.proofTier.howWeCheck${capitalize(tier)}`)}
+          </p>
+          <p className="text-xs text-content/60">{t('providerDetail.proofTier.disclaimer')}</p>
+        </div>
       ) : null}
 
       <div className="bg-surface-secondary mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-content/50">

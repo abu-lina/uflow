@@ -1249,11 +1249,13 @@ export const de = {
       whatsMissing: 'Was fehlt noch für {nextTier}',
       howWeCheck: 'Wie prüfen wir?',
       howWeCheckBronze:
-        'Wir prüfen Online-Quellen — Google, Instagram, Lieferplattformen wie Wolt und Uber Eats — und kontrollieren die Speisekarte auf verbotene Zutaten.',
+        'Wir prüfen die Online-Speisekarte und öffentlich verfügbare Informationen des Anbieters auf Halal-Indikatoren.',
       howWeCheckSilver:
-        'Zusätzlich zur Online-Prüfung besuchen wir den Standort persönlich, inspizieren Küche und Lager und überprüfen die Halal-Praktiken vor Ort.',
+        'Zusätzlich zur Online-Prüfung besuchen wir den Standort persönlich und überprüfen die Halal-Praktiken vor Ort.',
       howWeCheckGold:
-        'Wir prüfen, ob das Halal-Zertifikat echt, vorhanden und aktuell ist. Bei Anbietern mit Vor-Ort-Prüfung bestätigen wir die Praktiken auch beim Besuch.',
+        'Der Anbieter besitzt ein Halal-Zertifikat einer anerkannten Stelle, das wir prüfen und aufbewahren.',
+      disclaimer:
+        'Diese Prüfung spiegelt unsere Bewertung zum Zeitpunkt der Verifizierung wider. Jeder Verbraucher ist selbst dafür verantwortlich, eine informierte Entscheidung darüber zu treffen, ob er einem Anbieter vertraut.',
       comingSoonSlaughter: 'Halal-Schlachtung Verifizierung – demnächst verfügbar',
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
