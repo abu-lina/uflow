@@ -2,7 +2,16 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { BeerOff, ChevronDown, Dices, PiggyBank, SquareMenu } from 'lucide-react';
+import {
+  BeerOff,
+  ChevronDown,
+  Dices,
+  FileCheck,
+  MapPin,
+  PiggyBank,
+  SquareMenu,
+  UserCheck,
+} from 'lucide-react';
 import { HalalIcon as HugeHalalIcon } from 'hugeicons-react';
 import type { ReactNode } from 'react';
 
@@ -285,18 +294,18 @@ function getCheckItems(
   // gold
   const items: CheckItem[] = [
     {
-      icon: <SquareMenu aria-hidden className="h-6 w-6" />,
+      icon: <FileCheck aria-hidden className="h-6 w-6" />,
       labelKey: 'providerDetail.proofTier.checkCertificateOnFile',
     },
   ];
   if (onsiteVerified) {
     items.push(
       {
-        icon: <SquareMenu aria-hidden className="h-6 w-6" />,
+        icon: <MapPin aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkOnsiteVisit',
       },
       {
-        icon: <SquareMenu aria-hidden className="h-6 w-6" />,
+        icon: <UserCheck aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkOwnerConfirmed',
       },
     );
