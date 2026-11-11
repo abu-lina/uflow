@@ -429,7 +429,7 @@ export function ProofTierCard({
         <>
           <button
             aria-expanded={isMissingExpanded}
-            className="mt-3 inline-flex items-center gap-2 text-base font-medium text-content-heading"
+            className="mt-3 flex items-center gap-2 text-base font-medium text-content-heading"
             type="button"
             onClick={() => setIsMissingExpanded((prev) => !prev)}
           >
@@ -452,7 +452,7 @@ export function ProofTierCard({
       {/* Section 3: How do we check? (collapsed, prose per tier) */}
       <button
         aria-expanded={isExpanded}
-        className="mt-3 inline-flex items-center gap-2 text-base font-medium text-content-heading"
+        className="mt-3 flex items-center gap-2 text-base font-medium text-content-heading"
         type="button"
         onClick={() => setIsExpanded((prev) => !prev)}
       >
