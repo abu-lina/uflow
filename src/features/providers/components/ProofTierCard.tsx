@@ -283,10 +283,17 @@ function TierStepper({ activeTier, verificationMethod, t }: TierStepperProps) {
     future: 'bg-border',
   };
 
+  // Silver requires onsite — don't show its checks as "completed" when
+  // the provider jumped straight to gold via certificate without onsite.
+  const earnedTiers = new Set<SealTier>(['bronze']);
+  if (onsiteVerified) earnedTiers.add('silver');
+  earnedTiers.add(activeTier);
+
   return (
     <div className="space-y-0">
       {TIERS.map((tier, i) => {
         const state = tierState(tier, activeTier);
+        const showChecks = state === 'active' || (state === 'completed' && earnedTiers.has(tier));
         return (
           <div key={tier} data-tier={tier} data-tier-state={state}>
             <div className="flex items-start gap-3">
@@ -305,7 +312,7 @@ function TierStepper({ activeTier, verificationMethod, t }: TierStepperProps) {
                 >
                   {t(labelKey[tier])}
                 </p>
-                {state !== 'future' && (
+                {showChecks && (
                   <ul className="mt-1 space-y-0.5">
                     {tierChecks[tier].map((check) => (
                       <li key={check} className="flex items-center gap-1.5 text-sm text-content">
