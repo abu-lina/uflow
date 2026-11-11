@@ -1221,9 +1221,11 @@ export const en = {
       checkCertificateOnFile: 'Halal certificate on file',
       checkOnsiteVisit: 'On-site visit completed',
       checkOwnerConfirmed: 'Owner confirmed halal practices',
-      whatIsThis: 'How do we check?',
-      explanation:
-        "Every listing on Ummah Flow meets our halal requirements. The trust level shows how thoroughly we've confirmed this.",
+      tierLabelBronze: 'Bronze – Online Checked',
+      tierLabelSilver: 'Silver – On-site Checked',
+      tierLabelGold: 'Gold – Certificate Verified',
+      howWeCheck: 'How do we check?',
+      comingSoonSlaughter: 'Halal slaughter verification – coming soon',
       pendingReview: "This provider's halal status is pending review by our team.",
     },
     trustBadges: {

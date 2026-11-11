@@ -280,7 +280,78 @@ describe('ProofTierCard', () => {
     expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
   });
 
-  it('[TDD gate] retains checklist and expandable explanation', () => {
+  it('[TDD gate] stepper renders all three tier labels regardless of active tier', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    // Bronze is active, but silver and gold labels should also render
+    expect(screen.getByText('providerDetail.proofTier.tierLabelBronze')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.tierLabelSilver')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.tierLabelGold')).toBeInTheDocument();
+  });
+
+  it('[TDD gate] active tier node has primary styling', () => {
+    const { container } = render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    // Bronze is active — its step node should have the active marker
+    const activeSteps = container.querySelectorAll('[data-tier-state="active"]');
+    expect(activeSteps).toHaveLength(1);
+    expect(activeSteps[0].getAttribute('data-tier')).toBe('bronze');
+  });
+
+  it('[TDD gate] future tiers have muted state', () => {
+    const { container } = render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    // Bronze active → silver and gold are future
+    const futureSteps = container.querySelectorAll('[data-tier-state="future"]');
+    expect(futureSteps).toHaveLength(2);
+  });
+
+  it('[TDD gate] completed tiers below active have completed state', () => {
+    const { container } = render(
+      <ProofTierCard
+        verificationMethod="onsite"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    // Silver active → bronze is completed
+    const completedSteps = container.querySelectorAll('[data-tier-state="completed"]');
+    expect(completedSteps).toHaveLength(1);
+    expect(completedSteps[0].getAttribute('data-tier')).toBe('bronze');
+  });
+
+  it('[TDD gate] coming soon row renders below stepper', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    expect(screen.getByText('providerDetail.proofTier.comingSoonSlaughter')).toBeInTheDocument();
+  });
+
+  it('[TDD gate] no collapsible toggle in DOM', () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -290,10 +361,55 @@ describe('ProofTierCard', () => {
       />,
     );
     expect(
-      screen.getByText((v) => v.startsWith('providerDetail.proofTier.whatWeVerified')),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: 'providerDetail.proofTier.whatIsThis' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('[TDD gate] static heading replaces toggle', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    // "How do we check?" is now a static heading, not a button
+    expect(screen.getByText('providerDetail.proofTier.howWeCheck')).toBeInTheDocument();
+  });
+
+  it('[TDD gate] gold active makes bronze and silver completed', () => {
+    const { container } = render(
+      <ProofTierCard
+        certificateUrl="https://cdn.example.com/cert.pdf"
+        hasCertificate={true}
+        reviewStatus="approved"
+        verificationMethod="onsite"
+      />,
+    );
+    const completedSteps = container.querySelectorAll('[data-tier-state="completed"]');
+    expect(completedSteps).toHaveLength(2);
+    const activeSteps = container.querySelectorAll('[data-tier-state="active"]');
+    expect(activeSteps).toHaveLength(1);
+    expect(activeSteps[0].getAttribute('data-tier')).toBe('gold');
+  });
+
+  it('[TDD gate] certificate-only gold hides silver check items', () => {
+    render(
+      <ProofTierCard
+        certificateUrl="https://cdn.example.com/cert.pdf"
+        hasCertificate={true}
+        reviewStatus="approved"
+        verificationMethod="online"
+      />,
+    );
+    // Silver is "completed" state-wise but its onsite checks should not render
     expect(
-      screen.getByRole('button', { name: 'providerDetail.proofTier.whatIsThis' }),
-    ).toBeInTheDocument();
+      screen.queryByText('providerDetail.proofTier.checkMenuReviewedOnsite'),
+    ).not.toBeInTheDocument();
+    // Gold's own checks still render
+    expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
+    // Bronze checks still render (bronze is always earned)
+    expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
   });
 });

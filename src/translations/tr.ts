@@ -1229,9 +1229,11 @@ export const tr = {
       checkCertificateOnFile: 'Helal sertifikası dosyada',
       checkOnsiteVisit: 'Yerinde ziyaret tamamlandı',
       checkOwnerConfirmed: 'İşletme sahibi helal uygulamaları doğruladı',
-      whatIsThis: 'Nasıl kontrol ediyoruz?',
-      explanation:
-        'Ummah Flow üzerindeki her kayıt helal gereksinimlerimizi karşılar. Güven seviyesi bunu ne kadar kapsamlı doğruladığımızı gösterir.',
+      tierLabelBronze: 'Bronz – Çevrimiçi Kontrol Edildi',
+      tierLabelSilver: 'Gümüş – Yerinde Kontrol Edildi',
+      tierLabelGold: 'Altın – Sertifika Doğrulandı',
+      howWeCheck: 'Nasıl kontrol ediyoruz?',
+      comingSoonSlaughter: 'Helal kesim doğrulaması – yakında',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
