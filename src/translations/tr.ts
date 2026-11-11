@@ -1229,16 +1229,10 @@ export const tr = {
       checkCertificateOnFile: 'Helal sertifikası dosyada',
       checkOnsiteVisit: 'Yerinde ziyaret tamamlandı',
       checkOwnerConfirmed: 'İşletme sahibi helal uygulamaları doğruladı',
-      whatsMissing: '{{nextTier}} için eksik olan ne?',
+      tierLabelBronze: 'Bronz – Çevrimiçi Kontrol Edildi',
+      tierLabelSilver: 'Gümüş – Yerinde Kontrol Edildi',
+      tierLabelGold: 'Altın – Sertifika Doğrulandı',
       howWeCheck: 'Nasıl kontrol ediyoruz?',
-      howWeCheckBronze:
-        'Sağlayıcının web sitesini, Google kaydını ve teslimat uygulaması profillerini helal beyanları ve göstergeleri açısından kontrol ederiz.',
-      howWeCheckSilver:
-        'Çevrimiçi taramaya ek olarak lokasyonu ziyaret eder, işletme sahibiyle görüşür, menüyü yerinde inceler ve tedarikçi etiketlerini kontrol ederiz.',
-      howWeCheckGold:
-        'Helal sertifikasını doğrudan sağlayıcıdan talep eder ve geçerliliğini doğrulamak için düzenleyen makamla iletişime geçeriz.',
-      disclaimer:
-        'Bu kontrol, doğrulama sırasındaki değerlendirmemizi yansıtır. Her tüketici, bir sağlayıcıya güvenip güvenmeyeceği konusunda kendi bilinçli kararını vermekten sorumludur.',
       comingSoonSlaughter: 'Helal kesim doğrulaması – yakında',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

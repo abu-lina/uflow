@@ -1221,16 +1221,10 @@ export const en = {
       checkCertificateOnFile: 'Halal certificate on file',
       checkOnsiteVisit: 'On-site visit completed',
       checkOwnerConfirmed: 'Owner confirmed halal practices',
-      whatsMissing: "What's missing for {{nextTier}}?",
+      tierLabelBronze: 'Bronze – Online Checked',
+      tierLabelSilver: 'Silver – On-site Checked',
+      tierLabelGold: 'Gold – Certificate Verified',
       howWeCheck: 'How do we check?',
-      howWeCheckBronze:
-        "We check the provider's website, Google listing, and delivery app profiles for halal claims and indicators.",
-      howWeCheckSilver:
-        'In addition to online screening, we visit the location, talk to the owner, inspect the menu on-site, and check supplier labels.',
-      howWeCheckGold:
-        'We request the halal certificate directly from the provider and contact the issuing authority to confirm its validity.',
-      disclaimer:
-        'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
       comingSoonSlaughter: 'Halal slaughter verification – coming soon',
       pendingReview: "This provider's halal status is pending review by our team.",
     },

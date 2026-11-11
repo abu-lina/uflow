@@ -1243,16 +1243,10 @@ export const de = {
       checkCertificateOnFile: 'Halal-Zertifikat liegt vor',
       checkOnsiteVisit: 'Vor-Ort-Besuch durchgeführt',
       checkOwnerConfirmed: 'Inhaber hat Halal-Praxis bestätigt',
-      whatsMissing: 'Was fehlt noch für {{nextTier}}?',
+      tierLabelBronze: 'Bronze – Online geprüft',
+      tierLabelSilver: 'Silber – Vor-Ort geprüft',
+      tierLabelGold: 'Gold – Zertifikat verifiziert',
       howWeCheck: 'Wie prüfen wir?',
-      howWeCheckBronze:
-        'Wir prüfen die Webseite des Anbieters, den Google-Eintrag und Lieferapp-Profile auf Halal-Angaben und -Hinweise.',
-      howWeCheckSilver:
-        'Zusätzlich zur Online-Prüfung besuchen wir den Standort, sprechen mit dem Inhaber, prüfen die Speisekarte vor Ort und kontrollieren Lieferantenetiketten.',
-      howWeCheckGold:
-        'Wir fordern das Halal-Zertifikat direkt vom Anbieter an und kontaktieren die ausstellende Behörde, um die Gültigkeit zu bestätigen.',
-      disclaimer:
-        'Diese Prüfung spiegelt unsere Bewertung zum Zeitpunkt der Verifizierung wider. Jeder Verbraucher ist selbst dafür verantwortlich, eine informierte Entscheidung darüber zu treffen, ob er einem Anbieter vertraut.',
       comingSoonSlaughter: 'Halal-Schlachtung Verifizierung – demnächst verfügbar',
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },

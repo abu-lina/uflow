@@ -257,7 +257,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
   });
 
-  it('[QA] whatWeVerified heading is visible, check items shown after expand', async () => {
+  it('[QA] tier stepper heading and check items are always present', () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -266,12 +266,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
         reviewStatus="approved"
       />,
     );
-    expect(screen.getByText(/whatWeVerified/)).toBeInTheDocument();
-    expect(
-      screen.queryByText('providerDetail.proofTier.checkMenuReviewed'),
-    ).not.toBeInTheDocument();
-    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
-    await toggle.click();
+    expect(screen.getByText('providerDetail.proofTier.howWeCheck')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
   });
 });
