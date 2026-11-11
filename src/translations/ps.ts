@@ -1226,9 +1226,6 @@ export const ps = {
       checkCertificateOnFile: 'د حلال سند په دوسیه کې شته',
       checkOnsiteVisit: 'په ځای لیدنه ترسره شوه',
       checkOwnerConfirmed: 'مالک د حلال کړنې تایید کړې',
-      tierLabelBronze: 'برانز – آنلاین وکتل شوی',
-      tierLabelSilver: 'سلور – په ځای وکتل شوی',
-      tierLabelGold: 'ګولډ – سند تایید شوی',
       whatsMissing: 'د {{nextTier}} لپاره څه نشته؟',
       howWeCheck: 'موږ څنګه ازموینه کوو؟',
       howWeCheckBronze:
@@ -1238,7 +1235,7 @@ export const ps = {
       howWeCheckGold:
         'موږ د حلال تصدیق لیک مستقیم له چمتو کوونکي څخه غوښتنه کوو او د هغې اعتبار تایید کولو لپاره د صادرې ادارې سره اړیکه نیسو.',
       disclaimer:
-        'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
+        'دا ازموینه زموږ د تایید په وخت کې زموږ بیاکتنه منعکسوي. هر مصرف کوونکی پخپله مسؤل دی چې پریکړه وکړي آیا چمتو کوونکي باندې باور لري که نه.',
       comingSoonSlaughter: 'د حلال ذبح تایید – ډیر ژر راځي',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

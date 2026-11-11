@@ -1243,9 +1243,6 @@ export const de = {
       checkCertificateOnFile: 'Halal-Zertifikat liegt vor',
       checkOnsiteVisit: 'Vor-Ort-Besuch durchgeführt',
       checkOwnerConfirmed: 'Inhaber hat Halal-Praxis bestätigt',
-      tierLabelBronze: 'Bronze – Online geprüft',
-      tierLabelSilver: 'Silber – Vor-Ort geprüft',
-      tierLabelGold: 'Gold – Zertifikat verifiziert',
       whatsMissing: 'Was fehlt noch für {{nextTier}}?',
       howWeCheck: 'Wie prüfen wir?',
       howWeCheckBronze:

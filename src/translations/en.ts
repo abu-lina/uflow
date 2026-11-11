@@ -1221,9 +1221,6 @@ export const en = {
       checkCertificateOnFile: 'Halal certificate on file',
       checkOnsiteVisit: 'On-site visit completed',
       checkOwnerConfirmed: 'Owner confirmed halal practices',
-      tierLabelBronze: 'Bronze – Online Checked',
-      tierLabelSilver: 'Silver – On-site Checked',
-      tierLabelGold: 'Gold – Certificate Verified',
       whatsMissing: "What's missing for {{nextTier}}?",
       howWeCheck: 'How do we check?',
       howWeCheckBronze:

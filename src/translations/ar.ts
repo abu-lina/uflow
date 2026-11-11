@@ -1210,9 +1210,6 @@ export const ar = {
       checkCertificateOnFile: 'شهادة حلال محفوظة',
       checkOnsiteVisit: 'تمت زيارة الموقع',
       checkOwnerConfirmed: 'المالك أكد ممارسات الحلال',
-      tierLabelBronze: 'برونز – تم التحقق أونلاين',
-      tierLabelSilver: 'فضي – تم التحقق ميدانياً',
-      tierLabelGold: 'ذهبي – شهادة موثقة',
       whatsMissing: 'ما الذي ينقص للوصول إلى {{nextTier}}؟',
       howWeCheck: 'كيف نتحقق؟',
       howWeCheckBronze:
@@ -1222,7 +1219,7 @@ export const ar = {
       howWeCheckGold:
         'نطلب شهادة الحلال مباشرة من المزوّد ونتواصل مع الجهة المصدرة للتأكد من صلاحيتها.',
       disclaimer:
-        'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
+        'يعكس هذا الفحص تقييمنا وقت التحقق. كل مستهلك مسؤول عن اتخاذ قراره المستنير بشأن ثقته بمزوّد الخدمة.',
       comingSoonSlaughter: 'التحقق من الذبح الحلال – قريباً',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

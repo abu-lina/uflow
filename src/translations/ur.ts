@@ -1229,9 +1229,6 @@ export const ur = {
       checkCertificateOnFile: 'حلال سرٹیفیکیٹ دستیاب ہے',
       checkOnsiteVisit: 'موقع پر دورہ مکمل کیا گیا',
       checkOwnerConfirmed: 'مالک نے حلال طریقوں کی تصدیق کی',
-      tierLabelBronze: 'برانز – آن لائن جانچا گیا',
-      tierLabelSilver: 'سلور – موقع پر جانچا گیا',
-      tierLabelGold: 'گولڈ – سرٹیفکیٹ تصدیق شدہ',
       whatsMissing: '{{nextTier}} کے لیے کیا کمی ہے؟',
       howWeCheck: 'ہم کیسے جانچتے ہیں؟',
       howWeCheckBronze:
@@ -1241,7 +1238,7 @@ export const ur = {
       howWeCheckGold:
         'ہم حلال سرٹیفکیٹ براہ راست فراہم کنندہ سے حاصل کرتے ہیں اور اس کی صداقت کی تصدیق کے لیے جاری کرنے والے ادارے سے رابطہ کرتے ہیں۔',
       disclaimer:
-        'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
+        'یہ جانچ تصدیق کے وقت ہمارے جائزے کی عکاسی کرتی ہے۔ ہر صارف خود ذمہ دار ہے کہ وہ فراہم کنندہ پر اعتماد کرے یا نہ کرے۔',
       comingSoonSlaughter: 'حلال ذبیحہ کی تصدیق – جلد آرہا ہے',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',

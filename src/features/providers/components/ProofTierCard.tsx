@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Dices,
   FileCheck,
+  Lock,
   MapPin,
   PiggyBank,
   SquareMenu,
@@ -315,7 +316,7 @@ function getCheckItems(
 
 function VerifiedChecklist({ items, t }: { items: CheckItem[]; t: (key: string) => string }) {
   return (
-    <div className="space-y-0">
+    <div>
       {items.map(({ icon, labelKey }) => (
         <div key={labelKey} className="flex w-full items-center gap-1 rounded-xl">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
@@ -337,6 +338,8 @@ const NEXT_TIER: Record<SealTier, SealTier | null> = {
   silver: 'gold',
   gold: null,
 };
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // ---------------------------------------------------------------------------
 // ProofTierCard
@@ -415,8 +418,6 @@ export function ProofTierCard({
   const supportsAttestation = listingType === 'food' || listingType === 'store';
   const checkItems = getCheckItems(tier, verificationMethod);
   const nextTier = NEXT_TIER[tier];
-  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
   return (
     <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
       <SealRow
@@ -429,7 +430,7 @@ export function ProofTierCard({
       {/* Section 1: What we verified (collapsible) */}
       <button
         aria-expanded={isVerifiedExpanded}
-        className="flex items-center gap-2 text-base font-medium text-content-heading"
+        className="mt-3 flex items-center gap-2 text-base font-medium text-content-heading"
         type="button"
         onClick={() => setIsVerifiedExpanded((prev) => !prev)}
       >
@@ -495,7 +496,7 @@ export function ProofTierCard({
       </p>
 
       <div className="bg-surface-secondary mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-content/50">
-        <span className="text-xs">&#128274;</span>
+        <Lock aria-hidden className="h-4 w-4" />
         <p className="text-sm italic">{t('providerDetail.proofTier.comingSoonSlaughter')}</p>
       </div>
 
