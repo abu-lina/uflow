@@ -33,7 +33,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   // ---------------------------------------------------------------------------
   // Regression: certOnFile bug
   // ---------------------------------------------------------------------------
-  it('[QA] certificate checklist item renders when hasCertificate is true (regression: certOnFile)', () => {
+  it('[QA] certificate checklist item renders when hasCertificate is true (regression: certOnFile)', async () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -42,6 +42,8 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
         reviewStatus="approved"
       />,
     );
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
   });
 
@@ -82,7 +84,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
   // ---------------------------------------------------------------------------
   // Progressive levels: 4 verification states
   // ---------------------------------------------------------------------------
-  it('[QA] level 1 — online without certificate shows bronze seal + menu reviewed', () => {
+  it('[QA] level 1 — online without certificate shows bronze seal + menu reviewed', async () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -92,11 +94,13 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
       />,
     );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltBronze')).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.summaryBronze')).toBeInTheDocument();
   });
 
-  it('[QA] level 2 — online with certificate shows gold seal + certificate item', () => {
+  it('[QA] level 2 — online with certificate shows gold seal + certificate item', async () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -106,11 +110,13 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
       />,
     );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.summaryGoldCertOnly')).toBeInTheDocument();
   });
 
-  it('[QA] level 3 — onsite without certificate shows silver seal + onsite items', () => {
+  it('[QA] level 3 — onsite without certificate shows silver seal + onsite items', async () => {
     render(
       <ProofTierCard
         verificationMethod="onsite"
@@ -120,6 +126,8 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
       />,
     );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltSilver')).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
     expect(
       screen.getByText('providerDetail.proofTier.checkMenuReviewedOnsite'),
     ).toBeInTheDocument();
@@ -133,7 +141,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     expect(screen.getByText('providerDetail.proofTier.summarySilver')).toBeInTheDocument();
   });
 
-  it('[QA] level 4 — onsite with certificate shows gold seal + all checklist items', () => {
+  it('[QA] level 4 — onsite with certificate shows gold seal + all checklist items', async () => {
     render(
       <ProofTierCard
         verificationMethod="onsite"
@@ -143,7 +151,9 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
       />,
     );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
-    expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
+    // VerifiedChecklist shows gold-specific items only (not bronze items)
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkOnsiteVisit')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkOwnerConfirmed')).toBeInTheDocument();
@@ -247,7 +257,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
   });
 
-  it('[QA] tier stepper heading and check items are always present', () => {
+  it('[QA] whatWeVerified heading is visible, check items shown after expand', async () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -256,7 +266,12 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
         reviewStatus="approved"
       />,
     );
-    expect(screen.getByText('providerDetail.proofTier.howWeCheck')).toBeInTheDocument();
+    expect(screen.getByText(/whatWeVerified/)).toBeInTheDocument();
+    expect(
+      screen.queryByText('providerDetail.proofTier.checkMenuReviewed'),
+    ).not.toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
   });
 });
