@@ -1,7 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { BeerOff, Dices, PiggyBank } from 'lucide-react';
+import { useState } from 'react';
+import { BeerOff, ChevronDown, Dices, PiggyBank, SquareMenu } from 'lucide-react';
 import { HalalIcon as HugeHalalIcon } from 'hugeicons-react';
 import type { ReactNode } from 'react';
 
@@ -225,10 +226,116 @@ function GoldAttestationSection({
 }
 
 // ---------------------------------------------------------------------------
-// Tier stepper
+// VerifiedChecklist: icon-based list of what was checked for active tier
+// ---------------------------------------------------------------------------
+
+interface CheckItem {
+  icon: ReactNode;
+  labelKey: string;
+}
+
+function getCheckItems(
+  tier: SealTier,
+  verificationMethod: 'online' | 'onsite' | null | undefined,
+): CheckItem[] {
+  const onsiteVerified = (verificationMethod ?? 'online') === 'onsite';
+
+  if (tier === 'bronze') {
+    return [
+      {
+        icon: <SquareMenu aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkMenuReviewed',
+      },
+      {
+        icon: <BeerOff aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkSellsNoAlcohol',
+      },
+      {
+        icon: <PiggyBank aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkSellsNoPork',
+      },
+      {
+        icon: <HugeHalalIcon aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkClaimsMeatHalal',
+      },
+    ];
+  }
+
+  if (tier === 'silver') {
+    return [
+      {
+        icon: <SquareMenu aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkMenuReviewedOnsite',
+      },
+      {
+        icon: <BeerOff aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkSellsProcessNoAlcohol',
+      },
+      {
+        icon: <PiggyBank aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkSellsProcessNoPork',
+      },
+      {
+        icon: <HugeHalalIcon aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkMeatIsHalal',
+      },
+    ];
+  }
+
+  // gold
+  const items: CheckItem[] = [
+    {
+      icon: <SquareMenu aria-hidden className="h-6 w-6" />,
+      labelKey: 'providerDetail.proofTier.checkCertificateOnFile',
+    },
+  ];
+  if (onsiteVerified) {
+    items.push(
+      {
+        icon: <SquareMenu aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkOnsiteVisit',
+      },
+      {
+        icon: <SquareMenu aria-hidden className="h-6 w-6" />,
+        labelKey: 'providerDetail.proofTier.checkOwnerConfirmed',
+      },
+    );
+  }
+  return items;
+}
+
+function VerifiedChecklist({ items, t }: { items: CheckItem[]; t: (key: string) => string }) {
+  return (
+    <div className="space-y-0">
+      {items.map(({ icon, labelKey }) => (
+        <div key={labelKey} className="flex w-full items-center gap-1 rounded-xl">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
+            {icon}
+          </span>
+          <span className="text-sm font-semibold text-content-heading">{t(labelKey)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tier stepper (collapsible) — shows active + next tier only
 // ---------------------------------------------------------------------------
 
 const TIERS: SealTier[] = ['bronze', 'silver', 'gold'];
+
+const SEAL_ICON: Record<SealTier, string> = {
+  bronze: '/images/seals/seal-bronze.png',
+  silver: '/images/seals/seal-silver.png',
+  gold: '/images/seals/seal-gold.png',
+};
+
+const SEAL_ICON_INACTIVE: Record<SealTier, string> = {
+  bronze: '/images/seals/seal-bronze-inactive.png',
+  silver: '/images/seals/seal-silver-inactive.png',
+  gold: '/images/seals/seal-gold-inactive.png',
+};
 
 function tierState(tier: SealTier, activeTier: SealTier): 'active' | 'completed' | 'future' {
   const ai = TIERS.indexOf(activeTier);
@@ -240,11 +347,11 @@ function tierState(tier: SealTier, activeTier: SealTier): 'active' | 'completed'
 
 interface TierStepperProps {
   activeTier: SealTier;
-  verificationMethod: 'online' | 'onsite' | null | undefined;
   t: (key: string) => string;
+  verificationMethod: 'online' | 'onsite' | null | undefined;
 }
 
-function TierStepper({ activeTier, verificationMethod, t }: TierStepperProps) {
+function TierStepper({ activeTier, t, verificationMethod }: TierStepperProps) {
   const onsiteVerified = (verificationMethod ?? 'online') === 'onsite';
 
   const tierChecks: Record<SealTier, string[]> = {
@@ -277,29 +384,23 @@ function TierStepper({ activeTier, verificationMethod, t }: TierStepperProps) {
     gold: 'providerDetail.proofTier.tierLabelGold',
   };
 
-  const dotStyles: Record<string, string> = {
-    active: 'bg-primary',
-    completed: 'bg-primary/40',
-    future: 'bg-border',
-  };
-
-  // Silver requires onsite — don't show its checks as "completed" when
-  // the provider jumped straight to gold via certificate without onsite.
-  const earnedTiers = new Set<SealTier>(['bronze']);
-  if (onsiteVerified) earnedTiers.add('silver');
-  earnedTiers.add(activeTier);
+  // Only show active tier + next tier (skip completed lower tiers)
+  const activeIdx = TIERS.indexOf(activeTier);
+  const nextTier = activeIdx < TIERS.length - 1 ? TIERS[activeIdx + 1] : null;
+  const visibleTiers = nextTier ? [activeTier, nextTier] : [activeTier];
 
   return (
     <div className="space-y-0">
-      {TIERS.map((tier, i) => {
+      {visibleTiers.map((tier, i) => {
         const state = tierState(tier, activeTier);
-        const showChecks = state === 'active' || (state === 'completed' && earnedTiers.has(tier));
+        const isActive = state === 'active';
+        const sealSrc = isActive ? SEAL_ICON[tier] : SEAL_ICON_INACTIVE[tier];
         return (
           <div key={tier} data-tier={tier} data-tier-state={state}>
             <div className="flex items-start gap-3">
               <div className="flex flex-col items-center">
-                <div className={`h-3 w-3 rounded-full ${dotStyles[state]}`} />
-                {i < TIERS.length - 1 && (
+                <Image alt="" className="shrink-0" height={28} src={sealSrc} width={28} />
+                {i < visibleTiers.length - 1 && (
                   <div
                     className={`w-0.5 flex-1 ${state === 'future' ? 'bg-border' : 'bg-primary/30'}`}
                     style={{ minHeight: '2rem' }}
@@ -312,16 +413,16 @@ function TierStepper({ activeTier, verificationMethod, t }: TierStepperProps) {
                 >
                   {t(labelKey[tier])}
                 </p>
-                {showChecks && (
-                  <ul className="mt-1 space-y-0.5">
-                    {tierChecks[tier].map((check) => (
-                      <li key={check} className="flex items-center gap-1.5 text-sm text-content">
-                        <span className="text-primary">&#10003;</span>
-                        {check}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <ul className="mt-1 space-y-0.5">
+                  {tierChecks[tier].map((check) => (
+                    <li key={check} className="flex items-center gap-1.5 text-sm text-content">
+                      <span className={isActive ? 'text-primary' : 'text-content/40'}>
+                        {isActive ? '✓' : '○'}
+                      </span>
+                      {check}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
@@ -347,6 +448,7 @@ export function ProofTierCard({
   provisional = false,
 }: ProofTierCardProps) {
   const { t } = useLanguage();
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const tier = computeSealTier(
     verificationMethod,
@@ -404,7 +506,7 @@ export function ProofTierCard({
 
   const supportsAttestation = listingType === 'food' || listingType === 'store';
   const checkItems = getCheckItems(tier, verificationMethod);
-  const nextTier = NEXT_TIER[tier];
+
   return (
     <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
       <SealRow
@@ -414,11 +516,31 @@ export function ProofTierCard({
 
       <SummaryText text={t(summaryKey)} />
 
-      <h3 className="mb-2 text-base font-medium text-content-heading">
-        {t('providerDetail.proofTier.howWeCheck')}
-      </h3>
+      <div className="space-y-2">
+        <p className="text-base text-content-heading">
+          {t('providerDetail.proofTier.whatWeVerified')}:
+        </p>
+        <VerifiedChecklist items={checkItems} t={t} />
+      </div>
 
-      <TierStepper activeTier={tier} t={t} verificationMethod={verificationMethod} />
+      <button
+        aria-expanded={isExpanded}
+        className="mt-3 inline-flex items-center gap-2 text-base font-medium text-content-heading"
+        type="button"
+        onClick={() => setIsExpanded((prev) => !prev)}
+      >
+        {t('providerDetail.proofTier.howWeCheck')}
+        <ChevronDown
+          aria-hidden
+          className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isExpanded ? (
+        <div className="mt-2">
+          <TierStepper activeTier={tier} t={t} verificationMethod={verificationMethod} />
+        </div>
+      ) : null}
 
       <div className="bg-surface-secondary mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-content/50">
         <span className="text-xs">&#128274;</span>
