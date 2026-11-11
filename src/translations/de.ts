@@ -1246,7 +1246,7 @@ export const de = {
       tierLabelBronze: 'Bronze – Online geprüft',
       tierLabelSilver: 'Silber – Vor-Ort geprüft',
       tierLabelGold: 'Gold – Zertifikat verifiziert',
-      whatsMissing: 'Was fehlt noch für {{nextTier}}',
+      whatsMissing: 'Was fehlt noch für {{nextTier}}?',
       howWeCheck: 'Wie prüfen wir?',
       howWeCheckBronze:
         'Wir prüfen die Webseite des Anbieters, den Google-Eintrag und Lieferapp-Profile auf Halal-Angaben und -Hinweise.',

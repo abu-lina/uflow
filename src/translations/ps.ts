@@ -1229,7 +1229,7 @@ export const ps = {
       tierLabelBronze: 'برانز – آنلاین وکتل شوی',
       tierLabelSilver: 'سلور – په ځای وکتل شوی',
       tierLabelGold: 'ګولډ – سند تایید شوی',
-      whatsMissing: "What's missing for {{nextTier}}",
+      whatsMissing: 'د {{nextTier}} لپاره څه نشته؟',
       howWeCheck: 'موږ څنګه ازموینه کوو؟',
       howWeCheckBronze:
         'موږ د چمتو کوونکي ویب پاڼه، ګوګل لیست، او د رسولو اپلیکیشن پروفایلونه د حلالو ادعاوو او نښو لپاره ګورو.',

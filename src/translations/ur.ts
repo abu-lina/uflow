@@ -1232,7 +1232,7 @@ export const ur = {
       tierLabelBronze: 'برانز – آن لائن جانچا گیا',
       tierLabelSilver: 'سلور – موقع پر جانچا گیا',
       tierLabelGold: 'گولڈ – سرٹیفکیٹ تصدیق شدہ',
-      whatsMissing: "What's missing for {{nextTier}}",
+      whatsMissing: '{{nextTier}} کے لیے کیا کمی ہے؟',
       howWeCheck: 'ہم کیسے جانچتے ہیں؟',
       howWeCheckBronze:
         'ہم فراہم کنندہ کی ویب سائٹ، گوگل لسٹنگ، اور ڈلیوری ایپ پروفائلز میں حلال دعووں اور اشاروں کی جانچ کرتے ہیں۔',
