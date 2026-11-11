@@ -1224,7 +1224,7 @@ export const en = {
       tierLabelBronze: 'Bronze – Online Checked',
       tierLabelSilver: 'Silver – On-site Checked',
       tierLabelGold: 'Gold – Certificate Verified',
-      whatsMissing: "What's missing for {nextTier}",
+      whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'How do we check?',
       howWeCheckBronze:
         "We review the provider's online menu and publicly available information to check for halal indicators.",

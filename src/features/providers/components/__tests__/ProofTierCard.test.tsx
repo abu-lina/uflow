@@ -451,7 +451,7 @@ describe('ProofTierCard', () => {
     expect(screen.getByText('providerDetail.proofTier.comingSoonSlaughter')).toBeInTheDocument();
   });
 
-  it('[TDD gate] certificate-only gold checklist shows only gold items', () => {
+  it('[TDD gate] certificate-only gold checklist shows only gold items', async () => {
     render(
       <ProofTierCard
         certificateUrl="https://cdn.example.com/cert.pdf"
@@ -460,6 +460,8 @@ describe('ProofTierCard', () => {
         verificationMethod="online"
       />,
     );
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
     // VerifiedChecklist shows active tier items only — gold with online has just certificate
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
     // No silver onsite items

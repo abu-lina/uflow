@@ -1232,7 +1232,7 @@ export const ur = {
       tierLabelBronze: 'برانز – آن لائن جانچا گیا',
       tierLabelSilver: 'سلور – موقع پر جانچا گیا',
       tierLabelGold: 'گولڈ – سرٹیفکیٹ تصدیق شدہ',
-      whatsMissing: "What's missing for {nextTier}",
+      whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'ہم کیسے جانچتے ہیں؟',
       howWeCheckBronze:
         "We review the provider's online menu and publicly available information to check for halal indicators.",

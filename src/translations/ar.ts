@@ -1213,7 +1213,7 @@ export const ar = {
       tierLabelBronze: 'برونز – تم التحقق أونلاين',
       tierLabelSilver: 'فضي – تم التحقق ميدانياً',
       tierLabelGold: 'ذهبي – شهادة موثقة',
-      whatsMissing: "What's missing for {nextTier}",
+      whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'كيف نتحقق؟',
       howWeCheckBronze:
         "We review the provider's online menu and publicly available information to check for halal indicators.",

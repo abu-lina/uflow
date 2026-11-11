@@ -1229,7 +1229,7 @@ export const ps = {
       tierLabelBronze: 'برانز – آنلاین وکتل شوی',
       tierLabelSilver: 'سلور – په ځای وکتل شوی',
       tierLabelGold: 'ګولډ – سند تایید شوی',
-      whatsMissing: "What's missing for {nextTier}",
+      whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'موږ څنګه ازموینه کوو؟',
       howWeCheckBronze:
         "We review the provider's online menu and publicly available information to check for halal indicators.",

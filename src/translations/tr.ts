@@ -1232,7 +1232,7 @@ export const tr = {
       tierLabelBronze: 'Bronz – Çevrimiçi Kontrol Edildi',
       tierLabelSilver: 'Gümüş – Yerinde Kontrol Edildi',
       tierLabelGold: 'Altın – Sertifika Doğrulandı',
-      whatsMissing: "What's missing for {nextTier}",
+      whatsMissing: "What's missing for {{nextTier}}",
       howWeCheck: 'Nasıl kontrol ediyoruz?',
       howWeCheckBronze:
         "We review the provider's online menu and publicly available information to check for halal indicators.",

@@ -151,6 +151,8 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
       />,
     );
     expect(screen.getByAltText('providerDetail.proofTier.sealAltGold')).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
     // VerifiedChecklist shows gold-specific items only (not bronze items)
     expect(screen.getByText('providerDetail.proofTier.checkCertificateOnFile')).toBeInTheDocument();
     expect(screen.getByText('providerDetail.proofTier.checkOnsiteVisit')).toBeInTheDocument();
@@ -255,7 +257,7 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
     expect(screen.queryByText('providerDetail.attestation.noAlcohol')).not.toBeInTheDocument();
   });
 
-  it('[QA] whatWeVerified heading and check items are always visible', () => {
+  it('[QA] whatWeVerified heading is visible, check items shown after expand', async () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -265,6 +267,11 @@ describe('ProofTierCard — QA verification model (Plan 133)', () => {
       />,
     );
     expect(screen.getByText(/whatWeVerified/)).toBeInTheDocument();
+    expect(
+      screen.queryByText('providerDetail.proofTier.checkMenuReviewed'),
+    ).not.toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /whatWeVerified/ });
+    await toggle.click();
     expect(screen.getByText('providerDetail.proofTier.checkMenuReviewed')).toBeInTheDocument();
   });
 });

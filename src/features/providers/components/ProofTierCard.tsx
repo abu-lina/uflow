@@ -354,6 +354,7 @@ export function ProofTierCard({
   provisional = false,
 }: ProofTierCardProps) {
   const { t } = useLanguage();
+  const [isVerifiedExpanded, setIsVerifiedExpanded] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMissingExpanded, setIsMissingExpanded] = useState(false);
 
@@ -425,13 +426,24 @@ export function ProofTierCard({
 
       <SummaryText text={t(summaryKey)} />
 
-      {/* Section 1: What we verified (always open) */}
-      <div className="space-y-2">
-        <p className="text-base text-content-heading">
-          {t('providerDetail.proofTier.whatWeVerified')}:
-        </p>
-        <VerifiedChecklist items={checkItems} t={t} />
-      </div>
+      {/* Section 1: What we verified (collapsible) */}
+      <button
+        aria-expanded={isVerifiedExpanded}
+        className="flex items-center gap-2 text-base font-medium text-content-heading"
+        type="button"
+        onClick={() => setIsVerifiedExpanded((prev) => !prev)}
+      >
+        {t('providerDetail.proofTier.whatWeVerified')}
+        <ChevronDown
+          aria-hidden
+          className={`h-4 w-4 transition-transform ${isVerifiedExpanded ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {isVerifiedExpanded ? (
+        <div className="mt-2">
+          <VerifiedChecklist items={checkItems} t={t} />
+        </div>
+      ) : null}
 
       {/* Section 2: What's missing for [next tier] (collapsed, hidden for gold) */}
       {nextTier ? (
@@ -443,7 +455,7 @@ export function ProofTierCard({
             onClick={() => setIsMissingExpanded((prev) => !prev)}
           >
             {t('providerDetail.proofTier.whatsMissing', {
-              nextTier: t(`providerDetail.proofTier.tierLabel${capitalize(nextTier)}`),
+              nextTier: capitalize(nextTier),
             })}
             <ChevronDown
               aria-hidden
@@ -473,13 +485,14 @@ export function ProofTierCard({
       </button>
 
       {isExpanded ? (
-        <div className="mt-2 space-y-2">
-          <p className="text-sm text-content">
-            {t(`providerDetail.proofTier.howWeCheck${capitalize(tier)}`)}
-          </p>
-          <p className="text-xs text-content/60">{t('providerDetail.proofTier.disclaimer')}</p>
-        </div>
+        <p className="mt-2 text-sm text-content">
+          {t(`providerDetail.proofTier.howWeCheck${capitalize(tier)}`)}
+        </p>
       ) : null}
+
+      <p className="mt-2 rounded-xl border border-amber-200/60 bg-amber-50/50 px-3 py-2 text-sm text-amber-800">
+        {t('providerDetail.proofTier.disclaimer')}
+      </p>
 
       <div className="bg-surface-secondary mt-2 flex items-center gap-2 rounded-xl px-3 py-2 text-content/50">
         <span className="text-xs">&#128274;</span>
