@@ -502,7 +502,6 @@ async function main(): Promise<void> {
   if (!isAutoApply && isWrite && allCandidates.length > 0) {
     console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
     const { written, autoApplied } = await writeOrAutoApplyCandidates(allCandidates, stats);
-    stats.candidatesCreated += written;
     if (autoApplied > 0) {
       console.log(`  ✅ ${written} candidates written (${autoApplied} auto-applied by confidence)`);
     } else {
@@ -852,7 +851,6 @@ async function runWoltEnrichment(
   if (isWriteMode && allCandidates.length > 0) {
     console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
     const { written, autoApplied } = await writeOrAutoApplyCandidates(allCandidates, stats);
-    stats.candidatesCreated += written;
     if (autoApplied > 0) {
       console.log(`  ✅ ${written} candidates written (${autoApplied} auto-applied by confidence)`);
     } else {
@@ -1108,7 +1106,6 @@ async function runLieferandoEnrichment(
   if (isWriteMode && allCandidates.length > 0) {
     console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
     const { written, autoApplied } = await writeOrAutoApplyCandidates(allCandidates, stats);
-    stats.candidatesCreated += written;
     if (autoApplied > 0) {
       console.log(`  ✅ ${written} candidates written (${autoApplied} auto-applied by confidence)`);
     } else {
@@ -1374,7 +1371,6 @@ async function runUberEatsEnrichment(
     if (isWrite && allCandidates.length > 0) {
       console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
       const { written, autoApplied } = await writeOrAutoApplyCandidates(allCandidates, stats);
-      stats.candidatesCreated += written;
       if (autoApplied > 0) {
         console.log(
           `  ✅ ${written} candidates written (${autoApplied} auto-applied by confidence)`,
@@ -1834,6 +1830,7 @@ async function writeOrAutoApplyCandidates(
       });
 
       if (appliedFields.length > 0) {
+        let rpcFailed = false;
         try {
           if (Object.keys(rpcPayload).length > 0) {
             const { error: rpcError } = await supabase.rpc('admin_update_provider', {
@@ -1846,13 +1843,12 @@ async function writeOrAutoApplyCandidates(
               );
               // Fall through: these candidates will be written as pending below
               pending.push(...autoEligible);
-              // Skip the audit trail write for these
-              autoEligible.length = 0;
+              rpcFailed = true;
             }
           }
 
-          // Write auto-applied audit trail
-          for (const c of autoEligible) {
+          // Write auto-applied audit trail (skip if RPC failed — already pushed to pending)
+          for (const c of rpcFailed ? [] : autoEligible) {
             if (!appliedFields.includes(c.field_name)) {
               // buildAutoApplyPayload filtered this out (conflict, not additive) — write as pending
               pending.push(c);
@@ -1889,7 +1885,7 @@ async function writeOrAutoApplyCandidates(
             }
           }
 
-          if (appliedFields.length > 0 && autoEligible.length > 0) {
+          if (appliedFields.length > 0 && !rpcFailed) {
             console.log(
               `     ✨ Auto-applied ${appliedFields.length} high-confidence field(s) for ${providerId}: ${appliedFields.join(', ')}`,
             );
