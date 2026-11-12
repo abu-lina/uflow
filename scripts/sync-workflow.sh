@@ -15,11 +15,13 @@
 #   scripts/lane
 #   scripts/lane.sh
 #   scripts/review-bundle
-#   .devin/foreman.json
 #   .claude/settings.json
 #   .claude/hooks/fixed-proof-gate.sh
 #   .claude/hooks/post-write-check.sh
 #   .claude/hooks/on-stop-nudge.sh
+#   .claude/hooks/foreman-no-code-gate.sh
+#   .claude/hooks/foreman-no-read-src-gate.sh
+#   scripts/hooks/lane-signal-notify.sh
 #   scripts/sync-workflow.sh
 #
 # INIT-ONLY files are copied only on --init (never overwritten after that):
@@ -45,14 +47,21 @@ SYNC_FILES=(
   scripts/lane
   scripts/lane.sh
   scripts/review-bundle
-  .devin/foreman.json
   .claude/settings.json
   .claude/hooks/fixed-proof-gate.sh
   .claude/hooks/post-write-check.sh
   .claude/hooks/on-stop-nudge.sh
   .claude/hooks/idea-detection-nudge.sh
   .claude/hooks/review-dispatch-nudge.sh
+  .claude/hooks/sync-workflow-on-start.sh
+  .claude/hooks/ui-taste-gate.sh
+  .claude/hooks/strip-attribution.sh
+  .claude/hooks/foreman-no-code-gate.sh
+  .claude/hooks/foreman-no-read-src-gate.sh
+  scripts/hooks/lane-signal-notify.sh
   scripts/sync-workflow.sh
+  reference/operate.md
+  reference/polish.md
 )
 
 INIT_ONLY_FILES=(

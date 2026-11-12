@@ -2,6 +2,8 @@
 
 You are the crew for exactly one GitHub issue. Everything you do happens inside your worktree under `.worktrees/<issue>-<slug>/`. Read `AGENTS.md` first; this file is the step order.
 
+Supported agents: **Claude Code** and **Copilot CLI**. Both follow this workflow. Differences (hooks, skills, Rex integration, `-p` vs interactive mode) in `docs/agents/supported-agents.md`.
+
 ## 0. Orient (read, don't write)
 
 ```bash
@@ -82,7 +84,12 @@ Do not mark done until all blocking findings are addressed.
 
 ## 7. Report
 
-Update your Herdr workspace status to `blocked` or `done` every time you stop, not only when the PR is green and ready. This is the owner's signal; do it as the last action before leaving the lane.
+Before ending the session, write one of these to `.lane-signal`:
+
+- PR ready: `echo "handoff: PR #<n> ready for review" > .lane-signal`
+- Blocked: `echo "blocked: <reason>" > .lane-signal`
+
+The Stop hook reads this file and notifies the foreman. If you skip it, the foreman gets an automatic fallback message noting that the session ended without a signal.
 
 - PR ready: include the PR number or URL, the green checks, which acceptance criteria are covered by which tests, anything out of scope you found, and one learning (what surprised you, one sentence).
 - Stopped after 3 failed CI attempts: include the exact command, the last failing error, the fix rounds already tried, and what you need the owner to decide or unblock.

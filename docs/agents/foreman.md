@@ -59,24 +59,47 @@ The foreman handles every mechanical step — from idea detection through auto-m
 6. Apply labels: `ready`, `P<n>`, `area:<x>`, `type:<x>`.
 7. `gh issue create` with final ACs in body.
 
+> **HARD GATE:** When the PO approves a brainstormed design, the ONLY permitted next action is `gh issue create`. Never commit a spec to `main`, never write product code, never invoke any implementation skill. The design context belongs in the GitHub issue body, not in a file on `main`. Approval of the design is not approval of anything that comes after it.
+
 ## Stage 2 — Lane start
 
 **No direct edits.** The foreman never edits files directly. All implementation — including doc fixes and chores — goes through `scripts/lane start <issue> <slug>` first. File reads for triage or status are fine.
 
-**Skills:** `mattpocock-skills:writing-for-agents`, `superpowers:writing-plans` (conditional)
+**Skills:** `mattpocock-skills:writing-for-agents`, `superpowers:writing-plans` (conditional), `ui-taste` (UI lanes)
 
 1. Run `mattpocock-skills:writing-for-agents` → produces the Lane Brief from the grilled spec + user stories.
 2. **Conditional** (complex issues: schema changes, new subsystems, multi-domain, P0/P1): run `superpowers:writing-plans` to produce a step-by-step implementation plan before the lane starts.
-3. Create worktree and branch:
+
+> **HARD GATE — UI lanes must have a design brief before the lane starts:** If the lane touches any user-facing UI (admin tool, public page, component), invoke `ui-taste` and read both `reference/operate.md` and `reference/polish.md` BEFORE writing the Lane Brief. The brief must specify all of the following — if any are missing, the brief is incomplete:
+>
+> - Mobile layout
+> - Desktop layout (or explicit note: "mobile-only, hidden on desktop")
+> - Loading state
+> - Empty state
+> - Error state with retry
+> - Interactive states for all controls (selected, disabled, busy)
+>
+> _Incident 2026-11-08 (#874):_ UI lane brief omitted desktop layout and all states. Required 6+ reactive fix cycles after PO saw the page. All issues were predictable from a 10-minute upfront pass.
+
+3. Pick agent and tier, then propose to the PO:
+   - **Strong** (`claude` or `copilot`): 6+ ACs, security/data-sensitive, cross-cutting refactor, expected diff > 200 non-test lines. Default to `claude`.
+   - **Cheap** (`opencode`): everything else — config, scripts, docs, 5 or fewer ACs.
+
+   Propose in chat: "Starting lane #`<issue>` with `<agent>`. `<one-line reason>`. OK to proceed?"
+   Wait for explicit PO approval before continuing.
+
+4. Run the lane start command. This is the ONLY action after PO approval:
    ```bash
-   scripts/lane start <issue> <slug>
+   scripts/lane start <issue> <slug> [agent]
    ```
-4. Open worker pane via Rex:
-   ```bash
-   rex split -s "$REX_SESSION" --split=right -- bash -c "cd .worktrees/<issue>-<slug> && claude"
-   ```
-5. Pass the Lane Brief as the lane's opening prompt.
-6. Stay as foreman. Never write code or edit source in this session.
+   The script handles everything: worktree, branch, Rex pane, block registration, and brief delivery. There are no manual steps after this command.
+5. Stay as foreman. Never write code or edit source in this session.
+
+> **HARD GATE — immediate execution after PO approval:** When the PO approves a lane start, the ONLY permitted next action is `scripts/lane start <issue> <slug> [agent]`. Do not read source files, do not clean git state, do not check permissions, do not search for commands. Run the script. If it fails, report the error to the PO.
+>
+> The foreman never reads `src/`, `app/`, or component files. Permitted reads: `AGENTS.md`, `docs/agents/`, issue bodies, and `scripts/`.
+>
+> _Incident 2026-11-10 (#877):_ Foreman announced "Starting lane" then spent its entire context reading source files, cleaning stale git state, and searching for removed commands. Never ran the script.
 
 ## Stage 3 — Active implementation
 
@@ -88,11 +111,20 @@ The lane runs independently:
 1. Reads Lane Brief + plan → starts TDD cycle (Red → Green → Refactor → Verify).
 2. `self-improving-agent` runs automatically, capturing errors and learnings to `.learnings/LEARNINGS.md` and `ERRORS.md`.
 3. If a stop condition is hit (schema change needed, missing AC, test outside diff): lane stops and fires a block signal.
-4. Foreman monitors all active Rex panes for block signals. On block: reads reason, escalates to PO, relays resolution back to lane.
+4. When a lane hits a stop condition or completes handoff, the Stop hook delivers the signal automatically to this foreman pane. On block: read the reason, escalate to PO, relay resolution back to lane.
 5. When complete: lane runs `superpowers:finishing-a-development-branch` + `superpowers:verification-before-completion` (type-check, lint, vitest, build).
 6. Lane fires `handoff` skill → structured signal to foreman.
 
 **Foreman during implementation:** watch all active panes via Rex for block signals. Never interrupt a lane that is running cleanly.
+
+> **HARD GATE — foreman never edits worktree files:** When a lane is silent, slow, or stuck, the foreman's ONLY permitted responses are:
+>
+> 1. `SendMessage` to probe the lane.
+> 2. Escalate to the PO if the lane is unresponsive.
+>
+> The foreman MUST NOT edit, create, or delete any file inside `.worktrees/<issue>-<slug>/`, regardless of how small the fix appears. This includes quick bug fixes, seed data, design system corrections, and config changes. All such work goes to the lane via `SendMessage`. Doing it directly creates ghost commits not owned by the lane, violates the lane/foreman split, and sets a precedent that breaks the entire workflow.
+>
+> _Incident 2026-11-08 (#874):_ foreman directly fixed a PostgREST bug, rewrote a component for design system alignment, and seeded test data — all should have gone to the lane via `SendMessage`.
 
 ## Stage 4 — Checkpoint
 
@@ -100,7 +132,7 @@ The lane runs independently:
 
 1. Foreman opens a Rex pane with the dev server in the lane's worktree:
    ```bash
-   rex split -s "$REX_SESSION" --split=bottom -- bash -c "cd .worktrees/<issue>-<slug> && npm run dev"
+   rex split -s "$REX_SESSION" -b "$REX_BLOCK" --split=bottom -- bash -c "cd .worktrees/<issue>-<slug> && npm run dev"
    ```
 2. Foreman sends the PO a text summary: what was built + what to verify on localhost.
 3. PO verifies on localhost.
@@ -143,9 +175,10 @@ If code review forces a fix:
    ```
 2. Set auto-merge immediately:
    ```bash
-   gh pr merge --auto --squash
+   GH_HOST="" gh pr merge <PR-number> --auto --squash 2>/dev/null \
+     || echo "Auto-merge unavailable — merge PR #<PR-number> manually when ready"
    ```
-   GitHub merges when all required status checks pass. No agent stays alive to watch.
+   Auto-merge requires branch protection with at least one required status check. If the repo has no required checks configured, GitHub will reject the call even if "Allow auto-merge" is enabled in repo settings; the fallback prints a warning and continues. GitHub merges when all required status checks pass. No agent stays alive to watch.
 
 3. **On merge event:** foreman auto-rebases all other active lanes:
 
@@ -184,12 +217,8 @@ Include the learning sentence in the PR body and final issue comment.
 **Starting a second lane while one is active:**
 
 1. Confirm no shared `area:*` labels with the existing lane.
-2. Run `scripts/lane start <issue> <slug>` for the new lane.
-3. Open a new Rex pane:
-   ```bash
-   rex split -s "$REX_SESSION" --split=right -- bash -c "cd .worktrees/<issue>-<slug> && claude"
-   ```
-4. Monitor both panes for Handoff and block signals.
+2. Run `scripts/lane start <issue> <slug>` for the new lane. The script opens the Rex pane and sends the brief automatically.
+3. Monitor both panes for Handoff and block signals.
 
 ## Blocked lane protocol
 
@@ -212,3 +241,31 @@ A lane is blocked when it fires a block signal without reaching Handoff.
 4. If the lane cannot proceed after two relays: close the lane worktree, update the issue with findings, and return the issue to `ready` for re-shaping.
 
 **Never** unblock a lane by writing code in the foreman session.
+
+## Rex lane close — known gotchas
+
+### TRAP: `rex close -b` does not exist (2026-11-09)
+
+`scripts/lane done <issue>` removes the worktree and branch but does **not** close the Rex pane when `LANE_BLOCK` was never registered in `.env.lane` (see the silent-stop TRAP). The foreman must close the pane manually using the correct command:
+
+```bash
+# WRONG — -b flag does not exist on rex close
+rex close -b <block_id>
+
+# CORRECT
+rex block close <BLOCK_ID> -s <SESSION>
+```
+
+**Identifying the right pane:**
+
+```bash
+# 1. List pane IDs
+rex block ls -s <SESSION>
+
+# 2. Identify the lane pane by its shell prompt
+rex block capture -b <ID> -s <SESSION> --trim 2>&1 | tail -5
+# Look for the worktree dir in the prompt, e.g.: "874-provider-review-queue %"
+
+# 3. Close it
+rex block close <ID> -s <SESSION>
+```

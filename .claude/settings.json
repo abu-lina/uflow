@@ -1,4 +1,43 @@
 {
+  "permissions": {
+    "allow": [
+      "Write",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(git *)",
+      "Bash(gh issue *)",
+      "Bash(gh pr create)",
+      "Bash(gh pr checks)",
+      "Bash(pwd *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(command -v *)",
+      "Bash(which *)",
+      "Bash(diff *)",
+      "Bash(grep *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh run view *)",
+      "Bash(scripts/lane *)"
+    ],
+    "deny": [
+      "Bash(git merge)",
+      "Bash(git rebase)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git config --global*)",
+      "Bash(pass-cli *)",
+      "Write(.env.local)",
+      "Bash(gh pr merge)"
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "git branch --show-current 2>/dev/null"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -7,6 +46,41 @@
           {
             "type": "command",
             "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/fixed-proof-gate.sh\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/strip-attribution.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/ui-taste-gate.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/foreman-no-code-gate.sh\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/foreman-no-read-src-gate.sh\"",
             "timeout": 10
           }
         ]
@@ -31,6 +105,26 @@
             "type": "command",
             "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/on-stop-nudge.sh\"",
             "timeout": 10
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/scripts/hooks/lane-signal-notify.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$(git rev-parse --show-toplevel)/.claude/hooks/sync-workflow-on-start.sh\"",
+            "timeout": 30
           }
         ]
       }
