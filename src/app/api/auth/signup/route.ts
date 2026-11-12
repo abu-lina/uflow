@@ -207,7 +207,7 @@ export async function POST(request: Request) {
       const response = NextResponse.json({
         success: true,
         userId: crypto.randomUUID(),
-        email,
+        email: email.toLowerCase(),
       });
       setResendCapabilityCookie(response, email);
       return response;
@@ -238,6 +238,21 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      // TOCTOU race: another request created this user between our check and
+      // createUser. Return the same fake-200 to prevent enumeration (#585).
+      if (error.message?.includes('already been registered')) {
+        console.log('[SIGNUP API] Duplicate signup attempt (masked, race)');
+        const elapsed = Date.now() - startTime;
+        const padMs = Math.max(0, 300 - elapsed) + Math.random() * 100;
+        await new Promise((r) => setTimeout(r, padMs));
+        const response = NextResponse.json({
+          success: true,
+          userId: crypto.randomUUID(),
+          email: email.toLowerCase(),
+        });
+        setResendCapabilityCookie(response, email);
+        return response;
+      }
       // Never forward the Supabase error message to the client: it can
       // contain table names, constraint names or other internals.
       console.error('[SIGNUP API] Error creating user:', redactError(error));
