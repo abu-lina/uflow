@@ -164,25 +164,32 @@ describe('AC2: auth route errors go through redactError (#669)', () => {
   describe('signup', () => {
     it.each([
       [
-        'listError',
-        () =>
-          mockListUsers.mockResolvedValue({ data: { users: [] }, error: probeError('listUsers') }),
+        'lookupError',
+        () => mockMaybeSingle.mockResolvedValueOnce({ data: null, error: probeError('listUsers') }),
         500,
       ],
       [
         'consentError',
-        () => mockInsert.mockResolvedValueOnce({ error: probeError('consent insert') }),
+        () => {
+          mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+          mockInsert.mockResolvedValueOnce({ error: probeError('consent insert') });
+        },
         200,
       ],
       [
         'emailError',
         () => {
+          mockMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
           vi.stubEnv('NODE_ENV', 'development');
           vi.stubGlobal('fetch', vi.fn().mockRejectedValue(thrownProbeError('send-auth-email')));
         },
         200,
       ],
-      ['catch-all', () => mockListUsers.mockRejectedValue(thrownProbeError('listUsers')), 500],
+      [
+        'catch-all',
+        () => mockMaybeSingle.mockRejectedValueOnce(thrownProbeError('listUsers')),
+        500,
+      ],
     ] as const)('%s', async (_name, arrange, status) => {
       arrange();
 
