@@ -38,7 +38,8 @@ const laneRepoTemplate = () => {
   git(root, 'config', 'user.email', 'lane-test@example.com');
   git(root, 'config', 'user.name', 'Lane test');
   writeFileSync(join(root, 'README.md'), 'fixture\n');
-  git(root, 'add', 'README.md');
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n.env*\n');
+  git(root, 'add', 'README.md', '.gitignore');
   git(root, 'commit', '-m', 'fixture');
   git(root, 'remote', 'add', 'origin', remote);
   execFileSync('git', ['-C', root, 'push', '-u', 'origin', 'main'], { stdio: 'ignore' });

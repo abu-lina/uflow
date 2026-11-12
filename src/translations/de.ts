@@ -1601,6 +1601,7 @@ export const de = {
       loadMore: 'Mehr laden',
       loadFailed: 'Vorschläge konnten nicht geladen werden',
       pendingCount: '{{count}} offen',
+      confidenceScore: 'Konfidenz: {{score}}%',
     },
   },
 } as const;

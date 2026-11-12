@@ -1579,6 +1579,7 @@ export const ur = {
       loadMore: 'مزید لوڈ کریں',
       loadFailed: 'تجاویز لوڈ نہیں ہو سکیں',
       pendingCount: '{{count}} زیر التواء',
+      confidenceScore: 'اعتماد: {{score}}%',
     },
   },
 } as const;
