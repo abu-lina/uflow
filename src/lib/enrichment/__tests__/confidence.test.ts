@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeConfidenceScore, AUTO_APPLY_CONFIDENCE_THRESHOLD } from '../confidence';
+import { computeConfidenceScore, getAutoApplyThreshold } from '../confidence';
 
 describe('computeConfidenceScore', () => {
   it('returns 100 for identical names', () => {
@@ -12,7 +12,7 @@ describe('computeConfidenceScore', () => {
 
   it('returns high score for names differing by GmbH suffix', () => {
     const score = computeConfidenceScore('Pizza Palace GmbH', 'Pizza Palace');
-    expect(score).toBeGreaterThanOrEqual(AUTO_APPLY_CONFIDENCE_THRESHOLD);
+    expect(score).toBeGreaterThanOrEqual(getAutoApplyThreshold());
   });
 
   it('returns 0 for completely different names', () => {
@@ -32,8 +32,25 @@ describe('computeConfidenceScore', () => {
   });
 });
 
-describe('AUTO_APPLY_CONFIDENCE_THRESHOLD', () => {
-  it('is 85', () => {
-    expect(AUTO_APPLY_CONFIDENCE_THRESHOLD).toBe(85);
+describe('getAutoApplyThreshold', () => {
+  it('defaults to 85 when env var is not set', () => {
+    delete process.env.ENRICHMENT_CONFIDENCE_THRESHOLD;
+    expect(getAutoApplyThreshold()).toBe(85);
+  });
+
+  it('reads ENRICHMENT_CONFIDENCE_THRESHOLD env var', () => {
+    process.env.ENRICHMENT_CONFIDENCE_THRESHOLD = '70';
+    expect(getAutoApplyThreshold()).toBe(70);
+    delete process.env.ENRICHMENT_CONFIDENCE_THRESHOLD;
+  });
+
+  it('falls back to default for invalid env values', () => {
+    process.env.ENRICHMENT_CONFIDENCE_THRESHOLD = 'abc';
+    expect(getAutoApplyThreshold()).toBe(85);
+    process.env.ENRICHMENT_CONFIDENCE_THRESHOLD = '150';
+    expect(getAutoApplyThreshold()).toBe(85);
+    process.env.ENRICHMENT_CONFIDENCE_THRESHOLD = '-5';
+    expect(getAutoApplyThreshold()).toBe(85);
+    delete process.env.ENRICHMENT_CONFIDENCE_THRESHOLD;
   });
 });

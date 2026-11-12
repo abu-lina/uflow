@@ -61,10 +61,7 @@ import {
   LOCATION_FIELDS,
   type AutoApplyInput,
 } from '../src/lib/enrichment/auto-apply-payload';
-import {
-  computeConfidenceScore,
-  AUTO_APPLY_CONFIDENCE_THRESHOLD,
-} from '../src/lib/enrichment/confidence';
+import { computeConfidenceScore, getAutoApplyThreshold } from '../src/lib/enrichment/confidence';
 import { enrichFromLieferando } from '../src/lib/enrichment/delivery-platform/lieferando-enricher';
 import { createLieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-client';
 import {
@@ -1777,7 +1774,7 @@ type CandidateWithMeta = EnrichmentCandidate & {
  * additive candidates directly to the provider instead of leaving them pending.
  *
  * A candidate is auto-applied when:
- *  1. confidence_score >= AUTO_APPLY_CONFIDENCE_THRESHOLD (85)
+ *  1. confidence_score >= getAutoApplyThreshold() (default 85, env-configurable)
  *  2. The conflict type is 'additive' (current value is empty)
  *
  * Returns { written, autoApplied } counts.
@@ -1786,6 +1783,7 @@ async function writeOrAutoApplyCandidates(
   allCandidates: CandidateWithMeta[],
   stats: RunStats,
 ): Promise<{ written: number; autoApplied: number }> {
+  const threshold = getAutoApplyThreshold();
   let written = 0;
   let autoApplied = 0;
 
@@ -1800,10 +1798,10 @@ async function writeOrAutoApplyCandidates(
   for (const [providerId, candidates] of byProvider) {
     // Split: high-confidence candidates eligible for auto-apply
     const autoEligible = candidates.filter(
-      (c) => c.confidence_score != null && c.confidence_score >= AUTO_APPLY_CONFIDENCE_THRESHOLD,
+      (c) => c.confidence_score != null && c.confidence_score >= threshold,
     );
     const pending = candidates.filter(
-      (c) => c.confidence_score == null || c.confidence_score < AUTO_APPLY_CONFIDENCE_THRESHOLD,
+      (c) => c.confidence_score == null || c.confidence_score < threshold,
     );
 
     // Try auto-apply for high-confidence candidates
