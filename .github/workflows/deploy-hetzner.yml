@@ -1,5 +1,8 @@
 name: Deploy to Production
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -30,9 +33,11 @@ jobs:
 
       - name: Check nginx config changed
         id: nginx-check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           # For manual deployments, always upload (no previous commit to compare)
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          if [ "$EVENT_NAME" == "workflow_dispatch" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             if git diff --name-only HEAD~1 HEAD | grep -q 'deploy/nginx/nginx-template.conf'; then
@@ -53,10 +58,12 @@ jobs:
           target: '/tmp/'
 
       - name: Verify deployment confirmation
+        env:
+          CONFIRM_DEPLOY: ${{ github.event.inputs.confirm_deploy }}
         run: |
-          if [ "${{ github.event.inputs.confirm_deploy }}" != "deploy" ]; then
+          if [ "$CONFIRM_DEPLOY" != "deploy" ]; then
             echo "❌ Deployment not confirmed. You must type 'deploy' to proceed."
-            echo "Received: '${{ github.event.inputs.confirm_deploy }}'"
+            echo "Received: '$CONFIRM_DEPLOY'"
             exit 1
           fi
           echo "✅ Deployment confirmed - proceeding with production deployment"

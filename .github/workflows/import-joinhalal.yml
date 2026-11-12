@@ -22,6 +22,9 @@
 
 name: JoinHalal Provider Operations
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -73,7 +76,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -83,12 +86,16 @@ jobs:
 
       - name: Build CLI arguments
         id: args
+        env:
+          INPUT_OPERATION: ${{ inputs.operation }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_LIMIT: ${{ inputs.limit }}
         run: |
-          OP="${{ inputs.operation }}"
-          MODE="${{ inputs.mode }}"
+          OP="$INPUT_OPERATION"
+          MODE="$INPUT_MODE"
 
           if [ "$OP" = "import" ]; then
-            echo "cli_args=--${MODE} --limit ${{ inputs.limit }}" >> "$GITHUB_OUTPUT"
+            echo "cli_args=--${MODE} --limit $INPUT_LIMIT" >> "$GITHUB_OUTPUT"
           elif [ "$OP" = "audit-stale-clone" ]; then
             echo "cli_args=--audit-stale-clone" >> "$GITHUB_OUTPUT"
           else
@@ -99,30 +106,40 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          INPUT_OPERATION: ${{ inputs.operation }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_MODE: ${{ inputs.mode }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
         run: |
-          echo "🚀 Running JoinHalal [${{ inputs.operation }}] against ${{ inputs.environment }}"
-          echo "   Mode: ${{ inputs.mode }}"
-          echo "   Args: ${{ steps.args.outputs.cli_args }}"
+          echo "🚀 Running JoinHalal [$INPUT_OPERATION] against $INPUT_ENVIRONMENT"
+          echo "   Mode: $INPUT_MODE"
+          echo "   Args: $CLI_ARGS"
           echo ""
-          npx tsx scripts/import-joinhalal.ts ${{ steps.args.outputs.cli_args }}
+          npx tsx scripts/import-joinhalal.ts $CLI_ARGS
 
       - name: Summary
+        env:
+          INPUT_OPERATION: ${{ inputs.operation }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_MODE: ${{ inputs.mode }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
+          ACTOR: ${{ github.actor }}
         run: |
           echo "## Operation Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Operation | ${{ inputs.operation }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Mode | ${{ inputs.mode }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Operation | $INPUT_OPERATION |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | $INPUT_ENVIRONMENT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | $INPUT_MODE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Args | \`$CLI_ARGS\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | $ACTOR |" >> $GITHUB_STEP_SUMMARY
           echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ inputs.operation }}" = "backfill-alcohol" ] && [ "${{ inputs.mode }}" = "write" ]; then
+          if [ "$INPUT_OPERATION" = "backfill-alcohol" ] && [ "$INPUT_MODE" = "write" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "⚠️ **Providers with Alkohol badges set to \`review_status = 'rejected'\`**" >> $GITHUB_STEP_SUMMARY
           fi
-          if [ "${{ inputs.operation }}" = "import" ] && [ "${{ inputs.mode }}" = "write" ]; then
+          if [ "$INPUT_OPERATION" = "import" ] && [ "$INPUT_MODE" = "write" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "⚠️ **Records inserted with \`review_status = 'pending'\`**" >> $GITHUB_STEP_SUMMARY
             echo "Approve via admin moderation UI or SQL:" >> $GITHUB_STEP_SUMMARY

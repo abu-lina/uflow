@@ -23,6 +23,9 @@
 
 name: Halal Discovery Pipeline
 
+permissions:
+  contents: read
+
 on:
   schedule:
     - cron: '0 6 * * 1' # Every Monday at 06:00 UTC
@@ -61,7 +64,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -71,11 +74,15 @@ jobs:
 
       - name: Build CLI arguments
         id: args
+        env:
+          INPUT_MODE: ${{ inputs.mode || 'dry-run' }}
+          INPUT_LIMIT: ${{ inputs.limit || '' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          MODE="${{ inputs.mode || 'dry-run' }}"
-          LIMIT="${{ inputs.limit || '' }}"
+          MODE="$INPUT_MODE"
+          LIMIT="$INPUT_LIMIT"
 
-          if [ "$MODE" = "write" ] && [ "${{ github.event_name }}" != "schedule" ]; then
+          if [ "$MODE" = "write" ] && [ "$EVENT_NAME" != "schedule" ]; then
             ARGS="--write"
           else
             ARGS="--dry-run"
@@ -91,26 +98,34 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment || 'production' }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
         run: |
-          echo "Running Wolt discovery against ${{ inputs.environment || 'production' }}"
-          echo "  Args: ${{ steps.args.outputs.cli_args }}"
+          echo "Running Wolt discovery against $INPUT_ENVIRONMENT"
+          echo "  Args: $CLI_ARGS"
           echo ""
-          npx tsx scripts/discover-wolt.ts ${{ steps.args.outputs.cli_args }}
+          npx tsx scripts/discover-wolt.ts $CLI_ARGS
 
       - name: Step summary
         if: always()
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment || 'production' }}
+          INPUT_MODE: ${{ inputs.mode || 'dry-run' }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
+          ACTOR: ${{ github.actor }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           echo "## Wolt Discovery" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Wolt |" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | ${{ inputs.environment || 'production' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Mode | ${{ inputs.mode || 'dry-run' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Triggered by | ${{ github.actor }} (${{ github.event_name }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | $INPUT_ENVIRONMENT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | $INPUT_MODE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Args | \`$CLI_ARGS\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | $ACTOR ($EVENT_NAME) |" >> $GITHUB_STEP_SUMMARY
           echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ inputs.mode }}" = "write" ]; then
+          if [ "$INPUT_MODE" = "write" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "Records inserted with \`review_status = 'pending'\`. Approve via admin moderation." >> $GITHUB_STEP_SUMMARY
           fi
