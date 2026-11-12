@@ -146,7 +146,7 @@
     "tsx": "^4.23.15",
     "typescript": "5.5.4",
     "vite": "7.3.7",
-    "vite-tsconfig-paths": "^5.1.4",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "5.1.0"
   },
   "overrides": {
