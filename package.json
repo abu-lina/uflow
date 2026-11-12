@@ -175,15 +175,6 @@
     "browserslist": "4.29.1",
     "source-map-js": "^1.2.2"
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,css,md}": [
-      "prettier --write"
-    ]
-  },
   "resolutions": {
     "@types/react": "^18.2.64"
   }
