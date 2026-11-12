@@ -1792,7 +1792,8 @@ async function writeOrAutoApplyCandidates(
   }
 
   for (const [providerId, candidates] of byProvider) {
-    // Split: high-confidence candidates eligible for auto-apply
+    // Split: high-confidence candidates eligible for auto-apply.
+    // delivery_links and menu_items are handled by dedicated functions, never as candidates here.
     const autoEligible = candidates.filter(
       (c) => c.confidence_score != null && c.confidence_score >= threshold,
     );

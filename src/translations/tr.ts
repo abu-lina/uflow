@@ -1578,7 +1578,7 @@ export const tr = {
       loadMore: 'Daha fazla yükle',
       loadFailed: 'Adaylar yüklenemedi',
       pendingCount: '{{count}} bekliyor',
-      confidenceScore: 'Guven: {{score}}%',
+      confidenceScore: 'Güven: {{score}}%',
     },
   },
 } as const;
