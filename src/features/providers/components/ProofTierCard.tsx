@@ -69,6 +69,8 @@ interface ProofTierCardProps {
   noPork?: Provider['no_pork'];
   noGambling?: Provider['no_gambling'];
   reviewStatus?: Provider['review_status'];
+  lastVerifiedAt?: string | null;
+  nextAuditDue?: string | null;
   // Renders the seal for a pending submission (success screen), labelled
   // provisional since review can still change or reject it.
   provisional?: boolean;
@@ -354,6 +356,8 @@ export function ProofTierCard({
   noPork,
   noGambling,
   reviewStatus,
+  lastVerifiedAt,
+  nextAuditDue,
   provisional = false,
 }: ProofTierCardProps) {
   const { t } = useLanguage();
@@ -426,6 +430,25 @@ export function ProofTierCard({
       />
 
       <SummaryText text={t(summaryKey)} />
+
+      {(tier === 'silver' || tier === 'gold') && (lastVerifiedAt || nextAuditDue) ? (
+        <div className="text-content-secondary mt-2 space-y-1 text-sm">
+          {lastVerifiedAt ? (
+            <p>
+              {t('providerDetail.proofTier.lastVerified', {
+                date: new Date(lastVerifiedAt).toLocaleDateString(),
+              })}
+            </p>
+          ) : null}
+          {nextAuditDue ? (
+            <p>
+              {t('providerDetail.proofTier.nextAudit', {
+                date: new Date(nextAuditDue).toLocaleDateString(),
+              })}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* Section 1: What we verified (collapsible) */}
       <button

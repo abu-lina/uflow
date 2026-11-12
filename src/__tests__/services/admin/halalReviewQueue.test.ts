@@ -173,7 +173,7 @@ describe('confirmHalalReview', () => {
 
     expect(result).toEqual({ success: true });
     const fpUpdate = calls.find((c) => c.table === 'food_providers' && c.op === 'update');
-    expect(fpUpdate?.args[0]).toEqual(values);
+    expect(fpUpdate?.args[0]).toMatchObject(values);
     const candUpdate = calls.find((c) => c.table === 'enrichment_candidates' && c.op === 'update');
     expect(candUpdate?.args[0]).toMatchObject({ status: 'applied', reviewer_id: 'admin-1' });
     expect(calls).toContainEqual(
@@ -235,8 +235,11 @@ describe('confirmHalalReview', () => {
     expect(verifiedAt).toBeLessThanOrEqual(after);
 
     const auditDue = new Date(payload.next_audit_due as string).getTime();
-    const sixMonthsMs = 6 * 30 * 24 * 60 * 60 * 1000;
-    expect(auditDue).toBeGreaterThanOrEqual(before + sixMonthsMs - 5000);
-    expect(auditDue).toBeLessThanOrEqual(after + sixMonthsMs + 5000);
+    const expectedMin = new Date(before);
+    expectedMin.setMonth(expectedMin.getMonth() + 6);
+    const expectedMax = new Date(after);
+    expectedMax.setMonth(expectedMax.getMonth() + 6);
+    expect(auditDue).toBeGreaterThanOrEqual(expectedMin.getTime() - 5000);
+    expect(auditDue).toBeLessThanOrEqual(expectedMax.getTime() + 5000);
   });
 });

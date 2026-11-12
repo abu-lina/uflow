@@ -276,7 +276,9 @@ export function ProviderDetailSections({
             <ProofTierCard
               certificateUrl={provider.certificate_url}
               hasCertificate={provider.has_certificate}
+              lastVerifiedAt={provider.last_verified_at}
               listingType={provider.listing_type}
+              nextAuditDue={provider.next_audit_due}
               noAlcohol={provider.no_alcohol}
               noGambling={provider.no_gambling}
               noPork={provider.no_pork}

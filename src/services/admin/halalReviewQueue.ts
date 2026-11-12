@@ -131,12 +131,18 @@ export async function confirmHalalReview(
     return { success: false, error: 'Cannot enrich provider that now has an owner' };
   }
 
+  const now = new Date();
+  const sixMonthsLater = new Date(now);
+  sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+
   const { data: updated, error: updateError } = await supabase
     .from('food_providers')
     .update({
       no_alcohol: values.no_alcohol,
       no_pork: values.no_pork,
       no_gambling: values.no_gambling,
+      last_verified_at: now.toISOString(),
+      next_audit_due: sixMonthsLater.toISOString(),
     })
     .eq('provider_id', providerId)
     .select('provider_id');

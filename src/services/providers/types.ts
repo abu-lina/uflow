@@ -89,6 +89,8 @@ export interface Provider {
   no_pork?: boolean | null;
   // From store_providers extension table (joined in search queries)
   no_gambling?: boolean | null;
+  last_verified_at?: string | null;
+  next_audit_due?: string | null;
   opening_hours?: OpeningHours | null;
   food_menu_items?: FoodMenuItem[];
   matched_menu_items?: string[];
