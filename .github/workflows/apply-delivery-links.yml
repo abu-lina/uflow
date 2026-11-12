@@ -1,0 +1,100 @@
+# Apply website delivery links to provider_delivery_links (#809).
+# Reads Wolt, Lieferando and Uber Eats links from approved providers' websites.
+# Manual trigger only. Dry run by default.
+
+name: Apply Website Delivery Links
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'uat'
+        type: choice
+        options:
+          - uat
+          - production
+      provider_id:
+        description: 'Provider UUID (empty = all approved providers with a website)'
+        required: false
+        type: string
+      limit:
+        description: 'Max providers to process (positive integer)'
+        required: false
+        type: string
+      apply:
+        description: 'Write links to DB (off = dry run)'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apply-delivery-links
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: 'apply-delivery-links (${{ inputs.environment }})'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run apply-website-delivery-links
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          INPUT_APPLY: ${{ inputs.apply }}
+          INPUT_PROVIDER_ID: ${{ inputs.provider_id }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+        run: |
+          set -o pipefail
+          ARGS=()
+          if [ "$INPUT_APPLY" = "true" ]; then
+            ARGS+=(--apply)
+          else
+            ARGS+=(--dry-run)
+          fi
+          [ -n "$INPUT_PROVIDER_ID" ] && ARGS+=(--provider-id "$INPUT_PROVIDER_ID")
+          [ -n "$INPUT_LIMIT" ] && ARGS+=(--limit "$INPUT_LIMIT")
+          npx tsx scripts/apply-website-delivery-links.ts "${ARGS[@]}" 2>&1 | tee "$RUNNER_TEMP/apply.log"
+
+      - name: Summary
+        if: always()
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_APPLY: ${{ inputs.apply }}
+        run: |
+          LOG="$RUNNER_TEMP/apply.log"
+          field() { v=$(grep '^SUMMARY ' "$LOG" 2>/dev/null | tail -1 | tr ' ' '\n' | grep "^$1=" | cut -d= -f2); echo "${v:-0}"; }
+          MODE="dry-run"
+          [ "$INPUT_APPLY" = "true" ] && MODE="apply"
+          {
+            echo "## Apply Website Delivery Links"
+            echo ""
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Environment | $INPUT_ENVIRONMENT |"
+            echo "| Mode | $MODE |"
+            echo "| Processed | $(field processed) |"
+            echo "| Written | $(field written) |"
+            echo "| Skipped | $(field skipped) |"
+            echo "| Warned | $(field warned) |"
+            grep -q '^SUMMARY ' "$LOG" 2>/dev/null || { echo ""; echo "No summary produced."; }
+          } >> "$GITHUB_STEP_SUMMARY"
