@@ -1,5 +1,8 @@
 name: Weekly Quality Gates
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # Run weekly on Sundays at 2 AM UTC
@@ -25,7 +28,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -94,7 +97,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -142,7 +145,7 @@ jobs:
           fi
 
       - name: Upload security report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: security-reports
           path: |
@@ -161,7 +164,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -180,7 +183,7 @@ jobs:
           npx depcheck >> dependency-report.md || echo "⚠️ Depcheck completed with warnings"
 
       - name: Upload dependency report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dependency-report
           path: dependency-report.md
@@ -201,7 +204,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -224,7 +227,7 @@ jobs:
           find .next -name "*.js" -exec du -h {} \; | sort -rh | head -20 >> bundle-report.md
 
       - name: Upload bundle report
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: bundle-analysis
           path: bundle-report.md
@@ -240,15 +243,20 @@ jobs:
 
     steps:
       - name: Generate report
+        env:
+          RESULT_LIGHTHOUSE: ${{ needs.lighthouse-audit.result }}
+          RESULT_SECURITY: ${{ needs.security-scan.result }}
+          RESULT_DEPS: ${{ needs.dependency-check.result }}
+          RESULT_BUNDLE: ${{ needs.bundle-analysis.result }}
         run: |
           echo "## 🎯 Weekly Quality Gates Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Lighthouse Audit | ${{ needs.lighthouse-audit.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Check | ${{ needs.dependency-check.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Bundle Analysis | ${{ needs.bundle-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lighthouse Audit | $RESULT_LIGHTHOUSE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | $RESULT_SECURITY |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Check | $RESULT_DEPS |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle Analysis | $RESULT_BUNDLE |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 Check artifacts for detailed reports" >> $GITHUB_STEP_SUMMARY
           echo "🔄 Runs weekly on Sundays at 2 AM UTC" >> $GITHUB_STEP_SUMMARY
