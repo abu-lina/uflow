@@ -199,11 +199,10 @@ export async function POST(request: Request) {
     }
 
     if (users.some((u) => u.email === email)) {
-      console.log('[SIGNUP API] User already exists:', maskEmail(email));
-      return NextResponse.json(
-        { error: 'User with this email already exists', code: 'EMAIL_ALREADY_REGISTERED' },
-        { status: 409 },
-      );
+      // Return the same 200 shape as a real signup so the caller cannot
+      // distinguish "new account" from "already exists" (#585).
+      console.log('[SIGNUP API] Duplicate signup attempt (masked)');
+      return NextResponse.json({ success: true });
     }
 
     // Fails before any user exists if the signing key is missing (#746)

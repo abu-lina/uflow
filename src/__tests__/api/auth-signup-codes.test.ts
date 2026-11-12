@@ -139,15 +139,18 @@ describe('POST /api/auth/signup — sentinel error codes (issue #577)', () => {
     expect(body.code).toBe('PASSWORD_TOO_SHORT');
   });
 
-  it('returns EMAIL_ALREADY_REGISTERED when the user exists', async () => {
+  it('returns 200 with success when the user already exists (#585 enumeration fix)', async () => {
     mockListUsers.mockResolvedValue({
       data: { users: [{ email: VALID_BODY.email }] },
       error: null,
     });
     const res = await POST(makeRequest(VALID_BODY));
     const body = await res.json();
-    expect(res.status).toBe(409);
-    expect(body.code).toBe('EMAIL_ALREADY_REGISTERED');
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    // Must not leak that the email is already registered
+    expect(body.code).toBeUndefined();
+    expect(body.error).toBeUndefined();
   });
 
   it('never leaks Supabase internals on createUser failure', async () => {
