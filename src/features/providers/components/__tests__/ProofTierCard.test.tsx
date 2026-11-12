@@ -288,7 +288,7 @@ describe('ProofTierCard', () => {
   // Section 2: "What's missing for [next tier]" (collapsible)
   // ---------------------------------------------------------------------------
 
-  it('[TDD gate] bronze shows "what\'s missing" toggle for silver', () => {
+  it('[TDD gate] bronze hides "what\'s missing" — all silver categories already covered', () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -297,28 +297,7 @@ describe('ProofTierCard', () => {
         reviewStatus="approved"
       />,
     );
-    const toggle = screen.getByRole('button', { name: /whatsMissing/ });
-    expect(toggle).toBeInTheDocument();
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-  });
-
-  it('[TDD gate] expanding "what\'s missing" for bronze shows silver check items', async () => {
-    render(
-      <ProofTierCard
-        verificationMethod="online"
-        hasCertificate={false}
-        noAlcohol={true}
-        reviewStatus="approved"
-      />,
-    );
-    const toggle = screen.getByRole('button', { name: /whatsMissing/ });
-    await toggle.click();
-    expect(
-      screen.getByText('providerDetail.proofTier.checkMenuReviewedOnsite'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('providerDetail.proofTier.checkSellsProcessNoAlcohol'),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /whatsMissing/ })).not.toBeInTheDocument();
   });
 
   it('[TDD gate] expanding "what\'s missing" for silver shows gold check items', async () => {
