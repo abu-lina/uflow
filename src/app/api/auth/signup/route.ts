@@ -182,27 +182,35 @@ export async function POST(request: Request) {
 
     console.log('[SIGNUP API] Received signup request:', { language });
 
-    // Check if user already exists
-    console.log('[SIGNUP API] Checking if user exists...');
+    // O(1) indexed lookup via public.users instead of paginated listUsers (#585)
     const supabaseAdmin = getSupabaseAdmin();
-    const {
-      data: { users },
-      error: listError,
-    } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: existingUser, error: lookupError } = await supabaseAdmin
+      .from('users')
+      .select('user_id')
+      .eq('email', email.toLowerCase())
+      .maybeSingle();
 
-    if (listError) {
-      console.error('[SIGNUP API] Error checking existing users:', redactError(listError));
+    if (lookupError) {
+      console.error('[SIGNUP API] Error checking existing users:', redactError(lookupError));
       return NextResponse.json(
         { error: 'Failed to check user existence', code: 'SIGNUP_FAILED' },
         { status: 500 },
       );
     }
 
-    if (users.some((u) => u.email === email)) {
-      // Return the same 200 shape as a real signup so the caller cannot
-      // distinguish "new account" from "already exists" (#585).
+    if (existingUser) {
+      // Identical shape, headers, and timing to a real signup (#585).
       console.log('[SIGNUP API] Duplicate signup attempt (masked)');
-      return NextResponse.json({ success: true });
+      const elapsed = Date.now() - startTime;
+      const padMs = Math.max(0, 300 - elapsed) + Math.random() * 100;
+      await new Promise((r) => setTimeout(r, padMs));
+      const response = NextResponse.json({
+        success: true,
+        userId: crypto.randomUUID(),
+        email,
+      });
+      setResendCapabilityCookie(response, email);
+      return response;
     }
 
     // Fails before any user exists if the signing key is missing (#746)

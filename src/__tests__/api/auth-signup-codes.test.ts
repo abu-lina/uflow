@@ -8,25 +8,29 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const mockListUsers = vi.fn((..._args: unknown[]): Promise<unknown> => Promise.resolve(null));
 const mockCreateUser = vi.fn((..._args: unknown[]): Promise<unknown> => Promise.resolve(null));
 const mockInsert = vi.fn((..._args: unknown[]): Promise<unknown> => Promise.resolve(null));
+const mockMaybeSingle = vi.fn((..._args: unknown[]): Promise<unknown> => Promise.resolve(null));
 const mockCheckRateLimit = vi.fn((..._args: unknown[]) => true);
 const mockCheckIPBlocked = vi.fn((..._args: unknown[]) => false);
 const mockMarkSuspiciousIP = vi.fn((..._args: unknown[]) => {});
 const mockIsDisposableEmail = vi.fn((..._args: unknown[]) => false);
 
+const selectChain = {
+  eq: () => ({ maybeSingle: (...args: unknown[]) => mockMaybeSingle(...args) }),
+};
+
 vi.mock('@/lib/supabase/admin', () => ({
   getSupabaseAdmin: () => ({
     auth: {
       admin: {
-        listUsers: (...args: unknown[]) => mockListUsers(...args),
         createUser: (...args: unknown[]) => mockCreateUser(...args),
       },
     },
-    from: () => ({
-      insert: (...args: unknown[]) => mockInsert(...args),
-    }),
+    from: (table: string) =>
+      table === 'users'
+        ? { select: () => selectChain }
+        : { insert: (...args: unknown[]) => mockInsert(...args) },
   }),
 }));
 
@@ -87,7 +91,7 @@ describe('POST /api/auth/signup — sentinel error codes (issue #577)', () => {
     mockCheckRateLimit.mockReturnValue(true);
     mockCheckIPBlocked.mockReturnValue(false);
     mockIsDisposableEmail.mockReturnValue(false);
-    mockListUsers.mockResolvedValue({ data: { users: [] }, error: null });
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockCreateUser.mockResolvedValue({
       data: { user: { id: 'u-1', email: VALID_BODY.email } },
       error: null,
@@ -139,18 +143,17 @@ describe('POST /api/auth/signup — sentinel error codes (issue #577)', () => {
     expect(body.code).toBe('PASSWORD_TOO_SHORT');
   });
 
-  it('returns 200 with success when the user already exists (#585 enumeration fix)', async () => {
-    mockListUsers.mockResolvedValue({
-      data: { users: [{ email: VALID_BODY.email }] },
-      error: null,
-    });
+  it('returns 200 with indistinguishable shape when user already exists (#585)', async () => {
+    mockMaybeSingle.mockResolvedValue({ data: { user_id: 'existing-id' }, error: null });
     const res = await POST(makeRequest(VALID_BODY));
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
-    // Must not leak that the email is already registered
+    expect(typeof body.userId).toBe('string');
+    expect(body.email).toBe(VALID_BODY.email);
     expect(body.code).toBeUndefined();
     expect(body.error).toBeUndefined();
+    expect(res.headers.get('set-cookie')).toBeTruthy();
   });
 
   it('never leaks Supabase internals on createUser failure', async () => {
@@ -167,7 +170,10 @@ describe('POST /api/auth/signup — sentinel error codes (issue #577)', () => {
   });
 
   it('returns SIGNUP_FAILED with no internals on unexpected exceptions', async () => {
-    mockListUsers.mockRejectedValue(new Error('connection to db.internal:5432 refused'));
+    mockMaybeSingle.mockResolvedValue({
+      data: null,
+      error: new Error('connection to db.internal:5432 refused'),
+    });
     const res = await POST(makeRequest(VALID_BODY));
     const body = await res.json();
     expect(res.status).toBe(500);
