@@ -43,9 +43,7 @@ _lane_base() {
 }
 
 _lane_check_main() {
-  # The foreman may be on any branch; compare local main ref vs origin/main
-  # without requiring a clean working tree (the worktree is created from the
-  # remote branch, not from the checkout).
+  # Block dirty checkouts and ensure local main is in sync with origin/main.
   local git_dir unpushed behind
   git_dir="$(git rev-parse --git-dir)" || return 1
   for stale in REBASE_HEAD MERGE_HEAD; do
@@ -60,6 +58,14 @@ _lane_check_main() {
       printf 'removed stale %s/ from previous session\n' "$stale_dir"
     fi
   done
+  # Block lane start when there are uncommitted changes outside .worktrees/.
+  local dirty
+  dirty="$(git status --porcelain | grep -Ev '^\?\? \.worktrees/')" || true
+  if [[ -n "$dirty" ]]; then
+    printf 'uncommitted changes in the main checkout; commit or stash before starting a lane:\n%s\n' "$dirty" >&2
+    return 1
+  fi
+
   if ! git rev-parse --verify main >/dev/null 2>&1; then
     printf 'no local main branch; run "git checkout main" once to create it\n' >&2
     return 1
@@ -306,14 +312,34 @@ _lane_agent_cmd() {
 
 # Open a rex pane for the given agent, write LANE_BLOCK to env_file,
 # poll until the shell prompt appears, then send the brief.
+_lane_last_block() {
+  local root="$1"
+  local lane_dir block
+  for lane_dir in "$root/.worktrees"/*/; do
+    [[ -f "$lane_dir/.env.lane" ]] || continue
+    block="$(grep '^LANE_BLOCK=' "$lane_dir/.env.lane" 2>/dev/null | tail -1 | cut -d= -f2-)" || continue
+    [[ -n "$block" && "$block" =~ ^[a-zA-Z0-9_:-]+$ ]] || continue
+    # Verify the block still exists in the session
+    rex block read "$block" -s "$REX_SESSION" --lines 0 >/dev/null 2>&1 || continue
+    printf '%s\n' "$block"
+  done | tail -1
+}
+
 _lane_rex_open() {
   local agent="$1" model="$2" dir="$3" env_file="$4" issue="$5"
   local agent_cmd block_id
 
   agent_cmd="$(_lane_agent_cmd "$agent" "$model" "$dir")" || return 1
 
+  # Split from the last lane pane so lanes stack side-by-side instead of
+  # subdividing the foreman pane into invisibly thin slivers.
+  local root anchor
+  root="$(_lane_root)" || return 1
+  anchor="$(_lane_last_block "$root")"
+  [[ -z "$anchor" ]] && anchor="$REX_BLOCK"
+
   local split_json
-  split_json="$(rex split -s "$REX_SESSION" -b "$REX_BLOCK" --split=right --json -- bash -c "$agent_cmd")" ||
+  split_json="$(rex split -s "$REX_SESSION" -b "$anchor" --split=right --json -- bash -c "$agent_cmd")" ||
     { printf 'rex split failed\n' >&2; return 1; }
   block_id="$(printf '%s\n' "$split_json" | jq -r '.block_ids[0]')" ||
     { printf 'could not parse block_ids from rex split output: %s\n' "$split_json" >&2; return 1; }
@@ -377,6 +403,17 @@ lane() {
       local existing_type
       existing_type="$(_lane_type "$issue")"
       model="$(_lane_default_model "$agent" "$existing_type")"
+    fi
+    # Close the previous Rex pane (if any) before opening a new one.
+    if [[ -f "$dir/.env.lane" ]]; then
+      local old_block old_session
+      old_block="$(grep '^LANE_BLOCK=' "$dir/.env.lane" 2>/dev/null | tail -1 | cut -d= -f2-)" || true
+      old_session="$(grep -m1 '^REX_SESSION_ID=' "$dir/.env.lane" 2>/dev/null | cut -d= -f2-)" || true
+      if [[ -n "$old_block" && "$old_block" =~ ^[a-zA-Z0-9_:-]+$ ]]; then
+        rex block close "$old_block" -s "${old_session:-$REX_SESSION}" 2>/dev/null || true
+      fi
+      # Clear stale signal state from the previous session.
+      rm -f "$dir/.lane-signal" "$dir/.lane-signal-sent"
     fi
     printf 'lane #%s: %s on %s\n' "$issue" "$dir" "$branch"
     _lane_rex_open "$agent" "$model" "$dir" "$dir/.env.lane" "$issue"
@@ -456,7 +493,7 @@ lane_done() {
 
   local lane_block="" rex_session_id=""
   if [[ -f "$dir/.env.lane" ]]; then
-    lane_block="$(grep -m1 '^LANE_BLOCK=' "$dir/.env.lane" 2>/dev/null | cut -d= -f2-)" || true
+    lane_block="$(grep '^LANE_BLOCK=' "$dir/.env.lane" 2>/dev/null | tail -1 | cut -d= -f2-)" || true
     rex_session_id="$(grep -m1 '^REX_SESSION_ID=' "$dir/.env.lane" 2>/dev/null | cut -d= -f2-)" || true
   fi
 
@@ -474,7 +511,7 @@ lane_done() {
 
   # Close the lane pane before removing the worktree so .env.lane is still readable on retry.
   if [[ -n "$lane_block" ]]; then
-    rex block close -s "$rex_session_id" "$lane_block" 2>/dev/null || true
+    rex block close "$lane_block" -s "$rex_session_id" 2>/dev/null || true
   fi
 
   # Git's force option removes ignored build output such as .next and node_modules.
