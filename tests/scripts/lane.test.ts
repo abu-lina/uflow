@@ -170,7 +170,7 @@ const withFixture = (prefix: string, run: (fixture: string) => void) => {
   }
 };
 
-const baseWorktreeEntries = ['.env.lane', '.git', 'README.md'];
+const baseWorktreeEntries = ['.env.lane', '.git', '.gitignore', 'README.md'];
 
 const commitFile = (root: string, file: string, contents: string, message: string) => {
   writeFileSync(join(root, file), contents);
@@ -1448,6 +1448,9 @@ describe('lane worktree git hooks (#655)', { timeout: spawnTestTimeoutMs }, () =
   it('copies a top-level hooks dir without nesting it', () => {
     withHooksConfig(
       (root) => {
+        const gi = join(root, '.gitignore');
+        commitFile(root, '.gitignore', readFileSync(gi, 'utf8') + '.githooks\n', 'ignore hooks');
+        git(root, 'push', '-q', 'origin', 'main');
         mkdirSync(join(root, '.githooks'));
         writeFileSync(join(root, '.githooks', 'pre-commit'), '#!/bin/sh\n');
         git(root, 'config', 'core.hooksPath', '.githooks');
@@ -1461,6 +1464,8 @@ describe('lane worktree git hooks (#655)', { timeout: spawnTestTimeoutMs }, () =
       (root) => {
         mkdirSync(join(root, '.githooks'));
         commitFile(root, '.githooks/tracked', '#!/bin/sh\n', 'tracked hook');
+        const gi = join(root, '.gitignore');
+        commitFile(root, '.gitignore', readFileSync(gi, 'utf8') + '.githooks\n', 'ignore hooks');
         git(root, 'push', '-q', 'origin', 'main');
         writeFileSync(join(root, '.githooks', 'untracked-extra'), '#!/bin/sh\n');
         git(root, 'config', 'core.hooksPath', '.githooks');
