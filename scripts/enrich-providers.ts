@@ -61,6 +61,10 @@ import {
   LOCATION_FIELDS,
   type AutoApplyInput,
 } from '../src/lib/enrichment/auto-apply-payload';
+import {
+  computeConfidenceScore,
+  AUTO_APPLY_CONFIDENCE_THRESHOLD,
+} from '../src/lib/enrichment/confidence';
 import { enrichFromLieferando } from '../src/lib/enrichment/delivery-platform/lieferando-enricher';
 import { createLieferandoClient } from '../src/lib/enrichment/delivery-platform/lieferando-client';
 import {
@@ -319,7 +323,10 @@ async function main(): Promise<void> {
   }
 
   // 3. Process each provider
-  const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
+  const allCandidates: (EnrichmentCandidate & {
+    providerName: string;
+    confidence_score?: number | null;
+  })[] = [];
 
   for (const provider of providerRows) {
     // Circuit breaker check
@@ -341,12 +348,16 @@ async function main(): Promise<void> {
       const html = await fetchWithDelay(url);
       stats.providersProcessed++;
 
-      const parsed = parseEnrichmentData(html, offers, categories);
-      if (!parsed) {
+      const parseResult = parseEnrichmentData(html, offers, categories);
+      if (!parseResult) {
         console.log('⚠️  no parseable data');
         stats.failureCount++;
         continue;
       }
+      const parsed = parseResult.data;
+      const confidenceScore = parseResult.sourceName
+        ? computeConfidenceScore(provider.provider_name, parseResult.sourceName)
+        : null;
 
       const snapshot: ProviderSnapshot = {
         provider_id: provider.provider_id,
@@ -389,7 +400,11 @@ async function main(): Promise<void> {
         } else {
           statusParts.push(`${candidates.length} candidate(s)`);
           for (const c of candidates) {
-            allCandidates.push({ ...c, providerName: provider.provider_name });
+            allCandidates.push({
+              ...c,
+              providerName: provider.provider_name,
+              confidence_score: confidenceScore,
+            });
           }
         }
       }
@@ -489,49 +504,13 @@ async function main(): Promise<void> {
   // 5. Write candidates if not dry-run (skip during auto-apply — already applied directly)
   if (!isAutoApply && isWrite && allCandidates.length > 0) {
     console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
-    let written = 0;
-
-    for (const candidate of allCandidates) {
-      const { error } = await supabase.from('enrichment_candidates').upsert(
-        {
-          provider_id: candidate.provider_id,
-          source: candidate.source,
-          source_url: candidate.source_url,
-          field_name: candidate.field_name,
-          proposed_value: candidate.proposed_value,
-          current_value: candidate.current_value,
-          status: 'pending',
-          enriched_at: new Date().toISOString(),
-        },
-        {
-          // ignoreDuplicates: true → ON CONFLICT DO NOTHING
-          // Required for partial unique indexes (idx_enrichment_candidates_dedup
-          // has a WHERE status = 'pending' clause that ON CONFLICT (cols) without
-          // the WHERE clause cannot match for DO UPDATE semantics).
-          onConflict: 'provider_id,field_name,source',
-          ignoreDuplicates: true,
-        },
-      );
-
-      if (error) {
-        console.error(
-          `     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`,
-        );
-      } else {
-        written++;
-      }
+    const { written, autoApplied } = await writeOrAutoApplyCandidates(allCandidates, stats);
+    stats.candidatesCreated += written;
+    if (autoApplied > 0) {
+      console.log(`  ✅ ${written} candidates written (${autoApplied} auto-applied by confidence)`);
+    } else {
+      console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
     }
-
-    // Update last_enriched_at for processed providers
-    const processedIds = [...new Set(allCandidates.map((c) => c.provider_id))];
-    for (const pid of processedIds) {
-      await supabase
-        .from('providers')
-        .update({ last_enriched_at: new Date().toISOString() })
-        .eq('provider_id', pid);
-    }
-
-    console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
   } else if (isAutoApply) {
     console.log(`\n  ✅ Auto-apply complete.`);
   } else if (isDryRun) {
@@ -546,11 +525,16 @@ async function main(): Promise<void> {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+interface ParseResult {
+  data: ParsedEnrichmentData;
+  sourceName: string | null;
+}
+
 function parseEnrichmentData(
   html: string,
   offers: Offer[],
   categories: CategoryRow[] = [],
-): ParsedEnrichmentData | null {
+): ParseResult | null {
   const schema = extractSchemaOrgFromHtml(html);
   if (!schema) return null;
 
@@ -613,7 +597,7 @@ function parseEnrichmentData(
     (parsed as Record<string, unknown>)._provider_image = enrichmentData.image;
   }
 
-  return Object.keys(parsed).length > 0 ? parsed : null;
+  return Object.keys(parsed).length > 0 ? { data: parsed, sourceName: schema.name ?? null } : null;
 }
 
 async function fetchWithDelay(url: string): Promise<string> {
@@ -727,7 +711,10 @@ async function runWoltEnrichment(
   const woltClient = createWoltClient(undefined, geocoder);
 
   // 3. Process each provider
-  const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
+  const allCandidates: (EnrichmentCandidate & {
+    providerName: string;
+    confidence_score?: number | null;
+  })[] = [];
   // Track all matched providers (with sourceUrl) for delivery link writes,
   // independent of whether they produce enrichment candidates (Fix 239-1).
   const matchedWoltProviders: { providerId: string; providerName: string; sourceUrl: string }[] =
@@ -807,9 +794,15 @@ async function runWoltEnrichment(
       } else if (isAutoApply) {
         await autoApplyDeliveryFields(provider, result, noAlcoholMap, stats, 'wolt');
       } else {
+        const confidenceScore =
+          result.matchConfidence != null ? Math.round(result.matchConfidence * 100) : null;
         console.log(`📝 ${result.candidates.length} candidate(s) (slug: ${result.venueSlug})`);
         for (const c of result.candidates) {
-          allCandidates.push({ ...c, providerName: provider.provider_name });
+          allCandidates.push({
+            ...c,
+            providerName: provider.provider_name,
+            confidence_score: confidenceScore,
+          });
         }
       }
     } catch (err) {
@@ -861,44 +854,12 @@ async function runWoltEnrichment(
   // 5. Write candidates + delivery links if not dry-run
   if (isWriteMode && allCandidates.length > 0) {
     console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
-    let written = 0;
-
-    for (const candidate of allCandidates) {
-      const { error } = await supabase.from('enrichment_candidates').upsert(
-        {
-          provider_id: candidate.provider_id,
-          source: candidate.source,
-          source_url: candidate.source_url,
-          field_name: candidate.field_name,
-          proposed_value: candidate.proposed_value,
-          current_value: candidate.current_value,
-          status: 'pending',
-          enriched_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'provider_id,field_name,source',
-          ignoreDuplicates: true,
-        },
-      );
-
-      if (error) {
-        console.error(
-          `     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`,
-        );
-      } else {
-        written++;
-      }
-    }
-
-    console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
-
-    // Update last_enriched_at for processed providers
-    const processedIds = [...new Set(allCandidates.map((c) => c.provider_id))];
-    for (const pid of processedIds) {
-      await supabase
-        .from('providers')
-        .update({ last_enriched_at: new Date().toISOString() })
-        .eq('provider_id', pid);
+    const { written, autoApplied } = await writeOrAutoApplyCandidates(allCandidates, stats);
+    stats.candidatesCreated += written;
+    if (autoApplied > 0) {
+      console.log(`  ✅ ${written} candidates written (${autoApplied} auto-applied by confidence)`);
+    } else {
+      console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
     }
   }
 
@@ -1006,7 +967,10 @@ async function runLieferandoEnrichment(
   const geocoder = new StaticCityGeocoder();
   const lieferandoClient = createLieferandoClient();
 
-  const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
+  const allCandidates: (EnrichmentCandidate & {
+    providerName: string;
+    confidence_score?: number | null;
+  })[] = [];
   // Track all matched providers for delivery link writes (Fix 239-1)
   const matchedLieferandoProviders: {
     providerId: string;
@@ -1088,9 +1052,15 @@ async function runLieferandoEnrichment(
       } else if (isAutoApply) {
         await autoApplyLieferandoFields(provider, result, noAlcoholMap, stats);
       } else {
+        const confidenceScore =
+          result.matchConfidence != null ? Math.round(result.matchConfidence * 100) : null;
         console.log(`📝 ${result.candidates.length} candidate(s) (slug: ${result.venueSlug})`);
         for (const c of result.candidates) {
-          allCandidates.push({ ...c, providerName: provider.provider_name });
+          allCandidates.push({
+            ...c,
+            providerName: provider.provider_name,
+            confidence_score: confidenceScore,
+          });
         }
       }
     } catch (err) {
@@ -1140,43 +1110,13 @@ async function runLieferandoEnrichment(
 
   if (isWriteMode && allCandidates.length > 0) {
     console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
-    let written = 0;
-
-    for (const candidate of allCandidates) {
-      const { error } = await supabase.from('enrichment_candidates').upsert(
-        {
-          provider_id: candidate.provider_id,
-          source: candidate.source,
-          source_url: candidate.source_url,
-          field_name: candidate.field_name,
-          proposed_value: candidate.proposed_value,
-          current_value: candidate.current_value,
-          status: 'pending',
-          enriched_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'provider_id,field_name,source',
-          ignoreDuplicates: true,
-        },
-      );
-
-      if (error) {
-        console.error(
-          `     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`,
-        );
-      } else {
-        written++;
-      }
+    const { written, autoApplied } = await writeOrAutoApplyCandidates(allCandidates, stats);
+    stats.candidatesCreated += written;
+    if (autoApplied > 0) {
+      console.log(`  ✅ ${written} candidates written (${autoApplied} auto-applied by confidence)`);
+    } else {
+      console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
     }
-
-    const processedIds = [...new Set(allCandidates.map((c) => c.provider_id))];
-    for (const pid of processedIds) {
-      await supabase
-        .from('providers')
-        .update({ last_enriched_at: new Date().toISOString() })
-        .eq('provider_id', pid);
-    }
-    console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
   }
 
   // Write delivery links for ALL matched providers, regardless of candidate count (Fix 239-1)
@@ -1284,7 +1224,10 @@ async function runUberEatsEnrichment(
     // 2. Create UberEats client (one browser instance per run)
     const ubereatsClient = createUberEatsClient();
 
-    const allCandidates: (EnrichmentCandidate & { providerName: string })[] = [];
+    const allCandidates: (EnrichmentCandidate & {
+      providerName: string;
+      confidence_score?: number | null;
+    })[] = [];
     // Track all matched providers for delivery link writes (Fix 239-1)
     const matchedUberEatsProviders: {
       providerId: string;
@@ -1371,8 +1314,14 @@ async function runUberEatsEnrichment(
           await autoApplyDeliveryFields(provider, result, noAlcoholMap, stats, 'ubereats');
         } else {
           console.log(`📝 ${result.candidates.length} candidate(s) (slug: ${result.venueSlug})`);
+          const confidenceScore =
+            result.matchConfidence != null ? Math.round(result.matchConfidence * 100) : null;
           for (const c of result.candidates) {
-            allCandidates.push({ ...c, providerName: provider.provider_name });
+            allCandidates.push({
+              ...c,
+              providerName: provider.provider_name,
+              confidence_score: confidenceScore,
+            });
           }
         }
       } catch (err) {
@@ -1427,43 +1376,14 @@ async function runUberEatsEnrichment(
     // 5. Write candidates if not dry-run
     if (isWrite && allCandidates.length > 0) {
       console.log(`\n  💾 Writing ${allCandidates.length} candidates to enrichment_candidates...`);
-      let written = 0;
-
-      for (const candidate of allCandidates) {
-        const { error } = await supabase.from('enrichment_candidates').upsert(
-          {
-            provider_id: candidate.provider_id,
-            source: candidate.source,
-            source_url: candidate.source_url,
-            field_name: candidate.field_name,
-            proposed_value: candidate.proposed_value,
-            current_value: candidate.current_value,
-            status: 'pending',
-            enriched_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'provider_id,field_name,source',
-            ignoreDuplicates: true,
-          },
+      const { written, autoApplied } = await writeOrAutoApplyCandidates(allCandidates, stats);
+      stats.candidatesCreated += written;
+      if (autoApplied > 0) {
+        console.log(
+          `  ✅ ${written} candidates written (${autoApplied} auto-applied by confidence)`,
         );
-
-        if (error) {
-          console.error(
-            `     ❌ Failed to write candidate for ${candidate.provider_id}/${candidate.field_name}: ${error.message}`,
-          );
-        } else {
-          written++;
-        }
-      }
-
-      console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
-
-      const processedIds = [...new Set(allCandidates.map((c) => c.provider_id))];
-      for (const pid of processedIds) {
-        await supabase
-          .from('providers')
-          .update({ last_enriched_at: new Date().toISOString() })
-          .eq('provider_id', pid);
+      } else {
+        console.log(`  ✅ ${written}/${allCandidates.length} candidates written successfully`);
       }
     }
 
@@ -1843,6 +1763,190 @@ async function woltDirectUpsertDeliveryLink(
   if (error) {
     console.error(`     ⚠️  Delivery link write failed: ${error.message}`);
   }
+}
+
+// ─── Confidence-Based Auto-Apply ────────────────────────────────────────────
+
+type CandidateWithMeta = EnrichmentCandidate & {
+  providerName: string;
+  confidence_score?: number | null;
+};
+
+/**
+ * Writes candidates to enrichment_candidates, auto-applying high-confidence
+ * additive candidates directly to the provider instead of leaving them pending.
+ *
+ * A candidate is auto-applied when:
+ *  1. confidence_score >= AUTO_APPLY_CONFIDENCE_THRESHOLD (85)
+ *  2. The conflict type is 'additive' (current value is empty)
+ *
+ * Returns { written, autoApplied } counts.
+ */
+async function writeOrAutoApplyCandidates(
+  allCandidates: CandidateWithMeta[],
+  stats: RunStats,
+): Promise<{ written: number; autoApplied: number }> {
+  let written = 0;
+  let autoApplied = 0;
+
+  // Group candidates by provider for batch auto-apply via RPC
+  const byProvider = new Map<string, CandidateWithMeta[]>();
+  for (const c of allCandidates) {
+    const list = byProvider.get(c.provider_id) ?? [];
+    list.push(c);
+    byProvider.set(c.provider_id, list);
+  }
+
+  for (const [providerId, candidates] of byProvider) {
+    // Split: high-confidence candidates eligible for auto-apply
+    const autoEligible = candidates.filter(
+      (c) => c.confidence_score != null && c.confidence_score >= AUTO_APPLY_CONFIDENCE_THRESHOLD,
+    );
+    const pending = candidates.filter(
+      (c) => c.confidence_score == null || c.confidence_score < AUTO_APPLY_CONFIDENCE_THRESHOLD,
+    );
+
+    // Try auto-apply for high-confidence candidates
+    if (autoEligible.length > 0) {
+      // buildAutoApplyPayload filters to additive-only internally
+      const current: Record<string, unknown> = {};
+      for (const c of autoEligible) {
+        current[c.field_name] = c.current_value;
+      }
+
+      // Fetch primary location_id to avoid destructive RPC behavior
+      let primaryLocationId: string | null = null;
+      const hasLocationFields = autoEligible.some((c) => LOCATION_FIELDS.has(c.field_name));
+      if (hasLocationFields) {
+        const { data: locData } = await supabase
+          .from('locations')
+          .select('location_id')
+          .eq('provider_id', providerId)
+          .eq('is_primary', true)
+          .limit(1)
+          .single();
+        primaryLocationId = locData?.location_id ?? null;
+      }
+
+      const { rpcPayload, appliedFields } = buildAutoApplyPayload({
+        providerId,
+        current,
+        proposed: autoEligible,
+        primaryLocationId,
+      });
+
+      if (appliedFields.length > 0) {
+        try {
+          if (Object.keys(rpcPayload).length > 0) {
+            const { error: rpcError } = await supabase.rpc('admin_update_provider', {
+              p_provider_id: providerId,
+              p_data: rpcPayload,
+            });
+            if (rpcError) {
+              console.error(
+                `     ❌ Confidence auto-apply RPC failed for ${providerId}: ${rpcError.message}`,
+              );
+              // Fall through: these candidates will be written as pending below
+              pending.push(...autoEligible);
+              // Skip the audit trail write for these
+              autoEligible.length = 0;
+            }
+          }
+
+          // Write auto-applied audit trail
+          for (const c of autoEligible) {
+            if (!appliedFields.includes(c.field_name)) {
+              // buildAutoApplyPayload filtered this out (conflict, not additive) — write as pending
+              pending.push(c);
+              continue;
+            }
+
+            const { error } = await supabase.from('enrichment_candidates').upsert(
+              {
+                provider_id: c.provider_id,
+                source: c.source,
+                source_url: c.source_url,
+                field_name: c.field_name,
+                proposed_value: c.proposed_value,
+                current_value: c.current_value,
+                status: 'auto_applied',
+                confidence_score: c.confidence_score ?? null,
+                enriched_at: new Date().toISOString(),
+              },
+              {
+                onConflict: 'provider_id,field_name,source',
+                ignoreDuplicates: true,
+              },
+            );
+
+            if (error) {
+              console.error(
+                `     ❌ Failed to write auto-applied candidate for ${c.provider_id}/${c.field_name}: ${error.message}`,
+              );
+            } else {
+              autoApplied++;
+              written++;
+              stats.autoAppliedCount++;
+              stats.autoAppliedFields.push(c.field_name);
+            }
+          }
+
+          if (appliedFields.length > 0 && autoEligible.length > 0) {
+            console.log(
+              `     ✨ Auto-applied ${appliedFields.length} high-confidence field(s) for ${providerId}: ${appliedFields.join(', ')}`,
+            );
+          }
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error(`     ❌ Confidence auto-apply failed for ${providerId}: ${msg}`);
+          // Push all back to pending
+          pending.push(...autoEligible);
+        }
+      } else {
+        // No additive fields — all go to pending
+        pending.push(...autoEligible);
+      }
+    }
+
+    // Write remaining candidates as pending
+    for (const c of pending) {
+      const { error } = await supabase.from('enrichment_candidates').upsert(
+        {
+          provider_id: c.provider_id,
+          source: c.source,
+          source_url: c.source_url,
+          field_name: c.field_name,
+          proposed_value: c.proposed_value,
+          current_value: c.current_value,
+          status: 'pending',
+          confidence_score: c.confidence_score ?? null,
+          enriched_at: new Date().toISOString(),
+        },
+        {
+          onConflict: 'provider_id,field_name,source',
+          ignoreDuplicates: true,
+        },
+      );
+
+      if (error) {
+        console.error(
+          `     ❌ Failed to write candidate for ${c.provider_id}/${c.field_name}: ${error.message}`,
+        );
+      } else {
+        written++;
+      }
+    }
+  }
+
+  // Update last_enriched_at for all processed providers
+  for (const providerId of byProvider.keys()) {
+    await supabase
+      .from('providers')
+      .update({ last_enriched_at: new Date().toISOString() })
+      .eq('provider_id', providerId);
+  }
+
+  return { written, autoApplied };
 }
 
 // ─── Auto-Apply Helpers ──────────────────────────────────────────────────────
@@ -2380,8 +2484,9 @@ async function processPendingEnrichments(stats: RunStats): Promise<Set<string>> 
           }
 
           const html = await fetchWithDelay(provider.import_source_url);
-          const parsed = parseEnrichmentData(html, pendingOffers, pendingCategories);
-          if (parsed) {
+          const parseResult2 = parseEnrichmentData(html, pendingOffers, pendingCategories);
+          if (parseResult2) {
+            const parsed = parseResult2.data;
             const jhSnapshot: ProviderSnapshot = {
               provider_id: provider.provider_id,
               offers_ids: null,

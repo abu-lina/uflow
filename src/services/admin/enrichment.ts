@@ -25,6 +25,7 @@ export interface EnrichmentCandidateRow {
   source_category?: string | null;
   attribution?: unknown;
   evidence?: unknown;
+  confidence_score?: number | null;
   status: 'pending' | 'approved' | 'rejected' | 'applied' | 'auto-applied';
   enriched_at: string;
   reviewed_at: string | null;
@@ -182,6 +183,7 @@ export async function getPendingCandidates(
       source_category,
       attribution,
       evidence,
+      confidence_score,
       status,
       enriched_at,
       reviewed_at,
@@ -239,6 +241,7 @@ export async function getHistoryCandidates(
       proposed_value,
       current_value,
       evidence,
+      confidence_score,
       status,
       enriched_at,
       reviewed_at,

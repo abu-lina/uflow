@@ -1573,6 +1573,7 @@ export const ps = {
       loadMore: 'نور بار کړئ',
       loadFailed: 'وړاندیزونه بار نه شول',
       pendingCount: '{{count}} په انتظار کې',
+      confidenceScore: 'باور: {{score}}%',
     },
   },
 } as const;

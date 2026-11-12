@@ -1574,6 +1574,7 @@ export const en = {
       loadMore: 'Load more',
       loadFailed: 'Failed to load candidates',
       pendingCount: '{{count}} pending',
+      confidenceScore: 'Confidence: {{score}}%',
     },
   },
 } as const;
