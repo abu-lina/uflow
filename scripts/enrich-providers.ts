@@ -1867,7 +1867,7 @@ async function writeOrAutoApplyCandidates(
                 field_name: c.field_name,
                 proposed_value: c.proposed_value,
                 current_value: c.current_value,
-                status: 'auto_applied',
+                status: 'auto-applied',
                 confidence_score: c.confidence_score ?? null,
                 enriched_at: new Date().toISOString(),
               },
@@ -2024,7 +2024,7 @@ async function autoApplyDeliveryFields(
       .update({ last_enriched_at: new Date().toISOString() })
       .eq('provider_id', provider.provider_id);
 
-    // 4. Write audit trail to enrichment_candidates with status='auto_applied'
+    // 4. Write audit trail to enrichment_candidates with status='auto-applied'
     for (const c of result.candidates) {
       if (!appliedFields.includes(c.field_name)) continue;
 
@@ -2036,7 +2036,7 @@ async function autoApplyDeliveryFields(
           field_name: c.field_name,
           proposed_value: c.proposed_value,
           current_value: c.current_value,
-          status: 'auto_applied',
+          status: 'auto-applied',
           enriched_at: new Date().toISOString(),
         },
         {
@@ -2140,7 +2140,7 @@ async function autoApplyLieferandoFields(
           field_name: c.field_name,
           proposed_value: c.proposed_value,
           current_value: c.current_value,
-          status: 'auto_applied',
+          status: 'auto-applied',
           enriched_at: new Date().toISOString(),
         },
         {
@@ -2232,7 +2232,7 @@ async function autoApplyJoinHalalFields(
           field_name: c.field_name,
           proposed_value: c.proposed_value,
           current_value: c.current_value,
-          status: 'auto_applied',
+          status: 'auto-applied',
           enriched_at: new Date().toISOString(),
         },
         {

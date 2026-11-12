@@ -7,7 +7,7 @@ export function getAutoApplyThreshold(): number {
   const env = process.env.ENRICHMENT_CONFIDENCE_THRESHOLD;
   if (env == null) return DEFAULT_THRESHOLD;
   const parsed = parseInt(env, 10);
-  if (isNaN(parsed) || parsed < 0 || parsed > 100) return DEFAULT_THRESHOLD;
+  if (isNaN(parsed) || parsed < 50 || parsed > 100) return DEFAULT_THRESHOLD;
   return parsed;
 }
 

@@ -53,4 +53,14 @@ describe('getAutoApplyThreshold', () => {
     expect(getAutoApplyThreshold()).toBe(85);
     delete process.env.ENRICHMENT_CONFIDENCE_THRESHOLD;
   });
+
+  it('rejects values below minimum floor of 50', () => {
+    process.env.ENRICHMENT_CONFIDENCE_THRESHOLD = '0';
+    expect(getAutoApplyThreshold()).toBe(85);
+    process.env.ENRICHMENT_CONFIDENCE_THRESHOLD = '49';
+    expect(getAutoApplyThreshold()).toBe(85);
+    process.env.ENRICHMENT_CONFIDENCE_THRESHOLD = '50';
+    expect(getAutoApplyThreshold()).toBe(50);
+    delete process.env.ENRICHMENT_CONFIDENCE_THRESHOLD;
+  });
 });
