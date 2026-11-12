@@ -92,6 +92,17 @@ export const herdrWorktreeCreateCase = `  "worktree create")
     ;;
 `;
 
+/** Sanitized copy of process.env — prevents real Rex panes when vitest runs inside a Rex terminal. */
+export const testEnv = (overrides: Record<string, string | undefined> = {}) =>
+  ({
+    ...process.env,
+    GIT_CONFIG_NOSYSTEM: '1',
+    GIT_CONFIG_GLOBAL: '/dev/null',
+    REX_SESSION: '',
+    REX_BLOCK: '',
+    ...overrides,
+  }) as NodeJS.ProcessEnv;
+
 export const writeStub = (bin: string, name: string, body: string) => {
   mkdirSync(bin, { recursive: true });
   writeFileSync(join(bin, name), body, { mode: 0o755 });

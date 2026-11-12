@@ -21,6 +21,7 @@ import {
   laneEntrypoint,
   laneSh,
   shellQuote,
+  testEnv,
   writeStub,
 } from './helpers/lane';
 import { spawnTestTimeoutMs } from './helpers/timeout';
@@ -132,8 +133,7 @@ esac
   const result = spawnSync('bash', [laneEntrypoint, ...args], {
     cwd: root,
     encoding: 'utf8',
-    env: {
-      ...process.env,
+    env: testEnv({
       REX_SESSION: TEST_REX_SESSION,
       REX_BLOCK: TEST_REX_BLOCK,
       PATH: `${bin}:${process.env.PATH}`,
@@ -145,7 +145,7 @@ esac
       REX_PROMPT: rexPrompt,
       TMPDIR: join(fixture, 'tmp'),
       REPO_ROOT: root,
-    },
+    }),
   });
   const lines = (file: string) =>
     existsSync(file) ? readFileSync(file, 'utf8').split('\n').filter(Boolean) : [];
@@ -217,14 +217,13 @@ esac
   const result = spawnSync('bash', [laneEntrypoint, 'done', '636'], {
     cwd: root,
     encoding: 'utf8',
-    env: {
-      ...process.env,
+    env: testEnv({
       PATH: `${bin}:${process.env.PATH}`,
       HERDR_LOG: herdrLog,
       LSOF_LOG: lsofLog,
       LANE_DIR: dir,
       PR_STATE: prState,
-    },
+    }),
   });
   const calls = existsSync(herdrLog)
     ? readFileSync(herdrLog, 'utf8').split('\n').filter(Boolean)
@@ -240,7 +239,7 @@ describe('lane shell helpers', { timeout: spawnTestTimeoutMs }, () => {
     const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} status`], {
       cwd: new URL('../..', import.meta.url).pathname,
       encoding: 'utf8',
-      env: { ...process.env },
+      env: testEnv(),
     });
 
     expect(result.status).toBe(0);
@@ -264,7 +263,7 @@ describe('lane shell helpers', { timeout: spawnTestTimeoutMs }, () => {
         const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(path)} status`], {
           cwd,
           encoding: 'utf8',
-          env: { ...process.env },
+          env: testEnv(),
         });
         expect(result.status, `${path}: ${result.stderr}`).toBe(0);
         expect(result.stdout).toContain('WORKTREE\tBRANCH\tPR\tCI');
@@ -302,7 +301,7 @@ esac
       );
       writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
 
-      const env = { ...process.env, PATH: `${bin}:${process.env.PATH}` };
+      const env = testEnv({ PATH: `${bin}:${process.env.PATH}` });
       const successful = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} status`], {
         cwd: new URL('../..', import.meta.url).pathname,
         encoding: 'utf8',
@@ -372,7 +371,7 @@ esac
     const fixture = mkdtempSync(join(tmpdir(), 'lint-shell-criterion-1-'));
     const { bin, log } = createLintStubs(fixture);
     const root = new URL('../..', import.meta.url).pathname;
-    const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, LINT_LOG: log };
+    const env = testEnv({ PATH: `${bin}:${process.env.PATH}`, LINT_LOG: log });
 
     try {
       const defaults = spawnSync('npm', ['run', 'lint:shell'], {
@@ -418,7 +417,7 @@ esac
       const result = spawnSync('npm', ['run', 'lint:shell', '--', 'scripts/lane'], {
         cwd: root,
         encoding: 'utf8',
-        env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, LINT_LOG: log },
+        env: testEnv({ PATH: `${bin}:${process.env.PATH}`, LINT_LOG: log }),
       });
       expect(result.status).toBe(0);
       expect(readFileSync(log, 'utf8')).toContain(
@@ -450,12 +449,11 @@ typeset -p worktree branch pr_info > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
         {
           cwd: repoRoot,
           encoding: 'utf8',
-          env: {
-            ...process.env,
+          env: testEnv({
             PATH_BEFORE: pathBefore,
             PATH_AFTER: pathAfter,
             VARIABLE_DECLARATIONS: variableDeclarations,
-          },
+          }),
         },
       );
 
@@ -502,7 +500,7 @@ typeset -p worktree branch pr_info > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
       const done = spawnSync('bash', [laneEntrypoint, 'done', '636', '--force'], {
         cwd: root,
         encoding: 'utf8',
-        env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+        env: testEnv({ PATH: `${bin}:${process.env.PATH}` }),
       });
 
       expect(done.status, `${done.stdout}${done.stderr}`).toBe(0);
@@ -855,14 +853,13 @@ esac
         spawnSync('bash', [laneEntrypoint, 'start', ...args], {
           cwd,
           encoding: 'utf8',
-          env: {
-            ...process.env,
+          env: testEnv({
             REX_SESSION: TEST_REX_SESSION,
             REX_BLOCK: TEST_REX_BLOCK,
             PATH: `${bin}:${process.env.PATH}`,
             REX_LOG: rexLog,
             REPO_ROOT: root,
-          },
+          }),
         });
 
       const focused = run(root, '641');
@@ -954,7 +951,7 @@ esac
       const result = spawnSync('bash', [laneEntrypoint, 'status'], {
         cwd: root,
         encoding: 'utf8',
-        env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+        env: testEnv({ PATH: `${bin}:${process.env.PATH}` }),
       });
 
       expect(result.status, result.stderr).toBe(0);
@@ -1019,8 +1016,7 @@ esac
         const result = spawnSync(shell, [...shellArgs, `source ${shellQuote(laneSh)}\nforeman`], {
           cwd: root,
           encoding: 'utf8',
-          env: {
-            ...process.env,
+          env: testEnv({
             PATH: `${bin}:${process.env.PATH}`,
             TMPDIR: temp,
             HERDR_LOG: herdrLog,
@@ -1028,7 +1024,7 @@ esac
             HERDR_PANE_ID: 'w1M:p1',
             FIXTURES: herdrFixtureDir,
             CONFIG_SNAPSHOT: configSnapshot,
-          },
+          }),
         });
 
         expect(result.status, `${shell}: ${result.stderr}`).toBe(0);
@@ -1167,8 +1163,7 @@ esac
       { mode: 0o755 },
     );
 
-    const env = {
-      ...process.env,
+    const env = testEnv({
       PATH: `${bin}:${process.env.PATH}`,
       HERDR_LOG: log,
       TMPDIR: join(fixture, 'tmp'),
@@ -1180,7 +1175,7 @@ esac
       TAB_CREATE: scenario.tabCreate ?? 'ok',
       AGENT_START_ERROR: join(fixture, 'agent-start-error.json'),
       PROMPT_FILE: prompt,
-    };
+    });
     delete (env as Record<string, string | undefined>).HERDR_WORKSPACE_ID;
     if (scenario.workspaceId !== null) {
       (env as Record<string, string>).HERDR_WORKSPACE_ID = scenario.workspaceId ?? 'w1M';
@@ -1377,7 +1372,7 @@ describe('lane worktree git hooks (#655)', { timeout: spawnTestTimeoutMs }, () =
     writeFileSync(join(cwd, 'file.txt'), `${Math.random()}\n`);
     git(cwd, 'add', 'file.txt');
     execFileSync('git', ['-C', cwd, 'commit', '-m', 'change'], {
-      env: { ...process.env, MARKER_DIR: markerDir },
+      env: testEnv({ MARKER_DIR: markerDir }),
       stdio: 'ignore',
     });
   };
