@@ -242,7 +242,6 @@ function GoldAttestationSection({
 interface CheckItem {
   icon: ReactNode;
   labelKey: string;
-  category: string;
 }
 
 function getCheckItems(
@@ -256,22 +255,18 @@ function getCheckItems(
       {
         icon: <SquareMenu aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkMenuReviewed',
-        category: 'menu',
       },
       {
         icon: <BeerOff aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkSellsNoAlcohol',
-        category: 'alcohol',
       },
       {
         icon: <PiggyBank aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkSellsNoPork',
-        category: 'pork',
       },
       {
         icon: <HugeHalalIcon aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkClaimsMeatHalal',
-        category: 'halal',
       },
     ];
   }
@@ -281,22 +276,18 @@ function getCheckItems(
       {
         icon: <SquareMenu aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkMenuReviewedOnsite',
-        category: 'menu',
       },
       {
         icon: <BeerOff aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkSellsProcessNoAlcohol',
-        category: 'alcohol',
       },
       {
         icon: <PiggyBank aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkSellsProcessNoPork',
-        category: 'pork',
       },
       {
         icon: <HugeHalalIcon aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkMeatIsHalal',
-        category: 'halal',
       },
     ];
   }
@@ -306,7 +297,6 @@ function getCheckItems(
     {
       icon: <FileCheck aria-hidden className="h-6 w-6" />,
       labelKey: 'providerDetail.proofTier.checkCertificateOnFile',
-      category: 'certificate',
     },
   ];
   if (onsiteVerified) {
@@ -314,12 +304,10 @@ function getCheckItems(
       {
         icon: <MapPin aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkOnsiteVisit',
-        category: 'onsite',
       },
       {
         icon: <UserCheck aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkOwnerConfirmed',
-        category: 'owner',
       },
     );
   }
@@ -430,11 +418,6 @@ export function ProofTierCard({
   const supportsAttestation = listingType === 'food' || listingType === 'store';
   const checkItems = getCheckItems(tier, verificationMethod);
   const nextTier = NEXT_TIER[tier];
-  const missingItems = nextTier
-    ? getCheckItems(nextTier, verificationMethod).filter(
-        (item) => !checkItems.some((c) => c.category === item.category),
-      )
-    : [];
   return (
     <section aria-label={t('providerDetail.proofTier.sectionTitle')}>
       <SealRow
@@ -463,8 +446,8 @@ export function ProofTierCard({
         </div>
       ) : null}
 
-      {/* Section 2: What's missing for [next tier] (hidden when all categories overlap or no next tier) */}
-      {nextTier && missingItems.length > 0 ? (
+      {/* Section 2: What's missing for [next tier] (hidden for gold) */}
+      {nextTier ? (
         <>
           <button
             aria-expanded={isMissingExpanded}
@@ -482,7 +465,7 @@ export function ProofTierCard({
           </button>
           {isMissingExpanded ? (
             <div className="mt-2">
-              <VerifiedChecklist items={missingItems} t={t} />
+              <VerifiedChecklist items={getCheckItems(nextTier, verificationMethod)} t={t} />
             </div>
           ) : null}
         </>
