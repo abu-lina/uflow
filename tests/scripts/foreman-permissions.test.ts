@@ -94,7 +94,7 @@ if [ "$STUB_MODE" = compliant ]; then
     jq '.devin.org_id = "org-fake-value"' "$config" > "$config.tmp" && mv "$config.tmp" "$config"
   fi
   case "$cmd" in
-    "git rev-parse --short HEAD"|"gh issue list --limit 1"|"herdr agent list"|"scripts/lane status")
+    "git rev-parse --short HEAD"|"gh issue list --limit 1"|"herdr agent list"|*scripts/lane\\\ status*)
       eval "$cmd"
       exit $?
       ;;

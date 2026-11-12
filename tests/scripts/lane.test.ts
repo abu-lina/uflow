@@ -18,7 +18,6 @@ import {
   createLaneRepo,
   ghStub,
   git,
-  herdrWorktreeCreateCase,
   laneEntrypoint,
   laneSh,
   shellQuote,
@@ -62,6 +61,11 @@ type StartOptions = {
   slug?: string;
 };
 
+// Fake session/block IDs injected into the test environment for Rex-based lane start.
+const TEST_REX_SESSION = 'session:test-rex';
+const TEST_REX_BLOCK = 'block:test-foreman';
+const TEST_REX_LANE_BLOCK = 'block:test-123';
+
 const startCopilotLane = (
   fixture: string,
   rootEnv = '',
@@ -69,10 +73,12 @@ const startCopilotLane = (
   options: StartOptions = {},
 ) => {
   const bin = join(fixture, 'bin');
-  const herdrLog = join(fixture, 'herdr.log');
   const herdrCalls = join(fixture, 'herdr-calls.log');
   const ghCalls = join(fixture, 'gh-calls.log');
   const tmuxLog = join(fixture, 'tmux.log');
+  const rexLog = join(fixture, 'rex.log');
+  const rexArgs = join(fixture, 'rex-args.log');
+  const rexPrompt = join(fixture, 'rex-prompt.txt');
   const { root } = createLaneRepo(fixture);
   mkdirSync(bin);
   mkdirSync(join(fixture, 'tmp'));
@@ -80,18 +86,44 @@ const startCopilotLane = (
   prepareRoot?.(root);
   writeStub(bin, 'gh', ghStub);
   writeStub(bin, 'tmux', `#!/bin/sh\nprintf '%s\\n' "$*" >> "$TMUX_LOG"\n`);
+  // Minimal herdr stub — lane.sh no longer calls herdr for lane start (Rex handles it).
   writeStub(
     bin,
     'herdr',
     `#!/bin/sh
 { printf '%s' "$*" | tr '\\n' ' '; printf '\\n'; } >> "$HERDR_CALLS"
-case "$1 $2" in
-${herdrWorktreeCreateCase}  "agent start")
-    printf '%s\\n' 'agent start' >> "$HERDR_LOG"
-    shift 2
-    for arg do printf '%s\\n' "$arg" >> "$HERDR_LOG"; done
+`,
+  );
+  // Rex stub: returns a fake block_id on split, an instant shell prompt on capture,
+  // and logs the agent command args (one per line) so tests can assert on flags.
+  writeStub(
+    bin,
+    'rex',
+    `#!/bin/sh
+{ printf '%s' "$*" | tr '\\n' ' '; printf '\\n'; } >> "$REX_LOG"
+case "$1" in
+  split)
+    # Find args after -- (which are: bash -c <agent_cmd>)
+    while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do shift; done
+    # $1=-- $2=bash $3=-c $4=agent_cmd
+    if [ "$#" -ge 4 ]; then
+      shift 3  # skip -- bash -c
+      agent_cmd="$1"
+      # Strip the leading "cd /path && " to get the agent command and its flags
+      agent_part="\${agent_cmd#* && }"
+      # Use eval to properly unquote shell-escaped flags, then log each arg
+      eval "set -- \$agent_part"
+      shift  # skip binary name (copilot/devin/claude)
+      for arg do printf '%s\\n' "\$arg"; done >> "$REX_ARGS"
+    fi
+    printf '%s\\n' '{"block_ids":["${TEST_REX_LANE_BLOCK}"]}'
     ;;
-  "agent prompt") printf '%s\\n' 'agent prompt' >> "$HERDR_LOG" ;;
+  capture)
+    printf '❯\\n'
+    ;;
+  send)
+    cat >> "$REX_PROMPT"
+    ;;
 esac
 `,
   );
@@ -102,11 +134,15 @@ esac
     encoding: 'utf8',
     env: {
       ...process.env,
+      REX_SESSION: TEST_REX_SESSION,
+      REX_BLOCK: TEST_REX_BLOCK,
       PATH: `${bin}:${process.env.PATH}`,
-      HERDR_LOG: herdrLog,
       HERDR_CALLS: herdrCalls,
       GH_CALLS: ghCalls,
       TMUX_LOG: tmuxLog,
+      REX_LOG: rexLog,
+      REX_ARGS: rexArgs,
+      REX_PROMPT: rexPrompt,
       TMPDIR: join(fixture, 'tmp'),
       REPO_ROOT: root,
     },
@@ -115,11 +151,13 @@ esac
     existsSync(file) ? readFileSync(file, 'utf8').split('\n').filter(Boolean) : [];
   return {
     root,
-    herdrLog,
+    rexArgs,
+    rexPrompt,
     result,
     herdrCalls: () => lines(herdrCalls),
     ghCalls: () => lines(ghCalls),
     tmuxCalls: () => lines(tmuxLog),
+    rexCalls: () => lines(rexLog),
   };
 };
 
@@ -140,10 +178,9 @@ const commitFile = (root: string, file: string, contents: string, message: strin
   git(root, 'commit', '-m', message);
 };
 
-const argsAfterAgentStart = (herdrLog: string) => {
-  const logged = readFileSync(herdrLog, 'utf8').split('\n');
-  const start = logged.indexOf('agent start');
-  return logged.slice(start + 1, logged.indexOf('agent prompt', start));
+const argsAfterAgentStart = (rexArgs: string) => {
+  if (!existsSync(rexArgs)) return [];
+  return readFileSync(rexArgs, 'utf8').split('\n').filter(Boolean);
 };
 
 type DoneOptions = { prState?: string; lsofStatus?: number };
@@ -200,56 +237,22 @@ esac
 
 describe('lane shell helpers', { timeout: spawnTestTimeoutMs }, () => {
   it('runs lane status from a non-interactive shell without loading shell startup files', () => {
-    const fixture = mkdtempSync(join(tmpdir(), 'lane-entrypoint-'));
-    const bin = join(fixture, 'bin');
-    const herdrLog = join(fixture, 'herdr.log');
-    try {
-      mkdirSync(bin);
-      writeFileSync(
-        join(bin, 'herdr'),
-        `#!/bin/sh
-printf "%s\\n" "$*" >> "$HERDR_LOG"
-case "$1 $2" in
-  "agent list"|"workspace list") printf '%s\\n' '{"result":{}}' ;;
-esac
-`,
-        { mode: 0o755 },
-      );
-      writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
+    const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} status`], {
+      cwd: new URL('../..', import.meta.url).pathname,
+      encoding: 'utf8',
+      env: { ...process.env },
+    });
 
-      const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} status`], {
-        cwd: new URL('../..', import.meta.url).pathname,
-        encoding: 'utf8',
-        env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, HERDR_LOG: herdrLog },
-      });
-
-      expect(result.status).toBe(0);
-      expect(result.stdout).toContain('AGENT\tSTATUS\tWORKSPACE LABEL\tBRANCH');
-      expect(readFileSync(herdrLog, 'utf8')).toContain('agent list');
-      expect(readFileSync(herdrLog, 'utf8')).toContain('workspace list');
-    } finally {
-      rmSync(fixture, { recursive: true, force: true });
-    }
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('WORKTREE\tBRANCH\tPR\tCI');
   });
 
   it('resolves the helper for absolute, relative, and symlink invocations from a nested repo directory', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-entrypoint-link-'));
-    const bin = join(fixture, 'bin');
     const link = join(fixture, 'lane');
     const repoRoot = new URL('../..', import.meta.url).pathname;
     const nestedDirectory = join(repoRoot, 'docs', 'agents');
     try {
-      mkdirSync(bin);
-      writeFileSync(
-        join(bin, 'herdr'),
-        `#!/bin/sh
-case "$1 $2" in
-  "agent list"|"workspace list") printf '%s\\n' '{"result":{}}' ;;
-esac
-`,
-        { mode: 0o755 },
-      );
-      writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
       symlinkSync(laneEntrypoint, link);
 
       const invocations = [
@@ -261,10 +264,10 @@ esac
         const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(path)} status`], {
           cwd,
           encoding: 'utf8',
-          env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+          env: { ...process.env },
         });
         expect(result.status, `${path}: ${result.stderr}`).toBe(0);
-        expect(result.stdout).toContain('AGENT\tSTATUS\tWORKSPACE LABEL\tBRANCH');
+        expect(result.stdout).toContain('WORKTREE\tBRANCH\tPR\tCI');
       }
     } finally {
       rmSync(fixture, { recursive: true, force: true });
@@ -426,54 +429,13 @@ esac
     }
   });
 
-  it('preserves zsh variables and status output when listing stale workspaces', () => {
+  it('does not leak internal variables into the calling shell when sourced in zsh', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-status-path-'));
-    const bin = join(fixture, 'bin');
-    const existingPath = join(fixture, 'existing-checkout');
-    const missingPath = join(fixture, 'missing-checkout');
     const pathBefore = join(fixture, 'path-before');
     const pathAfter = join(fixture, 'path-after');
-    const jqPath = join(fixture, 'jq-path');
     const variableDeclarations = join(fixture, 'variables');
-    const workspaceJson = JSON.stringify({
-      result: {
-        workspaces: [
-          {
-            workspace_id: 'workspace-existing',
-            label: 'Existing',
-            worktree: { checkout_path: existingPath },
-          },
-          {
-            workspace_id: 'workspace-missing',
-            label: 'Missing',
-            worktree: { checkout_path: missingPath },
-          },
-          { workspace_id: 'workspace-no-path', label: 'No path', worktree: {} },
-        ],
-      },
-    });
     try {
-      mkdirSync(bin);
-      mkdirSync(existingPath);
-      writeFileSync(
-        join(bin, 'herdr'),
-        `#!/bin/sh
-case "$1 $2" in
-  "agent list") printf '%s\\n' '{"result":{"agents":[]}}' ;;
-  "workspace list") printf '%s\\n' ${shellQuote(workspaceJson)} ;;
-esac
-`,
-        { mode: 0o755 },
-      );
-
-      const env = {
-        ...process.env,
-        PATH: `${bin}:${process.env.PATH}`,
-        PATH_BEFORE: pathBefore,
-        PATH_AFTER: pathAfter,
-        JQ_PATH: jqPath,
-        VARIABLE_DECLARATIONS: variableDeclarations,
-      };
+      const repoRoot = new URL('../..', import.meta.url).pathname;
       const zsh = spawnSync(
         'zsh',
         [
@@ -481,68 +443,38 @@ esac
           '-c',
           `source ${shellQuote(laneSh)}
 printf '%s\\n' "$PATH" > "$PATH_BEFORE"
-jq_before="$(command -v jq)"
 lane_status
 printf '%s\\n' "$PATH" > "$PATH_AFTER"
-printf '%s\\n%s\\n' "$jq_before" "$(command -v jq)" > "$JQ_PATH"
-typeset -p workspace_id label path > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
+typeset -p worktree branch pr_info > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
         ],
-        { cwd: new URL('../..', import.meta.url).pathname, encoding: 'utf8', env },
+        {
+          cwd: repoRoot,
+          encoding: 'utf8',
+          env: {
+            ...process.env,
+            PATH_BEFORE: pathBefore,
+            PATH_AFTER: pathAfter,
+            VARIABLE_DECLARATIONS: variableDeclarations,
+          },
+        },
       );
-      const bash = spawnSync('bash', [laneEntrypoint, 'status'], {
-        cwd: new URL('../..', import.meta.url).pathname,
-        encoding: 'utf8',
-        env,
-      });
 
-      const expectedOutput =
-        `AGENT\tSTATUS\tWORKSPACE LABEL\tBRANCH\n` +
-        `No lanes open.\n` +
-        `STALE WORKSPACE\tworkspace-missing\tMissing\tcheckout path does not exist: ${missingPath}\n`;
       expect(zsh.status).toBe(0);
-      expect(bash.status).toBe(0);
-      expect(zsh.stdout).toBe(expectedOutput);
-      expect(bash.stdout).toBe(expectedOutput);
+      expect(zsh.stdout).toContain('WORKTREE\tBRANCH\tPR\tCI');
       expect(readFileSync(pathAfter, 'utf8')).toBe(readFileSync(pathBefore, 'utf8'));
-      const jqPaths = readFileSync(jqPath, 'utf8').trimEnd().split('\n');
-      expect(jqPaths).toHaveLength(2);
-      expect(jqPaths[0]).not.toBe('');
-      expect(jqPaths[1]).toBe(jqPaths[0]);
       const declarations = readFileSync(variableDeclarations, 'utf8');
-      expect(declarations).toContain('no such variable: workspace_id');
-      expect(declarations).toContain('no such variable: label');
-      expect(declarations).toContain('typeset -aT PATH path=');
+      expect(declarations).toContain('no such variable: worktree');
+      expect(declarations).toContain('no such variable: branch');
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
   });
 
-  it('keeps external commands available in zsh while resolving a workspace id', () => {
-    withFixture('lane-zsh-', (fixture) => {
-      const { root } = createLaneRepo(fixture);
-      const bin = join(fixture, 'bin');
-      const herdrLog = join(fixture, 'herdr.log');
-      mkdirSync(join(root, '.worktrees', '636-fixture'), { recursive: true });
-      writeStub(bin, 'jq', '#!/bin/sh\nprintf "workspace-636\\n"\n');
-      writeStub(bin, 'herdr', `#!/bin/sh\nprintf '%s\\n' "$*" >> "$HERDR_LOG"\n`);
-      const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} start 636`], {
-        cwd: root,
-        encoding: 'utf8',
-        env: { ...process.env, PATH: `${bin}:/usr/bin:/bin`, HERDR_LOG: herdrLog },
-      });
-
-      expect(result.status, result.stderr).toBe(0);
-      expect(readFileSync(herdrLog, 'utf8')).toContain('workspace focus workspace-636');
-    });
-  });
-
-  it('removes ignored build output and closes a failed Herdr worktree removal', () => {
+  it('removes ignored build output via git worktree --force on lane done', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-cleanup-'));
     const root = join(fixture, 'repo');
     const worktree = join(root, '.worktrees', '636-fixture');
     const bin = join(fixture, 'bin');
-    const herdrState = join(fixture, 'herdr-closed');
-    const herdrLog = join(fixture, 'herdr.log');
     try {
       mkdirSync(root);
       mkdirSync(bin);
@@ -557,59 +489,24 @@ typeset -p workspace_id label path > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
       execFileSync(
         'git',
         ['-C', root, 'worktree', 'add', '-b', 'fix/636-fixture', worktree, 'HEAD'],
-        {
-          stdio: 'ignore',
-        },
+        { stdio: 'ignore' },
       );
+      // Add ignored build output — git worktree remove --force should clean this up
       mkdirSync(join(worktree, '.next'));
       mkdirSync(join(worktree, 'node_modules'));
       writeFileSync(join(worktree, '.next', 'build-output'), 'ignored\n');
       writeFileSync(join(worktree, 'node_modules', 'dependency'), 'ignored\n');
-      writeFileSync(
-        join(bin, 'herdr'),
-        `#!/bin/sh
-printf '%s\\n' "$*" >> "$HERDR_LOG"
-case "$1 $2" in
-  "workspace list")
-    if [ -f "$HERDR_STATE" ]; then
-      printf '{"result":{"workspaces":[]}}\\n'
-    else
-      printf '{"result":{"workspaces":[{"workspace_id":"workspace-636","worktree":{"checkout_path":"%s"}}]}}\\n' "$LANE_WORKTREE"
-    fi
-    ;;
-  "worktree remove") exit 1 ;;
-  "workspace close") : > "$HERDR_STATE" ;;
-esac
-`,
-        { mode: 0o755 },
-      );
-      writeFileSync(join(bin, 'jq'), '#!/bin/sh\nprintf "workspace-636\\n"\n', { mode: 0o755 });
+      writeStub(bin, 'gh', `#!/bin/sh\nprintf '%s\\n' 'MERGED'\n`);
+      writeStub(bin, 'lsof', `#!/bin/sh\nexit 1\n`);
 
-      const env = {
-        ...process.env,
-        PATH: `${bin}:${process.env.PATH}`,
-        HERDR_LOG: herdrLog,
-        HERDR_STATE: herdrState,
-        LANE_WORKTREE: worktree,
-      };
       const done = spawnSync('bash', [laneEntrypoint, 'done', '636', '--force'], {
         cwd: root,
         encoding: 'utf8',
-        env,
-      });
-      const output = `${done.stdout}${done.stderr}`;
-      const remaining = execFileSync(join(bin, 'herdr'), ['workspace', 'list'], {
-        encoding: 'utf8',
-        env,
+        env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
       });
 
-      expect(done.status, output).toBe(0);
-      expect(readFileSync(herdrLog, 'utf8')).toContain('workspace close workspace-636');
-      expect(output).toMatch(
-        /Herdr could not remove .*; closing its workspace and completing local cleanup/,
-      );
-      expect(output).toContain('lane #636 removed');
-      expect(JSON.parse(remaining).result.workspaces).toEqual([]);
+      expect(done.status, `${done.stdout}${done.stderr}`).toBe(0);
+      expect(done.stdout).toContain('lane #636 removed');
       expect(existsSync(worktree)).toBe(false);
       expect(
         execFileSync('git', ['-C', root, 'branch', '--list', 'fix/636-fixture'], {
@@ -621,31 +518,28 @@ esac
     }
   });
 
-  it('uses Herdr instead of tmux for agent work', () => {
+  it('uses Rex instead of tmux for agent work', () => {
     for (const file of [laneGuide, foremanGuide]) {
       expect(file).not.toContain('tmux');
     }
     withFixture('lane-no-tmux-', (fixture) => {
-      const { result, herdrCalls, tmuxCalls } = startCopilotLane(fixture);
+      const { result, rexCalls, tmuxCalls } = startCopilotLane(fixture);
 
       expect(result.status, result.stderr).toBe(0);
-      expect(herdrCalls().some((call) => call.startsWith('agent start lane-640'))).toBe(true);
+      expect(rexCalls().some((call) => call.startsWith('split'))).toBe(true);
       expect(tmuxCalls()).toEqual([]);
     });
   });
 
   it('bases a lane branch on origin/main rather than an unpushed local commit', () => {
     withFixture('lane-base-', (fixture) => {
-      const { root, result, herdrCalls } = startCopilotLane(fixture, '', (repo) => {
+      const { root, result } = startCopilotLane(fixture, '', (repo) => {
         git(repo, 'checkout', '-q', '-b', 'local-work');
         commitFile(repo, 'local-only.txt', 'unpushed\n', 'local-only commit');
       });
       const dir = join(root, '.worktrees/640-placeholder-test');
 
       expect(result.status, result.stderr).toBe(0);
-      expect(herdrCalls().find((call) => call.startsWith('worktree create'))).toContain(
-        '--base origin/main',
-      );
       expect(existsSync(join(dir, 'local-only.txt'))).toBe(false);
       expect(git(dir, 'rev-parse', 'HEAD')).toBe(git(root, 'rev-parse', 'origin/main'));
     });
@@ -670,7 +564,7 @@ esac
 
   it('refuses to start when local main has unpushed commits and names them', () => {
     withFixture('lane-main-ahead-', (fixture) => {
-      const { root, result, ghCalls, herdrCalls } = startCopilotLane(fixture, '', (repo) =>
+      const { root, result, ghCalls, rexCalls } = startCopilotLane(fixture, '', (repo) =>
         commitFile(repo, 'local-only.txt', 'unpushed\n', 'unpushed main marker'),
       );
 
@@ -678,7 +572,7 @@ esac
       expect(result.stderr).toContain('local main is ahead of origin/main');
       expect(result.stderr).toContain('unpushed main marker');
       expect(ghCalls().filter((call) => call.startsWith('issue develop'))).toEqual([]);
-      expect(herdrCalls()).toEqual([]);
+      expect(rexCalls()).toEqual([]);
       expect(existsSync(join(root, '.worktrees'))).toBe(false);
     });
   });
@@ -729,20 +623,16 @@ esac
     expect(foremanGuide).not.toMatch(/push(?:ing)? (?:the )?LEARNINGS commit/i);
   });
 
-  it('creates the linked branch and Herdr worktree with its root pane', () => {
+  it('creates the linked branch and worktree and opens a Rex pane', () => {
     withFixture('lane-worktree-', (fixture) => {
-      const { root, result, ghCalls, herdrCalls } = startCopilotLane(fixture);
+      const { root, result, ghCalls, rexCalls } = startCopilotLane(fixture);
       const dir = join(root, '.worktrees/640-placeholder-test');
 
       expect(result.status, result.stderr).toBe(0);
       expect(ghCalls()).toContain('issue develop 640 --name fix/640-placeholder-test --base main');
-      expect(herdrCalls()).toContain(
-        `worktree create --cwd ${root} --branch fix/640-placeholder-test --base origin/main --path ${dir} --label #640 placeholder-test --focus`,
-      );
+      expect(existsSync(dir)).toBe(true);
       expect(git(dir, 'branch', '--show-current')).toBe('fix/640-placeholder-test');
-      expect(herdrCalls().find((call) => call.startsWith('agent start'))).toContain(
-        '--pane pane-lane',
-      );
+      expect(rexCalls().some((call) => call.startsWith('split'))).toBe(true);
     });
   });
 
@@ -757,29 +647,23 @@ esac
     });
   });
 
-  it('starts the selected agent in the returned pane and submits the lane prompt', () => {
+  it('starts the selected agent in a Rex pane and sends the lane prompt', () => {
     withFixture('lane-agent-start-', (fixture) => {
-      const { result, herdrCalls } = startCopilotLane(fixture);
-      const calls = herdrCalls();
-      const start = calls.findIndex((call) =>
-        call.startsWith('agent start lane-640 --kind copilot --pane pane-lane -- '),
-      );
-      const prompt = calls.findIndex((call) =>
-        call.startsWith('agent prompt lane-640 You are a lane.'),
-      );
+      const { result, rexCalls, rexPrompt } = startCopilotLane(fixture);
 
       expect(result.status, result.stderr).toBe(0);
-      expect(start).toBeGreaterThanOrEqual(0);
-      expect(prompt).toBeGreaterThan(start);
-      expect(calls[prompt]).toContain('work on GitHub issue #640');
+      expect(rexCalls().some((call) => call.startsWith('split'))).toBe(true);
+      const prompt = existsSync(rexPrompt) ? readFileSync(rexPrompt, 'utf8') : '';
+      expect(prompt).toContain('You are a lane.');
+      expect(prompt).toContain('work on GitHub issue #640');
     });
   });
 
   it('preserves the scoped Copilot and Devin lane permissions', () => {
     withFixture('lane-permissions-', (fixture) => {
-      const { result, herdrLog } = startCopilotLane(fixture);
+      const { result, rexArgs } = startCopilotLane(fixture, '', undefined, { agent: 'copilot' });
       expect(result.status, result.stderr).toBe(0);
-      const args = argsAfterAgentStart(herdrLog);
+      const args = argsAfterAgentStart(rexArgs);
       for (const tool of ['write', 'shell(npm:*)', 'shell(npx:*)', 'shell(git:*)']) {
         expect(args, tool).toContain(`--allow-tool=${tool}`);
       }
@@ -794,15 +678,15 @@ esac
       expect(args).not.toContain('--sandbox');
     });
     withFixture('lane-devin-permissions-', (fixture) => {
-      const { result, herdrLog } = startCopilotLane(fixture, '', undefined, { agent: 'devin' });
+      const { result, rexArgs } = startCopilotLane(fixture, '', undefined, { agent: 'devin' });
       expect(result.status, result.stderr).toBe(0);
-      const args = argsAfterAgentStart(herdrLog);
+      const args = argsAfterAgentStart(rexArgs);
       expect(args.join(' ')).toContain('--permission-mode accept-edits --sandbox');
       expect(args.filter((arg) => arg.startsWith('--allowed-tools'))).toEqual([]);
     });
   });
 
-  it('does not create or copy .env.local into the new worktree', () => {
+  it('copies .env.local from the main checkout into the new worktree', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-env-allowlist-'));
     try {
       const { root, result } = startCopilotLane(
@@ -810,7 +694,7 @@ esac
         'SUPABASE_SERVICE_ROLE_KEY=owner-secret\nRESEND_API_KEY=owner-secret\n',
       );
       expect(result.status, result.stderr).toBe(0);
-      expect(existsSync(join(root, '.worktrees/640-placeholder-test/.env.local'))).toBe(false);
+      expect(existsSync(join(root, '.worktrees/640-placeholder-test/.env.local'))).toBe(true);
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
@@ -819,10 +703,10 @@ esac
   it('starts Copilot lane agents with pass-cli shell access denied', () => {
     const fixture = mkdtempSync(join(tmpdir(), 'lane-pass-cli-denied-'));
     try {
-      const { herdrLog, result } = startCopilotLane(fixture);
+      const { rexArgs, result } = startCopilotLane(fixture, '', undefined, { agent: 'copilot' });
       expect(result.status, result.stderr).toBe(0);
-      const lines = readFileSync(herdrLog, 'utf8').split('\n');
-      expect(lines).toContain('--deny-tool=shell(pass-cli:*)');
+      const args = argsAfterAgentStart(rexArgs);
+      expect(args).toContain('--deny-tool=shell(pass-cli:*)');
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
@@ -832,9 +716,9 @@ esac
     const startedArgs = () => {
       const fixture = mkdtempSync(join(tmpdir(), 'lane-readonly-allow-'));
       try {
-        const { herdrLog, result } = startCopilotLane(fixture);
+        const { rexArgs, result } = startCopilotLane(fixture, '', undefined, { agent: 'copilot' });
         expect(result.status, result.stderr).toBe(0);
-        return readFileSync(herdrLog, 'utf8').split('\n').filter(Boolean);
+        return argsAfterAgentStart(rexArgs);
       } finally {
         rmSync(fixture, { recursive: true, force: true });
       }
@@ -888,14 +772,14 @@ esac
 
   it('grants Devin lanes only the shared git directory and approved gh commands', () => {
     withFixture('lane-devin-sandbox-', (fixture) => {
-      const { root, herdrLog, result } = startCopilotLane(fixture, '', undefined, {
+      const { root, rexArgs, result } = startCopilotLane(fixture, '', undefined, {
         agent: 'devin',
         issue: '659',
         slug: 'devin-sandbox',
       });
 
       expect(result.status, result.stderr).toBe(0);
-      const args = argsAfterAgentStart(herdrLog);
+      const args = argsAfterAgentStart(rexArgs);
       expect(args).toContain('--sandbox');
       const configIndex = args.indexOf('--config');
       expect(configIndex).toBeGreaterThanOrEqual(0);
@@ -929,9 +813,11 @@ esac
 
       expect(result.status, result.stderr).toBe(0);
       expect(result.stdout).toContain(`lane #640: ${dir} on fix/640-placeholder-test, port 3640`);
-      expect(readFileSync(join(dir, '.env.lane'), 'utf8')).toBe(
-        'PORT=3640\nPLAYWRIGHT_BASE_URL=http://127.0.0.1:3640\n',
-      );
+      const envLane = readFileSync(join(dir, '.env.lane'), 'utf8');
+      expect(envLane).toContain('PORT=3640\n');
+      expect(envLane).toContain('PLAYWRIGHT_BASE_URL=http://127.0.0.1:3640\n');
+      expect(envLane).toContain(`REX_SESSION_ID=${TEST_REX_SESSION}\n`);
+      expect(envLane).toContain(`FOREMAN_BLOCK=${TEST_REX_BLOCK}\n`);
       expect(readFileSync(join(dir, 'node_modules/dep/index.js'), 'utf8')).toBe('dependency\n');
       for (const file of ['.env', '.env.production', '.env.development.local']) {
         expect(existsSync(join(dir, file)), file).toBe(false);
@@ -939,51 +825,60 @@ esac
     });
   });
 
-  it('focuses an existing Herdr lane and refuses nested worktrees', () => {
+  it('reopens an existing lane via Rex and refuses nested worktrees', () => {
     withFixture('lane-focus-', (fixture) => {
       const { root } = createLaneRepo(fixture);
       const bin = join(fixture, 'bin');
-      const log = join(fixture, 'herdr.log');
+      const rexLog = join(fixture, 'rex.log');
       const dir = join(root, '.worktrees/641-existing');
       git(root, 'worktree', 'add', '-q', '-b', 'fix/641-existing', dir, 'HEAD');
+      // Write a minimal .env.lane so the existing-lane path doesn't fail
+      writeFileSync(
+        join(dir, '.env.lane'),
+        `PORT=3641\nPLAYWRIGHT_BASE_URL=http://127.0.0.1:3641\nISSUE=641\nREX_SESSION_ID=${TEST_REX_SESSION}\nFOREMAN_BLOCK=${TEST_REX_BLOCK}\n`,
+      );
+      writeStub(bin, 'gh', ghStub);
+      writeStub(bin, 'herdr', '#!/bin/sh\n');
       writeStub(
         bin,
-        'herdr',
+        'rex',
         `#!/bin/sh
-printf '%s\\n' "$*" >> "$HERDR_LOG"
-case "$1 $2" in
-  "workspace list")
-    printf '{"result":{"workspaces":[{"workspace_id":"workspace-641","worktree":{"checkout_path":"%s"}}]}}\\n' "$LANE_DIR"
-    ;;
+{ printf '%s' "$*" | tr '\\n' ' '; printf '\\n'; } >> "$REX_LOG"
+case "$1" in
+  split) printf '%s\\n' '{"block_ids":["block:test-123"]}' ;;
+  capture) printf '❯\\n' ;;
+  send) cat >/dev/null ;;
 esac
 `,
       );
-      const run = (cwd: string, laneDir: string, ...args: string[]) =>
+      const run = (cwd: string, ...args: string[]) =>
         spawnSync('bash', [laneEntrypoint, 'start', ...args], {
           cwd,
           encoding: 'utf8',
           env: {
             ...process.env,
+            REX_SESSION: TEST_REX_SESSION,
+            REX_BLOCK: TEST_REX_BLOCK,
             PATH: `${bin}:${process.env.PATH}`,
-            HERDR_LOG: log,
-            LANE_DIR: laneDir,
+            REX_LOG: rexLog,
+            REPO_ROOT: root,
           },
         });
-      const calls = () => readFileSync(log, 'utf8').split('\n').filter(Boolean);
 
-      const focused = run(root, dir, '641');
+      const focused = run(root, '641');
       expect(focused.status, focused.stderr).toBe(0);
-      expect(calls()).toEqual(['workspace list', 'workspace focus workspace-641']);
+      const rexCalls = existsSync(rexLog)
+        ? readFileSync(rexLog, 'utf8').split('\n').filter(Boolean)
+        : [];
+      expect(rexCalls.some((c) => c.startsWith('split'))).toBe(true);
 
-      const unknown = run(root, join(fixture, 'elsewhere'), '641');
-      expect(unknown.status).toBe(1);
-      expect(unknown.stderr).toContain('no Herdr workspace found');
+      const noSlug = run(root, '999');
+      expect(noSlug.status).toBe(1);
+      expect(noSlug.stderr).toContain('new lane needs a slug');
 
-      const callsBefore = calls();
-      const nested = run(dir, dir, '642', 'nested');
+      const nested = run(dir, '642', 'nested');
       expect(nested.status).toBe(1);
       expect(nested.stderr).toContain('run lane from the main checkout, not a worktree');
-      expect(calls()).toEqual(callsBefore);
     });
   });
 
@@ -1037,62 +932,25 @@ esac
       });
     });
 
-    it('removes the Herdr worktree before deleting the checkout and branch', () => {
+    it('removes the worktree checkout and branch on clean done', () => {
       withFixture('lane-done-clean-', (fixture) => {
-        const { root, dir, result, calls } = runLaneDone(fixture, () => {});
+        const { root, dir, result } = runLaneDone(fixture, () => {});
 
         expect(result.status, result.stderr).toBe(0);
         expect(result.stdout).toContain('lane #636 removed');
-        const removeIndex = calls.indexOf('worktree remove --workspace workspace-636 --force');
-        expect(removeIndex).toBeGreaterThanOrEqual(0);
-        expect(calls[removeIndex + 1]).toBe('checkout still present');
-        expect(calls.filter((call) => call.startsWith('workspace close'))).toEqual([]);
         expect(existsSync(dir)).toBe(false);
         expect(git(root, 'branch', '--list', 'fix/636-fixture')).toBe('');
       });
     });
   });
 
-  it('reports lane agents and orphaned Herdr workspaces', () => {
+  it('reports git-based lane worktrees with PR and CI columns', () => {
     withFixture('lane-status-report-', (fixture) => {
       const { root } = createLaneRepo(fixture);
       const bin = join(fixture, 'bin');
       const existing = join(root, '.worktrees/641-existing');
-      const missing = join(fixture, 'missing-checkout');
       git(root, 'worktree', 'add', '-q', '-b', 'fix/641-existing', existing, 'HEAD');
-      const agents = {
-        result: {
-          agents: [
-            {
-              name: 'lane-640',
-              agent_status: 'working',
-              workspace_id: 'w640',
-              branch: 'fix/640-a',
-            },
-            { name: 'lane-641', agent_status: 'idle', workspace_id: 'w641' },
-            { name: 'foreman', agent_status: 'idle', workspace_id: 'w0' },
-          ],
-        },
-      };
-      const workspaces = {
-        result: {
-          workspaces: [
-            { workspace_id: 'w640', label: '#640 a', worktree: { checkout_path: root } },
-            { workspace_id: 'w641', label: '#641 existing', worktree: { checkout_path: existing } },
-            { workspace_id: 'w999', label: 'Gone', worktree: { checkout_path: missing } },
-          ],
-        },
-      };
-      writeStub(
-        bin,
-        'herdr',
-        `#!/bin/sh
-case "$1 $2" in
-  "agent list") printf '%s\\n' ${shellQuote(JSON.stringify(agents))} ;;
-  "workspace list") printf '%s\\n' ${shellQuote(JSON.stringify(workspaces))} ;;
-esac
-`,
-      );
+      writeStub(bin, 'gh', ghStub);
       const result = spawnSync('bash', [laneEntrypoint, 'status'], {
         cwd: root,
         encoding: 'utf8',
@@ -1100,12 +958,9 @@ esac
       });
 
       expect(result.status, result.stderr).toBe(0);
-      expect(result.stdout).toBe(
-        'AGENT\tSTATUS\tWORKSPACE LABEL\tBRANCH\n' +
-          'lane-640\tworking\t#640 a\tfix/640-a\n' +
-          'lane-641\tidle\t#641 existing\tfix/641-existing\n' +
-          `STALE WORKSPACE\tw999\tGone\tcheckout path does not exist: ${missing}\n`,
-      );
+      const lines = result.stdout.split('\n').filter(Boolean);
+      expect(lines[0]).toBe('WORKTREE\tBRANCH\tPR\tCI');
+      expect(lines.some((l) => l.includes('fix/641-existing'))).toBe(true);
     });
   });
 
@@ -1645,9 +1500,9 @@ describe('lane and foreman agent options', { timeout: spawnTestTimeoutMs }, () =
   const startArgs = (options: StartOptions) => {
     let args: string[] = [];
     withFixture('lane-agent-options-', (fixture) => {
-      const { result, herdrLog } = startCopilotLane(fixture, '', undefined, options);
+      const { result, rexArgs } = startCopilotLane(fixture, '', undefined, options);
       expect(result.status, result.stderr).toBe(0);
-      args = argsAfterAgentStart(herdrLog);
+      args = argsAfterAgentStart(rexArgs);
     });
     return args;
   };

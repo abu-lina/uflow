@@ -12,6 +12,7 @@ const mockSignInWithPassword = vi.fn();
 const mockListUsers = vi.fn();
 const mockCreateUser = vi.fn();
 const mockUpdateUserById = vi.fn();
+const mockMaybeSingle = vi.fn();
 const mockInsert = vi.fn();
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -29,7 +30,10 @@ vi.mock('@/lib/supabase/admin', () => ({
         updateUserById: (...args: unknown[]) => mockUpdateUserById(...args),
       },
     },
-    from: () => ({ insert: (...args: unknown[]) => mockInsert(...args) }),
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle: () => mockMaybeSingle() }) }),
+      insert: (...args: unknown[]) => mockInsert(...args),
+    }),
   }),
 }));
 
@@ -93,6 +97,7 @@ describe('auth login and signup log no secret or PII material', () => {
     });
     mockUpdateUserById.mockResolvedValue({ error: null });
     mockInsert.mockResolvedValue({ error: null });
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
   });
 
   afterEach(() => {
