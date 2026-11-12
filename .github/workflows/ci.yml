@@ -1,5 +1,8 @@
 name: CI Pipeline
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches: [main, develop]
@@ -41,7 +44,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -76,7 +79,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -114,7 +117,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -166,7 +169,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -188,22 +191,28 @@ jobs:
 
     steps:
       - name: Check all jobs
+        env:
+          RESULT_IOC: ${{ needs.supply-chain-ioc-scan.result }}
+          RESULT_LINT: ${{ needs.lint-and-type-check.result }}
+          RESULT_TEST: ${{ needs.test.result }}
+          RESULT_BUILD: ${{ needs.build.result }}
+          RESULT_SECURITY: ${{ needs.security.result }}
         run: |
           echo "## 🚀 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Supply Chain IOC Scan | ${{ needs.supply-chain-ioc-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint & Type Check | ${{ needs.lint-and-type-check.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Supply Chain IOC Scan | $RESULT_IOC |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & Type Check | $RESULT_LINT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | $RESULT_TEST |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | $RESULT_BUILD |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | $RESULT_SECURITY |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ "${{ needs.supply-chain-ioc-scan.result }}" == "success" ] && \
-             [ "${{ needs.lint-and-type-check.result }}" == "success" ] && \
-             [ "${{ needs.test.result }}" == "success" ] && \
-             [ "${{ needs.build.result }}" == "success" ]; then
+          if [ "$RESULT_IOC" == "success" ] && \
+             [ "$RESULT_LINT" == "success" ] && \
+             [ "$RESULT_TEST" == "success" ] && \
+             [ "$RESULT_BUILD" == "success" ]; then
             echo "✅ **All CI checks passed!**" >> $GITHUB_STEP_SUMMARY
             exit 0
           else

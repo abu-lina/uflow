@@ -1,5 +1,8 @@
 name: Snyk PR Verification
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches: [main, develop]
@@ -16,6 +19,9 @@ jobs:
     # Only run on Snyk PRs (branch pattern: snyk-fix-*)
     if: startsWith(github.head_ref, 'snyk-fix-')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     timeout-minutes: 15
 
     steps:
@@ -25,18 +31,20 @@ jobs:
           fetch-depth: 0 # Full history for diff comparison
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Verify changed files
         id: check-files
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           echo "## 📋 Changed Files Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          CHANGED_FILES=$(git diff --name-only origin/"$BASE_REF"...HEAD)
           echo "Changed files:" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "$CHANGED_FILES" >> $GITHUB_STEP_SUMMARY
@@ -99,6 +107,9 @@ jobs:
 
       - name: Check environment variables
         id: check-env
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: |
           echo "## 🔐 Environment Variables Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -106,14 +117,14 @@ jobs:
           HAS_URL=true
           HAS_KEY=true
 
-          if [ -z "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" ]; then
+          if [ -z "$SUPABASE_URL" ]; then
             echo "⚠️ NEXT_PUBLIC_SUPABASE_URL secret is not set" >> $GITHUB_STEP_SUMMARY
             HAS_URL=false
           else
             echo "✅ NEXT_PUBLIC_SUPABASE_URL is set" >> $GITHUB_STEP_SUMMARY
           fi
 
-          if [ -z "${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" ]; then
+          if [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "⚠️ NEXT_PUBLIC_SUPABASE_ANON_KEY secret is not set" >> $GITHUB_STEP_SUMMARY
             HAS_KEY=false
           else
@@ -135,12 +146,13 @@ jobs:
           # Placeholder key format: sb_publishable_ prefix (new format, 30+ chars)
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://ci-build-test.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_ci_build_placeholder_not_a_real_key' }}
+          ENV_OK: ${{ steps.check-env.outputs.env_ok }}
         run: |
           echo "## 🔨 Build Verification" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Check if we're using placeholder values
-          if [ "${{ steps.check-env.outputs.env_ok }}" != "true" ]; then
+          if [ "$ENV_OK" != "true" ]; then
             echo "ℹ️ Using placeholder environment variables for build verification" >> $GITHUB_STEP_SUMMARY
             echo "ℹ️ This is acceptable for dependency upgrade PRs" >> $GITHUB_STEP_SUMMARY
           fi
@@ -223,11 +235,13 @@ jobs:
           fi
 
       - name: Generate dependency diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           echo "## 📊 Dependency Changes" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          DIFF_OUTPUT=$(git diff origin/${{ github.base_ref }}...HEAD -- package.json || echo "")
+          DIFF_OUTPUT=$(git diff origin/"$BASE_REF"...HEAD -- package.json || echo "")
 
           if [ -n "$DIFF_OUTPUT" ]; then
             echo "Package changes:" >> $GITHUB_STEP_SUMMARY
@@ -240,6 +254,8 @@ jobs:
 
       - name: Generate expert review checklist
         if: always()
+        env:
+          REPO: ${{ github.repository }}
         run: |
           echo "## ✅ Expert Review Checklist" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -252,19 +268,19 @@ jobs:
           echo "- [ ] **Frontend Expert**: Component compatibility, TypeScript, bundle size" >> $GITHUB_STEP_SUMMARY
           echo "- [ ] **UX/UI Expert**: Design system, accessibility, responsive design" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📖 Use the [Snyk PR Review Guide](https://github.com/${{ github.repository }}/blob/main/docs/guides/SNYK_PR_REVIEW.md) for detailed checklists." >> $GITHUB_STEP_SUMMARY
+          echo "📖 Use the [Snyk PR Review Guide](https://github.com/$REPO/blob/main/docs/guides/SNYK_PR_REVIEW.md) for detailed checklists." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📝 Use the [Review Template](https://github.com/${{ github.repository }}/blob/main/docs/templates/SNYK_PR_REVIEW_TEMPLATE.md) for structured reviews." >> $GITHUB_STEP_SUMMARY
+          echo "📝 Use the [Review Template](https://github.com/$REPO/blob/main/docs/templates/SNYK_PR_REVIEW_TEMPLATE.md) for structured reviews." >> $GITHUB_STEP_SUMMARY
 
       - name: Post PR comment
         if: always()
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-            const fs = require('fs');
-            const path = require('path');
+            const {repo, serverUrl, workflow, runId, runNumber} = context;
+            const repoSlug = `${repo.owner}/${repo.repo}`;
+            const url = `${serverUrl}/${repoSlug}`;
 
-            // Read step summary if available
             let summary = '## 🔍 Snyk PR Verification Results\n\n';
             summary += 'Automated verification completed. Please review the results below.\n\n';
             summary += '### ✅ Automated Checks\n\n';
@@ -275,12 +291,12 @@ jobs:
             summary += '- ✅ Type check\n';
             summary += '- ⚠️ Tests and lint (check logs)\n\n';
             summary += '### 📋 Next Steps\n\n';
-            summary += '1. Review the [verification summary](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n';
-            summary += '2. Complete expert review checklists in the [Snyk PR Review Guide](https://github.com/${{ github.repository }}/blob/main/docs/guides/SNYK_PR_REVIEW.md)\n';
-            summary += '3. Use the [Review Template](https://github.com/${{ github.repository }}/blob/main/docs/templates/SNYK_PR_REVIEW_TEMPLATE.md) for structured reviews\n';
+            summary += `1. Review the [verification summary](${url}/actions/runs/${runId})\n`;
+            summary += `2. Complete expert review checklists in the [Snyk PR Review Guide](https://github.com/${repoSlug}/blob/main/docs/guides/SNYK_PR_REVIEW.md)\n`;
+            summary += `3. Use the [Review Template](https://github.com/${repoSlug}/blob/main/docs/templates/SNYK_PR_REVIEW_TEMPLATE.md) for structured reviews\n`;
             summary += '4. Approve PR if all checks pass\n\n';
             summary += '---\n\n';
-            summary += '**Workflow Run**: [${{ github.workflow }} #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})';
+            summary += `**Workflow Run**: [${workflow} #${runNumber}](${url}/actions/runs/${runId})`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,

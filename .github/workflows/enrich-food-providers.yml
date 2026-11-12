@@ -5,6 +5,9 @@
 
 name: Food Provider Enrichment
 
+permissions:
+  contents: read
+
 on:
   schedule:
     - cron: '0 3 * * 0' # Weekly Sunday 3am UTC
@@ -44,7 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -53,9 +56,10 @@ jobs:
 
       - name: Resolve sources (supports schedule + workflow_dispatch)
         id: resolve-sources
+        env:
+          INPUT_SOURCES: ${{ github.event.inputs.sources }}
         run: |
-          SOURCES="${{ github.event.inputs.sources }}"
-          echo "resolved_sources=${SOURCES:-wolt,lieferando,ubereats,joinhalal}" >> "$GITHUB_OUTPUT"
+          echo "resolved_sources=${INPUT_SOURCES:-wolt,lieferando,ubereats,joinhalal}" >> "$GITHUB_OUTPUT"
 
       - name: Install Playwright Chromium
         if: contains(steps.resolve-sources.outputs.resolved_sources, 'ubereats') || contains(steps.resolve-sources.outputs.resolved_sources, 'lieferando')
@@ -65,12 +69,16 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESOLVED_SOURCES: ${{ steps.resolve-sources.outputs.resolved_sources }}
+          INPUT_MODE: ${{ github.event.inputs.mode || 'auto-apply' }}
+          INPUT_LIMIT: ${{ github.event.inputs.limit }}
+          INPUT_PROVIDER_ID: ${{ github.event.inputs.provider-id }}
         run: |
           set +e
-          SOURCES="${{ steps.resolve-sources.outputs.resolved_sources }}"
-          MODE="${{ github.event.inputs.mode || 'auto-apply' }}"
-          LIMIT="${{ github.event.inputs.limit }}"
-          if [ -n "${{ github.event.inputs.provider-id }}" ]; then
+          SOURCES="$RESOLVED_SOURCES"
+          MODE="$INPUT_MODE"
+          LIMIT="$INPUT_LIMIT"
+          if [ -n "$INPUT_PROVIDER_ID" ]; then
             SOURCES="none"
           fi
           mkdir -p /tmp/enrichment-logs
@@ -109,14 +117,15 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          INPUT_PROVIDER_ID: ${{ github.event.inputs.provider-id }}
         run: |
           echo ""
           echo "═══════════════════════════════════════════════"
           echo "  ▶️  Running delivery menu enrichment"
           echo "═══════════════════════════════════════════════"
           DM_ARGS=""
-          if [ -n "${{ github.event.inputs.provider-id }}" ]; then
-            DM_ARGS="--provider-id ${{ github.event.inputs.provider-id }}"
+          if [ -n "$INPUT_PROVIDER_ID" ]; then
+            DM_ARGS="--provider-id $INPUT_PROVIDER_ID"
           fi
           npx tsx scripts/enrich-delivery-menus.ts $DM_ARGS > "/tmp/enrichment-logs/delivery-menus.log" 2>&1
           RC=$?
@@ -130,7 +139,7 @@ jobs:
 
       - name: Upload run logs
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: enrichment-logs-${{ github.run_id }}
           path: /tmp/enrichment-logs/
