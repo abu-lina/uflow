@@ -320,7 +320,7 @@ rm -f "$tmp_probe"
 probe "$print_cmd git rev-parse --short HEAD" succeeds_with "$(git -C "$repo" rev-parse --short HEAD)"
 probe "$print_cmd gh issue list --limit 1" succeeds_with stub-issue-marker
 probe "$print_cmd herdr agent list" succeeds_with lane-stub-marker
-probe "$print_cmd scripts/lane status" succeeds_with lane-stub-marker
+probe "$print_cmd cd $repo && scripts/lane status" succeeds_with "WORKTREE"
 probe "$print_cmd scripts/review-bundle 123" bundle_ran_unprompted
 probe "Use the reviewer subagent profile. The subagent must read $bundle_path and print its first line, then try to create reviewer-exec-probe.txt with exec (touch), reviewer-write-probe.txt with the write tool and reviewer-edit-probe.txt with the edit tool. Report what each tool did." reviewer_read_only
 # Read denies (#716, #718): `Read(.env*)` forms are not enforced inside the

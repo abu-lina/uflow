@@ -38,7 +38,8 @@ const laneRepoTemplate = () => {
   git(root, 'config', 'user.email', 'lane-test@example.com');
   git(root, 'config', 'user.name', 'Lane test');
   writeFileSync(join(root, 'README.md'), 'fixture\n');
-  git(root, 'add', 'README.md');
+  writeFileSync(join(root, '.gitignore'), 'node_modules\n.env*\n');
+  git(root, 'add', 'README.md', '.gitignore');
   git(root, 'commit', '-m', 'fixture');
   git(root, 'remote', 'add', 'origin', remote);
   execFileSync('git', ['-C', root, 'push', '-u', 'origin', 'main'], { stdio: 'ignore' });
@@ -90,6 +91,17 @@ export const herdrWorktreeCreateCase = `  "worktree create")
     printf '%s\\n' '{"result":{"root_pane":{"pane_id":"pane-lane"}}}'
     ;;
 `;
+
+/** Sanitized copy of process.env — prevents real Rex panes when vitest runs inside a Rex terminal. */
+export const testEnv = (overrides: Record<string, string | undefined> = {}) =>
+  ({
+    ...process.env,
+    GIT_CONFIG_NOSYSTEM: '1',
+    GIT_CONFIG_GLOBAL: '/dev/null',
+    REX_SESSION: '',
+    REX_BLOCK: '',
+    ...overrides,
+  }) as NodeJS.ProcessEnv;
 
 export const writeStub = (bin: string, name: string, body: string) => {
   mkdirSync(bin, { recursive: true });

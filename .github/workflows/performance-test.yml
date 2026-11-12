@@ -4,6 +4,9 @@
 
 name: Performance Tests
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -48,7 +51,7 @@ jobs:
       - name: Install k6
         run: |
           sudo gpg -k
-          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69 C780D0BDB1A69C86
           echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
           sudo apt-get update
           sudo apt-get install k6
@@ -59,17 +62,19 @@ jobs:
       - name: Set environment variables
         env:
           STAGING_URL: ${{ secrets.STAGING_URL }}
+          PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
           TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
           TEST_ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
           TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
         run: |
-          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
-            echo "BASE_URL=${{ secrets.PRODUCTION_URL }}" >> $GITHUB_ENV
+          if [ "$INPUT_ENVIRONMENT" == "production" ]; then
+            echo "BASE_URL=$PRODUCTION_URL" >> $GITHUB_ENV
           else
             echo "BASE_URL=${STAGING_URL:-http://localhost:3000}" >> $GITHUB_ENV
           fi
-          echo "ENV=${{ github.event.inputs.environment || 'staging' }}" >> $GITHUB_ENV
+          echo "ENV=$INPUT_ENVIRONMENT" >> $GITHUB_ENV
           echo "TEST_USER_EMAIL=${TEST_USER_EMAIL}" >> $GITHUB_ENV
           echo "TEST_USER_PASSWORD=${TEST_USER_PASSWORD}" >> $GITHUB_ENV
           echo "TEST_ADMIN_EMAIL=${TEST_ADMIN_EMAIL}" >> $GITHUB_ENV
@@ -86,14 +91,15 @@ jobs:
           TEST_USER_PASSWORD: ${{ env.TEST_USER_PASSWORD }}
           TEST_ADMIN_EMAIL: ${{ env.TEST_ADMIN_EMAIL }}
           TEST_ADMIN_PASSWORD: ${{ env.TEST_ADMIN_PASSWORD }}
+          INPUT_TEST_TYPE: ${{ github.event.inputs.test_type || 'baseline' }}
         run: |
-          TEST_TYPE=${{ github.event.inputs.test_type || 'baseline' }}
+          TEST_TYPE="$INPUT_TEST_TYPE"
           bash tests/performance/run-tests.sh "$TEST_TYPE"
         continue-on-error: true
 
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: performance-test-reports
           path: tests/performance/reports/

@@ -20,6 +20,9 @@
 
 name: Provider Enrichment Pipeline
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -71,7 +74,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -81,16 +84,20 @@ jobs:
 
       - name: Build CLI arguments
         id: args
+        env:
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+          INPUT_SOURCE: ${{ inputs.source }}
         run: |
-          MODE="${{ inputs.mode }}"
-          LIMIT="${{ inputs.limit }}"
+          MODE="$INPUT_MODE"
+          LIMIT="$INPUT_LIMIT"
 
           if [ "$MODE" = "write" ]; then
-            CLI_ARGS="--write --source ${{ inputs.source }}"
+            CLI_ARGS="--write --source $INPUT_SOURCE"
           elif [ "$MODE" = "auto-apply" ]; then
-            CLI_ARGS="--mode auto-apply --source ${{ inputs.source }}"
+            CLI_ARGS="--mode auto-apply --source $INPUT_SOURCE"
           else
-            CLI_ARGS="--dry-run --source ${{ inputs.source }}"
+            CLI_ARGS="--dry-run --source $INPUT_SOURCE"
           fi
 
           if [ "$LIMIT" != "all" ]; then
@@ -104,29 +111,41 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_SOURCE: ${{ inputs.source }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
         run: |
-          echo "🚀 Running Provider Enrichment against ${{ inputs.environment }}"
-          echo "   Source: ${{ inputs.source }}"
-          echo "   Mode:   ${{ inputs.mode }}"
-          echo "   Limit:  ${{ inputs.limit }}"
-          echo "   Args:   ${{ steps.args.outputs.cli_args }}"
+          echo "🚀 Running Provider Enrichment against $INPUT_ENVIRONMENT"
+          echo "   Source: $INPUT_SOURCE"
+          echo "   Mode:   $INPUT_MODE"
+          echo "   Limit:  $INPUT_LIMIT"
+          echo "   Args:   $CLI_ARGS"
           echo ""
-          npx tsx scripts/enrich-providers.ts ${{ steps.args.outputs.cli_args }}
+          npx tsx scripts/enrich-providers.ts $CLI_ARGS
 
       - name: Summary
+        env:
+          INPUT_SOURCE: ${{ inputs.source }}
+          INPUT_ENVIRONMENT: ${{ inputs.environment }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_LIMIT: ${{ inputs.limit }}
+          CLI_ARGS: ${{ steps.args.outputs.cli_args }}
+          ACTOR: ${{ github.actor }}
         run: |
           echo "## Provider Enrichment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Source | ${{ inputs.source }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | ${{ inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Mode | ${{ inputs.mode }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Limit | ${{ inputs.limit }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Args | \`${{ steps.args.outputs.cli_args }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Triggered by | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Source | $INPUT_SOURCE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | $INPUT_ENVIRONMENT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mode | $INPUT_MODE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Limit | $INPUT_LIMIT |" >> $GITHUB_STEP_SUMMARY
+          echo "| Args | \`$CLI_ARGS\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered by | $ACTOR |" >> $GITHUB_STEP_SUMMARY
           echo "| Timestamp | $(date -u +%Y-%m-%dT%H:%M:%SZ) |" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ inputs.mode }}" = "write" ]; then
+          if [ "$INPUT_MODE" = "write" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "⚠️ **Candidates staged with \`status = 'pending'\`**" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -134,7 +153,7 @@ jobs:
             echo "- Admin API: \`GET /api/admin/enrichment/candidates\`" >> $GITHUB_STEP_SUMMARY
             echo "- Supabase Dashboard → Table Editor → \`enrichment_candidates\`" >> $GITHUB_STEP_SUMMARY
           fi
-          if [ "${{ inputs.mode }}" = "dry-run" ]; then
+          if [ "$INPUT_MODE" = "dry-run" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "ℹ️ **Dry-run mode — no data was written.** Review the logs above for proposed changes." >> $GITHUB_STEP_SUMMARY
           fi

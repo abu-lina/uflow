@@ -30,6 +30,7 @@ interface EnrichmentCandidate {
   enriched_at: string;
   reviewed_at?: string | null;
   reviewer_email?: string | null;
+  confidence_score?: number | null;
 }
 
 interface PaginationInfo {
@@ -414,6 +415,11 @@ function HistoryRow({ candidate }: { candidate: EnrichmentCandidate }) {
         >
           {statusKey ? t(`admin.enrichment.${statusKey}`) : candidate.status}
         </span>
+        {candidate.confidence_score != null && (
+          <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+            {t('admin.enrichment.confidenceScore', { score: candidate.confidence_score })}
+          </span>
+        )}
         <span className="text-xs text-gray-400">
           {new Date(candidate.reviewed_at ?? candidate.enriched_at).toLocaleDateString()}
         </span>

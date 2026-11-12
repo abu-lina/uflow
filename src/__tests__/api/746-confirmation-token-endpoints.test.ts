@@ -526,7 +526,12 @@ describe('#746 confirmation-token and resend endpoints', () => {
               }),
             },
           },
-          from: () => ({ insert: async () => ({ error: null }) }),
+          from: () => ({
+            select: () => ({
+              eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }),
+            }),
+            insert: async () => ({ error: null }),
+          }),
         }),
       }));
       const { POST: signup } = await import('@/app/api/auth/signup/route');

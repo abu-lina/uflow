@@ -16,6 +16,7 @@ if [ -n "${ZSH_VERSION:-}" ]; then
   function lane { "$_lane_wrapper_bin" start "$@"; }
   function lane_done { "$_lane_wrapper_bin" 'done' "$@"; }
   function lane_status { "$_lane_wrapper_bin" status "$@"; }
+  function foreman { "$_lane_wrapper_bin" foreman "$@"; }
   return 0
 fi
 
@@ -42,9 +43,7 @@ _lane_base() {
 }
 
 _lane_check_main() {
-  # The foreman may be on any branch; compare local main ref vs origin/main
-  # without requiring a clean working tree (the worktree is created from the
-  # remote branch, not from the checkout).
+  # Block dirty checkouts and ensure local main is in sync with origin/main.
   local git_dir unpushed behind
   git_dir="$(git rev-parse --git-dir)" || return 1
   for stale in REBASE_HEAD MERGE_HEAD; do
@@ -55,10 +54,18 @@ _lane_check_main() {
   done
   for stale_dir in rebase-merge rebase-apply; do
     if [[ -d "$git_dir/$stale_dir" ]]; then
-      rm -rf "$git_dir/$stale_dir"
+      rm -rf "${git_dir:?}/$stale_dir"
       printf 'removed stale %s/ from previous session\n' "$stale_dir"
     fi
   done
+  # Block lane start when there are uncommitted changes outside .worktrees/.
+  local dirty
+  dirty="$(git status --porcelain | grep -Ev '^\?\? \.worktrees/')" || true
+  if [[ -n "$dirty" ]]; then
+    printf 'uncommitted changes in the main checkout; commit or stash before starting a lane:\n%s\n' "$dirty" >&2
+    return 1
+  fi
+
   if ! git rev-parse --verify main >/dev/null 2>&1; then
     printf 'no local main branch; run "git checkout main" once to create it\n' >&2
     return 1
@@ -138,6 +145,83 @@ REVIEW-SKILLS — run these on every PR before marking it ready:
 FALLBACK — if no skill above clearly covers a step: /using-agent-skills, then stop and ask the owner.
 
 Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, comment on the issue so the foreman is notified.' "$issue"
+}
+
+_foreman_prompt() {
+  cat <<'PROMPT'
+You are the foreman. Read AGENTS.md, then docs/agents/foreman.md. Never write code. Propose lanes and wait for approval from the owner before starting them.
+
+Use the Herdr skill included below instead of discovering commands with --help. Watch running lanes with `herdr agent wait <lane> --until blocked --until done`, then report when a lane needs the owner.
+PROMPT
+  HERDR_ENV=1 herdr --skill
+}
+
+_agent_model_args() {
+  local agent="$1" choice="$2"
+  [[ -z "$choice" ]] && return 0
+  if [[ "$agent" == copilot ]]; then
+    case "$choice" in
+      none | minimal | low | medium | high | xhigh | max)
+        agent_args+=(--reasoning-effort "$choice")
+        ;;
+      *) agent_args+=(--model "$choice") ;;
+    esac
+  elif [[ "$agent" == claude ]]; then
+    # --reasoning-effort is not supported in Claude Code 2.1.x; skip effort levels silently
+    case "$choice" in
+      none | minimal | low | medium | high | xhigh | max) ;;
+      *) agent_args+=(--model "$choice") ;;
+    esac
+  else
+    agent_args+=(--model "$choice")
+  fi
+}
+
+_herdr_root_pane() {
+  local pane
+  pane="$(printf '%s\n' "$1" | jq -r '.result.root_pane.pane_id // empty')" || return 1
+  [[ -n "$pane" ]] || return 1
+  printf '%s\n' "$pane"
+}
+
+foreman() {
+  local agent="${1:-devin}" model="${2:-}" root get_output tab_response pane start_output prompt config_dir
+  local -a agent_args
+  agent_args=()
+  [[ "$agent" == copilot || "$agent" == devin || "$agent" == claude ]] || { echo "agent must be copilot, devin, or claude" >&2; return 1; }
+  [[ "$agent" == devin && -z "$model" ]] && model="claude-opus-5-5-high"
+
+  root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
+  [[ "$root" == */.worktrees/* ]] && { echo "run foreman from the main checkout, not a worktree" >&2; return 1; }
+
+  # Herdr can list a name for a dead agent, so ask for the agent itself: agent_not_found means no live foreman.
+  if get_output="$(herdr agent get foreman 2>&1)"; then
+    herdr agent focus foreman
+    return $?
+  fi
+  [[ "$(printf '%s\n' "$get_output" | jq -r '.error.code // empty' 2>/dev/null)" == agent_not_found ]] ||
+    { printf 'could not check for a running foreman: %s\n' "$get_output" >&2; return 1; }
+  [[ -n "${HERDR_WORKSPACE_ID:-}" ]] || { echo "HERDR_WORKSPACE_ID is not set; run foreman inside Herdr" >&2; return 1; }
+
+  _agent_model_args "$agent" "$model" || return 1
+  if [[ "$agent" == devin ]]; then
+    # Normal mode plus foreman.json rules: read-only commands run without prompts, writes are denied.
+    config_dir="$(mktemp -d "${TMPDIR:-/tmp}/foreman-config.XXXXXX")" || return 1
+    (umask 077 && cp "$root/.devin/foreman.json" "$config_dir/foreman.json" && chmod 600 "$config_dir/foreman.json") ||
+      { echo "could not copy $root/.devin/foreman.json" >&2; return 1; }
+    agent_args+=(--config "$config_dir/foreman.json")
+  fi
+  prompt="$(_foreman_prompt)" || { echo "could not load the Herdr skill" >&2; return 1; }
+
+  # The caller's pane is busy running this function, so the agent gets a fresh tab's root pane.
+  tab_response="$(herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd "$root" --label foreman --focus 2>&1)" ||
+    { printf 'could not create the foreman tab: %s\n' "$tab_response" >&2; return 1; }
+  pane="$(_herdr_root_pane "$tab_response")" ||
+    { echo "Herdr did not return a root pane for the foreman tab" >&2; return 1; }
+
+  start_output="$(herdr agent start foreman --kind "$agent" --pane "$pane" -- "${agent_args[@]}" 2>&1)" ||
+    { printf 'could not start the foreman in pane %s: %s\n' "$pane" "$start_output" >&2; return 1; }
+  herdr agent prompt foreman "$prompt"
 }
 
 # Build the agent CLI command string for use inside a rex pane.
@@ -228,14 +312,34 @@ _lane_agent_cmd() {
 
 # Open a rex pane for the given agent, write LANE_BLOCK to env_file,
 # poll until the shell prompt appears, then send the brief.
+_lane_last_block() {
+  local root="$1"
+  local lane_dir block
+  for lane_dir in "$root/.worktrees"/*/; do
+    [[ -f "$lane_dir/.env.lane" ]] || continue
+    block="$(grep '^LANE_BLOCK=' "$lane_dir/.env.lane" 2>/dev/null | tail -1 | cut -d= -f2-)" || continue
+    [[ -n "$block" && "$block" =~ ^[a-zA-Z0-9_:-]+$ ]] || continue
+    # Verify the block still exists in the session
+    rex block read "$block" -s "$REX_SESSION" --lines 0 >/dev/null 2>&1 || continue
+    printf '%s\n' "$block"
+  done | tail -1
+}
+
 _lane_rex_open() {
   local agent="$1" model="$2" dir="$3" env_file="$4" issue="$5"
-  local agent_cmd block_id brief
+  local agent_cmd block_id
 
   agent_cmd="$(_lane_agent_cmd "$agent" "$model" "$dir")" || return 1
 
+  # Split from the last lane pane so lanes stack side-by-side instead of
+  # subdividing the foreman pane into invisibly thin slivers.
+  local root anchor
+  root="$(_lane_root)" || return 1
+  anchor="$(_lane_last_block "$root")"
+  [[ -z "$anchor" ]] && anchor="$REX_BLOCK"
+
   local split_json
-  split_json="$(rex split -s "$REX_SESSION" -b "$REX_BLOCK" --split=right --json -- bash -c "$agent_cmd")" ||
+  split_json="$(rex split -s "$REX_SESSION" -b "$anchor" --split=right --json -- bash -c "$agent_cmd")" ||
     { printf 'rex split failed\n' >&2; return 1; }
   block_id="$(printf '%s\n' "$split_json" | jq -r '.block_ids[0]')" ||
     { printf 'could not parse block_ids from rex split output: %s\n' "$split_json" >&2; return 1; }
@@ -288,7 +392,7 @@ lane() {
   [[ "${REX_BLOCK:-}" =~ ^[a-zA-Z0-9_:-]+$ ]] || { printf 'REX_BLOCK contains invalid characters\n' >&2; return 1; }
   [[ "$issue" =~ ^[0-9]+$ ]] || { printf 'issue must be a positive integer\n' >&2; return 1; }
 
-  local root dir branch port base
+  local root dir branch port
   root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
   [[ "$root" == */.worktrees/* ]] && { echo "run lane from the main checkout, not a worktree" >&2; return 1; }
   dir="$(_lane_dir "$root" "$issue")"
@@ -299,6 +403,17 @@ lane() {
       local existing_type
       existing_type="$(_lane_type "$issue")"
       model="$(_lane_default_model "$agent" "$existing_type")"
+    fi
+    # Close the previous Rex pane (if any) before opening a new one.
+    if [[ -f "$dir/.env.lane" ]]; then
+      local old_block old_session
+      old_block="$(grep '^LANE_BLOCK=' "$dir/.env.lane" 2>/dev/null | tail -1 | cut -d= -f2-)" || true
+      old_session="$(grep -m1 '^REX_SESSION_ID=' "$dir/.env.lane" 2>/dev/null | cut -d= -f2-)" || true
+      if [[ -n "$old_block" && "$old_block" =~ ^[a-zA-Z0-9_:-]+$ ]]; then
+        rex block close "$old_block" -s "${old_session:-$REX_SESSION}" 2>/dev/null || true
+      fi
+      # Clear stale signal state from the previous session.
+      rm -f "$dir/.lane-signal" "$dir/.lane-signal-sent"
     fi
     printf 'lane #%s: %s on %s\n' "$issue" "$dir" "$branch"
     _lane_rex_open "$agent" "$model" "$dir" "$dir/.env.lane" "$issue"
@@ -311,7 +426,7 @@ lane() {
   [[ -z "$model" ]] && model="$(_lane_default_model "$agent" "$issue_type")"
   branch="$issue_type/$issue-$slug"
   dir="$root/.worktrees/$issue-$slug"
-  base="$(_lane_base)" || return 1
+  _lane_base > /dev/null || return 1
   _lane_check_main || return 1
   if ! git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
     gh issue develop "$issue" --name "$branch" --base main || return 1
@@ -378,7 +493,7 @@ lane_done() {
 
   local lane_block="" rex_session_id=""
   if [[ -f "$dir/.env.lane" ]]; then
-    lane_block="$(grep -m1 '^LANE_BLOCK=' "$dir/.env.lane" 2>/dev/null | cut -d= -f2-)" || true
+    lane_block="$(grep '^LANE_BLOCK=' "$dir/.env.lane" 2>/dev/null | tail -1 | cut -d= -f2-)" || true
     rex_session_id="$(grep -m1 '^REX_SESSION_ID=' "$dir/.env.lane" 2>/dev/null | cut -d= -f2-)" || true
   fi
 
@@ -387,7 +502,7 @@ lane_done() {
     state="$(GH_HOST="" gh pr view "$branch" --json state --jq .state 2>/dev/null)"
     [[ "$state" != "MERGED" ]] && { echo "PR for $branch is '${state:-missing}', not MERGED. Use --force only after the owner agrees." >&2; return 1; }
     # .worktrees/ is excluded via .gitignore; only .env.lane needs explicit grep exclusion
-    [[ -n "$(git -C "$dir" status --porcelain | grep -Ev '^.. \.env\.lane$')" ]] && { echo "$dir has uncommitted changes" >&2; return 1; }
+    git -C "$dir" status --porcelain | grep -Evq '^.. \.env\.lane$' && { echo "$dir has uncommitted changes" >&2; return 1; }
     if git -C "$root" rev-parse --verify -q "origin/$branch" >/dev/null; then
       [[ -n "$(git -C "$root" log "origin/$branch..$branch" --oneline)" ]] && { echo "$dir has unpushed commits" >&2; return 1; }
     fi
@@ -396,7 +511,7 @@ lane_done() {
 
   # Close the lane pane before removing the worktree so .env.lane is still readable on retry.
   if [[ -n "$lane_block" ]]; then
-    rex block close -s "$rex_session_id" "$lane_block" 2>/dev/null || true
+    rex block close "$lane_block" -s "$rex_session_id" 2>/dev/null || true
   fi
 
   # Git's force option removes ignored build output such as .next and node_modules.
@@ -457,7 +572,7 @@ lane_status() {
         worktree="" branch=""
         ;;
     esac
-  done <<<"$worktrees"
+  done < <(printf '%s\n\n' "$worktrees")
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

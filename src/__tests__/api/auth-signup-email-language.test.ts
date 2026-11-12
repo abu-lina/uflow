@@ -14,7 +14,10 @@ vi.mock('@/lib/supabase/admin', () => ({
         }),
       },
     },
-    from: () => ({ insert: async () => ({ error: null }) }),
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+      insert: async () => ({ error: null }),
+    }),
   }),
 }));
 

@@ -19,12 +19,18 @@ FOREMAN_BLOCK="$(_get_env FOREMAN_BLOCK "$root/.env.lane")"
 
 SIGNAL_VOCAB_RE='^(handoff|blocked): '
 
+if [[ -f "$root/.lane-signal-sent" ]]; then
+  exit 0
+fi
+
 if [[ ! -f "$root/.lane-signal" ]]; then
   branch="$(git -C "$root" rev-parse --abbrev-ref HEAD 2>/dev/null | tr -dc '[:print:]')"
   last_commit="$(git -C "$root" log -1 --format='%s' 2>/dev/null | tr -dc '[:print:]')"
   msg="Lane #$ISSUE: session ended without a signal, branch: $branch, last commit: $last_commit"
   rex send -s "$REX_SESSION_ID" -b "$FOREMAN_BLOCK" "$msg" 2>/dev/null &&
     rex send-key -s "$REX_SESSION_ID" -b "$FOREMAN_BLOCK" enter 2>/dev/null
+  # Mark delivered so repeated exits don't re-send the fallback message.
+  printf 'no-signal fallback delivered\n' > "$root/.lane-signal-sent" 2>/dev/null
   exit 0
 fi
 
@@ -33,4 +39,5 @@ signal="$(tr -dc '[:print:]' < "$root/.lane-signal")"
 
 rex send -s "$REX_SESSION_ID" -b "$FOREMAN_BLOCK" "Lane #$ISSUE: $signal" 2>/dev/null &&
   rex send-key -s "$REX_SESSION_ID" -b "$FOREMAN_BLOCK" enter 2>/dev/null
-# Keep .lane-signal so repeated session exits don't re-trigger the no-signal nudge.
+# Mark as delivered regardless of rex success to prevent re-delivery loops.
+mv "$root/.lane-signal" "$root/.lane-signal-sent" 2>/dev/null || true

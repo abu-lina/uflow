@@ -75,6 +75,7 @@ export interface EnrichmentCandidate {
   proposed_value: unknown;
   current_value: unknown;
   status?: 'pending' | 'approved' | 'rejected' | 'applied' | 'auto-applied';
+  confidence_score?: number | null;
 }
 
 export type ConflictType = 'no-change' | 'additive' | 'conflict';

@@ -1558,6 +1558,7 @@ export const ar = {
       loadMore: 'تحميل المزيد',
       loadFailed: 'تعذّر تحميل المقترحات',
       pendingCount: '{{count}} قيد الانتظار',
+      confidenceScore: 'الثقة: {{score}}%',
     },
   },
 } as const;
