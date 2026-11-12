@@ -74,6 +74,7 @@ jobs:
           [ -n "$INPUT_PROVIDER_ID" ] && ARGS+=(--provider-id "$INPUT_PROVIDER_ID")
           [ -n "$INPUT_LIMIT" ] && ARGS+=(--limit "$INPUT_LIMIT")
           npx tsx scripts/apply-website-delivery-links.ts "${ARGS[@]}" 2>&1 | tee "$RUNNER_TEMP/apply.log"
+          exit "${PIPESTATUS[0]}"
 
       - name: Summary
         if: always()
