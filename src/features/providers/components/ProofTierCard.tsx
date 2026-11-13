@@ -432,26 +432,26 @@ export function ProofTierCard({
       <SummaryText text={t(summaryKey)} />
 
       {(tier === 'silver' || tier === 'gold') && (lastVerifiedAt || nextAuditDue) ? (
-        <div className="text-content-secondary mt-2 space-y-1 text-sm">
+        <div className="text-content-secondary mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
           {lastVerifiedAt ? (
-            <p>
+            <span>
               {t('providerDetail.proofTier.lastVerified', {
                 date: new Date(lastVerifiedAt).toLocaleDateString(undefined, {
                   month: 'short',
                   year: 'numeric',
                 }),
               })}
-            </p>
+            </span>
           ) : null}
           {nextAuditDue ? (
-            <p>
+            <span>
               {t('providerDetail.proofTier.nextAudit', {
                 date: new Date(nextAuditDue).toLocaleDateString(undefined, {
                   month: 'short',
                   year: 'numeric',
                 }),
               })}
-            </p>
+            </span>
           ) : null}
         </div>
       ) : null}

@@ -1233,7 +1233,7 @@ export const en = {
         'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
       comingSoonSlaughter: 'Halal slaughter verification – coming soon',
       lastVerified: 'Last verified: {{date}}',
-      nextAudit: 'Next audit due: {{date}}',
+      nextAudit: 'Next: {{date}}',
       pendingReview: "This provider's halal status is pending review by our team.",
     },
     trustBadges: {

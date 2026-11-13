@@ -1222,7 +1222,7 @@ export const ar = {
         'يعكس هذا الفحص تقييمنا وقت التحقق. كل مستهلك مسؤول عن اتخاذ قراره المستنير بشأن ثقته بمزوّد الخدمة.',
       comingSoonSlaughter: 'التحقق من الذبح الحلال – قريباً',
       lastVerified: 'آخر تحقق: {{date}}',
-      nextAudit: 'موعد التدقيق القادم: {{date}}',
+      nextAudit: 'التالي: {{date}}',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
