@@ -436,14 +436,20 @@ export function ProofTierCard({
           {lastVerifiedAt ? (
             <p>
               {t('providerDetail.proofTier.lastVerified', {
-                date: new Date(lastVerifiedAt).toLocaleDateString(),
+                date: new Date(lastVerifiedAt).toLocaleDateString(undefined, {
+                  month: 'short',
+                  year: 'numeric',
+                }),
               })}
             </p>
           ) : null}
           {nextAuditDue ? (
             <p>
               {t('providerDetail.proofTier.nextAudit', {
-                date: new Date(nextAuditDue).toLocaleDateString(),
+                date: new Date(nextAuditDue).toLocaleDateString(undefined, {
+                  month: 'short',
+                  year: 'numeric',
+                }),
               })}
             </p>
           ) : null}
