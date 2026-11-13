@@ -1238,7 +1238,7 @@ export const ps = {
         'دا ازموینه زموږ د تایید په وخت کې زموږ بیاکتنه منعکسوي. هر مصرف کوونکی پخپله مسؤل دی چې پریکړه وکړي آیا چمتو کوونکي باندې باور لري که نه.',
       comingSoonSlaughter: 'د حلال ذبح تایید – ډیر ژر راځي',
       lastVerified: 'وروستی تایید: {{date}}',
-      nextAudit: 'راتلونکی: {{date}}',
+      nextAudit: 'راتلونکی آډیټ: {{date}}',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },

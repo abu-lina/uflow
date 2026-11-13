@@ -360,7 +360,7 @@ export function ProofTierCard({
   nextAuditDue,
   provisional = false,
 }: ProofTierCardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isVerifiedExpanded, setIsVerifiedExpanded] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMissingExpanded, setIsMissingExpanded] = useState(false);
@@ -432,11 +432,11 @@ export function ProofTierCard({
       <SummaryText text={t(summaryKey)} />
 
       {(tier === 'silver' || tier === 'gold') && (lastVerifiedAt || nextAuditDue) ? (
-        <div className="text-content-secondary mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+        <div className="text-content-secondary mt-1 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
           {lastVerifiedAt ? (
             <span>
               {t('providerDetail.proofTier.lastVerified', {
-                date: new Date(lastVerifiedAt).toLocaleDateString(undefined, {
+                date: new Date(lastVerifiedAt).toLocaleDateString(language, {
                   month: 'short',
                   year: 'numeric',
                 }),
@@ -446,7 +446,7 @@ export function ProofTierCard({
           {nextAuditDue ? (
             <span>
               {t('providerDetail.proofTier.nextAudit', {
-                date: new Date(nextAuditDue).toLocaleDateString(undefined, {
+                date: new Date(nextAuditDue).toLocaleDateString(language, {
                   month: 'short',
                   year: 'numeric',
                 }),

@@ -1241,7 +1241,7 @@ export const ur = {
         'یہ جانچ تصدیق کے وقت ہمارے جائزے کی عکاسی کرتی ہے۔ ہر صارف خود ذمہ دار ہے کہ وہ فراہم کنندہ پر اعتماد کرے یا نہ کرے۔',
       comingSoonSlaughter: 'حلال ذبیحہ کی تصدیق – جلد آرہا ہے',
       lastVerified: 'آخری تصدیق: {{date}}',
-      nextAudit: 'اگلا: {{date}}',
+      nextAudit: 'اگلا آڈٹ: {{date}}',
       // INTERIM de (#415): pending human translation
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
     },
