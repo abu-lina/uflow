@@ -475,4 +475,113 @@ describe('ProofTierCard', () => {
       screen.queryByText('providerDetail.proofTier.checkMenuReviewed'),
     ).not.toBeInTheDocument();
   });
+
+  // ---------------------------------------------------------------------------
+  // Section: Audit dates (last verified / next audit due) — #886
+  // ---------------------------------------------------------------------------
+
+  it('[TDD gate] silver tier shows both dates when both provided', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="onsite"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+        lastVerifiedAt="2026-06-01T00:00:00Z"
+        nextAuditDue="2026-12-01T00:00:00Z"
+      />,
+    );
+    expect(screen.getByText('providerDetail.proofTier.lastVerified')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.nextAudit')).toBeInTheDocument();
+  });
+
+  it('[TDD gate] gold tier shows both dates when both provided', () => {
+    render(
+      <ProofTierCard
+        certificateUrl="https://cdn.example.com/cert.pdf"
+        hasCertificate={true}
+        reviewStatus="approved"
+        verificationMethod="onsite"
+        lastVerifiedAt="2026-06-01T00:00:00Z"
+        nextAuditDue="2026-12-01T00:00:00Z"
+      />,
+    );
+    expect(screen.getByText('providerDetail.proofTier.lastVerified')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.nextAudit')).toBeInTheDocument();
+  });
+
+  it('[TDD gate] bronze tier hides dates even when both provided', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+        lastVerifiedAt="2026-06-01T00:00:00Z"
+        nextAuditDue="2026-12-01T00:00:00Z"
+      />,
+    );
+    expect(screen.queryByText('providerDetail.proofTier.lastVerified')).not.toBeInTheDocument();
+    expect(screen.queryByText('providerDetail.proofTier.nextAudit')).not.toBeInTheDocument();
+  });
+
+  it('[TDD gate] hides lastVerified line when lastVerifiedAt is null', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="onsite"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+        lastVerifiedAt={null}
+        nextAuditDue="2026-12-01T00:00:00Z"
+      />,
+    );
+    expect(screen.queryByText('providerDetail.proofTier.lastVerified')).not.toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.nextAudit')).toBeInTheDocument();
+  });
+
+  it('[TDD gate] hides nextAudit line when nextAuditDue is null', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="onsite"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+        lastVerifiedAt="2026-06-01T00:00:00Z"
+        nextAuditDue={null}
+      />,
+    );
+    expect(screen.getByText('providerDetail.proofTier.lastVerified')).toBeInTheDocument();
+    expect(screen.queryByText('providerDetail.proofTier.nextAudit')).not.toBeInTheDocument();
+  });
+
+  it('[TDD gate] hides entire date section when both dates are null', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="onsite"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+        lastVerifiedAt={null}
+        nextAuditDue={null}
+      />,
+    );
+    expect(screen.queryByText('providerDetail.proofTier.lastVerified')).not.toBeInTheDocument();
+    expect(screen.queryByText('providerDetail.proofTier.nextAudit')).not.toBeInTheDocument();
+  });
+
+  it('[TDD gate] provisional hides dates even when both provided', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="onsite"
+        hasCertificate={false}
+        noAlcohol={true}
+        provisional
+        lastVerifiedAt="2026-06-01T00:00:00Z"
+        nextAuditDue="2026-12-01T00:00:00Z"
+      />,
+    );
+    expect(screen.queryByText('providerDetail.proofTier.lastVerified')).not.toBeInTheDocument();
+    expect(screen.queryByText('providerDetail.proofTier.nextAudit')).not.toBeInTheDocument();
+  });
 });

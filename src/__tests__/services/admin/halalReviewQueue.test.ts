@@ -173,7 +173,7 @@ describe('confirmHalalReview', () => {
 
     expect(result).toEqual({ success: true });
     const fpUpdate = calls.find((c) => c.table === 'food_providers' && c.op === 'update');
-    expect(fpUpdate?.args[0]).toEqual(values);
+    expect(fpUpdate?.args[0]).toMatchObject(values);
     const candUpdate = calls.find((c) => c.table === 'enrichment_candidates' && c.op === 'update');
     expect(candUpdate?.args[0]).toMatchObject({ status: 'applied', reviewer_id: 'admin-1' });
     expect(calls).toContainEqual(
@@ -215,5 +215,31 @@ describe('confirmHalalReview', () => {
     const result = await confirmHalalReview('nope', values, 'admin-1');
     expect(result.success).toBe(false);
     expect(calls).toHaveLength(0);
+  });
+
+  it('[TDD gate] sets last_verified_at and next_audit_due when confirming review (#886)', async () => {
+    results.providers = { data: { provider_owner_id: null }, error: null };
+    results.food_providers = { data: [{ provider_id: P1 }], error: null };
+
+    const before = Date.now();
+    await confirmHalalReview(P1, values, 'admin-1');
+    const after = Date.now();
+
+    const fpUpdate = calls.find((c) => c.table === 'food_providers' && c.op === 'update');
+    const payload = fpUpdate?.args[0] as Record<string, unknown>;
+    expect(payload.last_verified_at).toBeDefined();
+    expect(payload.next_audit_due).toBeDefined();
+
+    const verifiedAt = new Date(payload.last_verified_at as string).getTime();
+    expect(verifiedAt).toBeGreaterThanOrEqual(before);
+    expect(verifiedAt).toBeLessThanOrEqual(after);
+
+    const auditDue = new Date(payload.next_audit_due as string).getTime();
+    const expectedMin = new Date(before);
+    expectedMin.setMonth(expectedMin.getMonth() + 6);
+    const expectedMax = new Date(after);
+    expectedMax.setMonth(expectedMax.getMonth() + 6);
+    expect(auditDue).toBeGreaterThanOrEqual(expectedMin.getTime() - 5000);
+    expect(auditDue).toBeLessThanOrEqual(expectedMax.getTime() + 5000);
   });
 });

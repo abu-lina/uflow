@@ -95,7 +95,7 @@ export async function getProviderById(
         supabase
           .from('food_providers')
           .select(
-            'verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling',
+            'verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling, last_verified_at, next_audit_due',
           )
           .eq('provider_id', id)
           .maybeSingle(),

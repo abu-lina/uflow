@@ -26,6 +26,8 @@ export interface FoodProviderExtension {
   no_alcohol: boolean | null;
   no_pork: boolean | null;
   no_gambling: boolean | null;
+  last_verified_at: string | null;
+  next_audit_due: string | null;
   proof_tier?: number;
 }
 
