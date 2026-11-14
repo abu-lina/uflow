@@ -441,7 +441,7 @@ describe('ProofTierCard', () => {
     expect(container.querySelector('[data-tier]')).not.toBeInTheDocument();
   });
 
-  it('[TDD gate] coming soon row still renders', () => {
+  it('does not render the "slaughter verification coming soon" row', () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -450,7 +450,34 @@ describe('ProofTierCard', () => {
         reviewStatus="approved"
       />,
     );
-    expect(screen.getByText('providerDetail.proofTier.comingSoonSlaughter')).toBeInTheDocument();
+    expect(
+      screen.queryByText('providerDetail.proofTier.comingSoonSlaughter'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the disclaimer inside the expanded "How do we check?" section', async () => {
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    await screen.getByRole('button', { name: /howWeCheck/ }).click();
+    expect(screen.getByText('providerDetail.proofTier.disclaimer')).toBeInTheDocument();
+  });
+
+  it('hides the disclaimer while "How do we check?" is collapsed', () => {
+    render(
+      <ProofTierCard
+        verificationMethod="online"
+        hasCertificate={false}
+        noAlcohol={true}
+        reviewStatus="approved"
+      />,
+    );
+    expect(screen.queryByText('providerDetail.proofTier.disclaimer')).not.toBeInTheDocument();
   });
 
   it('[TDD gate] certificate-only gold checklist shows only gold items', async () => {

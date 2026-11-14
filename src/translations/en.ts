@@ -1231,7 +1231,6 @@ export const en = {
         'We request the halal certificate directly from the provider and contact the issuing authority to confirm its validity.',
       disclaimer:
         'This check reflects our review at the time of verification. Every consumer is responsible for making their own informed decision about whether they trust a provider.',
-      comingSoonSlaughter: 'Halal slaughter verification – coming soon',
       lastVerified: 'Last verified: {{date}}',
       nextAudit: 'Next audit: {{date}}',
       pendingReview: "This provider's halal status is pending review by our team.",

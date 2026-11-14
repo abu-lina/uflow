@@ -1239,7 +1239,6 @@ export const tr = {
         'Helal sertifikasını doğrudan sağlayıcıdan talep eder ve geçerliliğini doğrulamak için düzenleyen makamla iletişime geçeriz.',
       disclaimer:
         'Bu kontrol, doğrulama sırasındaki değerlendirmemizi yansıtır. Her tüketici, bir sağlayıcıya güvenip güvenmeyeceği konusunda kendi bilinçli kararını vermekten sorumludur.',
-      comingSoonSlaughter: 'Helal kesim doğrulaması – yakında',
       lastVerified: 'Son doğrulama: {{date}}',
       nextAudit: 'Sonraki denetim: {{date}}',
       // INTERIM de (#415): pending human translation
