@@ -510,7 +510,7 @@ describe('ProofTierCard', () => {
     expect(screen.getByText('providerDetail.proofTier.nextAudit')).toBeInTheDocument();
   });
 
-  it('[TDD gate] bronze tier hides dates even when both provided', () => {
+  it('[TDD gate] bronze tier shows dates when both provided (#913)', () => {
     render(
       <ProofTierCard
         verificationMethod="online"
@@ -521,8 +521,8 @@ describe('ProofTierCard', () => {
         nextAuditDue="2026-12-01T00:00:00Z"
       />,
     );
-    expect(screen.queryByText('providerDetail.proofTier.lastVerified')).not.toBeInTheDocument();
-    expect(screen.queryByText('providerDetail.proofTier.nextAudit')).not.toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.lastVerified')).toBeInTheDocument();
+    expect(screen.getByText('providerDetail.proofTier.nextAudit')).toBeInTheDocument();
   });
 
   it('[TDD gate] hides lastVerified line when lastVerifiedAt is null', () => {
