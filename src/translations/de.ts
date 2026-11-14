@@ -1253,7 +1253,6 @@ export const de = {
         'Wir fordern das Halal-Zertifikat direkt vom Anbieter an und kontaktieren die ausstellende Behörde, um die Gültigkeit zu bestätigen.',
       disclaimer:
         'Diese Prüfung spiegelt unsere Bewertung zum Zeitpunkt der Verifizierung wider. Jeder Verbraucher ist selbst dafür verantwortlich, eine informierte Entscheidung darüber zu treffen, ob er einem Anbieter vertraut.',
-      comingSoonSlaughter: 'Halal-Schlachtung Verifizierung – demnächst verfügbar',
       lastVerified: 'Zuletzt geprüft: {{date}}',
       nextAudit: 'Nächste Prüfung: {{date}}',
       pendingReview: 'Der Halal-Status dieses Anbieters wird noch von unserem Team geprüft.',
