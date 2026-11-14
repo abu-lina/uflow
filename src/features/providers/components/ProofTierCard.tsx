@@ -431,7 +431,7 @@ export function ProofTierCard({
 
       <SummaryText text={t(summaryKey)} />
 
-      {(tier === 'silver' || tier === 'gold') && (lastVerifiedAt || nextAuditDue) ? (
+      {lastVerifiedAt || nextAuditDue ? (
         <div className="text-content-secondary mt-1 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
           {lastVerifiedAt ? (
             <span>
