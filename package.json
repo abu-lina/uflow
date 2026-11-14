@@ -7,6 +7,7 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
+    "predev": "bash scripts/check-env.sh",
     "dev": "next dev --webpack",
     "dev:uat": "bash scripts/switch-env.sh uat && npm run dev",
     "dev:prod": "bash scripts/switch-env.sh prod && npm run dev",

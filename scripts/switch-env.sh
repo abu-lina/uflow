@@ -32,7 +32,7 @@ echo ""
 # Determine source and target files
 case "$ENV_TYPE" in
     dev)
-        SOURCE_FILE=".env.local"
+        SOURCE_FILE=".env.local.localdb"
         TARGET_FILE=".env.local"
         BACKUP_FILE=".env.local.backup"
         ;;
@@ -71,17 +71,20 @@ cp "$SOURCE_FILE" "$TARGET_FILE"
 
 echo ""
 echo -e "${GREEN}✅ Switched to ${ENV_TYPE} environment!${NC}"
+
+# Validate the new credentials
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/check-env.sh" ]; then
+    echo ""
+    bash "$SCRIPT_DIR/check-env.sh"
+fi
+
 echo ""
 echo "Next steps:"
-echo "  1. Verify environment variables are correct"
-echo "  2. Run: npm run dev"
+echo "  1. Run: npm run dev"
 echo ""
 echo "To switch back:"
-echo "  mv ${BACKUP_FILE} ${TARGET_FILE}"
-
-
-
-
+echo "  bash scripts/switch-env.sh dev"
 
 
 
