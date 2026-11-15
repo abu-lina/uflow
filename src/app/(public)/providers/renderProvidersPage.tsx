@@ -3,17 +3,21 @@ import { Suspense } from 'react';
 import { getCityCenter, searchProvidersAndCommunityServices } from '@/services/providers';
 import type { SearchResult } from '@/services/providers';
 import { getCategoryById } from '@/services/categories';
-import { inferSectionFromCategory, SECTION_META } from '@/config/sectionFilters';
-import type { Section } from '@/providers/search-provider';
-import {
-  SEARCH_FILTER_KEY_SET,
-  type SearchFilterKey,
-} from '@/features/search/constants/filterKeys';
+import type { Section } from '@/config/sectionFilters';
+import { parseDiscoveryQuery } from '@/features/search/discoveryQuery';
 import { resolveFilteredCategoryLabel, type FilteredCategoryLabel } from '@/lib/categoryFilter';
 
 import { ProvidersContent } from './ProvidersContent';
 
 const PAGE_SIZE = 12;
+
+function toURLSearchParams(raw: { [key: string]: string | string[] | undefined }): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(raw)) {
+    if (typeof value === 'string') params.set(key, value);
+  }
+  return params;
+}
 
 export async function renderProvidersPage(opts: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -25,47 +29,20 @@ export async function renderProvidersPage(opts: {
   routeCategoryRecord?: FilteredCategoryLabel | null;
 }) {
   const { searchParams, routeSection, routeCategory, routeCity, routeCategoryRecord } = opts;
-  const params = await searchParams;
-  const query = typeof params.q === 'string' ? params.q : '';
+  const rawParams = await searchParams;
+  const params = toURLSearchParams(rawParams);
 
-  const category = routeCategory ?? (typeof params.category === 'string' ? params.category : null);
-
-  const locationParam = routeCity ?? (typeof params.location === 'string' ? params.location : '');
-  const isLegacyEverywhere = locationParam === 'Everywhere' || locationParam === 'Überall';
-  const location = isLegacyEverywhere ? '' : locationParam;
-
-  const resolvedSection =
-    routeSection ??
-    (() => {
-      const sectionParam = typeof params.section === 'string' ? params.section : null;
-      const categoryParam = typeof params.category === 'string' ? params.category : null;
-      const rawSection: Section =
-        sectionParam === 'food' ||
-        sectionParam === 'ummah' ||
-        sectionParam === 'store' ||
-        sectionParam === 'business'
-          ? sectionParam === 'business'
-            ? 'store'
-            : sectionParam
-          : categoryParam
-            ? inferSectionFromCategory(categoryParam)
-            : 'food';
-      return rawSection;
-    })();
-  const section: Section = SECTION_META[resolvedSection].active ? resolvedSection : 'food';
-
-  const rawFilters = typeof params.filters === 'string' ? params.filters : '';
-  const parsedFilters = rawFilters
-    .split(',')
-    .map((key) => key.trim())
-    .filter((key): key is SearchFilterKey => SEARCH_FILTER_KEY_SET.has(key));
-  const filters = parsedFilters.length > 0 ? parsedFilters : undefined;
+  const dq = parseDiscoveryQuery(params, {
+    city: routeCity,
+    category: routeCategory,
+    section: routeSection,
+  });
 
   // #254 post-QA: when a real category filter is active, every result card
   // displays the FILTERED category — a provider that matched on a secondary
   // still shows the category the user asked for. Resolved once per render;
   // sentinels (All/Alle/…) and unrecognised values yield null (primary).
-  const displayCategory = await resolveFilteredCategoryLabel(category, {
+  const displayCategory = await resolveFilteredCategoryLabel(dq.category, {
     record: routeCategoryRecord ?? null,
     fetchById: getCategoryById,
   });
@@ -75,18 +52,18 @@ export async function renderProvidersPage(opts: {
   let initialTotalCount = 0;
 
   // #674: the map opens on the city in scope, so look up its center in parallel.
-  const mapCenterPromise = location ? getCityCenter(location) : Promise.resolve(null);
+  const mapCenterPromise = dq.location ? getCityCenter(dq.location) : Promise.resolve(null);
 
   try {
     const data = await searchProvidersAndCommunityServices(
-      query,
-      category,
-      location,
+      dq.q,
+      dq.category,
+      dq.location,
       0,
       PAGE_SIZE,
       undefined,
-      section,
-      filters,
+      dq.section,
+      dq.filters,
     );
     initialResults = data.results;
     initialHasMore = data.hasMore;
@@ -100,15 +77,15 @@ export async function renderProvidersPage(opts: {
   return (
     <Suspense fallback={null}>
       <ProvidersContent
-        defaultLocation={location || undefined}
+        defaultLocation={dq.location || undefined}
         displayCategory={displayCategory}
         initialData={{
           results: initialResults,
           hasMore: initialHasMore,
           totalCount: initialTotalCount,
         }}
-        initialFilters={filters}
-        initialSection={section}
+        initialFilters={dq.filters}
+        initialSection={dq.section}
         mapCenter={mapCenter}
         mapCity={routeCity}
       />

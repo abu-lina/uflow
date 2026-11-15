@@ -9,19 +9,7 @@ import { searchProvidersAndCommunityServices } from '@/services/providers';
 import { getUserFromCookie } from '@/lib/supabase/getUserFromCookie';
 import { isAdminOrModerator } from '@/lib/auth/roles';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import type { Section } from '@/providers/search-provider';
-import {
-  SEARCH_FILTER_KEY_SET,
-  type SearchFilterKey,
-} from '@/features/search/constants/filterKeys';
-
-/** Valid review status values for admin filtering (Plan 058) */
-const VALID_REVIEW_STATUSES = ['approved', 'pending', 'rejected', 'needs_revision', 'all'] as const;
-type ReviewStatus = (typeof VALID_REVIEW_STATUSES)[number];
-
-function isValidReviewStatus(value: string): value is ReviewStatus {
-  return VALID_REVIEW_STATUSES.includes(value as ReviewStatus);
-}
+import { parseDiscoveryQueryForRoute, type ReviewStatus } from '@/features/search/discoveryQuery';
 
 /**
  * GET /api/providers/search
@@ -33,8 +21,7 @@ function isValidReviewStatus(value: string): value is ReviewStatus {
  * Query params:
  *   q         - free-text search query (optional)
  *   category  - category UUID filter (optional)
- *   location  - city name filter (optional); absent, empty, "Everywhere", and "Überall" all mean
- *               no city filter (LOCATION_ALL = ''). Mirror normalization from page.tsx (Plan 044).
+ *   location  - city name filter (optional); absent or empty means no city filter.
  *   page      - page number, 0-indexed (optional, defaults to 0)
  *   pageSize  - results per page (optional, defaults to 12)
  *   status    - (admin-only) review status filter or explicit all-status scope (Plan 058 / 267)
@@ -56,51 +43,22 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   try {
     const { searchParams } = new URL(request.url);
+    const dq = parseDiscoveryQueryForRoute(searchParams);
 
-    const query = searchParams.get('q') || '';
-    const category = searchParams.get('category') || null;
-    // Normalize location: absent (null) and empty string both mean LOCATION_ALL ('').
-    // Legacy localized labels from old links/bookmarks are also mapped to ''.
-    // Using ?? instead of || preserves '' as a valid sentinel value (Plan 044).
-    const rawLocation = searchParams.get('location') ?? '';
-    const location = rawLocation === 'Everywhere' || rawLocation === 'Überall' ? '' : rawLocation;
     const page = parseInt(searchParams.get('page') || '0', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '12', 10);
 
     // Plan 058: Admin status filter
-    const statusParam = searchParams.get('status');
     let adminOptions: { status: ReviewStatus; isAdmin: true } | undefined;
 
-    // Plan 089: Section filter
-    const sectionParam = searchParams.get('section');
-    const section: Section | undefined =
-      sectionParam === 'food' ||
-      sectionParam === 'ummah' ||
-      sectionParam === 'store' ||
-      sectionParam === 'business'
-        ? sectionParam === 'business'
-          ? 'store'
-          : (sectionParam as Section)
-        : undefined;
+    if (dq.statusError) {
+      return NextResponse.json(
+        { error: dq.statusError },
+        { status: 400, headers: { 'X-Correlation-ID': ctx.correlationId } },
+      );
+    }
 
-    const rawFilters = searchParams.get('filters') || '';
-    const parsedFilters = rawFilters
-      .split(',')
-      .map((key) => key.trim())
-      .filter((key): key is SearchFilterKey => SEARCH_FILTER_KEY_SET.has(key));
-    const filters = parsedFilters.length > 0 ? parsedFilters : undefined;
-
-    if (statusParam) {
-      // Validate status value first
-      if (!isValidReviewStatus(statusParam)) {
-        return NextResponse.json(
-          {
-            error: `Invalid status value: ${statusParam}. Valid values are: ${VALID_REVIEW_STATUSES.join(', ')}`,
-          },
-          { status: 400, headers: { 'X-Correlation-ID': ctx.correlationId } },
-        );
-      }
-
+    if (dq.status) {
       // Status filter requires admin/moderator authorization
       const user = await getUserFromCookie();
       if (!user) {
@@ -118,7 +76,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         );
       }
 
-      adminOptions = { status: statusParam, isAdmin: true };
+      adminOptions = { status: dq.status, isAdmin: true };
     }
 
     // Admin queries need service-role client to bypass RLS
@@ -126,14 +84,14 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     const data = await measureDependency(ctx, 'supabase.providers.search', () =>
       searchProvidersAndCommunityServices(
-        query,
-        category,
-        location,
+        dq.q,
+        dq.category,
+        dq.location,
         page,
         pageSize,
         adminOptions,
-        section,
-        filters,
+        dq.section,
+        dq.filters,
         adminClient,
       ),
     );
@@ -141,7 +99,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     // Apply caching headers per Plan 010/058 caching semantics
     // Admin-filtered responses must use no-store to prevent CDN from caching admin-only data
     const cacheControl =
-      query || statusParam || filters
+      dq.q || dq.status || dq.filters
         ? 'no-store'
         : 'public, s-maxage=60, stale-while-revalidate=30';
 

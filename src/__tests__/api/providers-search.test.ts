@@ -194,8 +194,7 @@ describe('GET /api/providers/search', () => {
     );
   });
 
-  // RC-3: legacy 'Everywhere' label must normalise to empty string, not filter by city name
-  it('should normalise legacy "Everywhere" location to empty string', async () => {
+  it('should treat "Everywhere" as a literal city name', async () => {
     mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
     const request = new Request('http://localhost:3000/api/providers/search?location=Everywhere');
@@ -204,7 +203,7 @@ describe('GET /api/providers/search', () => {
     expect(mockSearch).toHaveBeenCalledWith(
       '',
       null,
-      '',
+      'Everywhere',
       0,
       12,
       undefined,
@@ -214,8 +213,7 @@ describe('GET /api/providers/search', () => {
     );
   });
 
-  // RC-3: legacy 'Überall' label must normalise to empty string, not filter by city name
-  it('should normalise legacy "Überall" location to empty string', async () => {
+  it('should treat "Überall" as a literal city name', async () => {
     mockSearch.mockResolvedValue({ results: [], hasMore: false });
 
     const request = new Request('http://localhost:3000/api/providers/search?location=%C3%9Cberall');
@@ -224,7 +222,7 @@ describe('GET /api/providers/search', () => {
     expect(mockSearch).toHaveBeenCalledWith(
       '',
       null,
-      '',
+      'Überall',
       0,
       12,
       undefined,
