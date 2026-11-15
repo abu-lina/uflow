@@ -49,3 +49,9 @@ _Avoid_: screening, check
 **Trust Tier**:
 The confidence level assigned to an enrichment field type, determining whether it auto-applies or requires Review. Delivery links and images are high-trust (auto-applied). Compliance fields (`no_alcohol`, `no_pork`) are low-trust (reviewed). See ADR 0003.
 _Avoid_: confidence level, risk tier
+
+### Discovery
+
+**Discovery Query**:
+What a visitor is looking for in the directory, parsed once from a URL. A discovery link carries exactly one Discovery Query. The module lives at `src/features/search/discoveryQuery.ts`.
+_Avoid_: search params, query string, filters object

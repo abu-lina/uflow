@@ -54,13 +54,13 @@ describe('FoodPage location normalization (Plan 228: migrated from ProvidersPage
     );
   });
 
-  it('normalizes legacy Everywhere labels to LOCATION_ALL for SSR', async () => {
+  it('treats Everywhere as a literal city name', async () => {
     await FoodPage({ searchParams: Promise.resolve({ location: 'Everywhere' }) });
 
     expect(mockSearchProvidersAndCommunityServices).toHaveBeenCalledWith(
       '',
       null,
-      '',
+      'Everywhere',
       0,
       12,
       undefined,

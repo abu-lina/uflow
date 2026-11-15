@@ -197,7 +197,7 @@ describe('ProvidersContent initialSection gate', () => {
       resolve(ROOT, 'src/app/(public)/providers/renderProvidersPage.tsx'),
       'utf-8',
     );
-    expect(src).toContain('initialSection={section}');
+    expect(src).toContain('initialSection={dq.section}');
   });
 
   it('ProvidersContent accepts initialSection and gates initialData', () => {
