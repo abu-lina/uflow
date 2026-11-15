@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  parseDiscoveryQuery,
-  parseDiscoveryQueryForRoute,
-  type DiscoveryQuery,
-} from '../discoveryQuery';
+import { parseDiscoveryQuery, parseDiscoveryQueryForRoute } from '../discoveryQuery';
 
 describe('Discovery Query module', () => {
   describe('free text (q)', () => {

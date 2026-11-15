@@ -41,7 +41,7 @@ export async function renderProvidersPage(opts: {
   // #254 post-QA: when a real category filter is active, every result card
   // displays the FILTERED category — a provider that matched on a secondary
   // still shows the category the user asked for. Resolved once per render;
-  // sentinels (All/Ale/…) and unrecognised values yield null (primary).
+  // sentinels (All/Alle/…) and unrecognised values yield null (primary).
   const displayCategory = await resolveFilteredCategoryLabel(dq.category, {
     record: routeCategoryRecord ?? null,
     fetchById: getCategoryById,
