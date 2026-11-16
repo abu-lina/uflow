@@ -90,9 +90,14 @@ export function parseDiscoveryQueryForRoute(params: URLSearchParams): RouteDisco
 // ── Writers ──────────────────────────────────────────────────────────────
 
 function splitUrl(url: string): [string, URLSearchParams] {
-  const qIndex = url.indexOf('?');
-  if (qIndex === -1) return [url, new URLSearchParams()];
-  return [url.slice(0, qIndex), new URLSearchParams(url.slice(qIndex + 1))];
+  try {
+    const u = new URL(url);
+    return [u.pathname, u.searchParams];
+  } catch {
+    const qIndex = url.indexOf('?');
+    if (qIndex === -1) return [url, new URLSearchParams()];
+    return [url.slice(0, qIndex), new URLSearchParams(url.slice(qIndex + 1))];
+  }
 }
 
 function buildUrl(path: string, params: URLSearchParams): string {

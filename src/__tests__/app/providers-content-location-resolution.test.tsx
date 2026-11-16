@@ -248,16 +248,16 @@ describe('ProvidersContent location resolution (Plan 172)', () => {
     expect(getQueryKeyLocation()).toBe('Berlin');
   });
 
-  it('resolves to LOCATION_ALL when URL has location=Everywhere', () => {
+  it('passes location=Everywhere as-is (no mapping)', () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams('section=food&location=Everywhere'));
     render(<ProvidersContent />);
-    expect(getQueryKeyLocation()).toBe('');
+    expect(getQueryKeyLocation()).toBe('Everywhere');
   });
 
-  it('resolves to LOCATION_ALL when URL has location=Überall', () => {
+  it('passes location=Überall as-is (no mapping)', () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams('section=food&location=Überall'));
     render(<ProvidersContent />);
-    expect(getQueryKeyLocation()).toBe('');
+    expect(getQueryKeyLocation()).toBe('Überall');
   });
 
   it('resolves to LOCATION_ALL when URL has location= (empty)', () => {

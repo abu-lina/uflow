@@ -1,9 +1,10 @@
 'use client';
 
 import { SlidersHorizontal, X } from 'lucide-react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { buildSearchTermLink } from '@/features/search/discoveryQuery';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Section } from '@/providers/search-provider';
 
@@ -25,16 +26,19 @@ export function SearchContextBar({
   className = '',
 }: SearchContextBarProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { t } = useLanguage();
 
   const sectionLabel =
-    section === 'food' ? t('sections.food') : section === 'ummah' ? t('sections.ummah') : t('sections.stores');
+    section === 'food'
+      ? t('sections.food')
+      : section === 'ummah'
+        ? t('sections.ummah')
+        : t('sections.stores');
 
   const allResultsKey = 'search.context.allResults';
   const allResultsLabelCandidate = t(allResultsKey);
-  const allResultsLabel = allResultsLabelCandidate === allResultsKey ? sectionLabel : allResultsLabelCandidate;
+  const allResultsLabel =
+    allResultsLabelCandidate === allResultsKey ? sectionLabel : allResultsLabelCandidate;
 
   const editKey = 'search.context.edit';
   const editLabelCandidate = t(editKey);
@@ -49,18 +53,7 @@ export function SearchContextBar({
   }, [searchTerm]);
 
   const navigateWithQuery = (nextQuery: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('section');
-
-    const trimmed = nextQuery.trim();
-    if (trimmed) {
-      params.set('q', trimmed);
-    } else {
-      params.delete('q');
-    }
-
-    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
-    router.push(nextUrl);
+    router.push(buildSearchTermLink(window.location.href, nextQuery));
   };
 
   const handleQuerySubmit = () => {

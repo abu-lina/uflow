@@ -8,10 +8,8 @@ import type { OpeningHours } from '@/types/openingHours';
  * "open now" filter is inactive. Order-preserving.
  *
  * Extracted as a standalone utility (Plan 196 bug fix) so the "Open now"
- * filter can be applied consistently to BOTH the "near me" result set
- * (useNearMeSearch) and the regular paginated search result set
- * (ProvidersContent) — previously it only worked when combined with "near me",
- * which was a bug: `open_now=1` alone had no effect on results.
+ * filter can be applied consistently to both near-me results and the regular
+ * paginated search result set (ProvidersContent).
  */
 export function filterOpenNow<T extends { opening_hours?: OpeningHours | null }>(
   items: T[],
