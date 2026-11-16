@@ -35,15 +35,17 @@ import {
 } from '@/features/admin/components/AdminStatusFilter';
 import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 
-import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
+import { useSearch } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
-import { getResultsPathForSection, resolveSectionFromRoute } from '@/config/sectionFilters';
-import { buildNearMeUrl } from '@/lib/search-params';
-import type { SearchResult, NearMeFoodResult } from '@/services/providers';
+import { resolveSectionFromRoute } from '@/config/sectionFilters';
 import {
-  SEARCH_FILTER_KEY_SET,
-  type SearchFilterKey,
-} from '@/features/search/constants/filterKeys';
+  readDiscoveryQueryInBrowser,
+  buildSectionChangeLink,
+  buildStatusChangeLink,
+  buildNearMeLink,
+} from '@/features/search/discoveryQuery';
+import type { SearchResult, NearMeFoodResult } from '@/services/providers';
+import type { SearchFilterKey } from '@/features/search/constants/filterKeys';
 
 const SearchMap = dynamic(
   () => import('@/features/search/components/SearchMap').then((mod) => mod.SearchMap),
@@ -145,48 +147,15 @@ export function ProvidersContent({
   // Priority: ?section= > infer from ?category= (only when category param IS present) > default 'food' (D9)
   const section = resolveSectionFromRoute(pathname, new URLSearchParams(searchParams.toString()));
 
-  // Resolve the location for use as a query transport value (not for display).
-  // searchParams.get('location') returns null when absent, '' when ?location= is present.
-  // We must NOT use || here because '' is a valid sentinel (LOCATION_ALL) and would be
-  // discarded as falsy, causing it to fall through to a localized display label.
-  // Mirror the same normalization that page.tsx applies server-side (Plan 044).
-  const rawLocationParam = searchParams.get('location'); // null | string
-  const normalizedUrlLocation =
-    rawLocationParam === null
-      ? LOCATION_ALL // param absent → all locations (never fall through to context)
-      : rawLocationParam === 'Everywhere' || rawLocationParam === 'Überall'
-        ? LOCATION_ALL // legacy all-locations labels → LOCATION_ALL sentinel
-        : rawLocationParam; // real city name or '' (LOCATION_ALL)
-  // Priority: defaultLocation > URL param ('' preserved) > LOCATION_ALL ('')
-  // URL is sole source of truth. Context is never used as fallback for location.
-  const location = defaultLocation ?? normalizedUrlLocation;
-  // #674: the city the list and the map are scoped to
+  const dq = readDiscoveryQueryInBrowser(pathname, new URLSearchParams(searchParams.toString()));
+  const location = defaultLocation ?? dq.location;
   const scopeCity = mapCity ?? (location || null);
-  const query = searchParams.get('q') || '';
-
-  // URL param is the canonical source of truth for category filter.
-  // Context (selectedCategory) is only used as fallback when the URL param is absent,
-  // preventing stale context from overriding navigation to a different category UUID.
-  const category = (searchParams.get('category') || null) ?? selectedCategory;
-
-  // Plan 058: Admin status filter from URL params
-  // Only applied when user is admin (non-admins can't use status filter)
-  const statusParam = searchParams.get('status');
-  const statusFromUrl: ReviewStatusFilter =
-    statusParam === 'approved' ||
-    statusParam === 'pending' ||
-    statusParam === 'rejected' ||
-    statusParam === 'needs_revision'
-      ? statusParam
-      : null;
+  const query = dq.q;
+  const category = dq.category;
+  const statusFromUrl = dq.status as ReviewStatusFilter;
   const status = isAdmin ? statusFromUrl : null;
   const reviewStatusScope = isAdmin && section !== 'ummah' && status === null ? 'all' : status;
-  const rawFilters = searchParams.get('filters') || '';
-  const filters = rawFilters
-    .split(',')
-    .map((key) => key.trim())
-    .filter((key): key is SearchFilterKey => SEARCH_FILTER_KEY_SET.has(key));
-  const normalizedFilters = filters.length > 0 ? filters : undefined;
+  const normalizedFilters = dq.filters;
   const hasMatchingInitialFilters =
     (initialFilters ?? []).join(',') === (normalizedFilters ?? []).join(',');
 
@@ -246,7 +215,6 @@ export function ProvidersContent({
     active: nearMeActive && viewMode === 'list',
     openNow: isOpenNow,
     radiusKm: DEFAULT_RADIUS_KM,
-    urlSync: false,
   });
 
   // Deferred near-me navigation: only strip the city from the path once
@@ -256,7 +224,7 @@ export function ProvidersContent({
     if (geolocation.status === 'granted') {
       pendingNearMeNavRef.current = false;
       router.push(
-        buildNearMeUrl({
+        buildNearMeLink({
           section,
           active: true,
           openNow: isOpenNow,
@@ -284,7 +252,7 @@ export function ProvidersContent({
       // D2/D4: near-me and the path city are mutually exclusive — deactivating
       // drops near_me without restoring the previous city.
       router.push(
-        buildNearMeUrl({
+        buildNearMeLink({
           section,
           active: false,
           openNow: isOpenNow,
@@ -416,33 +384,16 @@ export function ProvidersContent({
   const handleSectionChange = useCallback(
     (nextSection: Section) => {
       if (nextSection === section) return;
-      const currentParams = new URLSearchParams(window.location.search);
-      const nextParams = new URLSearchParams();
-      const q = currentParams.get('q');
-      const filters = currentParams.get('filters');
-      if (q) nextParams.set('q', q);
-      if (filters) nextParams.set('filters', filters);
-      const nextPath = getResultsPathForSection(nextSection);
-      const qs = nextParams.toString();
-      router.replace(qs ? `${nextPath}?${qs}` : nextPath, { scroll: false });
+      router.replace(buildSectionChangeLink(window.location.href, nextSection), { scroll: false });
     },
     [section, router],
   );
 
-  // Plan 058: Handle admin status filter change - update URL with new status
   const handleStatusChange = useCallback(
     (newStatus: ReviewStatusFilter) => {
-      const params = new URLSearchParams(window.location.search);
-      if (newStatus) {
-        params.set('status', newStatus);
-      } else {
-        params.delete('status');
-      }
-      params.delete('section');
-      const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      router.replace(buildStatusChangeLink(window.location.href, newStatus), { scroll: false });
     },
-    [pathname, router],
+    [router],
   );
 
   // Sync location/category/query with search context - only when they actually change

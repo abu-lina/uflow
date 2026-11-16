@@ -13,7 +13,7 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
-import { buildNearMeUrl } from '@/lib/search-params';
+import { buildNearMeLink } from '@/features/search/discoveryQuery';
 
 import { logSupabaseError } from '@/utils/errorUtils';
 
@@ -177,11 +177,7 @@ function SearchBarContent({
   useEffect(() => {
     if (!hasSyncedFromUrl.current) {
       const q = searchParams.get('q') || '';
-      // Map legacy translated values ("Überall", "Everywhere") to canonical sentinel
-      const locationParam = searchParams.get('location') || '';
-      const isAllLocations =
-        !locationParam || locationParam === 'Überall' || locationParam === 'Everywhere';
-      const location = isAllLocations ? LOCATION_ALL : locationParam;
+      const location = searchParams.get('location') ?? LOCATION_ALL;
       setSearchQuery(q);
       setSelectedLocation(location);
       hasSyncedFromUrl.current = true;
@@ -233,7 +229,7 @@ function SearchBarContent({
       const openNow = overrides.openNow ?? openNowActive;
 
       router.push(
-        buildNearMeUrl({
+        buildNearMeLink({
           section: selectedSection,
           active,
           openNow,

@@ -53,5 +53,5 @@ _Avoid_: confidence level, risk tier
 ### Discovery
 
 **Discovery Query**:
-What a visitor is looking for in the directory, parsed once from a URL. A discovery link carries exactly one Discovery Query. The module lives at `src/features/search/discoveryQuery.ts`.
-_Avoid_: search params, query string, filters object
+What a visitor is looking for in the directory: one Listing Type plus any of Category, city, free text, value filters and near-me location. A discovery link carries exactly one Discovery Query, and the link is its only source of truth.
+_Avoid_: search params, search state, filters (for the whole query)

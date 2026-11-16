@@ -34,6 +34,7 @@ vi.mock('@/providers/LanguageProvider', () => ({
 describe('SearchContextBar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.pushState({}, '', '/food?location=Berlin');
   });
 
   it('renders search input value and people summary without location field', () => {

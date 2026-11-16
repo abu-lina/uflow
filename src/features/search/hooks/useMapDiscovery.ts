@@ -7,6 +7,7 @@ import type { Section } from '@/config/sectionFilters';
 import type { SearchFilterKey } from '@/features/search/constants/filterKeys';
 import { filterOpenNow } from '@/utils/filterOpenNow';
 import type { MapPin } from '@/features/search/components/SearchMap';
+import { buildViewToggleLink } from '@/features/search/discoveryQuery';
 import type { GeolocationCoords } from '@/hooks/useGeolocation';
 
 // Re-export row types for existing consumers
@@ -155,23 +156,14 @@ export function useMapDiscovery(
     [geolocation.status, geolocation.coords],
   );
 
-  // Build a URL with the updated ?view= param, preserving all other params.
-  // When nextView matches the default, strip ?view= for cleaner URLs.
-  const buildViewUrl = useCallback(
-    (nextView: ViewMode) => {
-      const sync = urlSyncRef.current;
-      if (!sync) return null;
-      const params = new URLSearchParams(sync.searchParams.toString());
-      if (nextView === defaultViewRef.current) {
-        params.delete('view');
-      } else {
-        params.set('view', nextView);
-      }
-      const qs = params.toString();
-      return qs ? `${sync.pathname}?${qs}` : sync.pathname;
-    },
-    [], // urlSyncRef and defaultViewRef are refs — stable
-  );
+  const buildViewUrl = useCallback((nextView: ViewMode) => {
+    const sync = urlSyncRef.current;
+    if (!sync) return null;
+    const currentUrl = sync.searchParams.toString()
+      ? `${sync.pathname}?${sync.searchParams.toString()}`
+      : sync.pathname;
+    return buildViewToggleLink(currentUrl, nextView, defaultViewRef.current);
+  }, []);
 
   // Wrapped setViewMode that also syncs URL when urlSync is provided.
   const setViewMode: React.Dispatch<React.SetStateAction<ViewMode>> = useCallback(
