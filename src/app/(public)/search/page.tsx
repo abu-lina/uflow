@@ -622,6 +622,11 @@ function SearchPageContent() {
     localStorage.removeItem('selectedCity');
     sessionStorage.removeItem('selectedCity');
     sessionStorage.setItem('uflow:wo-cleared-this-session', 'true');
+    const params = new URLSearchParams(searchParams.toString());
+    if (params.has('city')) {
+      params.delete('city');
+      router.replace(`/search?${params.toString()}`);
+    }
   };
 
   const handleToggleFilter = (key: string) => {

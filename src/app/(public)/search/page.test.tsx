@@ -416,7 +416,7 @@ describe('Search page Wo defaults and selection behavior', () => {
     expect(screen.getByRole('button', { name: 'Auswahl entfernen' })).toBeInTheDocument();
   });
 
-  it('[#945 AC2] deselecting city from URL param removes city from accordion title', async () => {
+  it('[#945 AC2] deselecting city from URL param removes city from URL', async () => {
     mockExtraParams = '&city=Berlin&open=wo';
 
     render(<SearchPage />);
@@ -428,5 +428,42 @@ describe('Search page Wo defaults and selection behavior', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Auswahl entfernen' }));
 
     expect(screen.getByRole('heading', { name: 'Wo?' })).toBeInTheDocument();
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringMatching(/^\/search\?/));
+    const replacedUrl = mockReplace.mock.calls[0][0] as string;
+    expect(new URLSearchParams(replacedUrl.split('?')[1]).has('city')).toBe(false);
+  });
+
+  it('[#945 AC3] after clearing city the selection is gone and popular cities return', async () => {
+    mockExtraParams = '&city=Berlin&open=wo';
+
+    render(<SearchPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('AUSWAHL')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Auswahl entfernen' }));
+
+    expect(screen.queryByText('AUSWAHL')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('BELIEBT')).toBeInTheDocument();
+    });
+  });
+
+  it('[#945 AC4] city deselection does not inject near_me param', async () => {
+    mockExtraParams = '&city=Berlin&open=wo';
+
+    render(<SearchPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Auswahl entfernen' }));
+
+    const replacedUrl = mockReplace.mock.calls[0][0] as string;
+    expect(new URLSearchParams(replacedUrl.split('?')[1]).has('near_me')).toBe(false);
   });
 });
