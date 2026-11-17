@@ -5,7 +5,7 @@ import { Suspense, useCallback, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 // Third-party imports
-import { ChevronDown, Search, X, Loader2, MapPin, Clock, Globe } from 'lucide-react';
+import { ChevronDown, Search, X, Loader2, MapPin, Clock, Globe, ShieldCheck } from 'lucide-react';
 // Local imports
 import { useSearch, LOCATION_ALL } from '@/providers/search-provider';
 import { fetchSearchSuggestions, fetchAvailableFilters } from '@/services/providers';
@@ -13,7 +13,12 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
-import { buildNearMeLink } from '@/features/search/discoveryQuery';
+import {
+  buildNearMeLink,
+  buildTierChangeLink,
+  TIER_CYCLE,
+  type HalalTier,
+} from '@/features/search/discoveryQuery';
 
 import { logSupabaseError } from '@/utils/errorUtils';
 
@@ -80,6 +85,10 @@ function SearchBarContent({
   const [openNowActive, setOpenNowActive] = useState(
     () => new URLSearchParams(searchParams.toString()).get('open_now') === '1',
   );
+  const [activeTier, setActiveTier] = useState<HalalTier | null>(() => {
+    const p = new URLSearchParams(searchParams.toString()).get('tier');
+    return p === 'bronze' || p === 'silver' || p === 'gold' ? p : null;
+  });
 
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [suggestions, setSuggestions] = useState<
@@ -293,6 +302,18 @@ function SearchBarContent({
     setOpenNowActive(next);
     syncUrl({ openNow: next });
   }, [openNowActive, syncUrl]);
+
+  // ── Halal Tier handler ─────────────────────────────────────────────
+  const handleTierClick = useCallback(() => {
+    const idx = TIER_CYCLE.indexOf(activeTier);
+    const next = TIER_CYCLE[(idx + 1) % TIER_CYCLE.length];
+    setActiveTier(next);
+    router.push(buildTierChangeLink(window.location.href, next));
+  }, [activeTier, router]);
+
+  const tierLabel = activeTier
+    ? t(`suchen.tierFilter.${activeTier}`)
+    : t('suchen.tierFilter.chipLabel');
 
   // Geo status helpers for hint display
   const geoStatus = geolocation.status;
@@ -512,6 +533,28 @@ function SearchBarContent({
             <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
             {t('suchen.openNow.chipLabel')}
           </button>
+
+          {/* Halal tier chip — cycles null → bronze → silver → gold → null */}
+          {selectedSection === 'food' && (
+            <button
+              aria-label={
+                activeTier
+                  ? `Halal filter: ${activeTier}. Click to change.`
+                  : 'Filter by halal tier'
+              }
+              aria-pressed={Boolean(activeTier)}
+              className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+                activeTier
+                  ? 'bg-primary text-white'
+                  : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+              }`}
+              type="button"
+              onClick={handleTierClick}
+            >
+              <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+              {tierLabel}
+            </button>
+          )}
 
           {/* Filter chip (only shown when at least one filter has count > 0) */}
           {availableFilters.some((f) => f.count > 0) && (

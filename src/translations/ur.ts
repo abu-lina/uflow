@@ -226,6 +226,13 @@ export const ur = {
     openNow: {
       chipLabel: 'ابھی کھلا ہے',
     },
+    tierFilter: {
+      chipLabel: 'حلال سطح',
+      bronze: 'Bronze+',
+      silver: 'Silver+',
+      gold: 'Gold',
+      all: 'سب',
+    },
     empty: {
       noNearby: 'بڑا فاصلہ آزمائیں یا بعد میں دوبارہ چیک کریں۔',
     },

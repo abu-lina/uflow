@@ -1,9 +1,10 @@
 'use client';
 
-import { MapPin, Clock, ChevronDown } from 'lucide-react';
+import { MapPin, Clock, ChevronDown, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { GeolocationStatus } from '@/hooks/useGeolocation';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
+import { TIER_CYCLE, type HalalTier } from '@/features/search/discoveryQuery';
 
 interface DiscoveryFilterBarProps {
   geoStatus: GeolocationStatus;
@@ -18,6 +19,10 @@ interface DiscoveryFilterBarProps {
   onLocationClick?: () => void;
   /** Optional admin-only content rendered inline with the filter bar. */
   adminSlot?: React.ReactNode;
+  /** Active halal tier filter; undefined or null means no filter. */
+  activeTier?: HalalTier | null;
+  /** Called with the next tier (or null to clear) when the chip is tapped. */
+  onTierChange?: (tier: HalalTier | null) => void;
 }
 
 /**
@@ -38,8 +43,21 @@ export function DiscoveryFilterBar({
   locationCity,
   onLocationClick,
   adminSlot,
+  activeTier,
+  onTierChange,
 }: DiscoveryFilterBarProps) {
   const { t } = useLanguage();
+
+  const handleTierClick = () => {
+    if (!onTierChange) return;
+    const idx = TIER_CYCLE.indexOf(activeTier ?? null);
+    const next = TIER_CYCLE[(idx + 1) % TIER_CYCLE.length];
+    onTierChange(next);
+  };
+
+  const tierLabel = activeTier
+    ? t(`suchen.tierFilter.${activeTier}`)
+    : t('suchen.tierFilter.chipLabel');
   const locationLabel = locationCity || t('search.everywhere');
 
   const showPermissionDenied =
@@ -98,6 +116,25 @@ export function DiscoveryFilterBar({
           <Clock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
           {t('suchen.openNow.chipLabel')}
         </button>
+
+        {onTierChange && (
+          <button
+            aria-label={
+              activeTier ? `Halal filter: ${activeTier}. Click to change.` : 'Filter by halal tier'
+            }
+            aria-pressed={Boolean(activeTier)}
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+              activeTier
+                ? 'bg-primary text-white'
+                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+            }`}
+            type="button"
+            onClick={handleTierClick}
+          >
+            <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+            {tierLabel}
+          </button>
+        )}
 
         {adminSlot}
       </div>

@@ -226,6 +226,13 @@ export const de = {
     openNow: {
       chipLabel: 'Jetzt geöffnet',
     },
+    tierFilter: {
+      chipLabel: 'Halal-Stufe',
+      bronze: 'Bronze+',
+      silver: 'Silver+',
+      gold: 'Gold',
+      all: 'Alle',
+    },
     empty: {
       noNearby: 'Versuche einen größeren Radius oder schau später wieder vorbei.',
     },

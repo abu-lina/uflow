@@ -12,6 +12,7 @@ import type { Provider, SearchResult, AdminSearchOptions, ProviderSearchResponse
 import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
+import type { HalalTier } from '@/features/search/discoveryQuery';
 
 async function loadProviderRelationIds(
   providerIds: string[],
@@ -113,6 +114,7 @@ export async function searchProvidersAndCommunityServices(
   section?: Section,
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
+  minHalalTier?: HalalTier,
 ): Promise<ProviderSearchResponse> {
   try {
     const normalizedCategory = category || '';
@@ -140,6 +142,7 @@ export async function searchProvidersAndCommunityServices(
             'food',
             barakahFilters,
             client,
+            minHalalTier,
           );
         case 'store':
           return await searchProvidersOnly(
@@ -152,6 +155,7 @@ export async function searchProvidersAndCommunityServices(
             'store',
             barakahFilters,
             client,
+            undefined, // tier filter only applies to food section
           );
         default:
           // D9: default section is FOOD
@@ -165,6 +169,7 @@ export async function searchProvidersAndCommunityServices(
             'food',
             barakahFilters,
             client,
+            minHalalTier,
           );
       }
     }
@@ -180,6 +185,7 @@ export async function searchProvidersAndCommunityServices(
       'food',
       barakahFilters,
       client,
+      minHalalTier,
     );
   } catch (error) {
     // Log error for debugging
@@ -228,11 +234,12 @@ async function searchProvidersOnly(
   listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
+  minHalalTier?: HalalTier,
 ): Promise<ProviderSearchResponse> {
   const offset = page * pageSize;
   const limit = pageSize + 1; // Fetch one extra to check if there are more
 
-  const { providers, totalCount } = await searchProviders(
+  const { providers: rawProviders, totalCount } = await searchProviders(
     query,
     category,
     location,
@@ -242,9 +249,11 @@ async function searchProvidersOnly(
     listingType,
     barakahFilters,
     client,
+    minHalalTier,
   );
-  const hasMore = providers.length > pageSize;
-  const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
+
+  const hasMore = rawProviders.length > pageSize;
+  const results = rawProviders.slice(0, pageSize).map(transformProviderToSearchResult);
   const sortedResults = sortByCreationDate(results);
 
   return { results: sortedResults, hasMore, totalCount };
@@ -267,6 +276,7 @@ export async function searchProviders(
   listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
+  minHalalTier?: HalalTier,
 ): Promise<{ providers: Provider[]; totalCount: number }> {
   // #254: a valid category filter matches primary AND secondary categories
   // via the provider_categories junction. The !inner embed must only be
@@ -289,9 +299,15 @@ export async function searchProviders(
   const baseSelectFields = adminOptions?.isAdmin
     ? '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images), review_status, review_feedback'
     : '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)';
+  // #939: When tier filtering is active, use !inner to INNER JOIN
+  // food_providers — this excludes providers without a food_providers row
+  // (tier = null). Column-level filters are applied after the query is built.
+  const tierEmbed = minHalalTier
+    ? ', food_providers!inner(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
+    : '';
   const selectFields = hasCategoryFilter
-    ? `${baseSelectFields}, provider_categories!inner(category_id)`
-    : baseSelectFields;
+    ? `${baseSelectFields}${tierEmbed}, provider_categories!inner(category_id)`
+    : `${baseSelectFields}${tierEmbed}`;
 
   // Plan 058: admin queries must use the service-role client to bypass RLS.
   // The caller (API route) passes the admin client directly via the `client` parameter
@@ -321,6 +337,29 @@ export async function searchProviders(
   if (barakahFilters && barakahFilters.length > 0) {
     for (const filterKey of barakahFilters) {
       req = req.eq(SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN[filterKey], true);
+    }
+  }
+
+  // #939: Apply tier-level filters on the food_providers embed.
+  // The !inner join already excludes providers without a food_providers row.
+  if (minHalalTier) {
+    if (minHalalTier === 'gold') {
+      req = req
+        .eq('food_providers.has_certificate', true)
+        .not('food_providers.certificate_url', 'is', null);
+    } else if (minHalalTier === 'silver') {
+      // silver+ = gold OR (onsite + attestation).
+      // Gold = has_certificate + certificate_url, no attestation needed.
+      req = req.or(
+        'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.eq.onsite,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
+        { foreignTable: 'food_providers' },
+      );
+    } else {
+      // bronze+ = gold OR (any verification_method + attestation)
+      req = req.or(
+        'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.not.is.null,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
+        { foreignTable: 'food_providers' },
+      );
     }
   }
 

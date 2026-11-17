@@ -10,6 +10,7 @@ import {
   buildSearchTermLink,
   buildNearMeLink,
   buildViewToggleLink,
+  buildTierChangeLink,
   readDiscoveryQueryInBrowser,
   buildResultsUrl,
   buildSearchResultsUrl,
@@ -440,6 +441,74 @@ describe('Discovery Query module', () => {
         category: undefined,
       });
       expect(result.category).toBeNull();
+    });
+  });
+
+  // ── Halal tier filter ────────────────────────────────────────────────
+
+  describe('tier param in readDiscoveryQueryInBrowser', () => {
+    it('parses bronze as a valid tier', () => {
+      const result = readDiscoveryQueryInBrowser('/food', new URLSearchParams('tier=bronze'));
+      expect(result.tier).toBe('bronze');
+    });
+
+    it('parses silver as a valid tier', () => {
+      const result = readDiscoveryQueryInBrowser('/food', new URLSearchParams('tier=silver'));
+      expect(result.tier).toBe('silver');
+    });
+
+    it('parses gold as a valid tier', () => {
+      const result = readDiscoveryQueryInBrowser('/food', new URLSearchParams('tier=gold'));
+      expect(result.tier).toBe('gold');
+    });
+
+    it('returns undefined for an invalid tier value', () => {
+      const result = readDiscoveryQueryInBrowser('/food', new URLSearchParams('tier=platinum'));
+      expect(result.tier).toBeUndefined();
+    });
+
+    it('returns undefined when tier param is absent', () => {
+      const result = readDiscoveryQueryInBrowser('/food', new URLSearchParams());
+      expect(result.tier).toBeUndefined();
+    });
+  });
+
+  describe('tier param in parseDiscoveryQueryForRoute', () => {
+    it('parses silver tier from route params', () => {
+      const result = parseDiscoveryQueryForRoute(new URLSearchParams('tier=silver'));
+      expect(result.tier).toBe('silver');
+    });
+
+    it('returns undefined for invalid tier in route params', () => {
+      const result = parseDiscoveryQueryForRoute(new URLSearchParams('tier=invalid'));
+      expect(result.tier).toBeUndefined();
+    });
+
+    it('returns undefined when tier is absent in route params', () => {
+      const result = parseDiscoveryQueryForRoute(new URLSearchParams());
+      expect(result.tier).toBeUndefined();
+    });
+  });
+
+  describe('buildTierChangeLink', () => {
+    it('adds tier param when tier is provided', () => {
+      const link = buildTierChangeLink('/food?q=kebab', 'silver');
+      expect(link).toBe('/food?q=kebab&tier=silver');
+    });
+
+    it('removes tier param when tier is null', () => {
+      const link = buildTierChangeLink('/food?q=kebab&tier=gold', null);
+      expect(link).toBe('/food?q=kebab');
+    });
+
+    it('replaces existing tier param', () => {
+      const link = buildTierChangeLink('/food?tier=bronze', 'gold');
+      expect(link).toBe('/food?tier=gold');
+    });
+
+    it('preserves other params', () => {
+      const link = buildTierChangeLink('/food?q=test&filters=muslim', 'bronze');
+      expect(link).toBe('/food?q=test&filters=muslim&tier=bronze');
     });
   });
 });

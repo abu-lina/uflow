@@ -90,6 +90,7 @@ describe('GET /api/providers/search', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
     );
   });
 
@@ -129,6 +130,7 @@ describe('GET /api/providers/search', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
     );
   });
 
@@ -146,6 +148,7 @@ describe('GET /api/providers/search', () => {
       'Berlin',
       0,
       12,
+      undefined,
       undefined,
       undefined,
       undefined,
@@ -171,6 +174,7 @@ describe('GET /api/providers/search', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
     );
   });
 
@@ -187,6 +191,7 @@ describe('GET /api/providers/search', () => {
       '',
       0,
       12,
+      undefined,
       undefined,
       undefined,
       undefined,
@@ -210,6 +215,7 @@ describe('GET /api/providers/search', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
     );
   });
 
@@ -225,6 +231,7 @@ describe('GET /api/providers/search', () => {
       'Überall',
       0,
       12,
+      undefined,
       undefined,
       undefined,
       undefined,
@@ -300,6 +307,7 @@ describe('GET /api/providers/search', () => {
         undefined,
         undefined,
         mockAdminClient,
+        undefined,
       );
     });
 
@@ -331,6 +339,7 @@ describe('GET /api/providers/search', () => {
         'food',
         undefined,
         mockAdminClient,
+        undefined,
       );
     });
 
@@ -364,6 +373,7 @@ describe('GET /api/providers/search', () => {
         undefined,
         ['muslim', 'parken'],
         undefined,
+        undefined,
       );
     });
 
@@ -385,6 +395,7 @@ describe('GET /api/providers/search', () => {
         undefined,
         undefined,
         ['muslim', 'parken'],
+        undefined,
         undefined,
       );
     });

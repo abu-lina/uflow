@@ -221,6 +221,13 @@ export const ar = {
     openNow: {
       chipLabel: 'مفتوح الآن',
     },
+    tierFilter: {
+      chipLabel: 'مستوى الحلال',
+      bronze: 'Bronze+',
+      silver: 'Silver+',
+      gold: 'Gold',
+      all: 'الكل',
+    },
     empty: {
       noNearby: 'جرّب نطاقًا أوسع أو تحقق لاحقًا.',
     },

@@ -224,6 +224,13 @@ export const ps = {
     openNow: {
       chipLabel: 'اوس خلاص دی',
     },
+    tierFilter: {
+      chipLabel: 'حلال کچه',
+      bronze: 'Bronze+',
+      silver: 'Silver+',
+      gold: 'Gold',
+      all: 'ټول',
+    },
     empty: {
       noNearby: 'لوی واټن هڅه وکړئ یا وروسته بیا وګورئ.',
     },

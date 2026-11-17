@@ -11,6 +11,11 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'suchen.openNow.chipLabel': 'Open now',
         'search.everywhere': 'Everywhere',
         'suchen.accordions.wo': 'Wo',
+        'suchen.tierFilter.chipLabel': 'Halal Level',
+        'suchen.tierFilter.bronze': 'Bronze+',
+        'suchen.tierFilter.silver': 'Silver+',
+        'suchen.tierFilter.gold': 'Gold',
+        'suchen.tierFilter.all': 'All',
       };
       return map[key] ?? key;
     },
@@ -75,5 +80,43 @@ describe('DiscoveryFilterBar location chip', () => {
     render(<DiscoveryFilterBar {...baseProps} locationCity="Stuttgart" />);
     expect(screen.queryByRole('button', { name: /Wo:/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Near me' })).toBeInTheDocument();
+  });
+});
+
+describe('DiscoveryFilterBar halal tier chip', () => {
+  it('hides the tier chip when onTierChange is not provided', () => {
+    render(<DiscoveryFilterBar {...baseProps} />);
+    expect(screen.queryByRole('button', { name: /halal/i })).not.toBeInTheDocument();
+  });
+
+  it('renders the tier chip when onTierChange is provided', () => {
+    render(<DiscoveryFilterBar {...baseProps} onTierChange={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Filter by halal tier' })).toBeInTheDocument();
+  });
+
+  it('shows the active tier in the aria-label when a tier is selected', () => {
+    render(<DiscoveryFilterBar {...baseProps} activeTier="silver" onTierChange={vi.fn()} />);
+    expect(
+      screen.getByRole('button', { name: 'Halal filter: silver. Click to change.' }),
+    ).toBeInTheDocument();
+  });
+
+  it('marks the tier chip aria-pressed true when a tier is active', () => {
+    render(<DiscoveryFilterBar {...baseProps} activeTier="gold" onTierChange={vi.fn()} />);
+    const chip = screen.getByRole('button', { name: 'Halal filter: gold. Click to change.' });
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('marks the tier chip aria-pressed false when no tier is active', () => {
+    render(<DiscoveryFilterBar {...baseProps} onTierChange={vi.fn()} />);
+    const chip = screen.getByRole('button', { name: 'Filter by halal tier' });
+    expect(chip).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('calls onTierChange when tier chip is clicked', () => {
+    const onTierChange = vi.fn();
+    render(<DiscoveryFilterBar {...baseProps} onTierChange={onTierChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Filter by halal tier' }));
+    expect(onTierChange).toHaveBeenCalledTimes(1);
   });
 });

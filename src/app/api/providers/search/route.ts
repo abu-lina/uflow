@@ -93,13 +93,14 @@ export async function GET(request: Request): Promise<NextResponse> {
         dq.section,
         dq.filters,
         adminClient,
+        dq.tier,
       ),
     );
 
     // Apply caching headers per Plan 010/058 caching semantics
     // Admin-filtered responses must use no-store to prevent CDN from caching admin-only data
     const cacheControl =
-      dq.q || dq.status || dq.filters
+      dq.q || dq.status || dq.filters || dq.tier
         ? 'no-store'
         : 'public, s-maxage=60, stale-while-revalidate=30';
 

@@ -43,7 +43,9 @@ import {
   buildSectionChangeLink,
   buildStatusChangeLink,
   buildNearMeLink,
+  buildTierChangeLink,
 } from '@/features/search/discoveryQuery';
+import type { HalalTier } from '@/features/search/discoveryQuery';
 import type { SearchResult, NearMeFoodResult } from '@/services/providers';
 import type { SearchFilterKey } from '@/features/search/constants/filterKeys';
 
@@ -70,6 +72,7 @@ async function fetchProvidersFromAPI(
   status?: ReviewStatusFilter | 'all',
   section?: Section,
   filters?: SearchFilterKey[],
+  tier?: HalalTier,
 ): Promise<{ results: SearchResult[]; hasMore: boolean; totalCount: number }> {
   const params = new URLSearchParams();
   if (query) params.set('q', query);
@@ -82,6 +85,7 @@ async function fetchProvidersFromAPI(
   // Plan 089: Include section filter
   if (section) params.set('section', section);
   if (filters && filters.length > 0) params.set('filters', filters.join(','));
+  if (tier) params.set('tier', tier);
 
   const response = await fetch(`/api/providers/search?${params.toString()}`);
   if (!response.ok) {
@@ -156,6 +160,7 @@ export function ProvidersContent({
   const status = isAdmin ? statusFromUrl : null;
   const reviewStatusScope = isAdmin && section !== 'ummah' && status === null ? 'all' : status;
   const normalizedFilters = dq.filters;
+  const activeTier = dq.tier;
   const hasMatchingInitialFilters =
     (initialFilters ?? []).join(',') === (normalizedFilters ?? []).join(',');
 
@@ -284,6 +289,7 @@ export function ProvidersContent({
         reviewStatusScope,
         section,
         normalizedFilters?.join(',') ?? '',
+        activeTier ?? '',
       ],
       queryFn: ({ pageParam = 0 }) =>
         fetchProvidersFromAPI(
@@ -295,6 +301,7 @@ export function ProvidersContent({
           reviewStatusScope,
           section,
           normalizedFilters,
+          activeTier,
         ),
       getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length : undefined),
       initialPageParam: 0,
@@ -392,6 +399,13 @@ export function ProvidersContent({
   const handleStatusChange = useCallback(
     (newStatus: ReviewStatusFilter) => {
       router.replace(buildStatusChangeLink(window.location.href, newStatus), { scroll: false });
+    },
+    [router],
+  );
+
+  const handleTierChange = useCallback(
+    (tier: HalalTier | null) => {
+      router.replace(buildTierChangeLink(window.location.href, tier), { scroll: false });
     },
     [router],
   );
@@ -644,6 +658,7 @@ export function ProvidersContent({
           filterBarSlot={
             section === 'food' ? (
               <DiscoveryFilterBar
+                activeTier={activeTier}
                 adminSlot={
                   isAdmin ? (
                     <AdminStatusFilter
@@ -657,6 +672,7 @@ export function ProvidersContent({
                 nearMeActive={nearMeActive}
                 openNowActive={isOpenNow}
                 onLocationClick={() => router.push(`/search?section=${section}&open=wo`)}
+                onTierChange={handleTierChange}
                 onToggleNearMe={handleToggleNearMe}
                 onToggleOpenNow={() => setIsOpenNow((v) => !v)}
               />
