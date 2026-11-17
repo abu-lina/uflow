@@ -12,6 +12,15 @@ import type { Provider, SearchResult, AdminSearchOptions, ProviderSearchResponse
 import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
+import { computeSealTier } from '@/features/providers/components/ProofTierCard';
+import type { HalalTier } from '@/features/search/discoveryQuery';
+
+const TIER_LEVELS: Record<HalalTier, number> = { bronze: 1, silver: 2, gold: 3 };
+
+export function tierMatchesMinimum(providerTier: HalalTier | null, minimum: HalalTier): boolean {
+  if (!providerTier) return false;
+  return TIER_LEVELS[providerTier] >= TIER_LEVELS[minimum];
+}
 
 async function loadProviderRelationIds(
   providerIds: string[],
@@ -113,6 +122,7 @@ export async function searchProvidersAndCommunityServices(
   section?: Section,
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
+  minHalalTier?: HalalTier,
 ): Promise<ProviderSearchResponse> {
   try {
     const normalizedCategory = category || '';
@@ -140,6 +150,7 @@ export async function searchProvidersAndCommunityServices(
             'food',
             barakahFilters,
             client,
+            minHalalTier,
           );
         case 'store':
           return await searchProvidersOnly(
@@ -152,6 +163,7 @@ export async function searchProvidersAndCommunityServices(
             'store',
             barakahFilters,
             client,
+            minHalalTier,
           );
         default:
           // D9: default section is FOOD
@@ -165,6 +177,7 @@ export async function searchProvidersAndCommunityServices(
             'food',
             barakahFilters,
             client,
+            minHalalTier,
           );
       }
     }
@@ -180,6 +193,7 @@ export async function searchProvidersAndCommunityServices(
       'food',
       barakahFilters,
       client,
+      minHalalTier,
     );
   } catch (error) {
     // Log error for debugging
@@ -228,11 +242,12 @@ async function searchProvidersOnly(
   listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
+  minHalalTier?: HalalTier,
 ): Promise<ProviderSearchResponse> {
   const offset = page * pageSize;
   const limit = pageSize + 1; // Fetch one extra to check if there are more
 
-  const { providers, totalCount } = await searchProviders(
+  const { providers: rawProviders, totalCount } = await searchProviders(
     query,
     category,
     location,
@@ -243,6 +258,22 @@ async function searchProvidersOnly(
     barakahFilters,
     client,
   );
+
+  // Apply tier filter in TypeScript to exactly match computeSealTier() logic.
+  const providers = minHalalTier
+    ? rawProviders.filter((p) =>
+        tierMatchesMinimum(
+          computeSealTier(
+            p.verification_method,
+            p.has_certificate,
+            { noAlcohol: p.no_alcohol, noPork: p.no_pork, noGambling: p.no_gambling },
+            p.certificate_url,
+          ),
+          minHalalTier,
+        ),
+      )
+    : rawProviders;
+
   const hasMore = providers.length > pageSize;
   const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
   const sortedResults = sortByCreationDate(results);
