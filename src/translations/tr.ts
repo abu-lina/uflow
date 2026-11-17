@@ -1278,6 +1278,9 @@ export const tr = {
     },
     popup: {
       closeAria: 'Kapat',
+      halalMeatDefinitionTitle: 'Helal et nedir?',
+      halalMeatDefinition:
+        "Helal et, İslami kurallara göre kesilen hayvanlardan elde edilir: Allah'ın adı anılır, keskin bir bıçakla hızlı bir kesim yapılır ve kan tamamen akıtılır. Bu, etin Müslümanlar için helal olmasını sağlar.",
     },
     container: {
       addressTapToNavigate: 'Navigasyon için adrese dokunun',

@@ -1259,6 +1259,9 @@ export const ar = {
     },
     popup: {
       closeAria: 'إغلاق',
+      halalMeatDefinitionTitle: 'ما هو اللحم الحلال؟',
+      halalMeatDefinition:
+        'اللحم الحلال يأتي من حيوانات ذُبحت وفقاً للشريعة الإسلامية: يُذكر اسم الله، ويُستخدم سكين حاد لذبح سريع، ويُصفّى الدم بالكامل. هذا يضمن أن اللحم مباح (حلال) للمسلمين.',
     },
     container: {
       addressTapToNavigate: 'اضغط على العنوان للتنقل',

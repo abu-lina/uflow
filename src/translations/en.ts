@@ -1269,6 +1269,9 @@ export const en = {
     },
     popup: {
       closeAria: 'Close',
+      halalMeatDefinitionTitle: 'What is halal meat?',
+      halalMeatDefinition:
+        'Halal meat comes from animals slaughtered according to Islamic guidelines: the name of Allah is spoken, a sharp knife is used for a swift cut, and the blood is fully drained. This ensures the meat is permissible (halal) for Muslims to consume.',
     },
     container: {
       addressTapToNavigate: 'Tap address to navigate',
