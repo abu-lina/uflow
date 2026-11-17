@@ -310,7 +310,6 @@ export function ProvidersContent({
       // Plan 228: Gate on section match to prevent stale data when switching sections
       ...((reviewStatusScope === null || reviewStatusScope === 'approved') &&
         initialData &&
-        !activeTier &&
         hasMatchingInitialFilters &&
         section === initialSection && {
           initialData: {

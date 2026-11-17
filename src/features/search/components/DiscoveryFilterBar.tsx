@@ -4,9 +4,7 @@ import { MapPin, Clock, ChevronDown, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { GeolocationStatus } from '@/hooks/useGeolocation';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
-import type { HalalTier } from '@/features/search/discoveryQuery';
-
-const TIER_CYCLE: Array<HalalTier | null> = [null, 'bronze', 'silver', 'gold'];
+import { TIER_CYCLE, type HalalTier } from '@/features/search/discoveryQuery';
 
 interface DiscoveryFilterBarProps {
   geoStatus: GeolocationStatus;
@@ -119,19 +117,24 @@ export function DiscoveryFilterBar({
           {t('suchen.openNow.chipLabel')}
         </button>
 
-        <button
-          aria-pressed={Boolean(activeTier)}
-          className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
-            activeTier
-              ? 'bg-primary text-white'
-              : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
-          }`}
-          type="button"
-          onClick={handleTierClick}
-        >
-          <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-          {tierLabel}
-        </button>
+        {onTierChange && (
+          <button
+            aria-label={
+              activeTier ? `Halal filter: ${activeTier}. Click to change.` : 'Filter by halal tier'
+            }
+            aria-pressed={Boolean(activeTier)}
+            className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
+              activeTier
+                ? 'bg-primary text-white'
+                : 'border border-gray-200 bg-white text-content-muted shadow-sm hover:border-gray-300 hover:text-content'
+            }`}
+            type="button"
+            onClick={handleTierClick}
+          >
+            <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+            {tierLabel}
+          </button>
+        )}
 
         {adminSlot}
       </div>

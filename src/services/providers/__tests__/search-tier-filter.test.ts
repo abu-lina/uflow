@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { computeSealTier } from '@/features/providers/components/ProofTierCard';
-import { tierMatchesMinimum } from '../search';
 
 // computeSealTier agreement — the TypeScript filter must agree with the UI tier derivation.
 const TIER_CASES = [
@@ -85,31 +84,5 @@ describe('computeSealTier agreement', () => {
       row.certificate_url,
     );
     expect(tier).toBe(row.expected);
-  });
-});
-
-describe('tierMatchesMinimum', () => {
-  it('bronze minimum includes bronze, silver, and gold providers', () => {
-    expect(tierMatchesMinimum('bronze', 'bronze')).toBe(true);
-    expect(tierMatchesMinimum('silver', 'bronze')).toBe(true);
-    expect(tierMatchesMinimum('gold', 'bronze')).toBe(true);
-  });
-
-  it('silver minimum includes silver and gold only', () => {
-    expect(tierMatchesMinimum('bronze', 'silver')).toBe(false);
-    expect(tierMatchesMinimum('silver', 'silver')).toBe(true);
-    expect(tierMatchesMinimum('gold', 'silver')).toBe(true);
-  });
-
-  it('gold minimum includes gold only', () => {
-    expect(tierMatchesMinimum('bronze', 'gold')).toBe(false);
-    expect(tierMatchesMinimum('silver', 'gold')).toBe(false);
-    expect(tierMatchesMinimum('gold', 'gold')).toBe(true);
-  });
-
-  it('null provider tier never matches any minimum', () => {
-    expect(tierMatchesMinimum(null, 'bronze')).toBe(false);
-    expect(tierMatchesMinimum(null, 'silver')).toBe(false);
-    expect(tierMatchesMinimum(null, 'gold')).toBe(false);
   });
 });

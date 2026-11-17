@@ -14,13 +14,6 @@ import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
 import type { HalalTier } from '@/features/search/discoveryQuery';
 
-const TIER_LEVELS: Record<HalalTier, number> = { bronze: 1, silver: 2, gold: 3 };
-
-export function tierMatchesMinimum(providerTier: HalalTier | null, minimum: HalalTier): boolean {
-  if (!providerTier) return false;
-  return TIER_LEVELS[providerTier] >= TIER_LEVELS[minimum];
-}
-
 async function loadProviderRelationIds(
   providerIds: string[],
   client?: SupabaseClient,
@@ -162,7 +155,7 @@ export async function searchProvidersAndCommunityServices(
             'store',
             barakahFilters,
             client,
-            minHalalTier,
+            undefined, // tier filter only applies to food section
           );
         default:
           // D9: default section is FOOD

@@ -13,12 +13,14 @@ import { useLanguage } from '@/providers/LanguageProvider';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermissionHint';
-import { buildNearMeLink, buildTierChangeLink } from '@/features/search/discoveryQuery';
-import type { HalalTier } from '@/features/search/discoveryQuery';
+import {
+  buildNearMeLink,
+  buildTierChangeLink,
+  TIER_CYCLE,
+  type HalalTier,
+} from '@/features/search/discoveryQuery';
 
 import { logSupabaseError } from '@/utils/errorUtils';
-
-const TIER_CYCLE: Array<HalalTier | null> = [null, 'bronze', 'silver', 'gold'];
 
 interface SearchBarProps {
   className?: string;
@@ -535,6 +537,11 @@ function SearchBarContent({
           {/* Halal tier chip — cycles null → bronze → silver → gold → null */}
           {selectedSection === 'food' && (
             <button
+              aria-label={
+                activeTier
+                  ? `Halal filter: ${activeTier}. Click to change.`
+                  : 'Filter by halal tier'
+              }
               aria-pressed={Boolean(activeTier)}
               className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md px-3 font-inter-tight text-sm font-semibold uppercase tracking-wide transition-colors ${
                 activeTier
