@@ -171,13 +171,18 @@ export function ProvidersContent({
 
   const geolocation = useGeolocation();
 
-  // Auto-trigger geolocation when near_me=1 arrives via URL
+  // Sync nearMeActive with the URL param (set/cleared by desktop header chip)
   useEffect(() => {
     if (nearMeFromUrl && !nearMeActive) {
       setNearMeActive(true);
     }
     if (nearMeFromUrl && geolocation.status === 'idle') {
       geolocation.requestLocation();
+    }
+    if (!nearMeFromUrl && nearMeActive) {
+      pendingNearMeNavRef.current = false;
+      setNearMeActive(false);
+      geolocation.reset();
     }
   }, [nearMeFromUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
