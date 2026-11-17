@@ -199,10 +199,15 @@ export async function shouldRedirectToWaitlist(
     return false;
   }
 
-  // Special case: Legal pages must always be publicly accessible (GDPR/TMG compliance)
+  // Special case: Public informational and legal pages must always be accessible
   // These pages should be accessible regardless of app launch status or waitlist token
-  if (pathname === '/terms' || pathname === '/privacy-policy' || pathname === '/impressum') {
-    return false; // Always allow access to legal pages
+  if (
+    pathname === '/about' ||
+    pathname === '/terms' ||
+    pathname === '/privacy-policy' ||
+    pathname === '/impressum'
+  ) {
+    return false; // Always allow access to informational/legal pages
   }
 
   // Special case: Authentication routes must always be publicly accessible
