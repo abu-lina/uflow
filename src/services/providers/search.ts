@@ -12,7 +12,7 @@ import type { Provider, SearchResult, AdminSearchOptions, ProviderSearchResponse
 import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
-import { computeSealTier } from '@/features/providers/components/ProofTierCard';
+import { computeSealTier } from '@/features/providers/computeSealTier';
 import type { HalalTier } from '@/features/search/discoveryQuery';
 
 const TIER_LEVELS: Record<HalalTier, number> = { bronze: 1, silver: 2, gold: 3 };
