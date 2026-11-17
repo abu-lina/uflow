@@ -1271,7 +1271,7 @@ export const en = {
       closeAria: 'Close',
       halalMeatDefinitionTitle: 'What is halal meat?',
       halalMeatDefinition:
-        'Halal meat comes from animals slaughtered according to Islamic guidelines:\n\n• Bismillah (the name of God) is spoken\n• A sharp knife makes a swift cut\n• The blood is fully drained\n\nMeat from animals stunned before slaughter is NOT considered halal.',
+        'Halal meat comes from animals slaughtered according to Islamic guidelines:\n\n• <strong>Bismillah</strong> (the name of God) is spoken\n• A sharp knife makes a swift cut\n• The blood is fully drained\n\nMeat from animals stunned before slaughter is <strong>NOT</strong> considered halal.',
     },
     container: {
       addressTapToNavigate: 'Tap address to navigate',
