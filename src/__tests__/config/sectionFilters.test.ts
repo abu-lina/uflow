@@ -7,14 +7,8 @@ import {
   SECTION_FILTER_CONFIG,
   getDefaultFilters,
   getAllowedFilters,
-  inferSectionFromCategory,
-  resolveSectionFromRoute,
   type SectionFilter,
 } from '@/config/sectionFilters';
-
-const ESSEN_TRINKEN_ID = '20c10efe-404b-4a39-bb81-5089a0332d78';
-const GEMEINSCHAFT_SPENDEN_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
-const DIENSTLEISTUNGEN_ID = 'some-other-uuid-business';
 
 describe('SECTION_FILTER_CONFIG', () => {
   it('exports config for food, ummah, and business sections', () => {
@@ -102,93 +96,5 @@ describe('getAllowedFilters', () => {
     expect(food).toContain('muslim_owned');
     // optional
     expect(food).toContain('makes_donations');
-  });
-});
-
-describe('inferSectionFromCategory', () => {
-  it('returns food for Essen & Trinken category UUID', () => {
-    expect(inferSectionFromCategory(ESSEN_TRINKEN_ID)).toBe('food');
-  });
-
-  it('returns ummah for Gemeinschaft & Spenden category UUID', () => {
-    expect(inferSectionFromCategory(GEMEINSCHAFT_SPENDEN_ID)).toBe('ummah');
-  });
-
-  it('returns business for any other category UUID', () => {
-    expect(inferSectionFromCategory(DIENSTLEISTUNGEN_ID)).toBe('store');
-  });
-
-  it('returns business for null/undefined category', () => {
-    expect(inferSectionFromCategory(null)).toBe('store');
-    expect(inferSectionFromCategory(undefined)).toBe('store');
-  });
-});
-
-describe('resolveSectionFromRoute', () => {
-  it('resolves stores pathname to business when section and category are absent', () => {
-    const params = new URLSearchParams('');
-    expect(resolveSectionFromRoute('/stores', params)).toBe('store');
-  });
-
-  it('resolves ummah pathname when section and category are absent', () => {
-    const params = new URLSearchParams('');
-    expect(resolveSectionFromRoute('/ummah', params)).toBe('ummah');
-  });
-
-  it('keeps explicit section as highest priority', () => {
-    const params = new URLSearchParams('section=food');
-    expect(resolveSectionFromRoute('/ummah', params)).toBe('food');
-  });
-
-  // #254: ?category= carries leaf categories (cuisines, store types) on
-  // section routes since 065c8abe, not just the two 'all' parents. The
-  // pathname is the section authority there; inference is only a fallback
-  // for genuinely sectionless legacy URLs like /providers?category=...
-  const KEBAB_DOENER_CUISINE_ID = '9026edb0-490a-4395-a3d7-27c5eacde0e2';
-  const STORE_CATEGORY_ID = 'a0000000-0000-4000-8000-000000000001';
-
-  it('pathname wins over a cuisine category on /food', () => {
-    const params = new URLSearchParams(`category=${KEBAB_DOENER_CUISINE_ID}`);
-    expect(resolveSectionFromRoute('/food', params)).toBe('food');
-  });
-
-  it('pathname wins over a cuisine category on /ummah', () => {
-    const params = new URLSearchParams(`category=${KEBAB_DOENER_CUISINE_ID}`);
-    expect(resolveSectionFromRoute('/ummah', params)).toBe('ummah');
-  });
-
-  it('pathname wins over a store category on /stores', () => {
-    const params = new URLSearchParams(`category=${STORE_CATEGORY_ID}`);
-    expect(resolveSectionFromRoute('/stores', params)).toBe('store');
-  });
-
-  it('pathname wins over category inference even for a known parent category', () => {
-    // Flips the Plan-111 expectation 'uses category inference before pathname
-    // fallback': that test assumed ?category= only ever carried the two
-    // 'all'-section parents, which was true until cuisine UUIDs started
-    // riding this param (#254). The invariant it protected — category-as-
-    // section-signal — is preserved on sectionless routes (next test).
-    const params = new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`);
-    expect(resolveSectionFromRoute('/stores', params)).toBe('store');
-  });
-
-  it('still infers section from category on sectionless /providers URLs', () => {
-    const params = new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`);
-    expect(resolveSectionFromRoute('/providers', params)).toBe('food');
-  });
-
-  it('still infers ummah from Gemeinschaft & Spenden on sectionless /providers URLs', () => {
-    const params = new URLSearchParams(`category=${GEMEINSCHAFT_SPENDEN_ID}`);
-    expect(resolveSectionFromRoute('/providers', params)).toBe('ummah');
-  });
-
-  it('resolves /food city+category path to food', () => {
-    const params = new URLSearchParams('');
-    expect(resolveSectionFromRoute('/food/berlin/kebab-doener', params)).toBe('food');
-  });
-
-  it('resolves locale-prefixed stores pathname to business when section and category are absent', () => {
-    const params = new URLSearchParams('');
-    expect(resolveSectionFromRoute('/de/stores', params)).toBe('store');
   });
 });

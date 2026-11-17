@@ -23,6 +23,7 @@ import {
   materialSymbolsSaveOutline,
 } from '@/lib/icons';
 import { validateCertificateFile } from '@/lib/validations/certificate';
+import { buildResultsUrl } from '@/features/search/discoveryQuery';
 
 const FIELD_TO_CAMEL = {
   no_alcohol: 'noAlcohol',
@@ -437,7 +438,10 @@ export default function EditHalalPage({ params }: { params: Promise<{ id: string
           ),
         );
         router.push(
-          providerMeta?.listingType === 'store' ? '/stores?status=pending' : '/food?status=pending',
+          buildResultsUrl({
+            section: providerMeta?.listingType === 'store' ? 'store' : 'food',
+            status: 'pending',
+          }),
         );
       } catch {
         toast.error(t('adminHalalEdit.review.gateBlocked'));

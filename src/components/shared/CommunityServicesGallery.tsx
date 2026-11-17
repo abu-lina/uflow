@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { getCommunityServices, type CommunityService } from '@/services/communityServices';
-import { buildResultsUrl } from '@/lib/search-params';
-import { GEMEINSCHAFT_SPENDEN_CATEGORY_ID } from '@/config/sectionFilters';
+import {
+  buildResultsUrl,
+  GEMEINSCHAFT_SPENDEN_CATEGORY_ID,
+} from '@/features/search/discoveryQuery';
 
 import CommunityServiceGallery from './CommunityServiceGallery';
 

@@ -12,24 +12,47 @@ let sessionStorageStore: Record<string, string> = {};
 
 const mockLocalStorage = {
   getItem: vi.fn((key: string) => localStorageStore[key] ?? null),
-  setItem: vi.fn((key: string, value: string) => { localStorageStore[key] = value; }),
-  removeItem: vi.fn((key: string) => { delete localStorageStore[key]; }),
-  clear: vi.fn(() => { localStorageStore = {}; }),
-  get length() { return Object.keys(localStorageStore).length; },
+  setItem: vi.fn((key: string, value: string) => {
+    localStorageStore[key] = value;
+  }),
+  removeItem: vi.fn((key: string) => {
+    delete localStorageStore[key];
+  }),
+  clear: vi.fn(() => {
+    localStorageStore = {};
+  }),
+  get length() {
+    return Object.keys(localStorageStore).length;
+  },
   key: vi.fn((index: number) => Object.keys(localStorageStore)[index] ?? null),
 };
 
 const mockSessionStorage = {
   getItem: vi.fn((key: string) => sessionStorageStore[key] ?? null),
-  setItem: vi.fn((key: string, value: string) => { sessionStorageStore[key] = value; }),
-  removeItem: vi.fn((key: string) => { delete sessionStorageStore[key]; }),
-  clear: vi.fn(() => { sessionStorageStore = {}; }),
-  get length() { return Object.keys(sessionStorageStore).length; },
+  setItem: vi.fn((key: string, value: string) => {
+    sessionStorageStore[key] = value;
+  }),
+  removeItem: vi.fn((key: string) => {
+    delete sessionStorageStore[key];
+  }),
+  clear: vi.fn(() => {
+    sessionStorageStore = {};
+  }),
+  get length() {
+    return Object.keys(sessionStorageStore).length;
+  },
   key: vi.fn((index: number) => Object.keys(sessionStorageStore)[index] ?? null),
 };
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn(), forward: vi.fn(), refresh: vi.fn(), prefetch: vi.fn() }),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+  }),
   useSearchParams: () => mockUseSearchParams(),
 }));
 
@@ -81,7 +104,9 @@ vi.mock('@/components/ui/ExpandSection', () => ({
 
 vi.mock('@/components/ui/Button', () => ({
   Button: ({ children, onClick, disabled }: any) => (
-    <button onClick={onClick} disabled={disabled}>{children}</button>
+    <button onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
   ),
 }));
 
@@ -142,13 +167,16 @@ vi.mock('@/services/providers', () => ({
   checkCityExists: vi.fn(() => Promise.resolve(false)),
 }));
 
-vi.mock('@/lib/search-params', () => ({
-  buildSearchParams: vi.fn(() => new URLSearchParams('section=food')),
+vi.mock('@/features/search/discoveryQuery', () => ({
+  buildSearchResultsUrl: vi.fn(() => '/food'),
+  getResultsPathForSection: vi.fn(() => '/food'),
+}));
+
+vi.mock('@/features/search/recentSearches', () => ({
   toFoodRecentSearches: vi.fn((entries: any[]) => entries),
 }));
 
 vi.mock('@/config/sectionFilters', () => ({
-  getResultsPathForSection: vi.fn(() => '/food'),
   SECTION_META: {
     food: { active: true, labelKey: 'sections.food' },
     ummah: { active: false, labelKey: 'sections.ummah', badgeKey: 'sections.soon' },
@@ -173,7 +201,10 @@ beforeEach(() => {
   localStorageStore = {};
   sessionStorageStore = {};
   Object.defineProperty(window, 'localStorage', { value: mockLocalStorage, configurable: true });
-  Object.defineProperty(window, 'sessionStorage', { value: mockSessionStorage, configurable: true });
+  Object.defineProperty(window, 'sessionStorage', {
+    value: mockSessionStorage,
+    configurable: true,
+  });
 });
 
 describe('Search page storage cleanup (Plan 172)', () => {
@@ -187,7 +218,9 @@ describe('Search page storage cleanup (Plan 172)', () => {
     });
 
     const clearButton = screen.getByTestId('wo-clear-button');
-    await act(async () => { fireEvent.click(clearButton); });
+    await act(async () => {
+      fireEvent.click(clearButton);
+    });
 
     expect(localStorageStore['selectedCity']).toBeUndefined();
     expect(sessionStorageStore['selectedCity']).toBeUndefined();
@@ -204,7 +237,9 @@ describe('Search page storage cleanup (Plan 172)', () => {
     });
 
     const clearAllButton = screen.getByText('Clear all');
-    await act(async () => { fireEvent.click(clearAllButton); });
+    await act(async () => {
+      fireEvent.click(clearAllButton);
+    });
 
     expect(localStorageStore['selectedCity']).toBeUndefined();
     expect(sessionStorageStore['selectedCity']).toBeUndefined();

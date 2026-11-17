@@ -12,15 +12,16 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { mockPush, mockRpc, mockFrom, mockFindNearest, mockGetCityCenter, mockSearch } =
-  vi.hoisted(() => ({
+const { mockPush, mockRpc, mockFrom, mockFindNearest, mockGetCityCenter, mockSearch } = vi.hoisted(
+  () => ({
     mockPush: vi.fn(),
     mockRpc: vi.fn(),
     mockFrom: vi.fn(),
     mockFindNearest: vi.fn(),
     mockGetCityCenter: vi.fn(),
     mockSearch: vi.fn(async () => ({ results: [], hasMore: false, totalCount: 0 })),
-  }));
+  }),
+);
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn(), prefetch: vi.fn() }),
@@ -49,7 +50,7 @@ vi.mock('@/app/(public)/providers/ProvidersContent', () => ({
 
 vi.mock('@/services/categories', () => ({ getCategoryById: vi.fn(async () => null) }));
 
-import { getCityMapPath } from '@/config/sectionFilters';
+import { getCityMapPath } from '@/features/search/discoveryQuery';
 import { STAGE2_MIN_PROVIDERS } from '@/hooks/useAppStage';
 import { getSelectedCityCoords, setSelectedCityCoords } from '@/lib/utils/selected-city-coords';
 import { CityEarlyAccessEmptyState } from '@/components/shared/CityEarlyAccessEmptyState';
@@ -65,9 +66,7 @@ beforeEach(() => {
 describe('#674 flow 1: onboarding lands on the map view of the onboarding city', () => {
   it('builds the map path for a city: /food?location=<city>&view=map', () => {
     expect(getCityMapPath('Berlin')).toBe('/food?location=Berlin&view=map');
-    expect(getCityMapPath('Frankfurt am Main')).toBe(
-      '/food?location=Frankfurt+am+Main&view=map',
-    );
+    expect(getCityMapPath('Frankfurt am Main')).toBe('/food?location=Frankfurt+am+Main&view=map');
   });
 
   it('keeps explicit params: an incoming location or view wins', () => {
@@ -124,7 +123,9 @@ describe('#674 flow 2: below the threshold, "currently being built" offers two w
   it('recommend opens the recommend form', () => {
     renderEmptyState();
 
-    fireEvent.click(screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.suggestProvider' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.suggestProvider' }),
+    );
 
     expect(mockPush).toHaveBeenCalledWith('/create/recommend');
   });
@@ -134,7 +135,9 @@ describe('#674 flow 2: below the threshold, "currently being built" offers two w
     setSelectedCityCoords({ lat: 52.02, lon: 8.53 });
     renderEmptyState();
 
-    fireEvent.click(screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.exploreUmmahFlow' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.exploreUmmahFlow' }),
+    );
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/food?location=Hannover&view=map'));
     expect(mockFindNearest).toHaveBeenCalledWith('Bielefeld', STAGE2_MIN_PROVIDERS, {
@@ -147,7 +150,9 @@ describe('#674 flow 2: below the threshold, "currently being built" offers two w
     mockFindNearest.mockReturnValue(new Promise(() => {}));
     renderEmptyState();
 
-    const explore = screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.exploreUmmahFlow' });
+    const explore = screen.getByRole('button', {
+      name: 'waitlist.cityEarlyAccess.exploreUmmahFlow',
+    });
     fireEvent.click(explore);
 
     await waitFor(() => expect(explore).toBeDisabled());
@@ -158,7 +163,9 @@ describe('#674 flow 2: below the threshold, "currently being built" offers two w
     mockFindNearest.mockResolvedValue(null);
     renderEmptyState();
 
-    fireEvent.click(screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.exploreUmmahFlow' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.exploreUmmahFlow' }),
+    );
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/food?view=map'));
   });
@@ -168,7 +175,9 @@ describe('#674 flow 2: below the threshold, "currently being built" offers two w
     vi.spyOn(console, 'error').mockImplementation(() => {});
     renderEmptyState();
 
-    fireEvent.click(screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.exploreUmmahFlow' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'waitlist.cityEarlyAccess.exploreUmmahFlow' }),
+    );
 
     await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/food?view=map'));
   });
@@ -198,9 +207,8 @@ describe('#674 flow 2: city coordinates from onboarding search', () => {
 
 describe('#674 flow 2: nearest city and city center services', () => {
   it('asks the RPC for the nearest city with at least the threshold of providers', async () => {
-    const { findNearestCityWithProviders } = await vi.importActual<
-      typeof import('@/services/providers')
-    >('@/services/providers');
+    const { findNearestCityWithProviders } =
+      await vi.importActual<typeof import('@/services/providers')>('@/services/providers');
     mockRpc.mockResolvedValue({ data: [{ city_name: 'Hannover' }], error: null });
 
     await expect(
@@ -215,9 +223,8 @@ describe('#674 flow 2: nearest city and city center services', () => {
   });
 
   it('sends null coordinates when the city was not picked through search', async () => {
-    const { findNearestCityWithProviders } = await vi.importActual<
-      typeof import('@/services/providers')
-    >('@/services/providers');
+    const { findNearestCityWithProviders } =
+      await vi.importActual<typeof import('@/services/providers')>('@/services/providers');
     mockRpc.mockResolvedValue({ data: [], error: null });
 
     await expect(findNearestCityWithProviders('Bielefeld', 6)).resolves.toBeNull();
@@ -228,18 +235,16 @@ describe('#674 flow 2: nearest city and city center services', () => {
   });
 
   it('throws when the RPC fails, so the caller can fall back', async () => {
-    const { findNearestCityWithProviders } = await vi.importActual<
-      typeof import('@/services/providers')
-    >('@/services/providers');
+    const { findNearestCityWithProviders } =
+      await vi.importActual<typeof import('@/services/providers')>('@/services/providers');
     mockRpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
 
     await expect(findNearestCityWithProviders('Bielefeld', 6)).rejects.toBeTruthy();
   });
 
   it('reads a city center from the cities table', async () => {
-    const { getCityCenter } = await vi.importActual<typeof import('@/services/providers')>(
-      '@/services/providers',
-    );
+    const { getCityCenter } =
+      await vi.importActual<typeof import('@/services/providers')>('@/services/providers');
     const maybeSingle = vi.fn(async () => ({
       data: { latitude: 52.52, longitude: 13.405 },
       error: null,
@@ -254,9 +259,8 @@ describe('#674 flow 2: nearest city and city center services', () => {
   });
 
   it('returns null for a city without coordinates or on error', async () => {
-    const { getCityCenter } = await vi.importActual<typeof import('@/services/providers')>(
-      '@/services/providers',
-    );
+    const { getCityCenter } =
+      await vi.importActual<typeof import('@/services/providers')>('@/services/providers');
     const maybeSingle = vi
       .fn()
       .mockResolvedValueOnce({ data: { latitude: null, longitude: null }, error: null })
