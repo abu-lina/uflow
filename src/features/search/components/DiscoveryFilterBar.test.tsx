@@ -11,6 +11,11 @@ vi.mock('@/providers/LanguageProvider', () => ({
         'suchen.openNow.chipLabel': 'Open now',
         'search.everywhere': 'Everywhere',
         'suchen.accordions.wo': 'Wo',
+        'suchen.tierFilter.chipLabel': 'Halal Level',
+        'suchen.tierFilter.bronze': 'Bronze+',
+        'suchen.tierFilter.silver': 'Silver+',
+        'suchen.tierFilter.gold': 'Gold',
+        'suchen.tierFilter.all': 'All',
       };
       return map[key] ?? key;
     },
@@ -75,5 +80,37 @@ describe('DiscoveryFilterBar location chip', () => {
     render(<DiscoveryFilterBar {...baseProps} locationCity="Stuttgart" />);
     expect(screen.queryByRole('button', { name: /Wo:/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Near me' })).toBeInTheDocument();
+  });
+});
+
+describe('DiscoveryFilterBar halal tier chip', () => {
+  it('renders the Halal Level chip when no tier is active', () => {
+    render(<DiscoveryFilterBar {...baseProps} />);
+    expect(screen.getByRole('button', { name: 'Halal Level' })).toBeInTheDocument();
+  });
+
+  it('shows the active tier label in the chip when a tier is selected', () => {
+    render(<DiscoveryFilterBar {...baseProps} activeTier="silver" />);
+    expect(screen.getByRole('button', { name: 'Silver+' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Halal Level' })).not.toBeInTheDocument();
+  });
+
+  it('marks the tier chip aria-pressed true when a tier is active', () => {
+    render(<DiscoveryFilterBar {...baseProps} activeTier="gold" />);
+    const chip = screen.getByRole('button', { name: 'Gold' });
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('marks the tier chip aria-pressed false when no tier is active', () => {
+    render(<DiscoveryFilterBar {...baseProps} />);
+    const chip = screen.getByRole('button', { name: 'Halal Level' });
+    expect(chip).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('calls onTierChange when tier chip is clicked', () => {
+    const onTierChange = vi.fn();
+    render(<DiscoveryFilterBar {...baseProps} onTierChange={onTierChange} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Halal Level' }));
+    expect(onTierChange).toHaveBeenCalledTimes(1);
   });
 });
