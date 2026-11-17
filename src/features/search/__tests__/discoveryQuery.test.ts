@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import type { WasSelection } from '../components/WasCategoryResults';
+
 import {
   parseDiscoveryQuery,
   parseDiscoveryQueryForRoute,
@@ -9,6 +11,16 @@ import {
   buildNearMeLink,
   buildViewToggleLink,
   readDiscoveryQueryInBrowser,
+  buildResultsUrl,
+  buildSearchResultsUrl,
+  inferSectionFromCategory,
+  getResultsPathForSection,
+  getHomeSection,
+  getHomeRedirectPath,
+  getCityMapPath,
+  resolveSectionFromSearchParams,
+  GEMEINSCHAFT_SPENDEN_CATEGORY_ID,
+  buildSearchPageLink,
 } from '../discoveryQuery';
 
 describe('Discovery Query module', () => {
@@ -428,5 +440,272 @@ describe('Discovery Query module', () => {
       });
       expect(result.category).toBeNull();
     });
+  });
+});
+
+// ── Moved from search-params.test.ts ────────────────────────────────────
+
+const KEBAB_ID = '9026edb0-490a-4395-a3d7-27c5eacde0e2';
+
+describe('buildResultsUrl — category must never be silently dropped (#254)', () => {
+  it('falls back to ?category=<id> when no city is selected', () => {
+    const url = buildResultsUrl({
+      section: 'food',
+      city: null,
+      categorySlug: 'kebab-doener',
+      categoryId: KEBAB_ID,
+    });
+    expect(url).toBe(`/food?category=${KEBAB_ID}`);
+  });
+
+  it('keeps the path form when city and slug are present', () => {
+    const url = buildResultsUrl({
+      section: 'food',
+      city: 'Berlin',
+      categorySlug: 'kebab-doener',
+      categoryId: KEBAB_ID,
+    });
+    expect(url).toBe('/food/berlin/kebab-doener');
+  });
+
+  it('falls back to ?category=<id> when the id is known but the slug is missing', () => {
+    const url = buildResultsUrl({
+      section: 'food',
+      city: 'Berlin',
+      categorySlug: null,
+      categoryId: KEBAB_ID,
+    });
+    expect(url).toBe(`/food/berlin?category=${KEBAB_ID}`);
+  });
+
+  it('applies the same fallback on non-food sections', () => {
+    const url = buildResultsUrl({
+      section: 'store',
+      city: null,
+      categorySlug: 'einzelhandel',
+      categoryId: KEBAB_ID,
+    });
+    expect(url).toBe(`/stores?category=${KEBAB_ID}`);
+  });
+
+  it('never puts a bare slug (non-UUID) into the ?category param', () => {
+    const url = buildResultsUrl({
+      section: 'ummah',
+      categorySlug: 'gemeinschaft-spenden',
+    });
+    expect(url).toBe('/ummah');
+  });
+
+  it('still emits query and filters alongside the category fallback', () => {
+    const url = buildResultsUrl({
+      section: 'food',
+      city: null,
+      categorySlug: 'kebab-doener',
+      categoryId: KEBAB_ID,
+      query: 'döner',
+      filters: ['muslim_owned'],
+    });
+    expect(url).toBe(`/food?q=d%C3%B6ner&category=${KEBAB_ID}&filters=muslim_owned`);
+  });
+});
+
+describe('buildSearchResultsUrl — #254 category with no city', () => {
+  it('produces /food?category=<id> for a category selection with no city', () => {
+    const selectedWas: WasSelection = {
+      type: 'category',
+      label: 'Kebab / Döner',
+      categoryId: KEBAB_ID,
+      categorySlug: 'kebab-doener',
+    };
+    const url = buildSearchResultsUrl({
+      selectedWas,
+      selectedSection: 'food',
+      selectedCity: null,
+    });
+    expect(url).toBe(`/food?category=${KEBAB_ID}`);
+  });
+
+  it('pins the with-city path form /food/berlin/kebab-doener', () => {
+    const selectedWas: WasSelection = {
+      type: 'category',
+      label: 'Kebab / Döner',
+      categoryId: KEBAB_ID,
+      categorySlug: 'kebab-doener',
+    };
+    const url = buildSearchResultsUrl({
+      selectedWas,
+      selectedSection: 'food',
+      selectedCity: 'Berlin',
+    });
+    expect(url).toBe('/food/berlin/kebab-doener');
+  });
+});
+
+// ── Moved from sectionFilters.test.ts ───────────────────────────────────
+
+const ESSEN_TRINKEN_ID = '20c10efe-404b-4a39-bb81-5089a0332d78';
+const GEMEINSCHAFT_SPENDEN_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
+const DIENSTLEISTUNGEN_ID = 'some-other-uuid-business';
+
+describe('inferSectionFromCategory (module)', () => {
+  it('returns food for Essen & Trinken category UUID', () => {
+    expect(inferSectionFromCategory(ESSEN_TRINKEN_ID)).toBe('food');
+  });
+
+  it('returns ummah for Gemeinschaft & Spenden category UUID', () => {
+    expect(inferSectionFromCategory(GEMEINSCHAFT_SPENDEN_ID)).toBe('ummah');
+  });
+
+  it('returns store for any other category UUID', () => {
+    expect(inferSectionFromCategory(DIENSTLEISTUNGEN_ID)).toBe('store');
+  });
+
+  it('returns store for null/undefined category', () => {
+    expect(inferSectionFromCategory(null)).toBe('store');
+    expect(inferSectionFromCategory(undefined)).toBe('store');
+  });
+});
+
+describe('getResultsPathForSection', () => {
+  it('maps food to /food', () => {
+    expect(getResultsPathForSection('food')).toBe('/food');
+  });
+
+  it('maps ummah to /ummah', () => {
+    expect(getResultsPathForSection('ummah')).toBe('/ummah');
+  });
+
+  it('maps store to /stores', () => {
+    expect(getResultsPathForSection('store')).toBe('/stores');
+  });
+});
+
+describe('getHomeSection', () => {
+  it('returns food (the default active section)', () => {
+    expect(getHomeSection()).toBe('food');
+  });
+});
+
+describe('getHomeRedirectPath', () => {
+  it('returns /food with no params', () => {
+    expect(getHomeRedirectPath(new URLSearchParams())).toBe('/food');
+  });
+
+  it('preserves query string', () => {
+    expect(getHomeRedirectPath(new URLSearchParams('q=kebab'))).toBe('/food?q=kebab');
+  });
+});
+
+describe('getCityMapPath', () => {
+  it('returns /food?location=Berlin&view=map for a city', () => {
+    expect(getCityMapPath('Berlin')).toBe('/food?location=Berlin&view=map');
+  });
+
+  it('returns /food?view=map for null city', () => {
+    expect(getCityMapPath(null)).toBe('/food?view=map');
+  });
+
+  it('respects explicit params', () => {
+    expect(getCityMapPath('Berlin', new URLSearchParams('view=list'))).toBe(
+      '/food?view=list&location=Berlin',
+    );
+  });
+});
+
+describe('resolveSectionFromSearchParams', () => {
+  it('resolves food from section=food', () => {
+    expect(resolveSectionFromSearchParams(new URLSearchParams('section=food'))).toBe('food');
+  });
+
+  it('resolves store from section=store', () => {
+    expect(resolveSectionFromSearchParams(new URLSearchParams('section=store'))).toBe('store');
+  });
+
+  it('defaults to food when section is unknown', () => {
+    expect(resolveSectionFromSearchParams(new URLSearchParams('section=xyz'))).toBe('food');
+  });
+
+  it('section=business falls through to food (legacy mapping removed)', () => {
+    expect(resolveSectionFromSearchParams(new URLSearchParams('section=business'))).toBe('food');
+  });
+
+  it('infers section from category when section is absent', () => {
+    expect(
+      resolveSectionFromSearchParams(new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`)),
+    ).toBe('food');
+  });
+});
+
+describe('GEMEINSCHAFT_SPENDEN_CATEGORY_ID export', () => {
+  it('has the expected UUID', () => {
+    expect(GEMEINSCHAFT_SPENDEN_CATEGORY_ID).toBe('4470c3e0-458f-40a6-a96e-ca0fbdf145d7');
+  });
+});
+
+// ── #918 pin tests: readDiscoveryQueryInBrowser with section=business ────
+
+describe('readDiscoveryQueryInBrowser — section=business pin tests', () => {
+  it('on /food path with section=business, pathname wins → food', () => {
+    const result = readDiscoveryQueryInBrowser('/food', new URLSearchParams('section=business'));
+    expect(result.section).toBe('food');
+  });
+
+  it('on /stores path with section=business, invalid section falls through → food', () => {
+    const result = readDiscoveryQueryInBrowser('/stores', new URLSearchParams('section=business'));
+    // section=business is invalid (legacy mapping removed), ?section= has priority,
+    // so it falls through to the default (food), not pathname.
+    expect(result.section).toBe('food');
+  });
+});
+
+// ── #918 pin test: unknown filter key is dropped ─────────────────────────
+
+describe('readDiscoveryQueryInBrowser — unknown filter key dropped', () => {
+  it('filters=muslim,notakey keeps only muslim', () => {
+    const result = readDiscoveryQueryInBrowser(
+      '/food',
+      new URLSearchParams('filters=muslim,notakey'),
+    );
+    expect(result.filters).toEqual(['muslim']);
+  });
+});
+
+// ── #918 Red: buildSearchPageLink ──────────────────────────────────────
+
+describe('buildSearchPageLink', () => {
+  it('returns /search?section=food for food', () => {
+    expect(buildSearchPageLink('food')).toBe('/search?section=food');
+  });
+
+  it('returns /search?section=store for store', () => {
+    expect(buildSearchPageLink('store')).toBe('/search?section=store');
+  });
+
+  it('preserves extra search params when provided', () => {
+    expect(buildSearchPageLink('ummah', new URLSearchParams('open=wo&q=kebab'))).toBe(
+      '/search?open=wo&q=kebab&section=ummah',
+    );
+  });
+});
+
+// ── #918 Red: buildResultsUrl status parameter ─────────────────────────
+
+describe('buildResultsUrl — status parameter', () => {
+  it('appends status when provided', () => {
+    expect(buildResultsUrl({ section: 'food', status: 'pending' })).toBe('/food?status=pending');
+  });
+
+  it('omits status when null', () => {
+    expect(buildResultsUrl({ section: 'food', status: null })).toBe('/food');
+  });
+
+  it('combines status with query and filters', () => {
+    const url = buildResultsUrl({
+      section: 'food',
+      query: 'kebab',
+      filters: ['muslim'],
+      status: 'approved',
+    });
+    expect(url).toBe('/food?q=kebab&filters=muslim&status=approved');
   });
 });

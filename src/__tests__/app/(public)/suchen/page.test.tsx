@@ -33,35 +33,42 @@ describe('/suchen redirect page', () => {
   it('redirects to /search when no section param is present', () => {
     mockSearchParams = new URLSearchParams();
     render(<SuchenPage />);
-    
+
     expect(mockReplace).toHaveBeenCalledWith('/search');
   });
 
   it('redirects to /search?section=food when section=food param is present', () => {
     mockSearchParams = new URLSearchParams('section=food');
     render(<SuchenPage />);
-    
+
     expect(mockReplace).toHaveBeenCalledWith('/search?section=food');
   });
 
   it('redirects to /search?section=ummah when section=ummah param is present', () => {
     mockSearchParams = new URLSearchParams('section=ummah');
     render(<SuchenPage />);
-    
+
     expect(mockReplace).toHaveBeenCalledWith('/search?section=ummah');
   });
 
   it('redirects to /search?section=business when section=business param is present', () => {
     mockSearchParams = new URLSearchParams('section=business');
     render(<SuchenPage />);
-    
+
     expect(mockReplace).toHaveBeenCalledWith('/search?section=business');
+  });
+
+  it('forwards unknown section exactly: section=bogus → /search?section=bogus', () => {
+    mockSearchParams = new URLSearchParams('section=bogus');
+    render(<SuchenPage />);
+
+    expect(mockReplace).toHaveBeenCalledWith('/search?section=bogus');
   });
 
   it('renders no UI (returns null)', () => {
     mockSearchParams = new URLSearchParams();
     const { container } = render(<SuchenPage />);
-    
+
     // The component should not render any visible content
     expect(container.firstChild).toBeNull();
   });
