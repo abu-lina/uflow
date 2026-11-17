@@ -1280,7 +1280,7 @@ export const tr = {
       closeAria: 'Kapat',
       halalMeatDefinitionTitle: 'Helal et nedir?',
       halalMeatDefinition:
-        "Helal et, İslami kurallara göre kesilen hayvanlardan elde edilir:\n\n• <strong>Bismillah</strong> (Allah'ın adı) söylenir\n• Keskin bir bıçakla hızlı bir kesim yapılır\n• Kan tamamen akıtılır\n\nKesim öncesinde bayıltılmış hayvanların eti helal kabul <strong>EDİLMEZ</strong>.",
+        'Helal et, İslami kurallara göre kesilen hayvanlardan elde edilir:\n\n• <strong><span class="bg-gold-gradient bg-clip-text font-semibold text-transparent">Bismillah</span></strong> (<span class="bg-gold-gradient bg-clip-text font-semibold text-transparent">Allah</span>\'ın adı) söylenir\n• Keskin bir bıçakla hızlı bir kesim yapılır\n• Kan tamamen akıtılır\n\nKesim öncesinde bayıltılmış hayvanların eti helal kabul <strong>EDİLMEZ</strong>.',
     },
     container: {
       addressTapToNavigate: 'Navigasyon için adrese dokunun',

@@ -1293,7 +1293,7 @@ export const de = {
       closeAria: 'Schließen',
       halalMeatDefinitionTitle: 'Was ist Halal-Fleisch?',
       halalMeatDefinition:
-        'Halal-Fleisch stammt von Tieren, die nach islamischen Richtlinien geschlachtet werden:\n\n• <strong>Bismillah</strong> (der Name Gottes) wird gesprochen\n• Ein scharfes Messer führt einen schnellen Schnitt\n• Das Blut wird vollständig abgelassen\n\nFleisch von Tieren, die vor der Schlachtung mit einem Bolzenschussgerät betäubt wurden, gilt <strong>NICHT</strong> als halal.',
+        'Halal-Fleisch stammt von Tieren, die nach islamischen Richtlinien geschlachtet werden:\n\n• Der Name <strong><span class=\\"bg-gold-gradient bg-clip-text font-semibold text-transparent\\">Allahs</span></strong> (Bismillah) muss gesprochen werden\n• Ein scharfes Messer führt einen schnellen Schnitt\n• Das Blut wird vollständig abgelassen\n\nFleisch von Tieren, die vor der Schlachtung mit einem Bolzenschussgerät betäubt wurden, gilt <strong>NICHT</strong> als halal.',
     },
     container: {
       addressTapToNavigate: 'Adresse antippen zum Navigieren',

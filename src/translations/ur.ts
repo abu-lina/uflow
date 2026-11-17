@@ -1280,7 +1280,7 @@ export const ur = {
       closeAria: 'بند کریں',
       halalMeatDefinitionTitle: 'حلال گوشت کیا ہے؟',
       halalMeatDefinition:
-        'حلال گوشت ان جانوروں سے حاصل ہوتا ہے جنہیں اسلامی اصولوں کے مطابق ذبح کیا گیا ہو:\n\n• <strong>بسم اللہ</strong> (اللہ کا نام) پڑھا جاتا ہے\n• تیز چھری سے فوری کٹ لگایا جاتا ہے\n• خون مکمل طور پر بہایا جاتا ہے\n\nذبح سے پہلے بے ہوش کیے گئے جانوروں کا گوشت حلال <strong>نہیں</strong> سمجھا جاتا۔',
+        'حلال گوشت ان جانوروں سے حاصل ہوتا ہے جنہیں اسلامی اصولوں کے مطابق ذبح کیا گیا ہو:\n\n• <strong><span class=\\"bg-gold-gradient bg-clip-text font-semibold text-transparent\\">بسم اللہ</span></strong> (<span class=\\"bg-gold-gradient bg-clip-text font-semibold text-transparent\\">اللہ</span> کا نام) پڑھا جاتا ہے\n• تیز چھری سے فوری کٹ لگایا جاتا ہے\n• خون مکمل طور پر بہایا جاتا ہے\n\nذبح سے پہلے بے ہوش کیے گئے جانوروں کا گوشت حلال <strong>نہیں</strong> سمجھا جاتا۔',
     },
     container: {
       addressTapToNavigate: 'نیویگیشن کے لیے پتے پر ٹیپ کریں',

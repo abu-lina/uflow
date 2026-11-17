@@ -1261,7 +1261,7 @@ export const ar = {
       closeAria: 'إغلاق',
       halalMeatDefinitionTitle: 'ما هو اللحم الحلال؟',
       halalMeatDefinition:
-        'اللحم الحلال يأتي من حيوانات ذُبحت وفقاً للشريعة الإسلامية:\n\n• يُذكر <strong>بسم الله</strong> (اسم الله) عند الذبح\n• يُستخدم سكين حاد لذبح سريع\n• يُصفّى الدم بالكامل\n\nلحم الحيوانات التي صُعقت قبل الذبح <strong>لا يُعتبر</strong> حلالاً.',
+        'اللحم الحلال يأتي من حيوانات ذُبحت وفقاً للشريعة الإسلامية:\n\n• يُذكر <strong><span class=\\"bg-gold-gradient bg-clip-text font-semibold text-transparent\\">بسم الله</span></strong> (اسم <span class=\\"bg-gold-gradient bg-clip-text font-semibold text-transparent\\">الله</span>) عند الذبح\n• يُستخدم سكين حاد لذبح سريع\n• يُصفّى الدم بالكامل\n\nلحم الحيوانات التي صُعقت قبل الذبح <strong>لا يُعتبر</strong> حلالاً.',
     },
     container: {
       addressTapToNavigate: 'اضغط على العنوان للتنقل',
