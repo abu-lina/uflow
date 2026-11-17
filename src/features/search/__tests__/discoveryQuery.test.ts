@@ -20,6 +20,7 @@ import {
   getHomeRedirectPath,
   getCityMapPath,
   resolveSectionFromSearchParams,
+  resolveSectionFromRoute,
   GEMEINSCHAFT_SPENDEN_CATEGORY_ID,
 } from '../discoveryQuery';
 
@@ -633,6 +634,88 @@ describe('resolveSectionFromSearchParams', () => {
     expect(
       resolveSectionFromSearchParams(new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`)),
     ).toBe('food');
+  });
+});
+
+describe('resolveSectionFromRoute', () => {
+  // 1. Basic pathname resolution (no params)
+  it('resolves food from /food', () => {
+    expect(resolveSectionFromRoute('/food', new URLSearchParams())).toBe('food');
+  });
+
+  it('resolves store from /stores', () => {
+    expect(resolveSectionFromRoute('/stores', new URLSearchParams())).toBe('store');
+  });
+
+  it('resolves ummah from /ummah', () => {
+    expect(resolveSectionFromRoute('/ummah', new URLSearchParams())).toBe('ummah');
+  });
+
+  // 2. Explicit ?section= wins over pathname
+  it('explicit ?section=food wins over /ummah pathname', () => {
+    expect(resolveSectionFromRoute('/ummah', new URLSearchParams('section=food'))).toBe('food');
+  });
+
+  it('explicit ?section=store wins over /food pathname', () => {
+    expect(resolveSectionFromRoute('/food', new URLSearchParams('section=store'))).toBe('store');
+  });
+
+  // 3. Pathname wins over cuisine category (#254 invariant)
+  it('pathname /food wins over ummah category', () => {
+    expect(
+      resolveSectionFromRoute('/food', new URLSearchParams(`category=${GEMEINSCHAFT_SPENDEN_ID}`)),
+    ).toBe('food');
+  });
+
+  it('pathname /ummah wins over food category', () => {
+    expect(
+      resolveSectionFromRoute('/ummah', new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`)),
+    ).toBe('ummah');
+  });
+
+  it('pathname /stores wins over food category', () => {
+    expect(
+      resolveSectionFromRoute('/stores', new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`)),
+    ).toBe('store');
+  });
+
+  // 4. Pathname wins over a known parent category
+  it('pathname /stores wins over ESSEN_TRINKEN parent category', () => {
+    expect(
+      resolveSectionFromRoute('/stores', new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`)),
+    ).toBe('store');
+  });
+
+  // 5. Sectionless /providers falls back to category inference
+  it('/providers with food category infers food', () => {
+    expect(
+      resolveSectionFromRoute('/providers', new URLSearchParams(`category=${ESSEN_TRINKEN_ID}`)),
+    ).toBe('food');
+  });
+
+  it('/providers with ummah category infers ummah', () => {
+    expect(
+      resolveSectionFromRoute(
+        '/providers',
+        new URLSearchParams(`category=${GEMEINSCHAFT_SPENDEN_ID}`),
+      ),
+    ).toBe('ummah');
+  });
+
+  // 6. Sub-path resolution
+  it('resolves food from /food/berlin/kebab-doener', () => {
+    expect(resolveSectionFromRoute('/food/berlin/kebab-doener', new URLSearchParams())).toBe(
+      'food',
+    );
+  });
+
+  // 7. Locale-prefixed paths
+  it('resolves store from /de/stores', () => {
+    expect(resolveSectionFromRoute('/de/stores', new URLSearchParams())).toBe('store');
+  });
+
+  it('resolves food from /de/food', () => {
+    expect(resolveSectionFromRoute('/de/food', new URLSearchParams())).toBe('food');
   });
 });
 
