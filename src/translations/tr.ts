@@ -1280,7 +1280,7 @@ export const tr = {
       closeAria: 'Kapat',
       halalMeatDefinitionTitle: 'Helal et nedir?',
       halalMeatDefinition:
-        'Helal et, İslami kurallara göre kesilen hayvanlardan elde edilir: dua okunur, keskin bir bıçakla hızlı bir kesim yapılır ve kan tamamen akıtılır. Kesim öncesinde saplanma tabancası (Bolzenschuss) ile bayıltılmış hayvanların eti helal kabul EDİLMEZ.',
+        "Helal et, İslami kurallara göre kesilen hayvanlardan elde edilir: Bismillah (Allah'ın adı) söylenir, keskin bir bıçakla hızlı bir kesim yapılır ve kan tamamen akıtılır. Kesim öncesinde saplanma tabancası (Bolzenschuss) ile bayıltılmış hayvanların eti helal kabul EDİLMEZ.",
     },
     container: {
       addressTapToNavigate: 'Navigasyon için adrese dokunun',

@@ -1293,7 +1293,7 @@ export const de = {
       closeAria: 'Schließen',
       halalMeatDefinitionTitle: 'Was ist Halal-Fleisch?',
       halalMeatDefinition:
-        'Halal-Fleisch stammt von Tieren, die nach islamischen Richtlinien geschlachtet werden: Ein Segen wird gesprochen, ein scharfes Messer führt einen schnellen Schnitt, und das Blut wird vollständig abgelassen. Fleisch von Tieren, die vor der Schlachtung mit einem Bolzenschussgerät betäubt wurden, gilt NICHT als halal.',
+        'Halal-Fleisch stammt von Tieren, die nach islamischen Richtlinien geschlachtet werden: Bismillah (der Name Gottes) wird gesprochen, ein scharfes Messer führt einen schnellen Schnitt, und das Blut wird vollständig abgelassen. Fleisch von Tieren, die vor der Schlachtung mit einem Bolzenschussgerät betäubt wurden, gilt NICHT als halal.',
     },
     container: {
       addressTapToNavigate: 'Adresse antippen zum Navigieren',
