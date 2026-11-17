@@ -13,6 +13,7 @@ import {
   readDiscoveryQueryInBrowser,
   buildResultsUrl,
   buildSearchResultsUrl,
+  buildSearchPageLink,
   inferSectionFromCategory,
   getResultsPathForSection,
   getHomeSection,
@@ -688,5 +689,20 @@ describe('buildResultsUrl — status parameter', () => {
       status: 'approved',
     });
     expect(url).toBe('/food?q=kebab&filters=muslim&status=approved');
+  });
+});
+
+// ── #918 Red: buildSearchPageLink ──────────────────────────────────────
+describe('buildSearchPageLink', () => {
+  it('returns /search?section=food for food', () => {
+    expect(buildSearchPageLink('food')).toBe('/search?section=food');
+  });
+  it('returns /search?section=store for store', () => {
+    expect(buildSearchPageLink('store')).toBe('/search?section=store');
+  });
+  it('preserves extra search params when provided', () => {
+    expect(buildSearchPageLink('ummah', new URLSearchParams('open=wo&q=kebab'))).toBe(
+      '/search?open=wo&q=kebab&section=ummah',
+    );
   });
 });
