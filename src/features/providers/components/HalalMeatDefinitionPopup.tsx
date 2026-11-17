@@ -90,7 +90,7 @@ export function HalalMeatDefinitionPopup({ isOpen, onClose }: HalalMeatDefinitio
         <h2 className="mb-3 pe-8 text-lg font-semibold text-content-heading">
           {t('providerDetail.popup.halalMeatDefinitionTitle')}
         </h2>
-        <p className="text-sm leading-relaxed text-content">
+        <p className="whitespace-pre-line text-sm leading-relaxed text-content">
           {t('providerDetail.popup.halalMeatDefinition')}
         </p>
       </div>
