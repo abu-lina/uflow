@@ -23,7 +23,7 @@ export interface DiscoveryQuery {
 export type HalalTier = 'bronze' | 'silver' | 'gold';
 const VALID_TIERS: HalalTier[] = ['bronze', 'silver', 'gold'];
 
-function parseTier(raw: string | null): HalalTier | undefined {
+export function parseTier(raw: string | null): HalalTier | undefined {
   if (!raw) return undefined;
   return VALID_TIERS.includes(raw as HalalTier) ? (raw as HalalTier) : undefined;
 }

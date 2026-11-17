@@ -4,7 +4,7 @@ import { getCityCenter, searchProvidersAndCommunityServices } from '@/services/p
 import type { SearchResult } from '@/services/providers';
 import { getCategoryById } from '@/services/categories';
 import type { Section } from '@/config/sectionFilters';
-import { parseDiscoveryQuery, type HalalTier } from '@/features/search/discoveryQuery';
+import { parseDiscoveryQuery, parseTier } from '@/features/search/discoveryQuery';
 import { resolveFilteredCategoryLabel, type FilteredCategoryLabel } from '@/lib/categoryFilter';
 
 import { ProvidersContent } from './ProvidersContent';
@@ -37,10 +37,7 @@ export async function renderProvidersPage(opts: {
     category: routeCategory,
     section: routeSection,
   });
-  const VALID_TIERS = new Set<HalalTier>(['bronze', 'silver', 'gold']);
-  const tierParam = params.get('tier');
-  const tier: HalalTier | undefined =
-    tierParam && VALID_TIERS.has(tierParam as HalalTier) ? (tierParam as HalalTier) : undefined;
+  const tier = parseTier(params.get('tier'));
 
   // #254 post-QA: when a real category filter is active, every result card
   // displays the FILTERED category — a provider that matched on a secondary
@@ -59,7 +56,7 @@ export async function renderProvidersPage(opts: {
   const mapCenterPromise = dq.location ? getCityCenter(dq.location) : Promise.resolve(null);
 
   try {
-    const args = [
+    const data = await searchProvidersAndCommunityServices(
       dq.q,
       dq.category,
       dq.location,
@@ -68,10 +65,9 @@ export async function renderProvidersPage(opts: {
       undefined,
       dq.section,
       dq.filters,
-    ] as const;
-    const data = tier
-      ? await searchProvidersAndCommunityServices(...args, undefined, tier)
-      : await searchProvidersAndCommunityServices(...args);
+      undefined,
+      tier,
+    );
     initialResults = data.results;
     initialHasMore = data.hasMore;
     initialTotalCount = data.totalCount;
