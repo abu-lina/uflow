@@ -257,11 +257,23 @@ async function searchProvidersOnly(
     listingType,
     barakahFilters,
     client,
+    minHalalTier,
   );
+
+  // #939: Flatten the PostgREST food_providers embed onto each row so the
+  // tier fields (verification_method, no_alcohol, …) are top-level.
+  // food_providers is a 1:1 FK so PostgREST returns an object (or null).
+  type RawWithEmbed = Provider & { food_providers?: Record<string, unknown> | null };
+  const flatProviders: Provider[] = minHalalTier
+    ? ((rawProviders as RawWithEmbed[]).map(({ food_providers: fp, ...rest }) => ({
+        ...rest,
+        ...(fp ?? {}),
+      })) as Provider[])
+    : rawProviders;
 
   // Apply tier filter in TypeScript to exactly match computeSealTier() logic.
   const providers = minHalalTier
-    ? rawProviders.filter((p) =>
+    ? flatProviders.filter((p) =>
         tierMatchesMinimum(
           computeSealTier(
             p.verification_method,
@@ -272,7 +284,7 @@ async function searchProvidersOnly(
           minHalalTier,
         ),
       )
-    : rawProviders;
+    : flatProviders;
 
   const hasMore = providers.length > pageSize;
   const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
@@ -298,6 +310,7 @@ export async function searchProviders(
   listingType?: 'food' | 'store' | 'ummah',
   barakahFilters?: SearchFilterKey[],
   client?: SupabaseClient,
+  minHalalTier?: HalalTier,
 ): Promise<{ providers: Provider[]; totalCount: number }> {
   // #254: a valid category filter matches primary AND secondary categories
   // via the provider_categories junction. The !inner embed must only be
@@ -320,9 +333,14 @@ export async function searchProviders(
   const baseSelectFields = adminOptions?.isAdmin
     ? '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images), review_status, review_feedback'
     : '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)';
+  // #939: LEFT JOIN food_providers when tier filtering is active so
+  // computeSealTier receives actual data instead of undefined.
+  const tierEmbed = minHalalTier
+    ? ', food_providers(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
+    : '';
   const selectFields = hasCategoryFilter
-    ? `${baseSelectFields}, provider_categories!inner(category_id)`
-    : baseSelectFields;
+    ? `${baseSelectFields}${tierEmbed}, provider_categories!inner(category_id)`
+    : `${baseSelectFields}${tierEmbed}`;
 
   // Plan 058: admin queries must use the service-role client to bypass RLS.
   // The caller (API route) passes the admin client directly via the `client` parameter
