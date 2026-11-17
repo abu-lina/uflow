@@ -36,6 +36,8 @@ describe('FoodPage location normalization (Plan 228: migrated from ProvidersPage
       undefined,
       'food',
       undefined,
+      undefined,
+      undefined,
     );
   });
 
@@ -50,6 +52,8 @@ describe('FoodPage location normalization (Plan 228: migrated from ProvidersPage
       12,
       undefined,
       'food',
+      undefined,
+      undefined,
       undefined,
     );
   });
@@ -66,6 +70,8 @@ describe('FoodPage location normalization (Plan 228: migrated from ProvidersPage
       undefined,
       'food',
       undefined,
+      undefined,
+      undefined,
     );
   });
 
@@ -80,6 +86,8 @@ describe('FoodPage location normalization (Plan 228: migrated from ProvidersPage
       12,
       undefined,
       'food',
+      undefined,
+      undefined,
       undefined,
     );
   });
@@ -96,6 +104,8 @@ describe('FoodPage location normalization (Plan 228: migrated from ProvidersPage
       undefined,
       'food',
       ['muslim', 'parken'],
+      undefined,
+      undefined,
     );
   });
 });

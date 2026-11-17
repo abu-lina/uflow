@@ -12,7 +12,6 @@ import type { Provider, SearchResult, AdminSearchOptions, ProviderSearchResponse
 import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
-import { computeSealTier } from '@/features/providers/computeSealTier';
 import type { HalalTier } from '@/features/search/discoveryQuery';
 
 const TIER_LEVELS: Record<HalalTier, number> = { bronze: 1, silver: 2, gold: 3 };
@@ -260,34 +259,8 @@ async function searchProvidersOnly(
     minHalalTier,
   );
 
-  // #939: Flatten the PostgREST food_providers embed onto each row so the
-  // tier fields (verification_method, no_alcohol, …) are top-level.
-  // food_providers is a 1:1 FK so PostgREST returns an object (or null).
-  type RawWithEmbed = Provider & { food_providers?: Record<string, unknown> | null };
-  const flatProviders: Provider[] = minHalalTier
-    ? ((rawProviders as RawWithEmbed[]).map(({ food_providers: fp, ...rest }) => ({
-        ...rest,
-        ...(fp ?? {}),
-      })) as Provider[])
-    : rawProviders;
-
-  // Apply tier filter in TypeScript to exactly match computeSealTier() logic.
-  const providers = minHalalTier
-    ? flatProviders.filter((p) =>
-        tierMatchesMinimum(
-          computeSealTier(
-            p.verification_method,
-            p.has_certificate,
-            { noAlcohol: p.no_alcohol, noPork: p.no_pork, noGambling: p.no_gambling },
-            p.certificate_url,
-          ),
-          minHalalTier,
-        ),
-      )
-    : flatProviders;
-
-  const hasMore = providers.length > pageSize;
-  const results = providers.slice(0, pageSize).map(transformProviderToSearchResult);
+  const hasMore = rawProviders.length > pageSize;
+  const results = rawProviders.slice(0, pageSize).map(transformProviderToSearchResult);
   const sortedResults = sortByCreationDate(results);
 
   return { results: sortedResults, hasMore, totalCount };
@@ -333,10 +306,11 @@ export async function searchProviders(
   const baseSelectFields = adminOptions?.isAdmin
     ? '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images), review_status, review_feedback'
     : '*, category:categories!providers_category_id_fkey(name_de, name_en, category_images)';
-  // #939: LEFT JOIN food_providers when tier filtering is active so
-  // computeSealTier receives actual data instead of undefined.
+  // #939: When tier filtering is active, use !inner to INNER JOIN
+  // food_providers — this excludes providers without a food_providers row
+  // (tier = null). Column-level filters are applied after the query is built.
   const tierEmbed = minHalalTier
-    ? ', food_providers(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
+    ? ', food_providers!inner(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
     : '';
   const selectFields = hasCategoryFilter
     ? `${baseSelectFields}${tierEmbed}, provider_categories!inner(category_id)`
@@ -370,6 +344,28 @@ export async function searchProviders(
   if (barakahFilters && barakahFilters.length > 0) {
     for (const filterKey of barakahFilters) {
       req = req.eq(SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN[filterKey], true);
+    }
+  }
+
+  // #939: Apply tier-level filters on the food_providers embed.
+  // The !inner join already excludes providers without a food_providers row.
+  if (minHalalTier) {
+    if (minHalalTier === 'gold') {
+      req = req
+        .eq('food_providers.has_certificate', true)
+        .not('food_providers.certificate_url', 'is', null);
+    } else {
+      // bronze and silver both require at least one attestation
+      req = req.or('no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true', {
+        foreignTable: 'food_providers',
+      });
+      if (minHalalTier === 'silver') {
+        // silver+ = onsite-with-attestation OR gold (certificate+URL)
+        req = req.or(
+          'verification_method.eq.onsite,and(has_certificate.eq.true,certificate_url.not.is.null)',
+          { foreignTable: 'food_providers' },
+        );
+      }
     }
   }
 
