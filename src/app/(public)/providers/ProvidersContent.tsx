@@ -37,7 +37,7 @@ import { LegalLinksModal } from '@/components/shared/LegalLinksModal';
 
 import { useSearch } from '@/providers/search-provider';
 import type { Section } from '@/providers/search-provider';
-import { resolveSectionFromRoute } from '@/config/sectionFilters';
+import { resolveSectionFromRoute } from '@/features/search/discoveryQuery';
 import {
   readDiscoveryQueryInBrowser,
   buildSectionChangeLink,

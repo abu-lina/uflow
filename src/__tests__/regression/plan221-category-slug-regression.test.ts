@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSearchResultsUrl } from '@/lib/search-params';
+import { buildSearchResultsUrl } from '@/features/search/discoveryQuery';
 import type { WasSelection } from '@/features/search/components/WasCategoryResults';
 
 describe('Plan 221 — category slug must use DB slug, not slugified German label', () => {

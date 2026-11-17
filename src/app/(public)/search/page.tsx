@@ -26,7 +26,8 @@ import { UmmahFilterSection } from '@/features/search/components/UmmahFilterSect
 import type { MapPin as ProviderMapPin } from '@/features/search/components/SearchMap';
 import { supabase } from '@/lib/supabase/client';
 import type { Section } from '@/providers/search-provider';
-import { buildSearchResultsUrl, toFoodRecentSearches } from '@/lib/search-params';
+import { buildSearchResultsUrl } from '@/features/search/discoveryQuery';
+import { toFoodRecentSearches } from '@/features/search/recentSearches';
 import { SECTION_META } from '@/config/sectionFilters';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { toast } from 'sonner';
@@ -76,7 +77,7 @@ function SearchPageContent() {
   type AccordionKey = 'was' | 'wo' | 'wer' | 'filter';
 
   const resolveSection = (rawSection: string | null): Section => {
-    const section = rawSection === 'business' ? 'store' : rawSection;
+    const section = rawSection;
     if (section === 'ummah' || section === 'store') {
       return SECTION_META[section].active ? section : 'food';
     }

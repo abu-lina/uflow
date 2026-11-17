@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { getFeatureFlag } from '@/config/feature-flags';
-import { getHomeRedirectPath } from '@/config/sectionFilters';
+import { getHomeRedirectPath } from '@/features/search/discoveryQuery';
 import { RootPageContent } from '@/components/shared/RootPageContent';
 
 type RouteSearchParams = { [key: string]: string | string[] | undefined };
@@ -35,11 +35,7 @@ function toURLSearchParams(params: RouteSearchParams): URLSearchParams {
 // Removed force-dynamic — searchParams usage makes it dynamic automatically.
 // Plan 010 — P1b: Reduce force-dynamic blast radius
 
-export default async function Home({
-  searchParams,
-}: {
-  searchParams: Promise<RouteSearchParams>;
-}) {
+export default async function Home({ searchParams }: { searchParams: Promise<RouteSearchParams> }) {
   const isAppLaunched = getFeatureFlag('isAppLaunched');
   const params = await searchParams;
   const fromEarlyAccess = params.from === 'early-access';

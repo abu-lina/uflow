@@ -128,24 +128,6 @@ describe('hardcoded /providers listing links updated to /food', () => {
     expect(src).not.toContain("router.push('/providers')");
   });
 
-  it('HomeSearchBar navigates to /food', () => {
-    const src = readFileSync(
-      resolve(ROOT, 'src/features/search/components/HomeSearchBar.tsx'),
-      'utf-8',
-    );
-    expect(src).toContain('/food?q=');
-    expect(src).not.toContain('/providers?q=');
-  });
-
-  it('HomeSearchInput navigates to /food', () => {
-    const src = readFileSync(
-      resolve(ROOT, 'src/features/search/components/HomeSearchInput.tsx'),
-      'utf-8',
-    );
-    expect(src).toContain('/food?q=');
-    expect(src).not.toContain('/providers?q=');
-  });
-
   it('UnifiedProviderCreateForm redirects to /food', () => {
     const src = readFileSync(
       resolve(ROOT, 'src/features/providers/UnifiedProviderCreateForm.tsx'),

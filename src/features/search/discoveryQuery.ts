@@ -1,13 +1,11 @@
-import {
-  getResultsPathForSection,
-  resolveSectionFromRoute,
-  SECTION_META,
-} from '@/config/sectionFilters';
+import { SECTION_META, DEFAULT_SECTION } from '@/config/sectionFilters';
 import type { Section } from '@/config/sectionFilters';
 import {
   SEARCH_FILTER_KEY_SET,
   type SearchFilterKey,
 } from '@/features/search/constants/filterKeys';
+import type { WasSelection } from '@/features/search/components/WasCategoryResults';
+import { slugify } from '@/lib/slugify';
 
 const VALID_REVIEW_STATUSES = ['approved', 'pending', 'rejected', 'needs_revision', 'all'] as const;
 export type ReviewStatus = (typeof VALID_REVIEW_STATUSES)[number];
@@ -35,6 +33,104 @@ interface PathOverrides {
   category?: string | null;
   section?: Section;
 }
+
+// ── Category → Section inference ────────────────────────────────────────
+
+/** Stable UUID for "Essen & Trinken" (SPEISEN_CATEGORY_ID). */
+const ESSEN_TRINKEN_CATEGORY_ID = '20c10efe-404b-4a39-bb81-5089a0332d78';
+
+/** Stable UUID for "Gemeinschaft & Spenden". */
+export const GEMEINSCHAFT_SPENDEN_CATEGORY_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
+
+/**
+ * Infers the section from a category UUID.
+ * Used for backward compat: legacy `/providers?category=...` URLs without
+ * `?section=` are resolved by mapping the category to the correct section.
+ */
+export function inferSectionFromCategory(categoryId: string | null | undefined): Section {
+  if (!categoryId) return 'store';
+  if (categoryId === ESSEN_TRINKEN_CATEGORY_ID) return 'food';
+  if (categoryId === GEMEINSCHAFT_SPENDEN_CATEGORY_ID) return 'ummah';
+  return 'store';
+}
+
+// ── Section → path helpers ──────────────────────────────────────────────
+
+/** Maps a section to its canonical public results route. */
+export function getResultsPathForSection(section: Section): '/food' | '/stores' | '/ummah' {
+  if (section === 'food') return '/food';
+  if (section === 'ummah') return '/ummah';
+  return '/stores';
+}
+
+/** The section `/` opens: DEFAULT_SECTION while active, otherwise the first active one. */
+export function getHomeSection(): Section {
+  if (SECTION_META[DEFAULT_SECTION].active) return DEFAULT_SECTION;
+  const sections = Object.keys(SECTION_META) as Section[];
+  return sections.find((section) => SECTION_META[section].active) ?? DEFAULT_SECTION;
+}
+
+/** `/` hands off to the home section route, keeping the incoming query string (#674). */
+export function getHomeRedirectPath(params: URLSearchParams): string {
+  const path = getResultsPathForSection(getHomeSection());
+  const qs = params.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
+/** Map view of the home section scoped to `city`; explicit params win (#674). */
+export function getCityMapPath(city: string | null, params = new URLSearchParams()): string {
+  const next = new URLSearchParams(params);
+  if (city && !next.has('location')) next.set('location', city);
+  if (!next.has('view')) next.set('view', 'map');
+  return getHomeRedirectPath(next);
+}
+
+// ── Section resolution ──────────────────────────────────────────────────
+
+/** Resolves section from URL params (no legacy business→store mapping). */
+export function resolveSectionFromSearchParams(params: URLSearchParams): Section {
+  const sectionParam = params.get('section');
+  if (sectionParam === 'food' || sectionParam === 'ummah' || sectionParam === 'store') {
+    return sectionParam;
+  }
+
+  const categoryParam = params.get('category');
+  if (categoryParam) {
+    return inferSectionFromCategory(categoryParam);
+  }
+
+  return 'food';
+}
+
+/**
+ * Resolves section from route context.
+ *
+ * Precedence (#254):
+ *   1. An explicit ?section= param — highest priority (deep links).
+ *   2. The pathname — canonical section routes (/food, /ummah, /stores)
+ *      are the section authority.
+ *   3. inferSectionFromCategory — last resort for genuinely sectionless
+ *      legacy URLs such as /providers?category=<parent-uuid>.
+ */
+export function resolveSectionFromRoute(
+  pathname: string | null | undefined,
+  params: URLSearchParams,
+): Section {
+  if (params.has('section')) {
+    return resolveSectionFromSearchParams(params);
+  }
+
+  // Path-based resolution, stripping optional locale prefix (e.g. /de/food -> /food)
+  const routePath = (pathname || '').replace(/^\/[a-z]{2}(?=\/)/, '');
+  if (routePath === '/food' || routePath.startsWith('/food/')) return 'food';
+  if (routePath === '/ummah' || routePath.startsWith('/ummah/')) return 'ummah';
+  if (routePath === '/stores' || routePath.startsWith('/stores/')) return 'store';
+
+  // Sectionless route: legacy ?category= inference, then the D9 default (food).
+  return resolveSectionFromSearchParams(params);
+}
+
+// ── Parsers ─────────────────────────────────────────────────────────────
 
 function parseFilters(raw: string | null): SearchFilterKey[] | undefined {
   if (!raw) return undefined;
@@ -87,7 +183,7 @@ export function parseDiscoveryQueryForRoute(params: URLSearchParams): RouteDisco
   return { q, category, location, section, filters, status, statusError };
 }
 
-// ── Writers ──────────────────────────────────────────────────────────────
+// ── URL builders ────────────────────────────────────────────────────────
 
 function splitUrl(url: string): [string, URLSearchParams] {
   try {
@@ -103,6 +199,83 @@ function splitUrl(url: string): [string, URLSearchParams] {
 function buildUrl(path: string, params: URLSearchParams): string {
   const qs = params.toString();
   return qs ? `${path}?${qs}` : path;
+}
+
+/**
+ * Build a path-based results URL: /food/[city]/[category]?q=...&filters=...
+ *
+ * The category only rides in the path when both a city and a slug are
+ * available (/food/berlin/kebab-doener). In every other case it falls back
+ * to the ?category=<id> query param (#254). A slug alone is never emitted
+ * as ?category= because the service only accepts category UUIDs.
+ */
+export function buildResultsUrl(opts: {
+  section: Section;
+  city?: string | null;
+  categorySlug?: string | null;
+  categoryId?: string | null;
+  query?: string | null;
+  filters?: string[];
+  status?: string | null;
+}): string {
+  const { section, city, categorySlug, categoryId, query, filters, status } = opts;
+  let path = getResultsPathForSection(section);
+
+  const categoryInPath = Boolean(city && categorySlug);
+  if (city) {
+    path += `/${slugify(city)}`;
+    if (categorySlug) {
+      path += `/${categorySlug}`;
+    }
+  }
+
+  const params = new URLSearchParams();
+  if (query) params.set('q', query);
+  if (categoryId && !categoryInPath) params.set('category', categoryId);
+  if (filters && filters.length > 0) params.set('filters', filters.join(','));
+  if (status) params.set('status', status);
+
+  const qs = params.toString();
+  return qs ? `${path}?${qs}` : path;
+}
+
+export function buildSearchPageLink(section: Section, extraParams?: URLSearchParams): string {
+  const params = extraParams ? new URLSearchParams(extraParams) : new URLSearchParams();
+  params.set('section', section);
+  return `/search?${params.toString()}`;
+}
+
+/**
+ * Build a full results URL from search page selections.
+ * Uses path-based routing: /food/[city]/[category-slug]
+ */
+export function buildSearchResultsUrl(opts: {
+  selectedWas: WasSelection | null;
+  selectedSection: Section;
+  selectedCity?: string | null;
+  selectedFilters?: string[];
+}): string {
+  const { selectedWas, selectedSection, selectedCity, selectedFilters } = opts;
+
+  let categorySlug: string | null = null;
+  let categoryId: string | null = null;
+  let query: string | null = null;
+
+  if (selectedWas?.type === 'category' && selectedWas.categoryId) {
+    categorySlug = selectedWas.categorySlug ?? null;
+    categoryId = selectedWas.categoryId;
+  } else if (selectedWas?.type === 'dish' || selectedWas?.type === 'service-type') {
+    query = selectedWas.label;
+  }
+
+  return buildResultsUrl({
+    section: selectedSection,
+    city: selectedCity,
+    categorySlug,
+    categoryId,
+    query,
+    filters: selectedFilters,
+  });
 }
 
 export function buildSectionChangeLink(currentUrl: string, nextSection: Section): string {
