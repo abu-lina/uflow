@@ -224,6 +224,13 @@ export const en = {
     openNow: {
       chipLabel: 'Open now',
     },
+    tierFilter: {
+      chipLabel: 'Halal Level',
+      bronze: 'Bronze+',
+      silver: 'Silver+',
+      gold: 'Gold',
+      all: 'All',
+    },
     empty: {
       noNearby: 'Try a larger radius or check back later.',
     },

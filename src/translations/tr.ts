@@ -222,6 +222,13 @@ export const tr = {
     openNow: {
       chipLabel: 'Şimdi açık',
     },
+    tierFilter: {
+      chipLabel: 'Helal Seviyesi',
+      bronze: 'Bronze+',
+      silver: 'Silver+',
+      gold: 'Gold',
+      all: 'Tümü',
+    },
     empty: {
       noNearby: 'Daha geniş bir mesafe deneyin veya daha sonra tekrar bakın.',
     },

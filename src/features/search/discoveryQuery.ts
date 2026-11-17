@@ -20,6 +20,14 @@ export interface DiscoveryQuery {
   filters: SearchFilterKey[] | undefined;
 }
 
+export type HalalTier = 'bronze' | 'silver' | 'gold';
+const VALID_TIERS: HalalTier[] = ['bronze', 'silver', 'gold'];
+
+function parseTier(raw: string | null): HalalTier | undefined {
+  if (!raw) return undefined;
+  return VALID_TIERS.includes(raw as HalalTier) ? (raw as HalalTier) : undefined;
+}
+
 export interface RouteDiscoveryQuery {
   q: string;
   category: string | null;
@@ -28,6 +36,7 @@ export interface RouteDiscoveryQuery {
   filters: SearchFilterKey[] | undefined;
   status: ReviewStatus | undefined;
   statusError: string | undefined;
+  tier: HalalTier | undefined;
 }
 
 interface PathOverrides {
@@ -84,7 +93,9 @@ export function parseDiscoveryQueryForRoute(params: URLSearchParams): RouteDisco
     }
   }
 
-  return { q, category, location, section, filters, status, statusError };
+  const tier = parseTier(params.get('tier'));
+
+  return { q, category, location, section, filters, status, statusError, tier };
 }
 
 // ── Writers ──────────────────────────────────────────────────────────────
@@ -182,6 +193,16 @@ export function buildViewToggleLink(
   return buildUrl(path, params);
 }
 
+export function buildTierChangeLink(currentUrl: string, tier: HalalTier | null): string {
+  const [path, params] = splitUrl(currentUrl);
+  if (tier) {
+    params.set('tier', tier);
+  } else {
+    params.delete('tier');
+  }
+  return buildUrl(path, params);
+}
+
 // ── Browser reader ───────────────────────────────────────────────────────
 
 const BROWSER_STATUS_VALUES = new Set(['approved', 'pending', 'rejected', 'needs_revision']);
@@ -197,6 +218,7 @@ export interface BrowserDiscoveryQuery {
   openNow: boolean;
   status: string | null;
   view: string | null;
+  tier: HalalTier | undefined;
 }
 
 export function readDiscoveryQueryInBrowser(
@@ -218,5 +240,7 @@ export function readDiscoveryQueryInBrowser(
   const viewParam = params.get('view');
   const view = viewParam && VIEW_VALUES.has(viewParam) ? viewParam : null;
 
-  return { q, category, location, section, filters, nearMe, openNow, status, view };
+  const tier = parseTier(params.get('tier'));
+
+  return { q, category, location, section, filters, nearMe, openNow, status, view, tier };
 }
