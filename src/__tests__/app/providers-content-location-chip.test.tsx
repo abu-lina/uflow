@@ -203,7 +203,7 @@ describe('ProvidersContent mobile location chip', () => {
     act(() => {
       filterBarProps().onLocationClick?.();
     });
-    expect(mockRouterPush).toHaveBeenCalledWith('/search?section=food&open=wo');
+    expect(mockRouterPush).toHaveBeenCalledWith('/search?section=food&open=wo&city=Stuttgart');
   });
 });
 

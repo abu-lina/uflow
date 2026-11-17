@@ -676,7 +676,11 @@ export function ProvidersContent({
                 locationCity={location || null}
                 nearMeActive={nearMeActive}
                 openNowActive={isOpenNow}
-                onLocationClick={() => router.push(`/search?section=${section}&open=wo`)}
+                onLocationClick={() =>
+                  router.push(
+                    `/search?section=${section}&open=wo${location ? `&city=${encodeURIComponent(location)}` : ''}`,
+                  )
+                }
                 onTierChange={handleTierChange}
                 onToggleNearMe={handleToggleNearMe}
                 onToggleOpenNow={() => setIsOpenNow((v) => !v)}

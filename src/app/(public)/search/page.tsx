@@ -411,8 +411,8 @@ function SearchPageContent() {
     };
   }, [wasQuery, selectedSection]);
 
-  // Hydrate Wo default from onboarding-selected city (client storage only).
-  // Session flag prevents re-hydration after user explicitly cleared this session.
+  // Hydrate Wo default from URL ?city= param or client storage.
+  // URL param wins (coming from results page); session flag prevents re-hydration after explicit clear.
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -421,13 +421,15 @@ function SearchPageContent() {
     const clearedThisSession = sessionStorage.getItem('uflow:wo-cleared-this-session');
     if (clearedThisSession) return;
 
+    const urlCity = searchParams.get('city');
     const storedCity =
       localStorage.getItem('selectedCity') ?? sessionStorage.getItem('selectedCity');
-    if (storedCity) {
-      setSelectedWoCity(storedCity);
+    const city = urlCity || storedCity;
+    if (city) {
+      setSelectedWoCity(city);
       setWoInputQuery('');
     }
-  }, []);
+  }, [searchParams]);
 
   // Validate unknown city inputs with a targeted lookup instead of full-table prefetch.
   useEffect(() => {
