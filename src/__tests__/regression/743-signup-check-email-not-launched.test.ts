@@ -20,8 +20,8 @@ describe('#743 confirm-email screen is reachable before launch', () => {
   });
 
   it('keeps other non-exempted app routes blocked', async () => {
-    await expect(shouldRedirectToWaitlist('/about', false, undefined, undefined)).resolves.toBe(
-      true,
-    );
+    await expect(
+      shouldRedirectToWaitlist('/manual-user', false, undefined, undefined),
+    ).resolves.toBe(true);
   });
 });
