@@ -180,6 +180,7 @@ export function ProvidersContent({
       geolocation.requestLocation();
     }
     if (!nearMeFromUrl && nearMeActive) {
+      pendingNearMeNavRef.current = false;
       setNearMeActive(false);
       geolocation.reset();
     }
