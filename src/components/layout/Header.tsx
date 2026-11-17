@@ -23,12 +23,12 @@ import {
   type ReviewStatusFilter,
 } from '@/features/admin/components/AdminStatusFilter';
 import { toast } from 'sonner';
+import { SECTION_META } from '@/config/sectionFilters';
 import {
+  buildResultsUrl,
   getResultsPathForSection,
   resolveSectionFromRoute,
-  SECTION_META,
-} from '@/config/sectionFilters';
-import { buildResultsUrl } from '@/lib/search-params';
+} from '@/features/search/discoveryQuery';
 
 // Dynamic imports for modals (Plan 007: reduce shared bundle)
 const SignupModal = dynamic(
@@ -109,17 +109,13 @@ export function Header() {
     const section = resolveSectionFromRoute(pathname, new URLSearchParams());
     // Use filters passed from SearchBar if provided; otherwise fall back to URL params
     const resolvedFilters = filters !== undefined ? filters : currentFiltersFromUrl();
-    let url = buildResultsUrl({
+    const url = buildResultsUrl({
       section,
       city: location || null,
       query: query || null,
       filters: resolvedFilters,
+      status: adminStatus || null,
     });
-    // Preserve admin status filter across search submissions
-    if (adminStatus) {
-      const sep = url.includes('?') ? '&' : '?';
-      url = `${url}${sep}status=${adminStatus}`;
-    }
     router.push(url);
   };
 
@@ -131,12 +127,7 @@ export function Header() {
   // Handle clear search - navigate to providers without query
   const handleClearSearch = () => {
     const section = resolveSectionFromRoute(pathname, new URLSearchParams());
-    let url: string = getResultsPathForSection(section);
-    // Preserve admin status filter when clearing search
-    if (adminStatus) {
-      url = `${url}?status=${adminStatus}`;
-    }
-    router.push(url);
+    router.push(buildResultsUrl({ section, status: adminStatus || null }));
   };
 
   // Handle location change - navigate to providers with new location
@@ -145,17 +136,13 @@ export function Header() {
     const current = new URLSearchParams(window.location.search);
     const q = current.get('q');
     const filters = current.get('filters')?.split(',').filter(Boolean);
-    let url = buildResultsUrl({
+    const url = buildResultsUrl({
       section,
       city: location || null,
       query: q || null,
       filters,
+      status: adminStatus || null,
     });
-    // Preserve admin status filter across location changes
-    if (adminStatus) {
-      const sep = url.includes('?') ? '&' : '?';
-      url = `${url}${sep}status=${adminStatus}`;
-    }
     router.push(url);
   };
 

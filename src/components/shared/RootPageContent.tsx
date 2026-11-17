@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getOnboardingState } from '@/lib/utils/onboarding-state';
 import { getFeatureFlag } from '@/config/feature-flags';
-import { getCityMapPath } from '@/config/sectionFilters';
+import { getCityMapPath } from '@/features/search/discoveryQuery';
 import { useAppStage } from '@/hooks/useAppStage';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
 import { CityEarlyAccessEmptyState } from './CityEarlyAccessEmptyState';

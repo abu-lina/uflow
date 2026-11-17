@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { cn } from '@/lib/utils';
-import { getCityMapPath } from '@/config/sectionFilters';
+import { getCityMapPath } from '@/features/search/discoveryQuery';
 import { STAGE2_MIN_PROVIDERS } from '@/hooks/useAppStage';
 import { getSelectedCityCoords } from '@/lib/utils/selected-city-coords';
 import { findNearestCityWithProviders } from '@/services/providers';

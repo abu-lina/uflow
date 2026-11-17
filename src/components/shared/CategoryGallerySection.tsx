@@ -8,8 +8,8 @@ import {
   fetchCategoriesBySection,
   type Category,
 } from '@/services/categories';
-import { inferSectionFromCategory, type Section } from '@/config/sectionFilters';
-import { buildResultsUrl } from '@/lib/search-params';
+import type { Section } from '@/config/sectionFilters';
+import { buildResultsUrl, inferSectionFromCategory } from '@/features/search/discoveryQuery';
 import { slugify } from '@/lib/slugify';
 import { formatAllahText } from '@/utils/textUtils';
 import {

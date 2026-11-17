@@ -111,7 +111,7 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     const input = screen.getByRole('searchbox');
     fireEvent.change(input, { target: { value: 'shawarma' } });
     fireEvent.keyDown(input, { key: 'Enter' });
-    expect(mockPush).toHaveBeenCalledWith('/food?q=shawarma&section=food');
+    expect(mockPush).toHaveBeenCalledWith('/food?q=shawarma');
   });
 
   it('encodes query values when navigating to /food with q', () => {
@@ -119,7 +119,7 @@ describe('HomeSearchBar (Plan 090 M2)', () => {
     const input = screen.getByRole('searchbox');
     fireEvent.change(input, { target: { value: 'halal burger' } });
     fireEvent.keyDown(input, { key: 'Enter' });
-    expect(mockPush).toHaveBeenCalledWith('/food?q=halal%20burger&section=food');
+    expect(mockPush).toHaveBeenCalledWith('/food?q=halal+burger');
   });
 
   it('does not navigate on other key presses', () => {

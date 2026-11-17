@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 import { CommunityServicesGallery } from '@/components/shared/CommunityServicesGallery';
-import { GEMEINSCHAFT_SPENDEN_CATEGORY_ID } from '@/config/sectionFilters';
-import * as searchParams from '@/lib/search-params';
+import { GEMEINSCHAFT_SPENDEN_CATEGORY_ID } from '@/features/search/discoveryQuery';
+import * as searchParams from '@/features/search/discoveryQuery';
 
 const push = vi.fn();
 

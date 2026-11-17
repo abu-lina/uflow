@@ -6,6 +6,7 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 import type { Section } from '@/providers/search-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { GeolocationStatus } from '@/hooks/useGeolocation';
+import { buildResultsUrl, buildSearchPageLink } from '@/features/search/discoveryQuery';
 import { DiscoveryFilterBar } from './DiscoveryFilterBar';
 
 interface HomeSearchBarProps {
@@ -70,9 +71,9 @@ export function HomeSearchBar({
     }
     const trimmed = query.trim();
     if (trimmed) {
-      router.push(`/food?q=${encodeURIComponent(trimmed)}&section=${activeSection}`);
+      router.push(buildResultsUrl({ section: activeSection, query: trimmed }));
     } else {
-      router.push(`/search?section=${activeSection}`);
+      router.push(buildSearchPageLink(activeSection));
     }
   };
 
@@ -106,7 +107,7 @@ export function HomeSearchBar({
           aria-label={t('home.searchFiltersAriaLabel')}
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-gray-500 transition-opacity hover:opacity-70 active:opacity-50"
           type="button"
-          onClick={() => router.push(`/search?section=${activeSection}`)}
+          onClick={() => router.push(buildSearchPageLink(activeSection))}
         >
           <SlidersHorizontal aria-hidden="true" className="h-5 w-5" />
         </button>
