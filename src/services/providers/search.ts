@@ -354,18 +354,19 @@ export async function searchProviders(
       req = req
         .eq('food_providers.has_certificate', true)
         .not('food_providers.certificate_url', 'is', null);
+    } else if (minHalalTier === 'silver') {
+      // silver+ = gold OR (onsite + attestation).
+      // Gold = has_certificate + certificate_url, no attestation needed.
+      req = req.or(
+        'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.eq.onsite,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
+        { foreignTable: 'food_providers' },
+      );
     } else {
-      // bronze and silver both require at least one attestation
-      req = req.or('no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true', {
-        foreignTable: 'food_providers',
-      });
-      if (minHalalTier === 'silver') {
-        // silver+ = onsite-with-attestation OR gold (certificate+URL)
-        req = req.or(
-          'verification_method.eq.onsite,and(has_certificate.eq.true,certificate_url.not.is.null)',
-          { foreignTable: 'food_providers' },
-        );
-      }
+      // bronze+ = gold OR (any verification_method + attestation)
+      req = req.or(
+        'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.not.is.null,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
+        { foreignTable: 'food_providers' },
+      );
     }
   }
 
