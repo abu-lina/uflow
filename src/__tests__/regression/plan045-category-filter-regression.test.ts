@@ -162,6 +162,7 @@ describe('Plan 045 — GET /api/providers/search category transport', () => {
       undefined,
       undefined,
       undefined,
+      undefined,
     );
   });
 
