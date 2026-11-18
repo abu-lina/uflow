@@ -90,9 +90,14 @@ export function HalalMeatDefinitionPopup({ isOpen, onClose }: HalalMeatDefinitio
         <h2 className="mb-3 pe-8 text-lg font-semibold text-content-heading">
           {t('providerDetail.popup.halalMeatDefinitionTitle')}
         </h2>
-        <p
-          className="whitespace-pre-line text-sm leading-relaxed text-content"
-          dangerouslySetInnerHTML={{ __html: t('providerDetail.popup.halalMeatDefinition') }}
+        <div
+          className="space-y-2 text-sm leading-relaxed text-content"
+          dangerouslySetInnerHTML={{
+            __html: t('providerDetail.popup.halalMeatDefinition')
+              .split('\n\n')
+              .map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`)
+              .join(''),
+          }}
         />
       </div>
     </div>

@@ -1280,7 +1280,7 @@ export const tr = {
       closeAria: 'Kapat',
       halalMeatDefinitionTitle: 'Helal et nedir?',
       halalMeatDefinition:
-        'Helal et, İslami kurallara göre kesilen hayvanlardan elde edilir:\n• <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">Bismillah</span></strong> söylenir\n• Keskin bir bıçakla hızlı bir kesim yapılır\n• Kan tamamen akıtılır\nKesim öncesinde bayıltılmış hayvanların eti helal kabul <strong>EDİLMEZ</strong>.\nBio helal et — hayvanlar insancıl yetiştirilip merhametle kesilen — ulaşmaya çalıştığımız idealdir.',
+        'Helal et, İslami kurallara göre kesilen hayvanlardan elde edilir:\n\n• <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">Bismillah</span></strong> söylenir\n• Keskin bir bıçakla hızlı bir kesim yapılır\n• Kan tamamen akıtılır\n\nKesim öncesinde bayıltılmış hayvanların eti helal kabul <strong>EDİLMEZ</strong>.\n\nBio helal et — hayvanlar insancıl yetiştirilip merhametle kesilen — ulaşmaya çalıştığımız idealdir.',
     },
     container: {
       addressTapToNavigate: 'Navigasyon için adrese dokunun',

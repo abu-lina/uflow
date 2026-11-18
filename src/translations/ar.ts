@@ -1261,7 +1261,7 @@ export const ar = {
       closeAria: 'إغلاق',
       halalMeatDefinitionTitle: 'ما هو اللحم الحلال؟',
       halalMeatDefinition:
-        'اللحم الحلال يأتي من حيوانات ذُبحت وفقاً للشريعة الإسلامية:\n• يُذكر <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">بسم الله</span></strong> عند الذبح\n• يُستخدم سكين حاد لذبح سريع\n• يُصفّى الدم بالكامل\nلحم الحيوانات التي صُعقت قبل الذبح <strong>لا يُعتبر</strong> حلالاً.\nاللحم الحلال العضوي — حيوانات تُربّى برحمة وتُذبح برأفة — هو المثال الأعلى الذي نسعى إليه.',
+        'اللحم الحلال يأتي من حيوانات ذُبحت وفقاً للشريعة الإسلامية:\n\n• يُذكر <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">بسم الله</span></strong> عند الذبح\n• يُستخدم سكين حاد لذبح سريع\n• يُصفّى الدم بالكامل\n\nلحم الحيوانات التي صُعقت قبل الذبح <strong>لا يُعتبر</strong> حلالاً.\n\nاللحم الحلال العضوي — حيوانات تُربّى برحمة وتُذبح برأفة — هو المثال الأعلى الذي نسعى إليه.',
     },
     container: {
       addressTapToNavigate: 'اضغط على العنوان للتنقل',

@@ -1271,7 +1271,7 @@ export const en = {
       closeAria: 'Close',
       halalMeatDefinitionTitle: 'What is halal meat?',
       halalMeatDefinition:
-        'Halal meat comes from animals slaughtered according to Islamic guidelines:\n• The name of <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">Allah</span></strong> must be spoken\n• A sharp knife makes a swift cut\n• The blood is fully drained\nMeat from animals stunned before slaughter is <strong>NOT</strong> considered halal.\nBio halal meat — animals raised humanely and slaughtered with mercy — is the ideal we strive for.',
+        'Halal meat comes from animals slaughtered according to Islamic guidelines:\n\n• The name of <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">Allah</span></strong> must be spoken\n• A sharp knife makes a swift cut\n• The blood is fully drained\n\nMeat from animals stunned before slaughter is <strong>NOT</strong> considered halal.\n\nBio halal meat — animals raised humanely and slaughtered with mercy — is the ideal we strive for.',
     },
     container: {
       addressTapToNavigate: 'Tap address to navigate',
