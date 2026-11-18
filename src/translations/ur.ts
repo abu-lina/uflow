@@ -1278,6 +1278,9 @@ export const ur = {
     },
     popup: {
       closeAria: 'بند کریں',
+      halalMeatDefinitionTitle: 'حلال گوشت کیا ہے؟',
+      halalMeatDefinition:
+        'حلال گوشت ان جانوروں سے حاصل ہوتا ہے جنہیں اسلامی اصولوں کے مطابق ذبح کیا گیا ہو:\n\n• <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">بسم اللہ</span></strong> پڑھا جاتا ہے\n• تیز چھری سے فوری کٹ لگایا جاتا ہے\n• خون مکمل طور پر بہایا جاتا ہے\n\nذبح سے پہلے بے ہوش کیے گئے جانوروں کا گوشت حلال <strong>نہیں</strong> سمجھا جاتا۔\n\nبائیو حلال گوشت — جانوروں کی شفقت سے پرورش اور رحم سے ذبح — ہمارا مثالی معیار ہے.',
     },
     container: {
       addressTapToNavigate: 'نیویگیشن کے لیے پتے پر ٹیپ کریں',
