@@ -1271,9 +1271,9 @@ export const tr = {
       nearby: 'Sağlayıcılar yükleniyor...',
     },
     halal: {
-      title: "Ummah Flow'daki restoranlar helal uygunluğu için kontrol edilir",
+      title: "Ummah Flow'un kontrol ettikleri",
       description:
-        'Bir restoran yalnızca alkol, haram et ve kumar sunmuyorsa listelenir. Etin helal usule göre kesilmiş olması gerekir.',
+        'Görülebileni kontrol ederiz: menüde alkol ve domuz eti yok, işyerinde kumar makinesi yok. Etin helal olup olmadığı, bir sertifika gösterilmedikçe işletme sahibinin beyanıdır. Her kayıt kendi seviyesini gösterir.',
       learnMore: 'Daha fazla bilgi',
     },
     popup: {

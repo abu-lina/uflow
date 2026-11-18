@@ -63,35 +63,7 @@ describe('halal trust modal copy (#566)', () => {
     }
   });
 
-  it('de description terminates the participle clause with its auxiliary verb', () => {
-    // The reported symptom: "Das Fleisch muss halal geschlachtet." ends the
-    // sentence on a bare participle. Asserting /geschlachtet sein\.$/ keeps
-    // the test meaningful if the copy is reworded later — it pins the
-    // grammar defect, not the exact string.
-    const description = String(getPath(de, 'providerDetail.halal.description')).trim();
-    expect(description).toMatch(/geschlachtet sein\.$/);
-    expect(description).not.toMatch(/geschlachtet\.$/);
-  });
-
-  it('de heading separates the "ob" subordinate clause with a comma', () => {
-    const title = String(getPath(de, 'providerDetail.halal.title'));
-    expect(title).toContain('geprüft, ob');
-    expect(title).not.toContain('geprüft ob');
-  });
-
-  it('de title spells the adjectival "halal" lowercase', () => {
-    // Duden: the adjective is lowercase; only nominal/compound uses
-    // (Halal-Zertifikat, Halal-Restaurant) take a capital. In
-    // "ob sie halal sind" it is adjectival, so "Halal" was wrong — and
-    // it also disagreed with the description's "halal geschlachtet".
-    const title = String(getPath(de, 'providerDetail.halal.title'));
-    expect(title).toContain('halal sind');
-    expect(title).not.toContain('Halal sind');
-  });
-
-  it('de description uses the accusative "keinen Alkohol" after "anbietet"', () => {
-    const description = String(getPath(de, 'providerDetail.halal.description'));
-    expect(description).toContain('keinen Alkohol');
-    expect(description).not.toContain('kein Alkohol');
-  });
+  // #948 rewrote the halal popup copy entirely — the four DE-specific grammar
+  // assertions below (participle clause, ob-comma, halal-casing, accusative)
+  // are superseded by halal-popup-wording-948.test.ts.
 });
