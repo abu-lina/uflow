@@ -65,3 +65,8 @@ export function generateFoodCategoryCanonicalUrl(
 ): string {
   return `${generateFoodCityCanonicalUrl(cityName, siteUrl)}/${slugify(categorySlug)}`;
 }
+
+export function generateProviderCanonicalUrl(providerId: string, siteUrl: string): string {
+  const base = siteUrl.replace(/\/+$/, '');
+  return `${base}/p/${providerId}`;
+}

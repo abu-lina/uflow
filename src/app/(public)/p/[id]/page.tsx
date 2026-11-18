@@ -9,6 +9,8 @@ import { ProviderDetailPageClient } from './ProviderDetailPageClient';
 import { ProviderScreeningPanelSkeleton } from '@/features/admin/components/ProviderScreeningPanel';
 import { ProviderScreeningSection } from '@/features/admin/components/ProviderScreeningSection';
 import { canViewScreenings } from '@/features/admin/services/provider-screenings.server';
+import { generateProviderCanonicalUrl } from '@/utils/canonicalUrl';
+import { getFirstImageUrl, isAllowedImageUrl, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 
 // Issue 533 — /p/<id> used to render a not-found page under HTTP 200 with
 // `index, follow`: the route never called notFound() server-side (the only
@@ -22,6 +24,8 @@ import { canViewScreenings } from '@/features/admin/services/provider-screenings
 // non-approved rows, and the middleware guard applies the same predicate to
 // the same identity. Anon and unrelated users get a row-less result and
 // notFound() — indistinguishable from a nonexistent id.
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
+
 const getProvider = cache(async (id: string) =>
   getProviderById(id, await createSupabaseCallerClient()),
 );
@@ -52,7 +56,26 @@ export async function generateMetadata({
     };
   }
 
-  return {};
+  const canonical = generateProviderCanonicalUrl(id, siteUrl);
+  const title = `${provider.provider_name}${provider.address_city ? ` in ${provider.address_city}` : ''}`;
+  const description = provider.description || `${provider.provider_name} on Ummah Flow`;
+  const imageUrl = getFirstImageUrl(provider.provider_images);
+  const defaultIcon = `${siteUrl}/icons/icon-512x512.png`;
+  const ogImage =
+    imageUrl !== PLACEHOLDER_IMAGE && isAllowedImageUrl(imageUrl) ? imageUrl : defaultIcon;
+
+  return {
+    title,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: 'Ummah Flow',
+      type: 'website',
+      images: [{ url: ogImage }],
+    },
+  };
 }
 
 /**
