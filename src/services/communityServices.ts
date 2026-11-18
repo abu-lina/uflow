@@ -319,7 +319,10 @@ export async function getCommunityServicesForProvider(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (Array.isArray(data) ? data : []).map((row: any) => mapRowToCS(row));
   } catch (error) {
-    console.error('Error fetching community services for provider:', error);
+    console.error(
+      'Error fetching community services for provider:',
+      (error as Error).message ?? error,
+    );
     return [];
   }
 }
