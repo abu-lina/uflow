@@ -168,15 +168,17 @@ function SearchBarContent({
   }, [searchQuery, customCities, selectedSection, selectedLocation, t]);
 
   // Sync state with URL params only on initial mount or when the page changes
+  const dqQuery = dq.q;
+  const dqLocation = dq.location;
   useEffect(() => {
     if (!hasSyncedFromUrl.current) {
-      const q = dq.q || '';
-      const location = dq.location || LOCATION_ALL;
+      const q = dqQuery || '';
+      const location = dqLocation || LOCATION_ALL;
       setSearchQuery(q);
       setSelectedLocation(location);
       hasSyncedFromUrl.current = true;
     }
-  }, [pathname, searchParams, setSearchQuery, setSelectedLocation, t]);
+  }, [pathname, searchParams, setSearchQuery, setSelectedLocation, t, dqQuery, dqLocation]);
 
   useEffect(() => {
     setHasMounted(true);
