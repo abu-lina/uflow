@@ -39,9 +39,8 @@ describe('migration 153 — engagement_type CHECK includes support (#968)', () =
     const { join } = await import('node:path');
     const migrationDir = join(process.cwd(), 'supabase', 'migrations');
     const name = readdirSync(migrationDir).find((f) => f.includes('issue968'));
-    if (name) {
-      await db.exec(readFileSync(join(migrationDir, name), 'utf8'));
-    }
+    if (!name) throw new Error('Migration file for issue968 not found');
+    await db.exec(readFileSync(join(migrationDir, name), 'utf8'));
   }, 60_000);
 
   afterAll(async () => {
