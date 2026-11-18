@@ -14,6 +14,7 @@ import {
   generateCityCanonicalUrl,
   generateFoodCityCanonicalUrl,
   generateFoodCategoryCanonicalUrl,
+  generateProviderCanonicalUrl,
 } from '@/utils/canonicalUrl';
 
 describe('stripUtmParams', () => {
@@ -134,6 +135,22 @@ describe('generateFoodCategoryCanonicalUrl (request 244 — T1)', () => {
   it('strips trailing slashes from siteUrl', () => {
     expect(generateFoodCategoryCanonicalUrl('Berlin', 'kebab', 'https://ummahflow.com/')).toBe(
       'https://ummahflow.com/food/berlin/kebab',
+    );
+  });
+});
+
+describe('generateProviderCanonicalUrl (#949)', () => {
+  const siteUrl = 'https://ummahflow.com';
+
+  it('generates /p/<id> canonical for a provider', () => {
+    expect(generateProviderCanonicalUrl('abc-123', siteUrl)).toBe(
+      'https://ummahflow.com/p/abc-123',
+    );
+  });
+
+  it('strips trailing slashes from siteUrl', () => {
+    expect(generateProviderCanonicalUrl('abc-123', 'https://ummahflow.com/')).toBe(
+      'https://ummahflow.com/p/abc-123',
     );
   });
 });
