@@ -22,9 +22,9 @@ const checks = [
 
 let allSet = true;
 for (const { name, value } of checks) {
-  const status = value && value.trim() !== '' ? '✅' : '❌';
-  if (!value || value.trim() === '') allSet = false;
-  console.log(`  ${status} ${name}: ${value ? 'set' : 'not set'}`);
+  const present = value && value.trim() !== '';
+  if (!present) allSet = false;
+  console.log(`  ${present ? '✅' : '❌'} ${name}: ${present ? 'set' : 'not set'}`);
 }
 
 console.log('');
