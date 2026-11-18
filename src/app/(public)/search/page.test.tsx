@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import SearchPage from './page';
 
 let mockSection: 'food' | 'ummah' | 'business' = 'food';
+let mockExtraParams = '';
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
 const mockBack = vi.fn();
@@ -14,7 +15,7 @@ vi.mock('next/navigation', () => ({
     back: mockBack,
     replace: mockReplace,
   }),
-  useSearchParams: () => new URLSearchParams(`section=${mockSection}`),
+  useSearchParams: () => new URLSearchParams(`section=${mockSection}${mockExtraParams}`),
 }));
 
 vi.mock('@/providers/LanguageProvider', () => ({
@@ -255,6 +256,7 @@ describe('Search page Wo defaults and selection behavior', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSection = 'food';
+    mockExtraParams = '';
     localStorage.clear();
     sessionStorage.clear();
   });
@@ -399,5 +401,69 @@ describe('Search page Wo defaults and selection behavior', () => {
 
     expect(screen.queryByRole('button', { name: /In der Nähe/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Jetzt geöffnet/i })).not.toBeInTheDocument();
+  });
+
+  it('[#945 AC1] hydrates city from URL param and shows clear button', async () => {
+    mockExtraParams = '&city=Berlin&open=wo';
+
+    render(<SearchPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('AUSWAHL')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Auswahl entfernen' })).toBeInTheDocument();
+  });
+
+  it('[#945 AC2] deselecting city from URL param removes city from URL', async () => {
+    mockExtraParams = '&city=Berlin&open=wo';
+
+    render(<SearchPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Auswahl entfernen' }));
+
+    expect(screen.getByRole('heading', { name: 'Wo?' })).toBeInTheDocument();
+    expect(mockReplace).toHaveBeenCalledWith(expect.stringMatching(/^\/search\?/));
+    const replacedUrl = mockReplace.mock.calls[0][0] as string;
+    expect(new URLSearchParams(replacedUrl.split('?')[1]).has('city')).toBe(false);
+  });
+
+  it('[#945 AC3] after clearing city the selection is gone and popular cities return', async () => {
+    mockExtraParams = '&city=Berlin&open=wo';
+
+    render(<SearchPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('AUSWAHL')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Auswahl entfernen' }));
+
+    expect(screen.queryByText('AUSWAHL')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('BELIEBT')).toBeInTheDocument();
+    });
+  });
+
+  it('[#945 AC4] city deselection does not inject near_me param', async () => {
+    mockExtraParams = '&city=Berlin&open=wo';
+
+    render(<SearchPage />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Wo: Berlin' })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Auswahl entfernen' }));
+
+    const replacedUrl = mockReplace.mock.calls[0][0] as string;
+    expect(new URLSearchParams(replacedUrl.split('?')[1]).has('near_me')).toBe(false);
   });
 });
