@@ -113,7 +113,7 @@ export async function renderProvidersPage(opts: {
       {routeCity && initialResults.length > 0 && (
         <script
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(buildItemListJsonLd(initialResults)),
+            __html: JSON.stringify(buildItemListJsonLd(initialResults)).replace(/</g, '\\u003c'),
           }}
           type="application/ld+json"
         />
