@@ -1293,7 +1293,7 @@ export const de = {
       closeAria: 'Schließen',
       halalMeatDefinitionTitle: 'Was ist Halal-Fleisch?',
       halalMeatDefinition:
-        'Halal-Fleisch stammt von Tieren, die nach islamischen Richtlinien geschlachtet werden:\n\n• Der Name <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">Allahs</span></strong> muss gesprochen werden\n• Ein scharfes Messer führt einen schnellen Schnitt\n• Das Blut wird vollständig abgelassen\n• Bio-Halal-Fleisch — Tiere artgerecht aufgezogen und barmherzig geschlachtet — ist das Ideal, das wir anstreben\n\nFleisch von Tieren, die vor der Schlachtung mit einem Bolzenschussgerät betäubt wurden, gilt <strong>NICHT</strong> als halal.',
+        'Halal-Fleisch stammt von Tieren, die nach islamischen Richtlinien geschlachtet werden:\n\n• Der Name <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">Allahs</span></strong> muss gesprochen werden\n• Ein scharfes Messer führt einen schnellen Schnitt\n• Das Blut wird vollständig abgelassen\n\nFleisch von Tieren, die vor der Schlachtung mit einem Bolzenschussgerät betäubt wurden, gilt <strong>NICHT</strong> als halal.\n\nBio-Halal-Fleisch — Tiere artgerecht aufgezogen und barmherzig geschlachtet — ist das Ideal, das wir anstreben.',
     },
     container: {
       addressTapToNavigate: 'Adresse antippen zum Navigieren',
