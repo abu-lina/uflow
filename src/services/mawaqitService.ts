@@ -1,6 +1,6 @@
 /**
  * Mawaqit API Service
- * 
+ *
  * Provides prayer times for mosques from mawaqit.net (8000+ mosques worldwide)
  */
 
@@ -15,7 +15,7 @@ const MAWAQIT_BEARER_TOKEN = process.env.MAWAQIT_BEARER_TOKEN;
 function getMawaqitHeaders(): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   };
 
   // Add bearer token if configured
@@ -28,13 +28,13 @@ function getMawaqitHeaders(): HeadersInit {
 
 /**
  * Search for mosques by name in Mawaqit database
- * 
+ *
  * @param query - Mosque name to search for
  * @param limit - Maximum number of results (default: 10)
  */
 export async function searchMawaqitMosque(
   query: string,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<MawaqitMosque[]> {
   if (!query || query.trim().length < 2) {
     return [];
@@ -80,14 +80,11 @@ export async function searchMawaqitMosque(
 
 /**
  * Get prayer times for a specific mosque
- * 
+ *
  * @param mosqueId - Mawaqit mosque ID
  * @param date - Date in YYYY-MM-DD format (default: today)
  */
-export async function getPrayerTimes(
-  mosqueId: string,
-  date?: string
-): Promise<PrayerTime | null> {
+export async function getPrayerTimes(mosqueId: string, date?: string): Promise<PrayerTime | null> {
   if (!mosqueId) {
     return null;
   }
@@ -95,13 +92,13 @@ export async function getPrayerTimes(
   try {
     // Use today's date if not provided
     const dateParam = date || new Date().toISOString().split('T')[0];
-    
+
     // Note: Actual endpoint may vary - check Mawaqit API docs at /docs
     const response = await fetch(
       `${MAWAQIT_API_URL}/api/v1/mosques/${encodeURIComponent(mosqueId)}/prayer-times?date=${dateParam}`,
       {
         headers: getMawaqitHeaders(),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -124,9 +121,9 @@ export async function getPrayerTimes(
 
 /**
  * Find mosque in Mawaqit by matching name and location
- * 
+ *
  * This is a helper function to match a selected place with a Mawaqit mosque
- * 
+ *
  * @param mosqueName - Name of the mosque
  * @param latitude - Optional latitude for location matching
  * @param longitude - Optional longitude for location matching
@@ -134,7 +131,7 @@ export async function getPrayerTimes(
 export async function findMawaqitMosqueByName(
   mosqueName: string,
   latitude?: number,
-  longitude?: number
+  longitude?: number,
 ): Promise<MawaqitMosque | null> {
   if (!mosqueName || mosqueName.trim().length < 2) {
     return null;

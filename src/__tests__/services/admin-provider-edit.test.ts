@@ -8,7 +8,11 @@ vi.mock('@/lib/supabase/admin', () => ({
   }),
 }));
 
-import { updateProviderFields, type AdminProviderEditData, buildBasicFieldsPayload } from '@/services/admin/providerEdit';
+import {
+  updateProviderFields,
+  type AdminProviderEditData,
+  buildBasicFieldsPayload,
+} from '@/services/admin/providerEdit';
 
 describe('updateProviderFields', () => {
   beforeEach(() => {
@@ -19,7 +23,10 @@ describe('updateProviderFields', () => {
   const validAdminId = '223e4567-e89b-12d3-a456-426614174001';
 
   it('calls admin_update_provider RPC with correct payload', async () => {
-    mockRpc.mockResolvedValue({ data: { provider_id: validProviderId, provider_name: 'Updated Name' }, error: null });
+    mockRpc.mockResolvedValue({
+      data: { provider_id: validProviderId, provider_name: 'Updated Name' },
+      error: null,
+    });
 
     const editData: AdminProviderEditData = {
       providerName: 'Updated Name',
@@ -81,7 +88,7 @@ describe('updateProviderFields', () => {
     mockRpc.mockResolvedValue({ data: null, error: { message: 'DB error' } });
 
     await expect(
-      updateProviderFields(validProviderId, { providerName: 'Test' }, validAdminId)
+      updateProviderFields(validProviderId, { providerName: 'Test' }, validAdminId),
     ).rejects.toThrow('DB error');
   });
 
@@ -89,7 +96,7 @@ describe('updateProviderFields', () => {
     mockRpc.mockResolvedValue({ data: null, error: null });
 
     await expect(
-      updateProviderFields(validProviderId, { providerName: 'Test' }, validAdminId)
+      updateProviderFields(validProviderId, { providerName: 'Test' }, validAdminId),
     ).rejects.toThrow('Provider not found');
   });
 
@@ -107,7 +114,11 @@ describe('updateProviderFields', () => {
   it('includes listing_type when explicitly provided', async () => {
     mockRpc.mockResolvedValue({ data: { provider_id: validProviderId }, error: null });
 
-    await updateProviderFields(validProviderId, { providerName: 'Name Only', listingType: 'store' }, validAdminId);
+    await updateProviderFields(
+      validProviderId,
+      { providerName: 'Name Only', listingType: 'store' },
+      validAdminId,
+    );
 
     const rpcPayload = mockRpc.mock.calls[0][1].p_data;
     expect(rpcPayload.providers).toMatchObject({
@@ -119,7 +130,11 @@ describe('updateProviderFields', () => {
   it('includes listing_type ummah in payload', async () => {
     mockRpc.mockResolvedValue({ data: { provider_id: validProviderId }, error: null });
 
-    await updateProviderFields(validProviderId, { providerName: 'Name Only', listingType: 'ummah' }, validAdminId);
+    await updateProviderFields(
+      validProviderId,
+      { providerName: 'Name Only', listingType: 'ummah' },
+      validAdminId,
+    );
 
     const rpcPayload = mockRpc.mock.calls[0][1].p_data;
     expect(rpcPayload.providers).toMatchObject({

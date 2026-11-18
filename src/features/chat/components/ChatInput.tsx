@@ -36,7 +36,7 @@ export function ChatInput({ onSend, isLoading = false }: ChatInputProps) {
 
   return (
     <div
-      className="flex items-end gap-2 border-t border-border/30 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+      className="flex items-end gap-2 border-t border-border/30 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3"
       style={{
         background: 'linear-gradient(rgb(245, 245, 245) 0%, rgb(251, 251, 251) 100%)',
         backdropFilter: 'blur(20px)',
@@ -49,7 +49,7 @@ export function ChatInput({ onSend, isLoading = false }: ChatInputProps) {
         aria-label="Chat message input"
         autoCapitalize="sentences"
         autoCorrect="on"
-        className="flex-1 resize-none rounded-xl border border-gray-300 px-4 h-12 text-sm py-3 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed bg-white"
+        className="h-12 flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
         disabled={isLoading}
         enterKeyHint="send"
         placeholder="Nachricht schreiben..."
@@ -61,7 +61,7 @@ export function ChatInput({ onSend, isLoading = false }: ChatInputProps) {
       />
       <button
         aria-label="Send message"
-        className="inline-flex items-center justify-center font-inter-tight text-base font-medium transition-all duration-150 ease-out disabled:opacity-50 active:scale-[0.98] bg-primary text-white hover:bg-primary-dark active:bg-primary-darker h-12 w-12 rounded-xl shadow-[0_8px_24px_rgba(88,157,150,0.25)]"
+        className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary font-inter-tight text-base font-medium text-white shadow-[0_8px_24px_rgba(88,157,150,0.25)] transition-all duration-150 ease-out hover:bg-primary-dark active:scale-[0.98] active:bg-primary-darker disabled:opacity-50"
         disabled={isLoading || !value.trim()}
         onClick={handleSend}
       >

@@ -56,7 +56,7 @@ import AdminProviderEditPage from '@/app/(dashboard)/dashboard/providers/[id]/ed
 
 function renderPage() {
   return render(
-    <AdminProviderEditPage params={{ id: VALID_ID } as unknown as Promise<{ id: string }>} />
+    <AdminProviderEditPage params={{ id: VALID_ID } as unknown as Promise<{ id: string }>} />,
   );
 }
 
@@ -65,13 +65,14 @@ describe('AdminProviderEditPage — delete flow', () => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        data: {
-          provider_id: VALID_ID,
-          provider_name: 'Test Provider',
-          review_status: 'approved',
-        },
-      }),
+      json: () =>
+        Promise.resolve({
+          data: {
+            provider_id: VALID_ID,
+            provider_name: 'Test Provider',
+            review_status: 'approved',
+          },
+        }),
     });
   });
 
@@ -79,7 +80,9 @@ describe('AdminProviderEditPage — delete flow', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /delete provider permanently/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /delete provider permanently/i }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -95,7 +98,9 @@ describe('AdminProviderEditPage — delete flow', () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /delete provider permanently/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /delete provider permanently/i }),
+      ).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /delete provider permanently/i }));

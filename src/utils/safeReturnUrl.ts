@@ -6,7 +6,7 @@ const PROBE_ORIGIN = 'https://return-url.invalid';
  */
 export function getSafeReturnUrl<F extends string | null>(
   raw: string | null | undefined,
-  fallback: F
+  fallback: F,
 ): string | F {
   if (!raw) return fallback;
 

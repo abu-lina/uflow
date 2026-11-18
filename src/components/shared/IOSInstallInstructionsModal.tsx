@@ -11,10 +11,7 @@ interface IOSInstallInstructionsModalProps {
   onClose: () => void;
 }
 
-export function IOSInstallInstructionsModal({
-  isOpen,
-  onClose,
-}: IOSInstallInstructionsModalProps) {
+export function IOSInstallInstructionsModal({ isOpen, onClose }: IOSInstallInstructionsModalProps) {
   const { t } = useLanguage();
   const modalRef = useRef<HTMLDivElement>(null);
   const [isClosing, setIsClosing] = useState(false);
@@ -46,7 +43,7 @@ export function IOSInstallInstructionsModal({
   useEffect(() => {
     if (isOpen && modalRef.current) {
       const firstFocusable = modalRef.current.querySelector(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       ) as HTMLElement;
       firstFocusable?.focus();
     }
@@ -99,11 +96,9 @@ export function IOSInstallInstructionsModal({
       >
         {/* Modal Content */}
         <div
-          className="relative flex w-full max-w-[392px] flex-col items-center gap-4 rounded-t-[32px] bg-background p-4 md:rounded-[24px] md:max-w-[480px] md:p-6"
+          className="relative flex w-full max-w-[392px] flex-col items-center gap-4 rounded-t-[32px] bg-background p-4 md:max-w-[480px] md:rounded-[24px] md:p-6"
           style={{
-            transform: isClosing
-              ? 'translateY(100%) scale(0.95)'
-              : 'translateY(0) scale(1)',
+            transform: isClosing ? 'translateY(100%) scale(0.95)' : 'translateY(0) scale(1)',
             transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
@@ -239,4 +234,3 @@ export function IOSInstallInstructionsModal({
 
   return createPortal(modalContent, document.body);
 }
-

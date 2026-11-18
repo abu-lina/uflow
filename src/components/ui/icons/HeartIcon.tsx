@@ -19,7 +19,10 @@ export function HeartIcon({
 }: HeartIconProps) {
   const iconColor = color || (isActive ? '#589D96' : '#777777');
   return (
-    <div className={`flex items-center justify-center ${className}`} style={{ width: 48, height: 48 }}>
+    <div
+      className={`flex items-center justify-center ${className}`}
+      style={{ width: 48, height: 48 }}
+    >
       <svg
         fill={filled ? iconColor : 'none'}
         height={height}

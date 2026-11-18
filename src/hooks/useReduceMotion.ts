@@ -15,9 +15,7 @@ export function useReduceMotion(): boolean {
       setReduce(false);
       return;
     }
-    const isIOS =
-      typeof navigator !== 'undefined' &&
-      /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
     setReduce(isIOS);
   }, []);
 

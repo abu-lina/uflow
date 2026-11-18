@@ -37,11 +37,11 @@ export async function GET(request: Request) {
   if (!expectedKey || !keyMatches(adminKey, expectedKey)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
-  
+
   // Allow admin to check specific IP by providing it in query params
   let ip: string;
   let identifier: string;
-  
+
   const requestedIP = url.searchParams.get('ip');
   if (requestedIP) {
     // Admin override - check the requested IP instead of visitor's IP
@@ -52,40 +52,32 @@ export async function GET(request: Request) {
     ip = getClientIP(request);
     identifier = getClientIdentifier(request);
   }
-  
+
   const isBlocked = checkIPBlocked(ip);
-  
+
   // Check rate limits
-  const magicLinkRateLimit = getRemainingRequests(
-    identifier,
-    10,
-    60 * 60 * 1000,
-    'magic-link'
-  );
-  
-  const verifyRateLimit = getRemainingRequests(
-    identifier,
-    10,
-    60 * 60 * 1000,
-    'verify-magic-link'
-  );
-  
+  const magicLinkRateLimit = getRemainingRequests(identifier, 10, 60 * 60 * 1000, 'magic-link');
+
+  const verifyRateLimit = getRemainingRequests(identifier, 10, 60 * 60 * 1000, 'verify-magic-link');
+
   // Get headers for IP detection
   const headers = {
     'x-forwarded-for': request.headers.get('x-forwarded-for'),
     'x-real-ip': request.headers.get('x-real-ip'),
     'cf-connecting-ip': request.headers.get('cf-connecting-ip'),
   };
-  
+
   const isAdminMode = Boolean(requestedIP);
-  
+
   const diagnostic = {
     timestamp: new Date().toISOString(),
     ip,
     identifier,
     email: email || 'not provided',
     mode: isAdminMode ? 'admin' : 'user',
-    note: isAdminMode ? 'Admin mode: Checking specific IP provided in query parameter' : 'User mode: Showing diagnostic for your current IP address',
+    note: isAdminMode
+      ? 'Admin mode: Checking specific IP provided in query parameter'
+      : 'User mode: Showing diagnostic for your current IP address',
     status: {
       ipBlocked: isBlocked,
       rateLimitExceeded: magicLinkRateLimit === 0,
@@ -96,47 +88,55 @@ export async function GET(request: Request) {
         remaining: magicLinkRateLimit,
         limit: 10,
         window: '1 hour',
-        status: magicLinkRateLimit === 0 ? 'EXCEEDED' : magicLinkRateLimit === null ? 'NONE' : 'OK'
+        status: magicLinkRateLimit === 0 ? 'EXCEEDED' : magicLinkRateLimit === null ? 'NONE' : 'OK',
       },
       verify: {
         remaining: verifyRateLimit,
         limit: 10,
         window: '1 hour',
-        status: verifyRateLimit === 0 ? 'EXCEEDED' : verifyRateLimit === null ? 'NONE' : 'OK'
-      }
+        status: verifyRateLimit === 0 ? 'EXCEEDED' : verifyRateLimit === null ? 'NONE' : 'OK',
+      },
     },
     detectedIP: {
       cloudflare: headers['cf-connecting-ip'],
       forwarded: headers['x-forwarded-for'],
       real: headers['x-real-ip'],
-      used: ip
+      used: ip,
     },
     environment: {
       nodeEnv: process.env.NODE_ENV,
       hasResendKey: !!process.env.RESEND_API_KEY,
       siteUrl: process.env.NEXT_PUBLIC_SITE_URL,
     },
-    recommendations: [] as string[]
+    recommendations: [] as string[],
   };
-  
+
   // Add recommendations
   if (isBlocked) {
-    diagnostic.recommendations.push('Your IP address is temporarily blocked. Please wait 15 minutes or contact support.');
+    diagnostic.recommendations.push(
+      'Your IP address is temporarily blocked. Please wait 15 minutes or contact support.',
+    );
   }
   if (magicLinkRateLimit === 0) {
-    diagnostic.recommendations.push('You have exceeded the rate limit (10 requests per hour). Please wait before requesting another magic link.');
+    diagnostic.recommendations.push(
+      'You have exceeded the rate limit (10 requests per hour). Please wait before requesting another magic link.',
+    );
   }
   if (!process.env.RESEND_API_KEY) {
-    diagnostic.recommendations.push('Email service is not configured. Contact support immediately.');
+    diagnostic.recommendations.push(
+      'Email service is not configured. Contact support immediately.',
+    );
   }
   if (diagnostic.recommendations.length === 0) {
-    diagnostic.recommendations.push('No issues detected. If magic links are not working, the issue may be with email delivery. Check your spam folder.');
+    diagnostic.recommendations.push(
+      'No issues detected. If magic links are not working, the issue may be with email delivery. Check your spam folder.',
+    );
   }
-  
+
   // Return as both JSON and HTML for easy viewing on mobile
   const acceptHeader = request.headers.get('accept') || '';
   const wantsHTML = acceptHeader.includes('text/html') || url.searchParams.get('format') === 'html';
-  
+
   if (wantsHTML) {
     const html = `<!DOCTYPE html>
 <html>
@@ -181,7 +181,7 @@ export async function GET(request: Request) {
   
   <h2>Recommendations</h2>
   <ul>
-    ${diagnostic.recommendations.map(rec => `<li>${escapeHtml(rec)}</li>`).join('')}
+    ${diagnostic.recommendations.map((rec) => `<li>${escapeHtml(rec)}</li>`).join('')}
   </ul>
   
   <h2>Share This Information</h2>
@@ -201,11 +201,11 @@ export async function GET(request: Request) {
   </script>
 </body>
 </html>`;
-    
+
     return new NextResponse(html, {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
   }
-  
+
   return NextResponse.json(diagnostic);
 }

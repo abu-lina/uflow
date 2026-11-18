@@ -9,21 +9,18 @@ interface TrustLevelIconProps {
 
 /**
  * Trust Level Icon Component
- * 
+ *
  * Displays icons for badge trust levels:
  * - SELF_DECLARED: No icon (returns null)
  * - COMMUNITY_CONFIRMED: Shield with community/users indicator (blue)
  * - UMMAH_FLOW_VERIFIED: Shield with checkmark (green/mint)
- * 
+ *
  * @example
  * ```tsx
  * <TrustLevelIcon trustLevel={TrustLevel.COMMUNITY_CONFIRMED} className="w-4 h-4" />
  * ```
  */
-export function TrustLevelIcon({
-  trustLevel,
-  className = '',
-}: TrustLevelIconProps) {
+export function TrustLevelIcon({ trustLevel, className = '' }: TrustLevelIconProps) {
   // SELF_DECLARED has no icon
   if (trustLevel === TrustLevel.SELF_DECLARED) {
     return null;
@@ -98,4 +95,3 @@ export function TrustLevelIcon({
   // Fallback (should never reach here, but TypeScript requires it)
   return null;
 }
-

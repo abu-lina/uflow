@@ -12,7 +12,9 @@ describe('Plan 129 migration 089 contract', () => {
     // TDD red gate: this should fail until migration 089 is implemented.
     expect(existsSync(migrationPath)).toBe(true);
     if (!existsSync(migrationPath)) {
-      throw new Error('Migration 089 file not found at supabase/migrations/089_fix_search_food_concepts_junction.sql.');
+      throw new Error(
+        'Migration 089 file not found at supabase/migrations/089_fix_search_food_concepts_junction.sql.',
+      );
     }
 
     const sql = readFileSync(migrationPath, 'utf8');
@@ -29,9 +31,17 @@ describe('Plan 129 migration 089 contract', () => {
     expect(sql).not.toContain('p.offers_ids');
 
     // Permission parity must be preserved after function recreation.
-    expect(sql).toContain('REVOKE ALL ON FUNCTION public.search_food_concepts(TEXT, INTEGER) FROM PUBLIC;');
-    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.search_food_concepts(TEXT, INTEGER) TO anon;');
-    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.search_food_concepts(TEXT, INTEGER) TO authenticated;');
-    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.search_food_concepts(TEXT, INTEGER) TO service_role;');
+    expect(sql).toContain(
+      'REVOKE ALL ON FUNCTION public.search_food_concepts(TEXT, INTEGER) FROM PUBLIC;',
+    );
+    expect(sql).toContain(
+      'GRANT EXECUTE ON FUNCTION public.search_food_concepts(TEXT, INTEGER) TO anon;',
+    );
+    expect(sql).toContain(
+      'GRANT EXECUTE ON FUNCTION public.search_food_concepts(TEXT, INTEGER) TO authenticated;',
+    );
+    expect(sql).toContain(
+      'GRANT EXECUTE ON FUNCTION public.search_food_concepts(TEXT, INTEGER) TO service_role;',
+    );
   });
 });

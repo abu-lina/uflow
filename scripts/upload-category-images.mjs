@@ -48,7 +48,8 @@ function getEnv(key) {
   return match ? match[1].trim() : null;
 }
 const SUPABASE_URL = process.env.SUPABASE_URL || getEnv('NEXT_PUBLIC_SUPABASE_URL');
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || getEnv('SUPABASE_SERVICE_ROLE_KEY');
+const SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || getEnv('SUPABASE_SERVICE_ROLE_KEY');
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error(
@@ -72,7 +73,9 @@ console.log(`   Source:   ${SOURCE_DIR}\n`);
 
 if (!existsSync(SOURCE_DIR)) {
   console.error(`ERROR: Source folder not found: ${SOURCE_DIR}`);
-  console.error(`Create it and add subfolders named after categories (e.g. imports/category-images/Afghan/)`);
+  console.error(
+    `Create it and add subfolders named after categories (e.g. imports/category-images/Afghan/)`,
+  );
   process.exit(1);
 }
 
@@ -132,16 +135,12 @@ for (const folderName of categoryFolders) {
     const storagePath = `${categoryId}/${i + 1}.webp`;
 
     // Convert to WebP (sharp handles PNG, JPG, WebP, AVIF input transparently)
-    const webpBytes = await sharp(srcFile)
-      .webp({ quality: 85 })
-      .toBuffer();
+    const webpBytes = await sharp(srcFile).webp({ quality: 85 }).toBuffer();
 
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(storagePath, webpBytes, {
-        contentType: 'image/webp',
-        upsert: true,
-      });
+    const { error } = await supabase.storage.from(BUCKET).upload(storagePath, webpBytes, {
+      contentType: 'image/webp',
+      upsert: true,
+    });
 
     if (error) {
       console.error(`  ✗ ${basename(srcFile)} → ${storagePath}: ${error.message}`);
@@ -172,5 +171,7 @@ for (const folderName of categoryFolders) {
 }
 
 // ─── Summary ─────────────────────────────────────────────────────────────────
-console.log(`\n${totalErrors === 0 ? '✅' : '⚠ '} Done — ${totalUploaded} file(s) uploaded, ${totalErrors} error(s).`);
+console.log(
+  `\n${totalErrors === 0 ? '✅' : '⚠ '} Done — ${totalUploaded} file(s) uploaded, ${totalErrors} error(s).`,
+);
 if (totalErrors > 0) process.exit(1);

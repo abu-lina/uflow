@@ -140,7 +140,8 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
   async function closedListCity(): Promise<string> {
     const { data, error } = await adminClient().from('cities').select('city_name').limit(1);
     if (error) throw error;
-    if (!data || data.length === 0) throw new Error('cities table is empty — migration 140 not applied');
+    if (!data || data.length === 0)
+      throw new Error('cities table is empty — migration 140 not applied');
     return data[0].city_name;
   }
 
@@ -197,9 +198,8 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
   });
 
   it('every live applicable_section="all" category submits instead of 500ing', async () => {
-    const { createProviderOrServiceServer } = await import(
-      '@/features/providers/services/create-provider.server'
-    );
+    const { createProviderOrServiceServer } =
+      await import('@/features/providers/services/create-provider.server');
     const { data: allCategories, error } = await adminClient()
       .from('categories')
       .select('category_id, name_en, applicable_section')
@@ -235,9 +235,8 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
   }, 60_000);
 
   it('a recommend city outside the closed list fails coded, not 500', async () => {
-    const { createProviderOrServiceServer, ProviderSubmitError } = await import(
-      '@/features/providers/services/create-provider.server'
-    );
+    const { createProviderOrServiceServer, ProviderSubmitError } =
+      await import('@/features/providers/services/create-provider.server');
     const { data: cat } = await adminClient()
       .from('categories')
       .select('category_id')
@@ -257,9 +256,8 @@ describe.skipIf(!LIVE)('#606 live repro — real Supabase submission path', () =
   }, 30_000);
 
   it('the same normalised name+city twice is a coded duplicate, not a 500', async () => {
-    const { createProviderOrServiceServer } = await import(
-      '@/features/providers/services/create-provider.server'
-    );
+    const { createProviderOrServiceServer } =
+      await import('@/features/providers/services/create-provider.server');
     const { data: cat } = await adminClient()
       .from('categories')
       .select('category_id, applicable_section')

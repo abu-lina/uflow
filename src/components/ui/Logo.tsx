@@ -10,7 +10,7 @@ export function Logo({ className = '', height = 32, width = 32 }: LogoProps) {
   return (
     <Image
       alt="U-Flow Logo"
-      className={`${className} object-contain flex-shrink-0`}
+      className={`${className} flex-shrink-0 object-contain`}
       height={height}
       priority={true}
       quality={95}

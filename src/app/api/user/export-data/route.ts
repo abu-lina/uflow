@@ -7,7 +7,7 @@ import { maskIp } from '@/lib/logging/redact-pii';
 
 /**
  * GET /api/user/export-data
- * 
+ *
  * Exports all user data in JSON format (GDPR Right to Portability)
  * Rate limited to 1 export per hour per user
  */
@@ -16,10 +16,7 @@ export async function GET(request: Request) {
     // 1. Authenticate user
     const user = await getUserFromCookie();
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // 2. Rate limiting: 1 export per hour per user
@@ -27,7 +24,7 @@ export async function GET(request: Request) {
     if (!checkRateLimit(identifier, 1, 60 * 60 * 1000, 'data-export')) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. You can export your data once per hour.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -109,7 +106,7 @@ export async function GET(request: Request) {
     // 5. Return JSON with download headers
     const jsonString = JSON.stringify(userData, null, 2);
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    
+
     return new NextResponse(jsonString, {
       status: 200,
       headers: {
@@ -122,7 +119,7 @@ export async function GET(request: Request) {
     console.error('[EXPORT] Unexpected error:', error);
     return NextResponse.json(
       { error: 'An unexpected error occurred while exporting your data' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

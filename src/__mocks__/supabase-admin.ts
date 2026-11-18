@@ -3,15 +3,15 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Mock Supabase Admin Client for API route testing
- * 
+ *
  * This mock provides a complete Supabase admin client with:
  * - Database operations (from, select, eq, maybeSingle, update)
  * - Auth admin operations (listUsers, updateUserById, generateLink)
- * 
+ *
  * Usage in tests:
  * ```typescript
  * import { createMockSupabaseAdmin } from '@/__mocks__/supabase-admin';
- * 
+ *
  * vi.mock('@supabase/supabase-js', () => ({
  *   createClient: vi.fn(() => createMockSupabaseAdmin()),
  * }));
@@ -46,8 +46,13 @@ export interface MockSupabaseAdmin {
   auth: {
     admin: {
       listUsers: () => Promise<{ data: { users: MockUser[] }; error: null | { message: string } }>;
-      getUserById: (userId: string) => Promise<{ data: { user: MockUser | null }; error: null | { message: string } }>;
-      updateUserById: (userId: string, updates: unknown) => Promise<{ error: null | { message: string } }>;
+      getUserById: (
+        userId: string,
+      ) => Promise<{ data: { user: MockUser | null }; error: null | { message: string } }>;
+      updateUserById: (
+        userId: string,
+        updates: unknown,
+      ) => Promise<{ error: null | { message: string } }>;
       generateLink: (options: {
         type: 'magiclink';
         email: string;
@@ -69,7 +74,9 @@ export interface MockQueryBuilder {
   eq: (column: string, value: unknown) => MockQueryBuilder;
   ilike: (column: string, value: unknown) => MockQueryBuilder;
   maybeSingle: () => Promise<{ data: unknown; error: null | { message: string } }>;
-  update: (values: Partial<MockTokenData>) => { eq: (column: string, value: unknown) => Promise<{ error: null | { message: string } }> };
+  update: (values: Partial<MockTokenData>) => {
+    eq: (column: string, value: unknown) => Promise<{ error: null | { message: string } }>;
+  };
 }
 
 /**
@@ -85,7 +92,7 @@ export function createMockSupabaseAdmin(
     updateError?: { message: string } | null;
     generateLinkError?: { message: string } | null;
     hashedToken?: string;
-  } = {}
+  } = {},
 ): SupabaseClient {
   const {
     tokenData = null,
@@ -159,35 +166,35 @@ export function createMockSupabaseAdmin(
         updateUserById: vi.fn(async (_userId: string, _updates: unknown) => {
           return { error: null };
         }),
-        generateLink: vi.fn(async (_options: {
-          type: 'magiclink';
-          email: string;
-          options?: { redirectTo: string };
-        }) => {
-          if (generateLinkError) {
-            return { data: null, error: generateLinkError };
-          }
-          return {
-            data: {
-              properties: {
-                hashed_token: hashedToken,
+        generateLink: vi.fn(
+          async (_options: {
+            type: 'magiclink';
+            email: string;
+            options?: { redirectTo: string };
+          }) => {
+            if (generateLinkError) {
+              return { data: null, error: generateLinkError };
+            }
+            return {
+              data: {
+                properties: {
+                  hashed_token: hashedToken,
+                },
               },
-            },
-            error: null,
-          };
-        }),
+              error: null,
+            };
+          },
+        ),
       },
     },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 }
 
 /**
  * Helper to create mock token data
  */
-export function createMockTokenData(
-  overrides: Partial<MockTokenData> = {}
-): MockTokenData {
+export function createMockTokenData(overrides: Partial<MockTokenData> = {}): MockTokenData {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
 

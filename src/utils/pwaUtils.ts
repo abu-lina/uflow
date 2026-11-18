@@ -36,21 +36,23 @@ export function detectPWA(): PWADetectionResult {
   const platform = window.navigator.platform;
 
   // Check if running in standalone mode (PWA)
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as Navigator & { standalone?: boolean }).standalone === true ||
     document.referrer.includes('android-app://');
 
   // Check for iOS PWA
-  const isIOSPWA = /iPad|iPhone|iPod/.test(userAgent) && 
+  const isIOSPWA =
+    /iPad|iPhone|iPod/.test(userAgent) &&
     (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
   // Check for Android PWA
-  const isAndroidPWA = /Android/.test(userAgent) && 
-    window.matchMedia('(display-mode: standalone)').matches;
+  const isAndroidPWA =
+    /Android/.test(userAgent) && window.matchMedia('(display-mode: standalone)').matches;
 
   // Determine display mode
   let displayMode: 'browser' | 'standalone' | 'minimal-ui' | 'fullscreen' = 'browser';
-  
+
   if (window.matchMedia('(display-mode: standalone)').matches) {
     displayMode = 'standalone';
   } else if (window.matchMedia('(display-mode: minimal-ui)').matches) {
@@ -104,15 +106,15 @@ export function getPWAInstallStatus(): 'not-installable' | 'installable' | 'inst
   if (typeof window === 'undefined') return 'not-installable';
 
   const pwaInfo = detectPWA();
-  
+
   if (pwaInfo.isPWA) {
     return 'installed';
   }
-  
+
   if (canInstallPWA()) {
     return 'installable';
   }
-  
+
   return 'not-installable';
 }
 
@@ -123,7 +125,7 @@ export function debugPWAInfo(): void {
   if (typeof window === 'undefined') return;
 
   const info = detectPWA();
-  
+
   console.group('🔍 PWA Detection Debug');
   console.log('Is PWA:', info.isPWA);
   console.log('Is Standalone:', info.isStandalone);

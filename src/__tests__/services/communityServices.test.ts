@@ -88,9 +88,7 @@ describe('communityServices service', () => {
       await searchCommunityServices('test-query');
 
       // SHOULD use provider_name ilike fallback (not community_service_name)
-      expect(mockOr).toHaveBeenCalledWith(
-        expect.stringContaining('provider_name.ilike'),
-      );
+      expect(mockOr).toHaveBeenCalledWith(expect.stringContaining('provider_name.ilike'));
     });
 
     it('[post-fix PASSES] uses ilike fallback on provider_name when RPC throws exception', async () => {
@@ -98,9 +96,7 @@ describe('communityServices service', () => {
 
       await searchCommunityServices('test-query');
 
-      expect(mockOr).toHaveBeenCalledWith(
-        expect.stringContaining('provider_name.ilike'),
-      );
+      expect(mockOr).toHaveBeenCalledWith(expect.stringContaining('provider_name.ilike'));
     });
 
     it('[post-fix PASSES] uses ilike fallback when RPC returns a generic error', async () => {
@@ -111,17 +107,12 @@ describe('communityServices service', () => {
 
       await searchCommunityServices('test-query');
 
-      expect(mockOr).toHaveBeenCalledWith(
-        expect.stringContaining('provider_name.ilike'),
-      );
+      expect(mockOr).toHaveBeenCalledWith(expect.stringContaining('provider_name.ilike'));
     });
 
     it('[post-fix PASSES] filters by provider_id when RPC returns results', async () => {
       mockRpc.mockResolvedValueOnce({
-        data: [
-          { provider_id: 'id-1' },
-          { provider_id: 'id-2' },
-        ],
+        data: [{ provider_id: 'id-1' }, { provider_id: 'id-2' }],
         error: null,
       });
 

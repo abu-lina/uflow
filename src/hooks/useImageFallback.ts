@@ -19,7 +19,7 @@ interface ImageFallbackResult {
 /**
  * Custom hook for handling image fallback logic with React Query caching
  * Priority: Provider images -> Category static images -> Placeholder image
- * 
+ *
  * Best Practice: Uses React Query for caching and leverages cached category data
  * to minimize duplicate fetches while still fetching entity images separately.
  */
@@ -29,10 +29,13 @@ export function useImageFallback({
   entityType,
   limit = 3,
 }: ImageFallbackOptions): ImageFallbackResult {
-
   // Use React Query to cache images per category and entity type
   // Query key includes categoryId to ensure proper cache invalidation
-  const { data: images = [], isLoading, error: queryError } = useQuery({
+  const {
+    data: images = [],
+    isLoading,
+    error: queryError,
+  } = useQuery({
     queryKey: ['gallery-images', entityType, categoryId, limit],
     queryFn: async () => {
       // Pass category.category_images (DB-driven JSONB) for fallback resolution
@@ -104,7 +107,9 @@ export function resolveGalleryImage(
     return providerImageUrl;
   }
 
-  const urls = parseCategoryImages(categoryImages as string | Record<string, unknown> | null | undefined);
+  const urls = parseCategoryImages(
+    categoryImages as string | Record<string, unknown> | null | undefined,
+  );
   if (urls.length > 0) {
     const idx = hashId(providerId || 'default') % urls.length;
     return urls[idx];
@@ -159,4 +164,3 @@ function extractFirstProviderImageUrl(providerImages: unknown): string | null {
     return null;
   }
 }
-

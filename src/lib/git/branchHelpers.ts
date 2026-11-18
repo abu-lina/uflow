@@ -25,30 +25,34 @@ function getWorkspaceRoot(): string {
  * - Limit length
  */
 export function sanitizeBranchName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    // Replace spaces and common separators with hyphens
-    .replace(/[\s_]+/g, '-')
-    // Remove invalid characters (keep alphanumeric, hyphens, and dots)
-    .replace(/[^a-z0-9.-]/g, '')
-    // Remove consecutive hyphens
-    .replace(/-+/g, '-')
-    // Remove leading/trailing hyphens and dots
-    .replace(/^[-.]+|[-.]+$/g, '')
-    // Limit length to 100 characters (git branch name limit is typically 255, but we'll be conservative)
-    .substring(0, 100);
+  return (
+    name
+      .toLowerCase()
+      .trim()
+      // Replace spaces and common separators with hyphens
+      .replace(/[\s_]+/g, '-')
+      // Remove invalid characters (keep alphanumeric, hyphens, and dots)
+      .replace(/[^a-z0-9.-]/g, '')
+      // Remove consecutive hyphens
+      .replace(/-+/g, '-')
+      // Remove leading/trailing hyphens and dots
+      .replace(/^[-.]+|[-.]+$/g, '')
+      // Limit length to 100 characters (git branch name limit is typically 255, but we'll be conservative)
+      .substring(0, 100)
+  );
 }
 
 /**
  * Create a git branch from the current branch
  * If branch already exists, checks it out instead
  */
-export async function createBranch(branchName: string): Promise<{ success: boolean; branchName: string; created: boolean; error?: string }> {
+export async function createBranch(
+  branchName: string,
+): Promise<{ success: boolean; branchName: string; created: boolean; error?: string }> {
   try {
     // Sanitize branch name
     const sanitized = sanitizeBranchName(branchName);
-    
+
     if (!sanitized) {
       return {
         success: false,
@@ -59,7 +63,7 @@ export async function createBranch(branchName: string): Promise<{ success: boole
     }
 
     const workspaceRoot = getWorkspaceRoot();
-    
+
     // Check if branch already exists locally
     let branchExists = false;
     try {
@@ -123,7 +127,8 @@ export async function getCurrentBranch(): Promise<string> {
     });
     return stdout.trim();
   } catch (error) {
-    throw new Error(`Failed to get current branch: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to get current branch: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
   }
 }
-

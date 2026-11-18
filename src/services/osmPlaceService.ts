@@ -1,6 +1,6 @@
 /**
  * OpenStreetMap Place Service
- * 
+ *
  * Searches for Muslim places (mosques, halal restaurants, shops) using Overpass API
  */
 
@@ -12,21 +12,23 @@ const OVERPASS_TIMEOUT = 25; // seconds
 /**
  * Get city bounding box using Nominatim
  */
-async function getCityBounds(cityName: string): Promise<{ bbox: [number, number, number, number]; center: [number, number] } | null> {
+async function getCityBounds(
+  cityName: string,
+): Promise<{ bbox: [number, number, number, number]; center: [number, number] } | null> {
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?` +
-      `format=json&` +
-      `q=${encodeURIComponent(cityName)}&` +
-      `addressdetails=1&` +
-      `limit=1&` +
-      `featuretype=city,town,village`,
+        `format=json&` +
+        `q=${encodeURIComponent(cityName)}&` +
+        `addressdetails=1&` +
+        `limit=1&` +
+        `featuretype=city,town,village`,
       {
         headers: {
           'User-Agent': 'UmmahFlow/1.0',
           'Accept-Language': 'de,en',
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -40,7 +42,7 @@ async function getCityBounds(cityName: string): Promise<{ bbox: [number, number,
 
     const result = data[0];
     const bbox = result.boundingbox; // [min_lat, max_lat, min_lon, max_lon]
-    
+
     if (!bbox || bbox.length !== 4) {
       return null;
     }
@@ -70,23 +72,23 @@ function getPlaceType(tags: Record<string, string>): OSMPlaceType | null {
   }
 
   // Halal restaurant
-  if (tags.amenity === 'restaurant' && (
-    tags['diet:halal'] === 'yes' || 
-    tags['diet:halal'] === 'only' || 
-    tags.cuisine === 'halal' ||
-    tags.cuisine === 'turkish' ||
-    tags.cuisine === 'middle_eastern' ||
-    tags.cuisine === 'arab'
-  )) {
+  if (
+    tags.amenity === 'restaurant' &&
+    (tags['diet:halal'] === 'yes' ||
+      tags['diet:halal'] === 'only' ||
+      tags.cuisine === 'halal' ||
+      tags.cuisine === 'turkish' ||
+      tags.cuisine === 'middle_eastern' ||
+      tags.cuisine === 'arab')
+  ) {
     return 'restaurant';
   }
 
   // Halal fast food
-  if (tags.amenity === 'fast_food' && (
-    tags['diet:halal'] === 'yes' || 
-    tags['diet:halal'] === 'only' ||
-    tags.cuisine === 'halal'
-  )) {
+  if (
+    tags.amenity === 'fast_food' &&
+    (tags['diet:halal'] === 'yes' || tags['diet:halal'] === 'only' || tags.cuisine === 'halal')
+  ) {
     return 'fast_food';
   }
 
@@ -110,20 +112,25 @@ function parseOSMElement(element: OverpassElement): OSMPlace | null {
   // Get coordinates (use center for ways/relations, lat/lon for nodes)
   const lat = element.lat ?? element.center?.lat;
   const lon = element.lon ?? element.center?.lon;
-  
+
   if (!lat || !lon) {
     return null;
   }
 
   // Get name
-  const name = element.tags.name || element.tags['name:de'] || element.tags['name:en'] || 'Unnamed Place';
-  
+  const name =
+    element.tags.name || element.tags['name:de'] || element.tags['name:en'] || 'Unnamed Place';
+
   // Parse address
   const address = {
     street: element.tags['addr:street'] || undefined,
     houseNumber: element.tags['addr:housenumber'] || undefined,
     postcode: element.tags['addr:postcode'] || undefined,
-    city: element.tags['addr:city'] || element.tags['addr:town'] || element.tags['addr:village'] || undefined,
+    city:
+      element.tags['addr:city'] ||
+      element.tags['addr:town'] ||
+      element.tags['addr:village'] ||
+      undefined,
     country: element.tags['addr:country'] || undefined,
   };
 
@@ -137,14 +144,14 @@ function parseOSMElement(element: OverpassElement): OSMPlace | null {
 
   // Build display name
   const addressParts = [
-    address.street && address.houseNumber ? `${address.street} ${address.houseNumber}` : address.street,
+    address.street && address.houseNumber
+      ? `${address.street} ${address.houseNumber}`
+      : address.street,
     address.postcode,
     address.city,
   ].filter(Boolean);
-  
-  const displayName = addressParts.length > 0 
-    ? `${name}, ${addressParts.join(', ')}`
-    : name;
+
+  const displayName = addressParts.length > 0 ? `${name}, ${addressParts.join(', ')}` : name;
 
   return {
     id: element.id,
@@ -153,8 +160,12 @@ function parseOSMElement(element: OverpassElement): OSMPlace | null {
     name,
     lat,
     lon,
-    address: Object.keys(address).some(k => address[k as keyof typeof address]) ? address : undefined,
-    contact: Object.keys(contact).some(k => contact[k as keyof typeof contact]) ? contact : undefined,
+    address: Object.keys(address).some((k) => address[k as keyof typeof address])
+      ? address
+      : undefined,
+    contact: Object.keys(contact).some((k) => contact[k as keyof typeof contact])
+      ? contact
+      : undefined,
     tags: element.tags,
     displayName,
   };
@@ -163,10 +174,7 @@ function parseOSMElement(element: OverpassElement): OSMPlace | null {
 /**
  * Search for Muslim places in a city by name query
  */
-export async function searchMuslimPlaces(
-  query: string,
-  cityName: string
-): Promise<OSMPlace[]> {
+export async function searchMuslimPlaces(query: string, cityName: string): Promise<OSMPlace[]> {
   if (!query || query.trim().length < 2) {
     return [];
   }
@@ -225,7 +233,7 @@ export async function searchMuslimPlaces(
     }
 
     const data: OverpassResponse = await response.json();
-    
+
     if (!data.elements || data.elements.length === 0) {
       return [];
     }
@@ -237,12 +245,12 @@ export async function searchMuslimPlaces(
 
     // Filter by search query (case-insensitive)
     // Check name, name:de, name:en, and display name
-    const filteredPlaces = allPlaces.filter(place => {
+    const filteredPlaces = allPlaces.filter((place) => {
       const nameMatch = place.name.toLowerCase().includes(searchQuery);
       const nameDeMatch = place.tags['name:de']?.toLowerCase().includes(searchQuery);
       const nameEnMatch = place.tags['name:en']?.toLowerCase().includes(searchQuery);
       const displayNameMatch = place.displayName?.toLowerCase().includes(searchQuery);
-      
+
       return nameMatch || nameDeMatch || nameEnMatch || displayNameMatch;
     });
 
@@ -259,7 +267,7 @@ export async function searchMuslimPlaces(
  */
 export async function getMuslimPlacesByCity(
   cityName: string,
-  limit: number = 50
+  limit: number = 50,
 ): Promise<OSMPlace[]> {
   if (!cityName || !cityName.trim()) {
     return [];
@@ -312,7 +320,7 @@ export async function getMuslimPlacesByCity(
     }
 
     const data: OverpassResponse = await response.json();
-    
+
     if (!data.elements || data.elements.length === 0) {
       return [];
     }

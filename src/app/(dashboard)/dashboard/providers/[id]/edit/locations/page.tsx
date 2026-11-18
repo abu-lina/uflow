@@ -49,7 +49,9 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
           setLocations(parsed);
           return;
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     async function fetchLocations() {
@@ -58,7 +60,7 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
         if (res.ok) {
           const json = await res.json();
           const data = (json.data ?? []) as Location[];
-          const mapped = data.map(loc => ({
+          const mapped = data.map((loc) => ({
             location_id: loc.location_id,
             location_name: loc.location_name ?? '',
             address_street: loc.address_street ?? '',
@@ -72,7 +74,9 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
           setLocations(mapped);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(mapped));
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     fetchLocations();
   }, [id, STORAGE_KEY]);
@@ -83,7 +87,7 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
   }, [locations, STORAGE_KEY, router]);
 
   const updateLocation = (index: number, field: string, value: unknown) => {
-    setLocations(prev => {
+    setLocations((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
       if (field === 'is_primary' && value === true) {
@@ -99,11 +103,11 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
 
   const removeLocation = (index: number) => {
     if (locations.length <= 1) return;
-    setLocations(prev => prev.filter((_, i) => i !== index));
+    setLocations((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addLocation = () => {
-    setLocations(prev => [...prev, createDefaultLocation()]);
+    setLocations((prev) => [...prev, createDefaultLocation()]);
   };
 
   return (
@@ -118,17 +122,20 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           {locations.map((loc, i) => (
-            <div key={loc.location_id} className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm gap-2">
+            <div
+              key={loc.location_id}
+              className="flex flex-col gap-2 rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+            >
               <div className="flex items-center gap-2">
                 <input
-                  className="flex-1 text-[15px] font-medium text-[#272727] outline-none bg-transparent"
+                  className="flex-1 bg-transparent text-[15px] font-medium text-[#272727] outline-none"
                   placeholder="Location name"
                   value={loc.location_name}
                   onChange={(e) => updateLocation(i, 'location_name', e.target.value)}
                 />
                 {locations.length > 1 && (
                   <button
-                    className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-50"
+                    className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-red-50"
                     type="button"
                     onClick={() => removeLocation(i)}
                   >
@@ -137,33 +144,33 @@ export default function EditLocationsPage({ params }: { params: Promise<{ id: st
                 )}
               </div>
               <input
-                className="text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                className="rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                 placeholder="Street"
                 value={loc.address_street}
                 onChange={(e) => updateLocation(i, 'address_street', e.target.value)}
               />
               <div className="flex gap-2">
                 <input
-                  className="flex-1 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                  className="flex-1 rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                   placeholder="ZIP"
                   value={loc.address_zip}
                   onChange={(e) => updateLocation(i, 'address_zip', e.target.value)}
                 />
                 <input
-                  className="flex-[2] text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                  className="flex-[2] rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                   placeholder="City"
                   value={loc.address_city}
                   onChange={(e) => updateLocation(i, 'address_city', e.target.value)}
                 />
               </div>
               <input
-                className="text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                className="rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                 placeholder="Country"
                 value={loc.address_country}
                 onChange={(e) => updateLocation(i, 'address_country', e.target.value)}
               />
               <input
-                className="text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                className="rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                 placeholder="Contact phone"
                 type="tel"
                 value={loc.contact_phone}

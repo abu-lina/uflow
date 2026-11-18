@@ -4,11 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 
-function makeTouchEvent(
-  clientX: number,
-  clientY: number,
-  preventDefault?: () => void
-) {
+function makeTouchEvent(clientX: number, clientY: number, preventDefault?: () => void) {
   const mockPreventDefault = preventDefault || vi.fn();
   return {
     touches: [{ clientX, clientY }],

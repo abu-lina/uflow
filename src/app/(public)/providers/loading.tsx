@@ -27,13 +27,13 @@ export default function ProvidersLoading() {
           >
             {/* Image skeleton */}
             <div className="h-48 bg-gray-200"></div>
-            
+
             {/* Content skeleton */}
             <div className="p-4">
               <div className="mb-3 h-6 w-3/4 rounded bg-gray-200"></div>
               <div className="mb-2 h-4 w-full rounded bg-gray-200"></div>
               <div className="mb-4 h-4 w-2/3 rounded bg-gray-200"></div>
-              
+
               {/* Tags skeleton */}
               <div className="flex gap-2">
                 <div className="h-6 w-20 rounded-full bg-gray-200"></div>

@@ -49,7 +49,7 @@ function makeSitemapXml(urls: string[]): string {
 
 function createMockSupabase(
   existingProviders: { provider_name: string; address_city: string | null }[],
-  offersData: { offer_id: string; name_de: string }[] = []
+  offersData: { offer_id: string; name_de: string }[] = [],
 ) {
   const selectMock = vi.fn();
 
@@ -107,12 +107,10 @@ function createMockSupabase(
 
 const originalFetch = global.fetch;
 
-function setupFetchMock(
-  sitemapXml: string,
-  pageHtmlByUrl: Record<string, string>
-) {
+function setupFetchMock(sitemapXml: string, pageHtmlByUrl: Record<string, string>) {
   global.fetch = vi.fn(async (input: string | URL | Request) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const url =
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 
     // Sitemap request
     if (url.includes('sitemap')) {
@@ -164,9 +162,7 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
     setupFetchMock(sitemapXml, pageHtml);
 
     // "pizza roma|berlin" is already in the DB → duplicate
-    const supabase = createMockSupabase([
-      { provider_name: 'Pizza Roma', address_city: 'Berlin' },
-    ]);
+    const supabase = createMockSupabase([{ provider_name: 'Pizza Roma', address_city: 'Berlin' }]);
 
     const result: DryRunResult = await runJoinHalalDryRun({
       supabase,
@@ -178,7 +174,7 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
     expect(result.stats.parsed).toBe(2);
     expect(result.stats.unmapped).toBe(1); // Pizza Roma has "pizza" slug → unmapped
     expect(result.stats.skipped).toBe(1); // Pizza Roma is duplicate
-    expect(result.stats.mapped).toBe(1);  // Good Food has "restaurant" slug → mapped
+    expect(result.stats.mapped).toBe(1); // Good Food has "restaurant" slug → mapped
 
     // The critical assertion: wouldInsert must be 1 (only Good Food),
     // NOT -1 (the old bug: 2 - 1 - 1 = 0 was also wrong) or 0.
@@ -195,9 +191,7 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
       [pageUrl]: makePageHtml('Pizza Roma', 'Hauptstraße 1, 10115 Berlin, Deutschland'),
     });
 
-    const supabase = createMockSupabase([
-      { provider_name: 'Pizza Roma', address_city: 'Berlin' },
-    ]);
+    const supabase = createMockSupabase([{ provider_name: 'Pizza Roma', address_city: 'Berlin' }]);
 
     const result = await runJoinHalalDryRun({
       supabase,
@@ -272,7 +266,7 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
         failed: expect.any(Number),
         wouldInsert: expect.any(Number),
         wouldUpdate: expect.any(Number),
-      })
+      }),
     );
 
     // Samples shape
@@ -282,11 +276,13 @@ describe('runJoinHalalDryRun — wouldInsert correctness', () => {
         provider_name: expect.any(String),
         address_city: expect.any(String),
         category_id: expect.any(String),
-      })
+      }),
     );
 
     // Invariant: wouldInsert + wouldUpdate = parsed - skipped (all non-duplicate parsed records)
-    expect(result.stats.wouldInsert + result.stats.wouldUpdate).toBe(result.stats.parsed - result.stats.skipped);
+    expect(result.stats.wouldInsert + result.stats.wouldUpdate).toBe(
+      result.stats.parsed - result.stats.skipped,
+    );
   });
 });
 
@@ -306,9 +302,7 @@ function makePageHtmlWithSpeisen(name: string, streetAddress: string, speisen: s
           streetAddress,
           addressCountry: 'DE',
         },
-        additionalProperty: [
-          { '@type': 'PropertyValue', name: 'Speisen', value: speisen },
-        ],
+        additionalProperty: [{ '@type': 'PropertyValue', name: 'Speisen', value: speisen }],
       },
     ],
   };
@@ -330,15 +324,20 @@ describe('runJoinHalalDryRun — Speisen offers mapping (Plan 051)', () => {
     // Provider has Döner (in catalog), Falafel (in catalog), Sushi (NOT in catalog)
     setupFetchMock(sitemapXml, {
       [pageUrl]: makePageHtmlWithSpeisen(
-        'Kebab Haus', 'Berliner Str. 5, 10115 Berlin, Deutschland', 'Döner, Falafel, Sushi'
+        'Kebab Haus',
+        'Berliner Str. 5, 10115 Berlin, Deutschland',
+        'Döner, Falafel, Sushi',
       ),
     });
 
-    const supabase = createMockSupabase([], [
-      { offer_id: 'offer-001', name_de: 'Döner' },
-      { offer_id: 'offer-002', name_de: 'Falafel' },
-      { offer_id: 'offer-003', name_de: 'Burger' },
-    ]);
+    const supabase = createMockSupabase(
+      [],
+      [
+        { offer_id: 'offer-001', name_de: 'Döner' },
+        { offer_id: 'offer-002', name_de: 'Falafel' },
+        { offer_id: 'offer-003', name_de: 'Burger' },
+      ],
+    );
 
     const result = await runJoinHalalDryRun({
       supabase,
@@ -346,7 +345,7 @@ describe('runJoinHalalDryRun — Speisen offers mapping (Plan 051)', () => {
       sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
     });
 
-    // Unmapped offers should report "Sushi" 
+    // Unmapped offers should report "Sushi"
     expect(result.unmappedOffers.length).toBe(1);
     expect(result.unmappedOffers[0].speise).toBe('Sushi');
     expect(result.unmappedOffers[0].count).toBe(1);
@@ -362,14 +361,19 @@ describe('runJoinHalalDryRun — Speisen offers mapping (Plan 051)', () => {
 
     setupFetchMock(sitemapXml, {
       [pageUrl]: makePageHtmlWithSpeisen(
-        'Burger Place', 'Musterstr. 1, 10117 Berlin, Deutschland', 'Burger, Döner'
+        'Burger Place',
+        'Musterstr. 1, 10117 Berlin, Deutschland',
+        'Burger, Döner',
       ),
     });
 
-    const supabase = createMockSupabase([], [
-      { offer_id: 'offer-001', name_de: 'Döner' },
-      { offer_id: 'offer-003', name_de: 'Burger' },
-    ]);
+    const supabase = createMockSupabase(
+      [],
+      [
+        { offer_id: 'offer-001', name_de: 'Döner' },
+        { offer_id: 'offer-003', name_de: 'Burger' },
+      ],
+    );
 
     const result = await runJoinHalalDryRun({
       supabase,
@@ -390,14 +394,19 @@ describe('runJoinHalalDryRun — Speisen offers mapping (Plan 051)', () => {
 
     setupFetchMock(sitemapXml, {
       [pageUrl]: makePageHtmlWithSpeisen(
-        'Food Spot', 'Hauptstr. 10, 80331 München, Deutschland', 'Pommes, Steak'
+        'Food Spot',
+        'Hauptstr. 10, 80331 München, Deutschland',
+        'Pommes, Steak',
       ),
     });
 
-    const supabase = createMockSupabase([], [
-      { offer_id: 'offer-010', name_de: 'Pommes' },
-      { offer_id: 'offer-011', name_de: 'Steak' },
-    ]);
+    const supabase = createMockSupabase(
+      [],
+      [
+        { offer_id: 'offer-010', name_de: 'Pommes' },
+        { offer_id: 'offer-011', name_de: 'Steak' },
+      ],
+    );
 
     const result = await runJoinHalalDryRun({
       supabase,
@@ -516,7 +525,7 @@ describe('runJoinHalalDryRun — AbortSignal support (Plan 049)', () => {
         limit: 10,
         sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
         signal: controller.signal,
-      })
+      }),
     ).rejects.toThrow(/abort|timeout/i);
   });
 
@@ -541,7 +550,8 @@ describe('runJoinHalalDryRun — AbortSignal support (Plan 049)', () => {
     const controller = new AbortController();
 
     global.fetch = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+      const url =
+        typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
 
       if (url.includes('sitemap')) {
         return { ok: true, status: 200, text: async () => sitemapXml } as Response;
@@ -569,10 +579,14 @@ describe('runJoinHalalDryRun — AbortSignal support (Plan 049)', () => {
             reject(new DOMException('The operation was aborted.', 'AbortError'));
             return;
           }
-          fetchSignal.addEventListener('abort', () => {
-            clearTimeout(timer);
-            reject(new DOMException('The operation was aborted.', 'AbortError'));
-          }, { once: true });
+          fetchSignal.addEventListener(
+            'abort',
+            () => {
+              clearTimeout(timer);
+              reject(new DOMException('The operation was aborted.', 'AbortError'));
+            },
+            { once: true },
+          );
         }
       });
     }) as typeof global.fetch;
@@ -586,7 +600,7 @@ describe('runJoinHalalDryRun — AbortSignal support (Plan 049)', () => {
         limit: 10,
         sitemapUrls: ['https://joinhalal.com/test-sitemap.xml'],
         signal: controller.signal,
-      })
+      }),
     ).rejects.toThrow(/abort|timeout|cancel/i);
     const elapsedMs = performance.now() - startMs;
 
@@ -601,11 +615,7 @@ describe('runJoinHalalDryRun — AbortSignal support (Plan 049)', () => {
 // ---------------------------------------------------------------------------
 
 /** Page HTML with vxconfig containing current_post.id for upsert keying */
-function makePageHtmlWithPostId(
-  name: string,
-  streetAddress: string,
-  postId: number
-): string {
+function makePageHtmlWithPostId(name: string, streetAddress: string, postId: number): string {
   const schema = {
     '@graph': [
       {
@@ -638,7 +648,7 @@ function createMockSupabaseWithImportSource(
     import_source?: string | null;
     import_source_id?: string | null;
   }[],
-  offersData: { offer_id: string; name_de: string }[] = []
+  offersData: { offer_id: string; name_de: string }[] = [],
 ) {
   const selectMock = vi.fn();
 
@@ -702,7 +712,7 @@ describe('runJoinHalalDryRun — wouldUpdate classification (Plan 052)', () => {
       [pageUrl]: makePageHtmlWithPostId(
         'Existing Place',
         'Hauptstr. 1, 10115 Berlin, Deutschland',
-        12345
+        12345,
       ),
     });
 
@@ -735,7 +745,7 @@ describe('runJoinHalalDryRun — wouldUpdate classification (Plan 052)', () => {
       [pageUrl]: makePageHtmlWithPostId(
         'New Place',
         'Berliner Str. 5, 10115 Berlin, Deutschland',
-        99999
+        99999,
       ),
     });
 
@@ -759,10 +769,7 @@ describe('runJoinHalalDryRun — wouldUpdate classification (Plan 052)', () => {
 
     setupFetchMock(sitemapXml, {
       // Uses makePageHtml (no vxconfig tag)
-      [pageUrl]: makePageHtml(
-        'No Vxconfig Place',
-        'Strasse 1, 10115 Berlin, Deutschland'
-      ),
+      [pageUrl]: makePageHtml('No Vxconfig Place', 'Strasse 1, 10115 Berlin, Deutschland'),
     });
 
     // Provider exists with same name+city but no import source
@@ -793,15 +800,9 @@ describe('runJoinHalalDryRun — wouldUpdate classification (Plan 052)', () => {
     const sitemapXml = makeSitemapXml([urlUpdate, urlNew, urlDup]);
 
     setupFetchMock(sitemapXml, {
-      [urlUpdate]: makePageHtmlWithPostId(
-        'Update Me', 'Str 1, 10115 Berlin, Deutschland', 100
-      ),
-      [urlNew]: makePageHtmlWithPostId(
-        'New One', 'Str 2, 20095 Hamburg, Deutschland', 200
-      ),
-      [urlDup]: makePageHtml(
-        'Dup One', 'Str 3, 80331 München, Deutschland'
-      ),
+      [urlUpdate]: makePageHtmlWithPostId('Update Me', 'Str 1, 10115 Berlin, Deutschland', 100),
+      [urlNew]: makePageHtmlWithPostId('New One', 'Str 2, 20095 Hamburg, Deutschland', 200),
+      [urlDup]: makePageHtml('Dup One', 'Str 3, 80331 München, Deutschland'),
     });
 
     const supabase = createMockSupabaseWithImportSource([
@@ -830,7 +831,7 @@ describe('runJoinHalalDryRun — wouldUpdate classification (Plan 052)', () => {
     expect(result.stats.skipped).toBe(1);
     // Invariant: wouldInsert + wouldUpdate = parsed - skipped
     expect(result.stats.wouldInsert + result.stats.wouldUpdate).toBe(
-      result.stats.parsed - result.stats.skipped
+      result.stats.parsed - result.stats.skipped,
     );
   });
 });

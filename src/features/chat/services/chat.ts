@@ -1,8 +1,11 @@
-import type { ChatRequest, ChatResponse, ConversationListItem, ConversationWithMessages } from '@/features/chat/types';
+import type {
+  ChatRequest,
+  ChatResponse,
+  ConversationListItem,
+  ConversationWithMessages,
+} from '@/features/chat/types';
 
-export async function sendMessage(
-  request: ChatRequest,
-): Promise<ChatResponse> {
+export async function sendMessage(request: ChatRequest): Promise<ChatResponse> {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

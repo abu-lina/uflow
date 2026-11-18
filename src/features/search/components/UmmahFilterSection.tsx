@@ -49,12 +49,18 @@ const UMMAH_FILTER_ITEMS: FilterItem[] = [
   },
 ];
 
-export function UmmahFilterSection({ selectedFilters, onToggleFilter, t }: UmmahFilterSectionProps) {
+export function UmmahFilterSection({
+  selectedFilters,
+  onToggleFilter,
+  t,
+}: UmmahFilterSectionProps) {
   const isShowAllPreviewEnabled = getFeatureFlag('enableSearchExpandShowAllPreview');
   const [showAllFilters, setShowAllFilters] = useState(false);
 
   const visibleFilterItems = isShowAllPreviewEnabled
-    ? (showAllFilters ? UMMAH_FILTER_ITEMS : UMMAH_FILTER_ITEMS.slice(0, 3))
+    ? showAllFilters
+      ? UMMAH_FILTER_ITEMS
+      : UMMAH_FILTER_ITEMS.slice(0, 3)
     : UMMAH_FILTER_ITEMS.slice(0, 3);
 
   return (
@@ -66,26 +72,27 @@ export function UmmahFilterSection({ selectedFilters, onToggleFilter, t }: Ummah
           <button
             key={key}
             aria-checked={selected}
-            className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors hover:bg-background-selection/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="hover:bg-background-selection/50 flex w-full items-center gap-3 rounded-xl p-2 text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
             role="checkbox"
             type="button"
             onClick={() => onToggleFilter(key)}
           >
             <span
-              className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary ${
+              className={`bg-background-selection relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary ${
                 selected ? 'ring-2 ring-primary' : ''
               }`}
             >
               <Icon aria-hidden className="h-6 w-6" />
-              {selected ? <Check aria-hidden="true" className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-primary p-0.5 text-white" /> : null}
+              {selected ? (
+                <Check
+                  aria-hidden="true"
+                  className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-primary p-0.5 text-white"
+                />
+              ) : null}
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-base font-semibold text-content-heading">
-                {t(titleKey)}
-              </span>
-              <span className="text-base font-light text-text-muted">
-                {t(subtitleKey)}
-              </span>
+              <span className="text-base font-semibold text-content-heading">{t(titleKey)}</span>
+              <span className="text-base font-light text-text-muted">{t(subtitleKey)}</span>
             </span>
           </button>
         );

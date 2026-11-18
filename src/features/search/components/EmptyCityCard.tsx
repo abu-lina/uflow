@@ -13,7 +13,7 @@ interface EmptyCityCardProps {
 
 /**
  * Plan 093 M1 — Empty-city notification card
- * 
+ *
  * Shows when a user searches for a city with no providers.
  * - Authenticated users: one-tap "Notify me" (email from session)
  * - Anonymous users: email input + "Notify me" button
@@ -66,12 +66,12 @@ export function EmptyCityCard({ cityName, userEmail }: EmptyCityCardProps) {
     return (
       <div
         aria-live="polite"
-        className="mt-4 px-4 py-6 bg-neutral-50 dark:bg-neutral-900/30 rounded-2xl border border-border-light"
+        className="mt-4 rounded-2xl border border-border-light bg-neutral-50 px-4 py-6 dark:bg-neutral-900/30"
         role="status"
       >
         <div className="flex items-start gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 shrink-0">
-            <Bell className="w-5 h-5 text-primary" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <Bell className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-text-primary">
@@ -85,16 +85,16 @@ export function EmptyCityCard({ cityName, userEmail }: EmptyCityCardProps) {
 
   return (
     <div
-      className="mt-4 px-4 py-6 bg-neutral-50 dark:bg-neutral-900/30 rounded-2xl border border-border-light"
+      className="mt-4 rounded-2xl border border-border-light bg-neutral-50 px-4 py-6 dark:bg-neutral-900/30"
       dir="auto"
     >
       {/* Header with icon */}
-      <div className="flex items-start gap-3 mb-4">
-        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 shrink-0">
-          <Bell className="w-5 h-5 text-text-muted" />
+      <div className="mb-4 flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800">
+          <Bell className="h-5 w-5 text-text-muted" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium text-text-primary mb-1">
+          <p className="mb-1 text-sm font-medium text-text-primary">
             {t('suchen.notifyMeCityUnavailable', { city: cityName })}
           </p>
         </div>
@@ -110,12 +110,12 @@ export function EmptyCityCard({ cityName, userEmail }: EmptyCityCardProps) {
             variant="secondary"
             onClick={handleNotifyMe}
           >
-            <Bell className="w-4 h-4" />
+            <Bell className="h-4 w-4" />
             {isSubmitting ? t('common.loading') : t('suchen.notifyMe')}
           </Button>
 
           {submitState === 'error' && (
-            <p aria-live="assertive" className="text-sm text-destructive" role="alert">
+            <p aria-live="assertive" className="text-destructive text-sm" role="alert">
               {errorMessage}
             </p>
           )}
@@ -127,7 +127,7 @@ export function EmptyCityCard({ cityName, userEmail }: EmptyCityCardProps) {
         <div className="space-y-3">
           <input
             aria-label={t('suchen.notifyMeEmailPlaceholder')}
-            className="w-full px-3 py-2 text-sm bg-surface border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors"
+            className="w-full rounded-lg border border-border-light bg-surface px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
             disabled={isSubmitting}
             placeholder={t('suchen.notifyMeEmailPlaceholder')}
             type="email"
@@ -142,12 +142,12 @@ export function EmptyCityCard({ cityName, userEmail }: EmptyCityCardProps) {
             variant="secondary"
             onClick={handleNotifyMe}
           >
-            <Bell className="w-4 h-4" />
+            <Bell className="h-4 w-4" />
             {isSubmitting ? t('common.loading') : t('suchen.notifyMe')}
           </Button>
 
           {submitState === 'error' && (
-            <p aria-live="assertive" className="text-sm text-destructive" role="alert">
+            <p aria-live="assertive" className="text-destructive text-sm" role="alert">
               {errorMessage}
             </p>
           )}
@@ -155,9 +155,9 @@ export function EmptyCityCard({ cityName, userEmail }: EmptyCityCardProps) {
       )}
 
       {/* Provider CTA — subtle secondary link */}
-      <div className="mt-4 pt-4 border-t border-border-light">
+      <div className="mt-4 border-t border-border-light pt-4">
         <Link
-          className="block text-xs text-text-muted hover:text-text-primary transition-colors text-center"
+          className="block text-center text-xs text-text-muted transition-colors hover:text-text-primary"
           href="/recommend"
         >
           {t('suchen.providerCTA')}

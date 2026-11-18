@@ -1,7 +1,9 @@
 # JavaScript/TypeScript Vulnerabilities
 
 ## DOM-Based XSS
+
 **Dangerous sinks:**
+
 ```javascript
 // Never use with untrusted input
 element.innerHTML = userInput;
@@ -14,6 +16,7 @@ setInterval(userInput, 0);
 ```
 
 **React-specific:**
+
 ```jsx
 // Dangerous - allows XSS
 <div dangerouslySetInnerHTML={{__html: userInput}} />
@@ -23,6 +26,7 @@ setInterval(userInput, 0);
 ```
 
 ## SQL/NoSQL Injection
+
 ```javascript
 // VULNERABLE
 db.query(`SELECT * FROM users WHERE id = ${userId}`);
@@ -34,17 +38,19 @@ collection.find({ name: name });
 ```
 
 ## Command Injection
+
 ```javascript
 // VULNERABLE
 exec(`ls ${userInput}`);
 spawn('sh', ['-c', `echo ${userInput}`]);
 
 // SAFE
-execFile('ls', [userInput]);  // No shell
-spawn('echo', [userInput]);   // Array args
+execFile('ls', [userInput]); // No shell
+spawn('echo', [userInput]); // Array args
 ```
 
 ## Prototype Pollution
+
 ```javascript
 // VULNERABLE - allows __proto__ modification
 function merge(target, source) {
@@ -64,10 +70,11 @@ function safeMerge(target, source) {
 ```
 
 ## Insecure Deserialization
+
 ```javascript
 // VULNERABLE
 const obj = JSON.parse(userInput);
-obj.someMethod();  // Can execute if poisoned
+obj.someMethod(); // Can execute if poisoned
 
 // SAFE - validate structure
 const parsed = JSON.parse(userInput);
@@ -75,15 +82,17 @@ const validated = schema.validate(parsed);
 ```
 
 ## JWT Issues
+
 ```javascript
 // VULNERABLE - algorithm confusion
-jwt.verify(token, secret);  // May accept 'none' algorithm
+jwt.verify(token, secret); // May accept 'none' algorithm
 
 // SAFE - specify algorithm
 jwt.verify(token, secret, { algorithms: ['HS256'] });
 ```
 
 ## Path Traversal
+
 ```javascript
 // VULNERABLE
 const file = path.join(uploadDir, userFilename);

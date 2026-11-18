@@ -26,11 +26,7 @@ const mockSupabase = {
   })),
 };
 
-import {
-  resolveOfferIds,
-  createMissingOffers,
-  type Offer,
-} from '@/lib/import/joinhalal';
+import { resolveOfferIds, createMissingOffers, type Offer } from '@/lib/import/joinhalal';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -39,9 +35,7 @@ beforeEach(() => {
 describe('Write-path offer auto-creation pipeline (Plan 053)', () => {
   it('[pre-fix FAILS] unmatched Speisen were silently dropped — offers_ids incomplete', () => {
     // Before Plan 053: resolveOfferIds returned unmatchedSpeisen but callers ignored them
-    const existingOffers: Offer[] = [
-      { offer_id: 'uuid-pizza', name_de: 'Pizza' },
-    ];
+    const existingOffers: Offer[] = [{ offer_id: 'uuid-pizza', name_de: 'Pizza' }];
     const speisen = ['Pizza', 'Sushi', 'Ramen'];
 
     const { matchedIds, unmatchedSpeisen } = resolveOfferIds(speisen, existingOffers);
@@ -53,9 +47,7 @@ describe('Write-path offer auto-creation pipeline (Plan 053)', () => {
   });
 
   it('[post-fix PASSES] unmatched Speisen are auto-created and merged into offers_ids', async () => {
-    const existingOffers: Offer[] = [
-      { offer_id: 'uuid-pizza', name_de: 'Pizza' },
-    ];
+    const existingOffers: Offer[] = [{ offer_id: 'uuid-pizza', name_de: 'Pizza' }];
     const speisen = ['Pizza', 'Sushi', 'Ramen'];
 
     // Step 1: resolveOfferIds identifies unmatched terms

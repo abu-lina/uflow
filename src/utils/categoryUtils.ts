@@ -8,7 +8,7 @@ export async function shouldCreateCommunityService(categoryId: string): Promise<
   // Hardcoded check for "Gemeinschaft & Spenden" category
   // In the future, this could be based on a database field like category_type
   const COMMUNITY_SERVICE_CATEGORY_ID = '4470c3e0-458f-40a6-a96e-ca0fbdf145d7';
-  
+
   return categoryId === COMMUNITY_SERVICE_CATEGORY_ID;
 }
 
@@ -21,10 +21,10 @@ export async function getCategoryName(categoryId: string): Promise<string> {
     .select('name_de, name_en')
     .eq('category_id', categoryId)
     .single();
-    
+
   if (error || !data) {
     return 'Unknown Category';
   }
-  
+
   return data.name_de || data.name_en || 'Unknown Category';
 }

@@ -2,10 +2,7 @@
 
 import { RefObject, useEffect } from 'react';
 
-export function useAriaHidden(
-  containerRef: RefObject<HTMLElement | null>,
-  isOpen: boolean,
-): void {
+export function useAriaHidden(containerRef: RefObject<HTMLElement | null>, isOpen: boolean): void {
   useEffect(() => {
     if (!isOpen) return;
 

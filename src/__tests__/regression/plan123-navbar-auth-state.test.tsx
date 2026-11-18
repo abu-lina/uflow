@@ -108,13 +108,9 @@ vi.mock('@/components/ui/Button', () => ({
   ),
 }));
 vi.mock('@/components/ui/LinkButton', () => ({
-  LinkButton: ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => <button onClick={onClick}>{children}</button>,
+  LinkButton: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
+    <button onClick={onClick}>{children}</button>
+  ),
 }));
 
 describe('Plan 123 Navbar Auth State Regression', () => {

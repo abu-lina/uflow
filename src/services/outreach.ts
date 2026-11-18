@@ -107,9 +107,7 @@ export function hashToken(rawToken: string): string {
  * Validate an outreach token using the database RPC function.
  * Returns provider info if valid, error message if not.
  */
-export async function validateOutreachToken(
-  tokenHash: string
-): Promise<TokenValidationResult> {
+export async function validateOutreachToken(tokenHash: string): Promise<TokenValidationResult> {
   const { data, error } = await supabase.rpc('validate_outreach_token', {
     p_token_hash: tokenHash,
   });
@@ -135,9 +133,7 @@ export async function validateOutreachToken(
  * Create a new outreach token for a provider.
  * Returns both the raw token (for email) and the token record ID.
  */
-export async function createOutreachToken(
-  params: CreateTokenParams
-): Promise<CreateTokenResult> {
+export async function createOutreachToken(params: CreateTokenParams): Promise<CreateTokenResult> {
   const { rawToken, tokenHash } = generateToken();
 
   const expiresAt = new Date();
@@ -187,9 +183,7 @@ export async function consumeToken(tokenHash: string): Promise<void> {
 /**
  * Get the current outreach record for a provider.
  */
-export async function getOutreachByProvider(
-  providerId: string
-): Promise<ProviderOutreach | null> {
+export async function getOutreachByProvider(providerId: string): Promise<ProviderOutreach | null> {
   const { data, error } = await supabase
     .from('provider_owner_outreach')
     .select('*')
@@ -206,9 +200,7 @@ export async function getOutreachByProvider(
 /**
  * Get outreach record by ID.
  */
-export async function getOutreachById(
-  outreachId: string
-): Promise<ProviderOutreach | null> {
+export async function getOutreachById(outreachId: string): Promise<ProviderOutreach | null> {
   const { data, error } = await supabase
     .from('provider_owner_outreach')
     .select('*')
@@ -228,7 +220,7 @@ export async function getOutreachById(
 export async function updateOutreachStatus(
   outreachId: string,
   status: OutreachStatus,
-  outcomeNote?: string
+  outcomeNote?: string,
 ): Promise<ProviderOutreach> {
   const updateData: Record<string, unknown> = {
     status,
@@ -260,9 +252,7 @@ export async function updateOutreachStatus(
  * - dispatch_after has passed
  * - next_attempt_at has passed (or is null)
  */
-export async function getPendingOutreach(
-  limit: number = 10
-): Promise<ProviderOutreach[]> {
+export async function getPendingOutreach(limit: number = 10): Promise<ProviderOutreach[]> {
   const now = new Date().toISOString();
 
   const { data, error } = await supabase
@@ -287,7 +277,7 @@ export async function getPendingOutreach(
 export async function recordDispatchAttempt(
   outreachId: string,
   success: boolean,
-  errorMessage?: string
+  errorMessage?: string,
 ): Promise<ProviderOutreach> {
   const { data: current, error: fetchError } = await supabase
     .from('provider_owner_outreach')
@@ -343,7 +333,7 @@ export async function recordDispatchAttempt(
  */
 export async function approveOutreach(
   outreachId: string,
-  approvedByUserId: string
+  approvedByUserId: string,
 ): Promise<ProviderOutreach> {
   const { data, error } = await supabase
     .from('provider_owner_outreach')
@@ -413,9 +403,7 @@ export async function createOutreachTask(params: {
 /**
  * Get pending manual outreach tasks.
  */
-export async function getPendingTasks(
-  limit: number = 20
-): Promise<OutreachTask[]> {
+export async function getPendingTasks(limit: number = 20): Promise<OutreachTask[]> {
   const { data, error } = await supabase
     .from('provider_outreach_tasks')
     .select('*')

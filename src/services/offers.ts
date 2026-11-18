@@ -26,10 +26,7 @@ export interface FoodMenuItem {
 }
 
 export async function getOffers(limit?: number, offset?: number): Promise<Offer[]> {
-  let query = supabase
-    .from('offers')
-    .select('*')
-    .order('name_de', { ascending: true });
+  let query = supabase.from('offers').select('*').order('name_de', { ascending: true });
 
   // Add pagination if provided
   if (limit !== undefined) {
@@ -66,11 +63,7 @@ export async function getOffersCount(): Promise<number> {
 }
 
 export async function getOfferById(id: string): Promise<Offer | null> {
-  const { data, error } = await supabase
-    .from('offers')
-    .select('*')
-    .eq('offer_id', id)
-    .single();
+  const { data, error } = await supabase.from('offers').select('*').eq('offer_id', id).single();
 
   if (error) {
     console.error('Error fetching offer:', error);

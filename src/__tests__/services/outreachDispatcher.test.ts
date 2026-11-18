@@ -1,7 +1,7 @@
 /**
  * Tests for provider owner outreach dispatcher
  * Plan 038: Provider Owner Outreach & Claim System
- * 
+ *
  * TDD: These tests are written BEFORE implementation.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -296,7 +296,7 @@ describe('outreachDispatcher', () => {
       expect(recordDispatchAttempt).toHaveBeenCalledWith(
         'outreach-4',
         false,
-        'Email delivery failed'
+        'Email delivery failed',
       );
     });
 
@@ -325,10 +325,10 @@ describe('outreachDispatcher', () => {
       await dispatchSingleOutreach(outreach);
 
       expect(createOutreachToken).toHaveBeenCalledWith(
-        expect.objectContaining({ providerName: 'Bilal Moschee' })
+        expect.objectContaining({ providerName: 'Bilal Moschee' }),
       );
       expect(sendProviderOutreachEmail).toHaveBeenCalledWith(
-        expect.objectContaining({ providerName: 'Bilal Moschee' })
+        expect.objectContaining({ providerName: 'Bilal Moschee' }),
       );
     });
 
@@ -360,10 +360,10 @@ describe('outreachDispatcher', () => {
       expect(result.success).toBe(true);
       // Must not use either of the old hardcoded placeholders
       expect(createOutreachToken).not.toHaveBeenCalledWith(
-        expect.objectContaining({ providerName: 'Provider' })
+        expect.objectContaining({ providerName: 'Provider' }),
       );
       expect(sendProviderOutreachEmail).not.toHaveBeenCalledWith(
-        expect.objectContaining({ providerName: 'Your business' })
+        expect.objectContaining({ providerName: 'Your business' }),
       );
     });
 

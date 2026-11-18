@@ -28,9 +28,7 @@ describe('import-muslimbusiness CLI', () => {
 
     expect(result.status).not.toBe(0);
     // The script writes argument validation errors to stderr
-    expect(result.stderr).toContain(
-      '--limit requires a positive integer (got: undefined)'
-    );
+    expect(result.stderr).toContain('--limit requires a positive integer (got: undefined)');
   }, 15_000);
 
   it('accepts a positive --limit and reaches category loading', () => {

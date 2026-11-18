@@ -81,7 +81,12 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
 
   const getAddressForLocation = (loc: Location | null): string => {
     if (!loc) return '';
-    const parts = [loc.address_street, loc.address_zip && loc.address_city ? `${loc.address_zip} ${loc.address_city}` : loc.address_city].filter(Boolean);
+    const parts = [
+      loc.address_street,
+      loc.address_zip && loc.address_city
+        ? `${loc.address_zip} ${loc.address_city}`
+        : loc.address_city,
+    ].filter(Boolean);
     return parts.join(', ');
   };
 
@@ -112,9 +117,12 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
 
   const providerImageUrls = getAllTrustedImageUrls(provider.provider_images);
   const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
-  const categoryFallbackImageUrl = categoryUrls.length > 0
-    ? categoryUrls[hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length]
-    : null;
+  const categoryFallbackImageUrl =
+    categoryUrls.length > 0
+      ? categoryUrls[
+          hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length
+        ]
+      : null;
   const allImageUrls =
     providerImageUrls.length > 0
       ? providerImageUrls
@@ -375,179 +383,180 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
           <div className="pb-24">
             <MobileProviderDetail provider={provider} onBack={handleBack} />
 
-          {/* Provider Info Card */}
-          <div className="mx-6 mt-6 rounded-2xl bg-white p-4 shadow-sm">
-            <h2 className="font-inter-tight text-xl font-semibold text-content-heading">
-              {provider.provider_name}
-            </h2>
-            <OpenStatusLine locationId={selectedLocationId ?? undefined} provider={provider} />
-            {(selectedLocation?.address_city || provider.address_city) ? (
-              <div className="mt-1">
-                <button
-                  className="text-left text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline"
-                  disabled={
-                    !isAddressNavigableForLocation(selectedLocation) &&
-                    !isAddressNavigable(
-                      provider.address_street ?? undefined,
-                      provider.address_zip ?? undefined,
-                      provider.address_city ?? undefined,
-                    )
-                  }
-                  title={t('providerDetail.container.addressTapToNavigate')}
-                  onClick={() => {
-                    const address = getAddressForLocation(selectedLocation) || formatAddress(
-                      provider.address_street ?? undefined,
-                      provider.address_zip ?? undefined,
-                      provider.address_city ?? undefined,
-                    );
-                    if (address) {
-                      openNavigation(address);
+            {/* Provider Info Card */}
+            <div className="mx-6 mt-6 rounded-2xl bg-white p-4 shadow-sm">
+              <h2 className="font-inter-tight text-xl font-semibold text-content-heading">
+                {provider.provider_name}
+              </h2>
+              <OpenStatusLine locationId={selectedLocationId ?? undefined} provider={provider} />
+              {selectedLocation?.address_city || provider.address_city ? (
+                <div className="mt-1">
+                  <button
+                    className="text-left text-gray-600 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-gray-600 disabled:hover:no-underline"
+                    disabled={
+                      !isAddressNavigableForLocation(selectedLocation) &&
+                      !isAddressNavigable(
+                        provider.address_street ?? undefined,
+                        provider.address_zip ?? undefined,
+                        provider.address_city ?? undefined,
+                      )
                     }
-                  }}
-                >
-                  {getAddressForLocation(selectedLocation) || (
-                    provider.address_street && provider.address_zip
-                      ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
-                      : provider.address_city
-                  )}
-                </button>
-
-              </div>
-            ) : (
-              <div className="mt-1 text-gray-600">{t('providerDetail.container.online')}</div>
-            )}
-
-            {/* Contact Icons */}
-            <div className="mt-4 flex items-center gap-4">
-              {provider.social_website && (
-                <button
-                  className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
-                  onClick={() => {
-                    const url = normalizeWebsiteUrl(provider.social_website);
-                    if (url) window.open(url, '_blank');
-                  }}
-                >
-                  <Icon className="h-5 w-5 text-gray-600" icon="mdi:internet" />
-                </button>
-              )}
-              {provider.contact_phone && (
-                <button
-                  className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
-                  onClick={() => window.open(`tel:${provider.contact_phone}`)}
-                >
-                  <Icon className="h-5 w-5 text-gray-600" icon="entypo:old-phone" />
-                </button>
-              )}
-              {provider.social_instagram && (
-                <button
-                  className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
-                  onClick={() => {
-                    const url = normalizeInstagramUrl(provider.social_instagram);
-                    if (url) window.open(url, '_blank');
-                  }}
-                >
-                  <Icon className="h-5 w-5 text-gray-600" icon="mdi:instagram" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Barakah Effect Section */}
-          {isLoadingCommunityServices ? (
-            <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
-              <div className="animate-pulse">
-                <div className="mb-4 flex items-center justify-between">
-                  <div className="h-5 w-40 rounded bg-gray-200"></div>
-                  <div className="h-5 w-5 rounded bg-gray-200"></div>
+                    title={t('providerDetail.container.addressTapToNavigate')}
+                    onClick={() => {
+                      const address =
+                        getAddressForLocation(selectedLocation) ||
+                        formatAddress(
+                          provider.address_street ?? undefined,
+                          provider.address_zip ?? undefined,
+                          provider.address_city ?? undefined,
+                        );
+                      if (address) {
+                        openNavigation(address);
+                      }
+                    }}
+                  >
+                    {getAddressForLocation(selectedLocation) ||
+                      (provider.address_street && provider.address_zip
+                        ? `${provider.address_street}, ${provider.address_zip} ${provider.address_city}`
+                        : provider.address_city)}
+                  </button>
                 </div>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded bg-gray-200"></div>
-                    <div className="flex-1">
-                      <div className="mb-2 h-4 w-28 rounded bg-gray-200"></div>
-                      <div className="h-3 w-20 rounded bg-gray-200"></div>
+              ) : (
+                <div className="mt-1 text-gray-600">{t('providerDetail.container.online')}</div>
+              )}
+
+              {/* Contact Icons */}
+              <div className="mt-4 flex items-center gap-4">
+                {provider.social_website && (
+                  <button
+                    className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
+                    onClick={() => {
+                      const url = normalizeWebsiteUrl(provider.social_website);
+                      if (url) window.open(url, '_blank');
+                    }}
+                  >
+                    <Icon className="h-5 w-5 text-gray-600" icon="mdi:internet" />
+                  </button>
+                )}
+                {provider.contact_phone && (
+                  <button
+                    className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
+                    onClick={() => window.open(`tel:${provider.contact_phone}`)}
+                  >
+                    <Icon className="h-5 w-5 text-gray-600" icon="entypo:old-phone" />
+                  </button>
+                )}
+                {provider.social_instagram && (
+                  <button
+                    className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100"
+                    onClick={() => {
+                      const url = normalizeInstagramUrl(provider.social_instagram);
+                      if (url) window.open(url, '_blank');
+                    }}
+                  >
+                    <Icon className="h-5 w-5 text-gray-600" icon="mdi:instagram" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Barakah Effect Section */}
+            {isLoadingCommunityServices ? (
+              <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
+                <div className="animate-pulse">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="h-5 w-40 rounded bg-gray-200"></div>
+                    <div className="h-5 w-5 rounded bg-gray-200"></div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded bg-gray-200"></div>
+                      <div className="flex-1">
+                        <div className="mb-2 h-4 w-28 rounded bg-gray-200"></div>
+                        <div className="h-3 w-20 rounded bg-gray-200"></div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            ) : (
+              communityServices &&
+              communityServices.length > 0 && (
+                <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
+                  <button
+                    className="flex w-full items-center justify-between"
+                    onClick={() => setExpandedBarakah(!expandedBarakah)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
+                        {t('providers.ourBarakahEffect')}
+                      </h3>
+                      <Icon
+                        className="h-4 w-4 text-gray-500"
+                        icon="material-symbols:info-outline"
+                      />
+                    </div>
+                    <ChevronDown
+                      className={`h-6 w-6 text-gray-600 transition-transform ${
+                        expandedBarakah ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {expandedBarakah && (
+                    <div className="mt-4 space-y-3">
+                      {communityServices.map((service, index) => (
+                        <button
+                          key={index}
+                          className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                          onClick={() => router.push(`/p/${service.community_service_id}`)}
+                        >
+                          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
+                            <Image
+                              fill
+                              alt={service.community_service_name}
+                              className="object-cover"
+                              src={
+                                service.community_service_images &&
+                                service.community_service_images.length > 0
+                                  ? service.community_service_images[0]
+                                  : PLACEHOLDER_IMAGE
+                              }
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-inter-tight font-medium text-content">
+                              {service.community_service_name}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {getCategoryName(service.category)}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              +{service.donation_count || 10}{' '}
+                              {service.category?.name_de === 'Moschee'
+                                ? t('providers.initiativesSupported')
+                                : t('providers.donations')}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+
+            <div className="mx-6 mt-4 space-y-4">
+              <ProviderDetailSections
+                badges={provider.badges ?? []}
+                isLoadingBadges={false}
+                locations={locations}
+                provider={provider}
+                selectedLocationId={selectedLocationId}
+                onLocationSelect={handleLocationSelect}
+              />
             </div>
-          ) : (
-            communityServices &&
-            communityServices.length > 0 && (
-              <div className="mx-6 mt-4 rounded-2xl bg-white p-4 shadow-sm">
-                <button
-                  className="flex w-full items-center justify-between"
-                  onClick={() => setExpandedBarakah(!expandedBarakah)}
-                >
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
-                      {t('providers.ourBarakahEffect')}
-                    </h3>
-                    <Icon className="h-4 w-4 text-gray-500" icon="material-symbols:info-outline" />
-                  </div>
-                  <ChevronDown
-                    className={`h-6 w-6 text-gray-600 transition-transform ${
-                      expandedBarakah ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-
-                {expandedBarakah && (
-                  <div className="mt-4 space-y-3">
-                    {communityServices.map((service, index) => (
-                      <button
-                        key={index}
-                        className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
-                        onClick={() =>
-                          router.push(`/p/${service.community_service_id}`)
-                        }
-                      >
-                        <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
-                          <Image
-                            fill
-                            alt={service.community_service_name}
-                            className="object-cover"
-                            src={
-                              service.community_service_images &&
-                              service.community_service_images.length > 0
-                                ? service.community_service_images[0]
-                                : PLACEHOLDER_IMAGE
-                            }
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-inter-tight font-medium text-content">
-                            {service.community_service_name}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {getCategoryName(service.category)}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            +{service.donation_count || 10}{' '}
-                            {service.category?.name_de === 'Moschee'
-                              ? t('providers.initiativesSupported')
-                              : t('providers.donations')}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          )}
-
-          <div className="mx-6 mt-4 space-y-4">
-            <ProviderDetailSections
-              badges={provider.badges ?? []}
-              isLoadingBadges={false}
-              locations={locations}
-              provider={provider}
-              selectedLocationId={selectedLocationId}
-              onLocationSelect={handleLocationSelect}
-            />
           </div>
-        </div>
         </div>
 
         {/* Mobile Action Buttons - Fixed at bottom */}
@@ -590,249 +599,309 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   // Desktop version - similar to existing modal but as a page
   return (
     <>
-    <div className="min-h-screen bg-gray-50">
-      {/* Desktop Header */}
-      <div className="border-b border-gray-200 bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-4">
-          <div className="flex items-center justify-between">
-            <button
-              className="flex items-center gap-2 text-content-muted hover:text-content-heading"
-              onClick={handleBack}
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="font-inter-tight">{t('providerDetail.container.back')}</span>
-            </button>
-            <h1 className="font-inter-tight text-2xl font-bold text-content-heading">
-              {provider.provider_name}
-            </h1>
-            <div className="w-20" /> {/* Spacer */}
+      <div className="min-h-screen bg-gray-50">
+        {/* Desktop Header */}
+        <div className="border-b border-gray-200 bg-white">
+          <div className="mx-auto max-w-7xl px-4 py-4">
+            <div className="flex items-center justify-between">
+              <button
+                className="flex items-center gap-2 text-content-muted hover:text-content-heading"
+                onClick={handleBack}
+              >
+                <ArrowLeft className="h-5 w-5" />
+                <span className="font-inter-tight">{t('providerDetail.container.back')}</span>
+              </button>
+              <h1 className="font-inter-tight text-2xl font-bold text-content-heading">
+                {provider.provider_name}
+              </h1>
+              <div className="w-20" /> {/* Spacer */}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Desktop Content */}
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* Left Column - Images */}
-          <div className="space-y-4">
-            {/* Main Image */}
-            <div
-              className="relative h-[480px] w-full cursor-grab overflow-hidden rounded-3xl active:cursor-grabbing"
-              style={{
-                backgroundColor: categoryFallbackBackground,
-                userSelect: 'none',
-              }}
-              onMouseDown={handleMouseDown}
-              onMouseLeave={handleMouseUp}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onTouchEnd={handleTouchEnd}
-              onTouchMove={handleTouchMove}
-              onTouchStart={handleTouchStart}
-            >
+        {/* Desktop Content */}
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {/* Left Column - Images */}
+            <div className="space-y-4">
+              {/* Main Image */}
               <div
-                ref={imageContainerRef}
-                className="flex h-full w-full"
-                style={getTransformStyle()}
+                className="relative h-[480px] w-full cursor-grab overflow-hidden rounded-3xl active:cursor-grabbing"
+                style={{
+                  backgroundColor: categoryFallbackBackground,
+                  userSelect: 'none',
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchMove}
+                onTouchStart={handleTouchStart}
               >
-                {allImageUrls.map((imageUrl, index) => (
-                  <div
-                    key={index}
-                    className="relative h-full w-full flex-shrink-0"
-                    style={{ minWidth: '100%' }}
-                  >
-                    <Image
-                      fill
-                      alt={`${provider.provider_name} ${index + 1}`}
-                      className="object-cover"
-                      priority={index === 0}
-                      sizes="(min-width: 1024px) 50vw, 100vw"
-                      src={imageUrl}
-                    />
-                  </div>
-                ))}
+                <div
+                  ref={imageContainerRef}
+                  className="flex h-full w-full"
+                  style={getTransformStyle()}
+                >
+                  {allImageUrls.map((imageUrl, index) => (
+                    <div
+                      key={index}
+                      className="relative h-full w-full flex-shrink-0"
+                      style={{ minWidth: '100%' }}
+                    >
+                      <Image
+                        fill
+                        alt={`${provider.provider_name} ${index + 1}`}
+                        className="object-cover"
+                        priority={index === 0}
+                        sizes="(min-width: 1024px) 50vw, 100vw"
+                        src={imageUrl}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Navigation Arrows */}
+                {allImageUrls.length > 1 && (
+                  <>
+                    {selectedImageIdx > 0 && (
+                      <button
+                        className="absolute left-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                        onClick={goToPrevious}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                    )}
+                    {selectedImageIdx < allImageUrls.length - 1 && (
+                      <button
+                        className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
+                        onClick={goToNext}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
 
-              {/* Navigation Arrows */}
+              {/* Thumbnails */}
               {allImageUrls.length > 1 && (
-                <>
-                  {selectedImageIdx > 0 && (
+                <div className="flex gap-4">
+                  {allImageUrls.map((img, i) => (
                     <button
-                      className="absolute left-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
-                      onClick={goToPrevious}
+                      key={i}
+                      className={`relative overflow-hidden rounded-lg border-2 transition-all hover:scale-105 ${
+                        selectedImageIdx === i ? 'border-primary' : 'border-transparent'
+                      }`}
+                      style={{ width: 80, height: 60 }}
+                      onClick={() => goToImage(i)}
                     >
-                      <ChevronLeft className="h-4 w-4" />
+                      <Image
+                        fill
+                        alt={t('providers.providerThumbnailAlt', {
+                          name: provider.provider_name,
+                          index: i + 1,
+                        })}
+                        className="object-cover"
+                        src={img}
+                      />
                     </button>
-                  )}
-                  {selectedImageIdx < allImageUrls.length - 1 && (
-                    <button
-                      className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white transition-all hover:bg-black/70"
-                      onClick={goToNext}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  )}
-                </>
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* Thumbnails */}
-            {allImageUrls.length > 1 && (
-              <div className="flex gap-4">
-                {allImageUrls.map((img, i) => (
-                  <button
-                    key={i}
-                    className={`relative overflow-hidden rounded-lg border-2 transition-all hover:scale-105 ${
-                      selectedImageIdx === i ? 'border-primary' : 'border-transparent'
-                    }`}
-                    style={{ width: 80, height: 60 }}
-                    onClick={() => goToImage(i)}
-                  >
-                    <Image
-                      fill
-                      alt={t('providers.providerThumbnailAlt', { name: provider.provider_name, index: i + 1 })}
-                      className="object-cover"
-                      src={img}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right Column - Details */}
-          <div className="space-y-6">
-            {/* Provider Info */}
-            <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <h2 className="font-inter-tight text-3xl font-bold text-content-heading">
-                {provider.provider_name}
-              </h2>
-              <OpenStatusLine locationId={selectedLocationId ?? undefined} provider={provider} />
-              <p className="mt-2 text-gray-600">{getCategoryName(provider.category)}</p>
-
-              {/* Contact Actions */}
-              <div className="mt-6 flex items-center gap-4">
-                {provider.social_website && (
-                  <button
-                    className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                    onClick={() =>
-                      provider.social_website && window.open(provider.social_website, '_blank')
-                    }
-                  >
-                    <Icon className="h-4 w-4" icon="mdi:internet" />
-                    {t('providerDetail.container.website')}
-                  </button>
-                )}
-                {provider.contact_phone && (
-                  <button
-                    className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                    onClick={() => window.open(`tel:${provider.contact_phone}`)}
-                  >
-                    <Icon className="h-4 w-4" icon="entypo:old-phone" />
-                    {t('providerDetail.container.call')}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Barakah Effect - Show loading state or content */}
-            {isLoadingCommunityServices ? (
+            {/* Right Column - Details */}
+            <div className="space-y-6">
+              {/* Provider Info */}
               <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <div className="animate-pulse">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="h-6 w-48 rounded bg-gray-200"></div>
-                    <div className="h-6 w-6 rounded bg-gray-200"></div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-4">
-                      <div className="h-16 w-16 rounded bg-gray-200"></div>
-                      <div className="flex-1">
-                        <div className="mb-2 h-4 w-32 rounded bg-gray-200"></div>
-                        <div className="h-3 w-24 rounded bg-gray-200"></div>
+                <h2 className="font-inter-tight text-3xl font-bold text-content-heading">
+                  {provider.provider_name}
+                </h2>
+                <OpenStatusLine locationId={selectedLocationId ?? undefined} provider={provider} />
+                <p className="mt-2 text-gray-600">{getCategoryName(provider.category)}</p>
+
+                {/* Contact Actions */}
+                <div className="mt-6 flex items-center gap-4">
+                  {provider.social_website && (
+                    <button
+                      className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() =>
+                        provider.social_website && window.open(provider.social_website, '_blank')
+                      }
+                    >
+                      <Icon className="h-4 w-4" icon="mdi:internet" />
+                      {t('providerDetail.container.website')}
+                    </button>
+                  )}
+                  {provider.contact_phone && (
+                    <button
+                      className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => window.open(`tel:${provider.contact_phone}`)}
+                    >
+                      <Icon className="h-4 w-4" icon="entypo:old-phone" />
+                      {t('providerDetail.container.call')}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Barakah Effect - Show loading state or content */}
+              {isLoadingCommunityServices ? (
+                <div className="rounded-2xl bg-white p-6 shadow-sm">
+                  <div className="animate-pulse">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div className="h-6 w-48 rounded bg-gray-200"></div>
+                      <div className="h-6 w-6 rounded bg-gray-200"></div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-4">
+                        <div className="h-16 w-16 rounded bg-gray-200"></div>
+                        <div className="flex-1">
+                          <div className="mb-2 h-4 w-32 rounded bg-gray-200"></div>
+                          <div className="h-3 w-24 rounded bg-gray-200"></div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              communityServices &&
-              communityServices.length > 0 && (
+              ) : (
+                communityServices &&
+                communityServices.length > 0 && (
+                  <div className="rounded-2xl bg-white p-6 shadow-sm">
+                    <button
+                      className="flex w-full items-center justify-between"
+                      onClick={() => setExpandedBarakah(!expandedBarakah)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
+                          {t('providers.ourBarakahEffect')}
+                        </h3>
+                        <Icon
+                          className="h-5 w-5 text-gray-500"
+                          icon="material-symbols:info-outline"
+                        />
+                      </div>
+                      <ChevronDown
+                        className={`h-7 w-7 text-gray-600 transition-transform ${
+                          expandedBarakah ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    {expandedBarakah && (
+                      <div className="mt-4 space-y-3">
+                        {communityServices.map((service, index) => {
+                          const firstImageUrl =
+                            service.community_service_images &&
+                            service.community_service_images.length > 0
+                              ? service.community_service_images[0]
+                              : PLACEHOLDER_IMAGE;
+
+                          const handleMouseEnter = () => {
+                            // Prefetch the route
+                            router.prefetch(`/community-services/${service.community_service_id}`);
+                            // Prefetch the first image
+                            if (firstImageUrl && firstImageUrl !== PLACEHOLDER_IMAGE) {
+                              const link = document.createElement('link');
+                              link.rel = 'prefetch';
+                              link.as = 'image';
+                              link.href = firstImageUrl;
+                              document.head.appendChild(link);
+                            }
+                          };
+
+                          return (
+                            <button
+                              key={index}
+                              className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
+                              onClick={() =>
+                                router.push(`/community-services/${service.community_service_id}`)
+                              }
+                              onMouseEnter={handleMouseEnter}
+                            >
+                              <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
+                                <Image
+                                  fill
+                                  alt={service.community_service_name}
+                                  className="object-cover"
+                                  src={
+                                    service.community_service_images &&
+                                    service.community_service_images.length > 0
+                                      ? service.community_service_images[0]
+                                      : PLACEHOLDER_IMAGE
+                                  }
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-inter-tight font-semibold text-content">
+                                  {service.community_service_name}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {getCategoryName(service.category)}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  +{service.donation_count || 10}{' '}
+                                  {service.category?.name_de === 'Moschee'
+                                    ? t('providers.initiativesSupported')
+                                    : t('providers.donations')}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+
+              {/* Supporting Providers Section (only for community services) */}
+              {isCommunityService && supportingProviders.length > 0 && (
                 <div className="rounded-2xl bg-white p-6 shadow-sm">
                   <button
                     className="flex w-full items-center justify-between"
-                    onClick={() => setExpandedBarakah(!expandedBarakah)}
+                    onClick={() => setExpandedProviders(!expandedProviders)}
                   >
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
-                        {t('providers.ourBarakahEffect')}
-                      </h3>
-                      <Icon
-                        className="h-5 w-5 text-gray-500"
-                        icon="material-symbols:info-outline"
-                      />
-                    </div>
+                    <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
+                      {t('providerDetail.container.supporters')}
+                    </h3>
                     <ChevronDown
                       className={`h-7 w-7 text-gray-600 transition-transform ${
-                        expandedBarakah ? 'rotate-180' : ''
+                        expandedProviders ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
-                  {expandedBarakah && (
-                    <div className="mt-4 space-y-3">
-                      {communityServices.map((service, index) => {
-                        const firstImageUrl =
-                          service.community_service_images &&
-                          service.community_service_images.length > 0
-                            ? service.community_service_images[0]
-                            : PLACEHOLDER_IMAGE;
-
-                        const handleMouseEnter = () => {
-                          // Prefetch the route
-                          router.prefetch(`/community-services/${service.community_service_id}`);
-                          // Prefetch the first image
-                          if (firstImageUrl && firstImageUrl !== PLACEHOLDER_IMAGE) {
-                            const link = document.createElement('link');
-                            link.rel = 'prefetch';
-                            link.as = 'image';
-                            link.href = firstImageUrl;
-                            document.head.appendChild(link);
-                          }
-                        };
+                  {expandedProviders && (
+                    <div className="mt-4">
+                      {supportingProviders.map((supportingProvider) => {
+                        const providerImageUrls = getAllTrustedImageUrlsWithFallback(
+                          supportingProvider.provider_images,
+                          supportingProvider.category?.category_images as CategoryImages,
+                        );
+                        const providerImage =
+                          providerImageUrls.length > 0 ? providerImageUrls[0] : PLACEHOLDER_IMAGE;
 
                         return (
                           <button
-                            key={index}
+                            key={supportingProvider.provider_id}
                             className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
-                            onClick={() =>
-                              router.push(`/community-services/${service.community_service_id}`)
-                            }
-                            onMouseEnter={handleMouseEnter}
+                            onClick={() => router.push(`/p/${supportingProvider.provider_id}`)}
                           >
                             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
                               <Image
                                 fill
-                                alt={service.community_service_name}
+                                alt={supportingProvider.provider_name}
                                 className="object-cover"
-                                src={
-                                  service.community_service_images &&
-                                  service.community_service_images.length > 0
-                                    ? service.community_service_images[0]
-                                    : PLACEHOLDER_IMAGE
-                                }
+                                src={providerImage}
                               />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="font-inter-tight font-semibold text-content">
-                                {service.community_service_name}
+                                {supportingProvider.provider_name}
                               </p>
                               <p className="text-sm text-gray-600">
-                                {getCategoryName(service.category)}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                +{service.donation_count || 10}{' '}
-                                {service.category?.name_de === 'Moschee'
-                                  ? t('providers.initiativesSupported')
-                                  : t('providers.donations')}
+                                {getCategoryName(supportingProvider.category)}
                               </p>
                             </div>
                           </button>
@@ -841,110 +910,51 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
                     </div>
                   )}
                 </div>
-              )
-            )}
+              )}
 
-            {/* Supporting Providers Section (only for community services) */}
-            {isCommunityService && supportingProviders.length > 0 && (
-              <div className="rounded-2xl bg-white p-6 shadow-sm">
-                <button
-                  className="flex w-full items-center justify-between"
-                  onClick={() => setExpandedProviders(!expandedProviders)}
-                >
-                  <h3 className="font-inter-tight text-2xl font-semibold text-content-heading">
-                    {t('providerDetail.container.supporters')}
-                  </h3>
-                  <ChevronDown
-                    className={`h-7 w-7 text-gray-600 transition-transform ${
-                      expandedProviders ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-                {expandedProviders && (
-                  <div className="mt-4">
-                    {supportingProviders.map((supportingProvider) => {
-                      const providerImageUrls = getAllTrustedImageUrlsWithFallback(
-                        supportingProvider.provider_images,
-                        supportingProvider.category?.category_images as CategoryImages,
-                      );
-                      const providerImage =
-                        providerImageUrls.length > 0 ? providerImageUrls[0] : PLACEHOLDER_IMAGE;
+              <ProviderDetailSections
+                badges={provider.badges ?? []}
+                isLoadingBadges={false}
+                locations={locations}
+                provider={provider}
+                selectedLocationId={selectedLocationId}
+                onLocationSelect={handleLocationSelect}
+              />
 
-                      return (
-                        <button
-                          key={supportingProvider.provider_id}
-                          className="flex w-full items-center gap-4 rounded-lg p-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
-                          onClick={() =>
-                            router.push(`/p/${supportingProvider.provider_id}`)
-                          }
-                        >
-                          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-sm">
-                            <Image
-                              fill
-                              alt={supportingProvider.provider_name}
-                              className="object-cover"
-                              src={providerImage}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-inter-tight font-semibold text-content">
-                              {supportingProvider.provider_name}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {getCategoryName(supportingProvider.category)}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
+              {/* Action Buttons */}
+              {customActionButtons ? (
+                <div className="flex gap-4">{customActionButtons}</div>
+              ) : (
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <BookmarkButton
+                      className="h-auto"
+                      isHovered={isHovered}
+                      isTransiting={isTransiting}
+                      savedText={t('actions.saved')}
+                      saveText={t('actions.save')}
+                      shouldAnimateFill={shouldAnimateFill}
+                      state={getButtonState()}
+                      wasBookmarked={wasBookmarked}
+                      onClick={handleBookmarkAction}
+                      onHoverEnd={() => setIsHovered(false)}
+                      onHoverStart={() => setIsHovered(true)}
+                    />
                   </div>
-                )}
-              </div>
-            )}
-
-            <ProviderDetailSections
-              badges={provider.badges ?? []}
-              isLoadingBadges={false}
-              locations={locations}
-              provider={provider}
-              selectedLocationId={selectedLocationId}
-              onLocationSelect={handleLocationSelect}
-            />
-
-            {/* Action Buttons */}
-            {customActionButtons ? (
-              <div className="flex gap-4">{customActionButtons}</div>
-            ) : (
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <BookmarkButton
-                    className="h-auto"
-                    isHovered={isHovered}
-                    isTransiting={isTransiting}
-                    savedText={t('actions.saved')}
-                    saveText={t('actions.save')}
-                    shouldAnimateFill={shouldAnimateFill}
-                    state={getButtonState()}
-                    wasBookmarked={wasBookmarked}
-                    onClick={handleBookmarkAction}
-                    onHoverEnd={() => setIsHovered(false)}
-                    onHoverStart={() => setIsHovered(true)}
-                  />
+                  <button
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 px-6 py-3 font-inter-tight font-medium text-gray-700 hover:bg-gray-50"
+                    onClick={handleShareAction}
+                  >
+                    <Icon className="h-5 w-5" icon="material-symbols:share" />
+                    {t('providerDetail.container.share')}
+                  </button>
                 </div>
-                <button
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-300 px-6 py-3 font-inter-tight font-medium text-gray-700 hover:bg-gray-50"
-                  onClick={handleShareAction}
-                >
-                  <Icon className="h-5 w-5" icon="material-symbols:share" />
-                  {t('providerDetail.container.share')}
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <HalalTrustPopup isOpen={showHalalPopup} onClose={handleCloseHalalPopup} />
+      <HalalTrustPopup isOpen={showHalalPopup} onClose={handleCloseHalalPopup} />
     </>
   );
 };

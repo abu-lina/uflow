@@ -188,9 +188,7 @@ describe('POST /api/admin/import-joinhalal/dry-run', () => {
     const POST = await getHandler();
 
     await POST(makeRequest({ limit: 50 }));
-    expect(mockRunDryRun).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 50 })
-    );
+    expect(mockRunDryRun).toHaveBeenCalledWith(expect.objectContaining({ limit: 50 }));
   });
 
   it('returns 500 when runJoinHalalDryRun throws', async () => {

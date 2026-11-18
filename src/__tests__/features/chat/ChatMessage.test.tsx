@@ -28,12 +28,7 @@ describe('ChatMessage', () => {
   });
 
   it('renders assistant message aligned to the left', () => {
-    render(
-      <ChatMessage
-        role="assistant"
-        content="Wie kann ich dir helfen?"
-      />,
-    );
+    render(<ChatMessage role="assistant" content="Wie kann ich dir helfen?" />);
 
     const message = screen.getByText('Wie kann ich dir helfen?');
     expect(message).toBeInTheDocument();
@@ -71,11 +66,7 @@ describe('ChatMessage', () => {
 
   it('hides content text when results are present', () => {
     render(
-      <ChatMessage
-        role="assistant"
-        content="Hier sind die Ergebnisse:"
-        results={[mockProvider]}
-      />,
+      <ChatMessage role="assistant" content="Hier sind die Ergebnisse:" results={[mockProvider]} />,
     );
 
     expect(screen.queryByText('Hier sind die Ergebnisse:')).not.toBeInTheDocument();
@@ -94,13 +85,7 @@ describe('ChatMessage', () => {
       },
     ];
 
-    render(
-      <ChatMessage
-        role="assistant"
-        content="Ich habe diese gefunden:"
-        results={providers}
-      />,
-    );
+    render(<ChatMessage role="assistant" content="Ich habe diese gefunden:" results={providers} />);
 
     expect(screen.getByText('Döner Haus')).toBeInTheDocument();
     expect(screen.getByText('Kebab Haus')).toBeInTheDocument();

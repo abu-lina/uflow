@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { parsePriceToCents, extractSearchResultsFromState, extractRestaurantFromState, extractMenuFromState } from '../ubereats-client';
+import {
+  parsePriceToCents,
+  extractSearchResultsFromState,
+  extractRestaurantFromState,
+  extractMenuFromState,
+} from '../ubereats-client';
 import type { UberEatsMenuCategory } from '../ubereats-types';
 
 describe('parsePriceToCents', () => {
@@ -103,9 +108,7 @@ describe('extractSearchResultsFromState', () => {
 
   it('falls back to searchResults array when catalog is empty', () => {
     const state = {
-      searchResults: [
-        { store: { title: 'Fallback Restaurant', slug: 'fallback-1', rating: 4.0 } },
-      ],
+      searchResults: [{ store: { title: 'Fallback Restaurant', slug: 'fallback-1', rating: 4.0 } }],
     };
 
     const results = extractSearchResultsFromState(state);
@@ -156,9 +159,7 @@ describe('extractMenuFromState', () => {
           },
           {
             title: 'Drinks',
-            items: [
-              { title: 'Cola', description: '0.5L', price: '3,50 €' },
-            ],
+            items: [{ title: 'Cola', description: '0.5L', price: '3,50 €' }],
           },
         ],
       },

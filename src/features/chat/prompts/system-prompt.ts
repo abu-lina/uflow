@@ -131,7 +131,7 @@ export async function buildSystemPrompt(includeRegistration?: boolean): Promise<
     .select('name_de')
     .in('applicable_section', ['food', 'all'])
     .order('name_de');
-  
+
   if (categories && categories.length > 0) {
     const catList = categories.map((c: { name_de: string }) => c.name_de).join(', ');
     prompt += `\n\nAVAILABLE CATEGORIES (only suggest from this list — never invent categories):\n${catList}\n\nWhen suggesting categories to the user, ONLY pick from the list above. Show the EXACT name from the list.`;

@@ -41,7 +41,7 @@ interface UseScrollHeaderOptions {
 
 /**
  * Reusable hook for scroll-based header visibility
- * 
+ *
  * Features:
  * - Velocity-aware behavior (fast scroll = immediate response)
  * - Smart container detection (main element or window)
@@ -49,12 +49,12 @@ interface UseScrollHeaderOptions {
  * - Bottom boundary protection
  * - iOS rubber band effect protection
  * - Performance optimized with requestAnimationFrame
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage
  * const { isHeaderVisible } = useScrollHeader();
- * 
+ *
  * return (
  *   <>
  *     <PageHeader title="My Page" isVisible={isHeaderVisible} />
@@ -64,7 +64,7 @@ interface UseScrollHeaderOptions {
  *   </>
  * );
  * ```
- * 
+ *
  * @example
  * ```tsx
  * // With dependencies (re-initialize when content loads)
@@ -120,7 +120,11 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
       return distanceFromBottom < bottomBuffer;
     };
 
-    const updateHeaderVisibility = (currentScrollY: number, scrollDifference: number, velocity: number) => {
+    const updateHeaderVisibility = (
+      currentScrollY: number,
+      scrollDifference: number,
+      velocity: number,
+    ) => {
       // Clear any pending visibility changes
       if (visibilityTimeout) {
         clearTimeout(visibilityTimeout);
@@ -132,8 +136,8 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
         if (pendingVisibility !== true) {
           pendingVisibility = true;
           // Immediate update when at top (no delay needed)
-        setIsHeaderVisible(true);
-        hideScrollY = 0;
+          setIsHeaderVisible(true);
+          hideScrollY = 0;
         }
         return;
       }
@@ -149,8 +153,8 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
         if (velocity > velocityThreshold) {
           if (pendingVisibility !== false) {
             pendingVisibility = false;
-          setIsHeaderVisible(false);
-          hideScrollY = currentScrollY;
+            setIsHeaderVisible(false);
+            hideScrollY = currentScrollY;
           }
           return;
         }
@@ -160,9 +164,9 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
             pendingVisibility = false;
             // Small delay prevents jitter on slow scrolls
             visibilityTimeout = setTimeout(() => {
-          setIsHeaderVisible(false);
-          if (hideScrollY === 0) {
-            hideScrollY = currentScrollY;
+              setIsHeaderVisible(false);
+              if (hideScrollY === 0) {
+                hideScrollY = currentScrollY;
               }
             }, 50);
           }
@@ -172,13 +176,14 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
 
       // Show when scrolling up - velocity-aware
       if (scrollDifference < 0) {
-        const scrollUpDistance = hideScrollY > 0 ? hideScrollY - currentScrollY : Math.abs(scrollDifference);
+        const scrollUpDistance =
+          hideScrollY > 0 ? hideScrollY - currentScrollY : Math.abs(scrollDifference);
         // Fast upward scroll: show immediately
         if (Math.abs(velocity) > velocityThreshold) {
           if (pendingVisibility !== true) {
             pendingVisibility = true;
-          setIsHeaderVisible(true);
-          hideScrollY = 0;
+            setIsHeaderVisible(true);
+            hideScrollY = 0;
           }
           return;
         }
@@ -187,8 +192,8 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
           if (pendingVisibility !== true) {
             pendingVisibility = true;
             // Immediate show feels more responsive
-          setIsHeaderVisible(true);
-          hideScrollY = 0;
+            setIsHeaderVisible(true);
+            hideScrollY = 0;
           }
         }
       }
@@ -206,12 +211,15 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
           const currentScrollY = getScrollY(scrollContainer);
           const scrollDifference = currentScrollY - lastScrollY;
           const timeDelta = currentTime - lastScrollTime;
-          
+
           // Calculate velocity (px per frame) normalized to 60fps
           const velocity = timeDelta > 0 ? scrollDifference / (timeDelta / 16.67) : 0;
 
           // Ignore tiny scroll movements (but allow fast movements)
-          if (Math.abs(scrollDifference) < minScrollDelta && Math.abs(velocity) < velocityThreshold) {
+          if (
+            Math.abs(scrollDifference) < minScrollDelta &&
+            Math.abs(velocity) < velocityThreshold
+          ) {
             ticking = false;
             return;
           }
@@ -234,7 +242,7 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
 
       // Try main element first (preferred - more performant)
       const mainElement = document.querySelector('main') as HTMLElement;
-      
+
       if (mainElement && mainElement.scrollHeight > mainElement.clientHeight) {
         scrollContainer = mainElement;
         lastScrollY = mainElement.scrollTop;
@@ -272,8 +280,15 @@ export function useScrollHeader(options: UseScrollHeaderOptions = {}) {
         cleanupFn();
       }
     };
-  }, [enabled, scrollThreshold, minScrollDelta, velocityThreshold, showThreshold, bottomBuffer, ...dependencies]);
+  }, [
+    enabled,
+    scrollThreshold,
+    minScrollDelta,
+    velocityThreshold,
+    showThreshold,
+    bottomBuffer,
+    ...dependencies,
+  ]);
 
   return { isHeaderVisible };
 }
-

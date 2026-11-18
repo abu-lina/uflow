@@ -108,16 +108,12 @@ describe('PATCH /api/admin/review-community-service', () => {
   });
 
   it('[TDD RED] returns 400 when rejecting without feedback', async () => {
-    const res = await PATCH(
-      makeRequest({ communityServiceId: validId, reviewStatus: 'rejected' }),
-    );
+    const res = await PATCH(makeRequest({ communityServiceId: validId, reviewStatus: 'rejected' }));
     expect(res.status).toBe(400);
   });
 
   it('[TDD RED] returns 200 for valid approve', async () => {
-    const res = await PATCH(
-      makeRequest({ communityServiceId: validId, reviewStatus: 'approved' }),
-    );
+    const res = await PATCH(makeRequest({ communityServiceId: validId, reviewStatus: 'approved' }));
     expect(res.status).toBe(200);
     expect(mockReview).toHaveBeenCalledWith(validId, 'approved', null, 'admin-id');
   });

@@ -1,6 +1,7 @@
 # Go Vulnerabilities
 
 ## SQL Injection
+
 ```go
 // VULNERABLE
 query := fmt.Sprintf("SELECT * FROM users WHERE id = %s", userID)
@@ -12,6 +13,7 @@ db.QueryRow("SELECT * FROM users WHERE id = ?", userID)
 ```
 
 ## Command Injection
+
 ```go
 // VULNERABLE
 cmd := exec.Command("sh", "-c", "echo " + userInput)
@@ -23,6 +25,7 @@ cmd.Run()
 ```
 
 ## Path Traversal
+
 ```go
 // VULNERABLE
 path := filepath.Join(baseDir, userFilename)
@@ -37,6 +40,7 @@ if !strings.HasPrefix(targetPath, basePath) {
 ```
 
 ## Insecure TLS
+
 ```go
 // VULNERABLE - skip verification
 tr := &http.Transport{
@@ -52,6 +56,7 @@ tr := &http.Transport{
 ```
 
 ## Race Conditions
+
 ```go
 // VULNERABLE - data race
 var counter int
@@ -73,6 +78,7 @@ go func() {
 ```
 
 ## Integer Overflow
+
 ```go
 // VULNERABLE - can overflow
 func allocate(size int) []byte {
@@ -89,6 +95,7 @@ func allocate(size int) ([]byte, error) {
 ```
 
 ## Information Disclosure
+
 ```go
 // VULNERABLE - stack trace to user
 http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +116,7 @@ defer func() {
 ```
 
 ## Template Injection
+
 ```go
 // VULNERABLE - text/template doesn't escape
 import "text/template"

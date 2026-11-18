@@ -129,7 +129,9 @@ describe('admin taxonomy create APIs', () => {
   });
 
   it('creates offers through the admin server boundary', async () => {
-    const response = await postAdminOffer(createJsonRequest({ name: 'Baguette' }, 'http://localhost/api/admin/offers'));
+    const response = await postAdminOffer(
+      createJsonRequest({ name: 'Baguette' }, 'http://localhost/api/admin/offers'),
+    );
 
     expect(response.status).toBe(201);
     const json = await response.json();
@@ -140,14 +142,16 @@ describe('admin taxonomy create APIs', () => {
       'system',
       'offer-1',
       expect.objectContaining({ name_de: 'Baguette' }),
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 
   it('rejects duplicate offer names with a clear message', async () => {
     mockOffersSelect.mockResolvedValue({ data: [{ name_de: 'Baguette' }], error: null });
 
-    const response = await postAdminOffer(createJsonRequest({ name: 'Baguette' }, 'http://localhost/api/admin/offers'));
+    const response = await postAdminOffer(
+      createJsonRequest({ name: 'Baguette' }, 'http://localhost/api/admin/offers'),
+    );
 
     expect(response.status).toBe(409);
     const json = await response.json();
@@ -155,7 +159,9 @@ describe('admin taxonomy create APIs', () => {
   });
 
   it('creates needs through the admin server boundary', async () => {
-    const response = await postAdminNeed(createJsonRequest({ name: 'Volunteers' }, 'http://localhost/api/admin/needs'));
+    const response = await postAdminNeed(
+      createJsonRequest({ name: 'Volunteers' }, 'http://localhost/api/admin/needs'),
+    );
 
     expect(response.status).toBe(201);
     const json = await response.json();
@@ -166,7 +172,7 @@ describe('admin taxonomy create APIs', () => {
       'system',
       'need-1',
       expect.objectContaining({ name_de: 'Volunteers' }),
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 });

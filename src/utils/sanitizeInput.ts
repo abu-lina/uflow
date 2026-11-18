@@ -1,24 +1,24 @@
 /**
  * Input Sanitization Utilities
- * 
+ *
  * Prevents XSS attacks by sanitizing user input before database insertion.
  * Uses a lightweight approach suitable for text fields (offers, needs, etc.)
- * 
+ *
  * For production, consider using DOMPurify for more comprehensive sanitization.
  */
 
 /**
  * Sanitize text input for database storage
- * 
+ *
  * Removes:
  * - HTML tags
  * - Script tags
  * - Event handlers (onclick, onerror, etc.)
  * - JavaScript: and data: URLs
- * 
+ *
  * @param input - Raw user input
  * @returns Sanitized string safe for database storage
- * 
+ *
  * @example
  * ```tsx
  * const sanitized = sanitizeTextInput(userInput);
@@ -56,9 +56,9 @@ export function sanitizeTextInput(input: string): string {
 
 /**
  * Validate and sanitize offer/need name
- * 
+ *
  * Combines validation and sanitization in one step
- * 
+ *
  * @param input - Raw user input
  * @param maxLength - Maximum allowed length (default: 100)
  * @returns Sanitized string or empty string if invalid
@@ -77,4 +77,3 @@ export function validateAndSanitizeName(input: string, maxLength: number = 100):
 
   return sanitized;
 }
-

@@ -9,7 +9,9 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('Missing required environment variables.');
-  console.error('  NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local');
+  console.error(
+    '  NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local',
+  );
   process.exit(1);
 }
 
@@ -49,7 +51,9 @@ const explicitSlug = getArgValue('--slug');
 
 if (!providerId || !platform || !url) {
   console.error('Usage: npx tsx scripts/add-delivery-link.ts \\');
-  console.error('  --provider-id <uuid> --platform wolt|lieferando|ubereats --url <url> [--slug <slug>]');
+  console.error(
+    '  --provider-id <uuid> --platform wolt|lieferando|ubereats --url <url> [--slug <slug>]',
+  );
   process.exit(1);
 }
 
@@ -72,19 +76,17 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const { error: upsertError } = await supabase
-    .from('provider_delivery_links')
-    .upsert(
-      {
-        provider_id: providerId,
-        platform,
-        platform_url: url,
-        platform_slug: slug || null,
-        is_active: true,
-        last_verified_at: new Date().toISOString(),
-      },
-      { onConflict: 'provider_id,platform' }
-    );
+  const { error: upsertError } = await supabase.from('provider_delivery_links').upsert(
+    {
+      provider_id: providerId,
+      platform,
+      platform_url: url,
+      platform_slug: slug || null,
+      is_active: true,
+      last_verified_at: new Date().toISOString(),
+    },
+    { onConflict: 'provider_id,platform' },
+  );
 
   if (upsertError) {
     console.error(`Failed to add delivery link: ${upsertError.message}`);

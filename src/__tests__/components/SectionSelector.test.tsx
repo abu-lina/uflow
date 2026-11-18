@@ -88,7 +88,6 @@ describe('SectionSelector (Plan 089 M6)', () => {
     expect(storesTab).not.toBeDisabled();
   });
 
-
   it('clicking inactive section tab shows coming soon toast instead of calling onSectionChange', () => {
     const onSectionChange = vi.fn();
     render(<SectionSelector selectedSection="food" onSectionChange={onSectionChange} />);
@@ -96,7 +95,7 @@ describe('SectionSelector (Plan 089 M6)', () => {
     expect(onSectionChange).not.toHaveBeenCalled();
     expect(vi.mocked(toast.info)).toHaveBeenCalledWith(
       'Ummah is coming soon',
-      expect.objectContaining({ description: "We're working on it — stay tuned." })
+      expect.objectContaining({ description: "We're working on it — stay tuned." }),
     );
   });
 });

@@ -37,15 +37,32 @@ function getProviderIcon(listingType: string | null): ReactNode {
   }
 }
 
-export function ChatMessage({ role, content, isLoading = false, results, options, onOptionSelect, singleSelect }: ChatMessageProps) {
+export function ChatMessage({
+  role,
+  content,
+  isLoading = false,
+  results,
+  options,
+  onOptionSelect,
+  singleSelect,
+}: ChatMessageProps) {
   if (isLoading && role === 'assistant') {
     return (
-      <div className="flex my-4 px-6" data-role="assistant">
-        <div className="bg-gray-100 rounded-2xl rounded-bl-none px-4 py-3">
+      <div className="my-4 flex px-6" data-role="assistant">
+        <div className="rounded-2xl rounded-bl-none bg-gray-100 px-4 py-3">
           <div className="flex gap-1" data-testid="typing-indicator">
-            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            <span
+              className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+              style={{ animationDelay: '0ms' }}
+            />
+            <span
+              className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+              style={{ animationDelay: '150ms' }}
+            />
+            <span
+              className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+              style={{ animationDelay: '300ms' }}
+            />
           </div>
         </div>
       </div>
@@ -56,29 +73,34 @@ export function ChatMessage({ role, content, isLoading = false, results, options
   const bubbleClass = bubbleStyles[role] || bubbleStyles.assistant;
 
   return (
-    <div className={`flex my-4 px-6 ${isUser ? 'justify-end' : 'justify-start'}`} data-role={role}>
+    <div className={`my-4 flex px-6 ${isUser ? 'justify-end' : 'justify-start'}`} data-role={role}>
       <div className={bubbleClass}>
         {content && (!results || results.length === 0) && (
-          <div className="text-sm leading-snug space-y-1">
+          <div className="space-y-1 text-sm leading-snug">
             <ReactMarkdown>{content}</ReactMarkdown>
           </div>
         )}
         {results && results.length > 0 && (
-          <div className="flex flex-col gap-3 mt-2">
+          <div className="mt-2 flex flex-col gap-3">
             {results.map((provider) => (
               <SuggestionCard
                 key={provider.provider_id}
                 href={`/p/${provider.provider_id}`}
                 icon={getProviderIcon(provider.listing_type)}
-                subtitle={[provider.address_city, provider.category_name].filter(Boolean).join(' | ')}
+                subtitle={[provider.address_city, provider.category_name]
+                  .filter(Boolean)
+                  .join(' | ')}
                 title={provider.provider_name}
               />
             ))}
           </div>
         )}
-        {options && onOptionSelect && role === 'assistant' && (!results || results.length === 0) && (
-          singleSelect ? (
-            <div className="flex flex-col gap-3 mt-3">
+        {options &&
+          onOptionSelect &&
+          role === 'assistant' &&
+          (!results || results.length === 0) &&
+          (singleSelect ? (
+            <div className="mt-3 flex flex-col gap-3">
               {options.map((option) => (
                 <SuggestionCard
                   key={option}
@@ -90,9 +112,13 @@ export function ChatMessage({ role, content, isLoading = false, results, options
               ))}
             </div>
           ) : (
-            <QuickReplies disabled={isLoading} options={options} singleSelect={singleSelect} onSelect={onOptionSelect} />
-          )
-        )}
+            <QuickReplies
+              disabled={isLoading}
+              options={options}
+              singleSelect={singleSelect}
+              onSelect={onOptionSelect}
+            />
+          ))}
       </div>
     </div>
   );

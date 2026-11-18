@@ -9,11 +9,11 @@ interface OrigamiBirdIconProps {
   width?: number;
 }
 
-export function OrigamiBirdIcon({ 
-  alt = 'Origami Bird Icon', 
-  className = '', 
-  height = 176, 
-  width = 144 
+export function OrigamiBirdIcon({
+  alt = 'Origami Bird Icon',
+  className = '',
+  height = 176,
+  width = 144,
 }: OrigamiBirdIconProps) {
   return (
     <Image

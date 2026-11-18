@@ -38,9 +38,10 @@ export function WasServiceTypeResults({
   t,
 }: WasServiceTypeResultsProps) {
   const normalizedQuery = query.trim().toLowerCase();
-  const matchingItems = normalizedQuery.length < 2
-    ? SERVICE_TYPES
-    : SERVICE_TYPES.filter((item) => t(item.labelKey).toLowerCase().includes(normalizedQuery));
+  const matchingItems =
+    normalizedQuery.length < 2
+      ? SERVICE_TYPES
+      : SERVICE_TYPES.filter((item) => t(item.labelKey).toLowerCase().includes(normalizedQuery));
   const visibleItems = matchingItems.slice(0, 3);
   const shouldShowRecent = normalizedQuery.length < 2 && recentSearches.length > 0;
   const shouldShowPopular = !shouldShowRecent;
@@ -53,9 +54,9 @@ export function WasServiceTypeResults({
             {t('suchen.was.selectionLabel')}
           </p>
           <div className="space-y-1">
-            <div className="flex w-full items-center justify-between rounded-xl bg-background-selection px-2 py-3">
+            <div className="bg-background-selection flex w-full items-center justify-between rounded-xl px-2 py-3">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                <div className="bg-background-selection flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary">
                   <BriefcaseBusiness aria-hidden="true" className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
@@ -95,7 +96,7 @@ export function WasServiceTypeResults({
                   ariaLabel={label}
                   className="transition-colors hover:bg-neutral-muted"
                   icon={
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                    <div className="bg-background-selection flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary">
                       <BriefcaseBusiness aria-hidden="true" className="h-5 w-5" />
                     </div>
                   }
@@ -128,7 +129,7 @@ export function WasServiceTypeResults({
                 ariaLabel={item.label}
                 className="transition-colors hover:bg-neutral-muted"
                 icon={
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                  <div className="bg-background-selection flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary">
                     <BriefcaseBusiness aria-hidden="true" className="h-5 w-5" />
                   </div>
                 }

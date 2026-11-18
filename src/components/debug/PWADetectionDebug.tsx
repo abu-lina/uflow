@@ -19,8 +19,8 @@ export function PWADetectionDebug() {
   };
 
   return (
-    <div className="fixed top-20 right-4 z-50 bg-blue-500 text-white p-3 rounded shadow-lg max-w-xs">
-      <div className="text-xs font-mono space-y-1">
+    <div className="fixed right-4 top-20 z-50 max-w-xs rounded bg-blue-500 p-3 text-white shadow-lg">
+      <div className="space-y-1 font-mono text-xs">
         <div className="font-bold">PWA Detection</div>
         <div>PWA: {pwaInfo.isPWA ? '✅' : '❌'}</div>
         <div>Standalone: {pwaInfo.isStandalone ? '✅' : '❌'}</div>
@@ -29,10 +29,7 @@ export function PWADetectionDebug() {
         <div>Mode: {pwaInfo.displayMode}</div>
         <div>Installable: {canInstallPWA() ? '✅' : '❌'}</div>
         <div>Status: {installStatus}</div>
-        <button
-          className="mt-2 px-2 py-1 bg-blue-600 rounded text-xs"
-          onClick={handleDebug}
-        >
+        <button className="mt-2 rounded bg-blue-600 px-2 py-1 text-xs" onClick={handleDebug}>
           Log to Console
         </button>
       </div>

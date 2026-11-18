@@ -13,10 +13,7 @@ interface DelayedUnmountResult {
   isAnimating: boolean;
 }
 
-export function useDelayedUnmount(
-  isOpen: boolean,
-  durationMs = 300,
-): DelayedUnmountResult {
+export function useDelayedUnmount(isOpen: boolean, durationMs = 300): DelayedUnmountResult {
   const [shouldRender, setShouldRender] = useState(isOpen);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

@@ -250,18 +250,15 @@ function extractLabeledValue(text: string, label: string): string {
   // For the last label (Social Media), we stop at common noise patterns
   const stopAlternatives = [
     ...nextLabels.map((l) => escapeRegex(l) + ':'),
-    '\\d+%\\s*RABATT',    // Promo text like "15%RABATT"
-    'SUPPORTER',           // [SUPPORTER] badge
-    'Neu\\b',             // "Neu" badge
-    'White Week',          // White Week promo
+    '\\d+%\\s*RABATT', // Promo text like "15%RABATT"
+    'SUPPORTER', // [SUPPORTER] badge
+    'Neu\\b', // "Neu" badge
+    'White Week', // White Week promo
   ];
 
   const stopPattern = `(?=${stopAlternatives.join('|')}|$)`;
 
-  const pattern = new RegExp(
-    escapeRegex(label) + ':\\s*' + '(.*?)' + '\\s*' + stopPattern,
-    'is'
-  );
+  const pattern = new RegExp(escapeRegex(label) + ':\\s*' + '(.*?)' + '\\s*' + stopPattern, 'is');
 
   const match = text.match(pattern);
   if (!match) return '';

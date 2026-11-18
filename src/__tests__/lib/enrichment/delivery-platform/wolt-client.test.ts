@@ -21,14 +21,9 @@ describe('WoltClient', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({}), { status: 200 })
-    );
+    fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({}), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
-    client = createWoltClient(
-      { requestDelayMs: 0, maxRetries: 0 },
-      mockGeocoder
-    );
+    client = createWoltClient({ requestDelayMs: 0, maxRetries: 0 }, mockGeocoder);
   });
 
   afterEach(() => {
@@ -38,14 +33,14 @@ describe('WoltClient', () => {
   describe('searchVenuesByLocation', () => {
     it('constructs correct URL with lat/lon', async () => {
       fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify({ sections: [] }), { status: 200 })
+        new Response(JSON.stringify({ sections: [] }), { status: 200 }),
       );
       await client.searchVenuesByLocation(52.52, 13.405);
       expect(fetchMock).toHaveBeenCalledWith(
         'https://consumer-api.wolt.com/v1/pages/restaurants?lat=52.52&lon=13.405',
         expect.objectContaining({
           headers: { 'User-Agent': expect.any(String) },
-        })
+        }),
       );
     });
 
@@ -63,7 +58,7 @@ describe('WoltClient', () => {
         ],
       };
       fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify(responsePayload), { status: 200 })
+        new Response(JSON.stringify(responsePayload), { status: 200 }),
       );
       const result = await client.searchVenuesByLocation(52.52, 13.405);
       expect(result.venues).toHaveLength(1);
@@ -72,16 +67,14 @@ describe('WoltClient', () => {
 
     it('returns empty venues for empty response', async () => {
       fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify({ sections: [] }), { status: 200 })
+        new Response(JSON.stringify({ sections: [] }), { status: 200 }),
       );
       const result = await client.searchVenuesByLocation(52.52, 13.405);
       expect(result.venues).toHaveLength(0);
     });
 
     it('returns empty venues when no sections key', async () => {
-      fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify({}), { status: 200 })
-      );
+      fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({}), { status: 200 }));
       const result = await client.searchVenuesByLocation(52.52, 13.405);
       expect(result.venues).toHaveLength(0);
     });
@@ -90,12 +83,12 @@ describe('WoltClient', () => {
   describe('fetchMenuData', () => {
     it('constructs correct URL with venue slug', async () => {
       fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify({ categories: [] }), { status: 200 })
+        new Response(JSON.stringify({ categories: [] }), { status: 200 }),
       );
       await client.fetchMenuData('test-venue');
       expect(fetchMock).toHaveBeenCalledWith(
         'https://restaurant-api.wolt.com/v4/venues/slug/test-venue/menu/data?unit_prices=true&show_weighted_items=true&show_subcategories=true',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -113,7 +106,7 @@ describe('WoltClient', () => {
         ],
       };
       fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify(responsePayload), { status: 200 })
+        new Response(JSON.stringify(responsePayload), { status: 200 }),
       );
       const result = await client.fetchMenuData('test-venue');
       expect(result.items).toHaveLength(3);
@@ -124,7 +117,7 @@ describe('WoltClient', () => {
 
     it('handles empty menu', async () => {
       fetchMock.mockResolvedValueOnce(
-        new Response(JSON.stringify({ categories: [] }), { status: 200 })
+        new Response(JSON.stringify({ categories: [] }), { status: 200 }),
       );
       const result = await client.fetchMenuData('test-venue');
       expect(result.items).toHaveLength(0);
@@ -134,20 +127,13 @@ describe('WoltClient', () => {
 
   describe('error handling', () => {
     it('throws on 404', async () => {
-      fetchMock.mockResolvedValueOnce(
-        new Response('Not Found', { status: 404 })
-      );
-      await expect(client.searchVenuesByLocation(52.52, 13.405)).rejects.toThrow(
-        'Wolt API 404'
-      );
+      fetchMock.mockResolvedValueOnce(new Response('Not Found', { status: 404 }));
+      await expect(client.searchVenuesByLocation(52.52, 13.405)).rejects.toThrow('Wolt API 404');
     });
 
     it('retries on 429 with backoff', async () => {
       vi.useFakeTimers();
-      const clientWithRetry = createWoltClient(
-        { requestDelayMs: 0, maxRetries: 2 },
-        mockGeocoder
-      );
+      const clientWithRetry = createWoltClient({ requestDelayMs: 0, maxRetries: 2 }, mockGeocoder);
       fetchMock
         .mockResolvedValueOnce(new Response('Too Many Requests', { status: 429 }))
         .mockResolvedValueOnce(new Response('Too Many Requests', { status: 429 }))
@@ -163,10 +149,7 @@ describe('WoltClient', () => {
 
     it('throws after exhausting retries on 429', async () => {
       vi.useFakeTimers();
-      const clientWithRetry = createWoltClient(
-        { requestDelayMs: 0, maxRetries: 1 },
-        mockGeocoder
-      );
+      const clientWithRetry = createWoltClient({ requestDelayMs: 0, maxRetries: 1 }, mockGeocoder);
       fetchMock.mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
 
       const promise = clientWithRetry.searchVenuesByLocation(52.52, 13.405);
@@ -182,9 +165,7 @@ describe('WoltClient', () => {
 
     it('handles network errors', async () => {
       fetchMock.mockRejectedValueOnce(new Error('Network failure'));
-      await expect(client.searchVenuesByLocation(52.52, 13.405)).rejects.toThrow(
-        'Network failure'
-      );
+      await expect(client.searchVenuesByLocation(52.52, 13.405)).rejects.toThrow('Network failure');
     });
   });
 

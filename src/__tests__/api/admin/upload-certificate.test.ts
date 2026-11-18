@@ -112,13 +112,11 @@ describe('upload-certificate — storage upload path', () => {
   it('uploads to path prefixed with providerId', async () => {
     mockUpload.mockResolvedValue({ data: { path: `${VALID_ID}/uuid-file.png` }, error: null });
 
-    const supabaseAdmin = await import('@/lib/supabase/admin').then(m => m.getSupabaseAdmin());
+    const supabaseAdmin = await import('@/lib/supabase/admin').then((m) => m.getSupabaseAdmin());
     const buffer = new ArrayBuffer(100);
-    const result = await supabaseAdmin.storage.from('provider-certificates').upload(
-      `${VALID_ID}/uuid-file.png`,
-      buffer,
-      { contentType: 'image/png', upsert: false }
-    );
+    const result = await supabaseAdmin.storage
+      .from('provider-certificates')
+      .upload(`${VALID_ID}/uuid-file.png`, buffer, { contentType: 'image/png', upsert: false });
 
     expect(result.data?.path).toContain(VALID_ID);
   });
@@ -127,14 +125,14 @@ describe('upload-certificate — storage upload path', () => {
     const uploadPath = `${VALID_ID}/abc-cert.png`;
     mockUpload.mockResolvedValue({ data: { path: uploadPath }, error: null });
 
-    const supabaseAdmin = await import('@/lib/supabase/admin').then(m => m.getSupabaseAdmin());
-    const { data: uploadData } = await supabaseAdmin.storage.from('provider-certificates').upload(
-      uploadPath,
-      new ArrayBuffer(100),
-      { contentType: 'image/png', upsert: false }
-    );
+    const supabaseAdmin = await import('@/lib/supabase/admin').then((m) => m.getSupabaseAdmin());
+    const { data: uploadData } = await supabaseAdmin.storage
+      .from('provider-certificates')
+      .upload(uploadPath, new ArrayBuffer(100), { contentType: 'image/png', upsert: false });
 
-    const { data: urlData } = supabaseAdmin.storage.from('provider-certificates').getPublicUrl(uploadData!.path);
+    const { data: urlData } = supabaseAdmin.storage
+      .from('provider-certificates')
+      .getPublicUrl(uploadData!.path);
     expect(urlData.publicUrl).toContain(VALID_ID);
     expect(urlData.publicUrl).toContain('provider-certificates');
   });

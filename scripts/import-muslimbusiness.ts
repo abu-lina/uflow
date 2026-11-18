@@ -59,7 +59,9 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('❌ Missing required environment variables.');
-  console.error('   NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local');
+  console.error(
+    '   NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local',
+  );
   process.exit(1);
 }
 
@@ -87,7 +89,8 @@ const USER_AGENT = 'UFlow-Import/1.0 (+https://ummahflow.com/import)';
 // muslimbusiness.de currently renders the directory client-side. The data backing the UI
 // is loaded from the site's own Supabase project using an embedded anon key.
 // We fall back to this acquisition path when the server-delivered HTML contains 0 cards.
-const SOURCE_CLIENT_DATA_PAGE_CHUNK_REGEX = /\/_next\/static\/chunks\/app\/datenbank\/page-[^"'\s]+\.js/g;
+const SOURCE_CLIENT_DATA_PAGE_CHUNK_REGEX =
+  /\/_next\/static\/chunks\/app\/datenbank\/page-[^"'\s]+\.js/g;
 const SOURCE_SUPABASE_PROJECT_REGEX = /https:\/\/([a-z0-9]+)\.supabase\.co\b/;
 const SOURCE_SUPABASE_ANON_JWT_REGEX = /eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+/;
 
@@ -157,148 +160,148 @@ interface UnmappedEntry {
  */
 const BRANCHEN_CATEGORY_MAP: Record<string, string> = {
   // ─── Essen & Trinken ───────────────────────────────────────────
-  'gastronomie': 'Essen & Trinken',
-  'lebensmittel': 'Essen & Trinken',
-  'lieferservice': 'Essen & Trinken',
-  'getränkefachhandel': 'Essen & Trinken',
-  'nahrungsergänzungsmittel': 'Essen & Trinken',
+  gastronomie: 'Essen & Trinken',
+  lebensmittel: 'Essen & Trinken',
+  lieferservice: 'Essen & Trinken',
+  getränkefachhandel: 'Essen & Trinken',
+  nahrungsergänzungsmittel: 'Essen & Trinken',
 
   // ─── Bildung & Lernen ──────────────────────────────────────────
-  'bildung': 'Bildung & Lernen',
-  'nachhilfeschule': 'Bildung & Lernen',
-  'pädagogik': 'Bildung & Lernen',
-  'schulbegleitung': 'Bildung & Lernen',
-  'sprachdienstleistungen': 'Bildung & Lernen',
-  'fahrschule': 'Bildung & Lernen',
+  bildung: 'Bildung & Lernen',
+  nachhilfeschule: 'Bildung & Lernen',
+  pädagogik: 'Bildung & Lernen',
+  schulbegleitung: 'Bildung & Lernen',
+  sprachdienstleistungen: 'Bildung & Lernen',
+  fahrschule: 'Bildung & Lernen',
 
   // ─── Gesundheit & Sport ────────────────────────────────────────
   'gesundheits- und sozialwesen': 'Gesundheit & Sport',
-  'sport': 'Gesundheit & Sport',
-  'fitness': 'Gesundheit & Sport',
-  'ems': 'Gesundheit & Sport',
-  'personaltraining': 'Gesundheit & Sport',
-  'physiotherapie': 'Gesundheit & Sport',
-  'psychologie': 'Gesundheit & Sport',
-  'sterbebegleitung': 'Gesundheit & Sport',
-  'wellness': 'Gesundheit & Sport',
-  'stillberatung': 'Gesundheit & Sport',
-  'familienbetreuung': 'Gesundheit & Sport',
+  sport: 'Gesundheit & Sport',
+  fitness: 'Gesundheit & Sport',
+  ems: 'Gesundheit & Sport',
+  personaltraining: 'Gesundheit & Sport',
+  physiotherapie: 'Gesundheit & Sport',
+  psychologie: 'Gesundheit & Sport',
+  sterbebegleitung: 'Gesundheit & Sport',
+  wellness: 'Gesundheit & Sport',
+  stillberatung: 'Gesundheit & Sport',
+  familienbetreuung: 'Gesundheit & Sport',
 
   // ─── Handwerk & Reparatur ──────────────────────────────────────
-  'bauwesen': 'Handwerk & Reparatur',
-  'elektrotechnik': 'Handwerk & Reparatur',
-  'handwerk': 'Handwerk & Reparatur',
-  'sanierung': 'Handwerk & Reparatur',
-  'renovierung': 'Handwerk & Reparatur',
+  bauwesen: 'Handwerk & Reparatur',
+  elektrotechnik: 'Handwerk & Reparatur',
+  handwerk: 'Handwerk & Reparatur',
+  sanierung: 'Handwerk & Reparatur',
+  renovierung: 'Handwerk & Reparatur',
   'reparatur- und technikservice': 'Handwerk & Reparatur',
-  'ingenieurdienstleistungen': 'Handwerk & Reparatur',
-  'bauingenieurwesen': 'Handwerk & Reparatur',
-  'bauplanung': 'Handwerk & Reparatur',
-  'bauträger': 'Handwerk & Reparatur',
-  'bauphysik': 'Handwerk & Reparatur',
-  'haustechnik': 'Handwerk & Reparatur',
-  'gebäudetechnik': 'Handwerk & Reparatur',
-  'photovoltaik': 'Handwerk & Reparatur',
-  'gartenbau': 'Handwerk & Reparatur',
-  'grünanlagenpflege': 'Handwerk & Reparatur',
-  'lackierer': 'Handwerk & Reparatur',
-  'statik': 'Handwerk & Reparatur',
+  ingenieurdienstleistungen: 'Handwerk & Reparatur',
+  bauingenieurwesen: 'Handwerk & Reparatur',
+  bauplanung: 'Handwerk & Reparatur',
+  bauträger: 'Handwerk & Reparatur',
+  bauphysik: 'Handwerk & Reparatur',
+  haustechnik: 'Handwerk & Reparatur',
+  gebäudetechnik: 'Handwerk & Reparatur',
+  photovoltaik: 'Handwerk & Reparatur',
+  gartenbau: 'Handwerk & Reparatur',
+  grünanlagenpflege: 'Handwerk & Reparatur',
+  lackierer: 'Handwerk & Reparatur',
+  statik: 'Handwerk & Reparatur',
 
   // ─── Kleidung & Mode ──────────────────────────────────────────
-  'textil': 'Kleidung & Mode',
-  'mode': 'Kleidung & Mode',
-  'bekleidung': 'Kleidung & Mode',
-  'massanfertigung': 'Kleidung & Mode',
-  'schmuck': 'Kleidung & Mode',
+  textil: 'Kleidung & Mode',
+  mode: 'Kleidung & Mode',
+  bekleidung: 'Kleidung & Mode',
+  massanfertigung: 'Kleidung & Mode',
+  schmuck: 'Kleidung & Mode',
 
   // ─── Dienstleistungen ─────────────────────────────────────────
-  'it': 'Dienstleistungen',
-  'marketing': 'Dienstleistungen',
-  'beratung': 'Dienstleistungen',
-  'coaching': 'Dienstleistungen',
-  'unternehmensberatung': 'Dienstleistungen',
-  'webdesign': 'Dienstleistungen',
-  'reinigung': 'Dienstleistungen',
-  'gebäudereinigung': 'Dienstleistungen',
-  'industriereinigung': 'Dienstleistungen',
-  'sicherheitsdienst': 'Dienstleistungen',
-  'logistik': 'Dienstleistungen',
-  'umzug': 'Dienstleistungen',
-  'buchhaltung': 'Dienstleistungen',
-  'steuerberatung': 'Dienstleistungen',
-  'rechtswesen': 'Dienstleistungen',
-  'rechtsdienstleistungen': 'Dienstleistungen',
-  'personalvermittlung': 'Dienstleistungen',
-  'personalberatung': 'Dienstleistungen',
-  'personalmarketing': 'Dienstleistungen',
-  'recruiting': 'Dienstleistungen',
-  'dienstleistung': 'Dienstleistungen',
-  'dienstleistungen': 'Dienstleistungen',
-  'eventmanagement': 'Dienstleistungen',
-  'fotografie': 'Dienstleistungen',
-  'videografie': 'Dienstleistungen',
-  'grafikdesign': 'Dienstleistungen',
-  'design': 'Dienstleistungen',
-  'mediendesign': 'Dienstleistungen',
-  'werbetechnik': 'Dienstleistungen',
-  'werbeagentur': 'Dienstleistungen',
-  'digitalagentur': 'Dienstleistungen',
+  it: 'Dienstleistungen',
+  marketing: 'Dienstleistungen',
+  beratung: 'Dienstleistungen',
+  coaching: 'Dienstleistungen',
+  unternehmensberatung: 'Dienstleistungen',
+  webdesign: 'Dienstleistungen',
+  reinigung: 'Dienstleistungen',
+  gebäudereinigung: 'Dienstleistungen',
+  industriereinigung: 'Dienstleistungen',
+  sicherheitsdienst: 'Dienstleistungen',
+  logistik: 'Dienstleistungen',
+  umzug: 'Dienstleistungen',
+  buchhaltung: 'Dienstleistungen',
+  steuerberatung: 'Dienstleistungen',
+  rechtswesen: 'Dienstleistungen',
+  rechtsdienstleistungen: 'Dienstleistungen',
+  personalvermittlung: 'Dienstleistungen',
+  personalberatung: 'Dienstleistungen',
+  personalmarketing: 'Dienstleistungen',
+  recruiting: 'Dienstleistungen',
+  dienstleistung: 'Dienstleistungen',
+  dienstleistungen: 'Dienstleistungen',
+  eventmanagement: 'Dienstleistungen',
+  fotografie: 'Dienstleistungen',
+  videografie: 'Dienstleistungen',
+  grafikdesign: 'Dienstleistungen',
+  design: 'Dienstleistungen',
+  mediendesign: 'Dienstleistungen',
+  werbetechnik: 'Dienstleistungen',
+  werbeagentur: 'Dienstleistungen',
+  digitalagentur: 'Dienstleistungen',
   'social media': 'Dienstleistungen',
   'content-creator': 'Dienstleistungen',
   'content management': 'Dienstleistungen',
-  'softwareentwicklung': 'Dienstleistungen',
-  'software': 'Dienstleistungen',
-  'automatisierung': 'Dienstleistungen',
-  'ki': 'Dienstleistungen',
+  softwareentwicklung: 'Dienstleistungen',
+  software: 'Dienstleistungen',
+  automatisierung: 'Dienstleistungen',
+  ki: 'Dienstleistungen',
   'künstliche intelligenz': 'Dienstleistungen',
-  'digitalisierung': 'Dienstleistungen',
-  'technologieunternehmen': 'Dienstleistungen',
-  'datenschutz': 'Dienstleistungen',
-  'telekommunikation': 'Dienstleistungen',
-  'mobilfunk': 'Dienstleistungen',
-  'suchmaschienenoptimierung': 'Dienstleistungen',
-  'sales': 'Dienstleistungen',
-  'vertrieb': 'Dienstleistungen',
-  'immobilien': 'Dienstleistungen',
-  'energie': 'Dienstleistungen',
-  'energielösungen': 'Dienstleistungen',
-  'verwaltung': 'Dienstleistungen',
-  'kundenservice': 'Dienstleistungen',
-  'büroservice': 'Dienstleistungen',
-  'übersetzung': 'Dienstleistungen',
-  'dokumentenorganisation': 'Dienstleistungen',
-  'kommunikation': 'Dienstleistungen',
-  'konfliktlösung': 'Dienstleistungen',
-  'architektur': 'Dienstleistungen',
+  digitalisierung: 'Dienstleistungen',
+  technologieunternehmen: 'Dienstleistungen',
+  datenschutz: 'Dienstleistungen',
+  telekommunikation: 'Dienstleistungen',
+  mobilfunk: 'Dienstleistungen',
+  suchmaschienenoptimierung: 'Dienstleistungen',
+  sales: 'Dienstleistungen',
+  vertrieb: 'Dienstleistungen',
+  immobilien: 'Dienstleistungen',
+  energie: 'Dienstleistungen',
+  energielösungen: 'Dienstleistungen',
+  verwaltung: 'Dienstleistungen',
+  kundenservice: 'Dienstleistungen',
+  büroservice: 'Dienstleistungen',
+  übersetzung: 'Dienstleistungen',
+  dokumentenorganisation: 'Dienstleistungen',
+  kommunikation: 'Dienstleistungen',
+  konfliktlösung: 'Dienstleistungen',
+  architektur: 'Dienstleistungen',
   'facility services': 'Dienstleistungen',
-  'redaktion': 'Dienstleistungen',
-  'filmproduktion': 'Dienstleistungen',
-  'medien': 'Dienstleistungen',
-  'tourismus': 'Dienstleistungen',
-  'reisen': 'Dienstleistungen',
-  'kfz': 'Dienstleistungen',
-  'autohandel': 'Dienstleistungen',
-  'parfümerie': 'Dienstleistungen',
-  'kosmetik': 'Dienstleistungen',
-  'ticketing': 'Dienstleistungen',
+  redaktion: 'Dienstleistungen',
+  filmproduktion: 'Dienstleistungen',
+  medien: 'Dienstleistungen',
+  tourismus: 'Dienstleistungen',
+  reisen: 'Dienstleistungen',
+  kfz: 'Dienstleistungen',
+  autohandel: 'Dienstleistungen',
+  parfümerie: 'Dienstleistungen',
+  kosmetik: 'Dienstleistungen',
+  ticketing: 'Dienstleistungen',
   'gemeinnützige organisation': 'Dienstleistungen',
   'erste hilfe schulung': 'Dienstleistungen',
-  'gutachten': 'Dienstleistungen',
-  'versicherung': 'Dienstleistungen',
-  'produktivität': 'Dienstleistungen',
+  gutachten: 'Dienstleistungen',
+  versicherung: 'Dienstleistungen',
+  produktivität: 'Dienstleistungen',
   'business services': 'Dienstleistungen',
-  'vermittlung': 'Dienstleistungen',
+  vermittlung: 'Dienstleistungen',
   'wohnungs- und gebäudeverwaltung': 'Dienstleistungen',
 
   // ─── Sonstiges (catch-all for less common Branchen) ────────────
   'e-commerce': 'Sonstiges',
-  'einzelhandel': 'Sonstiges',
-  'großhandel': 'Sonstiges',
-  'buchhandel': 'Sonstiges',
-  'spielwaren': 'Sonstiges',
+  einzelhandel: 'Sonstiges',
+  großhandel: 'Sonstiges',
+  buchhandel: 'Sonstiges',
+  spielwaren: 'Sonstiges',
   'lern- und familienprodukte': 'Sonstiges',
-  'kunst': 'Sonstiges',
-  'graffiti': 'Sonstiges',
+  kunst: 'Sonstiges',
+  graffiti: 'Sonstiges',
 };
 
 // ─── Supabase client ──────────────────────────────────────────────────────────
@@ -344,10 +347,7 @@ async function ensureImportBotUser(): Promise<boolean> {
 // ─── Schema verification ───────────────────────────────────────────────────────
 
 async function checkProviderDescriptionExists(): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('providers')
-    .select('provider_description')
-    .limit(1);
+  const { data, error } = await supabase.from('providers').select('provider_description').limit(1);
 
   if (error?.message?.includes('column') && error.message.includes('provider_description')) {
     return false;
@@ -379,15 +379,13 @@ async function loadCategories(): Promise<Category[]> {
  */
 function resolveCategoryId(
   branchen: string[],
-  categories: Category[]
+  categories: Category[],
 ): { categoryId: string | null; matched: string | null } {
   for (const branche of branchen) {
     const targetName = BRANCHEN_CATEGORY_MAP[branche.toLowerCase().trim()];
     if (!targetName) continue;
 
-    const match = categories.find(
-      (c) => c.name_de.toLowerCase() === targetName.toLowerCase()
-    );
+    const match = categories.find((c) => c.name_de.toLowerCase() === targetName.toLowerCase());
     if (match) {
       return { categoryId: match.category_id, matched: targetName };
     }
@@ -439,7 +437,9 @@ async function fetchJson<T>(url: string, headers?: Record<string, string>): Prom
   return response.json() as Promise<T>;
 }
 
-async function discoverSourceSupabaseConfigFromHtml(html: string): Promise<SourceSupabaseConfig | null> {
+async function discoverSourceSupabaseConfigFromHtml(
+  html: string,
+): Promise<SourceSupabaseConfig | null> {
   const chunkMatches = html.match(SOURCE_CLIENT_DATA_PAGE_CHUNK_REGEX) ?? [];
   if (chunkMatches.length === 0) return null;
 
@@ -463,7 +463,7 @@ async function discoverSourceSupabaseConfigFromHtml(html: string): Promise<Sourc
 async function fetchAllFromSupabaseRest<T>(
   config: SourceSupabaseConfig,
   table: string,
-  query: string
+  query: string,
 ): Promise<T[]> {
   // Supabase REST pagination uses Range headers. We'll page in chunks to avoid
   // relying on unbounded responses.
@@ -500,29 +500,31 @@ async function fetchCardsFromSourceClientDataset(html: string) {
   const businesses = await fetchAllFromSupabaseRest<MuslimBusinessSourceBusiness>(
     config,
     '7tv9s_business',
-    'select=*&genehmigt=eq.true'
+    'select=*&genehmigt=eq.true',
   );
   if (businesses.length === 0) return [];
 
-  const standortRelations = await fetchAllFromSupabaseRest<MuslimBusinessSourceBusinessStandortRelation>(
-    config,
-    '7tv9s_business_standort_relation',
-    'select=id_business,id_standort'
-  );
-  const brancheRelations = await fetchAllFromSupabaseRest<MuslimBusinessSourceBusinessBrancheRelation>(
-    config,
-    'business_branche_relation',
-    'select=id_business,id_branche'
-  );
+  const standortRelations =
+    await fetchAllFromSupabaseRest<MuslimBusinessSourceBusinessStandortRelation>(
+      config,
+      '7tv9s_business_standort_relation',
+      'select=id_business,id_standort',
+    );
+  const brancheRelations =
+    await fetchAllFromSupabaseRest<MuslimBusinessSourceBusinessBrancheRelation>(
+      config,
+      'business_branche_relation',
+      'select=id_business,id_branche',
+    );
   const standorte = await fetchAllFromSupabaseRest<MuslimBusinessSourceStandort>(
     config,
     '7tv9s_standort',
-    'select=id,standort'
+    'select=id,standort',
   );
   const branchen = await fetchAllFromSupabaseRest<MuslimBusinessSourceBranche>(
     config,
     '7tv9s_branche',
-    'select=id,branche'
+    'select=id,branche',
   );
 
   const cards = buildCardsFromClientDataset({
@@ -555,7 +557,7 @@ interface TransformResult {
 function transformCardToProvider(
   card: ReturnType<typeof extractProviderCardsFromHtml>[0],
   categories: Category[],
-  _includeDescription: boolean
+  _includeDescription: boolean,
 ): TransformResult {
   const providerName = card.name.trim();
   if (!providerName) {
@@ -610,9 +612,7 @@ function transformCardToProvider(
     needs_ids: [],
   };
 
-  const unmappedBranchen = !categoryId && branchen.length > 0
-    ? branchen
-    : undefined;
+  const unmappedBranchen = !categoryId && branchen.length > 0 ? branchen : undefined;
 
   return { record, unmappedBranchen };
 }
@@ -662,7 +662,7 @@ function printDryRunReport(
   stats: ImportStats,
   unmapped: UnmappedEntry[],
   samples: ProviderUpsert[],
-  allLocations: string[]
+  allLocations: string[],
 ) {
   console.log('\n════════════════════════════════════════════════════════');
   console.log('  DRY-RUN REPORT — no data was written');
@@ -683,9 +683,7 @@ function printDryRunReport(
         brancheCounts.set(b, (brancheCounts.get(b) ?? 0) + 1);
       }
     }
-    const sorted = [...brancheCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 15);
+    const sorted = [...brancheCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
     for (const [branche, count] of sorted) {
       console.log(`    "${branche}" (${count} entries)`);
     }
@@ -697,9 +695,7 @@ function printDryRunReport(
     for (const loc of allLocations) {
       locationCounts.set(loc, (locationCounts.get(loc) ?? 0) + 1);
     }
-    const topLocations = [...locationCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 20);
+    const topLocations = [...locationCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20);
     console.log('\n  Top 20 Standorte:');
     for (const [loc, count] of topLocations) {
       console.log(`    "${loc}" (${count})`);
@@ -778,7 +774,7 @@ async function main() {
   console.log('▶ Checking provider_description column availability...');
   const hasDescriptionColumn = await checkProviderDescriptionExists();
   console.log(
-    `  ${hasDescriptionColumn ? '✓ Column available' : '⚠ Column absent — description mapping skipped'}`
+    `  ${hasDescriptionColumn ? '✓ Column available' : '⚠ Column absent — description mapping skipped'}`,
   );
 
   // ─ Fetch the directory page (single page, all cards)
@@ -796,7 +792,9 @@ async function main() {
   console.log(`  ✓ Found ${cards.length} cards`);
 
   if (cards.length === 0) {
-    console.warn('  ⚠ No provider cards found in server HTML. Trying client-dataset acquisition...');
+    console.warn(
+      '  ⚠ No provider cards found in server HTML. Trying client-dataset acquisition...',
+    );
     cards = await fetchCardsFromSourceClientDataset(html);
     console.log(`  ✓ Found ${cards.length} cards via client dataset`);
 
@@ -845,7 +843,7 @@ async function main() {
     const { record, error, unmappedBranchen } = transformCardToProvider(
       card,
       categories,
-      hasDescriptionColumn
+      hasDescriptionColumn,
     );
 
     if (error || !record) {
@@ -905,21 +903,17 @@ async function main() {
   for (let offset = 0; offset < toInsert.length; offset += BATCH_SIZE) {
     const batch = toInsert.slice(offset, offset + BATCH_SIZE);
 
-    const { error } = await supabase
-      .from('providers')
-      .insert(batch);
+    const { error } = await supabase.from('providers').insert(batch);
 
     if (error) {
-      console.error(
-        `  ❌ Batch insert failed (offset ${offset}): ${error.message}`
-      );
+      console.error(`  ❌ Batch insert failed (offset ${offset}): ${error.message}`);
       stats.failed += batch.length;
       continue;
     }
 
     stats.inserted = (stats.inserted ?? 0) + batch.length;
     console.log(
-      `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
+      `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`,
     );
   }
 

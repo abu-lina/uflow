@@ -18,10 +18,7 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
   );
 }
 
-export function useFocusTrap(
-  containerRef: RefObject<HTMLElement | null>,
-  isOpen: boolean,
-): void {
+export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, isOpen: boolean): void {
   useEffect(() => {
     if (!isOpen) return;
 

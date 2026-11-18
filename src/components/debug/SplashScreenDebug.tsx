@@ -10,11 +10,11 @@ import { useSplash } from '@/providers/splash-provider';
  */
 export function SplashScreenDebug() {
   const { setSplashVisible } = useSplash();
-  
+
   // Check feature flag and development mode
   const isDebugEnabled = getFeatureFlag('splashScreenDebug');
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   if (!isDebugEnabled || !isDevelopment) {
     return null;
   }
@@ -22,7 +22,7 @@ export function SplashScreenDebug() {
   const handleResetSplash = () => {
     // Clear splash screen state
     resetSplashScreen();
-    
+
     // Force a small delay to ensure localStorage is updated
     setTimeout(() => {
       setSplashVisible(true);
@@ -30,11 +30,8 @@ export function SplashScreenDebug() {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 bg-red-500 text-white p-2 rounded shadow-lg">
-      <button
-        className="text-xs font-mono"
-        onClick={handleResetSplash}
-      >
+    <div className="fixed right-4 top-4 z-50 rounded bg-red-500 p-2 text-white shadow-lg">
+      <button className="font-mono text-xs" onClick={handleResetSplash}>
         Reset Splash Screen
       </button>
     </div>

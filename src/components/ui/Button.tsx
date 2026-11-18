@@ -47,8 +47,7 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   icon?: React.ReactNode | string; // Support both ReactNode and Iconify string (leading icon)
   trailingIcon?: React.ReactNode | string; // Trailing icon (after text)
   loading?: boolean;
@@ -56,39 +55,52 @@ export interface ButtonProps
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, icon, trailingIcon, loading = false, loadingText, children, disabled, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      fullWidth,
+      icon,
+      trailingIcon,
+      loading = false,
+      loadingText,
+      children,
+      disabled,
+      ...props
+    },
+    ref,
+  ) => {
     const isDisabled = disabled || loading;
-    const hasText = loading ? (loadingText || children) : children;
+    const hasText = loading ? loadingText || children : children;
     const isIconOnly = (icon || trailingIcon) && !hasText;
-    
+
     // Render icon - support both ReactNode and Iconify string
     const renderIcon = (iconProp?: React.ReactNode | string) => {
       if (!iconProp || loading) return null;
-      
+
       if (typeof iconProp === 'string') {
         return <Icon aria-hidden="true" className="h-6 w-6" icon={iconProp} />;
       }
-      
+
       // For React components, don't constrain the size - let the component control its own size
       return iconProp;
     };
-    
+
     return (
       <button
         ref={ref}
         className={cn(
-          buttonVariants({ variant, size, fullWidth }), 
+          buttonVariants({ variant, size, fullWidth }),
           isIconOnly ? 'gap-0' : 'gap-2',
-          className
+          className,
         )}
         disabled={isDisabled}
         {...props}
       >
         {renderIcon(icon)}
         {(hasText || loading) && (
-          <span className="text-center">
-            {loading ? (loadingText || children) : children}
-          </span>
+          <span className="text-center">{loading ? loadingText || children : children}</span>
         )}
         {renderIcon(trailingIcon)}
       </button>

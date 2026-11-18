@@ -48,7 +48,9 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
           setLinks(parsed);
           return;
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     async function fetchLinks() {
@@ -60,7 +62,9 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
           setLinks(data);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     fetchLinks();
   }, [id, STORAGE_KEY]);
@@ -71,7 +75,7 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
   }, [links, STORAGE_KEY, router]);
 
   const updateLink = (index: number, field: string, value: unknown) => {
-    setLinks(prev => {
+    setLinks((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
       return next;
@@ -79,12 +83,12 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
   };
 
   const removeLink = (index: number) => {
-    setLinks(prev => prev.filter((_, i) => i !== index));
+    setLinks((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addLink = () => {
     if (!newLink.platform_url.trim()) return;
-    setLinks(prev => [...prev, { ...newLink }]);
+    setLinks((prev) => [...prev, { ...newLink }]);
     setNewLink({ ...DEFAULT_LINK });
     setShowAddForm(false);
   };
@@ -101,23 +105,31 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           {links.map((link, i) => (
-            <div key={i} className="flex items-center gap-3 rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
-              <Icon className="h-6 w-6 text-[#999999]" icon={PLATFORM_ICONS[link.platform] ?? 'material-symbols:link'} />
-              <div className="flex flex-1 flex-col gap-1 min-w-0">
+            <div
+              key={i}
+              className="flex items-center gap-3 rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+            >
+              <Icon
+                className="h-6 w-6 text-[#999999]"
+                icon={PLATFORM_ICONS[link.platform] ?? 'material-symbols:link'}
+              />
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <select
-                  className="text-xs font-medium text-[#999999] outline-none bg-transparent"
+                  className="bg-transparent text-xs font-medium text-[#999999] outline-none"
                   value={link.platform}
                   onChange={(e) => updateLink(i, 'platform', e.target.value)}
                 >
-                  {PLATFORMS.map(p => (
-                    <option key={p} value={p}>{PLATFORM_LABELS[p]}</option>
+                  {PLATFORMS.map((p) => (
+                    <option key={p} value={p}>
+                      {PLATFORM_LABELS[p]}
+                    </option>
                   ))}
                 </select>
 
                 {/* Custom name input for website links */}
                 {link.platform === 'website' && (
                   <input
-                    className="text-[13px] font-medium text-[#272727] outline-none bg-transparent"
+                    className="bg-transparent text-[13px] font-medium text-[#272727] outline-none"
                     placeholder="e.g. Online-Shop, Bestellseite"
                     type="text"
                     value={link.platform_slug ?? ''}
@@ -126,7 +138,7 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
                 )}
 
                 <input
-                  className="text-[13px] font-medium text-[#272727] outline-none bg-transparent truncate"
+                  className="truncate bg-transparent text-[13px] font-medium text-[#272727] outline-none"
                   placeholder="https://..."
                   type="url"
                   value={link.platform_url}
@@ -142,7 +154,7 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
                 Active
               </label>
               <button
-                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-50"
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-red-50"
                 type="button"
                 onClick={() => removeLink(i)}
               >
@@ -153,34 +165,41 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
         </div>
 
         {showAddForm ? (
-          <div className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm gap-2">
+          <div className="flex flex-col gap-2 rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
             <select
-              className="text-xs font-medium text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+              className="rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs font-medium text-[#999999] outline-none"
               value={newLink.platform}
-              onChange={(e) => setNewLink(prev => ({ ...prev, platform: e.target.value as AdminProviderDeliveryLink['platform'] }))}
+              onChange={(e) =>
+                setNewLink((prev) => ({
+                  ...prev,
+                  platform: e.target.value as AdminProviderDeliveryLink['platform'],
+                }))
+              }
             >
-              {PLATFORMS.map(p => (
-                <option key={p} value={p}>{PLATFORM_LABELS[p]}</option>
+              {PLATFORMS.map((p) => (
+                <option key={p} value={p}>
+                  {PLATFORM_LABELS[p]}
+                </option>
               ))}
             </select>
 
             {/* Custom name input for new website links */}
             {newLink.platform === 'website' && (
               <input
-                className="text-[13px] font-medium text-[#272727] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                className="rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-[13px] font-medium text-[#272727] outline-none"
                 placeholder="Name, e.g. Online-Shop"
                 type="text"
                 value={newLink.platform_slug ?? ''}
-                onChange={(e) => setNewLink(prev => ({ ...prev, platform_slug: e.target.value }))}
+                onChange={(e) => setNewLink((prev) => ({ ...prev, platform_slug: e.target.value }))}
               />
             )}
 
             <input
-              className="text-[13px] font-medium text-[#272727] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+              className="rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-[13px] font-medium text-[#272727] outline-none"
               placeholder="URL *"
               type="url"
               value={newLink.platform_url}
-              onChange={(e) => setNewLink(prev => ({ ...prev, platform_url: e.target.value }))}
+              onChange={(e) => setNewLink((prev) => ({ ...prev, platform_url: e.target.value }))}
             />
             <div className="flex gap-2">
               <button
@@ -194,7 +213,10 @@ export default function EditDeliveryPage({ params }: { params: Promise<{ id: str
               <button
                 className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-[#999999] hover:bg-gray-50"
                 type="button"
-                onClick={() => { setShowAddForm(false); setNewLink({ ...DEFAULT_LINK }); }}
+                onClick={() => {
+                  setShowAddForm(false);
+                  setNewLink({ ...DEFAULT_LINK });
+                }}
               >
                 Cancel
               </button>

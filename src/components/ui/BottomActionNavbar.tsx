@@ -6,7 +6,7 @@ import { IconButton } from './IconButton';
 
 /**
  * Bottom action navbar component for action buttons
- * 
+ *
  * Features:
  * - Fixed position at bottom with proper safe area handling
  * - Support for single primary button or primary + secondary button layout
@@ -44,8 +44,10 @@ export function BottomActionNavbar({
   height = 'h-12',
 }: BottomActionNavbarProps) {
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 z-50 w-full bg-white/10 backdrop-blur-3xl border-t border-white/20 ${className}`}>
-      <div className={`flex ${height} w-full max-w-[400px] mx-auto items-center px-6 pb-safe`}>
+    <nav
+      className={`fixed bottom-0 left-0 right-0 z-50 w-full border-t border-white/20 bg-white/10 backdrop-blur-3xl ${className}`}
+    >
+      <div className={`flex ${height} pb-safe mx-auto w-full max-w-[400px] items-center px-6`}>
         {secondaryButton ? (
           /* Two Button Layout */
           <div className="flex w-full gap-3.5">

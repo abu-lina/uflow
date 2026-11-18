@@ -57,7 +57,7 @@ describe('WoCityResults (Plan 102)', () => {
         userEmail={null}
         onClearSelection={vi.fn()}
         onSelect={vi.fn()}
-      />, 
+      />,
     );
 
     expect(screen.getByText('Suche laeuft...')).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe('WoCityResults (Plan 102)', () => {
         userEmail={null}
         onClearSelection={vi.fn()}
         onSelect={onSelect}
-      />, 
+      />,
     );
 
     expect(screen.getByText('ZULETZT GESUCHT')).toBeInTheDocument();
@@ -171,7 +171,7 @@ describe('WoCityResults (Plan 102)', () => {
         userEmail={null}
         onClearSelection={onClearSelection}
         onSelect={vi.fn()}
-      />, 
+      />,
     );
 
     expect(screen.getByText('AUSWAHL')).toBeInTheDocument();
@@ -195,7 +195,7 @@ describe('WoCityResults (Plan 102)', () => {
         userEmail="user@example.com"
         onClearSelection={vi.fn()}
         onSelect={vi.fn()}
-      />, 
+      />,
     );
 
     expect(screen.getByText('Empty city: Mannheim')).toBeInTheDocument();

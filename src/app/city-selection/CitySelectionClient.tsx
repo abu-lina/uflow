@@ -98,14 +98,16 @@ export default function CitySelectionClient({ initialCities }: { initialCities?:
     const targetCities = ['Berlin', 'Frankfurt', 'Stuttgart'];
     return targetCities.map((cityName) => {
       const found = allCitiesData.find((city) => city.city_name === cityName);
-      return found || {
-        id: `placeholder-${cityName.toLowerCase()}`,
-        city_name: cityName,
-        country: 'Germany',
-        is_unlocked: false,
-        interest_count: 0,
-        provider_count: 0,
-      };
+      return (
+        found || {
+          id: `placeholder-${cityName.toLowerCase()}`,
+          city_name: cityName,
+          country: 'Germany',
+          is_unlocked: false,
+          interest_count: 0,
+          provider_count: 0,
+        }
+      );
     });
   }, [allCitiesData]);
 

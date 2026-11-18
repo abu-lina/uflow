@@ -5,6 +5,7 @@
 ### 1. Get Cloudflare API Token
 
 **Recommended: API Token**
+
 1. Go to: https://dash.cloudflare.com/profile/api-tokens
 2. Click "Create Token"
 3. Use "Edit zone DNS" template or create custom token with:
@@ -38,6 +39,7 @@ Then run the script.
 ## What It Does
 
 The script will:
+
 1. Look up your Cloudflare zone ID automatically
 2. Ask what to purge:
    - **Option 1**: Everything (all cached content)
@@ -85,16 +87,19 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache"
 ## Troubleshooting
 
 ### "Could not find zone ID"
+
 - Check that your API token has access to `ummahflow.com`
 - Verify the domain is in your Cloudflare account
 - Try using Global API Key instead
 
 ### "Failed to purge cache"
+
 - Check API token permissions (needs Cache Purge permission)
 - Verify zone ID is correct
 - Check Cloudflare API status: https://www.cloudflarestatus.com/
 
 ### Script hangs
+
 - Check internet connection
 - Verify Cloudflare API is accessible
 - Try manual purge via dashboard
@@ -109,12 +114,3 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/purge_cache"
 ## Security Note
 
 Never commit your Cloudflare API token to git. Always use environment variables or a secure secrets manager.
-
-
-
-
-
-
-
-
-

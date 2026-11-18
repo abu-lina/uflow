@@ -28,14 +28,14 @@ export default function CommunityServicesLoading() {
             <div className="flex items-center justify-center bg-gray-100 p-6">
               <div className="h-20 w-20 rounded-full bg-gray-200"></div>
             </div>
-            
+
             {/* Content skeleton */}
             <div className="p-4">
               <div className="mb-3 h-6 w-3/4 rounded bg-gray-200"></div>
               <div className="mb-2 h-4 w-full rounded bg-gray-200"></div>
               <div className="mb-2 h-4 w-full rounded bg-gray-200"></div>
               <div className="mb-4 h-4 w-1/2 rounded bg-gray-200"></div>
-              
+
               {/* Stats skeleton */}
               <div className="flex items-center gap-4">
                 <div className="h-4 w-16 rounded bg-gray-200"></div>

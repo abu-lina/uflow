@@ -14,11 +14,11 @@ interface ProviderSelectionModalProps {
   onComplete: (token?: string) => void;
 }
 
-export function ProviderSelectionModal({ 
-  isOpen, 
+export function ProviderSelectionModal({
+  isOpen,
   email,
-  onClose, 
-  onComplete 
+  onClose,
+  onComplete,
 }: ProviderSelectionModalProps) {
   const { t } = useLanguage();
   const modalRef = useRef<HTMLDivElement>(null);
@@ -26,64 +26,66 @@ export function ProviderSelectionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submitWaitlist = useCallback(async (isProvider: boolean | null) => {
-    setIsSubmitting(true);
-    setError(null);
+  const submitWaitlist = useCallback(
+    async (isProvider: boolean | null) => {
+      setIsSubmitting(true);
+      setError(null);
 
-    try {
-      const response = await fetch('/api/waitlist/join', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.toLowerCase().trim(),
-          isProvider,
-        }),
-      });
+      try {
+        const response = await fetch('/api/waitlist/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email.toLowerCase().trim(),
+            isProvider,
+          }),
+        });
 
-      const data: WaitlistResponse = await response.json();
+        const data: WaitlistResponse = await response.json();
 
-      if (!response.ok) {
-        // Handle specific error cases
-        if (response.status === 409) {
-          setError(data.error?.message || t('waitlist.errorAlreadyOnWaitlist'));
-        } else if (response.status === 429) {
-          setError(t('waitlist.errorTooManyRequests'));
-        } else {
-          setError(data.error?.message || t('waitlist.errorGeneric'));
+        if (!response.ok) {
+          // Handle specific error cases
+          if (response.status === 409) {
+            setError(data.error?.message || t('waitlist.errorAlreadyOnWaitlist'));
+          } else if (response.status === 429) {
+            setError(t('waitlist.errorTooManyRequests'));
+          } else {
+            setError(data.error?.message || t('waitlist.errorGeneric'));
+          }
+          setIsSubmitting(false);
+          return;
         }
-        setIsSubmitting(false);
-        return;
-      }
 
-      // Success - persist state IMMEDIATELY, then close modal
-      // Extract waitlist token from response
-      const waitlistToken = data.data?.waitlistToken;
-      
-      // CRITICAL: Write to localStorage BEFORE closing modal
-      // This ensures state persists when user installs PWA
-      setOnboardingState({
-        email,
-        waitlistSubmitted: true,
-        earlyAccessUnlocked: true,
-        submittedAt: new Date().toISOString(),
-        waitlistToken,
-      });
-      
-      onClose();
-      onComplete(waitlistToken);
-      
-    } catch (err) {
-      console.error('[Waitlist] Submit error:', err);
-      setError(t('waitlist.errorNetworkError'));
-      setIsSubmitting(false);
-    }
-  }, [email, onClose, onComplete, t]);
+        // Success - persist state IMMEDIATELY, then close modal
+        // Extract waitlist token from response
+        const waitlistToken = data.data?.waitlistToken;
+
+        // CRITICAL: Write to localStorage BEFORE closing modal
+        // This ensures state persists when user installs PWA
+        setOnboardingState({
+          email,
+          waitlistSubmitted: true,
+          earlyAccessUnlocked: true,
+          submittedAt: new Date().toISOString(),
+          waitlistToken,
+        });
+
+        onClose();
+        onComplete(waitlistToken);
+      } catch (err) {
+        console.error('[Waitlist] Submit error:', err);
+        setError(t('waitlist.errorNetworkError'));
+        setIsSubmitting(false);
+      }
+    },
+    [email, onClose, onComplete, t],
+  );
 
   const handleClose = useCallback(() => {
     if (isSubmitting) return;
-    
+
     setIsClosing(true);
     setTimeout(() => {
       setIsClosing(false);
@@ -108,10 +110,12 @@ export function ProviderSelectionModal({
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
-      
+
       // Focus first button
       setTimeout(() => {
-        const firstButton = modalRef.current?.querySelector('button:not([aria-label="Close"])') as HTMLButtonElement;
+        const firstButton = modalRef.current?.querySelector(
+          'button:not([aria-label="Close"])',
+        ) as HTMLButtonElement;
         firstButton?.focus();
       }, 100);
     } else {
@@ -149,11 +153,9 @@ export function ProviderSelectionModal({
       >
         {/* Modal Content */}
         <div
-          className="relative flex w-full max-w-[392px] flex-col items-center gap-3 rounded-t-[32px] bg-white p-4 md:rounded-[24px] md:max-w-[480px] md:p-6"
+          className="relative flex w-full max-w-[392px] flex-col items-center gap-3 rounded-t-[32px] bg-white p-4 md:max-w-[480px] md:rounded-[24px] md:p-6"
           style={{
-            transform: isClosing 
-              ? 'translateY(100%) scale(0.95)' 
-              : 'translateY(0) scale(1)',
+            transform: isClosing ? 'translateY(100%) scale(0.95)' : 'translateY(0) scale(1)',
             transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
@@ -213,7 +215,7 @@ export function ProviderSelectionModal({
               >
                 {t('waitlist.providerModalJoinAsProvider')}
               </Button>
-              
+
               <Button
                 fullWidth
                 aria-label={t('waitlist.providerModalJoinAsCustomer')}
@@ -233,4 +235,3 @@ export function ProviderSelectionModal({
 
   return createPortal(modalContent, document.body);
 }
-

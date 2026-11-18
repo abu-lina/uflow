@@ -30,10 +30,7 @@ function computeStage(providerCount: number): AppStage {
 export async function generateStaticParams() {
   const supabase = createSupabaseStaticClient();
   // #606: unlisted catalog rows stay invisible to /city pages.
-  const { data } = await supabase
-    .from('cities')
-    .select('city_name')
-    .eq('is_listed', true);
+  const { data } = await supabase.from('cities').select('city_name').eq('is_listed', true);
   return (data || []).map((city) => ({ cityName: city.city_name }));
 }
 

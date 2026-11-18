@@ -1,10 +1,7 @@
 'use client';
 
 import { BadgeKey, TrustLevel } from '@/types/badges';
-import type {
-  BadgeWithConfirmationStatus,
-  ProviderBadgeWithType,
-} from '@/types/badges';
+import type { BadgeWithConfirmationStatus, ProviderBadgeWithType } from '@/types/badges';
 import { TrustLevelIcon } from '@/components/ui/icons/TrustLevelIcon';
 import { cn } from '@/lib/utils';
 
@@ -63,8 +60,7 @@ export function BadgeLabel({
   };
 
   // Get label text based on language
-  const labelText =
-    badgeType.labels[language] || badgeType.labels.de || badgeType.badge_key;
+  const labelText = badgeType.labels[language] || badgeType.labels.de || badgeType.badge_key;
 
   const shortLabel =
     shortLabels[badgeType.badge_key]?.[language] ||
@@ -87,12 +83,12 @@ export function BadgeLabel({
       className={cn(
         'inline-flex flex-row items-center justify-center',
         size === 'sm' ? 'h-6 px-1.5' : 'h-8 px-2',
-        'bg-neutral-muted border border-neutral rounded-[3.7px]',
+        'rounded-[3.7px] border border-neutral bg-neutral-muted',
         size === 'sm'
           ? 'font-inter-tight text-sm font-medium text-content-heading'
           : 'font-inter-tight text-base font-medium text-content-heading',
         'whitespace-nowrap',
-        className
+        className,
       )}
       role="status"
     >
@@ -122,4 +118,3 @@ function getTrustLevelLabel(trustLevel: TrustLevel): string {
       return '';
   }
 }
-

@@ -34,7 +34,9 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
           setItems(parsed);
           return;
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     async function fetchItems() {
@@ -46,7 +48,9 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
           setItems(data);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     fetchItems();
   }, [id, STORAGE_KEY]);
@@ -57,7 +61,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
   }, [items, STORAGE_KEY, router]);
 
   const updateItem = (index: number, field: string, value: unknown) => {
-    setItems(prev => {
+    setItems((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
       return next;
@@ -65,12 +69,12 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
   };
 
   const removeItem = (index: number) => {
-    setItems(prev => prev.filter((_, i) => i !== index));
+    setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addItem = () => {
     if (!newItem.name_de.trim()) return;
-    setItems(prev => [...prev, { ...newItem, sort_order: prev.length }]);
+    setItems((prev) => [...prev, { ...newItem, sort_order: prev.length }]);
     setNewItem({ ...DEFAULT_ITEM, sort_order: 0 });
     setShowAddForm(false);
   };
@@ -87,16 +91,19 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           {items.map((item, i) => (
-            <div key={i} className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm gap-2">
+            <div
+              key={i}
+              className="flex flex-col gap-2 rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm"
+            >
               <div className="flex items-center gap-2">
                 <input
-                  className="flex-1 text-[15px] font-medium text-[#272727] outline-none bg-transparent"
+                  className="flex-1 bg-transparent text-[15px] font-medium text-[#272727] outline-none"
                   placeholder="Name (DE) *"
                   value={item.name_de}
                   onChange={(e) => updateItem(i, 'name_de', e.target.value)}
                 />
                 <button
-                  className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-50"
+                  className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-red-50"
                   type="button"
                   onClick={() => removeItem(i)}
                 >
@@ -105,13 +112,13 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               </div>
               <div className="flex gap-2">
                 <input
-                  className="flex-1 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                  className="flex-1 rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                   placeholder="Name (EN)"
                   value={item.name_en ?? ''}
                   onChange={(e) => updateItem(i, 'name_en', e.target.value)}
                 />
                 <input
-                  className="w-24 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                  className="w-24 rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                   min={0}
                   placeholder="Price (cent)"
                   type="number"
@@ -121,17 +128,19 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               </div>
               <div className="flex gap-2">
                 <select
-                  className="flex-1 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                  className="flex-1 rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                   value={item.category ?? ''}
                   onChange={(e) => updateItem(i, 'category', e.target.value || null)}
                 >
                   <option value="">No category</option>
-                  {CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
                   ))}
                 </select>
                 <input
-                  className="w-16 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                  className="w-16 rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                   min={0}
                   placeholder="Sort"
                   type="number"
@@ -140,7 +149,7 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
                 />
               </div>
               <textarea
-                className="text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1 resize-none"
+                className="resize-none rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                 placeholder="Description (DE)"
                 rows={2}
                 value={item.description_de ?? ''}
@@ -159,37 +168,43 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
         </div>
 
         {showAddForm ? (
-          <div className="flex flex-col rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm gap-2">
+          <div className="flex flex-col gap-2 rounded-2xl border border-[#E5E5E5] bg-white px-3 py-2 shadow-sm">
             <input
-              className="text-[15px] font-medium text-[#272727] outline-none bg-transparent"
+              className="bg-transparent text-[15px] font-medium text-[#272727] outline-none"
               placeholder="Name (DE) *"
               value={newItem.name_de}
-              onChange={(e) => setNewItem(prev => ({ ...prev, name_de: e.target.value }))}
+              onChange={(e) => setNewItem((prev) => ({ ...prev, name_de: e.target.value }))}
             />
             <div className="flex gap-2">
               <input
-                className="flex-1 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                className="flex-1 rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                 placeholder="Name (EN)"
                 value={newItem.name_en ?? ''}
-                onChange={(e) => setNewItem(prev => ({ ...prev, name_en: e.target.value }))}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, name_en: e.target.value }))}
               />
               <input
-                className="w-24 text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+                className="w-24 rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
                 min={0}
                 placeholder="Price (cent)"
                 type="number"
                 value={newItem.price_cents}
-                onChange={(e) => setNewItem(prev => ({ ...prev, price_cents: parseInt(e.target.value) || 0 }))}
+                onChange={(e) =>
+                  setNewItem((prev) => ({ ...prev, price_cents: parseInt(e.target.value) || 0 }))
+                }
               />
             </div>
             <select
-              className="text-xs text-[#999999] outline-none bg-transparent border border-[#E5E5E5] rounded-lg px-2 py-1"
+              className="rounded-lg border border-[#E5E5E5] bg-transparent px-2 py-1 text-xs text-[#999999] outline-none"
               value={newItem.category ?? ''}
-              onChange={(e) => setNewItem(prev => ({ ...prev, category: e.target.value || null }))}
+              onChange={(e) =>
+                setNewItem((prev) => ({ ...prev, category: e.target.value || null }))
+              }
             >
               <option value="">No category</option>
-              {CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
             <div className="flex gap-2">
@@ -204,7 +219,10 @@ export default function EditMenuPage({ params }: { params: Promise<{ id: string 
               <button
                 className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-[#999999] hover:bg-gray-50"
                 type="button"
-                onClick={() => { setShowAddForm(false); setNewItem({ ...DEFAULT_ITEM }); }}
+                onClick={() => {
+                  setShowAddForm(false);
+                  setNewItem({ ...DEFAULT_ITEM });
+                }}
               >
                 Cancel
               </button>

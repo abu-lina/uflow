@@ -14,9 +14,7 @@ export async function findCityBySlug(slug: string): Promise<string | null> {
     .limit(500);
 
   if (cities) {
-    const match = cities.find(
-      (c: { city_name: string }) => slugify(c.city_name) === slug,
-    );
+    const match = cities.find((c: { city_name: string }) => slugify(c.city_name) === slug);
     if (match) return match.city_name;
   }
 

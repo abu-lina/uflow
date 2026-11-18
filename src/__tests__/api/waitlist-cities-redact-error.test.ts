@@ -103,7 +103,8 @@ describe('waitlist and cities routes (#669)', () => {
       ],
       [
         'cities rpcError',
-        () => mockRpc.mockResolvedValue({ data: null, error: probeError('get_cities_with_counts') }),
+        () =>
+          mockRpc.mockResolvedValue({ data: null, error: probeError('get_cities_with_counts') }),
         () => listCities(request('cities', 'GET')),
       ],
       [
@@ -124,7 +125,15 @@ describe('waitlist and cities routes (#669)', () => {
   describe('AC3: waitlist/update logs no raw zod issues', () => {
     it.each([
       ['malformed email', { email: `${PROBE_EMAIL} `, waitlistToken: 'waitlist-token' }],
-      ['wrong field types', { email: PROBE_EMAIL, waitlistToken: 'waitlist-token', selected_city: PROBE_EMAIL.length, has_seen_early_access: PROBE_EMAIL }],
+      [
+        'wrong field types',
+        {
+          email: PROBE_EMAIL,
+          waitlistToken: 'waitlist-token',
+          selected_city: PROBE_EMAIL.length,
+          has_seen_early_access: PROBE_EMAIL,
+        },
+      ],
     ])('%s', async (_name, body) => {
       const response = await updateWaitlist(request('waitlist/update', 'PATCH', body));
 

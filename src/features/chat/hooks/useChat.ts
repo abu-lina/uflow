@@ -39,7 +39,9 @@ export function useChat(): UseChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadSession().messages);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [conversationId, setConversationId] = useState<string | null>(() => loadSession().conversationId);
+  const [conversationId, setConversationId] = useState<string | null>(
+    () => loadSession().conversationId,
+  );
   const sendingRef = useRef(false);
 
   useEffect(() => {
@@ -101,11 +103,11 @@ export function useChat(): UseChatReturn {
 
               try {
                 const parsed = JSON.parse(data);
-                
+
                 if (parsed.conversation_id) {
                   setConversationId(parsed.conversation_id);
                 }
-                
+
                 if (parsed.results) {
                   setMessages((prev) => {
                     const updated = [...prev];
@@ -128,7 +130,10 @@ export function useChat(): UseChatReturn {
                       // Remove lines that CONTAIN any extracted option text (handles *, **, bullets)
                       for (const opt of parsed.options) {
                         const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        cleanContent = cleanContent.replace(new RegExp('^.*' + escaped + '.*$', 'gm'), '');
+                        cleanContent = cleanContent.replace(
+                          new RegExp('^.*' + escaped + '.*$', 'gm'),
+                          '',
+                        );
                       }
                       // Also strip the comma-separated line containing all options
                       if (parsed.options.length >= 3) {
@@ -137,7 +142,12 @@ export function useChat(): UseChatReturn {
                         const joinedAmp = parsed.options.join(', ').replace(/&/g, '&amp;');
                         cleanContent = cleanContent.replace(joinedAmp, '');
                       }
-                      updated[updated.length - 1] = { ...last, content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(), options: parsed.options, singleSelect: SINGLE_SELECT_RE.test(last.content || '') };
+                      updated[updated.length - 1] = {
+                        ...last,
+                        content: cleanContent.replace(/\n{3,}/g, '\n\n').trim(),
+                        options: parsed.options,
+                        singleSelect: SINGLE_SELECT_RE.test(last.content || ''),
+                      };
                     }
                     return updated;
                   });
@@ -167,7 +177,10 @@ export function useChat(): UseChatReturn {
               const updated = [...prev];
               const last = updated[updated.length - 1];
               if (last && last.role === 'assistant' && !last.content) {
-                updated[updated.length - 1] = { ...last, content: 'Entschuldigung, ich konnte keine Antwort generieren.' };
+                updated[updated.length - 1] = {
+                  ...last,
+                  content: 'Entschuldigung, ich konnte keine Antwort generieren.',
+                };
               }
               return updated;
             });
@@ -191,8 +204,7 @@ export function useChat(): UseChatReturn {
           setMessages((prev) => [...prev, assistantMessage]);
         }
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : 'An unexpected error occurred';
+        const message = err instanceof Error ? err.message : 'An unexpected error occurred';
         setError(message);
       } finally {
         setIsLoading(false);

@@ -85,7 +85,14 @@ describe('POST /api/auth/magic-link provider errors (#669)', () => {
     spyOnConsole();
     mockListUsers.mockResolvedValue({ data: { users: [] }, error: null });
     mockCreateUser.mockResolvedValue({
-      data: { user: { id: 'ml-669-user', email: PROBE_EMAIL, email_confirmed_at: null, user_metadata: {} } },
+      data: {
+        user: {
+          id: 'ml-669-user',
+          email: PROBE_EMAIL,
+          email_confirmed_at: null,
+          user_metadata: {},
+        },
+      },
       error: null,
     });
     mockConsentInsert.mockResolvedValue({ error: null });
@@ -131,7 +138,11 @@ describe('POST /api/auth/magic-link provider errors (#669)', () => {
     it.each([
       [
         'listError',
-        () => mockListUsers.mockResolvedValue({ data: { users: [] }, error: providerError('listUsers') }),
+        () =>
+          mockListUsers.mockResolvedValue({
+            data: { users: [] },
+            error: providerError('listUsers'),
+          }),
         500,
       ],
       [
@@ -141,14 +152,11 @@ describe('POST /api/auth/magic-link provider errors (#669)', () => {
       ],
       [
         'tokenError',
-        () => mockTokenInsert.mockResolvedValue({ data: null, error: providerError('token insert') }),
+        () =>
+          mockTokenInsert.mockResolvedValue({ data: null, error: providerError('token insert') }),
         500,
       ],
-      [
-        'catch-all',
-        () => mockListUsers.mockRejectedValue(thrownProviderError('listUsers')),
-        500,
-      ],
+      ['catch-all', () => mockListUsers.mockRejectedValue(thrownProviderError('listUsers')), 500],
     ] as const)('%s', async (_name, arrange, status) => {
       arrange();
 

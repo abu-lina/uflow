@@ -1,7 +1,7 @@
 /**
  * Tests for provider owner outreach service
  * Plan 038: Provider Owner Outreach & Claim System
- * 
+ *
  * TDD: These tests are written BEFORE implementation.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -65,13 +65,15 @@ describe('outreach service', () => {
     it('returns valid result for unexpired, unconsumed token', async () => {
       const tokenHash = 'abc123hash';
       mockRpc.mockResolvedValueOnce({
-        data: [{
-          is_valid: true,
-          provider_id: 'provider-uuid',
-          provider_name: 'Test Provider',
-          action_scope: 'decision',
-          error_message: null,
-        }],
+        data: [
+          {
+            is_valid: true,
+            provider_id: 'provider-uuid',
+            provider_name: 'Test Provider',
+            action_scope: 'decision',
+            error_message: null,
+          },
+        ],
         error: null,
       });
 
@@ -88,13 +90,15 @@ describe('outreach service', () => {
 
     it('returns invalid result for expired token', async () => {
       mockRpc.mockResolvedValueOnce({
-        data: [{
-          is_valid: false,
-          provider_id: null,
-          provider_name: null,
-          action_scope: null,
-          error_message: 'Token expired',
-        }],
+        data: [
+          {
+            is_valid: false,
+            provider_id: null,
+            provider_name: null,
+            action_scope: null,
+            error_message: 'Token expired',
+          },
+        ],
         error: null,
       });
 
@@ -106,13 +110,15 @@ describe('outreach service', () => {
 
     it('returns invalid result for consumed token', async () => {
       mockRpc.mockResolvedValueOnce({
-        data: [{
-          is_valid: false,
-          provider_id: null,
-          provider_name: null,
-          action_scope: null,
-          error_message: 'Token already used',
-        }],
+        data: [
+          {
+            is_valid: false,
+            provider_id: null,
+            provider_name: null,
+            action_scope: null,
+            error_message: 'Token already used',
+          },
+        ],
         error: null,
       });
 
@@ -172,11 +178,13 @@ describe('outreach service', () => {
         }),
       });
 
-      await expect(createOutreachToken({
-        providerId: 'provider-uuid',
-        providerName: 'Test Provider',
-        actionScope: 'decision',
-      })).rejects.toThrow();
+      await expect(
+        createOutreachToken({
+          providerId: 'provider-uuid',
+          providerName: 'Test Provider',
+          actionScope: 'decision',
+        }),
+      ).rejects.toThrow();
     });
   });
 
@@ -357,7 +365,7 @@ describe('outreach types', () => {
       'kept',
       'expired',
     ];
-    
+
     // Type check passes if this compiles
     expect(validStatuses).toHaveLength(9);
   });

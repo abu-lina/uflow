@@ -66,9 +66,13 @@ describe('POST /api/admin/import-joinhalal/dry-run — timeout handling (Plan 04
     mockRunDryRun.mockImplementation(async (options: { signal?: AbortSignal }) => {
       return new Promise((_, reject) => {
         if (options.signal) {
-          options.signal.addEventListener('abort', () => {
-            reject(new Error('Dry-run aborted: timeout exceeded during page fetch.'));
-          }, { once: true });
+          options.signal.addEventListener(
+            'abort',
+            () => {
+              reject(new Error('Dry-run aborted: timeout exceeded during page fetch.'));
+            },
+            { once: true },
+          );
         }
       });
     });

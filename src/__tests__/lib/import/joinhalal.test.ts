@@ -126,26 +126,20 @@ describe('makeProviderKey', () => {
 
 describe('buildCliWriteCommand', () => {
   it('returns base write command for "all" limit', () => {
-    expect(buildCliWriteCommand('all')).toBe(
-      'npx tsx scripts/import-joinhalal.ts --write'
-    );
+    expect(buildCliWriteCommand('all')).toBe('npx tsx scripts/import-joinhalal.ts --write');
   });
 
   it('returns write command with --limit 10', () => {
-    expect(buildCliWriteCommand(10)).toBe(
-      'npx tsx scripts/import-joinhalal.ts --write --limit 10'
-    );
+    expect(buildCliWriteCommand(10)).toBe('npx tsx scripts/import-joinhalal.ts --write --limit 10');
   });
 
   it('returns write command with --limit 50', () => {
-    expect(buildCliWriteCommand(50)).toBe(
-      'npx tsx scripts/import-joinhalal.ts --write --limit 50'
-    );
+    expect(buildCliWriteCommand(50)).toBe('npx tsx scripts/import-joinhalal.ts --write --limit 50');
   });
 
   it('returns write command with --limit 100', () => {
     expect(buildCliWriteCommand(100)).toBe(
-      'npx tsx scripts/import-joinhalal.ts --write --limit 100'
+      'npx tsx scripts/import-joinhalal.ts --write --limit 100',
     );
   });
 
@@ -161,7 +155,7 @@ describe('buildCliWriteCommand', () => {
 describe('IMPORT_BOT_UUID', () => {
   it('is a valid UUID (all hex chars and correct format)', () => {
     expect(IMPORT_BOT_UUID).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
   });
 });
@@ -192,8 +186,6 @@ describe('DEFAULT_SITEMAPS', () => {
   });
 
   it('all URLs start with https://joinhalal.com', () => {
-    DEFAULT_SITEMAPS.forEach((url) =>
-      expect(url).toMatch(/^https:\/\/joinhalal\.com\//)
-    );
+    DEFAULT_SITEMAPS.forEach((url) => expect(url).toMatch(/^https:\/\/joinhalal\.com\//));
   });
 });

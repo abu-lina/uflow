@@ -254,7 +254,7 @@ for (const documentUrl of DOCUMENT_CONTROL_URLS) {
     console.error('');
     console.error(
       'Note: the control for / passed and this one did not, so documents ARE routed ' +
-        'but only at the root. That is the old `matcher: \'/\'` start-url route; the ' +
+        "but only at the root. That is the old `matcher: '/'` start-url route; the " +
         'offline page would work on / and nowhere else.',
     );
   }

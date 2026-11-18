@@ -1,6 +1,6 @@
 /**
  * City name translation utility
- * 
+ *
  * Translates city names to the user's preferred language using Nominatim API.
  * Results are cached to avoid repeated API calls.
  */
@@ -26,10 +26,7 @@ const languageMap: Record<Language, string> = {
  * @param language - The target language code
  * @returns The translated city name, or the original if translation fails
  */
-export async function translateCityName(
-  cityName: string,
-  language: Language
-): Promise<string> {
+export async function translateCityName(cityName: string, language: Language): Promise<string> {
   if (!cityName || !cityName.trim()) {
     return cityName;
   }
@@ -50,20 +47,20 @@ export async function translateCityName(
   try {
     // Use Nominatim search API to get city name in target language
     const acceptLanguage = languageMap[language] || 'en';
-    
+
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?` +
-      `format=json&` +
-      `q=${encodeURIComponent(cityName)}&` +
-      `addressdetails=1&` +
-      `limit=1&` +
-      `featuretype=city,town,village`,
+        `format=json&` +
+        `q=${encodeURIComponent(cityName)}&` +
+        `addressdetails=1&` +
+        `limit=1&` +
+        `featuretype=city,town,village`,
       {
         headers: {
           'User-Agent': 'UmmahFlow/1.0',
           'Accept-Language': acceptLanguage,
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -73,17 +70,17 @@ export async function translateCityName(
     }
 
     const data = await response.json();
-    
+
     if (data && data.length > 0) {
       // Extract city name from the result
       const result = data[0];
-      const translatedName = 
-        result.address?.city || 
-        result.address?.town || 
-        result.address?.village || 
-        result.name || 
+      const translatedName =
+        result.address?.city ||
+        result.address?.town ||
+        result.address?.village ||
+        result.name ||
         cityName;
-      
+
       // Cache the result
       cityTranslationCache.set(cacheKey, translatedName);
       return translatedName;

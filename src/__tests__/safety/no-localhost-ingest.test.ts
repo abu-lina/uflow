@@ -26,11 +26,7 @@ describe('P0 Safety: No localhost ingest calls in production code', () => {
       const fullPath = path.join(dir, entry.name);
 
       // Skip test directories, node_modules, and build output
-      if (
-        entry.name === '__tests__' ||
-        entry.name === 'node_modules' ||
-        entry.name === '.next'
-      ) {
+      if (entry.name === '__tests__' || entry.name === 'node_modules' || entry.name === '.next') {
         continue;
       }
 

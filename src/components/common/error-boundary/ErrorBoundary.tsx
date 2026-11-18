@@ -36,8 +36,10 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
           <div className="mx-auto max-w-md rounded-lg bg-white p-8 text-center shadow-lg">
-            <AlertTriangle className="mb-4 h-16 w-16 text-red-500 mx-auto" />
-            <h2 className="mb-2 text-xl font-semibold text-content-heading">Etwas ist schiefgelaufen</h2>
+            <AlertTriangle className="mx-auto mb-4 h-16 w-16 text-red-500" />
+            <h2 className="mb-2 text-xl font-semibold text-content-heading">
+              Etwas ist schiefgelaufen
+            </h2>
             <p className="mb-6 text-content-muted">
               Es gab einen unerwarteten Fehler. Bitte versuche es erneut.
             </p>

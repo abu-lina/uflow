@@ -11,7 +11,7 @@ describe('SuggestionCard', () => {
         icon={<Sparkles size={24} data-testid="test-icon" />}
         title="Test Title"
         subtitle="Test Subtitle"
-      />
+      />,
     );
     expect(screen.getByText('Test Title')).toBeInTheDocument();
     expect(screen.getByText('Test Subtitle')).toBeInTheDocument();
@@ -20,46 +20,25 @@ describe('SuggestionCard', () => {
 
   it('triggers onClick when clicked', () => {
     const onClick = vi.fn();
-    render(
-      <SuggestionCard
-        icon={<Sparkles size={24} />}
-        title="Clickable"
-        onClick={onClick}
-      />
-    );
+    render(<SuggestionCard icon={<Sparkles size={24} />} title="Clickable" onClick={onClick} />);
     fireEvent.click(screen.getByRole('button'));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it('renders without subtitle', () => {
-    render(
-      <SuggestionCard
-        icon={<Sparkles size={24} />}
-        title="No Subtitle"
-      />
-    );
+    render(<SuggestionCard icon={<Sparkles size={24} />} title="No Subtitle" />);
     expect(screen.getByText('No Subtitle')).toBeInTheDocument();
   });
 
   it('applies custom className', () => {
     const { container } = render(
-      <SuggestionCard
-        icon={<Sparkles size={24} />}
-        title="Styled"
-        className="custom-class"
-      />
+      <SuggestionCard icon={<Sparkles size={24} />} title="Styled" className="custom-class" />,
     );
     expect(container.firstChild).toHaveClass('custom-class');
   });
 
   it('renders as a button when onClick is provided', () => {
-    render(
-      <SuggestionCard
-        icon={<Sparkles size={24} />}
-        title="Button Test"
-        onClick={() => {}}
-      />
-    );
+    render(<SuggestionCard icon={<Sparkles size={24} />} title="Button Test" onClick={() => {}} />);
     expect(screen.getByRole('button')).toBeInTheDocument();
   });
 
@@ -70,7 +49,7 @@ describe('SuggestionCard', () => {
         title="Link Card"
         subtitle="Navigates to detail page"
         href="/p/123"
-      />
+      />,
     );
     const link = screen.getByRole('link');
     expect(link).toBeInTheDocument();

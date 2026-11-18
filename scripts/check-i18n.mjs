@@ -51,7 +51,9 @@ export function collectMissingKeys(localeData, canonicalLocale = 'en') {
 }
 
 function readAllLocales(translationsDir) {
-  return Object.fromEntries(LOCALES.map((locale) => [locale, loadLocaleObject(translationsDir, locale)]));
+  return Object.fromEntries(
+    LOCALES.map((locale) => [locale, loadLocaleObject(translationsDir, locale)]),
+  );
 }
 
 function printReport(missingByLocale) {

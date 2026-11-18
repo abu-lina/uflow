@@ -112,7 +112,7 @@ describe('Signup claim handoff', () => {
         expect.objectContaining({
           method: 'POST',
           body: JSON.stringify({ token: 'claim-token-123' }),
-        })
+        }),
       );
     });
   });

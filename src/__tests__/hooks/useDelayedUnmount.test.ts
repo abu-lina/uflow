@@ -23,10 +23,9 @@ describe('useDelayedUnmount', () => {
   });
 
   it('shouldRender stays true during exit delay after isOpen → false', () => {
-    const { result, rerender } = renderHook(
-      ({ isOpen }) => useDelayedUnmount(isOpen, 300),
-      { initialProps: { isOpen: true } },
-    );
+    const { result, rerender } = renderHook(({ isOpen }) => useDelayedUnmount(isOpen, 300), {
+      initialProps: { isOpen: true },
+    });
     rerender({ isOpen: false });
     // Before delay expires — still rendered
     expect(result.current.shouldRender).toBe(true);
@@ -34,10 +33,9 @@ describe('useDelayedUnmount', () => {
   });
 
   it('shouldRender becomes false after the delay expires', () => {
-    const { result, rerender } = renderHook(
-      ({ isOpen }) => useDelayedUnmount(isOpen, 300),
-      { initialProps: { isOpen: true } },
-    );
+    const { result, rerender } = renderHook(({ isOpen }) => useDelayedUnmount(isOpen, 300), {
+      initialProps: { isOpen: true },
+    });
     rerender({ isOpen: false });
     act(() => {
       vi.advanceTimersByTime(300);
@@ -46,10 +44,9 @@ describe('useDelayedUnmount', () => {
   });
 
   it('cancels the timer if isOpen goes back to true during exit delay', () => {
-    const { result, rerender } = renderHook(
-      ({ isOpen }) => useDelayedUnmount(isOpen, 300),
-      { initialProps: { isOpen: true } },
-    );
+    const { result, rerender } = renderHook(({ isOpen }) => useDelayedUnmount(isOpen, 300), {
+      initialProps: { isOpen: true },
+    });
     rerender({ isOpen: false });
     act(() => {
       vi.advanceTimersByTime(100); // partially through delay
@@ -77,10 +74,9 @@ describe('useDelayedUnmount', () => {
       dispatchEvent: vi.fn(),
     }));
 
-    const { result, rerender } = renderHook(
-      ({ isOpen }) => useDelayedUnmount(isOpen, 300),
-      { initialProps: { isOpen: true } },
-    );
+    const { result, rerender } = renderHook(({ isOpen }) => useDelayedUnmount(isOpen, 300), {
+      initialProps: { isOpen: true },
+    });
     rerender({ isOpen: false });
     // With reduced motion, no timer needed — should be false immediately
     act(() => {

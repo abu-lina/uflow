@@ -18,11 +18,7 @@ export async function getNeeds(): Promise<Need[]> {
 }
 
 export async function getNeedById(id: string): Promise<Need | null> {
-  const { data, error } = await supabase
-    .from('needs')
-    .select('*')
-    .eq('need_id', id)
-    .single();
+  const { data, error } = await supabase.from('needs').select('*').eq('need_id', id).single();
 
   if (error) {
     console.error('Error fetching need:', error);

@@ -41,7 +41,9 @@ describe('getCommunityServiceForAdmin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // GET chain: .from().select().eq(provider_id).eq(listing_type) resolves
-    mockEq.mockReturnValueOnce({ eq: mockEq }).mockResolvedValue({ data: [fakeCommunityService], error: null });
+    mockEq
+      .mockReturnValueOnce({ eq: mockEq })
+      .mockResolvedValue({ data: [fakeCommunityService], error: null });
     mockSelect.mockReturnValue({ eq: mockEq });
     mockFrom.mockReturnValue({ select: mockSelect });
   });
@@ -64,7 +66,9 @@ describe('getCommunityServiceForAdmin', () => {
   it('[post-fix PASSES] throws when database returns an error', async () => {
     mockEq.mockResolvedValue({ data: null, error: { message: 'DB error' } });
 
-    await expect(getCommunityServiceForAdmin(validCsId)).rejects.toThrow('Failed to fetch community service');
+    await expect(getCommunityServiceForAdmin(validCsId)).rejects.toThrow(
+      'Failed to fetch community service',
+    );
   });
 });
 
@@ -134,7 +138,10 @@ describe('updateCommunityServiceReview', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockSingle.mockResolvedValue({ data: { ...fakeCommunityService, review_status: 'approved' }, error: null });
+    mockSingle.mockResolvedValue({
+      data: { ...fakeCommunityService, review_status: 'approved' },
+      error: null,
+    });
     const mockSelectChain = { single: mockSingle };
     // UPDATE chain: .from().update().eq(provider_id).eq(listing_type).select().single()
     mockEq.mockReturnValueOnce({ eq: mockEq }).mockReturnValue({ select: () => mockSelectChain });
@@ -146,9 +153,7 @@ describe('updateCommunityServiceReview', () => {
     const result = await updateCommunityServiceReview(validCsId, 'approved', null, adminUserId);
 
     expect(mockFrom).toHaveBeenCalledWith('providers');
-    expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ review_status: 'approved' }),
-    );
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ review_status: 'approved' }));
     expect(result).toMatchObject({ review_status: 'approved' });
   });
 

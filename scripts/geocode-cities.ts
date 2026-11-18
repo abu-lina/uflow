@@ -64,7 +64,9 @@ async function main(): Promise<void> {
     try {
       const coords = await geocode(city);
       if (coords) {
-        rows.push(`  (${sqlText(city.city_name)}, ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)})`);
+        rows.push(
+          `  (${sqlText(city.city_name)}, ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)})`,
+        );
       } else {
         console.error(`unresolved: ${city.city_name} (${city.country})`);
       }

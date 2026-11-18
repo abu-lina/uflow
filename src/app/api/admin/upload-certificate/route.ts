@@ -19,13 +19,13 @@ export async function POST(request: Request) {
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to upload-certificate API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to upload-certificate API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -48,15 +48,12 @@ export async function POST(request: Request) {
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       return NextResponse.json(
         { error: `Invalid file type. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: 'File size exceeds 5MB limit' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'File size exceeds 5MB limit' }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -65,8 +62,7 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const { data, error } = await supabase
-      .storage
+    const { data, error } = await supabase.storage
       .from('provider-certificates')
       .upload(filePath, buffer, {
         contentType: file.type,
@@ -77,8 +73,7 @@ export async function POST(request: Request) {
       throw new Error(`Failed to upload file: ${error.message}`);
     }
 
-    const { data: urlData } = supabase
-      .storage
+    const { data: urlData } = supabase.storage
       .from('provider-certificates')
       .getPublicUrl(data.path);
 
@@ -88,16 +83,16 @@ export async function POST(request: Request) {
       'Error in upload-certificate API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request) }
+      { ...getRequestMetadata(request) },
     );
 
-    const errorMessage = process.env.NODE_ENV === 'production'
-      ? 'Failed to upload certificate'
-      : error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      process.env.NODE_ENV === 'production'
+        ? 'Failed to upload certificate'
+        : error instanceof Error
+          ? error.message
+          : 'Unknown error';
 
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

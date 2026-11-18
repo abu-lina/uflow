@@ -35,13 +35,13 @@ interface ScrollablePageHeaderProps {
 
 /**
  * Reusable scrollable page header component
- * 
+ *
  * Features:
  * - Consistent styling across all pages
  * - Optional back button
  * - Flexible right-side content
  * - Safe area support for mobile devices
- * 
+ *
  * @example
  * ```tsx
  * <ScrollablePageHeader
@@ -73,19 +73,20 @@ export function ScrollablePageHeader({
       className={`fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+24px)] ${className}`}
       style={{
         // Exact match with page background - no blur to ensure seamless integration
-        background: 'linear-gradient(180deg, hsl(var(--color-neutral-50)) 0%, hsl(var(--color-neutral-50)) 100%)',
+        background:
+          'linear-gradient(180deg, hsl(var(--color-neutral-50)) 0%, hsl(var(--color-neutral-50)) 100%)',
         backgroundAttachment: 'scroll',
       }}
     >
-      <div className="flex items-start w-full max-w-[393px] mx-auto px-4 h-10">
+      <div className="mx-auto flex h-10 w-full max-w-[393px] items-start px-4">
         {/* Back Button */}
         {onBack && (
           <button
             aria-label="Zurück"
-            className="flex items-center justify-center w-8 h-8 -ml-1"
+            className="-ml-1 flex h-8 w-8 items-center justify-center"
             onClick={handleBack}
           >
-            <Icon className="w-8 h-8 text-content" icon="material-symbols:chevron-left" />
+            <Icon className="h-8 w-8 text-content" icon="material-symbols:chevron-left" />
           </button>
         )}
 
@@ -93,17 +94,11 @@ export function ScrollablePageHeader({
         {customContent ? (
           customContent
         ) : showTitle ? (
-          <h1 className="text-xl font-semibold text-content-heading">
-            {title}
-          </h1>
+          <h1 className="text-xl font-semibold text-content-heading">{title}</h1>
         ) : null}
 
         {/* Right Content */}
-        {rightContent && (
-          <div className="ml-auto flex items-center">
-            {rightContent}
-          </div>
-        )}
+        {rightContent && <div className="ml-auto flex items-center">{rightContent}</div>}
       </div>
     </header>
   );

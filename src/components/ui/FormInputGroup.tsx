@@ -22,15 +22,15 @@ interface FormInputGroupProps {
 /**
  * Reusable container component for grouping multiple FormInput components
  * with consistent spacing.
- * 
+ *
  * This component ensures proper spacing between form inputs and maintains
  * consistent layout patterns across the application.
- * 
+ *
  * Features:
  * - Flexible gap control (default: gap-4, recommended: gap-3 for 12px)
  * - Proper flex layout with full width
  * - Extensible className support for custom styling
- * 
+ *
  * @example
  * ```tsx
  * // Default gap (16px)
@@ -38,13 +38,13 @@ interface FormInputGroupProps {
  *   <FormInput label="Email" type="email" />
  *   <FormInput label="Password" type="password" variant="with-icon" />
  * </FormInputGroup>
- * 
+ *
  * // Custom 12px gap
  * <FormInputGroup gap="gap-3">
  *   <FormInput label="First Name" type="text" />
  *   <FormInput label="Last Name" type="text" />
  * </FormInputGroup>
- * 
+ *
  * // Custom styling
  * <FormInputGroup className="mb-6" gap="gap-2">
  *   <FormInput label="Phone" type="tel" />
@@ -52,18 +52,6 @@ interface FormInputGroupProps {
  * </FormInputGroup>
  * ```
  */
-export function FormInputGroup({
-  children,
-  gap = 'gap-4',
-  className = '',
-}: FormInputGroupProps) {
-  return (
-    <div className={cn(
-      'flex w-full flex-col',
-      gap,
-      className
-    )}>
-      {children}
-    </div>
-  );
+export function FormInputGroup({ children, gap = 'gap-4', className = '' }: FormInputGroupProps) {
+  return <div className={cn('flex w-full flex-col', gap, className)}>{children}</div>;
 }

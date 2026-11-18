@@ -25,18 +25,18 @@ export function cn(...inputs: ClassValue[]) {
 export function isValidTailwindClass(className: string | DOMTokenList | null | undefined): boolean {
   // Handle null/undefined
   if (!className) return false;
-  
+
   // Convert DOMTokenList to string if needed
   const classString = typeof className === 'string' ? className : className.toString();
-  
+
   // Handle empty string
   if (!classString.trim()) return false;
-  
+
   // Basic validation - can be enhanced with actual Tailwind class checking
   return classString.split(' ').every((cls) => {
     // Skip empty strings from split
     if (!cls.trim()) return true;
-    
+
     // Check for common Tailwind patterns
     return (
       /^[a-z-]+$/.test(cls) || // Basic classes like 'flex', 'p-4'

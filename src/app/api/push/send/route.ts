@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
         {
           error: 'Push notifications are not configured. VAPID keys are missing.',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
     if (authError || !authUser) {
       return NextResponse.json(
         { error: 'Unauthorized. Please log in to send notifications.' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
           error: 'Rate limit exceeded. Please try again later.',
           retryAfter: 60, // seconds
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
         {
           error: validationError instanceof Error ? validationError.message : 'Invalid input',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
         {
           error: 'Forbidden. You can only send notifications to yourself.',
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -272,10 +272,7 @@ export async function POST(request: NextRequest) {
 
       if (fetchError) {
         console.error('Error fetching push subscriptions:', fetchError);
-        return NextResponse.json(
-          { error: 'Failed to fetch user subscriptions' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to fetch user subscriptions' }, { status: 500 });
       }
 
       if (batchSubscriptions) {
@@ -284,7 +281,7 @@ export async function POST(request: NextRequest) {
             endpoint: sub.endpoint,
             keys: sub.keys as { p256dh: string; auth: string },
             user_id: sub.user_id,
-          }))
+          })),
         );
       }
     }
@@ -298,7 +295,7 @@ export async function POST(request: NextRequest) {
           failed: 0,
           total: 0,
         },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -325,7 +322,7 @@ export async function POST(request: NextRequest) {
 
     for (let i = 0; i < subscriptions.length; i += CHUNK_SIZE) {
       const chunk = subscriptions.slice(i, i + CHUNK_SIZE);
-      
+
       const chunkResults = await Promise.allSettled(
         chunk.map(async (sub) => {
           try {
@@ -334,22 +331,16 @@ export async function POST(request: NextRequest) {
               keys: sub.keys,
             };
 
-            await webpush.sendNotification(
-              subscription,
-              JSON.stringify(payload)
-            );
+            await webpush.sendNotification(subscription, JSON.stringify(payload));
 
             return { success: true, endpoint: sub.endpoint };
           } catch (error: unknown) {
             const webPushError = error as { statusCode?: number };
-            
+
             // If subscription is invalid (410 Gone or 404 Not Found), remove it
             if (webPushError.statusCode === 410 || webPushError.statusCode === 404) {
               console.log(`Removing invalid subscription: ${sub.endpoint}`);
-              await supabase
-                .from('push_subscriptions')
-                .delete()
-                .eq('endpoint', sub.endpoint);
+              await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
             }
 
             return {
@@ -358,7 +349,7 @@ export async function POST(request: NextRequest) {
               error: webPushError.statusCode || 'Unknown error',
             };
           }
-        })
+        }),
       );
 
       // Process chunk results
@@ -387,14 +378,13 @@ export async function POST(request: NextRequest) {
         failed,
         total: subscriptions.length,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error('Send notification error:', error);
     return NextResponse.json(
       { error: 'Internal server error. Please try again later.' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -46,9 +46,9 @@ function CityRow({
     <RowItem
       selectable
       ariaLabel={`${city} - ${countLabel}`}
-      className={`transition-colors hover:bg-background-selection/50 focus:outline-none focus:ring-2 focus:ring-primary/30 ${className ?? ''}`}
+      className={`hover:bg-background-selection/50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 ${className ?? ''}`}
       icon={
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+        <div className="bg-background-selection flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary">
           <MapPin aria-hidden="true" className="h-6 w-6" />
         </div>
       }
@@ -86,11 +86,7 @@ export function WoCityResults({
   }, [query]);
 
   if (isLoading) {
-    return (
-      <p className="py-2 text-center text-sm text-text-muted">
-        {t('suchen.wo.loading')}
-      </p>
-    );
+    return <p className="py-2 text-center text-sm text-text-muted">{t('suchen.wo.loading')}</p>;
   }
 
   if (isError) {
@@ -105,15 +101,21 @@ export function WoCityResults({
     const countByCity = new Map(popularCities.map((entry) => [entry.city, entry.provider_count]));
 
     const visiblePopularCities = isShowAllPreviewEnabled
-      ? (showAllPopularCities ? popularCities : popularCities.slice(0, 3))
+      ? showAllPopularCities
+        ? popularCities
+        : popularCities.slice(0, 3)
       : popularCities.slice(0, 3);
     const visibleRecentSearches = isShowAllPreviewEnabled
-      ? (showAllRecentCities ? recentSearches : recentSearches.slice(0, 3))
+      ? showAllRecentCities
+        ? recentSearches
+        : recentSearches.slice(0, 3)
       : recentSearches.slice(0, 3);
     const shouldShowRecent = recentSearches.length > 0;
     const shouldShowPopular = !shouldShowRecent && popularCities.length > 0;
-    const hasMorePopularCities = isShowAllPreviewEnabled && !showAllPopularCities && popularCities.length > 3;
-    const hasMoreRecentSearches = isShowAllPreviewEnabled && !showAllRecentCities && recentSearches.length > 3;
+    const hasMorePopularCities =
+      isShowAllPreviewEnabled && !showAllPopularCities && popularCities.length > 3;
+    const hasMoreRecentSearches =
+      isShowAllPreviewEnabled && !showAllRecentCities && recentSearches.length > 3;
 
     if (popularCities.length === 0 && recentSearches.length === 0 && !selectedCity) {
       return null;
@@ -127,7 +129,7 @@ export function WoCityResults({
               {t('suchen.wo.selectionLabel')}
             </p>
             <div className="space-y-1">
-              <div className="flex h-[72px] w-full items-center justify-between rounded-xl bg-background-selection px-2 py-0">
+              <div className="bg-background-selection flex h-[72px] w-full items-center justify-between rounded-xl px-2 py-0">
                 <CityRow
                   city={selectedCity}
                   className="h-full py-0 hover:bg-transparent"
@@ -210,7 +212,12 @@ export function WoCityResults({
   if (filteredCities.length > 0) {
     return (
       <div className="mt-4 space-y-1">
-        {(isShowAllPreviewEnabled ? (showAllFilteredCities ? filteredCities : filteredCities.slice(0, 3)) : filteredCities).map((entry) => (
+        {(isShowAllPreviewEnabled
+          ? showAllFilteredCities
+            ? filteredCities
+            : filteredCities.slice(0, 3)
+          : filteredCities
+        ).map((entry) => (
           <CityRow
             key={`filtered:${entry.city}`}
             city={entry.city}
@@ -234,9 +241,7 @@ export function WoCityResults({
 
   if (isCheckingCityValidity || isValidNoProviderCity === null) {
     return (
-      <p className="mt-4 py-2 text-center text-sm text-text-muted">
-        {t('suchen.wo.loading')}
-      </p>
+      <p className="mt-4 py-2 text-center text-sm text-text-muted">{t('suchen.wo.loading')}</p>
     );
   }
 
@@ -245,8 +250,10 @@ export function WoCityResults({
   }
 
   return (
-    <div className="mt-4 px-4 py-3 bg-neutral-50 dark:bg-neutral-900/30 rounded-lg border border-border-light">
-      <p className="text-sm text-text-muted text-center">{t('suchen.cityNotRecognized', { city: query })}</p>
+    <div className="mt-4 rounded-lg border border-border-light bg-neutral-50 px-4 py-3 dark:bg-neutral-900/30">
+      <p className="text-center text-sm text-text-muted">
+        {t('suchen.cityNotRecognized', { city: query })}
+      </p>
     </div>
   );
 }

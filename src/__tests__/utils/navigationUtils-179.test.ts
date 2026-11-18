@@ -14,19 +14,13 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import {
-  shouldShowMobileFooter,
-  shouldShowCityEarlyAccessNavbar,
-} from '@/utils/navigationUtils';
+import { shouldShowMobileFooter, shouldShowCityEarlyAccessNavbar } from '@/utils/navigationUtils';
 
 /**
  * Helper: set localStorage so hasCompletedOnboarding() returns true.
  */
 function simulateOnboardingComplete() {
-  localStorage.setItem(
-    'ummahflow_onboarding',
-    JSON.stringify({ earlyAccessUnlocked: true }),
-  );
+  localStorage.setItem('ummahflow_onboarding', JSON.stringify({ earlyAccessUnlocked: true }));
   localStorage.setItem('selectedCity', 'Berlin');
 }
 
@@ -101,7 +95,9 @@ describe('Plan 179 — /chat page hides mobile navbar', () => {
     });
 
     it('shouldShowCityEarlyAccessNavbar still returns true for /providers', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/providers', false, false, null, 'stage2')).toBe(true);
+      expect(shouldShowCityEarlyAccessNavbar('/providers', false, false, null, 'stage2')).toBe(
+        true,
+      );
     });
   });
 });

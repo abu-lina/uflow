@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     if (authError || !authUser) {
       return NextResponse.json(
         { error: 'Unauthorized. Please log in to enable push notifications.' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
           error: 'Rate limit exceeded. Please try again later.',
           retryAfter: 3600, // seconds
         },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     if (!subscription || !subscription.endpoint || !subscription.keys) {
       return NextResponse.json(
         { error: 'Invalid subscription data. Missing endpoint or keys.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
     if (!subscription.keys.p256dh || !subscription.keys.auth) {
       return NextResponse.json(
         { error: 'Invalid subscription data. Missing p256dh or auth key.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
     if (userId !== authUser.id) {
       return NextResponse.json(
         { error: 'Forbidden. You can only subscribe for your own account.' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -162,12 +162,9 @@ export async function POST(request: NextRequest) {
     // Upsert subscription (insert or update if exists)
     const { data, error } = await supabase
       .from('push_subscriptions')
-      .upsert(
-        subscriptionData,
-        {
-          onConflict: 'user_id,endpoint',
-        }
-      )
+      .upsert(subscriptionData, {
+        onConflict: 'user_id,endpoint',
+      })
       .select()
       .single();
 
@@ -175,7 +172,7 @@ export async function POST(request: NextRequest) {
       console.error('Error saving push subscription:', error);
       return NextResponse.json(
         { error: 'Failed to save subscription. Please try again.' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -185,13 +182,13 @@ export async function POST(request: NextRequest) {
         subscription: data,
         message: 'Push notifications enabled successfully',
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error('Push subscription error:', error);
     return NextResponse.json(
       { error: 'Internal server error. Please try again later.' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -245,10 +242,7 @@ export async function DELETE(request: NextRequest) {
     const { endpoint } = body;
 
     if (!endpoint) {
-      return NextResponse.json(
-        { error: 'Missing endpoint' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing endpoint' }, { status: 400 });
     }
 
     const supabase = createSupabaseServerClient();
@@ -260,10 +254,7 @@ export async function DELETE(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !authUser) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Delete subscription
@@ -275,10 +266,7 @@ export async function DELETE(request: NextRequest) {
 
     if (error) {
       console.error('Error deleting push subscription:', error);
-      return NextResponse.json(
-        { error: 'Failed to remove subscription' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to remove subscription' }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -286,14 +274,10 @@ export async function DELETE(request: NextRequest) {
         success: true,
         message: 'Push notifications disabled successfully',
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error('Push unsubscribe error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

@@ -42,7 +42,12 @@ vi.mock('@/lib/openrouter', () => ({
         read: () => {
           if (!sent) {
             sent = true;
-            return Promise.resolve({ done: false, value: encoder.encode('data: {"choices":[{"delta":{"content":"Hallo! Wie kann ich helfen?"}}]}\n\ndata: [DONE]\n\n') });
+            return Promise.resolve({
+              done: false,
+              value: encoder.encode(
+                'data: {"choices":[{"delta":{"content":"Hallo! Wie kann ich helfen?"}}]}\n\ndata: [DONE]\n\n',
+              ),
+            });
           }
           return Promise.resolve({ done: true, value: undefined });
         },
@@ -162,7 +167,13 @@ describe('POST /api/chat', () => {
     beforeEach(() => {
       mockSupabaseServer.maybeSingle.mockResolvedValue({ data: null, error: null });
       mockSupabaseServer.single.mockResolvedValue({
-        data: { id: 'conv-1', user_id: 'user-123', title: 'Hello', created_at: '2026-01-01', updated_at: '2026-01-01' },
+        data: {
+          id: 'conv-1',
+          user_id: 'user-123',
+          title: 'Hello',
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+        },
         error: null,
       });
       mockSupabaseServer.limit.mockReturnValue({ data: [], error: null });
@@ -204,7 +215,13 @@ describe('POST /api/chat', () => {
     it('returns block message when guardrail triggers Tier 2', async () => {
       mockSupabaseServer.maybeSingle.mockResolvedValue({ data: null, error: null });
       mockSupabaseServer.single.mockResolvedValue({
-        data: { id: 'conv-block', user_id: 'user-123', title: 'Test', created_at: '2026-01-01', updated_at: '2026-01-01' },
+        data: {
+          id: 'conv-block',
+          user_id: 'user-123',
+          title: 'Test',
+          created_at: '2026-01-01',
+          updated_at: '2026-01-01',
+        },
         error: null,
       });
       mockSupabaseServer.limit.mockReturnValue({ data: [], error: null });

@@ -1,6 +1,6 @@
 /**
  * Push Notification Service
- * 
+ *
  * Service for sending push notifications to users
  * Provides a clean API for sending notifications from server-side code
  */
@@ -34,10 +34,10 @@ interface SendNotificationResult {
 
 /**
  * Send push notification to one or more users
- * 
+ *
  * @param options - Notification options
  * @returns Promise with send result
- * 
+ *
  * @example
  * ```ts
  * await sendPushNotification({
@@ -49,7 +49,7 @@ interface SendNotificationResult {
  * ```
  */
 export async function sendPushNotification(
-  options: SendNotificationOptions
+  options: SendNotificationOptions,
 ): Promise<SendNotificationResult> {
   try {
     const response = await fetch('/api/push/send', {
@@ -89,11 +89,11 @@ export async function sendPushNotification(
 
 /**
  * Send push notification from server-side code
- * 
+ *
  * @param options - Notification options
  * @param apiUrl - Base API URL (defaults to process.env.NEXT_PUBLIC_SITE_URL)
  * @returns Promise with send result
- * 
+ *
  * @example
  * ```ts
  * // In API route or server component
@@ -106,7 +106,7 @@ export async function sendPushNotification(
  */
 export async function sendPushNotificationServer(
   options: SendNotificationOptions,
-  apiUrl?: string
+  apiUrl?: string,
 ): Promise<SendNotificationResult> {
   const baseUrl = apiUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const url = `${baseUrl}/api/push/send`;
@@ -146,4 +146,3 @@ export async function sendPushNotificationServer(
     throw error;
   }
 }
-

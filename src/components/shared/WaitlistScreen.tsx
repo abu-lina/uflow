@@ -166,121 +166,121 @@ export function WaitlistScreen({ onSuccess: _onSuccess, onProviderQuestion }: Wa
       {languageSwitcherPortal}
       <div className="relative flex min-h-full flex-1 flex-col px-4 sm:px-6 lg:px-8">
         <div className="flex w-full flex-1 items-center justify-center">
-        <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="flex w-full max-w-md flex-col items-center gap-8"
-          initial={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-        >
-          {/* Heading */}
-          <div className="flex flex-col items-center gap-4 text-center">
-            <Logo height={96} width={96} />
-            <h1 className="font-inter-tight text-3xl font-semibold leading-tight text-content-heading sm:text-4xl">
-              {t('waitlist.title')}
-            </h1>
-            <p className="font-inter text-base leading-normal text-content sm:text-lg">
-              {t('waitlist.description')}
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="flex w-full max-w-md flex-col items-center gap-8"
+            initial={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            {/* Heading */}
+            <div className="flex flex-col items-center gap-4 text-center">
+              <Logo height={96} width={96} />
+              <h1 className="font-inter-tight text-3xl font-semibold leading-tight text-content-heading sm:text-4xl">
+                {t('waitlist.title')}
+              </h1>
+              <p className="font-inter text-base leading-normal text-content sm:text-lg">
+                {t('waitlist.description')}
+              </p>
+            </div>
+
+            {/* Form */}
+            <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
+              <FormInput
+                aria-label={t('auth.email')}
+                autoComplete="email"
+                disabled={isSubmitting}
+                label={t('auth.email')}
+                placeholder={t('waitlist.emailPlaceholder')}
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError(null); // Clear error on change
+                }}
+              />
+
+              {/* Error message with retry option */}
+              {error && (
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  aria-live="polite"
+                  className="flex flex-col gap-2"
+                  initial={{ opacity: 0, y: -10 }}
+                  role="alert"
+                  transition={{ duration: 0.2 }}
+                >
+                  <p className="text-sm text-danger">{error}</p>
+                  {/* Show retry button for network/server errors */}
+                  {(error.includes('network') ||
+                    error.includes('server') ||
+                    error.includes('error')) && (
+                    <Button
+                      className="self-start"
+                      size="sm"
+                      type="button"
+                      variant="secondary"
+                      onClick={handleRetry}
+                    >
+                      {t('waitlist.retry') || 'Try Again'}
+                    </Button>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Consent Checkbox */}
+              <div className="mt-2">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    required
+                    aria-label={
+                      t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'
+                    }
+                    aria-required="true"
+                    checked={termsAccepted && privacyAccepted}
+                    className="h-4 w-4 flex-shrink-0 rounded border text-primary focus:ring-2 focus:ring-primary"
+                    disabled={isSubmitting}
+                    type="checkbox"
+                    onChange={(e) => {
+                      setTermsAccepted(e.target.checked);
+                      setPrivacyAccepted(e.target.checked);
+                    }}
+                  />
+                  <span className="text-[11px] leading-[13px] text-content-muted">
+                    {t('waitlist.acceptTermsText') || 'I accept the '}
+                    <Link className="underline hover:text-primary" href="/terms">
+                      {t('legal.termsOfService') || 'Terms of Service'}
+                    </Link>
+                    {t('waitlist.acceptTermsAnd') || ' and '}
+                    <Link className="underline hover:text-primary" href="/privacy-policy">
+                      {t('legal.privacyPolicy') || 'Privacy Policy'}
+                    </Link>
+                    {t('waitlist.acceptTermsEnd') || '.'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Submit button */}
+              <div className="mt-2">
+                <Button
+                  fullWidth
+                  aria-label={t('waitlist.joinButton')}
+                  disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
+                  loading={isSubmitting}
+                  loadingText={t('waitlist.joining')}
+                  size="lg"
+                  type="submit"
+                  variant="primary"
+                >
+                  {t('waitlist.joinButton')}
+                </Button>
+              </div>
+            </form>
+
+            {/* Additional info */}
+            <p className="text-center font-inter text-sm text-content-muted">
+              {t('waitlist.privacyNotice')}
             </p>
-          </div>
-
-          {/* Form */}
-          <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit}>
-            <FormInput
-              aria-label={t('auth.email')}
-              autoComplete="email"
-              disabled={isSubmitting}
-              label={t('auth.email')}
-              placeholder={t('waitlist.emailPlaceholder')}
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError(null); // Clear error on change
-              }}
-            />
-
-            {/* Error message with retry option */}
-            {error && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                aria-live="polite"
-                className="flex flex-col gap-2"
-                initial={{ opacity: 0, y: -10 }}
-                role="alert"
-                transition={{ duration: 0.2 }}
-              >
-                <p className="text-sm text-danger">{error}</p>
-                {/* Show retry button for network/server errors */}
-                {(error.includes('network') ||
-                  error.includes('server') ||
-                  error.includes('error')) && (
-                  <Button
-                    className="self-start"
-                    size="sm"
-                    type="button"
-                    variant="secondary"
-                    onClick={handleRetry}
-                  >
-                    {t('waitlist.retry') || 'Try Again'}
-                  </Button>
-                )}
-              </motion.div>
-            )}
-
-            {/* Consent Checkbox */}
-            <div className="mt-2">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  required
-                  aria-label={
-                    t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'
-                  }
-                  aria-required="true"
-                  checked={termsAccepted && privacyAccepted}
-                  className="h-4 w-4 flex-shrink-0 rounded border text-primary focus:ring-2 focus:ring-primary"
-                  disabled={isSubmitting}
-                  type="checkbox"
-                  onChange={(e) => {
-                    setTermsAccepted(e.target.checked);
-                    setPrivacyAccepted(e.target.checked);
-                  }}
-                />
-                <span className="text-[11px] leading-[13px] text-content-muted">
-                  {t('waitlist.acceptTermsText') || 'I accept the '}
-                  <Link className="underline hover:text-primary" href="/terms">
-                    {t('legal.termsOfService') || 'Terms of Service'}
-                  </Link>
-                  {t('waitlist.acceptTermsAnd') || ' and '}
-                  <Link className="underline hover:text-primary" href="/privacy-policy">
-                    {t('legal.privacyPolicy') || 'Privacy Policy'}
-                  </Link>
-                  {t('waitlist.acceptTermsEnd') || '.'}
-                </span>
-              </label>
-            </div>
-
-            {/* Submit button */}
-            <div className="mt-2">
-              <Button
-                fullWidth
-                aria-label={t('waitlist.joinButton')}
-                disabled={isSubmitting || !email.trim() || !termsAccepted || !privacyAccepted}
-                loading={isSubmitting}
-                loadingText={t('waitlist.joining')}
-                size="lg"
-                type="submit"
-                variant="primary"
-              >
-                {t('waitlist.joinButton')}
-              </Button>
-            </div>
-          </form>
-
-          {/* Additional info */}
-          <p className="text-center font-inter text-sm text-content-muted">
-            {t('waitlist.privacyNotice')}
-          </p>
-        </motion.div>
+          </motion.div>
         </div>
       </div>
     </>

@@ -78,7 +78,11 @@ export function getOutreachEmailHtml(params: {
 const templates = {
   de: {
     subject: 'Ihr Unternehmen auf Ummah Flow – Bitte überprüfen',
-    getHtml: (params: { tokenUrl: string; providerName: string; whatsappUrl: string | null }) => `<!DOCTYPE html>
+    getHtml: (params: {
+      tokenUrl: string;
+      providerName: string;
+      whatsappUrl: string | null;
+    }) => `<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="utf-8">
@@ -131,7 +135,9 @@ const templates = {
       </p>
     </div>
     
-    ${params.whatsappUrl ? `<!-- WhatsApp Contact Option -->
+    ${
+      params.whatsappUrl
+        ? `<!-- WhatsApp Contact Option -->
     <div style="background: #F5F5F5; padding: 24px 32px; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 12px 0; font-size: 14px; color: #555555;">
         <strong style="color: #232323;">Kontaktieren Sie uns auch per WhatsApp:</strong>
@@ -140,7 +146,9 @@ const templates = {
         <span>📱</span>
         <span>WhatsApp öffnen</span>
       </a>
-    </div>` : ''}
+    </div>`
+        : ''
+    }
     
     <!-- Footer -->
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
@@ -166,7 +174,11 @@ const templates = {
   },
   en: {
     subject: 'Your Business on Ummah Flow – Please Review',
-    getHtml: (params: { tokenUrl: string; providerName: string; whatsappUrl: string | null }) => `<!DOCTYPE html>
+    getHtml: (params: {
+      tokenUrl: string;
+      providerName: string;
+      whatsappUrl: string | null;
+    }) => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -219,7 +231,9 @@ const templates = {
       </p>
     </div>
     
-    ${params.whatsappUrl ? `<!-- WhatsApp Contact Option -->
+    ${
+      params.whatsappUrl
+        ? `<!-- WhatsApp Contact Option -->
     <div style="background: #F5F5F5; padding: 24px 32px; border-top: 1px solid #D4D4D4;">
       <p style="margin: 0 0 12px 0; font-size: 14px; color: #555555;">
         <strong style="color: #232323;">You can also contact us via WhatsApp:</strong>
@@ -228,7 +242,9 @@ const templates = {
         <span>📱</span>
         <span>Open WhatsApp</span>
       </a>
-    </div>` : ''}
+    </div>`
+        : ''
+    }
     
     <!-- Footer -->
     <div style="background: #F5F5F5; padding: 24px 32px; text-align: center; border-top: 1px solid #D4D4D4;">
@@ -262,7 +278,7 @@ const templates = {
  * Send a provider outreach email.
  */
 export async function sendProviderOutreachEmail(
-  params: OutreachEmailParams
+  params: OutreachEmailParams,
 ): Promise<OutreachEmailResult> {
   try {
     const resend = getResendClient();

@@ -79,10 +79,12 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
           .eq('provider_id', communityServiceId);
 
         const error = providerError || needsError;
-        const data = providerData ? {
-          needs_ids: needRows?.map((r: { need_id: string }) => r.need_id) ?? [],
-          category_id: providerData.category_id,
-        } : null;
+        const data = providerData
+          ? {
+              needs_ids: needRows?.map((r: { need_id: string }) => r.need_id) ?? [],
+              category_id: providerData.category_id,
+            }
+          : null;
 
         if (!error && data) {
           if (data.needs_ids) {
@@ -101,17 +103,21 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
   }, [communityServiceId]);
 
   const filteredNeeds = needs.filter((need) => {
-    const needName = language === 'en' ? (need.name_en || need.name_de || '') : (need.name_de || need.name_en || '');
+    const needName =
+      language === 'en' ? need.name_en || need.name_de || '' : need.name_de || need.name_en || '';
     return needName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   const toggleNeed = (needId: string) => {
-    setSelectedNeedIds(prev => {
+    setSelectedNeedIds((prev) => {
       const newSelection = prev.includes(needId)
-        ? prev.filter(id => id !== needId)
+        ? prev.filter((id) => id !== needId)
         : [...prev, needId];
 
-      localStorage.setItem(`admin_cs_edit_needs_${communityServiceId}`, JSON.stringify(newSelection));
+      localStorage.setItem(
+        `admin_cs_edit_needs_${communityServiceId}`,
+        JSON.stringify(newSelection),
+      );
       return newSelection;
     });
   };
@@ -138,10 +144,13 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
       }
 
       const createdNeed = responseData.data as Need;
-      setNeeds(prev => [...prev, createdNeed]);
+      setNeeds((prev) => [...prev, createdNeed]);
       const newSelection = [...selectedNeedIds, createdNeed.need_id];
       setSelectedNeedIds(newSelection);
-      localStorage.setItem(`admin_cs_edit_needs_${communityServiceId}`, JSON.stringify(newSelection));
+      localStorage.setItem(
+        `admin_cs_edit_needs_${communityServiceId}`,
+        JSON.stringify(newSelection),
+      );
       setNewNeed('');
     } catch (error) {
       console.error('Error creating need:', error);
@@ -156,22 +165,24 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
   };
 
   return (
-    <div className="flex h-screen-fix flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      <header className="fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)]">
-        <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">
+    <div className="h-screen-fix flex flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+      <header className="fixed left-0 right-0 top-0 z-50 bg-white/10 pt-[calc(env(safe-area-inset-top)+24px)] backdrop-blur-3xl">
+        <div className="mx-auto flex h-10 w-full max-w-[393px] items-start pl-7 pr-4">
           <button
             aria-label={t('editProvider.back')}
-            className="flex items-center justify-center w-8 h-8 -ml-1"
+            className="-ml-1 flex h-8 w-8 items-center justify-center"
             onClick={() => router.back()}
           >
-            <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
+            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="text-xl font-semibold text-content-heading">{t('editProvider.editNeeds.title')}</h1>
+          <h1 className="text-xl font-semibold text-content-heading">
+            {t('editProvider.editNeeds.title')}
+          </h1>
         </div>
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-[393px] mx-auto px-4 pt-[calc(env(safe-area-inset-top)+24px+40px+24px)] pb-24">
+        <div className="mx-auto w-full max-w-[393px] px-4 pb-24 pt-[calc(env(safe-area-inset-top)+24px+40px+24px)]">
           <div className="mb-4">
             <div className="relative">
               <Icon
@@ -195,7 +206,9 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div className="mb-6">
-            <h3 className="mb-2 text-sm font-medium text-[#232323]">{t('editProvider.editNeeds.createNew')}</h3>
+            <h3 className="mb-2 text-sm font-medium text-[#232323]">
+              {t('editProvider.editNeeds.createNew')}
+            </h3>
             <div className="flex gap-2">
               <input
                 className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
@@ -216,7 +229,9 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <div className="mb-4">
-            <h3 className="mb-4 text-sm font-medium text-[#232323]">{t('editProvider.editNeeds.availableNeeds')}</h3>
+            <h3 className="mb-4 text-sm font-medium text-[#232323]">
+              {t('editProvider.editNeeds.availableNeeds')}
+            </h3>
           </div>
           <div className="space-y-2">
             {isLoading ? (
@@ -229,14 +244,16 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
                   key={need.need_id}
                   className={`w-full rounded-xl px-4 py-3 text-left transition-all duration-200 ${
                     selectedNeedIds.includes(need.need_id)
-                      ? 'bg-primary-light text-content-heading border border-primary'
-                      : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                      ? 'border border-primary bg-primary-light text-content-heading'
+                      : 'border border-gray-200 bg-white text-[#232323] hover:border-gray-300 hover:bg-gray-50'
                   }`}
                   onClick={() => toggleNeed(need.need_id)}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">
-                      {language === 'en' ? (need.name_en || need.name_de || '') : (need.name_de || need.name_en || '')}
+                      {language === 'en'
+                        ? need.name_en || need.name_de || ''
+                        : need.name_de || need.name_en || ''}
                     </span>
                     {selectedNeedIds.includes(need.need_id) && (
                       <Icon className="h-5 w-5 text-primary" icon="lucide:check" />
@@ -251,7 +268,13 @@ export default function CsEditNeedsPage({ params }: { params: Promise<{ id: stri
 
       <FooterAction
         actionButton={{
-          label: selectedNeedIds.length > 0 ? t('editProvider.editNeeds.selected').replace('{{count}}', selectedNeedIds.length.toString()) : t('editProvider.editNeeds.save'),
+          label:
+            selectedNeedIds.length > 0
+              ? t('editProvider.editNeeds.selected').replace(
+                  '{{count}}',
+                  selectedNeedIds.length.toString(),
+                )
+              : t('editProvider.editNeeds.save'),
           icon: 'lucide:check',
           onClick: handleSave,
           variant: 'primary',

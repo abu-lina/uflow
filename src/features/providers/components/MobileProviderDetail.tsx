@@ -4,9 +4,14 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { useLanguage } from '@/providers/LanguageProvider';
-import { getAllTrustedImageUrls, PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, hashId, parseCategoryImages } from '@/utils/imageUtils';
+import {
+  getAllTrustedImageUrls,
+  PLACEHOLDER_IMAGE,
+  getCategoryCardBackgroundColor,
+  hashId,
+  parseCategoryImages,
+} from '@/utils/imageUtils';
 import type { Provider } from '@/services/providers';
-
 
 interface CategoryInfo {
   name_de: string;
@@ -22,7 +27,7 @@ interface MobileProviderDetailProps {
 export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ provider, onBack }) => {
   const router = useRouter();
   const { t, language } = useLanguage();
-  
+
   // Helper function to get category name based on language
   const getCategoryName = (category: CategoryInfo | undefined) => {
     if (!category) return t('search.unnamed');
@@ -32,7 +37,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
       return category.name_de || category.name_en || t('search.unnamed');
     }
   };
-  
+
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -40,12 +45,15 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
       router.back();
     }
   };
-  
+
   const providerImageUrls = getAllTrustedImageUrls(provider.provider_images);
   const categoryUrls = parseCategoryImages(provider.category?.category_images ?? null);
-  const categoryFallbackImageUrl = categoryUrls.length > 0
-    ? categoryUrls[hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length]
-    : null;
+  const categoryFallbackImageUrl =
+    categoryUrls.length > 0
+      ? categoryUrls[
+          hashId(`${provider.category_id ?? ''}-${provider.provider_id}`) % categoryUrls.length
+        ]
+      : null;
   const allImageUrls =
     providerImageUrls.length > 0
       ? providerImageUrls
@@ -82,14 +90,16 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
       {/* Image + Page Indicator Section */}
       <div className="flex w-full flex-col items-start gap-2">
         {/* Image Container */}
-        <div 
+        <div
           aria-label={t('providerDetail.container.imageGalleryAria', {
             name: provider.provider_name,
             count: allImageUrls.length,
           })}
           className="relative h-[312.52px] w-full overflow-hidden rounded-3xl bg-neutral-100"
           role="img"
-          style={categoryFallbackBackground ? { backgroundColor: categoryFallbackBackground } : undefined}
+          style={
+            categoryFallbackBackground ? { backgroundColor: categoryFallbackBackground } : undefined
+          }
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft' && selectedImageIdx > 0) {
@@ -103,11 +113,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
           onTouchStart={handleTouchStart}
         >
           {/* Image Carousel */}
-          <div
-            ref={imageContainerRef}
-            className="flex h-full w-full"
-            style={getTransformStyle()}
-          >
+          <div ref={imageContainerRef} className="flex h-full w-full" style={getTransformStyle()}>
             {allImageUrls.map((imageUrl, index) => (
               <div
                 key={index}
@@ -116,7 +122,10 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
               >
                 <Image
                   fill
-                  alt={t('providers.providerImageAlt', { name: provider.provider_name, index: index + 1 })}
+                  alt={t('providers.providerImageAlt', {
+                    name: provider.provider_name,
+                    index: index + 1,
+                  })}
                   className="object-cover"
                   loading={index === 0 ? 'eager' : 'lazy'}
                   sizes="(max-width: 768px) 100vw, 393px"
@@ -131,7 +140,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
           </div>
 
           {/* Back Button - Left Chevron */}
-          <div className="absolute left-0 top-0 flex h-[63.78px] w-full items-start justify-start p-4 z-10">
+          <div className="absolute left-0 top-0 z-10 flex h-[63.78px] w-full items-start justify-start p-4">
             <button
               className="flex h-8 w-8 items-center justify-center rounded-[9.53514px] border-[0.794595px] border-[#CDCDCD] bg-white/70 backdrop-blur-[1.98649px]"
               type="button"
@@ -140,7 +149,6 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
               <ChevronLeft className="h-5 w-5 text-[#232323]" />
             </button>
           </div>
-
 
           {/* Category Frame - positioned at bottom */}
           <div className="absolute bottom-0 left-0 flex h-full w-full items-end justify-start p-4">
@@ -171,9 +179,9 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
               >
                 <svg
                   fill="none"
-                  height={selectedImageIdx === index ? "16" : "12"}
+                  height={selectedImageIdx === index ? '16' : '12'}
                   viewBox="0.279844 0.519531 12.331856 11.999969"
-                  width={selectedImageIdx === index ? "16" : "12"}
+                  width={selectedImageIdx === index ? '16' : '12'}
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
@@ -192,8 +200,6 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
           </div>
         )}
       </div>
-
-
     </div>
   );
 };

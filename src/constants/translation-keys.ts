@@ -1,6 +1,6 @@
 /**
  * Translation Keys
- * 
+ *
  * Centralized constants for all translation keys to prevent typos
  * and improve IDE autocomplete support.
  */
@@ -145,7 +145,7 @@ export const TRANSLATION_KEYS = {
 
 // Type-safe helper to create custom keys
 export type TranslationKey = {
-  [K in keyof typeof TRANSLATION_KEYS]: typeof TRANSLATION_KEYS[K][keyof typeof TRANSLATION_KEYS[K]]
+  [
+    K in keyof typeof TRANSLATION_KEYS
+  ]: (typeof TRANSLATION_KEYS)[K][keyof (typeof TRANSLATION_KEYS)[K]];
 }[keyof typeof TRANSLATION_KEYS];
-
-

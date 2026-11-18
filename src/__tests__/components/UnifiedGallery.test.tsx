@@ -183,16 +183,18 @@ describe('UnifiedGallery — image error fallback [Plan 055]', () => {
       <UnifiedGallery
         categoryId="category-palette-test"
         entityType="provider"
-        category={{
-          id: 'category-palette-test',
-          name_en: 'Test',
-          name_de: 'Test',
-          category_images: {
-            urls: [
-              'https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/232c2870/1.webp',
-            ],
-          },
-        } as unknown as Parameters<typeof UnifiedGallery>[0]['category']}
+        category={
+          {
+            id: 'category-palette-test',
+            name_en: 'Test',
+            name_de: 'Test',
+            category_images: {
+              urls: [
+                'https://rdtdtcfntopcxcigkqoq.supabase.co/storage/v1/object/public/category-images/232c2870/1.webp',
+              ],
+            },
+          } as unknown as Parameters<typeof UnifiedGallery>[0]['category']
+        }
       />,
     );
 

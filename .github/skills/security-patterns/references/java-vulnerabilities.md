@@ -1,6 +1,7 @@
 # Java/Kotlin Vulnerabilities
 
 ## SQL Injection
+
 ```java
 // VULNERABLE
 String query = "SELECT * FROM users WHERE id = " + userId;
@@ -22,6 +23,7 @@ entityManager.find(User.class, userId);
 ```
 
 ## Unsafe Deserialization
+
 ```java
 // VULNERABLE - ObjectInputStream on untrusted data
 ObjectInputStream ois = new ObjectInputStream(untrustedStream);
@@ -39,6 +41,7 @@ ObjectInputFilter filter = ObjectInputFilter.Config.createFilter(
 ```
 
 ## XXE (XML External Entity)
+
 ```java
 // VULNERABLE
 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -53,6 +56,7 @@ dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
 ```
 
 ## Path Traversal
+
 ```java
 // VULNERABLE
 String path = basePath + "/" + userFilename;
@@ -67,6 +71,7 @@ if (!targetPath.startsWith(basePath)) {
 ```
 
 ## Spring Security Misconfiguration
+
 ```java
 // VULNERABLE - overly permissive
 http.authorizeRequests()
@@ -83,6 +88,7 @@ http.csrf().disable();  // Only for stateless APIs
 ```
 
 ## LDAP Injection
+
 ```java
 // VULNERABLE
 String filter = "(uid=" + username + ")";
@@ -94,6 +100,7 @@ String filter = "(uid=" + safeUsername + ")";
 ```
 
 ## Insecure Randomness
+
 ```java
 // VULNERABLE - predictable
 Random random = new Random();

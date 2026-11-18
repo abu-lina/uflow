@@ -81,7 +81,10 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
   }, [providerId]);
 
   const filteredCategories = categories.filter((category) => {
-    const categoryName = language === 'en' ? (category.name_en || category.name_de || '') : (category.name_de || category.name_en || '');
+    const categoryName =
+      language === 'en'
+        ? category.name_en || category.name_de || ''
+        : category.name_de || category.name_en || '';
     return categoryName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
@@ -141,14 +144,12 @@ export default function EditCategoryPage({ params }: { params: Promise<{ id: str
                 key={category.category_id}
                 className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 ${
                   selectedCategoryId === category.category_id
-                    ? 'bg-primary-light text-content-heading border border-primary'
-                    : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                    ? 'border border-primary bg-primary-light text-content-heading'
+                    : 'border border-gray-200 bg-white text-[#232323] hover:border-gray-300 hover:bg-gray-50'
                 }`}
                 onClick={() => handleCategorySelect(category.category_id)}
               >
-                <span className="text-sm font-medium">
-                  {categoryName}
-                </span>
+                <span className="text-sm font-medium">{categoryName}</span>
               </button>
             );
           })

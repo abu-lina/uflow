@@ -61,13 +61,12 @@ describe('needs service', () => {
       await searchNeeds('test-query');
 
       // Fallback should use explicit columns, not select('*')
-      expect(mockSelect).toHaveBeenCalledWith(
-        expect.stringContaining('need_id')
-      );
+      expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('need_id'));
       // Must NOT be called with '*'
       const selectCalls = mockSelect.mock.calls;
       const fallbackSelectCall = selectCalls.find(
-        (call: unknown[]) => typeof call[0] === 'string' && call[0] !== '*, category:categories(name_de, name_en)'
+        (call: unknown[]) =>
+          typeof call[0] === 'string' && call[0] !== '*, category:categories(name_de, name_en)',
       );
       expect(fallbackSelectCall).toBeDefined();
       if (fallbackSelectCall) {
@@ -97,7 +96,14 @@ describe('needs service', () => {
     it('returns RPC results when available', async () => {
       mockRpc.mockResolvedValueOnce({
         data: [
-          { need_id: 'n1', name_de: 'Nachhilfe', name_en: 'Tutoring', category_id: 'c1', created_by: 'u1', created_at: '2024-01-01' },
+          {
+            need_id: 'n1',
+            name_de: 'Nachhilfe',
+            name_en: 'Tutoring',
+            category_id: 'c1',
+            created_by: 'u1',
+            created_at: '2024-01-01',
+          },
         ],
         error: null,
       });

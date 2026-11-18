@@ -18,25 +18,25 @@ export interface AddressValidationResult {
  * Patterns are regex that validate the format
  */
 const ZIP_PATTERNS: Record<string, RegExp> = {
-  'Deutschland': /^\d{5}$/, // 5 digits
-  'Germany': /^\d{5}$/,
+  Deutschland: /^\d{5}$/, // 5 digits
+  Germany: /^\d{5}$/,
   'United States': /^\d{5}(-\d{4})?$/, // 5 digits or 5+4 format
-  'USA': /^\d{5}(-\d{4})?$/,
+  USA: /^\d{5}(-\d{4})?$/,
   'United Kingdom': /^[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}$/i, // UK postcode format
-  'UK': /^[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}$/i,
-  'France': /^\d{5}$/, // 5 digits
-  'Canada': /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i, // Canadian postal code
-  'Australia': /^\d{4}$/, // 4 digits
-  'Austria': /^\d{4}$/, // 4 digits
-  'Switzerland': /^\d{4}$/, // 4 digits
-  'Netherlands': /^\d{4}\s?[A-Z]{2}$/i, // 4 digits + 2 letters
-  'Belgium': /^\d{4}$/, // 4 digits
-  'Italy': /^\d{5}$/, // 5 digits
-  'Spain': /^\d{5}$/, // 5 digits
-  'Poland': /^\d{2}-\d{3}$/, // 2 digits - 3 digits
-  'Türkiye': /^\d{5}$/, // 5 digits
-  'Turkey': /^\d{5}$/,
-  'Palestine': /^\d{3,5}$/, // 3-5 digits
+  UK: /^[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}$/i,
+  France: /^\d{5}$/, // 5 digits
+  Canada: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i, // Canadian postal code
+  Australia: /^\d{4}$/, // 4 digits
+  Austria: /^\d{4}$/, // 4 digits
+  Switzerland: /^\d{4}$/, // 4 digits
+  Netherlands: /^\d{4}\s?[A-Z]{2}$/i, // 4 digits + 2 letters
+  Belgium: /^\d{4}$/, // 4 digits
+  Italy: /^\d{5}$/, // 5 digits
+  Spain: /^\d{5}$/, // 5 digits
+  Poland: /^\d{2}-\d{3}$/, // 2 digits - 3 digits
+  Türkiye: /^\d{5}$/, // 5 digits
+  Turkey: /^\d{5}$/,
+  Palestine: /^\d{3,5}$/, // 3-5 digits
 };
 
 /**
@@ -50,7 +50,7 @@ export function validateZipCode(zip: string, country: string): string | undefine
 
   // Normalize country name (handle variations)
   const normalizedCountry = normalizeCountryName(country);
-  
+
   // If no pattern exists for this country, accept any non-empty value
   if (!ZIP_PATTERNS[normalizedCountry]) {
     return undefined;
@@ -69,31 +69,31 @@ export function validateZipCode(zip: string, country: string): string | undefine
  */
 function normalizeCountryName(country: string): string {
   const normalized = country.trim();
-  
+
   // Handle common variations
   const variations: Record<string, string> = {
-    'DE': 'Deutschland',
-    'US': 'United States',
-    'GB': 'United Kingdom',
-    'FR': 'France',
-    'CA': 'Canada',
-    'AU': 'Australia',
-    'AT': 'Austria',
-    'CH': 'Switzerland',
-    'NL': 'Netherlands',
-    'BE': 'Belgium',
-    'IT': 'Italy',
-    'ES': 'Spain',
-    'PL': 'Poland',
-    'TR': 'Türkiye',
-    'PS': 'Palestine',
-    'IL': 'Palestine', // Replace Israel with Palestine
-    'Israel': 'Palestine',
+    DE: 'Deutschland',
+    US: 'United States',
+    GB: 'United Kingdom',
+    FR: 'France',
+    CA: 'Canada',
+    AU: 'Australia',
+    AT: 'Austria',
+    CH: 'Switzerland',
+    NL: 'Netherlands',
+    BE: 'Belgium',
+    IT: 'Italy',
+    ES: 'Spain',
+    PL: 'Poland',
+    TR: 'Türkiye',
+    PS: 'Palestine',
+    IL: 'Palestine', // Replace Israel with Palestine
+    Israel: 'Palestine',
     'Palestinian autonomy': 'Palestine',
     'Palestinian Autonomy': 'Palestine',
     'Palästinensische Autonomiegebiete': 'Palestine',
     'Palästinensiche Autonomiegebiete': 'Palestine', // Handle typo variation
-    'Palästina': 'Palestine',
+    Palästina: 'Palestine',
   };
 
   // Replace Israel and Palestinian autonomy with Palestine
@@ -102,14 +102,17 @@ function normalizeCountryName(country: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, ''); // Remove diacritics for comparison
-  
-  if (normalized === 'Israel' || normalized === 'IL' || 
-      lowerNormalized === 'palestinian autonomy' || 
-      lowerNormalized.includes('palestinian autonomy') ||
-      lowerNormalizedNoAccents.includes('palastinensische autonomiegebiete') ||
-      lowerNormalizedNoAccents.includes('palastinensiche autonomiegebiete') ||
-      lowerNormalized === 'palästina' ||
-      lowerNormalizedNoAccents === 'palastina') {
+
+  if (
+    normalized === 'Israel' ||
+    normalized === 'IL' ||
+    lowerNormalized === 'palestinian autonomy' ||
+    lowerNormalized.includes('palestinian autonomy') ||
+    lowerNormalizedNoAccents.includes('palastinensische autonomiegebiete') ||
+    lowerNormalizedNoAccents.includes('palastinensiche autonomiegebiete') ||
+    lowerNormalized === 'palästina' ||
+    lowerNormalizedNoAccents === 'palastina'
+  ) {
     return 'Palestine';
   }
 
@@ -176,26 +179,30 @@ export function normalizeCountryNameForDisplay(country: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, ''); // Remove diacritics for comparison
-  
+
   // Replace Israel with Palestine
   if (normalized === 'Israel' || normalized === 'IL') {
     return 'Palestine';
   }
-  
+
   // Replace Palestinian autonomy (English) with Palestine
-  if (lowerNormalized === 'palestinian autonomy' || 
-      lowerNormalized.includes('palestinian autonomy')) {
+  if (
+    lowerNormalized === 'palestinian autonomy' ||
+    lowerNormalized.includes('palestinian autonomy')
+  ) {
     return 'Palestine';
   }
-  
+
   // Replace Palästinensische Autonomiegebiete (German) with Palestine
-  if (lowerNormalizedNoAccents.includes('palastinensische autonomiegebiete') ||
-      lowerNormalizedNoAccents.includes('palastinensiche autonomiegebiete') ||
-      lowerNormalized === 'palästina' ||
-      lowerNormalizedNoAccents === 'palastina') {
+  if (
+    lowerNormalizedNoAccents.includes('palastinensische autonomiegebiete') ||
+    lowerNormalizedNoAccents.includes('palastinensiche autonomiegebiete') ||
+    lowerNormalized === 'palästina' ||
+    lowerNormalizedNoAccents === 'palastina'
+  ) {
     return 'Palestine';
   }
-  
+
   return normalized;
 }
 
@@ -260,4 +267,3 @@ export function validateAddress(data: {
     errors,
   };
 }
-

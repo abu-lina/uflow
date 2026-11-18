@@ -15,10 +15,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import {
-  shouldShowCityEarlyAccessNavbar,
-  shouldShowMobileFooter,
-} from '@/utils/navigationUtils';
+import { shouldShowCityEarlyAccessNavbar, shouldShowMobileFooter } from '@/utils/navigationUtils';
 
 /**
  * Helper: simulate a fresh user with NO localStorage/sessionStorage.
@@ -74,15 +71,21 @@ describe('Plan 063 — Fresh-user mobile auth entry (Bug B)', () => {
 
   describe('Other onboarding pages remain gated for fresh users', () => {
     it('shouldShowCityEarlyAccessNavbar returns false on /about without onboarding', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/about', false, false, null, 'onboarding')).toBe(false);
+      expect(shouldShowCityEarlyAccessNavbar('/about', false, false, null, 'onboarding')).toBe(
+        false,
+      );
     });
 
     it('shouldShowCityEarlyAccessNavbar returns false on /welcome without onboarding', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/welcome', false, false, null, 'onboarding')).toBe(false);
+      expect(shouldShowCityEarlyAccessNavbar('/welcome', false, false, null, 'onboarding')).toBe(
+        false,
+      );
     });
 
     it('[post-fix PASSES] should remain hidden on locale-prefixed /city-selection routes', () => {
-      expect(shouldShowCityEarlyAccessNavbar('/de/city-selection', false, false, null, 'stage2')).toBe(false);
+      expect(
+        shouldShowCityEarlyAccessNavbar('/de/city-selection', false, false, null, 'stage2'),
+      ).toBe(false);
     });
   });
 

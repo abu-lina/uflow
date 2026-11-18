@@ -9,32 +9,74 @@ export interface AlcoholDetectionResult {
 
 export const ALCOHOL_KEYWORDS: ReadonlyArray<string> = [
   // ——— Beer & wheat beer ———
-  'Bier', 'Weizen', 'Weißbier', 'Hefeweizen', 'Pils', 'Pilsner',
-  'Kölsch', 'Altbier', 'Helles', 'Dunkles', 'Export',
-  'Radler', 'Alsterwasser',
+  'Bier',
+  'Weizen',
+  'Weißbier',
+  'Hefeweizen',
+  'Pils',
+  'Pilsner',
+  'Kölsch',
+  'Altbier',
+  'Helles',
+  'Dunkles',
+  'Export',
+  'Radler',
+  'Alsterwasser',
   // ——— Wine & sparkling ———
-  'Wein', 'Sekt', 'Champagner', 'Prosecco', 'Glühwein', 'Bowle',
+  'Wein',
+  'Sekt',
+  'Champagner',
+  'Prosecco',
+  'Glühwein',
+  'Bowle',
   // ——— Spirits ———
-  'Schnaps', 'Vodka', 'Wodka', 'Gin', 'Rum', 'Whisky', 'Whiskey',
-  'Korn', 'Likör', 'Cognac', 'Grappa', 'Tequila',
+  'Schnaps',
+  'Vodka',
+  'Wodka',
+  'Gin',
+  'Rum',
+  'Whisky',
+  'Whiskey',
+  'Korn',
+  'Likör',
+  'Cognac',
+  'Grappa',
+  'Tequila',
   // ——— Cocktails & mixed ———
-  'Cocktail', 'Longdrink', 'Mixgetränk',
+  'Cocktail',
+  'Longdrink',
+  'Mixgetränk',
   // ——— Brand-name spirits/liqueurs ———
-  'Jägermeister', 'Amaretto', 'Baileys',
+  'Jägermeister',
+  'Amaretto',
+  'Baileys',
   // ——— Popular beer brands (Plan 193) ———
-  'Paulaner', 'Becks', 'Krombacher', 'Warsteiner', 'Erdinger',
+  'Paulaner',
+  'Becks',
+  'Krombacher',
+  'Warsteiner',
+  'Erdinger',
   // ——— Popular alcoholic drink brands (Plan 193) ———
-  'Desperados', 'Jack Daniels', 'Campari', 'Aperol',
+  'Desperados',
+  'Jack Daniels',
+  'Campari',
+  'Aperol',
   // ——— Generic ———
-  'alkoholisches Getränk', 'alkoholische Getränke',
+  'alkoholisches Getränk',
+  'alkoholische Getränke',
 ] as const;
 
 export const NO_ALCOHOL_KEYWORDS: ReadonlyArray<string> = [
-  'alkoholfrei', 'ohne Alkohol', '0,0%',
+  'alkoholfrei',
+  'ohne Alkohol',
+  '0,0%',
 ] as const;
 
 export const AMBIGUOUS_KEYWORDS: ReadonlyArray<string> = [
-  'Saft', 'Schorle', 'Punsch', 'Hausgetränk',
+  'Saft',
+  'Schorle',
+  'Punsch',
+  'Hausgetränk',
 ] as const;
 
 function itemHasKeyword(itemName: string, keyword: string): boolean {

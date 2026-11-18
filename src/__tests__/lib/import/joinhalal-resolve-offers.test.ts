@@ -62,10 +62,7 @@ describe('resolveOfferIds', () => {
   });
 
   it('handles a mix of matched and unmatched values', () => {
-    const result = resolveOfferIds(
-      ['Burger', 'Sushi', 'Pommes', 'Ramen', 'Steak'],
-      OFFERS_CATALOG
-    );
+    const result = resolveOfferIds(['Burger', 'Sushi', 'Pommes', 'Ramen', 'Steak'], OFFERS_CATALOG);
     expect(result.matchedIds).toEqual(['offer-001', 'offer-003', 'offer-005']);
     expect(result.unmatchedSpeisen).toEqual(['Sushi', 'Ramen']);
   });
@@ -73,10 +70,14 @@ describe('resolveOfferIds', () => {
   it('resolves all catalog values when all Speisen match', () => {
     const result = resolveOfferIds(
       ['Burger', 'Döner', 'Pommes', 'Falafel', 'Steak'],
-      OFFERS_CATALOG
+      OFFERS_CATALOG,
     );
     expect(result.matchedIds).toEqual([
-      'offer-001', 'offer-002', 'offer-003', 'offer-004', 'offer-005',
+      'offer-001',
+      'offer-002',
+      'offer-003',
+      'offer-004',
+      'offer-005',
     ]);
     expect(result.unmatchedSpeisen).toEqual([]);
   });

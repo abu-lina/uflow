@@ -16,18 +16,14 @@ export function ProviderCard({ provider }: ProviderCardProps) {
 
   return (
     <Link
-      className="block p-3 bg-white rounded-xl border border-gray-200 hover:border-primary/40 hover:shadow-sm transition-all mb-2"
+      className="mb-2 block rounded-xl border border-gray-200 bg-white p-3 transition-all hover:border-primary/40 hover:shadow-sm"
       href={`/p/${provider.provider_id}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-gray-900 truncate">
-            {provider.provider_name}
-          </p>
-          <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
-            {provider.category_name && (
-              <span>{provider.category_name}</span>
-            )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-gray-900">{provider.provider_name}</p>
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500">
+            {provider.category_name && <span>{provider.category_name}</span>}
             {provider.address_city && (
               <>
                 {provider.category_name && <span>·</span>}
@@ -36,11 +32,11 @@ export function ProviderCard({ provider }: ProviderCardProps) {
             )}
           </div>
           {badges.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
+            <div className="mt-1.5 flex flex-wrap gap-1">
               {badges.map((badge) => (
                 <span
                   key={badge}
-                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary-dark"
+                  className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary-dark"
                 >
                   {badge}
                 </span>

@@ -7,7 +7,7 @@ describe('migration 006 phase3 referential integrity', () => {
     process.cwd(),
     'supabase',
     'migrations',
-    '006_phase3_referential_integrity.sql'
+    '006_phase3_referential_integrity.sql',
   );
   const sql = readFileSync(migrationPath, 'utf8');
 

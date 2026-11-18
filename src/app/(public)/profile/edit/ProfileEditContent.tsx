@@ -34,17 +34,17 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
   const { user: clientUser, isLoading: loading } = useAuth();
   const { t } = useLanguage();
   const router = useRouter();
-  
+
   // Use client-side user if server-side user is null
   const effectiveUser: SupabaseUser | null = user || (clientUser as SupabaseUser | null);
-  
+
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
   });
-  
+
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -56,14 +56,14 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     if (effectiveUser) {
       const fullName = effectiveUser.user_metadata?.full_name ?? '';
       const nameParts = fullName.split(' ');
-      
+
       const initialData = {
         firstName: nameParts[0] || '',
         lastName: nameParts.slice(1).join(' ') || '',
         email: effectiveUser.email || '',
         password: '',
       };
-      
+
       setFormData(initialData);
       setOriginalData(initialData);
     }
@@ -76,9 +76,8 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     }
   }, [effectiveUser, loading, router]);
 
-
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -87,7 +86,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
   // Check if form has changes
   const hasChanges = () => {
     if (!originalData) return false;
-    
+
     return (
       formData.firstName !== originalData.firstName ||
       formData.lastName !== originalData.lastName ||
@@ -105,7 +104,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       // Update user metadata if name changed
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
       const currentFullName = effectiveUser?.user_metadata?.full_name ?? '';
-      
+
       if (fullName !== currentFullName) {
         await authService.updateUser({
           data: {
@@ -130,7 +129,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
 
       // Show success state on button briefly, then redirect
       setIsSaved(true);
-      
+
       // Update original data to current form data (excluding password)
       setOriginalData({
         firstName: formData.firstName,
@@ -138,15 +137,14 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         email: formData.email,
         password: '',
       });
-      
+
       // Clear password field after successful save
-      setFormData(prev => ({ ...prev, password: '' }));
-      
+      setFormData((prev) => ({ ...prev, password: '' }));
+
       // Redirect to profile page after a brief success state
       setTimeout(() => {
         router.push('/profile');
       }, 1500);
-      
     } catch (err) {
       console.error('Error updating profile:', err);
       setError(t('profile.errorUpdatingProfile'));
@@ -169,7 +167,7 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-600 mx-auto" />
+          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-gray-600" />
           <p className="text-gray-600">{t('profile.checkingAuth')}</p>
         </div>
       </div>
@@ -181,17 +179,16 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <Lock className="mb-4 h-8 w-8 text-gray-600 mx-auto" />
+          <Lock className="mx-auto mb-4 h-8 w-8 text-gray-600" />
           <p className="text-gray-600">{t('profile.authRequired')}</p>
         </div>
       </div>
     );
   }
 
-
   return (
     <PageLayout hasBackground={false} maxWidth="full">
-      <PageHeader 
+      <PageHeader
         title={t('profile.editProfile')}
         variant="back-and-title"
         onBack={() => router.back()}
@@ -211,10 +208,8 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         <ContentSection>
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <SectionHeading>
-                {t('profile.personalData')}
-              </SectionHeading>
-            
+              <SectionHeading>{t('profile.personalData')}</SectionHeading>
+
               <div className="space-y-3">
                 {/* First Name */}
                 <FormInput
@@ -251,16 +246,16 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
                   <FormInput
                     label={t('profile.password')}
                     labelClassName="h-[15px] w-full font-inter-tight text-xs font-normal leading-[15px]"
-                    rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    rightIcon={
+                      showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />
+                    }
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     variant="with-icon"
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     onRightIconClick={() => setShowPassword(!showPassword)}
                   />
-                  <p className="pl-2 text-xs text-gray-500">
-                    {t('profile.passwordHint')}
-                  </p>
+                  <p className="pl-2 text-xs text-gray-500">{t('profile.passwordHint')}</p>
                 </div>
               </div>
             </div>
@@ -268,12 +263,10 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
         </ContentSection>
 
         {/* Manage Account Section */}
-        <ContentSection className="mt-8 mb-6">
+        <ContentSection className="mb-6 mt-8">
           <div>
-            <SectionHeading>
-              {t('profile.manageAccount')}
-            </SectionHeading>
-          
+            <SectionHeading>{t('profile.manageAccount')}</SectionHeading>
+
             <button
               className="flex h-[54px] w-full items-center gap-3 rounded-xl border border-[#D4D4D4] bg-white px-4"
               onClick={handleCloseAccount}
@@ -293,7 +286,11 @@ export function ProfileEditContent({ user }: ProfileEditContentProps) {
       <BottomActionNavbar
         height="h-16"
         primaryButton={{
-          label: isSaved ? t('actions.saved') : hasChanges() ? t('actions.saveChanges') : t('actions.noChanges'),
+          label: isSaved
+            ? t('actions.saved')
+            : hasChanges()
+              ? t('actions.saveChanges')
+              : t('actions.noChanges'),
           icon: isSaved ? 'lucide:check' : 'lucide:save',
           onClick: submitForm,
           disabled: isSaved || isSubmitting || !hasChanges(),

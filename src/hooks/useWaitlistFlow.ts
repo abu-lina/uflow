@@ -39,7 +39,7 @@ interface WaitlistStatusResponse {
 
 /**
  * Hook to manage waitlist flow state machine
- * 
+ *
  * Handles:
  * - State transitions
  * - localStorage persistence
@@ -61,25 +61,28 @@ export function useWaitlistFlow() {
    * Transition to a new state
    * Includes validation and logging for debugging
    */
-  const transitionTo = useCallback((newState: WaitlistFlowState, data?: Partial<WaitlistFlowData>) => {
-    if (isTransitioningRef.current) {
-      return;
-    }
+  const transitionTo = useCallback(
+    (newState: WaitlistFlowState, data?: Partial<WaitlistFlowData>) => {
+      if (isTransitioningRef.current) {
+        return;
+      }
 
-    isTransitioningRef.current = true;
+      isTransitioningRef.current = true;
 
-    // Update flow data if provided
-    if (data) {
-      setFlowData((prev) => ({ ...prev, ...data }));
-    }
+      // Update flow data if provided
+      if (data) {
+        setFlowData((prev) => ({ ...prev, ...data }));
+      }
 
-    setCurrentState(newState);
+      setCurrentState(newState);
 
-    // Allow next transition after a brief delay
-    setTimeout(() => {
-      isTransitioningRef.current = false;
-    }, 100);
-  }, []);
+      // Allow next transition after a brief delay
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+      }, 100);
+    },
+    [],
+  );
 
   /**
    * Initialize state from localStorage and API
@@ -99,8 +102,8 @@ export function useWaitlistFlow() {
 
     if (onboardingState?.earlyAccessUnlocked) {
       // Check if user has a selected city
-      const selectedCity = 
-        typeof window !== 'undefined' 
+      const selectedCity =
+        typeof window !== 'undefined'
           ? localStorage.getItem('selectedCity') || sessionStorage.getItem('selectedCity')
           : null;
 
@@ -117,7 +120,7 @@ export function useWaitlistFlow() {
       });
       setCurrentState('earlyAccess');
       setIsInitialized(true);
-      
+
       // Verify with API in background (only if waitlist is not skipped)
       if (!skipWaitlist) {
         fetch('/api/waitlist/status')
@@ -189,7 +192,7 @@ export function useWaitlistFlow() {
             email,
             waitlistToken: prev.waitlistToken,
           }));
-          
+
           // Store in consolidated state for persistence across sessions
           setOnboardingState({
             email,
@@ -197,7 +200,7 @@ export function useWaitlistFlow() {
             earlyAccessUnlocked: true,
             submittedAt: new Date().toISOString(),
           });
-          
+
           // Transition to early access if still in initial state
           setCurrentState((prevState) => {
             if (prevState === 'splash' || prevState === 'waitlist' || prevState === 'loading') {
@@ -237,7 +240,7 @@ export function useWaitlistFlow() {
     // Once user has progressed (about, success, earlyAccess, etc.), ignore isSplashVisible changes
     const isInitialState = currentState === 'splash' || currentState === 'waitlist';
     const shouldIgnore = !isInitialState || hasProgressedRef.current;
-    
+
     if (shouldIgnore) {
       return;
     }
@@ -278,14 +281,17 @@ export function useWaitlistFlow() {
     }, [currentState, transitionTo]),
 
     // Waitlist → Success
-    handleWaitlistSuccess: useCallback((email: string, token?: string) => {
-      if (currentState === 'waitlist') {
-        transitionTo('success', {
-          email,
-          waitlistToken: token || '',
-        });
-      }
-    }, [currentState, transitionTo]),
+    handleWaitlistSuccess: useCallback(
+      (email: string, token?: string) => {
+        if (currentState === 'waitlist') {
+          transitionTo('success', {
+            email,
+            waitlistToken: token || '',
+          });
+        }
+      },
+      [currentState, transitionTo],
+    ),
 
     // Success → Early Access
     handleSuccessComplete: useCallback(() => {
@@ -316,10 +322,10 @@ export function useWaitlistFlow() {
         // CRITICAL: Keep localStorage intact so PWA knows user already joined
         // Database already has has_seen_early_access = true
         // State persists for future sessions/PWA installs
-        
+
         // Mark early access as completed for welcome page detection
         localStorage.setItem('early_access_completed', 'true');
-        
+
         // Redirect to root with query parameter for welcome page
         // This ensures proper URL context for iOS PWA installation
         if (typeof window !== 'undefined') {
@@ -334,13 +340,16 @@ export function useWaitlistFlow() {
     }, []),
 
     // Waitlist complete (from provider modal)
-    handleWaitlistComplete: useCallback((token?: string) => {
-      if (currentState === 'waitlist') {
-        transitionTo('success', {
-          waitlistToken: token || '',
-        });
-      }
-    }, [currentState, transitionTo]),
+    handleWaitlistComplete: useCallback(
+      (token?: string) => {
+        if (currentState === 'waitlist') {
+          transitionTo('success', {
+            waitlistToken: token || '',
+          });
+        }
+      },
+      [currentState, transitionTo],
+    ),
   };
 
   return {

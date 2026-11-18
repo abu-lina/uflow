@@ -20,7 +20,10 @@ export function InfoTrailing({ onPress, ariaLabel, className }: InfoTrailingProp
     return (
       <button
         aria-label={ariaLabel}
-        className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#e9e9e9]', className)}
+        className={cn(
+          'flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#e9e9e9]',
+          className,
+        )}
         type="button"
         onClick={onPress}
       >
@@ -32,7 +35,10 @@ export function InfoTrailing({ onPress, ariaLabel, className }: InfoTrailingProp
   return (
     <span
       aria-hidden="true"
-      className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#e9e9e9]', className)}
+      className={cn(
+        'flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#e9e9e9]',
+        className,
+      )}
       data-testid="info-trailing-static"
     >
       {content}

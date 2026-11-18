@@ -12,9 +12,13 @@ vi.mock('@/services/communityServices', () => ({
   getCommunityServiceById: (...args: unknown[]) => mockClientGetCommunityServiceById(...args),
 }));
 
-vi.mock('@/app/(public)/community-services/[community_service_id]/CommunityServiceDetailPageClient', () => ({
-  CommunityServiceDetailPageClient: (props: unknown) => mockCommunityServiceDetailPageClient(props),
-}));
+vi.mock(
+  '@/app/(public)/community-services/[community_service_id]/CommunityServiceDetailPageClient',
+  () => ({
+    CommunityServiceDetailPageClient: (props: unknown) =>
+      mockCommunityServiceDetailPageClient(props),
+  }),
+);
 
 vi.mock('@/components/community-services/ImagePreloader', () => ({
   ImagePreloader: () => null,
@@ -61,7 +65,9 @@ describe('community service detail page server data path', () => {
     const mod = await import('@/app/(public)/community-services/[community_service_id]/page');
 
     // Should NOT throw — page returns JSX with CommunityServiceDetailPageClient
-    const result = await mod.default({ params: Promise.resolve({ community_service_id: 'cs-missing' }) });
+    const result = await mod.default({
+      params: Promise.resolve({ community_service_id: 'cs-missing' }),
+    });
 
     expect(mockServerGetCommunityServiceById).toHaveBeenCalledWith('cs-missing');
     // Verify the result is a React element (not an error/throw)

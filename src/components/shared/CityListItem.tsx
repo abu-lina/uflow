@@ -15,11 +15,11 @@ interface CityListItemProps {
 
 /**
  * Reusable city list item component
- * 
+ *
  * Displays:
  * - Line 1: City name (e.g., "Berlin")
  * - Line 2: Status + interest count (e.g., "Not active yet · 14 people interested")
- * 
+ *
  * Features:
  * - Rule of 8 spacing (p-4)
  * - Hover states
@@ -37,21 +37,22 @@ export const CityListItem = memo(function CityListItem({
 }: CityListItemProps) {
   // Get status text based on unlock status
   const statusText = isUnlocked ? 'Live' : 'Not active yet';
-  
+
   // Format interest count
-  const interestText = interestCount === 1 
-    ? `${interestCount} person interested`
-    : `${interestCount} people interested`;
+  const interestText =
+    interestCount === 1
+      ? `${interestCount} person interested`
+      : `${interestCount} people interested`;
 
   return (
     <motion.button
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        'w-full flex flex-col p-4 rounded-xl bg-white text-left transition-all duration-150 h-[72px]',
+        'flex h-[72px] w-full flex-col rounded-xl bg-white p-4 text-left transition-all duration-150',
         'hover:bg-neutral-light hover:shadow-sm',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
+        'disabled:cursor-not-allowed disabled:opacity-50',
         'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-        className
+        className,
       )}
       disabled={disabled}
       initial={{ opacity: 0, y: 10 }}
@@ -64,7 +65,7 @@ export const CityListItem = memo(function CityListItem({
       <span className="font-inter-tight text-base font-semibold text-content-heading">
         {cityName}
       </span>
-      
+
       {/* Status and interest count */}
       <div className="flex items-center gap-1 text-sm text-content-muted">
         <span>{statusText}</span>
@@ -74,4 +75,3 @@ export const CityListItem = memo(function CityListItem({
     </motion.button>
   );
 });
-

@@ -72,15 +72,15 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
 const footerHeightMap: Record<string, string> = {
   'h-12': 'pb-12', // 48px
   'h-16': 'pb-16', // 64px - default
-  'subpage': 'pb-20', // 80px for subpage buttons
+  subpage: 'pb-20', // 80px for subpage buttons
 } as const;
 
 // Padding mapping for consistent spacing - ensures proper padding from device edges with safe area support
 const paddingMap = {
   none: 'px-0',
-  sm: 'px-2',              // 8px mobile only (no safe area, minimal padding)
-  default: 'px-safe',      // 16px minimum + safe area insets - STANDARD for all pages
-  lg: 'px-6',              // 24px mobile (no safe area, legacy)
+  sm: 'px-2', // 8px mobile only (no safe area, minimal padding)
+  default: 'px-safe', // 16px minimum + safe area insets - STANDARD for all pages
+  lg: 'px-6', // 24px mobile (no safe area, legacy)
   'lg-safe': 'px-safe-24', // 24px minimum + safe area insets
   responsive: 'px-safe-responsive', // 16px mobile, 20px tablet, 24px desktop + safe area insets
 } as const;
@@ -88,7 +88,7 @@ const paddingMap = {
 /**
  * Reusable page content wrapper that provides consistent 16px padding from device edges
  * and proper spacing below header and above footer.
- * 
+ *
  * Features:
  * - Standard 16px left/right padding from device edges
  * - Proper layout structure without conflicting scroll containers
@@ -96,10 +96,10 @@ const paddingMap = {
  * - Type-safe max-width variants
  * - Forward ref support
  * - Renders as div by default to avoid nested main elements
- * 
+ *
  * Note: Scrolling is handled by the parent RootClientLayout main container
  * to prevent nested scroll areas that cause weird scrolling behavior.
- * 
+ *
  * @example
  * ```tsx
  * // Basic usage with standard 16px padding
@@ -112,61 +112,65 @@ const paddingMap = {
  * ```
  */
 export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperProps>(
-  ({ 
-    children, 
-    className = '', 
-    contentClassName = '',
-    maxWidth = 'sm',
-    centerVertically = false,
-    footerHeight = 'h-16',
-    padding = 'default',
-    asMain = false,
-    includeMobileNavSpacing = false,
-    hasBackground = false,
-    ...props
-  }, ref) => {
+  (
+    {
+      children,
+      className = '',
+      contentClassName = '',
+      maxWidth = 'sm',
+      centerVertically = false,
+      footerHeight = 'h-16',
+      padding = 'default',
+      asMain = false,
+      includeMobileNavSpacing = false,
+      hasBackground = false,
+      ...props
+    },
+    ref,
+  ) => {
     // Handle both predefined variants and custom strings
-    const maxWidthClass = typeof maxWidth === 'string' && maxWidth in maxWidthMap 
-      ? maxWidthMap[maxWidth as MaxWidthVariant]
-      : maxWidth;
-    
+    const maxWidthClass =
+      typeof maxWidth === 'string' && maxWidth in maxWidthMap
+        ? maxWidthMap[maxWidth as MaxWidthVariant]
+        : maxWidth;
+
     // Handle padding variant or custom string
-    const paddingClass = typeof padding === 'string' && padding in paddingMap
-      ? paddingMap[padding as keyof typeof paddingMap]
-      : padding;
+    const paddingClass =
+      typeof padding === 'string' && padding in paddingMap
+        ? paddingMap[padding as keyof typeof paddingMap]
+        : padding;
 
     // Determine footer bottom padding class when centering vertically
     // If mobile nav spacing is enabled, use the unified pb-mobile-nav to respect real footer height + safe area
     const footerPaddingClass = centerVertically
-      ? (includeMobileNavSpacing
-          ? 'pb-mobile-nav'
-          : (footerHeight
-              ? (footerHeight in footerHeightMap 
-                  ? footerHeightMap[footerHeight]
-                  : footerHeight)
-              : ''))
+      ? includeMobileNavSpacing
+        ? 'pb-mobile-nav'
+        : footerHeight
+          ? footerHeight in footerHeightMap
+            ? footerHeightMap[footerHeight]
+            : footerHeight
+          : ''
       : '';
 
     const containerProps = {
       className: cn(
         'flex flex-col gap-6 w-full',
         // Alignment: center vertically when needed, otherwise normal flow
-        centerVertically 
-          ? `justify-center items-center flex-1 ${footerPaddingClass}`
-          : '',
+        centerVertically ? `justify-center items-center flex-1 ${footerPaddingClass}` : '',
         // Don't apply padding when hasBackground is true (content handles its own margins)
         !hasBackground && paddingClass,
         // Max width constraint (only apply if not full) and center container
         maxWidthClass !== 'max-w-full' && [maxWidthClass, 'mx-auto'],
         // Apply background with proper margins (respects footer margins)
-        hasBackground && 'bg-gradient-to-b from-neutral-50 to-neutral-50 rounded-t-2xl mx-6 sm:mx-8',
+        hasBackground &&
+          'bg-gradient-to-b from-neutral-50 to-neutral-50 rounded-t-2xl mx-6 sm:mx-8',
         // Mobile navigation spacing (only when not centering vertically; when centering, footerPaddingClass handles spacing)
         includeMobileNavSpacing && !centerVertically && 'mobile-nav-spacing',
         // Custom class names
         contentClassName,
-        className
+        className,
       ),
-      ...props
+      ...props,
     };
 
     // Use type assertion to handle the dynamic element types
@@ -183,7 +187,7 @@ export const PageContentWrapper = forwardRef<HTMLDivElement, PageContentWrapperP
         {children}
       </div>
     );
-  }
+  },
 );
 
 PageContentWrapper.displayName = 'PageContentWrapper';

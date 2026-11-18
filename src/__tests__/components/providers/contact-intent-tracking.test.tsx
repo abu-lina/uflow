@@ -41,12 +41,7 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 describe('ProviderDetailModal — contact_intent_triggered', () => {
   it('emits contact_intent_triggered with contact_type=call when call button is clicked', async () => {
-    render(
-      <ProviderDetailModal
-        provider={mockProvider}
-        onClose={mockOnClose}
-      />,
-    );
+    render(<ProviderDetailModal provider={mockProvider} onClose={mockOnClose} />);
 
     // The call button renders an Icon with data-icon="entypo:old-phone"
     // We find the icon span, then climb up to its parent button
@@ -66,12 +61,7 @@ describe('ProviderDetailModal — contact_intent_triggered', () => {
   });
 
   it('emits contact_intent_triggered with contact_type=website when website button is clicked', async () => {
-    render(
-      <ProviderDetailModal
-        provider={mockProvider}
-        onClose={mockOnClose}
-      />,
-    );
+    render(<ProviderDetailModal provider={mockProvider} onClose={mockOnClose} />);
 
     // Website button renders Icon with data-icon="mdi:internet"
     const websiteIcon = document.querySelector('[data-icon="mdi:internet"]');
@@ -90,12 +80,7 @@ describe('ProviderDetailModal — contact_intent_triggered', () => {
   });
 
   it('does NOT emit contact_intent_triggered when save button is clicked', async () => {
-    render(
-      <ProviderDetailModal
-        provider={mockProvider}
-        onClose={mockOnClose}
-      />,
-    );
+    render(<ProviderDetailModal provider={mockProvider} onClose={mockOnClose} />);
 
     // Save button renders Icon with data-icon="iconamoon:heart" or similar
     const saveIcons = document.querySelectorAll(
@@ -109,10 +94,7 @@ describe('ProviderDetailModal — contact_intent_triggered', () => {
     }
 
     // trackEvent must NOT be called for save actions
-    expect(trackEvent).not.toHaveBeenCalledWith(
-      'contact_intent_triggered',
-      expect.anything(),
-    );
+    expect(trackEvent).not.toHaveBeenCalledWith('contact_intent_triggered', expect.anything());
   });
 });
 
@@ -131,13 +113,7 @@ describe('ProviderCardModal — contact_intent_triggered', () => {
   };
 
   it('emits contact_intent_triggered with contact_type=call when call link is clicked', async () => {
-    render(
-      <ProviderCardModal
-        open={true}
-        provider={cardProvider}
-        onClose={mockOnClose}
-      />,
-    );
+    render(<ProviderCardModal open={true} provider={cardProvider} onClose={mockOnClose} />);
 
     // ProviderActionBar renders <a aria-label={t('providers.call')} href="tel:...">
     // In English locale (jsdom default): 'Call'; in German: 'Anrufen'
@@ -155,13 +131,7 @@ describe('ProviderCardModal — contact_intent_triggered', () => {
   });
 
   it('emits contact_intent_triggered with contact_type=website when website link is clicked', async () => {
-    render(
-      <ProviderCardModal
-        open={true}
-        provider={cardProvider}
-        onClose={mockOnClose}
-      />,
-    );
+    render(<ProviderCardModal open={true} provider={cardProvider} onClose={mockOnClose} />);
 
     // ProviderActionBar renders <a aria-label="Website" href="...">
     const websiteLink = screen.getByRole('link', { name: 'Website' });

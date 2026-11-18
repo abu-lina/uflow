@@ -18,18 +18,26 @@ vi.mock('@/features/providers/components/ProviderCard', () => ({
     category?: { name_de?: string; name_en?: string; category_images?: Record<string, unknown> };
     provider_name: string;
   }) => {
-    capturedCards.push({ provider_id: props.provider_id, distanceKm: props.distanceKm, category: props.category });
+    capturedCards.push({
+      provider_id: props.provider_id,
+      distanceKm: props.distanceKm,
+      category: props.category,
+    });
     return (
       <div data-testid={`provider-card-${props.provider_id}`}>
         <span data-testid={`provider-name-${props.provider_id}`}>{props.provider_name}</span>
-        <span data-testid={`provider-distance-${props.provider_id}`}>{props.distanceKm ?? 'no-distance'}</span>
+        <span data-testid={`provider-distance-${props.provider_id}`}>
+          {props.distanceKm ?? 'no-distance'}
+        </span>
       </div>
     );
   },
 }));
 
 vi.mock('@/components/ui/SkeletonGrid', () => ({
-  SkeletonGrid: ({ count }: { count?: number }) => <div data-testid="skeleton-grid">count={count}</div>,
+  SkeletonGrid: ({ count }: { count?: number }) => (
+    <div data-testid="skeleton-grid">count={count}</div>
+  ),
 }));
 
 vi.mock('@/components/ui/EmptyState', () => ({
@@ -79,13 +87,7 @@ describe('HomeNearMeList', () => {
 
   it('[post-fix PASSES] loading → SkeletonGrid', () => {
     render(
-      <HomeNearMeList
-        error={null}
-        headerOffset={120}
-        isLoading
-        onRetry={vi.fn()}
-        results={[]}
-      />,
+      <HomeNearMeList error={null} headerOffset={120} isLoading onRetry={vi.fn()} results={[]} />,
     );
 
     expect(screen.getByTestId('skeleton-grid')).toHaveTextContent('count=8');
@@ -104,7 +106,9 @@ describe('HomeNearMeList', () => {
     );
 
     expect(screen.getByTestId('empty-title')).toHaveTextContent('Something went wrong');
-    expect(screen.getByTestId('empty-description')).toHaveTextContent('Could not load nearby providers.');
+    expect(screen.getByTestId('empty-description')).toHaveTextContent(
+      'Could not load nearby providers.',
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -122,7 +126,9 @@ describe('HomeNearMeList', () => {
     );
 
     expect(screen.getByTestId('empty-title')).toHaveTextContent('No open restaurants nearby');
-    expect(screen.getByTestId('empty-description')).toHaveTextContent('Try enabling location or expanding your search.');
+    expect(screen.getByTestId('empty-description')).toHaveTextContent(
+      'Try enabling location or expanding your search.',
+    );
   });
 
   it('[post-fix PASSES] renders a card per result in the given order', () => {
@@ -151,7 +157,12 @@ describe('HomeNearMeList', () => {
 
   it('[post-fix PASSES] each card receives distanceKm = result.distance_km', () => {
     const results: NearMeFoodResult[] = [
-      { ...makeResult('p1', 0.4), category_name_de: null, category_name_en: null, category_images: null },
+      {
+        ...makeResult('p1', 0.4),
+        category_name_de: null,
+        category_name_en: null,
+        category_images: null,
+      },
       makeResult('p2', 12.5),
     ];
 
@@ -174,6 +185,8 @@ describe('HomeNearMeList', () => {
 
     expect(capturedCards[1].category?.name_de).toBe('Turkisch');
     expect(capturedCards[1].category?.name_en).toBe('Turkish');
-    expect(capturedCards[1].category?.category_images).toEqual({ urls: ['https://example.com/cat.jpg'] });
+    expect(capturedCards[1].category?.category_images).toEqual({
+      urls: ['https://example.com/cat.jpg'],
+    });
   });
 });

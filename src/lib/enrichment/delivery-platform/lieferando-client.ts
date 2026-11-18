@@ -19,9 +19,7 @@ const DEFAULT_CONFIG: Required<LieferandoClientConfig> = {
 };
 
 function parsePriceCents(priceText: string): number {
-  const cleaned = priceText
-    .replace(/[^\d,]/g, '')
-    .replace(',', '.');
+  const cleaned = priceText.replace(/[^\d,]/g, '').replace(',', '.');
   const parsed = parseFloat(cleaned);
   if (isNaN(parsed)) return 0;
   return Math.round(parsed * 100);
@@ -88,7 +86,7 @@ function parseMenuCategories($: CheerioDoc): LieferandoMenuCategory[] {
   const categories: LieferandoMenuCategory[] = [];
 
   const categoryElements = $(
-    '[class*="category"], [class*="menu-category"], [class*="gericht-gruppe"], section'
+    '[class*="category"], [class*="menu-category"], [class*="gericht-gruppe"], section',
   ).filter((_, el) => {
     const header = $(el).find('h2, h3, [class*="category-name"], [class*="category-title"]');
     return header.length > 0 && $(el).find('[class*="menu-item"], [class*="gericht"]').length > 0;
@@ -118,7 +116,7 @@ function parseMenuCategories($: CheerioDoc): LieferandoMenuCategory[] {
       const description = descEl.length > 0 ? descEl.first().text().trim() : null;
 
       const priceEl = $item.find(
-        '[class*="item-price"], [class*="gericht-preis"], [class*="price"]'
+        '[class*="item-price"], [class*="gericht-preis"], [class*="price"]',
       );
       const priceText = priceEl.length > 0 ? priceEl.first().text().trim() : '0,00 €';
       const priceCents = parsePriceCents(priceText);
@@ -162,7 +160,8 @@ class LieferandoPlaywrightClient implements LieferandoClient {
   private async createPage(): Promise<Page> {
     const browser = await this.getBrowser();
     const context = await browser.newContext({
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       viewport: { width: 1920, height: 1080 },
     });
     return context.newPage();
@@ -170,7 +169,10 @@ class LieferandoPlaywrightClient implements LieferandoClient {
 
   async searchRestaurants(city: string): Promise<LieferandoSearchResult[]> {
     await this.rateLimit();
-    const citySlug = city.toLowerCase().replace(/\s+/g, '-').replace(/[^a-zäöüß-]/g, '');
+    const citySlug = city
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-zäöüß-]/g, '');
     // The EN delivery listing page renders restaurant cards with /en/menu/{slug} links.
     // The old /speisekarte/{city} URL was a menu page, not a search page.
     const url = `${BASE_URL}/en/delivery/food/${encodeURIComponent(citySlug)}`;
@@ -188,11 +190,20 @@ class LieferandoPlaywrightClient implements LieferandoClient {
         const allLinks = Array.prototype.slice.call(document.querySelectorAll('a'));
         const restaurantLinks = allLinks.filter((el: HTMLAnchorElement) => {
           const href = el.href || '';
-          return (href.includes('/menu/') || href.includes('/speisekarte/')) &&
-            el.textContent && el.textContent.trim().length > 3;
+          return (
+            (href.includes('/menu/') || href.includes('/speisekarte/')) &&
+            el.textContent &&
+            el.textContent.trim().length > 3
+          );
         });
 
-        const results: Array<{name: string; slug: string; city: string; rating: number | null; isActive: boolean}> = [];
+        const results: Array<{
+          name: string;
+          slug: string;
+          city: string;
+          rating: number | null;
+          isActive: boolean;
+        }> = [];
         const seen = new Set<string>();
 
         restaurantLinks.forEach((el: HTMLAnchorElement) => {
@@ -212,7 +223,7 @@ class LieferandoPlaywrightClient implements LieferandoClient {
             name,
             slug,
             city: cityName,
-            rating: (rating !== null && !isNaN(rating)) ? rating : null,
+            rating: rating !== null && !isNaN(rating) ? rating : null,
             isActive: true,
           });
         });
@@ -253,39 +264,55 @@ class LieferandoPlaywrightClient implements LieferandoClient {
           }
         }
 
-        const name = (jsonLd?.name as string) || document.querySelector('h1')?.textContent?.trim() || '';
-        const address = ((jsonLd?.address as Record<string, unknown>)?.streetAddress as string) || '';
+        const name =
+          (jsonLd?.name as string) || document.querySelector('h1')?.textContent?.trim() || '';
+        const address =
+          ((jsonLd?.address as Record<string, unknown>)?.streetAddress as string) || '';
         const phone = (jsonLd?.telephone as string) || null;
 
-        const descEl = document.querySelector('[class*="description"], [class*="beschreibung"], meta[name="description"]');
+        const descEl = document.querySelector(
+          '[class*="description"], [class*="beschreibung"], meta[name="description"]',
+        );
         const description = descEl?.getAttribute('content') || descEl?.textContent?.trim() || null;
 
         const rating = jsonLd?.aggregateRating
           ? ((jsonLd.aggregateRating as Record<string, unknown>)?.ratingValue as number) || null
           : null;
 
-        const categories: Array<{name: string; items: Array<{name: string; description: string | null; priceCents: number}>}> = [];
-        const catNodeList = document.querySelectorAll('[class*="category"], [class*="menu-category"], [class*="gericht-gruppe"], section');
+        const categories: Array<{
+          name: string;
+          items: Array<{ name: string; description: string | null; priceCents: number }>;
+        }> = [];
+        const catNodeList = document.querySelectorAll(
+          '[class*="category"], [class*="menu-category"], [class*="gericht-gruppe"], section',
+        );
         const catElements = Array.prototype.slice.call(catNodeList);
 
         catElements.forEach((cat) => {
-          const header = cat.querySelector('h2, h3, [class*="category-name"], [class*="category-title"]');
+          const header = cat.querySelector(
+            'h2, h3, [class*="category-name"], [class*="category-title"]',
+          );
           if (!header) return;
           const catName = header.textContent?.trim() || 'Sonstige';
 
-          const items: Array<{name: string; description: string | null; priceCents: number}> = [];
+          const items: Array<{ name: string; description: string | null; priceCents: number }> = [];
           const itemNodeList = cat.querySelectorAll('[class*="menu-item"], [class*="gericht"]');
           const itemElements = Array.prototype.slice.call(itemNodeList);
 
           itemElements.forEach((item) => {
             const nameEl = item.querySelector('[class*="item-name"], [class*="gericht-name"], h4');
-            const name = nameEl?.textContent?.trim() || (item.childNodes[0]?.textContent || '').trim();
+            const name =
+              nameEl?.textContent?.trim() || (item.childNodes[0]?.textContent || '').trim();
             if (!name) return;
 
-            const descEl = item.querySelector('[class*="item-description"], [class*="gericht-beschreibung"], p');
+            const descEl = item.querySelector(
+              '[class*="item-description"], [class*="gericht-beschreibung"], p',
+            );
             const description = descEl ? descEl.textContent?.trim() || null : null;
 
-            const priceEl = item.querySelector('[class*="item-price"], [class*="gericht-preis"], [class*="price"]');
+            const priceEl = item.querySelector(
+              '[class*="item-price"], [class*="gericht-preis"], [class*="price"]',
+            );
             const priceText = priceEl ? priceEl.textContent?.trim() || '0,00 €' : '0,00 €';
             const cleaned = priceText.replace(/[^\d,]/g, '').replace(',', '.');
             const priceCents = Math.round((parseFloat(cleaned) || 0) * 100);
@@ -341,9 +368,7 @@ class LieferandoPlaywrightClient implements LieferandoClient {
   }
 }
 
-export function createLieferandoClient(
-  config?: LieferandoClientConfig
-): LieferandoClient {
+export function createLieferandoClient(config?: LieferandoClientConfig): LieferandoClient {
   const merged: Required<LieferandoClientConfig> = {
     ...DEFAULT_CONFIG,
     ...config,

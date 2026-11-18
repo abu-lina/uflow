@@ -14,7 +14,9 @@ const eqCalls: unknown[][] = [];
 function likeToRegExp(pattern: string): RegExp {
   const source = pattern
     .split('')
-    .map((char) => (char === '%' ? '.*' : char === '_' ? '.' : char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+    .map((char) =>
+      char === '%' ? '.*' : char === '_' ? '.' : char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    )
     .join('');
   return new RegExp(`^${source}$`, 'i');
 }
@@ -46,11 +48,21 @@ vi.mock('@/lib/supabase/admin', () => ({
     auth: {
       admin: {
         getUserById: async () => ({
-          data: { user: { id: 'user-669', email: STORED_EMAIL, email_confirmed_at: 'now', user_metadata: {} } },
+          data: {
+            user: {
+              id: 'user-669',
+              email: STORED_EMAIL,
+              email_confirmed_at: 'now',
+              user_metadata: {},
+            },
+          },
           error: null,
         }),
         updateUserById: async () => ({ error: null }),
-        generateLink: async () => ({ data: { properties: { hashed_token: 'hashed-669' } }, error: null }),
+        generateLink: async () => ({
+          data: { properties: { hashed_token: 'hashed-669' } },
+          error: null,
+        }),
       },
     },
   }),

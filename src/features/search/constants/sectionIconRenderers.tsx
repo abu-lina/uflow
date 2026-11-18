@@ -8,12 +8,7 @@ import type { Section } from '@/providers/search-provider';
 export const SECTION_ICON_RENDERERS: Record<Section, (isActive: boolean) => ReactNode> = {
   food: () => <Hamburger aria-hidden="true" className="h-4 w-4 shrink-0" />,
   ummah: (isActive) => (
-    <HomeIcon
-      className="h-4 w-4 shrink-0"
-      isActive={isActive}
-      size={16}
-      viewBox="12 12 24 24"
-    />
+    <HomeIcon className="h-4 w-4 shrink-0" isActive={isActive} size={16} viewBox="12 12 24 24" />
   ),
   store: () => <Store aria-hidden="true" className="h-4 w-4 shrink-0" />,
 };

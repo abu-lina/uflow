@@ -19,18 +19,31 @@ export async function POST(request: Request) {
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      return NextResponse.json({ error: 'Forbidden - Admin or Moderator access required' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Forbidden - Admin or Moderator access required' },
+        { status: 403 },
+      );
     }
 
     const identifier = getClientIdentifier(request, user.id);
-    const isRateLimited = !rateLimiters.adminReview.perHour(identifier) ||
+    const isRateLimited =
+      !rateLimiters.adminReview.perHour(identifier) ||
       !rateLimiters.adminReview.perMinute(identifier);
     if (isRateLimited) {
-      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 },
+      );
     }
 
-    const body = await request.json().catch(() => null) as { name?: unknown; categoryId?: unknown } | null;
-    const sanitizedName = validateAndSanitizeName(typeof body?.name === 'string' ? body.name : '', 100);
+    const body = (await request.json().catch(() => null)) as {
+      name?: unknown;
+      categoryId?: unknown;
+    } | null;
+    const sanitizedName = validateAndSanitizeName(
+      typeof body?.name === 'string' ? body.name : '',
+      100,
+    );
     const categoryId = typeof body?.categoryId === 'string' ? body.categoryId : null;
 
     if (!sanitizedName) {
@@ -48,10 +61,16 @@ export async function POST(request: Request) {
 
     const validation = validateOfferOrNeedName(sanitizedName, existingOffers ?? [], false);
     if (!validation.isValid) {
-      const duplicateError = validation.errors.find((message) => message.includes('existiert bereits'));
+      const duplicateError = validation.errors.find((message) =>
+        message.includes('existiert bereits'),
+      );
       return NextResponse.json(
-        { error: duplicateError ? 'An entry with this name already exists' : validation.errors[0] ?? 'Invalid offer name' },
-        { status: duplicateError ? 409 : 400 }
+        {
+          error: duplicateError
+            ? 'An entry with this name already exists'
+            : (validation.errors[0] ?? 'Invalid offer name'),
+        },
+        { status: duplicateError ? 409 : 400 },
       );
     }
 
@@ -67,7 +86,10 @@ export async function POST(request: Request) {
 
     if (createError) {
       if (createError.code === '23505') {
-        return NextResponse.json({ error: 'An entry with this name already exists' }, { status: 409 });
+        return NextResponse.json(
+          { error: 'An entry with this name already exists' },
+          { status: 409 },
+        );
       }
       throw new Error(`Failed to create offer: ${createError.message}`);
     }
@@ -81,7 +103,7 @@ export async function POST(request: Request) {
       {
         ipAddress: getClientIp(request),
         userAgent: getUserAgent(request),
-      }
+      },
     );
 
     return NextResponse.json({ data: createdOffer }, { status: 201 });
@@ -90,17 +112,17 @@ export async function POST(request: Request) {
       'Error in admin offers API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      getRequestMetadata(request)
+      getRequestMetadata(request),
     );
 
     // Plan 060 H-2: Sanitize error message in production
-    const errorMessage = process.env.NODE_ENV === 'production'
-      ? 'Failed to create offer'
-      : error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage =
+      process.env.NODE_ENV === 'production'
+        ? 'Failed to create offer'
+        : error instanceof Error
+          ? error.message
+          : 'Unknown error';
 
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

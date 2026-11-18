@@ -16,13 +16,14 @@ interface AdminStatusFilterProps {
 
 /**
  * Admin status filter tabs for provider moderation (Plan 058 M2)
- * 
+ *
  * Shows filter tabs: All, Approved, Pending, Rejected, Needs Revision
  * Only visible to admin/moderator users on the /providers page
  */
 export function AdminStatusFilter({ selectedStatus, onStatusChange }: AdminStatusFilterProps) {
-  const prefersReducedMotion = typeof window !== 'undefined' && 
-    typeof window.matchMedia === 'function' && 
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const handleKeyDown = (e: React.KeyboardEvent, status: ReviewStatusFilter) => {
@@ -41,11 +42,7 @@ export function AdminStatusFilter({ selectedStatus, onStatusChange }: AdminStatu
   ];
 
   return (
-    <div
-      aria-label="Filter providers by review status"
-      className="contents"
-      role="tablist"
-    >
+    <div aria-label="Filter providers by review status" className="contents" role="tablist">
       {statuses.map(({ value, label }) => {
         const isSelected = selectedStatus === value;
         return (

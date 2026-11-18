@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
-import {
-  getClientIP,
-  checkIPBlocked,
-} from '@/utils/security';
+import { getClientIP, checkIPBlocked } from '@/utils/security';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { logAuth } from '@/lib/logger';
 
@@ -13,42 +10,39 @@ import { logAuth } from '@/lib/logger';
 function isTestMode(request: Request): boolean {
   const testApiKey = request.headers.get('x-test-api-key');
   const expectedKey = process.env.TEST_API_KEY;
-  
+
   if (testApiKey && expectedKey && testApiKey === expectedKey) {
     return true;
   }
-  
+
   return process.env.NODE_ENV === 'test';
 }
 
 export async function POST(request: Request) {
   const startTime = Date.now();
   const ip = getClientIP(request);
-  
+
   logAuth('info', {
     event: 'token_verification_request',
     ip,
   });
-  
+
   try {
     const isTest = isTestMode(request);
-    
+
     const body = await request.json();
     const { token } = body;
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : body.email;
-    
+
     // 1. Validate input first
     if (!token || !email) {
       logAuth('warn', {
         event: 'token_verification_missing_input',
         ip,
       });
-      return NextResponse.json(
-        { error: 'Missing token or email' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing token or email' }, { status: 400 });
     }
-    
+
     // 2. Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       logAuth('warn', {
@@ -56,17 +50,14 @@ export async function POST(request: Request) {
         ip,
         email,
       });
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
     }
-    
+
     // 3. Verify token from database FIRST
     // If token is valid, we allow verification even if IP is blocked
     // because the token itself proves legitimacy
     const supabaseAdmin = getSupabaseAdmin();
-    
+
     // First, check if token exists at all (regardless of email or used status)
     // This helps us distinguish between "token not found" vs "token already used"
     const { data: tokenByTokenOnly } = await supabaseAdmin
@@ -75,12 +66,12 @@ export async function POST(request: Request) {
       .eq('token', token)
       .eq('type', 'magic_link')
       .maybeSingle();
-    
+
     // Check if token exists but is already used (before checking for valid unused token)
     if (tokenByTokenOnly && tokenByTokenOnly.used) {
       const storedEmail = tokenByTokenOnly.email?.toLowerCase();
       const providedEmailLower = email.toLowerCase();
-      
+
       if (storedEmail === providedEmailLower) {
         logAuth('warn', {
           event: 'token_verification_already_used',
@@ -90,15 +81,16 @@ export async function POST(request: Request) {
           duration: Date.now() - startTime,
         });
         return NextResponse.json(
-          { 
-            error: 'This magic link has already been used. Magic links can only be used once. Please request a new one.',
-            code: 'TOKEN_ALREADY_USED'
+          {
+            error:
+              'This magic link has already been used. Magic links can only be used once. Please request a new one.',
+            code: 'TOKEN_ALREADY_USED',
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
-    
+
     // Exact match on the normalised email; magic-link stores it trimmed and lowercased
     let { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('email_confirmation_tokens')
@@ -108,7 +100,7 @@ export async function POST(request: Request) {
       .eq('type', 'magic_link')
       .eq('used', false)
       .maybeSingle();
-    
+
     if (tokenError) {
       logAuth('error', {
         event: 'token_verification_database_error',
@@ -117,25 +109,22 @@ export async function POST(request: Request) {
         error: tokenError.message || 'Database error',
         duration: Date.now() - startTime,
       });
-      return NextResponse.json(
-        { error: 'Failed to verify token' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to verify token' }, { status: 500 });
     }
-    
+
     // 4. Check if token is valid
     // If token is valid, allow verification even if IP is blocked
     // because the token itself proves legitimacy
     const now = new Date();
     const expiresAt = tokenData ? new Date(tokenData.expires_at) : null;
     const isTokenValid = tokenData && expiresAt && expiresAt >= now;
-    
+
     if (!isTokenValid) {
       // Token is invalid - apply rate limiting and IP blocking to prevent brute force
       const identifier = getClientIdentifier(request);
       const rateLimit = isTest ? 1000 : 10;
       const rateLimitWindow = isTest ? 60 * 1000 : 60 * 60 * 1000;
-      
+
       if (!checkRateLimit(identifier, rateLimit, rateLimitWindow, 'verify-magic-link')) {
         logAuth('warn', {
           event: 'token_verification_rate_limit_exceeded',
@@ -145,13 +134,13 @@ export async function POST(request: Request) {
         });
         return NextResponse.json(
           { error: 'Too many verification attempts. Please try again later.' },
-          { status: 429 }
+          { status: 429 },
         );
       }
-      
+
       // Check IP blocking for invalid tokens
       const ipBlocked = !isTest && checkIPBlocked(ip);
-      
+
       if (ipBlocked) {
         logAuth('warn', {
           event: 'token_verification_blocked_ip',
@@ -161,13 +150,13 @@ export async function POST(request: Request) {
           ipBlocked: true,
           duration: Date.now() - startTime,
         });
-        
+
         return NextResponse.json(
           { error: 'Access temporarily restricted. Please try again later.' },
-          { status: 403 }
+          { status: 403 },
         );
       }
-      
+
       // Token invalid but IP not blocked - return token error
       if (!tokenData) {
         // Check if token exists but email doesn't match
@@ -180,14 +169,14 @@ export async function POST(request: Request) {
             duration: Date.now() - startTime,
           });
           return NextResponse.json(
-            { 
+            {
               error: 'Invalid magic link. The email in the link does not match the token.',
-              code: 'EMAIL_MISMATCH'
+              code: 'EMAIL_MISMATCH',
             },
-            { status: 400 }
+            { status: 400 },
           );
         }
-        
+
         logAuth('warn', {
           event: 'token_verification_not_found',
           ip,
@@ -196,14 +185,14 @@ export async function POST(request: Request) {
           duration: Date.now() - startTime,
         });
         return NextResponse.json(
-          { 
+          {
             error: 'Invalid or expired magic link. Please request a new one.',
-            code: 'TOKEN_NOT_FOUND'
+            code: 'TOKEN_NOT_FOUND',
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
-      
+
       logAuth('warn', {
         event: 'token_verification_expired',
         ip,
@@ -214,19 +203,19 @@ export async function POST(request: Request) {
         duration: Date.now() - startTime,
       });
       return NextResponse.json(
-        { 
+        {
           error: 'Magic link has expired. Please request a new one.',
           code: 'TOKEN_EXPIRED',
-          expiresAt: expiresAt?.toISOString()
+          expiresAt: expiresAt?.toISOString(),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
+
     // Token is valid - proceed with verification even if IP is blocked
     // The valid token proves the user is legitimate, so we bypass IP blocking
     const ipBlocked = !isTest && checkIPBlocked(ip);
-    
+
     if (ipBlocked) {
       logAuth('info', {
         event: 'token_verification_bypass_ip_block',
@@ -237,13 +226,13 @@ export async function POST(request: Request) {
         bypassed: true,
       });
     }
-    
+
     // 7. Mark token as used
     const { error: updateError } = await supabaseAdmin
       .from('email_confirmation_tokens')
       .update({ used: true, updated_at: new Date().toISOString() })
       .eq('id', tokenData.id);
-    
+
     if (updateError) {
       logAuth('warn', {
         event: 'token_verification_update_error',
@@ -253,11 +242,14 @@ export async function POST(request: Request) {
         // Continue anyway - token verification succeeded
       });
     }
-    
+
     // 8. Get user to check if they need email confirmation
     // Use getUserById instead of listUsers to avoid performance issues with large user bases
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
-    
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAdmin.auth.admin.getUserById(tokenData.user_id);
+
     if (userError) {
       logAuth('error', {
         event: 'token_verification_user_fetch_error',
@@ -266,12 +258,9 @@ export async function POST(request: Request) {
         error: userError.message || 'Failed to fetch user',
         duration: Date.now() - startTime,
       });
-      return NextResponse.json(
-        { error: 'Failed to verify user' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to verify user' }, { status: 500 });
     }
-    
+
     if (!user) {
       logAuth('error', {
         event: 'token_verification_user_not_found',
@@ -279,12 +268,9 @@ export async function POST(request: Request) {
         userId: tokenData.user_id,
         duration: Date.now() - startTime,
       });
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    
+
     if (!user.email) {
       logAuth('error', {
         event: 'token_verification_user_email_missing',
@@ -292,14 +278,12 @@ export async function POST(request: Request) {
         userId: tokenData.user_id,
         duration: Date.now() - startTime,
       });
-      return NextResponse.json(
-        { error: 'User email not found' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'User email not found' }, { status: 400 });
     }
-    
+
     // 9. Confirm email if needed
-    const isConfirmed = user.email_confirmed_at !== null || user.user_metadata?.email_confirmed === true;
+    const isConfirmed =
+      user.email_confirmed_at !== null || user.user_metadata?.email_confirmed === true;
 
     const mergedMetadata: Record<string, unknown> = {
       ...(user.user_metadata || {}),
@@ -328,23 +312,24 @@ export async function POST(request: Request) {
         });
       }
     }
-    
+
     // 10. Create a session using Supabase Admin API
     // Generate a Supabase magic link to get a hashed_token for session creation
-    const requestOrigin = request.headers.get('origin') || 
-                         request.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
-                         process.env.NEXT_PUBLIC_SITE_URL || 
-                         'http://localhost:3000';
-    
+    const requestOrigin =
+      request.headers.get('origin') ||
+      request.headers.get('referer')?.split('/').slice(0, 3).join('/') ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      'http://localhost:3000';
+
     // Generate a Supabase magic link (this creates a proper hashed_token)
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email: user.email,
       options: {
         redirectTo: `${requestOrigin}/auth/callback`,
-      }
+      },
     });
-    
+
     if (linkError) {
       logAuth('error', {
         event: 'token_verification_session_link_error',
@@ -355,14 +340,14 @@ export async function POST(request: Request) {
       });
       return NextResponse.json(
         { error: 'Failed to create session. Please try again.' },
-        { status: 500 }
+        { status: 500 },
       );
     }
-    
+
     // Extract the hashed_token from the link data
     // generateLink returns properties.hashed_token which we can use with verifyOtp
     const hashedToken = linkData.properties?.hashed_token;
-    
+
     if (!hashedToken) {
       logAuth('error', {
         event: 'token_verification_missing_hashed_token',
@@ -371,12 +356,9 @@ export async function POST(request: Request) {
         error: 'No hashed_token in generateLink response',
         duration: Date.now() - startTime,
       });
-      return NextResponse.json(
-        { error: 'Failed to generate session token' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to generate session token' }, { status: 500 });
     }
-    
+
     const duration = Date.now() - startTime;
     logAuth('info', {
       event: 'token_verification_success',
@@ -387,7 +369,7 @@ export async function POST(request: Request) {
       bypassed: ipBlocked,
       duration,
     });
-    
+
     // Return the hashed token and user info
     // The client will use this hashed_token with verifyOtp to create the session
     return NextResponse.json({
@@ -396,9 +378,8 @@ export async function POST(request: Request) {
       user: {
         id: user.id,
         email: user.email,
-      }
+      },
     });
-    
   } catch (error) {
     logAuth('error', {
       event: 'token_verification_unexpected_error',
@@ -406,9 +387,6 @@ export async function POST(request: Request) {
       error: error instanceof Error ? error.message : 'Unknown error',
       duration: Date.now() - startTime,
     });
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }

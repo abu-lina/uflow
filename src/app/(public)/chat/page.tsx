@@ -27,15 +27,15 @@ export default function ChatPage() {
   const userName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0];
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-transparent">
-      <header className="fixed left-0 right-0 top-0 z-50 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)] pb-2 bg-transparent border-b border-transparent isolate -mx-px px-px">
-        <div className="flex items-center w-full px-safe-24 h-header-height-mobile sm:h-header-height-tablet">
+    <div className="flex h-[100dvh] flex-col bg-transparent">
+      <header className="fixed left-0 right-0 top-0 isolate z-50 -mx-px border-b border-transparent bg-transparent px-px pb-2 pt-[calc(env(safe-area-inset-top)+16px)] sm:pt-[calc(env(safe-area-inset-top)+24px)]">
+        <div className="px-safe-24 flex h-header-height-mobile w-full items-center sm:h-header-height-tablet">
           <h1 className="flex-1 font-inter-tight text-xl font-semibold text-content-heading">
             {t('chat.pageTitle')}
           </h1>
           <button
             aria-label={t('common.close')}
-            className="w-8 h-8 flex items-center justify-center -mr-1"
+            className="-mr-1 flex h-8 w-8 items-center justify-center"
             onClick={() => router.back()}
           >
             <X className="text-content-heading" size={22} strokeWidth={2} />
@@ -43,7 +43,7 @@ export default function ChatPage() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-hidden mt-[calc(env(safe-area-inset-top)+16px+56px)] sm:mt-[calc(env(safe-area-inset-top)+24px+56px)]">
+      <div className="mt-[calc(env(safe-area-inset-top)+16px+56px)] flex-1 overflow-hidden sm:mt-[calc(env(safe-area-inset-top)+24px+56px)]">
         <ChatWidget userName={userName} />
       </div>
     </div>

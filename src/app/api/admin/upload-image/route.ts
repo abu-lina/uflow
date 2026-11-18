@@ -28,12 +28,13 @@ export async function POST(request: Request) {
 
     // Rate limiting (Plan 060 M-4)
     const identifier = getClientIdentifier(request, user.id);
-    const isRateLimited = !rateLimiters.adminReview.perHour(identifier) ||
-                          !rateLimiters.adminReview.perMinute(identifier);
+    const isRateLimited =
+      !rateLimiters.adminReview.perHour(identifier) ||
+      !rateLimiters.adminReview.perMinute(identifier);
     if (isRateLimited) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -48,14 +49,19 @@ export async function POST(request: Request) {
     const fileExt = file.name.split('.').pop()?.toLowerCase();
     if (!fileExt || !ALLOWED_IMAGE_EXTENSIONS.includes(fileExt)) {
       return NextResponse.json(
-        { error: `File type not allowed. Accepted extensions: ${ALLOWED_IMAGE_EXTENSIONS.join(', ')}` },
-        { status: 400 }
+        {
+          error: `File type not allowed. Accepted extensions: ${ALLOWED_IMAGE_EXTENSIONS.join(', ')}`,
+        },
+        { status: 400 },
       );
     }
 
     // Validate MIME type
     if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
-      return NextResponse.json({ error: 'File must be a raster image (SVG not allowed)' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'File must be a raster image (SVG not allowed)' },
+        { status: 400 },
+      );
     }
 
     // Validate file size (max 5MB)
@@ -81,17 +87,14 @@ export async function POST(request: Request) {
         'Admin image upload error',
         new Error(uploadError.message),
         {},
-        { ...getRequestMetadata(request), userId: user.id }
+        { ...getRequestMetadata(request), userId: user.id },
       );
-      return NextResponse.json(
-        { error: 'Upload failed' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
     }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('provider-images')
-      .getPublicUrl(fileName);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('provider-images').getPublicUrl(fileName);
 
     return NextResponse.json({ url: publicUrl });
   } catch (error) {
@@ -99,11 +102,8 @@ export async function POST(request: Request) {
       'Admin image upload error',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      getRequestMetadata(request)
+      getRequestMetadata(request),
     );
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -78,7 +78,9 @@ const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   console.error('❌ Missing required environment variables.');
-  console.error('   NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local');
+  console.error(
+    '   NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set in .env.local',
+  );
   process.exit(1);
 }
 
@@ -225,10 +227,7 @@ async function ensureImportBotUser(): Promise<boolean> {
  * provider_description, so the import succeeds regardless.
  */
 async function checkProviderDescriptionExists(): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('providers')
-    .select('provider_description')
-    .limit(1);
+  const { data, error } = await supabase.from('providers').select('provider_description').limit(1);
 
   if (error?.message?.includes('column') && error.message.includes('provider_description')) {
     return false;
@@ -303,7 +302,9 @@ async function fetchText(url: string, attempt = 1): Promise<string | null> {
     if (!response.ok) {
       if (response.status === 429 && attempt <= MAX_RETRY_ON_RATE_LIMIT) {
         const backoff = attempt * 5000;
-        console.warn(`  ⚠ Rate limited (429) on ${url} — waiting ${backoff / 1000}s (attempt ${attempt}/${MAX_RETRY_ON_RATE_LIMIT})`);
+        console.warn(
+          `  ⚠ Rate limited (429) on ${url} — waiting ${backoff / 1000}s (attempt ${attempt}/${MAX_RETRY_ON_RATE_LIMIT})`,
+        );
         await sleep(backoff);
         return fetchText(url, attempt + 1);
       }
@@ -325,10 +326,7 @@ function sleep(ms: number): Promise<void> {
 
 // ─── Discovery ────────────────────────────────────────────────────────────────
 
-async function collectLocationUrls(
-  sitemapUrls: string[],
-  limit: number | null
-): Promise<string[]> {
+async function collectLocationUrls(sitemapUrls: string[], limit: number | null): Promise<string[]> {
   const allUrls: string[] = [];
 
   for (const sitemapUrl of sitemapUrls) {
@@ -365,7 +363,7 @@ function transformPageToProvider(
   url: string,
   categories: Category[],
   includeDescription: boolean,
-  offers: Offer[]
+  offers: Offer[],
 ): TransformResult {
   const schema = extractSchemaOrgFromHtml(html);
   if (!schema) {
@@ -440,11 +438,13 @@ function transformPageToProvider(
   }
 
   const unmapped =
-    !categoryId && categorySlug
-      ? { category: categorySlug, url, name: providerName }
-      : undefined;
+    !categoryId && categorySlug ? { category: categorySlug, url, name: providerName } : undefined;
 
-  return { record, unmapped, unmatchedSpeisen: unmatchedSpeisen.length > 0 ? unmatchedSpeisen : undefined };
+  return {
+    record,
+    unmapped,
+    unmatchedSpeisen: unmatchedSpeisen.length > 0 ? unmatchedSpeisen : undefined,
+  };
 }
 
 // ─── Deduplication ────────────────────────────────────────────────────────────
@@ -475,8 +475,8 @@ async function loadExistingProviderKeys(): Promise<Set<string>> {
       existing.add(
         makeProviderKey(
           (row.provider_name ?? '') as string,
-          (row.address_city ?? null) as string | null
-        )
+          (row.address_city ?? null) as string | null,
+        ),
       );
     }
 
@@ -619,7 +619,9 @@ async function runBackfillAlcohol(isDryRun: boolean): Promise<void> {
   const providers = Array.from(providersById.values());
 
   if ((modernProviders?.length ?? 0) === 0 && (legacyProviders?.length ?? 0) > 0) {
-    console.log(`  ℹ No import_source='joinhalal' rows found; using ${(legacyProviders ?? []).length} legacy import-bot rows.`);
+    console.log(
+      `  ℹ No import_source='joinhalal' rows found; using ${(legacyProviders ?? []).length} legacy import-bot rows.`,
+    );
   }
 
   if (!providers || providers.length === 0) {
@@ -926,7 +928,9 @@ async function runProvenanceRecovery(isDryRun: boolean): Promise<void> {
     return;
   }
 
-  console.log(`\n▶ Step 4: Persisting provenance for ${matchResult.matched.length} matched providers...`);
+  console.log(
+    `\n▶ Step 4: Persisting provenance for ${matchResult.matched.length} matched providers...`,
+  );
   let persistSuccess = 0;
   let persistFailed = 0;
 
@@ -958,9 +962,7 @@ async function runProvenanceRecovery(isDryRun: boolean): Promise<void> {
       }
     }
 
-    console.log(
-      `  ✓ Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.length} updates`
-    );
+    console.log(`  ✓ Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${batch.length} updates`);
   }
 
   console.log('\n════════════════════════════════════════════════════════');
@@ -1032,14 +1034,18 @@ async function runStaleCloneAudit(): Promise<void> {
   if (audit.exactDuplicates.length > 0) {
     console.log('\n  Exact duplicates (first 10):');
     for (const dup of audit.exactDuplicates.slice(0, 10)) {
-      console.log(`    • stale=${dup.staleCloneId} ↔ legacy=${dup.legacyId} [${dup.matchField}=${dup.matchValue}]`);
+      console.log(
+        `    • stale=${dup.staleCloneId} ↔ legacy=${dup.legacyId} [${dup.matchField}=${dup.matchValue}]`,
+      );
     }
   }
 
   if (audit.partialOverlaps.length > 0) {
     console.log('\n  Partial overlaps (first 10):');
     for (const overlap of audit.partialOverlaps.slice(0, 10)) {
-      console.log(`    • stale=${overlap.staleCloneId} (${overlap.staleCloneName}) ↔ legacy=${overlap.legacyId} (${overlap.legacyName}) [${overlap.city ?? 'no city'}]`);
+      console.log(
+        `    • stale=${overlap.staleCloneId} (${overlap.staleCloneName}) ↔ legacy=${overlap.legacyId} (${overlap.legacyName}) [${overlap.city ?? 'no city'}]`,
+      );
     }
   }
 
@@ -1091,8 +1097,7 @@ async function main() {
   const limit: ImportLimit =
     limitRaw === 10 || limitRaw === 50 || limitRaw === 100 ? limitRaw : 'all';
   const sitemapFlag = args.findIndex((a) => a === '--sitemap');
-  const sitemapUrls =
-    sitemapFlag >= 0 ? [args[sitemapFlag + 1]] : DEFAULT_SITEMAPS;
+  const sitemapUrls = sitemapFlag >= 0 ? [args[sitemapFlag + 1]] : DEFAULT_SITEMAPS;
 
   console.log('\n╔══════════════════════════════════════════════════════╗');
   console.log('║   UFlow — JoinHalal Provider Import                  ║');
@@ -1130,7 +1135,9 @@ async function main() {
   const offers = await loadOffers();
   console.log(`  ✓ Loaded ${offers.length} offers`);
   if (offers.length === 0) {
-    console.warn('  ⚠ No offers found in catalog — Speisen will not be resolved. Run migration 061 first.');
+    console.warn(
+      '  ⚠ No offers found in catalog — Speisen will not be resolved. Run migration 061 first.',
+    );
   }
 
   // Verify upsert RPC function exists (Plan 055: fail fast on schema contract mismatch)
@@ -1148,7 +1155,7 @@ async function main() {
   console.log('▶ Checking provider_description column availability...');
   const hasDescriptionColumn = await checkProviderDescriptionExists();
   console.log(
-    `  ${hasDescriptionColumn ? 'ℹ Column available (not used by RPC)' : 'ℹ Column absent (not required by RPC)'}`
+    `  ${hasDescriptionColumn ? 'ℹ Column available (not used by RPC)' : 'ℹ Column absent (not required by RPC)'}`,
   );
 
   // Ensure import-bot user exists (required for FK constraint)
@@ -1218,7 +1225,7 @@ async function main() {
       url,
       categories,
       hasDescriptionColumn,
-      offers
+      offers,
     );
 
     if (error || !record) {
@@ -1294,7 +1301,9 @@ async function main() {
         }
       }
 
-      console.log(`  ✓ Created/resolved ${createdOffers.length} offers, linked to ${providerUnmatchedSpeisen.size} providers`);
+      console.log(
+        `  ✓ Created/resolved ${createdOffers.length} offers, linked to ${providerUnmatchedSpeisen.size} providers`,
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`  ❌ Failed to auto-create offers: ${message}`);
@@ -1312,7 +1321,9 @@ async function main() {
 
   // Upsert batch: records with import_source_id (conflict on import_source,import_source_id)
   if (toUpsert.length > 0) {
-    console.log(`\n▶ Upserting ${toUpsert.length} providers (with post ID) in batches of ${BATCH_SIZE}...`);
+    console.log(
+      `\n▶ Upserting ${toUpsert.length} providers (with post ID) in batches of ${BATCH_SIZE}...`,
+    );
 
     for (let offset = 0; offset < toUpsert.length; offset += BATCH_SIZE) {
       const batch = toUpsert.slice(offset, offset + BATCH_SIZE);
@@ -1320,13 +1331,12 @@ async function main() {
       // Use RPC function with explicit ON CONFLICT DO UPDATE SET allowlist
       // to preserve admin-controlled fields (Plan 052 safety requirement)
       // import_source_url is now persisted (Plan 058, migration 065)
-      const { data, error } = await supabase
-        .rpc('upsert_joinhalal_providers', { p_providers: batch });
+      const { data, error } = await supabase.rpc('upsert_joinhalal_providers', {
+        p_providers: batch,
+      });
 
       if (error) {
-        console.error(
-          `  ❌ Batch upsert failed (offset ${offset}): ${error.message}`
-        );
+        console.error(`  ❌ Batch upsert failed (offset ${offset}): ${error.message}`);
         stats.failed += batch.length;
         continue;
       }
@@ -1337,14 +1347,16 @@ async function main() {
         stats.updated += Number(data[0].updated_count);
       }
       console.log(
-        `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: upserted ${batch.length} records`
+        `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: upserted ${batch.length} records`,
       );
     }
   }
 
   // Insert-only batch: records without import_source_id (already deduped client-side)
   if (toInsertOnly.length > 0) {
-    console.log(`\n▶ Inserting ${toInsertOnly.length} providers (no post ID, insert-only) in batches of ${BATCH_SIZE}...`);
+    console.log(
+      `\n▶ Inserting ${toInsertOnly.length} providers (no post ID, insert-only) in batches of ${BATCH_SIZE}...`,
+    );
 
     for (let offset = 0; offset < toInsertOnly.length; offset += BATCH_SIZE) {
       const batch = toInsertOnly.slice(offset, offset + BATCH_SIZE);
@@ -1378,9 +1390,7 @@ async function main() {
         .select('provider_id');
 
       if (error) {
-        console.error(
-          `  ❌ Batch insert failed (offset ${offset}): ${error.message}`
-        );
+        console.error(`  ❌ Batch insert failed (offset ${offset}): ${error.message}`);
         stats.failed += batch.length;
         continue;
       }
@@ -1423,7 +1433,7 @@ async function main() {
 
       stats.inserted += batch.length;
       console.log(
-        `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`
+        `  ✓ Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${batch.length} records`,
       );
     }
   }

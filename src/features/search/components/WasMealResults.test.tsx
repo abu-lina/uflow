@@ -50,14 +50,7 @@ describe('WasMealResults (Plan 096)', () => {
 
   it('renders loading state', () => {
     render(
-      <WasMealResults
-        items={[]}
-        isLoading
-        isError={false}
-        query="doe"
-        onSelect={vi.fn()}
-        t={t}
-      />,
+      <WasMealResults items={[]} isLoading isError={false} query="doe" onSelect={vi.fn()} t={t} />,
     );
 
     expect(screen.getByText('Suche laeuft...')).toBeInTheDocument();
@@ -65,17 +58,12 @@ describe('WasMealResults (Plan 096)', () => {
 
   it('renders error state', () => {
     render(
-      <WasMealResults
-        items={[]}
-        isLoading={false}
-        isError
-        query="doe"
-        onSelect={vi.fn()}
-        t={t}
-      />,
+      <WasMealResults items={[]} isLoading={false} isError query="doe" onSelect={vi.fn()} t={t} />,
     );
 
-    expect(screen.getByText('Suche nicht verfuegbar. Bitte versuche es erneut.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Suche nicht verfuegbar. Bitte versuche es erneut.'),
+    ).toBeInTheDocument();
   });
 
   it('renders result rows and calls onSelect on tap', () => {

@@ -77,7 +77,7 @@ export interface ProviderBadge {
   confirmation_count: number;
   created_at: string;
   updated_at: string;
-  
+
   // Joined data (when fetching with relations)
   badge_type?: BadgeType;
 }
@@ -257,10 +257,3 @@ export interface BadgeWithDetails extends ProviderBadgeWithType {
     unique_confirmers: number;
   };
 }
-
-
-
-
-
-
-

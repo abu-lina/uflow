@@ -33,13 +33,13 @@ export async function PATCH(request: Request) {
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to review-community-service API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to review-community-service API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -49,13 +49,14 @@ export async function PATCH(request: Request) {
       !rateLimiters.adminReview.perHour(identifier) ||
       !rateLimiters.adminReview.perMinute(identifier);
     if (isRateLimited) {
-      logger.warn(
-        'Rate limit exceeded for review-community-service API',
-        { userId: user.id, identifier, ...getRequestMetadata(request) }
-      );
+      logger.warn('Rate limit exceeded for review-community-service API', {
+        userId: user.id,
+        identifier,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -69,23 +70,19 @@ export async function PATCH(request: Request) {
           'Invalid request body for review-community-service',
           {
             communityServiceId:
-              typeof body?.communityServiceId === 'string'
-                ? body.communityServiceId
-                : '[invalid]',
-            reviewStatus:
-              typeof body?.reviewStatus === 'string' ? body.reviewStatus : '[invalid]',
+              typeof body?.communityServiceId === 'string' ? body.communityServiceId : '[invalid]',
+            reviewStatus: typeof body?.reviewStatus === 'string' ? body.reviewStatus : '[invalid]',
             error: validationError.message,
           },
-          { ...getRequestMetadata(request), userId: user.id }
+          { ...getRequestMetadata(request), userId: user.id },
         );
       }
       return NextResponse.json(
         {
           error: 'Invalid request body',
-          details:
-            validationError instanceof Error ? validationError.message : 'Validation failed',
+          details: validationError instanceof Error ? validationError.message : 'Validation failed',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -93,7 +90,7 @@ export async function PATCH(request: Request) {
       validatedData.communityServiceId,
       validatedData.reviewStatus,
       validatedData.reviewFeedback ?? null,
-      user.id
+      user.id,
     );
 
     await logAdminAction(
@@ -109,7 +106,7 @@ export async function PATCH(request: Request) {
       {
         ipAddress: getClientIp(request),
         userAgent: getUserAgent(request),
-      }
+      },
     );
 
     return NextResponse.json({
@@ -126,12 +123,12 @@ export async function PATCH(request: Request) {
       'Error in review-community-service API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request) }
+      { ...getRequestMetadata(request) },
     );
 
     return NextResponse.json(
       { error: 'Failed to update community service review' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

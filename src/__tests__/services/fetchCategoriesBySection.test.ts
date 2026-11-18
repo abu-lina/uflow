@@ -16,9 +16,30 @@ const UMMAH_CATEGORY_UUID = 'ummah-cat-uuid-002';
 const BUSINESS_CATEGORY_UUID = 'biz-cat-uuid-003';
 
 const mockCategories = [
-  { id: '1', category_id: FOOD_CATEGORY_UUID, name_de: 'Restaurant & Cafe', name_en: 'Restaurant & Cafe', created_at: '', updated_at: '' },
-  { id: '2', category_id: UMMAH_CATEGORY_UUID, name_de: 'Moschee', name_en: 'Mosque', created_at: '', updated_at: '' },
-  { id: '3', category_id: BUSINESS_CATEGORY_UUID, name_de: 'Handwerk', name_en: 'Crafts', created_at: '', updated_at: '' },
+  {
+    id: '1',
+    category_id: FOOD_CATEGORY_UUID,
+    name_de: 'Restaurant & Cafe',
+    name_en: 'Restaurant & Cafe',
+    created_at: '',
+    updated_at: '',
+  },
+  {
+    id: '2',
+    category_id: UMMAH_CATEGORY_UUID,
+    name_de: 'Moschee',
+    name_en: 'Mosque',
+    created_at: '',
+    updated_at: '',
+  },
+  {
+    id: '3',
+    category_id: BUSINESS_CATEGORY_UUID,
+    name_de: 'Handwerk',
+    name_en: 'Crafts',
+    created_at: '',
+    updated_at: '',
+  },
 ];
 
 // ─── Mock Supabase client with per-test overrides ─────────────────────────────
@@ -27,7 +48,9 @@ const mockSupabase = {
 };
 
 vi.mock('@/lib/supabase/client', () => ({
-  get supabase() { return mockSupabase; },
+  get supabase() {
+    return mockSupabase;
+  },
 }));
 
 // Helper to build a mock chain resolving with { data, error }
@@ -55,7 +78,7 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
     const providersChain = chainResolving([{ category_id: FOOD_CATEGORY_UUID }]);
     const categoriesChain = chainResolving([mockCategories[0]]);
     mockSupabase.from
-      .mockReturnValueOnce(providersChain)   // providers query
+      .mockReturnValueOnce(providersChain) // providers query
       .mockReturnValueOnce(categoriesChain); // categories query
 
     const result = await fetchCategoriesBySection('food');
@@ -67,7 +90,7 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
     const csChain = chainResolving([{ category_id: UMMAH_CATEGORY_UUID }]);
     const categoriesChain = chainResolving([mockCategories[1]]);
     mockSupabase.from
-      .mockReturnValueOnce(csChain)          // community_services query
+      .mockReturnValueOnce(csChain) // community_services query
       .mockReturnValueOnce(categoriesChain); // categories query
 
     const result = await fetchCategoriesBySection('ummah');
@@ -79,7 +102,7 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
     const providersChain = chainResolving([{ category_id: BUSINESS_CATEGORY_UUID }]);
     const categoriesChain = chainResolving([mockCategories[2]]);
     mockSupabase.from
-      .mockReturnValueOnce(providersChain)   // providers query
+      .mockReturnValueOnce(providersChain) // providers query
       .mockReturnValueOnce(categoriesChain); // categories query
 
     const result = await fetchCategoriesBySection('store');
@@ -104,36 +127,24 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
     const providersChain = chainResolving([{ category_id: FOOD_CATEGORY_UUID }]);
     const categoriesChain = chainResolving([mockCategories[0]]);
 
-    mockSupabase.from
-      .mockReturnValueOnce(providersChain)
-      .mockReturnValueOnce(categoriesChain);
+    mockSupabase.from.mockReturnValueOnce(providersChain).mockReturnValueOnce(categoriesChain);
 
     await fetchCategoriesBySection('food');
 
     const inCalls = (categoriesChain.in as ReturnType<typeof vi.fn>).mock.calls;
-    expect(inCalls).toEqual(
-      expect.arrayContaining([
-        ['applicable_section', ['food', 'all']],
-      ]),
-    );
+    expect(inCalls).toEqual(expect.arrayContaining([['applicable_section', ['food', 'all']]]));
   });
 
   it('[pre-fix FAILS] [post-fix PASSES] uses store scope (plus legacy compatibility) for applicable_section guardrail', async () => {
     const providersChain = chainResolving([{ category_id: BUSINESS_CATEGORY_UUID }]);
     const categoriesChain = chainResolving([mockCategories[2]]);
 
-    mockSupabase.from
-      .mockReturnValueOnce(providersChain)
-      .mockReturnValueOnce(categoriesChain);
+    mockSupabase.from.mockReturnValueOnce(providersChain).mockReturnValueOnce(categoriesChain);
 
     await fetchCategoriesBySection('store');
 
     const inCalls = (categoriesChain.in as ReturnType<typeof vi.fn>).mock.calls;
-    expect(inCalls).toEqual(
-      expect.arrayContaining([
-        ['applicable_section', ['store', 'all']],
-      ]),
-    );
+    expect(inCalls).toEqual(expect.arrayContaining([['applicable_section', ['store', 'all']]]));
   });
 
   it('deduplicates category IDs before fetching categories', async () => {
@@ -142,9 +153,7 @@ describe('fetchCategoriesBySection (Plan 090 M3)', () => {
       { category_id: FOOD_CATEGORY_UUID }, // duplicate
     ]);
     const categoriesChain = chainResolving([mockCategories[0]]);
-    mockSupabase.from
-      .mockReturnValueOnce(providersChain)
-      .mockReturnValueOnce(categoriesChain);
+    mockSupabase.from.mockReturnValueOnce(providersChain).mockReturnValueOnce(categoriesChain);
 
     const result = await fetchCategoriesBySection('food');
     expect(result).toHaveLength(1);

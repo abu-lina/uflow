@@ -43,15 +43,15 @@ export function BookmarkButton({
   const { isPressed, ...pressedHandlers } = usePressedState();
 
   return (
-    <div 
-      className={`relative flex-1 h-12 ${className}`}
+    <div
+      className={`relative h-12 flex-1 ${className}`}
       style={{
         WebkitTapHighlightColor: 'transparent',
         WebkitTouchCallout: 'none',
       }}
     >
       <motion.div
-        className="size-full cursor-pointer relative"
+        className="relative size-full cursor-pointer"
         style={{
           pointerEvents: state === 'loading' ? 'none' : 'auto',
           WebkitTapHighlightColor: 'transparent',
@@ -70,7 +70,7 @@ export function BookmarkButton({
         {/* Pressed state overlay */}
         <motion.div
           animate={{ opacity: isPressed ? 0.7 : 0 }}
-          className="absolute inset-0 z-10 pointer-events-none"
+          className="pointer-events-none absolute inset-0 z-10"
           style={{
             background: COLORS.mintPressed,
             borderRadius: state === 'saved' ? '9.6px' : '12px',
@@ -118,131 +118,122 @@ export function BookmarkButton({
               WebkitTouchCallout: 'none',
             }}
           >
-              <div 
-                className="relative rounded-[9.6px] size-full overflow-hidden"
+            <div
+              className="relative size-full overflow-hidden rounded-[9.6px]"
+              style={{
+                backgroundColor: COLORS.mintPressed,
+                isolation: 'isolate',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
+                WebkitTransform: 'translateZ(0)',
+                transform: 'translateZ(0)',
+                willChange: 'transform',
+                WebkitMaskImage: '-webkit-radial-gradient(white, white)',
+                maskImage: 'radial-gradient(white, white)',
+              }}
+            >
+              <div
+                className="absolute inset-0"
                 style={{
-                  backgroundColor: COLORS.mintPressed,
-                  isolation: 'isolate',
-                  WebkitBackfaceVisibility: 'hidden',
-                  backfaceVisibility: 'hidden',
-                  WebkitTransform: 'translateZ(0)',
-                  transform: 'translateZ(0)',
-                  willChange: 'transform',
-                  WebkitMaskImage: '-webkit-radial-gradient(white, white)',
-                  maskImage: 'radial-gradient(white, white)',
+                  background: COLORS.mintPressed,
+                  borderRadius: '9.6px',
+                  opacity: 1,
+                }}
+              />
+              <div
+                className="relative size-full"
+                style={{
+                  boxShadow: isHovered
+                    ? `0 2px 8px ${COLORS_RGBA.mint.shadowHover}`
+                    : `0 1px 4px ${COLORS_RGBA.mint.shadow}`,
                 }}
               >
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: COLORS.mintPressed,
-                    borderRadius: '9.6px',
-                    opacity: 1,
-                  }}
-                />
-                <div
-                  className="relative size-full"
-                  style={{
-                    boxShadow: isHovered
-                      ? `0 2px 8px ${COLORS_RGBA.mint.shadowHover}`
-                      : `0 1px 4px ${COLORS_RGBA.mint.shadow}`,
-                  }}
-                >
-                  <div className="flex flex-row items-center justify-center size-full">
-                    <div
-                      className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
-                    >
-                      <AnimatedHeartIcon 
-                        animate={false}
-                        animateFill={shouldAnimateFill}
-                        className=""
-                        filled={true}
-                        size={24}
-                        useFigmaPath={true}
-                      />
-                      <div
-                        className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
-                      >
-                        <p className="leading-[normal] whitespace-pre">{savedText}</p>
-                      </div>
+                <div className="flex size-full flex-row items-center justify-center">
+                  <div className="relative box-border flex size-full content-stretch items-center justify-center gap-[4.8px] overflow-clip px-[16px] py-0">
+                    <AnimatedHeartIcon
+                      animate={false}
+                      animateFill={shouldAnimateFill}
+                      className=""
+                      filled={true}
+                      size={24}
+                      useFigmaPath={true}
+                    />
+                    <div className="relative flex shrink-0 flex-col justify-center text-nowrap text-center font-inter-tight text-[16px] font-medium leading-[0] text-white">
+                      <p className="whitespace-pre leading-[normal]">{savedText}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          ) : (
-            <motion.div
-              key="idle"
-              animate={{ opacity: 1, scale: 1 }}
-              className="size-full"
-              exit={{ opacity: 0, scale: 0.97, zIndex: 0 }}
-              initial={false}
-              style={{ 
-                zIndex: 1,
+          </div>
+        ) : (
+          <motion.div
+            key="idle"
+            animate={{ opacity: 1, scale: 1 }}
+            className="size-full"
+            exit={{ opacity: 0, scale: 0.97, zIndex: 0 }}
+            initial={false}
+            style={{
+              zIndex: 1,
+              WebkitTransform: 'translateZ(0)',
+              transform: 'translateZ(0)',
+              willChange: 'transform',
+            }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          >
+            <div
+              className="relative size-full overflow-hidden rounded-[9.6px]"
+              style={{
                 WebkitTransform: 'translateZ(0)',
                 transform: 'translateZ(0)',
                 willChange: 'transform',
+                WebkitMaskImage: '-webkit-radial-gradient(white, white)',
+                maskImage: 'radial-gradient(white, white)',
+                isolation: 'isolate',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
               }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <div 
-                className="relative rounded-[9.6px] size-full overflow-hidden"
+              <motion.div
+                animate={{
+                  opacity: 1,
+                }}
+                className="absolute inset-0"
                 style={{
+                  background: COLORS.mint,
+                  borderRadius: '9.6px',
                   WebkitTransform: 'translateZ(0)',
                   transform: 'translateZ(0)',
-                  willChange: 'transform',
-                  WebkitMaskImage: '-webkit-radial-gradient(white, white)',
-                  maskImage: 'radial-gradient(white, white)',
-                  isolation: 'isolate',
-                  WebkitBackfaceVisibility: 'hidden',
-                  backfaceVisibility: 'hidden',
                 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+              />
+              <motion.div
+                animate={{
+                  boxShadow: isHovered
+                    ? `0 2px 8px ${COLORS_RGBA.mintOld.shadowHover}`
+                    : `0 1px 4px ${COLORS_RGBA.mintOld.shadow}`,
+                }}
+                className="relative size-full"
+                transition={{ duration: 0.2 }}
               >
-                <motion.div
-                  animate={{
-                    opacity: 1,
-                  }}
-                  className="absolute inset-0"
-                  style={{
-                    background: COLORS.mint,
-                    borderRadius: '9.6px',
-                    WebkitTransform: 'translateZ(0)',
-                    transform: 'translateZ(0)',
-                  }}
-                  transition={{ duration: 0.5, ease: 'easeInOut' }}
-                />
-                <motion.div
-                  animate={{
-                    boxShadow: isHovered
-                      ? `0 2px 8px ${COLORS_RGBA.mintOld.shadowHover}`
-                      : `0 1px 4px ${COLORS_RGBA.mintOld.shadow}`,
-                  }}
-                  className="relative size-full"
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="flex flex-row items-center justify-center size-full">
-                    <div
-                      className="box-border content-stretch flex gap-[4.8px] items-center justify-center overflow-clip px-[16px] py-0 relative size-full"
-                    >
-                      <AnimatedHeartIcon
-                        animate={wasBookmarked}
-                        filled={false}
-                        size={24}
-                        useFigmaPath={true}
-                      />
-                      <div
-                        className="flex flex-col font-inter-tight font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap text-white"
-                      >
-                        <p className="leading-[normal] whitespace-pre">{saveText}</p>
-                      </div>
+                <div className="flex size-full flex-row items-center justify-center">
+                  <div className="relative box-border flex size-full content-stretch items-center justify-center gap-[4.8px] overflow-clip px-[16px] py-0">
+                    <AnimatedHeartIcon
+                      animate={wasBookmarked}
+                      filled={false}
+                      size={24}
+                      useFigmaPath={true}
+                    />
+                    <div className="relative flex shrink-0 flex-col justify-center text-nowrap text-center font-inter-tight text-[16px] font-medium leading-[0] text-white">
+                      <p className="whitespace-pre leading-[normal]">{saveText}</p>
                     </div>
                   </div>
-                </motion.div>
-              </div>
-            </motion.div>
-          )}
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
     </div>
   );
 }
-

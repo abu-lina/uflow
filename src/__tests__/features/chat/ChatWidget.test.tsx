@@ -38,9 +38,7 @@ describe('ChatWidget', () => {
     render(<ChatWidget />);
 
     expect(screen.getByText(/As-Salamu-Aleikum/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Wie kann ich dir helfen/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Wie kann ich dir helfen/i)).toBeInTheDocument();
   });
 
   it('shows loading indicator when isLoading is true', () => {
@@ -86,9 +84,7 @@ describe('ChatWidget', () => {
 
   it('calls sendMessage when user types and sends', async () => {
     const sendMessage = vi.fn();
-    mockUseChat.mockReturnValue(
-      mockChatState({ sendMessage }),
-    );
+    mockUseChat.mockReturnValue(mockChatState({ sendMessage }));
 
     render(<ChatWidget />);
 
@@ -135,9 +131,7 @@ describe('ChatWidget', () => {
 
   // Plan 197 — auth-required card shows generic chat message, not restaurant-registration text
   it('[pre-fix FAILS] auth-required error does NOT show restaurant-registration text', () => {
-    mockUseChat.mockReturnValue(
-      mockChatState({ error: 'Authentication required' }),
-    );
+    mockUseChat.mockReturnValue(mockChatState({ error: 'Authentication required' }));
 
     render(<ChatWidget />);
 
@@ -145,9 +139,7 @@ describe('ChatWidget', () => {
   });
 
   it('[pre-fix FAILS] auth-required error card uses i18n key for body text', () => {
-    mockUseChat.mockReturnValue(
-      mockChatState({ error: 'Authentication required' }),
-    );
+    mockUseChat.mockReturnValue(mockChatState({ error: 'Authentication required' }));
 
     render(<ChatWidget />);
 

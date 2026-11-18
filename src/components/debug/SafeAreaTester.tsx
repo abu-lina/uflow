@@ -12,7 +12,7 @@ export function SafeAreaTester({ isVisible = false }: SafeAreaTesterProps) {
   if (!showTester) {
     return (
       <button
-        className="fixed top-4 right-4 z-[9999] bg-red-500 text-white px-2 py-1 text-xs rounded"
+        className="fixed right-4 top-4 z-[9999] rounded bg-red-500 px-2 py-1 text-xs text-white"
         onClick={() => setShowTester(true)}
       >
         Test Safe Areas
@@ -21,9 +21,9 @@ export function SafeAreaTester({ isVisible = false }: SafeAreaTesterProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] pointer-events-none">
+    <div className="pointer-events-none fixed inset-0 z-[9999]">
       {/* Safe Area Overlay */}
-      <div 
+      <div
         className="absolute inset-0 border-4 border-red-500"
         style={{
           borderTopWidth: 'env(safe-area-inset-top, 0px)',
@@ -32,18 +32,26 @@ export function SafeAreaTester({ isVisible = false }: SafeAreaTesterProps) {
           borderRightWidth: 'env(safe-area-inset-right, 0px)',
         }}
       />
-      
+
       {/* Safe Area Info */}
-      <div className="absolute top-4 left-4 bg-black/80 text-white p-2 rounded text-xs">
-        <div>Top: <span className="text-green-400">env(safe-area-inset-top)</span></div>
-        <div>Bottom: <span className="text-green-400">env(safe-area-inset-bottom)</span></div>
-        <div>Left: <span className="text-green-400">env(safe-area-inset-left)</span></div>
-        <div>Right: <span className="text-green-400">env(safe-area-inset-right)</span></div>
+      <div className="absolute left-4 top-4 rounded bg-black/80 p-2 text-xs text-white">
+        <div>
+          Top: <span className="text-green-400">env(safe-area-inset-top)</span>
+        </div>
+        <div>
+          Bottom: <span className="text-green-400">env(safe-area-inset-bottom)</span>
+        </div>
+        <div>
+          Left: <span className="text-green-400">env(safe-area-inset-left)</span>
+        </div>
+        <div>
+          Right: <span className="text-green-400">env(safe-area-inset-right)</span>
+        </div>
       </div>
 
       {/* Close Button */}
       <button
-        className="absolute top-4 right-4 bg-red-500 text-white px-2 py-1 text-xs rounded pointer-events-auto"
+        className="pointer-events-auto absolute right-4 top-4 rounded bg-red-500 px-2 py-1 text-xs text-white"
         onClick={() => setShowTester(false)}
       >
         Close

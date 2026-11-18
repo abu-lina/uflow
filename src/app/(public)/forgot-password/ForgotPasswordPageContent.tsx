@@ -59,7 +59,7 @@ export function ForgotPasswordPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email) {
       setError(t('forgotPassword.emailRequired'));
       return;
@@ -70,25 +70,22 @@ export function ForgotPasswordPageContent() {
 
     try {
       const { error } = await resetPasswordWithLanguage(email, language);
-      
+
       if (error) {
         setError(mapForgotPasswordError(error.message));
         setIsLoading(false);
         return;
       }
-      
+
       // Success
       setIsSuccess(true);
       setIsLoading(false);
-      
+
       // Show success toast
-      toast.success(
-        t('forgotPassword.emailSentToastTitle'),
-        {
-          description: t('forgotPassword.emailSentToastDescription'),
-          duration: 5000,
-        }
-      );
+      toast.success(t('forgotPassword.emailSentToastTitle'), {
+        description: t('forgotPassword.emailSentToastDescription'),
+        duration: 5000,
+      });
     } catch (error) {
       console.error('Password reset error:', error);
       setError(t('forgotPassword.genericError'));
@@ -116,21 +113,18 @@ export function ForgotPasswordPageContent() {
 
     try {
       const { error } = await resetPasswordWithLanguage(email, language);
-      
+
       if (error) {
         setError(mapForgotPasswordError(error.message));
         setIsLoading(false);
         return;
       }
-      
+
       // Show success toast
-      toast.success(
-        t('forgotPassword.emailResentToastTitle'),
-        {
-          description: t('forgotPassword.emailResentToastDescription'),
-          duration: 4000,
-        }
-      );
+      toast.success(t('forgotPassword.emailResentToastTitle'), {
+        description: t('forgotPassword.emailResentToastDescription'),
+        duration: 4000,
+      });
     } catch (error) {
       console.error('Resend password reset error:', error);
       setError(t('forgotPassword.genericError'));
@@ -145,10 +139,14 @@ export function ForgotPasswordPageContent() {
         variant="back-and-title"
         onBack={handleBackToLogin}
       />
-      
+
       <HeaderSpacer />
-      
-      <PageContentWrapper centerVertically={true} contentClassName="gap-10" includeMobileNavSpacing={true}>
+
+      <PageContentWrapper
+        centerVertically={true}
+        contentClassName="gap-10"
+        includeMobileNavSpacing={true}
+      >
         {/* Title + Paragraph with proper spacing */}
         <TitleSection>
           <TitleAndText
@@ -207,10 +205,7 @@ export function ForgotPasswordPageContent() {
 
                 {/* Back to Login Link */}
                 <div className="text-center">
-                  <LinkButton
-                    type="button"
-                    onClick={handleBackToLogin}
-                  >
+                  <LinkButton type="button" onClick={handleBackToLogin}>
                     {t('forgotPassword.backToLogin')}
                   </LinkButton>
                 </div>
@@ -227,7 +222,7 @@ export function ForgotPasswordPageContent() {
                   <h2 className="mb-3 text-xl font-semibold text-content-heading">
                     {t('forgotPassword.successTitle')}
                   </h2>
-                  <p className="text-content text-base leading-6">
+                  <p className="text-base leading-6 text-content">
                     {t('forgotPassword.successDescription')}
                   </p>
                 </div>
@@ -245,19 +240,14 @@ export function ForgotPasswordPageContent() {
                     {t('forgotPassword.resend')}
                   </Button>
 
-                  <LinkButton
-                    type="button"
-                    onClick={handleBackToLogin}
-                  >
+                  <LinkButton type="button" onClick={handleBackToLogin}>
                     {t('forgotPassword.backToLogin')}
                   </LinkButton>
                 </div>
 
                 {/* Help Text */}
                 <div className="mt-6 rounded-2xl border border-border bg-neutral-light/50 p-4">
-                  <p className="text-sm text-content">
-                    {t('forgotPassword.helpText')}
-                  </p>
+                  <p className="text-sm text-content">{t('forgotPassword.helpText')}</p>
                 </div>
               </div>
             )}

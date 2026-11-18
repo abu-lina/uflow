@@ -322,7 +322,10 @@ describe('parseStandorte', () => {
 
   it('handles region names like NRW', () => {
     expect(parseStandorte('Dortmund, NRW, Niedersachsen, Unna')).toEqual([
-      'Dortmund', 'NRW', 'Niedersachsen', 'Unna',
+      'Dortmund',
+      'NRW',
+      'Niedersachsen',
+      'Unna',
     ]);
   });
 });
@@ -338,7 +341,8 @@ describe('parseBranchen', () => {
 
   it('parses comma-separated Branchen', () => {
     expect(parseBranchen('Verpackungsindustrie, Logistik')).toEqual([
-      'Verpackungsindustrie', 'Logistik',
+      'Verpackungsindustrie',
+      'Logistik',
     ]);
   });
 
@@ -355,15 +359,13 @@ describe('parseBranchen', () => {
   });
 
   it('handles Branchen with special characters', () => {
-    expect(parseBranchen('Gesundheits- und Sozialwesen')).toEqual([
-      'Gesundheits- und Sozialwesen',
-    ]);
+    expect(parseBranchen('Gesundheits- und Sozialwesen')).toEqual(['Gesundheits- und Sozialwesen']);
   });
 
   it('handles space-padded Branchen from source', () => {
-    expect(parseBranchen('Dokumentenorganisation , Übersetzung, KI, Büroservice, Buchhaltung')).toEqual([
-      'Dokumentenorganisation', 'Übersetzung', 'KI', 'Büroservice', 'Buchhaltung',
-    ]);
+    expect(
+      parseBranchen('Dokumentenorganisation , Übersetzung, KI, Büroservice, Buchhaltung'),
+    ).toEqual(['Dokumentenorganisation', 'Übersetzung', 'KI', 'Büroservice', 'Buchhaltung']);
   });
 });
 
@@ -440,7 +442,7 @@ describe('normalizeSocialMedia', () => {
 
   it('extracts Instagram URL as-is', () => {
     expect(normalizeSocialMedia('https://www.instagram.com/immo_funnels/')).toBe(
-      'https://www.instagram.com/immo_funnels/'
+      'https://www.instagram.com/immo_funnels/',
     );
   });
 
@@ -450,7 +452,7 @@ describe('normalizeSocialMedia', () => {
 
   it('returns LinkedIn URL as-is', () => {
     expect(normalizeSocialMedia('www.linkedin.com/in/awalter-dl')).toBe(
-      'www.linkedin.com/in/awalter-dl'
+      'www.linkedin.com/in/awalter-dl',
     );
   });
 

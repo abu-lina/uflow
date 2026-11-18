@@ -73,13 +73,14 @@ If you prefer to apply migrations one by one, follow this order:
 After running the consolidated schema, verify all tables exist:
 
 ```sql
-SELECT table_name 
-FROM information_schema.tables 
+SELECT table_name
+FROM information_schema.tables
 WHERE table_schema = 'public'
 ORDER BY table_name;
 ```
 
 Expected tables:
+
 - ✅ admin_audit_logs
 - ✅ bookmarks
 - ✅ categories
@@ -138,7 +139,7 @@ INSERT INTO public.providers (
   address_city,
   review_status
 )
-SELECT 
+SELECT
   'Test Provider ' || generate_series,
   'Test description for provider ' || generate_series,
   (SELECT category_id FROM public.categories LIMIT 1),

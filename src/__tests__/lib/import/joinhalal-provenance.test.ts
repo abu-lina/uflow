@@ -20,7 +20,7 @@ import {
 describe('normalizeMatchKey (Plan 058)', () => {
   it('normalizes name and city to lowercase trimmed key', () => {
     expect(normalizeMatchKey('Triple B Burger Brothers', 'Stuttgart')).toBe(
-      'triple b burger brothers|stuttgart'
+      'triple b burger brothers|stuttgart',
     );
   });
 
@@ -37,9 +37,7 @@ describe('normalizeMatchKey (Plan 058)', () => {
   });
 
   it('handles German umlauts consistently (no normalization)', () => {
-    expect(normalizeMatchKey('Bäckerei Müller', 'München')).toBe(
-      'bäckerei müller|münchen'
-    );
+    expect(normalizeMatchKey('Bäckerei Müller', 'München')).toBe('bäckerei müller|münchen');
   });
 });
 
@@ -95,7 +93,7 @@ describe('matchLegacyProviders (Plan 058)', () => {
     expect(result.matched).toHaveLength(1);
     expect(result.matched[0].providerId).toBe('provider-1');
     expect(result.matched[0].joinHalalUrl).toBe(
-      'https://joinhalal.com/locations/restaurant/triple-b-burger-brothers-stuttgart-mitte-5990/'
+      'https://joinhalal.com/locations/restaurant/triple-b-burger-brothers-stuttgart-mitte-5990/',
     );
     expect(result.matched[0].matchMethod).toBe('import_source_id');
     expect(result.ambiguous).toHaveLength(0);

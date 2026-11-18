@@ -1,9 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import {
-  defaultFeatureFlags,
-  getFeatureFlag,
-  getAllFeatureFlags,
-} from '@/config/feature-flags';
+import { defaultFeatureFlags, getFeatureFlag, getAllFeatureFlags } from '@/config/feature-flags';
 
 describe('enableChatbot feature flag', () => {
   afterEach(() => {

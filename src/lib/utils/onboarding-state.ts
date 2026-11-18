@@ -1,11 +1,11 @@
 /**
  * Consolidated onboarding state management for localStorage
- * 
+ *
  * This module manages the persistent onboarding state that survives:
  * - Browser refresh
  * - PWA install
  * - App reopen
- * 
+ *
  * Key: ummahflow_onboarding
  */
 
@@ -86,7 +86,7 @@ export function setOnboardingState(state: OnboardingState): void {
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    
+
     // Verify write succeeded
     const verification = localStorage.getItem(STORAGE_KEY);
     if (!verification) {
@@ -114,7 +114,7 @@ export function clearOnboardingState(): void {
 
   try {
     localStorage.removeItem(STORAGE_KEY);
-    
+
     // Also clean up any old keys that might still exist
     localStorage.removeItem('showEarlyAccess');
     localStorage.removeItem('waitlistEmail');
@@ -135,9 +135,7 @@ export function hasJoinedWaitlist(): boolean {
 /**
  * Update specific fields in the onboarding state
  */
-export function updateOnboardingState(
-  updates: Partial<OnboardingState>
-): void {
+export function updateOnboardingState(updates: Partial<OnboardingState>): void {
   const current = getOnboardingState();
   if (!current) {
     console.warn('[OnboardingState] Cannot update - no existing state');
@@ -149,4 +147,3 @@ export function updateOnboardingState(
     ...updates,
   });
 }
-

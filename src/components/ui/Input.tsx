@@ -13,7 +13,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className="flex w-full flex-col gap-2">
         {label && (
           <label
-            className="text-content w-full text-left font-inter text-base font-normal"
+            className="w-full text-left font-inter text-base font-normal text-content"
             htmlFor={id}
           >
             {label}
@@ -22,7 +22,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={cn(
-            'outline-border h-0 w-full bg-transparent outline outline-[0.5px] outline-offset-[-0.25px]',
+            'h-0 w-full bg-transparent outline outline-[0.5px] outline-offset-[-0.25px] outline-border',
             error && 'outline-danger',
             className,
           )}

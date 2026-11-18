@@ -79,7 +79,7 @@ interface AddressAutocompleteProps {
 
 /**
  * Address autocomplete component using OpenStreetMap Nominatim API
- * 
+ *
  * Features:
  * - Real-time address suggestions as user types
  * - Auto-fills all address fields when an address is selected
@@ -87,7 +87,7 @@ interface AddressAutocompleteProps {
  * - Free, open-source, and privacy-friendly
  * - Gracefully handles API failures (falls back to manual entry)
  * - Loading and error states
- * 
+ *
  * Note: Uses OpenStreetMap's Nominatim service which is free but has rate limits.
  * For production, consider using a self-hosted instance or a proxy.
  */
@@ -147,18 +147,18 @@ export function AddressAutocomplete({
       // Important: Respect rate limits (1 request per second recommended)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
-        `format=json&` +
-        `q=${encodeURIComponent(query)}&` +
-        `addressdetails=1&` +
-        `limit=5&` +
-        `countrycodes=`, // Empty = all countries
+          `format=json&` +
+          `q=${encodeURIComponent(query)}&` +
+          `addressdetails=1&` +
+          `limit=5&` +
+          `countrycodes=`, // Empty = all countries
         {
           signal: abortControllerRef.current.signal,
           headers: {
             'User-Agent': 'UmmahFlow/1.0', // Required by Nominatim ToS
             'Accept-Language': 'de,en', // Prefer German, fallback to English
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -193,19 +193,27 @@ export function AddressAutocomplete({
   }, []);
 
   // Parse Nominatim result to AddressComponents
-  const parseAddress = useCallback((result: NominatimResult): AddressComponents => {
-    const address: AddressComponents = {
-      street: formatStreetAddress(result),
-      zip: result.address?.postcode || '',
-      city: result.address?.city || result.address?.town || result.address?.village || result.address?.municipality || '',
-      country: normalizeCountryNameForDisplay(result.address?.country || ''),
-      latitude: parseFloat(result.lat),
-      longitude: parseFloat(result.lon),
-      formattedAddress: result.display_name,
-    };
+  const parseAddress = useCallback(
+    (result: NominatimResult): AddressComponents => {
+      const address: AddressComponents = {
+        street: formatStreetAddress(result),
+        zip: result.address?.postcode || '',
+        city:
+          result.address?.city ||
+          result.address?.town ||
+          result.address?.village ||
+          result.address?.municipality ||
+          '',
+        country: normalizeCountryNameForDisplay(result.address?.country || ''),
+        latitude: parseFloat(result.lat),
+        longitude: parseFloat(result.lon),
+        formattedAddress: result.display_name,
+      };
 
-    return address;
-  }, [formatStreetAddress]);
+      return address;
+    },
+    [formatStreetAddress],
+  );
 
   // Fetch suggestions - stable reference
   const fetchSuggestionsStable = useRef(fetchSuggestions);
@@ -233,16 +241,19 @@ export function AddressAutocomplete({
   }, []); // No dependencies - using ref for fetchSuggestions
 
   // Handle suggestion click
-  const handleSuggestionClick = useCallback((result: NominatimResult) => {
-    const displayName = result.display_name;
-    setInputValue(displayName);
-    setShowSuggestions(false);
+  const handleSuggestionClick = useCallback(
+    (result: NominatimResult) => {
+      const displayName = result.display_name;
+      setInputValue(displayName);
+      setShowSuggestions(false);
 
-    // Parse and return address
-    const address = parseAddress(result);
-    // Call callback directly - it's memoized so should be stable
-    onAddressSelect(address);
-  }, [onAddressSelect, parseAddress]);
+      // Parse and return address
+      const address = parseAddress(result);
+      // Call callback directly - it's memoized so should be stable
+      onAddressSelect(address);
+    },
+    [onAddressSelect, parseAddress],
+  );
 
   // Cleanup on unmount
   useEffect(() => {
@@ -269,11 +280,9 @@ export function AddressAutocomplete({
   return (
     <div className={`relative ${className}`}>
       {label && (
-        <label className="text-xs leading-[15px] text-content-muted mb-1 block">
-          {label}
-        </label>
+        <label className="mb-1 block text-xs leading-[15px] text-content-muted">{label}</label>
       )}
-      
+
       <div className="relative">
         <input
           ref={inputRef}
@@ -295,34 +304,31 @@ export function AddressAutocomplete({
 
         {/* Loading indicator */}
         {displayLoading && (
-          <div className="absolute right-0 top-0 flex items-center h-full pr-2">
-            <Icon
-              className="h-4 w-4 text-content-muted animate-spin"
-              icon="mdi:loading"
-            />
+          <div className="absolute right-0 top-0 flex h-full items-center pr-2">
+            <Icon className="h-4 w-4 animate-spin text-content-muted" icon="mdi:loading" />
           </div>
         )}
 
         {/* Suggestions dropdown */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-lg z-50 max-h-[200px] overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-[200px] overflow-y-auto rounded-lg border border-border bg-background shadow-lg">
             {suggestions.map((result) => (
               <button
                 key={result.place_id}
-                className="w-full text-left px-3 py-2 hover:bg-neutral-100 text-sm text-content border-b border-neutral-100 last:border-b-0"
+                className="w-full border-b border-neutral-100 px-3 py-2 text-left text-sm text-content last:border-b-0 hover:bg-neutral-100"
                 type="button"
                 onClick={() => handleSuggestionClick(result)}
               >
                 <div className="flex items-start gap-2">
                   <Icon
-                    className="h-4 w-4 text-primary mt-0.5 flex-shrink-0"
+                    className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary"
                     icon="mdi:map-marker"
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-[13px] leading-[18px]">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-medium leading-[18px]">
                       {formatStreetAddress(result)}
                     </div>
-                    <div className="text-xs text-content-muted truncate mt-0.5">
+                    <div className="mt-0.5 truncate text-xs text-content-muted">
                       {result.display_name.split(',').slice(1).join(',').trim()}
                     </div>
                   </div>
@@ -335,7 +341,7 @@ export function AddressAutocomplete({
 
       {/* Error message */}
       {error && (
-        <div className="mt-1 text-xs text-danger flex items-center gap-1">
+        <div className="mt-1 flex items-center gap-1 text-xs text-danger">
           <Icon className="h-3 w-3" icon="mdi:alert-circle" />
           <span>{error}</span>
         </div>
@@ -343,11 +349,8 @@ export function AddressAutocomplete({
 
       {/* Helper text */}
       {!error && inputValue.length > 0 && inputValue.length < 3 && (
-        <div className="mt-1 text-xs text-content-muted">
-          {t('create.location.typeToSearch')}
-        </div>
+        <div className="mt-1 text-xs text-content-muted">{t('create.location.typeToSearch')}</div>
       )}
     </div>
   );
 }
-

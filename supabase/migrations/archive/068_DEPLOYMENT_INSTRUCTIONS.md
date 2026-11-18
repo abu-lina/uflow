@@ -26,6 +26,7 @@
 #### 1. Get Connection String
 
 From Supabase Dashboard:
+
 1. Project Settings → Database
 2. Connection String → **Direct** (not Transaction or Session)
 3. Copy the connection string (format below)
@@ -35,10 +36,12 @@ postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.co
 ```
 
 **For UAT**:
+
 - Project: uat.ummahflow.com
 - Get password from `.env.uat` or Supabase UAT project settings
 
 **For Production**:
+
 - Project: ummahflow.com
 - Get password from `.env.production` or Supabase production project settings
 
@@ -54,6 +57,7 @@ psql "postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supab
 ```
 
 **Expected output**:
+
 ```
 INSERT 0 500
 INSERT 0 500
@@ -73,19 +77,19 @@ psql "postgresql://..." -c "SELECT COUNT(*) as total_cities FROM cities;"
 
 # Spot-check key cities
 psql "postgresql://..." -c "
-  SELECT city_name, country 
-  FROM cities 
-  WHERE city_name IN ('Los Angeles', 'New York City', 'London', 'Paris', 'Dubai', 'Berlin') 
+  SELECT city_name, country
+  FROM cities
+  WHERE city_name IN ('Los Angeles', 'New York City', 'London', 'Paris', 'Dubai', 'Berlin')
   ORDER BY city_name;
 "
 # Expected: All 6 cities returned
 
 # Check country distribution (top 10)
 psql "postgresql://..." -c "
-  SELECT country, COUNT(*) as city_count 
-  FROM cities 
-  GROUP BY country 
-  ORDER BY city_count DESC 
+  SELECT country, COUNT(*) as city_count
+  FROM cities
+  GROUP BY country
+  ORDER BY city_count DESC
   LIMIT 10;
 "
 # Expected: India (3679), United States (2813), Brazil (2230), etc.
@@ -105,6 +109,7 @@ psql "postgresql://..." -c "
 ### Idempotency
 
 Migration uses `ON CONFLICT (city_name) DO NOTHING` — **safe to re-run** if:
+
 - Process interrupted
 - Network failure mid-migration
 - Need to re-apply
@@ -122,25 +127,26 @@ TRUNCATE cities CASCADE;
 
 ## Country Coverage
 
-| Country | Cities | % of Total |
-|---------|--------|------------|
-| 🇮🇳 India | 3,679 | 13.5% |
-| 🇺🇸 United States | 2,813 | 10.3% |
-| 🇧🇷 Brazil | 2,230 | 8.2% |
-| 🇨🇳 China | 1,893 | 7.0% |
-| 🇯🇵 Japan | 1,244 | 4.6% |
-| 🇩🇪 Germany | 1,137 | 4.2% |
-| 🇷🇺 Russia | 1,086 | 4.0% |
-| 🇬🇧 United Kingdom | 817 | 3.0% |
-| 🇪🇸 Spain | 711 | 2.6% |
-| 🇫🇷 France | 679 | 2.5% |
-| Others | ~13,738 | ~50.6% |
+| Country           | Cities  | % of Total |
+| ----------------- | ------- | ---------- |
+| 🇮🇳 India          | 3,679   | 13.5%      |
+| 🇺🇸 United States  | 2,813   | 10.3%      |
+| 🇧🇷 Brazil         | 2,230   | 8.2%       |
+| 🇨🇳 China          | 1,893   | 7.0%       |
+| 🇯🇵 Japan          | 1,244   | 4.6%       |
+| 🇩🇪 Germany        | 1,137   | 4.2%       |
+| 🇷🇺 Russia         | 1,086   | 4.0%       |
+| 🇬🇧 United Kingdom | 817     | 3.0%       |
+| 🇪🇸 Spain          | 711     | 2.6%       |
+| 🇫🇷 France         | 679     | 2.5%       |
+| Others            | ~13,738 | ~50.6%     |
 
 ## Troubleshooting
 
 ### Error: "psql: command not found"
 
 Install PostgreSQL client:
+
 ```bash
 # macOS
 brew install postgresql
@@ -180,9 +186,9 @@ This is **expected and safe** if cities already exist. The migration uses `ON CO
 SELECT * FROM cities ORDER BY city_name LIMIT 10;
 
 -- Verify no duplicates
-SELECT city_name, COUNT(*) 
-FROM cities 
-GROUP BY city_name 
+SELECT city_name, COUNT(*)
+FROM cities
+GROUP BY city_name
 HAVING COUNT(*) > 1;
 -- Expected: 0 rows (no duplicates)
 ```
@@ -190,6 +196,7 @@ HAVING COUNT(*) > 1;
 ## Support
 
 If migration fails or cities not loading:
+
 1. Check psql connection string
 2. Verify migration file exists: `supabase/migrations/068_add_international_cities.sql`
 3. Check database logs in Supabase Dashboard

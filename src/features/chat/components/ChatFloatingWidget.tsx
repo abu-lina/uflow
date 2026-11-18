@@ -21,12 +21,18 @@ export function ChatFloatingWidget() {
   return (
     <>
       {/* FAB button */}
-      <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50">
+      <div className="fixed bottom-20 right-4 z-50 md:bottom-6 md:right-6">
         {!isOpen && (
           <button
             aria-label={t('chat.openChat')}
-            className="w-14 h-14 rounded-full bg-primary text-white shadow-lg hover:bg-primary-dark hover:shadow-xl transition-all flex items-center justify-center"
-            onClick={() => { if (window.innerWidth < 768) { router.push('/chat'); } else { setIsOpen(true); } }}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all hover:bg-primary-dark hover:shadow-xl"
+            onClick={() => {
+              if (window.innerWidth < 768) {
+                router.push('/chat');
+              } else {
+                setIsOpen(true);
+              }
+            }}
           >
             <MessageCircle size={24} strokeWidth={2} />
           </button>
@@ -38,20 +44,28 @@ export function ChatFloatingWidget() {
         <>
           {/* Overlay — shows app screen behind */}
           <div
-            className="fixed inset-0 bg-black/30 z-50 md:hidden"
+            className="fixed inset-0 z-50 bg-black/30 md:hidden"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Modal panel */}
-          <div className="fixed inset-4 md:inset-auto md:bottom-20 md:right-4 z-50 bg-white rounded-3xl shadow-xl shadow-black/5 border border-gray-100 flex flex-col overflow-hidden md:w-[400px] md:h-[600px] md:max-h-[calc(100vh-100px)]">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-primary text-white rounded-t-3xl">
-              <h3 className="font-semibold text-sm">{t('chat.assistantTitle')}</h3>
+          <div className="fixed inset-4 z-50 flex flex-col overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl shadow-black/5 md:inset-auto md:bottom-20 md:right-4 md:h-[600px] md:max-h-[calc(100vh-100px)] md:w-[400px]">
+            <div className="flex items-center justify-between rounded-t-3xl border-b border-gray-200 bg-primary px-4 py-3 text-white">
+              <h3 className="text-sm font-semibold">{t('chat.assistantTitle')}</h3>
               <button
                 aria-label={t('chat.closeChat')}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-primary-dark transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-primary-dark"
                 onClick={() => setIsOpen(false)}
               >
-                <svg fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 24 24" width="16">
+                <svg
+                  fill="none"
+                  height="16"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                  width="16"
+                >
                   <line x1="18" x2="6" y1="6" y2="18" />
                   <line x1="6" x2="18" y1="6" y2="18" />
                 </svg>

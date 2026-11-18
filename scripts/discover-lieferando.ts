@@ -55,109 +55,109 @@ const DEFAULT_OUTPUT_PATH = path.resolve(process.cwd(), 'data/lieferando-halal.j
  * URL format: /en/delivery/food/postcode-{PLZ}
  */
 const CITY_POSTAL_CODES: Record<string, string> = {
-  'Berlin': '10115',
-  'München': '80331',
+  Berlin: '10115',
+  München: '80331',
   'Frankfurt am Main': '60311',
-  'Stuttgart': '70173',
-  'Köln': '50667',
-  'Mannheim': '68161',
-  'Augsburg': '86150',
-  'Hamburg': '20095',
-  'Dortmund': '44135',
-  'Nürnberg': '90402',
-  'Düsseldorf': '40213',
-  'Bielefeld': '33602',
-  'Kassel': '34117',
+  Stuttgart: '70173',
+  Köln: '50667',
+  Mannheim: '68161',
+  Augsburg: '86150',
+  Hamburg: '20095',
+  Dortmund: '44135',
+  Nürnberg: '90402',
+  Düsseldorf: '40213',
+  Bielefeld: '33602',
+  Kassel: '34117',
   'Offenbach am Main': '63065',
-  'Bochum': '44787',
-  'Wiesbaden': '65183',
-  'Bremen': '28195',
-  'Hanau': '63450',
-  'Darmstadt': '64283',
-  'Paderborn': '33098',
-  'Germering': '82110',
-  'Essen': '45127',
-  'Duisburg': '47051',
-  'Böblingen': '71032',
-  'Hannover': '30159',
-  'Ingolstadt': '85049',
-  'Leipzig': '04109',
-  'Ludwigsburg': '71638',
-  'Wuppertal': '42103',
-  'Hagen': '58095',
-  'Recklinghausen': '45657',
-  'Herford': '32049',
+  Bochum: '44787',
+  Wiesbaden: '65183',
+  Bremen: '28195',
+  Hanau: '63450',
+  Darmstadt: '64283',
+  Paderborn: '33098',
+  Germering: '82110',
+  Essen: '45127',
+  Duisburg: '47051',
+  Böblingen: '71032',
+  Hannover: '30159',
+  Ingolstadt: '85049',
+  Leipzig: '04109',
+  Ludwigsburg: '71638',
+  Wuppertal: '42103',
+  Hagen: '58095',
+  Recklinghausen: '45657',
+  Herford: '32049',
   'Bad Oeynhausen': '32545',
-  'Schweinfurt': '97421',
-  'Freising': '85354',
+  Schweinfurt: '97421',
+  Freising: '85354',
   'Bergisch Gladbach': '51465',
   'Hofheim am Taunus': '65719',
-  'Norderstedt': '22846',
-  'Schorndorf': '73614',
-  'Metzingen': '72555',
+  Norderstedt: '22846',
+  Schorndorf: '73614',
+  Metzingen: '72555',
   'Sulzbach (Taunus)': '65843',
-  'Siegburg': '53721',
-  'Reutlingen': '72764',
-  'Aachen': '52062',
-  'Frechen': '50226',
-  'Erkelenz': '41812',
-  'Baesweiler': '52499',
-  'Erding': '85435',
-  'Leverkusen': '51373',
-  'Rostock': '18055',
-  'Mönchengladbach': '41061',
-  'Witten': '58452',
-  'Gelsenkirchen': '45879',
-  'Arnsberg': '59821',
-  'Münster': '48143',
-  'Dachau': '85221',
-  'Aschaffenburg': '63739',
-  'Langen': '63225',
-  'Dreieich': '63303',
-  'Uhingen': '73066',
+  Siegburg: '53721',
+  Reutlingen: '72764',
+  Aachen: '52062',
+  Frechen: '50226',
+  Erkelenz: '41812',
+  Baesweiler: '52499',
+  Erding: '85435',
+  Leverkusen: '51373',
+  Rostock: '18055',
+  Mönchengladbach: '41061',
+  Witten: '58452',
+  Gelsenkirchen: '45879',
+  Arnsberg: '59821',
+  Münster: '48143',
+  Dachau: '85221',
+  Aschaffenburg: '63739',
+  Langen: '63225',
+  Dreieich: '63303',
+  Uhingen: '73066',
   'Ebersbach an der Fils': '73061',
   'Kirchheim unter Teck': '73230',
-  'Leinfelden': '70771',
-  'Pforzheim': '75172',
-  'Gröbenzell': '82194',
-  'Herne': '44623',
-  'Datteln': '45711',
-  'Kerpen': '50169',
-  'Oberhaching': '82041',
-  'Ottobrunn': '85521',
-  'Oberschleißheim': '85764',
-  'Villingen': '78048',
-  'Ulm': '89073',
-  'Heilbronn': '74072',
-  'Bonn': '53111',
-  'Oldenburg': '26122',
-  'Osnabrück': '49074',
-  'Heidelberg': '69117',
-  'Solingen': '42651',
-  'Regensburg': '93047',
-  'Würzburg': '97070',
-  'Wolfsburg': '38440',
-  'Göttingen': '37073',
-  'Dresden': '01067',
-  'Karlsruhe': '76131',
-  'Krefeld': '47798',
-  'Mainz': '55116',
-  'Lübeck': '23552',
-  'Erfurt': '99084',
-  'Oberhausen': '46045',
-  'Halle': '06108',
-  'Magdeburg': '39104',
-  'Freiburg': '79098',
-  'Potsdam': '14467',
-  'Saarbrücken': '66111',
-  'Hamm': '59065',
-  'Ludwigshafen': '67059',
-  'Braunschweig': '38100',
-  'Kiel': '24103',
-  'Chemnitz': '09111',
-  'Altenstadt': '86972',
+  Leinfelden: '70771',
+  Pforzheim: '75172',
+  Gröbenzell: '82194',
+  Herne: '44623',
+  Datteln: '45711',
+  Kerpen: '50169',
+  Oberhaching: '82041',
+  Ottobrunn: '85521',
+  Oberschleißheim: '85764',
+  Villingen: '78048',
+  Ulm: '89073',
+  Heilbronn: '74072',
+  Bonn: '53111',
+  Oldenburg: '26122',
+  Osnabrück: '49074',
+  Heidelberg: '69117',
+  Solingen: '42651',
+  Regensburg: '93047',
+  Würzburg: '97070',
+  Wolfsburg: '38440',
+  Göttingen: '37073',
+  Dresden: '01067',
+  Karlsruhe: '76131',
+  Krefeld: '47798',
+  Mainz: '55116',
+  Lübeck: '23552',
+  Erfurt: '99084',
+  Oberhausen: '46045',
+  Halle: '06108',
+  Magdeburg: '39104',
+  Freiburg: '79098',
+  Potsdam: '14467',
+  Saarbrücken: '66111',
+  Hamm: '59065',
+  Ludwigshafen: '67059',
+  Braunschweig: '38100',
+  Kiel: '24103',
+  Chemnitz: '09111',
+  Altenstadt: '86972',
   'Lauf an der Pegnitz': '91207',
-  'Starnberg': '82319',
+  Starnberg: '82319',
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -358,7 +358,8 @@ async function runScrape(limit: number | null, outputPath: string) {
       lastRequestTime = Date.now();
 
       const context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         viewport: { width: 1920, height: 1080 },
       });
       const page = await context.newPage();
@@ -512,7 +513,8 @@ async function runEndToEnd(isDryRun: boolean, limit: number | null) {
       lastRequestTime = Date.now();
 
       const context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         viewport: { width: 1920, height: 1080 },
       });
       const page = await context.newPage();
@@ -523,7 +525,12 @@ async function runEndToEnd(isDryRun: boolean, limit: number | null) {
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`  ${progress} ${cityName}: scrape error - ${msg}`);
-        cityResults.push({ city: cityName, halalRestaurants: 0, newProviders: 0, existingWithLink: 0 });
+        cityResults.push({
+          city: cityName,
+          halalRestaurants: 0,
+          newProviders: 0,
+          existingWithLink: 0,
+        });
         continue;
       } finally {
         await page.close().catch(() => {});
@@ -542,7 +549,12 @@ async function runEndToEnd(isDryRun: boolean, limit: number | null) {
         if (existingKeys.has(key)) {
           const providerId = existingKeyToId.get(key);
           if (providerId) {
-            existingWithLinks.push({ restaurant, city: cityName, isNew: false, existingProviderId: providerId });
+            existingWithLinks.push({
+              restaurant,
+              city: cityName,
+              isNew: false,
+              existingProviderId: providerId,
+            });
           }
           existingCount++;
         } else {
@@ -552,8 +564,15 @@ async function runEndToEnd(isDryRun: boolean, limit: number | null) {
         }
       }
 
-      console.log(`  ${progress} ${cityName}: ${restaurants.length} halal (${newCount} new, ${existingCount} existing)`);
-      cityResults.push({ city: cityName, halalRestaurants: restaurants.length, newProviders: newCount, existingWithLink: existingCount });
+      console.log(
+        `  ${progress} ${cityName}: ${restaurants.length} halal (${newCount} new, ${existingCount} existing)`,
+      );
+      cityResults.push({
+        city: cityName,
+        halalRestaurants: restaurants.length,
+        newProviders: newCount,
+        existingWithLink: existingCount,
+      });
     }
   } finally {
     await browser.close();
@@ -589,7 +608,9 @@ async function writeToSupabase(
   }
 
   if (newProviders.length > 0) {
-    console.log(`\n> Inserting ${newProviders.length} new providers in batches of ${BATCH_SIZE}...`);
+    console.log(
+      `\n> Inserting ${newProviders.length} new providers in batches of ${BATCH_SIZE}...`,
+    );
 
     const providerRecords = newProviders.map((item) => ({
       provider_name: item.restaurant.name,
@@ -630,7 +651,9 @@ async function writeToSupabase(
 
       const insertedCount = data?.length ?? 0;
       inserted += insertedCount;
-      console.log(`  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${insertedCount} records`);
+      console.log(
+        `  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: inserted ${insertedCount} records`,
+      );
 
       // Create food_providers extension rows
       if (data && data.length > 0) {
@@ -651,14 +674,16 @@ async function writeToSupabase(
 
       // Create delivery links
       if (data && data.length > 0) {
-        const links: DeliveryLinkUpsert[] = data.map((row: { provider_id: string; import_source_id: string }) => ({
-          provider_id: row.provider_id,
-          platform: 'lieferando' as const,
-          platform_url: `${BASE_URL}/speisekarte/${row.import_source_id}`,
-          platform_slug: row.import_source_id,
-          is_active: true,
-          last_verified_at: new Date().toISOString(),
-        }));
+        const links: DeliveryLinkUpsert[] = data.map(
+          (row: { provider_id: string; import_source_id: string }) => ({
+            provider_id: row.provider_id,
+            platform: 'lieferando' as const,
+            platform_url: `${BASE_URL}/speisekarte/${row.import_source_id}`,
+            platform_slug: row.import_source_id,
+            is_active: true,
+            last_verified_at: new Date().toISOString(),
+          }),
+        );
 
         const { error: linkError } = await supabase
           .from('provider_delivery_links')
@@ -675,7 +700,9 @@ async function writeToSupabase(
 
   // Upsert delivery links for existing providers
   if (existingWithLinks.length > 0) {
-    console.log(`\n> Upserting ${existingWithLinks.length} delivery links for existing providers...`);
+    console.log(
+      `\n> Upserting ${existingWithLinks.length} delivery links for existing providers...`,
+    );
 
     const links: DeliveryLinkUpsert[] = existingWithLinks.map((item) => ({
       provider_id: item.existingProviderId!,
@@ -696,7 +723,9 @@ async function writeToSupabase(
       if (error) {
         console.warn(`  Delivery link batch failed (offset ${offset}): ${error.message}`);
       } else {
-        console.log(`  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: upserted ${batch.length} delivery links`);
+        console.log(
+          `  + Batch ${Math.floor(offset / BATCH_SIZE) + 1}: upserted ${batch.length} delivery links`,
+        );
       }
     }
   }
@@ -719,21 +748,17 @@ function printReport(
   console.log('\n  City-by-city results:');
   console.log('  ' + '-'.repeat(54));
   console.log(
-    '  ' +
-    'City'.padEnd(30) +
-    'Halal'.padStart(8) +
-    'New'.padStart(8) +
-    'Exists'.padStart(8),
+    '  ' + 'City'.padEnd(30) + 'Halal'.padStart(8) + 'New'.padStart(8) + 'Exists'.padStart(8),
   );
   console.log('  ' + '-'.repeat(54));
 
   for (const cr of cityResults) {
     console.log(
       '  ' +
-      cr.city.padEnd(30) +
-      String(cr.halalRestaurants).padStart(8) +
-      String(cr.newProviders).padStart(8) +
-      String(cr.existingWithLink).padStart(8),
+        cr.city.padEnd(30) +
+        String(cr.halalRestaurants).padStart(8) +
+        String(cr.newProviders).padStart(8) +
+        String(cr.existingWithLink).padStart(8),
     );
   }
 

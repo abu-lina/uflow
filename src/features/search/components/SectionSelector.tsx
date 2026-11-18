@@ -27,7 +27,11 @@ interface SectionSelectorProps {
  * The active tab is marked with aria-selected=true per ARIA tablist pattern.
  * Inactive sections (per SECTION_META) are dimmed (35% opacity) and show a toast on tap
  */
-export function SectionSelector({ selectedSection, onSectionChange, className = '' }: SectionSelectorProps) {
+export function SectionSelector({
+  selectedSection,
+  onSectionChange,
+  className = '',
+}: SectionSelectorProps) {
   const { t } = useLanguage();
 
   const getSectionLabel = (section: Section): string => {
@@ -37,7 +41,7 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
   return (
     <div
       aria-label="Browse sections"
-      className={`flex items-center justify-between w-full border border-border-light bg-background h-14 rounded-2xl px-2 ${className}`}
+      className={`flex h-14 w-full items-center justify-between rounded-2xl border border-border-light bg-background px-2 ${className}`}
       role="tablist"
     >
       {SECTION_ORDER.map((value) => {
@@ -52,10 +56,8 @@ export function SectionSelector({ selectedSection, onSectionChange, className = 
             aria-label={label}
             aria-selected={isActive}
             className={[
-              'flex-1 h-10 rounded-xl flex items-center justify-center gap-1.5 px-3 overflow-hidden font-inter-tight font-medium text-base transition-colors',
-              isActive
-                ? 'bg-primary text-white'
-                : 'text-neutral-500 hover:text-neutral-700',
+              'flex h-10 flex-1 items-center justify-center gap-1.5 overflow-hidden rounded-xl px-3 font-inter-tight text-base font-medium transition-colors',
+              isActive ? 'bg-primary text-white' : 'text-neutral-500 hover:text-neutral-700',
               isDisabled && 'opacity-[0.35]',
             ].join(' ')}
             role="tab"

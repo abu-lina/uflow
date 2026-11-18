@@ -31,7 +31,7 @@ export function useOptimisticBookmark({
       if (newBookmarkState) {
         return [...old, bookmarkableId];
       } else {
-        return old.filter(id => id !== bookmarkableId);
+        return old.filter((id) => id !== bookmarkableId);
       }
     });
 
@@ -79,9 +79,11 @@ export function useOptimisticBookmark({
       }
 
       // 6. Dispatch event for other components to listen
-      window.dispatchEvent(new CustomEvent('bookmark-changed', {
-        detail: { bookmarkableId, bookmarkableType, isBookmarked: newBookmarkState }
-      }));
+      window.dispatchEvent(
+        new CustomEvent('bookmark-changed', {
+          detail: { bookmarkableId, bookmarkableType, isBookmarked: newBookmarkState },
+        }),
+      );
 
       // 7. If adding bookmark, invalidate cache (don't fetch immediately - let it load on demand)
       // This prevents blocking the UI with a large data fetch
@@ -90,14 +92,13 @@ export function useOptimisticBookmark({
         // This makes the bookmark action feel instant
         queryClient.invalidateQueries({ queryKey: ['saved-providers', user.id] });
       }
-
     } catch (error) {
       console.error('Error syncing bookmark:', error);
-      
+
       // 8. Revert optimistic updates on error
       queryClient.invalidateQueries({ queryKey: ['bookmarks', user.id] });
       queryClient.invalidateQueries({ queryKey: ['saved-providers', user.id] });
-      
+
       // Revert callback
       onBookmarkChange?.(!newBookmarkState);
     }

@@ -55,7 +55,7 @@ export function ResetPasswordPageContent() {
   };
 
   const handleInputChange = useCallback((field: keyof FormData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -65,12 +65,12 @@ export function ResetPasswordPageContent() {
   useEffect(() => {
     const tokenParam = searchParams.get('token');
     const emailParam = searchParams.get('email');
-    
+
     if (!tokenParam || !emailParam) {
       setError(t('resetPassword.invalidLinkError'));
       return;
     }
-    
+
     setToken(tokenParam);
     setEmail(emailParam);
   }, [searchParams, t]);
@@ -106,7 +106,7 @@ export function ResetPasswordPageContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !token || !email) {
       return;
     }
@@ -134,19 +134,16 @@ export function ResetPasswordPageContent() {
         setIsLoading(false);
         return;
       }
-      
+
       // Success
       setIsSuccess(true);
       setIsLoading(false);
-      
+
       // Show success toast
-      toast.success(
-        t('resetPassword.successToastTitle'),
-        {
-          description: t('resetPassword.successToastDescription'),
-          duration: 5000,
-        }
-      );
+      toast.success(t('resetPassword.successToastTitle'), {
+        description: t('resetPassword.successToastDescription'),
+        duration: 5000,
+      });
     } catch (error) {
       console.error('Password reset error:', error);
       setError(t('resetPassword.genericError'));
@@ -174,9 +171,9 @@ export function ResetPasswordPageContent() {
           variant="back-and-title"
           onBack={handleBackToLogin}
         />
-        
+
         <HeaderSpacer />
-        
+
         <PageContentWrapper>
           <div className="flex w-full flex-col">
             <TitleSection>
@@ -195,18 +192,11 @@ export function ResetPasswordPageContent() {
 
                 {/* Action Buttons */}
                 <div className="flex w-full flex-col gap-3">
-                  <Button
-                    fullWidth
-                    variant="auth"
-                    onClick={handleRequestNewLink}
-                  >
+                  <Button fullWidth variant="auth" onClick={handleRequestNewLink}>
                     {t('resetPassword.requestNewLink')}
                   </Button>
 
-                  <LinkButton
-                    type="button"
-                    onClick={handleBackToLogin}
-                  >
+                  <LinkButton type="button" onClick={handleBackToLogin}>
                     {t('resetPassword.backToLogin')}
                   </LinkButton>
                 </div>
@@ -225,10 +215,14 @@ export function ResetPasswordPageContent() {
         variant="back-and-title"
         onBack={handleBackToLogin}
       />
-      
+
       <HeaderSpacer />
-      
-      <PageContentWrapper centerVertically={true} contentClassName="gap-10" includeMobileNavSpacing={true}>
+
+      <PageContentWrapper
+        centerVertically={true}
+        contentClassName="gap-10"
+        includeMobileNavSpacing={true}
+      >
         {/* Title + Paragraph with proper spacing */}
         <TitleSection>
           <TitleAndText
@@ -248,7 +242,9 @@ export function ResetPasswordPageContent() {
                     required
                     label={t('resetPassword.newPasswordLabel')}
                     placeholder={t('resetPassword.newPasswordPlaceholder')}
-                    rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    rightIcon={
+                      showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />
+                    }
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     variant="with-icon"
@@ -259,7 +255,13 @@ export function ResetPasswordPageContent() {
                     required
                     label={t('resetPassword.confirmPasswordLabel')}
                     placeholder={t('resetPassword.confirmPasswordPlaceholder')}
-                    rightIcon={showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    rightIcon={
+                      showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )
+                    }
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={formData.confirmPassword}
                     variant="with-icon"
@@ -311,18 +313,14 @@ export function ResetPasswordPageContent() {
                   <h2 className="mb-3 text-xl font-semibold text-content-heading">
                     {t('resetPassword.successTitle')}
                   </h2>
-                  <p className="text-content text-base leading-6">
+                  <p className="text-base leading-6 text-content">
                     {t('resetPassword.successDescription')}
                   </p>
                 </div>
 
                 {/* Action Button */}
                 <div className="w-full">
-                  <Button
-                    fullWidth
-                    variant="auth"
-                    onClick={handleBackToLogin}
-                  >
+                  <Button fullWidth variant="auth" onClick={handleBackToLogin}>
                     {t('resetPassword.goToLogin')}
                   </Button>
                 </div>

@@ -12,7 +12,7 @@ interface CityCardProps {
 
 /**
  * City Card Component for Stage 2 (6-14 providers)
- * 
+ *
  * Displays a card with Early Access badge, title, description, and CTA button.
  * Matches provider card width for visual consistency:
  * - Width: 288px (w-72, matches ProviderCard width)
@@ -36,8 +36,8 @@ export function CityCard({ cityName, onSuggestProvider }: CityCardProps) {
       className={cn(
         'flex w-full max-w-72 flex-col items-center',
         'gap-6 p-4',
-        'bg-white border border-border rounded-[24px]',
-        'box-border'
+        'rounded-[24px] border border-border bg-white',
+        'box-border',
       )}
     >
       {/* Early Access Badge */}
@@ -45,9 +45,9 @@ export function CityCard({ cityName, onSuggestProvider }: CityCardProps) {
         className={cn(
           'flex flex-row items-center justify-center',
           'gap-1 px-2 py-0',
-          'w-[137px] h-8',
-          'bg-white/70 border-[0.8px] border-neutral rounded-[9.6px]',
-          'backdrop-blur-[2px]'
+          'h-8 w-[137px]',
+          'rounded-[9.6px] border-[0.8px] border-neutral bg-white/70',
+          'backdrop-blur-[2px]',
         )}
       >
         <Icon
@@ -55,7 +55,7 @@ export function CityCard({ cityName, onSuggestProvider }: CityCardProps) {
           className="size-6 shrink-0 text-content-heading"
           icon="lucide:bird"
         />
-        <span className="font-inter-tight text-base font-semibold leading-[19px] text-content-heading whitespace-nowrap">
+        <span className="whitespace-nowrap font-inter-tight text-base font-semibold leading-[19px] text-content-heading">
           {t('waitlist.earlyAccess.badge')}
         </span>
       </div>

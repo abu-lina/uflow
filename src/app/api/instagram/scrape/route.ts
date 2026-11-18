@@ -19,41 +19,33 @@ export async function POST(request: NextRequest) {
     if (!checkRateLimit(identifier, 10, 60 * 60 * 1000, 'instagram-scrape')) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     const { username } = await request.json();
 
     if (!username) {
-      return NextResponse.json(
-        { error: 'Username is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Username is required' }, { status: 400 });
     }
 
     // F-049-07: Validate username format to prevent path traversal / injection
     const INSTAGRAM_USERNAME_REGEX = /^[a-zA-Z0-9._]{1,30}$/;
     if (!INSTAGRAM_USERNAME_REGEX.test(username)) {
-      return NextResponse.json(
-        { error: 'Invalid Instagram username format' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid Instagram username format' }, { status: 400 });
     }
 
     // Method 1: Try Instagram's public GraphQL endpoint
     // This endpoint returns public data without authentication
-    const response = await fetch(
-      `https://www.instagram.com/${username}/?__a=1&__d=dis`,
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-      }
-    );
+    const response = await fetch(`https://www.instagram.com/${username}/?__a=1&__d=dis`, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'application/json',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
 
     if (!response.ok) {
       // Method 2: Fallback to scraping the HTML page
@@ -64,10 +56,7 @@ export async function POST(request: NextRequest) {
     const userData = data?.graphql?.user || data?.user;
 
     if (!userData) {
-      return NextResponse.json(
-        { error: 'Profile not found or is private' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Profile not found or is private' }, { status: 404 });
     }
 
     // Extract recent images
@@ -92,8 +81,8 @@ export async function POST(request: NextRequest) {
       businessCategory: userData.business_category_name || undefined,
       businessEmail: userData.business_email || undefined,
       businessPhone: userData.business_phone_number || undefined,
-      businessAddress: userData.business_address_json 
-        ? JSON.parse(userData.business_address_json).street_address 
+      businessAddress: userData.business_address_json
+        ? JSON.parse(userData.business_address_json).street_address
         : undefined,
     };
 
@@ -101,10 +90,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error scraping Instagram:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to fetch Instagram data. The profile might be private or Instagram may have rate-limited the request.' 
+      {
+        error:
+          'Failed to fetch Instagram data. The profile might be private or Instagram may have rate-limited the request.',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -114,7 +104,7 @@ async function scrapeInstagramHTML(username: string) {
     const response = await fetch(`https://www.instagram.com/${username}/`, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html',
+        Accept: 'text/html',
       },
     });
 
@@ -133,11 +123,11 @@ async function scrapeInstagramHTML(username: string) {
       // Try to extract from window._sharedData
       const sharedDataRegex = /window\._sharedData = ({.+?});/;
       const sharedDataMatch = html.match(sharedDataRegex);
-      
+
       if (sharedDataMatch) {
         const sharedData = JSON.parse(sharedDataMatch[1]);
         const userData = sharedData?.entry_data?.ProfilePage?.[0]?.graphql?.user;
-        
+
         if (userData) {
           const recentImages: string[] = [];
           const posts = userData.edge_owner_to_timeline_media?.edges || [];
@@ -182,10 +172,6 @@ async function scrapeInstagramHTML(username: string) {
     return NextResponse.json(instagramData);
   } catch (error) {
     console.error('Error scraping Instagram HTML:', error);
-    return NextResponse.json(
-      { error: 'Failed to scrape Instagram profile' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to scrape Instagram profile' }, { status: 500 });
   }
 }
-

@@ -19,9 +19,7 @@ export interface SuggestedNeed extends Need {
  * @param categoryId - The category_id from the categories table
  * @returns Array of suggested offers with priority
  */
-export async function getSuggestedOffersForCategory(
-  categoryId: string
-): Promise<SuggestedOffer[]> {
+export async function getSuggestedOffersForCategory(categoryId: string): Promise<SuggestedOffer[]> {
   try {
     // First, check if the table exists by trying to fetch suggestions
     const { data: suggestionData, error: suggestionError } = await supabase
@@ -44,7 +42,7 @@ export async function getSuggestedOffersForCategory(
     }
 
     // Get the offer IDs
-    const offerIds = suggestionData.map(s => s.offer_id);
+    const offerIds = suggestionData.map((s) => s.offer_id);
 
     // Fetch the actual offers
     const { data: offersData, error: offersError } = await supabase
@@ -58,20 +56,20 @@ export async function getSuggestedOffersForCategory(
     }
 
     // Combine offers with their priorities
-    const priorityMap = new Map(
-      suggestionData.map(s => [s.offer_id, s.priority])
-    );
+    const priorityMap = new Map(suggestionData.map((s) => [s.offer_id, s.priority]));
 
-    return (offersData || []).map(offer => ({
-      ...offer,
-      priority: priorityMap.get(offer.offer_id) || 0,
-    })).sort((a, b) => {
-      // Sort by priority (desc), then name (asc)
-      if (b.priority !== a.priority) {
-        return b.priority - a.priority;
-      }
-      return a.name_de.localeCompare(b.name_de);
-    });
+    return (offersData || [])
+      .map((offer) => ({
+        ...offer,
+        priority: priorityMap.get(offer.offer_id) || 0,
+      }))
+      .sort((a, b) => {
+        // Sort by priority (desc), then name (asc)
+        if (b.priority !== a.priority) {
+          return b.priority - a.priority;
+        }
+        return a.name_de.localeCompare(b.name_de);
+      });
   } catch (error) {
     console.error('Error in getSuggestedOffersForCategory:', error);
     return [];
@@ -83,9 +81,7 @@ export async function getSuggestedOffersForCategory(
  * @param categoryId - The category_id from the categories table
  * @returns Array of suggested needs with priority
  */
-export async function getSuggestedNeedsForCategory(
-  categoryId: string
-): Promise<SuggestedNeed[]> {
+export async function getSuggestedNeedsForCategory(categoryId: string): Promise<SuggestedNeed[]> {
   try {
     // First, check if the table exists by trying to fetch suggestions
     const { data: suggestionData, error: suggestionError } = await supabase
@@ -108,7 +104,7 @@ export async function getSuggestedNeedsForCategory(
     }
 
     // Get the need IDs
-    const needIds = suggestionData.map(s => s.need_id);
+    const needIds = suggestionData.map((s) => s.need_id);
 
     // Fetch the actual needs
     const { data: needsData, error: needsError } = await supabase
@@ -122,20 +118,20 @@ export async function getSuggestedNeedsForCategory(
     }
 
     // Combine needs with their priorities
-    const priorityMap = new Map(
-      suggestionData.map(s => [s.need_id, s.priority])
-    );
+    const priorityMap = new Map(suggestionData.map((s) => [s.need_id, s.priority]));
 
-    return (needsData || []).map(need => ({
-      ...need,
-      priority: priorityMap.get(need.need_id) || 0,
-    })).sort((a, b) => {
-      // Sort by priority (desc), then name (asc)
-      if (b.priority !== a.priority) {
-        return b.priority - a.priority;
-      }
-      return a.name_de.localeCompare(b.name_de);
-    });
+    return (needsData || [])
+      .map((need) => ({
+        ...need,
+        priority: priorityMap.get(need.need_id) || 0,
+      }))
+      .sort((a, b) => {
+        // Sort by priority (desc), then name (asc)
+        if (b.priority !== a.priority) {
+          return b.priority - a.priority;
+        }
+        return a.name_de.localeCompare(b.name_de);
+      });
   } catch (error) {
     console.error('Error in getSuggestedNeedsForCategory:', error);
     return [];
@@ -168,7 +164,7 @@ export async function addCategorySuggestion(
   categoryId: string,
   type: 'offer' | 'need',
   itemId: string,
-  priority: number = 0
+  priority: number = 0,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const table = type === 'offer' ? 'category_suggested_offers' : 'category_suggested_needs';
@@ -201,7 +197,7 @@ export async function addCategorySuggestion(
 export async function removeCategorySuggestion(
   categoryId: string,
   type: 'offer' | 'need',
-  itemId: string
+  itemId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const table = type === 'offer' ? 'category_suggested_offers' : 'category_suggested_needs';
@@ -224,4 +220,3 @@ export async function removeCategorySuggestion(
     return { success: false, error: String(error) };
   }
 }
-

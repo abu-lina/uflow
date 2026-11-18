@@ -10,10 +10,7 @@ vi.mock('@/lib/supabase/admin', () => ({
 
 import type { AdminProviderEditData } from '@/services/admin/providerEdit';
 
-import {
-  buildLocationsPayload,
-  updateProviderFields,
-} from '@/services/admin/providerEdit';
+import { buildLocationsPayload, updateProviderFields } from '@/services/admin/providerEdit';
 
 describe('buildLocationsPayload', () => {
   it('returns locations array when provided', () => {
@@ -76,14 +73,15 @@ describe('updateProviderFields — locations in RPC payload', () => {
       '123e4567-e89b-12d3-a456-426614174000',
       {
         providerName: 'Test',
-        locations: [
-          { location_name: 'Berlin', address_city: 'Berlin', is_primary: true },
-        ],
+        locations: [{ location_name: 'Berlin', address_city: 'Berlin', is_primary: true }],
       },
-      'admin-user-id'
+      'admin-user-id',
     );
 
-    const rpcArg = mockRpc.mock.calls[0][1] as { p_provider_id: string; p_data: Record<string, unknown> };
+    const rpcArg = mockRpc.mock.calls[0][1] as {
+      p_provider_id: string;
+      p_data: Record<string, unknown>;
+    };
     expect(rpcArg.p_data.locations).toEqual([
       { location_name: 'Berlin', address_city: 'Berlin', is_primary: true },
     ]);
@@ -110,25 +108,17 @@ describe('updateProviderFields — locations in RPC payload', () => {
       ],
     };
 
-    await updateProviderFields(
-      '123e4567-e89b-12d3-a456-426614174000',
-      editData,
-      'admin-id'
-    );
+    await updateProviderFields('123e4567-e89b-12d3-a456-426614174000', editData, 'admin-id');
 
     const callPayload = mockRpc.mock.calls[0][1].p_data as Record<string, unknown>;
     const locs = callPayload.locations as Array<Record<string, unknown>>;
     expect(locs).toHaveLength(2);
 
-    const existingLoc = locs.find(
-      (l) => l.location_id === 'existing-location-1'
-    );
+    const existingLoc = locs.find((l) => l.location_id === 'existing-location-1');
     expect(existingLoc).toBeDefined();
     expect(existingLoc!.location_name).toBe('Berlin Mitte');
 
-    const newLoc = locs.find(
-      (l) => !l.location_id
-    );
+    const newLoc = locs.find((l) => !l.location_id);
     expect(newLoc).toBeDefined();
     expect(newLoc!.location_name).toBe('Hamburg Hbf');
   });

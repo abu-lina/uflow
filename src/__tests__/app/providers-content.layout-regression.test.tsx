@@ -191,7 +191,9 @@ describe('ProvidersContent layout regression (Plan 109)', () => {
     render(<ProvidersContent initialSection="store" />);
 
     await waitFor(() => {
-      expect(mockGetMapLocations).toHaveBeenCalledWith(expect.objectContaining({ section: 'store' }));
+      expect(mockGetMapLocations).toHaveBeenCalledWith(
+        expect.objectContaining({ section: 'store' }),
+      );
     });
   });
 });

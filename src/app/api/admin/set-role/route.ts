@@ -4,9 +4,9 @@ import { getUserRole } from '@/lib/auth/roles';
 
 /**
  * POST /api/admin/set-role
- * 
+ *
  * Set a user's role (admin/moderator only)
- * 
+ *
  * Request body:
  * {
  *   userId?: string (optional - defaults to current user)
@@ -20,10 +20,7 @@ export async function POST(request: Request) {
     const user = await getUserFromCookie();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
     // F-049-01: Require admin/moderator role (DB-backed) for privilege escalation
@@ -31,7 +28,7 @@ export async function POST(request: Request) {
     if (callerRole !== 'admin' && callerRole !== 'moderator') {
       return NextResponse.json(
         { error: 'Forbidden. Only admin or moderator can set roles.' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -41,7 +38,7 @@ export async function POST(request: Request) {
     if (!role || !['user', 'owner', 'admin', 'moderator'].includes(role)) {
       return NextResponse.json(
         { error: 'Invalid role. Must be one of: user, owner, admin, moderator' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -52,45 +49,40 @@ export async function POST(request: Request) {
     // If email is provided, find the user by email
     if (email && !userId) {
       // Use listUsers and filter by email (getUserByEmail not available in this SDK version)
-      const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const {
+        data: { users },
+        error: listError,
+      } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
       if (listError) {
         return NextResponse.json(
           { error: 'Failed to search for user', details: listError.message },
-          { status: 500 }
+          { status: 500 },
         );
       }
-      const userByEmail = users.find(u => u.email === email);
+      const userByEmail = users.find((u) => u.email === email);
       if (!userByEmail) {
-        return NextResponse.json(
-          { error: 'User not found with that email' },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: 'User not found with that email' }, { status: 404 });
       }
       targetUserId = userByEmail.id;
     }
 
     // Prevent self-role-changes (after email resolution so both paths are covered)
     if (targetUserId === user.id) {
-      return NextResponse.json(
-        { error: 'Cannot change your own role.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Cannot change your own role.' }, { status: 403 });
     }
 
     // Only admins can assign the admin role
     if (role === 'admin' && callerRole !== 'admin') {
-      return NextResponse.json(
-        { error: 'Only admins can grant admin role.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Only admins can grant admin role.' }, { status: 403 });
     }
 
     // Get auth user data for email
-    const { data: authUserData, error: authError } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+    const { data: authUserData, error: authError } =
+      await supabaseAdmin.auth.admin.getUserById(targetUserId);
     if (authError || !authUserData?.user) {
       return NextResponse.json(
         { error: 'User not found in auth system', details: authError?.message },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -103,10 +95,7 @@ export async function POST(request: Request) {
 
     // Moderators cannot modify admin users
     if (callerRole !== 'admin' && existingUser?.role === 'admin') {
-      return NextResponse.json(
-        { error: 'Only admins can modify admin users.' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Only admins can modify admin users.' }, { status: 403 });
     }
 
     let responseUser: unknown;
@@ -124,7 +113,7 @@ export async function POST(request: Request) {
       if (error) {
         return NextResponse.json(
           { error: 'Failed to update role', details: error.message },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -145,7 +134,7 @@ export async function POST(request: Request) {
       if (error) {
         return NextResponse.json(
           { error: 'Failed to create user record', details: error.message },
-          { status: 500 }
+          { status: 500 },
         );
       }
 
@@ -165,7 +154,7 @@ export async function POST(request: Request) {
         error: 'Failed to set role',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

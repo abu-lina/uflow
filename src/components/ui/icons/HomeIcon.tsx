@@ -7,7 +7,12 @@ interface HomeIconProps {
   viewBox?: string;
 }
 
-export function HomeIcon({ className = '', isActive = false, size = 48, viewBox = '0 0 48 48' }: HomeIconProps) {
+export function HomeIcon({
+  className = '',
+  isActive = false,
+  size = 48,
+  viewBox = '0 0 48 48',
+}: HomeIconProps) {
   if (isActive) {
     return (
       <svg

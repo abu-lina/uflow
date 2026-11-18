@@ -13,8 +13,8 @@ const iconButtonVariants = cva(
         success: 'bg-primary-dark text-white hover:bg-primary-dark',
       },
       size: {
-        sm: 'h-8 w-8',   // 32px
-        md: 'h-10 w-10', // 40px  
+        sm: 'h-8 w-8', // 32px
+        md: 'h-10 w-10', // 40px
         lg: 'h-12 w-12', // 48px
         xl: 'h-14 w-14', // 56px
       },
@@ -23,12 +23,11 @@ const iconButtonVariants = cva(
       variant: 'secondary',
       size: 'lg',
     },
-  }
+  },
 );
 
 export interface IconButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof iconButtonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof iconButtonVariants> {
   icon: React.ReactNode | string; // Support both ReactNode and Iconify string
   'aria-label': string;
   loading?: boolean;
@@ -36,19 +35,19 @@ export interface IconButtonProps
 
 /**
  * Simple icon-only button component
- * 
+ *
  * Features:
  * - Perfect 1:1 ratio (square buttons)
  * - Automatically centers the icon
  * - Icon passed as React.ReactNode (supports any size)
  * - No gap or spacing issues
  * - Clean, focused API
- * 
+ *
  * @example
  * ```tsx
- * <IconButton 
- *   variant="secondary" 
- *   size="lg" 
+ * <IconButton
+ *   variant="secondary"
+ *   size="lg"
  *   aria-label="Delete item"
  *   onClick={handleDelete}
  * >
@@ -60,7 +59,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ className, variant, size, icon, disabled, loading, onClick, ...props }, ref) => {
     const isDisabled = disabled || loading;
     const internalRef = useRef<HTMLButtonElement | null>(null);
-    
+
     // Combine forwarded ref with internal ref using callback ref pattern
     const setRef = (element: HTMLButtonElement | null) => {
       internalRef.current = element;
@@ -70,29 +69,40 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         (ref as React.MutableRefObject<HTMLButtonElement | null>).current = element;
       }
     };
-    
+
     // Render icon - support both ReactNode and Iconify string
     const renderIcon = () => {
       if (loading) {
-        return <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />;
+        return (
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        );
       }
-      
+
       if (typeof icon === 'string') {
         // Use text-content-heading for the icon color (#232323)
-        return <Icon aria-hidden="true" className="h-5 w-5 pointer-events-none text-content-heading" icon={icon} />;
+        return (
+          <Icon
+            aria-hidden="true"
+            className="pointer-events-none h-5 w-5 text-content-heading"
+            icon={icon}
+          />
+        );
       }
-      
+
       // Wrap ReactNode icons to prevent click propagation issues
       // The pointer-events-none ensures clicks always hit the button, not child SVG elements
       // Use text-content-heading for the icon color (#232323)
       if (icon) {
         return (
-          <span className="pointer-events-none flex items-center justify-center text-content-heading" style={{ pointerEvents: 'none' }}>
+          <span
+            className="pointer-events-none flex items-center justify-center text-content-heading"
+            style={{ pointerEvents: 'none' }}
+          >
             {icon}
           </span>
         );
       }
-      
+
       return null;
     };
 
@@ -126,7 +136,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         }
       });
     }, [icon]);
-    
+
     return (
       <button
         ref={setRef}
@@ -138,7 +148,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         {renderIcon()}
       </button>
     );
-  }
+  },
 );
 
 IconButton.displayName = 'IconButton';

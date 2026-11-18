@@ -5,10 +5,7 @@ interface ChatIconProps {
   isActive?: boolean;
 }
 
-export function ChatIcon({
-  className = '',
-  isActive = false,
-}: ChatIconProps) {
+export function ChatIcon({ className = '', isActive = false }: ChatIconProps) {
   const strokeColor = isActive ? '#589D96' : '#777777';
 
   return (

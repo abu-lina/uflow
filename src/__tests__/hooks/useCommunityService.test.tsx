@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * TDD tests for useCommunityService hook (Plan 082)
- * 
+ *
  * These tests were written BEFORE the hook was implemented.
  * Red → Green verified per TDD gate procedure.
  */
@@ -60,10 +60,9 @@ describe('useCommunityService hook (Plan 082)', () => {
   it('[post-fix PASSES] fetches a community service by ID when no initialData', async () => {
     mockGetCommunityServiceById.mockResolvedValue(fakeCommunityService);
 
-    const { result } = renderHook(
-      () => useCommunityService({ communityServiceId: 'cs-test-1' }),
-      { wrapper: createWrapper() },
-    );
+    const { result } = renderHook(() => useCommunityService({ communityServiceId: 'cs-test-1' }), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -75,7 +74,8 @@ describe('useCommunityService hook (Plan 082)', () => {
   it('[post-fix PASSES] returns initialData immediately without fetching when provided', async () => {
     // Hook should serve initialData immediately (not null)
     const { result } = renderHook(
-      () => useCommunityService({ communityServiceId: 'cs-test-1', initialData: fakeCommunityService }),
+      () =>
+        useCommunityService({ communityServiceId: 'cs-test-1', initialData: fakeCommunityService }),
       { wrapper: createWrapper() },
     );
 
@@ -100,10 +100,9 @@ describe('useCommunityService hook (Plan 082)', () => {
   });
 
   it('[post-fix PASSES] does not fetch when communityServiceId is empty', () => {
-    const { result } = renderHook(
-      () => useCommunityService({ communityServiceId: '' }),
-      { wrapper: createWrapper() },
-    );
+    const { result } = renderHook(() => useCommunityService({ communityServiceId: '' }), {
+      wrapper: createWrapper(),
+    });
 
     expect(result.current.isLoading).toBe(false);
     expect(mockGetCommunityServiceById).not.toHaveBeenCalled();

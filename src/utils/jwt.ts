@@ -15,7 +15,7 @@ function decodeJWTPayload(token: string): { exp?: number; [key: string]: unknown
     const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
     // Add padding if needed
     const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    
+
     const decoded = Buffer.from(padded, 'base64').toString('utf-8');
     return JSON.parse(decoded) as { exp?: number; [key: string]: unknown };
   } catch {
@@ -37,9 +37,9 @@ export function isJWTExpired(token: string): boolean {
   // exp is in seconds, Date.now() is in milliseconds
   const expirationTime = payload.exp * 1000;
   const now = Date.now();
-  
+
   // Add 5 second buffer to account for clock skew
-  return now >= (expirationTime - 5000);
+  return now >= expirationTime - 5000;
 }
 
 /**

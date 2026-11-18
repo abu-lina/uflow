@@ -10,7 +10,7 @@ export function PageIndicator({ activeIndex, count, className = '' }: PageIndica
       {Array.from({ length: count }, (_, index) => (
         <div
           key={index}
-          className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+          className={`h-2 w-2 rounded-full transition-colors duration-200 ${
             index === activeIndex ? 'bg-primary' : 'bg-border'
           }`}
         />

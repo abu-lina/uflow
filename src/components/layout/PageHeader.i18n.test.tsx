@@ -32,7 +32,9 @@ describe('PageHeader back button i18n (issue #719)', () => {
   it('back button aria-label is the German label with the de bundle', () => {
     mockBundle = de;
     render(<PageHeader title="Titel" variant="back-and-title" onBack={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Zurück' }).getAttribute('aria-label')).toBe('Zurück');
+    expect(screen.getByRole('button', { name: 'Zurück' }).getAttribute('aria-label')).toBe(
+      'Zurück',
+    );
   });
 
   it('back button aria-label is the English label and not "Zurück"', () => {

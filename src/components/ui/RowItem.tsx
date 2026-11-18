@@ -39,7 +39,9 @@ function IconWrapper({ icon, selected }: { icon: ReactNode; selected: boolean })
   return (
     <div className="relative">
       {icon}
-      {selected ? <span className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-primary" /> : null}
+      {selected ? (
+        <span className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-primary" />
+      ) : null}
       {selected ? (
         <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white">
           <Check aria-hidden="true" className="h-3 w-3" />

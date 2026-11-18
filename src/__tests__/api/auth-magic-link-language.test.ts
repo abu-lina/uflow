@@ -52,7 +52,7 @@ const post = (language: string) =>
         origin: 'http://localhost',
       },
       body: JSON.stringify({ email: PROBE_EMAIL, language }),
-    }) as never
+    }) as never,
   );
 
 describe('POST /api/auth/magic-link email language (#722 AC4)', () => {

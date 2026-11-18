@@ -75,8 +75,7 @@ export async function enrichFromWolt(
   }
 
   // Use venue_preview_items from discovery API (menu endpoint deprecated)
-  const previewItems =
-    (match.venue.venue_preview_items as Array<{ name?: string }>) ?? [];
+  const previewItems = (match.venue.venue_preview_items as Array<{ name?: string }>) ?? [];
   const menuItemNames = previewItems
     .filter((i): i is { name: string } => typeof i?.name === 'string')
     .map((i) => i.name);
