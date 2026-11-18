@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { AboutPageContent } from '@/components/shared/AboutPageContent';
@@ -44,7 +44,7 @@ describe('AboutPageContent desktop layout (#958)', () => {
     const header = container.querySelector('header');
     expect(header).toBeTruthy();
 
-    const headerWrapper = header!.closest('[class*="md:hidden"]');
+    const headerWrapper = (header as HTMLElement).closest('[class*="md:hidden"]');
     expect(headerWrapper).toBeTruthy();
   });
 
@@ -55,7 +55,7 @@ describe('AboutPageContent desktop layout (#958)', () => {
     const contentWrapper = container.querySelector('[class*="items-center"][class*="gap-8"]');
     expect(contentWrapper).toBeTruthy();
 
-    const classes = contentWrapper!.className;
+    const classes = (contentWrapper as HTMLElement).className;
     const hasConstrainedWidth = /max-w-(?!full)\S+/.test(classes);
     expect(hasConstrainedWidth).toBe(true);
   });
@@ -67,11 +67,11 @@ describe('AboutPageContent desktop layout (#958)', () => {
     const ctaButton = container.querySelector('button.w-full');
     expect(ctaButton).toBeTruthy();
 
-    const classes = ctaButton!.className;
+    const classes = (ctaButton as HTMLElement).className;
     const hasDesktopWidthConstraint =
       classes.includes('md:w-auto') ||
       classes.includes('md:max-w') ||
-      ctaButton!.closest('[class*="max-w-"]') !== null;
+      (ctaButton as HTMLElement).closest('[class*="max-w-"]') !== null;
     expect(hasDesktopWidthConstraint).toBe(true);
   });
 });
