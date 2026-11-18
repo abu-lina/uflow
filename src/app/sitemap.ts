@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-import { supabase } from '@/lib/supabase/client';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import {
   generateFoodCityCanonicalUrl,
   generateFoodCategoryCanonicalUrl,
@@ -8,6 +8,7 @@ import {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
+  const supabase = createSupabaseServerClient();
 
   const entries: MetadataRoute.Sitemap = [{ url: `${siteUrl}/food` }];
 

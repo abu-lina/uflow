@@ -1,17 +1,13 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ─── Mock Supabase ──────────────────────────────────────────────────────────
+// ─── Mock Supabase server client ────────────────────────────────────────────
 const mockSupabase = { from: vi.fn() };
 
-vi.mock('@/lib/supabase/client', () => ({
-  get supabase() {
-    return mockSupabase;
-  },
-}));
-
-// Mock server-only to avoid the import error in test env
 vi.mock('server-only', () => ({}));
+vi.mock('@/lib/supabase/server', () => ({
+  createSupabaseServerClient: () => mockSupabase,
+}));
 
 // ─── Mock data ──────────────────────────────────────────────────────────────
 const SITE_URL = 'https://ummahflow.com';
