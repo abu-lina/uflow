@@ -40,3 +40,10 @@ next-env.d.ts
 
 # Parallel lane worktrees
 .worktrees/
+
+# Unformatted directories (narrowed scope, #613)
+agent-output/
+docs/
+tests/performance/
+tools/
+.devin/
