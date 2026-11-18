@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -12,6 +12,7 @@ interface HalalMeatDefinitionPopupProps {
 
 export function HalalMeatDefinitionPopup({ isOpen, onClose }: HalalMeatDefinitionPopupProps) {
   const { t } = useLanguage();
+  const headingId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -73,6 +74,7 @@ export function HalalMeatDefinitionPopup({ isOpen, onClose }: HalalMeatDefinitio
     >
       <div
         ref={dialogRef}
+        aria-labelledby={headingId}
         aria-modal="true"
         className="relative w-full max-w-md rounded-2xl bg-white p-5 shadow-xl"
         role="dialog"
@@ -87,7 +89,7 @@ export function HalalMeatDefinitionPopup({ isOpen, onClose }: HalalMeatDefinitio
         >
           <X className="h-4 w-4" />
         </button>
-        <h2 className="mb-3 pe-8 text-lg font-semibold text-content-heading">
+        <h2 className="mb-3 pe-8 text-lg font-semibold text-content-heading" id={headingId}>
           {t('providerDetail.popup.halalMeatDefinitionTitle')}
         </h2>
         <div
