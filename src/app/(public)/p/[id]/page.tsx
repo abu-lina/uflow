@@ -10,7 +10,7 @@ import { ProviderScreeningPanelSkeleton } from '@/features/admin/components/Prov
 import { ProviderScreeningSection } from '@/features/admin/components/ProviderScreeningSection';
 import { canViewScreenings } from '@/features/admin/services/provider-screenings.server';
 import { generateProviderCanonicalUrl } from '@/utils/canonicalUrl';
-import { getFirstImageUrl, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
+import { getFirstImageUrl, isAllowedImageUrl, PLACEHOLDER_IMAGE } from '@/utils/imageUtils';
 
 // Issue 533 — /p/<id> used to render a not-found page under HTTP 200 with
 // `index, follow`: the route never called notFound() server-side (the only
@@ -60,7 +60,9 @@ export async function generateMetadata({
   const title = `${provider.provider_name}${provider.address_city ? ` in ${provider.address_city}` : ''}`;
   const description = provider.description || `${provider.provider_name} on Ummah Flow`;
   const imageUrl = getFirstImageUrl(provider.provider_images);
-  const ogImage = imageUrl === PLACEHOLDER_IMAGE ? '/icons/icon-512x512.png' : imageUrl;
+  const defaultIcon = `${siteUrl}/icons/icon-512x512.png`;
+  const ogImage =
+    imageUrl !== PLACEHOLDER_IMAGE && isAllowedImageUrl(imageUrl) ? imageUrl : defaultIcon;
 
   return {
     title,

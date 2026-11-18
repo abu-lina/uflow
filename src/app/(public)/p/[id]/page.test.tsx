@@ -120,7 +120,8 @@ describe('/p/[id] generateMetadata (#949)', () => {
       description: 'Fresh halal meat in Berlin',
     };
     const m = await meta();
-    const og = m.openGraph!;
+    expect(m.openGraph).toBeDefined();
+    const og = m.openGraph as NonNullable<typeof m.openGraph>;
     expect(og.title).toContain('Halal Meats');
     expect(og.description).toContain('Fresh halal meat');
     expect(og.url).toContain('/p/p1');
@@ -135,7 +136,8 @@ describe('/p/[id] generateMetadata (#949)', () => {
       description: null,
     };
     const m = await meta();
-    const og = m.openGraph!;
+    expect(m.openGraph).toBeDefined();
+    const og = m.openGraph as NonNullable<typeof m.openGraph>;
     const images = Array.isArray(og.images) ? og.images : [og.images];
     const firstUrl =
       typeof images[0] === 'string' ? images[0] : (images[0] as { url: string })?.url;
@@ -151,7 +153,8 @@ describe('/p/[id] generateMetadata (#949)', () => {
       description: null,
     };
     const m = await meta();
-    const og = m.openGraph!;
+    expect(m.openGraph).toBeDefined();
+    const og = m.openGraph as NonNullable<typeof m.openGraph>;
     const images = Array.isArray(og.images) ? og.images : [og.images];
     const firstUrl =
       typeof images[0] === 'string' ? images[0] : (images[0] as { url: string })?.url;
