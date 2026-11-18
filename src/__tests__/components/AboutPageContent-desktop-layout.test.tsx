@@ -63,18 +63,15 @@ describe('AboutPageContent desktop layout (#958)', () => {
   it('does not render a full-width button on desktop', () => {
     const { container } = render(<AboutPageContent />);
 
-    // The CTA button should not be full-width on md+ viewports
-    const button = container.querySelector('button');
-    expect(button).toBeTruthy();
+    // The CTA button has w-full from fullWidth prop — find it specifically
+    const ctaButton = container.querySelector('button.w-full');
+    expect(ctaButton).toBeTruthy();
 
-    // Button or its wrapper should constrain width on desktop
-    // The button should have md:w-auto or be inside a max-width container
-    const classes = button!.className;
+    const classes = ctaButton!.className;
     const hasDesktopWidthConstraint =
       classes.includes('md:w-auto') ||
       classes.includes('md:max-w') ||
-      // Or the button's parent constrains it
-      button!.closest('[class*="max-w-"]') !== null;
+      ctaButton!.closest('[class*="max-w-"]') !== null;
     expect(hasDesktopWidthConstraint).toBe(true);
   });
 });

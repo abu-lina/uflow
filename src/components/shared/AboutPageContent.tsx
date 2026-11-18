@@ -112,7 +112,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
           the frosted/blurred overlay covering the map illustration (Plan 022).
           The language switcher is already rendered via portal above. */}
         {!showSplashHeader && (
-          <>
+          <div className="md:hidden">
             <PageHeader
               rightIcon={
                 <Image
@@ -128,7 +128,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
               onBack={() => router.back()}
             />
             <HeaderSpacer />
-          </>
+          </div>
         )}
 
         {/* CONTENT SECTION - Flexible middle area with proper centering */}
@@ -136,7 +136,7 @@ export function AboutPageContent({ onComplete, showSplashHeader = false }: About
           centerVertically={true}
           contentClassName="flex flex-col items-center gap-8 pb-8"
           includeMobileNavSpacing={false}
-          maxWidth="full"
+          maxWidth="2xl"
           padding="lg-safe"
         >
           {/* Card Container */}
