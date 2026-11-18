@@ -17,11 +17,21 @@ CREATE POLICY "ummah_providers_select"
     )
   );
 
--- provider_engagements: public read (engagement data is non-sensitive;
--- the joined providers table's own RLS gates which providers are visible).
+-- provider_engagements: readable when both referenced providers are visible
+-- to the caller (delegates to providers RLS which hides non-approved rows
+-- from non-owners).
 CREATE POLICY "provider_engagements_select"
   ON public.provider_engagements FOR SELECT
-  USING (true);
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.providers p
+      WHERE p.provider_id = provider_engagements.initiating_provider_id
+    )
+    AND EXISTS (
+      SELECT 1 FROM public.providers p
+      WHERE p.provider_id = provider_engagements.engaged_provider_id
+    )
+  );
 
 -- provider_engagements INSERT: owner of the initiating provider, or admin/moderator.
 CREATE POLICY "provider_engagements_insert"
@@ -39,6 +49,9 @@ CREATE POLICY "provider_engagements_insert"
         AND u.role IN ('admin', 'moderator')
     )
   );
+
+-- No UPDATE policy: the app uses delete-then-insert for changes; UPDATE is
+-- intentionally blocked so stale engagement_type values can't be smuggled in.
 
 -- provider_engagements DELETE: owner of the initiating provider, or admin/moderator.
 CREATE POLICY "provider_engagements_delete"

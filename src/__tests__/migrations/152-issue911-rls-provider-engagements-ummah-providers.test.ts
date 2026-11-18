@@ -182,20 +182,37 @@ describe('migration 152 — provider_engagements + ummah_providers RLS (#911)', 
     expect(result).toHaveLength(1);
   });
 
+  it('anon cannot see engagements referencing a pending provider', async () => {
+    await db.exec(
+      `INSERT INTO public.provider_engagements (initiating_provider_id, engaged_provider_id, engagement_type)
+       VALUES ('${PROVIDER_A}', '${PROVIDER_C}', 'endorsement')`,
+    );
+    const result = await asCaller('anon', null, () =>
+      rows<{ id: string }>(
+        'SELECT id FROM public.provider_engagements WHERE engaged_provider_id = $1',
+        [PROVIDER_C],
+      ),
+    );
+    expect(result).toHaveLength(0);
+    await db.exec(
+      `DELETE FROM public.provider_engagements WHERE initiating_provider_id = '${PROVIDER_A}' AND engaged_provider_id = '${PROVIDER_C}' AND engagement_type = 'endorsement'`,
+    );
+  });
+
   // -- provider_engagements INSERT --
 
   it('provider owner can INSERT engagements for their provider', async () => {
-    await asCaller('authenticated', OWNER_A, async () => {
+    await asCaller('authenticated', OWNER_B, async () => {
       await db.query(
         `INSERT INTO public.provider_engagements (initiating_provider_id, engaged_provider_id, engagement_type)
          VALUES ($1, $2, 'financial')`,
-        [PROVIDER_A, PROVIDER_C],
+        [PROVIDER_B, PROVIDER_A],
       );
       const result = await rows<{ id: string }>(
         'SELECT id FROM public.provider_engagements WHERE initiating_provider_id = $1',
-        [PROVIDER_A],
+        [PROVIDER_B],
       );
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(1);
     });
   });
 
