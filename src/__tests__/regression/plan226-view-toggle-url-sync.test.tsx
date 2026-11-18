@@ -42,13 +42,17 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
 
   it('reads ?view=list from URL and uses it as initial view mode (overriding default map)', () => {
     const params = new URLSearchParams('view=list');
-    const { result } = renderHook(() => useMapDiscovery(geo, 'map', null, makeUrlSync(params)));
+    const { result } = renderHook(() =>
+      useMapDiscovery(geo, 'map', null, makeUrlSync(params), { view: 'list' }),
+    );
     expect(result.current.viewMode).toBe('list');
   });
 
   it('reads ?view=map from URL and uses it as initial view mode (overriding default list)', () => {
     const params = new URLSearchParams('view=map');
-    const { result } = renderHook(() => useMapDiscovery(geo, 'list', null, makeUrlSync(params)));
+    const { result } = renderHook(() =>
+      useMapDiscovery(geo, 'list', null, makeUrlSync(params), { view: 'map' }),
+    );
     expect(result.current.viewMode).toBe('map');
   });
 
@@ -81,7 +85,9 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
 
   it('toggleViewMode strips ?view= when switching back to default (map)', () => {
     const params = new URLSearchParams('view=list');
-    const { result } = renderHook(() => useMapDiscovery(geo, 'map', null, makeUrlSync(params)));
+    const { result } = renderHook(() =>
+      useMapDiscovery(geo, 'map', null, makeUrlSync(params), { view: 'list' }),
+    );
 
     act(() => result.current.toggleViewMode());
 
@@ -182,7 +188,7 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
   it('preserves other params when stripping ?view= on default toggle', () => {
     const params = new URLSearchParams('q=shawarma&view=map');
     const { result } = renderHook(() =>
-      useMapDiscovery(geo, 'list', null, makeUrlSync(params, '/food')),
+      useMapDiscovery(geo, 'list', null, makeUrlSync(params, '/food'), { view: 'map' }),
     );
 
     // Currently viewing map (non-default). Toggle back to list (default).

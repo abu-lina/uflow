@@ -20,9 +20,8 @@ export type ViewMode = 'map' | 'list';
 // ---- URL sync ----
 
 /**
- * Optional URL-sync configuration. When provided, the hook reads the initial
- * view mode from `searchParams.get('view')` and writes back on toggle/set
- * via `replace()`. All existing query params are preserved.
+ * Optional URL-sync configuration. When provided, the hook writes the
+ * view mode back via `replace()`. All existing query params are preserved.
  */
 export interface UrlSyncConfig {
   searchParams: URLSearchParams | { get(key: string): string | null; toString(): string };
@@ -100,18 +99,20 @@ export function useMapDiscovery(
     section?: Section;
     city?: string | null;
     filters?: SearchFilterKey[];
+    openNow?: boolean;
+    view?: string | null;
   },
 ): UseMapDiscoveryResult {
-  const [isOpenNow, setIsOpenNow] = useState(() => urlSync?.searchParams.get('open_now') === '1');
+  const [isOpenNow, setIsOpenNow] = useState(() => options?.openNow ?? false);
 
-  // Sync isOpenNow when the URL param changes (e.g. desktop header chip toggle)
-  const urlOpenNow = urlSync?.searchParams.get('open_now') === '1';
+  // Sync isOpenNow when the caller's value changes (e.g. desktop header chip toggle)
+  const urlOpenNow = options?.openNow ?? false;
   useEffect(() => {
     setIsOpenNow(urlOpenNow);
   }, [urlOpenNow]);
 
-  // Resolve initial view: URL param > defaultViewMode
-  const urlView = urlSync?.searchParams.get('view');
+  // Resolve initial view: caller value > defaultViewMode
+  const urlView = options?.view;
   const initialView: ViewMode =
     urlView === 'map' ? 'map' : urlView === 'list' ? 'list' : defaultViewMode;
 
