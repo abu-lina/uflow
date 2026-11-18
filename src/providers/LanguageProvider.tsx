@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useLayoutEffect,
   useCallback,
   useMemo,
   ReactNode,
@@ -168,28 +169,21 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
   }, []);
 
-  // Handle language detection after hydration
-  useEffect(() => {
+  // Detect language before paint so children never see the stale SSR default.
+  useLayoutEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
 
-    // Priority 1: Check for saved user preference (explicit user choice)
     const savedLanguage = localStorage.getItem('preferred-language');
 
     if (isValidLanguage(savedLanguage)) {
-      // User has explicitly selected a language - use it
       setLanguageState(savedLanguage);
       return;
     }
 
-    // Priority 2: Auto-detect language (only if no saved preference exists)
-    // This only happens on first visit or if preference was cleared
     const detectedLang = detectLanguage();
     setLanguageState(detectedLang);
-
-    // Save the auto-detected language as initial preference
-    // This allows it to persist across sessions, but user can still override it
     localStorage.setItem('preferred-language', detectedLang);
   }, []);
 
