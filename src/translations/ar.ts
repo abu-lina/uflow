@@ -173,6 +173,8 @@ export const ar = {
     personSingular: '{{count}} شخص',
     personPlural: '{{count}} أشخاص',
     searchButton: 'بحث',
+    foodInCity: 'طعام حلال في {{city}}',
+    categoryInCity: '{{category}} في {{city}}',
     suggestions: {
       provider: 'مطعم',
       cuisine: 'مطبخ',

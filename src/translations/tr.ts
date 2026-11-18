@@ -173,6 +173,8 @@ export const tr = {
     personSingular: '{{count}} Kişi',
     personPlural: '{{count}} Kişi',
     searchButton: 'Ara',
+    foodInCity: '{{city}} Helal Yemek',
+    categoryInCity: '{{city}} {{category}}',
     suggestions: {
       provider: 'Restoran',
       cuisine: 'Mutfak',

@@ -74,7 +74,7 @@ vi.mock('@/services/categories', () => ({
 }));
 
 vi.mock('@/app/(public)/providers/ProvidersContent', () => ({
-  ProvidersContent: (props: Record<string, unknown>) => {
+  ProvidersContent: (_props: Record<string, unknown>) => {
     // Render the h1 the real component would render, so we can test the prop flow.
     // The real component will use useLanguage() — here we just check the props arrive.
     return null;
@@ -152,10 +152,8 @@ describe('#951 AC2: category page h1 names category and city', () => {
       routeCity: 'Stuttgart',
       routeCategory: 'cat-restaurants',
       routeCategoryRecord: {
-        category_id: 'cat-restaurants',
         name_de: 'Restaurants',
         name_en: 'Restaurants',
-        slug: 'restaurants',
       },
     });
 

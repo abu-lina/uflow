@@ -6,10 +6,39 @@ import { getCategoryById } from '@/services/categories';
 import type { Section } from '@/config/sectionFilters';
 import { parseDiscoveryQuery, parseTier } from '@/features/search/discoveryQuery';
 import { resolveFilteredCategoryLabel, type FilteredCategoryLabel } from '@/lib/categoryFilter';
+import { generateProviderCanonicalUrl } from '@/utils/canonicalUrl';
 
 import { ProvidersContent } from './ProvidersContent';
 
 const PAGE_SIZE = 12;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ummahflow.com';
+
+function buildItemListJsonLd(results: SearchResult[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: results.map((r, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'LocalBusiness',
+        name: r.name,
+        url: generateProviderCanonicalUrl(r.id, SITE_URL),
+        ...(r.address_street || r.address_city || r.address_zip || r.address_country
+          ? {
+              address: {
+                '@type': 'PostalAddress',
+                ...(r.address_street && { streetAddress: r.address_street }),
+                ...(r.address_city && { addressLocality: r.address_city }),
+                ...(r.address_zip && { postalCode: r.address_zip }),
+                ...(r.address_country && { addressCountry: r.address_country }),
+              },
+            }
+          : {}),
+      },
+    })),
+  };
+}
 
 function toURLSearchParams(raw: { [key: string]: string | string[] | undefined }): URLSearchParams {
   const params = new URLSearchParams();
@@ -77,22 +106,36 @@ export async function renderProvidersPage(opts: {
 
   const mapCenter = await mapCenterPromise;
 
+  const routeCategoryName = routeCategoryRecord?.name_en || routeCategoryRecord?.name_de || null;
+
   return (
-    <Suspense fallback={null}>
-      <ProvidersContent
-        defaultLocation={dq.location || undefined}
-        displayCategory={displayCategory}
-        initialData={{
-          results: initialResults,
-          hasMore: initialHasMore,
-          totalCount: initialTotalCount,
-        }}
-        initialFilters={dq.filters}
-        initialSection={dq.section}
-        mapCenter={mapCenter}
-        mapCity={routeCity}
-        pageCategory={routeCategory}
-      />
-    </Suspense>
+    <>
+      {routeCity && initialResults.length > 0 && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(buildItemListJsonLd(initialResults)),
+          }}
+          type="application/ld+json"
+        />
+      )}
+      <Suspense fallback={null}>
+        <ProvidersContent
+          defaultLocation={dq.location || undefined}
+          displayCategory={displayCategory}
+          initialData={{
+            results: initialResults,
+            hasMore: initialHasMore,
+            totalCount: initialTotalCount,
+          }}
+          initialFilters={dq.filters}
+          initialSection={dq.section}
+          mapCenter={mapCenter}
+          mapCity={routeCity}
+          pageCategory={routeCategory}
+          routeCategoryName={routeCategoryName}
+          routeCity={routeCity}
+        />
+      </Suspense>
+    </>
   );
 }

@@ -175,6 +175,8 @@ export const ur = {
     personSingular: '{{count}} شخص',
     personPlural: '{{count}} لوگ',
     searchButton: 'تلاش کریں',
+    foodInCity: '{{city}} میں حلال کھانا',
+    categoryInCity: '{{city}} میں {{category}}',
     suggestions: {
       provider: 'ریستوران',
       cuisine: 'کھانے',

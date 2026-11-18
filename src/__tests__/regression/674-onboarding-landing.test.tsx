@@ -88,21 +88,33 @@ describe('#674 flow 1: onboarding lands on the map view of the onboarding city',
     const element = (await renderProvidersPage({
       searchParams: Promise.resolve({ location: 'Berlin', view: 'map' }),
       routeSection: 'food',
-    })) as ReactElement<{ children: ReactElement<Record<string, unknown>> }>;
+    })) as ReactElement;
+
+    const children = Array.isArray(element.props.children)
+      ? element.props.children
+      : [element.props.children];
+    const suspense = children.find((c: ReactElement) => c && c.props?.children);
+    const content = suspense.props.children as ReactElement<Record<string, unknown>>;
 
     expect(mockGetCityCenter).toHaveBeenCalledWith('Berlin');
-    expect(element.props.children.type).toBe(ProvidersContent);
-    expect(element.props.children.props.mapCenter).toEqual({ lat: 52.52, lng: 13.405 });
+    expect(content.type).toBe(ProvidersContent);
+    expect(content.props.mapCenter).toEqual({ lat: 52.52, lng: 13.405 });
   });
 
   it('looks up no center when no city is in scope', async () => {
     const element = (await renderProvidersPage({
       searchParams: Promise.resolve({}),
       routeSection: 'food',
-    })) as ReactElement<{ children: ReactElement<Record<string, unknown>> }>;
+    })) as ReactElement;
+
+    const children = Array.isArray(element.props.children)
+      ? element.props.children
+      : [element.props.children];
+    const suspense = children.find((c: ReactElement) => c && c.props?.children);
+    const content = suspense.props.children as ReactElement<Record<string, unknown>>;
 
     expect(mockGetCityCenter).not.toHaveBeenCalled();
-    expect(element.props.children.props.mapCenter).toBeNull();
+    expect(content.props.mapCenter).toBeNull();
   });
 });
 
