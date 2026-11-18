@@ -1262,9 +1262,9 @@ export const en = {
       nearby: 'Loading providers...',
     },
     halal: {
-      title: 'Restaurants on Ummah Flow are checked for halal compliance',
+      title: 'What Ummah Flow checks',
       description:
-        'A restaurant is only listed if it offers no alcohol, no prohibited meat, and no gambling. The meat must be slaughtered halal.',
+        "We check what can be seen: no alcohol and no pork on the menu, no gambling machines on site. Whether the meat is halal is the owner's statement unless a certificate is shown. Each listing shows its level.",
       learnMore: 'Learn more',
     },
     popup: {
