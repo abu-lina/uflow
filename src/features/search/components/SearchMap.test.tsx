@@ -148,7 +148,10 @@ describe('SearchMap', () => {
   });
 
   it('[pre-fix FAILS / post-fix PASSES] SearchMap source does not call getCurrentPosition', () => {
-    const source = fs.readFileSync(path.join(mapRoot, 'src/features/search/components/SearchMap.tsx'), 'utf8');
+    const source = fs.readFileSync(
+      path.join(mapRoot, 'src/features/search/components/SearchMap.tsx'),
+      'utf8',
+    );
     expect(source).not.toContain('getCurrentPosition');
   });
 
@@ -212,9 +215,7 @@ describe('#674 SearchMap zooms to the focused city', () => {
   }
 
   it('centers the map on the city center at city zoom when the city has coordinates', async () => {
-    render(
-      <SearchMap focus={{ key: 'Hamburg', center: { lat: 53.55, lng: 10.0 } }} pins={pins} />,
-    );
+    render(<SearchMap focus={{ key: 'Hamburg', center: { lat: 53.55, lng: 10.0 } }} pins={pins} />);
 
     const map = await mapInstance();
     await waitFor(() => expect(map.setView).toHaveBeenCalledWith([53.55, 10.0], 12));
@@ -239,10 +240,7 @@ describe('#674 SearchMap zooms to the focused city', () => {
       <SearchMap focus={{ key: 'Hamburg', center: { lat: 53.55, lng: 10.0 } }} pins={pins} />,
     );
     rerender(
-      <SearchMap
-        focus={{ key: 'Hamburg', center: { lat: 53.55, lng: 10.0 } }}
-        pins={[...pins]}
-      />,
+      <SearchMap focus={{ key: 'Hamburg', center: { lat: 53.55, lng: 10.0 } }} pins={[...pins]} />,
     );
 
     const map = await mapInstance();

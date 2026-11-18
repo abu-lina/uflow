@@ -66,18 +66,18 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
 
         // Priority 2: Get category fallback images
         const categoryImages: string[] = [];
-        
+
         if (category?.category_images) {
           try {
             // Handle different possible data structures
             let parsedCategoryImages;
-            
+
             if (typeof category.category_images === 'string') {
               parsedCategoryImages = JSON.parse(category.category_images);
             } else {
               parsedCategoryImages = category.category_images;
             }
-            
+
             // Handle different possible structures
             if (Array.isArray(parsedCategoryImages)) {
               // Direct array of URLs
@@ -96,10 +96,11 @@ export default function CommunityServiceGallery({ category }: CommunityServiceGa
 
         // Combine community service images with category images
         const combinedImages = [...communityServiceImages];
-        
+
         // Fill remaining slots with category images (repeat if necessary)
         while (combinedImages.length < 3 && categoryImages.length > 0) {
-          const categoryImageIndex = (combinedImages.length - communityServiceImages.length) % categoryImages.length;
+          const categoryImageIndex =
+            (combinedImages.length - communityServiceImages.length) % categoryImages.length;
           combinedImages.push(categoryImages[categoryImageIndex]);
         }
 

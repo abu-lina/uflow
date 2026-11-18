@@ -125,7 +125,8 @@ test('Home nav link hit-tests to itself across its full mobile target', async ({
 
   expect(hitTest.found, 'expected a visible Home nav link').toBe(true);
   expect(hitTest.checked, 'expected a non-empty Home nav target').toBeGreaterThan(0);
-  expect(hitTest.hits, 'every pixel across the Home link target must hit the link or a child').toEqual(
-    [],
-  );
+  expect(
+    hitTest.hits,
+    'every pixel across the Home link target must hit the link or a child',
+  ).toEqual([]);
 });

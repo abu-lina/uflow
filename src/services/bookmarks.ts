@@ -19,7 +19,10 @@ function withLegacyFields(bookmark: Bookmark): Bookmark {
   };
 }
 
-export async function getBookmarkForProvider(providerId: string, userId: string): Promise<Bookmark | null> {
+export async function getBookmarkForProvider(
+  providerId: string,
+  userId: string,
+): Promise<Bookmark | null> {
   const { data, error } = await supabase
     .from('bookmarks')
     .select('id, provider_id, user_id, created_at')
@@ -51,7 +54,10 @@ export async function deleteBookmark(id: string): Promise<void> {
   }
 }
 
-export async function toggleBookmarkForProvider(providerId: string, userId: string): Promise<boolean> {
+export async function toggleBookmarkForProvider(
+  providerId: string,
+  userId: string,
+): Promise<boolean> {
   const existing = await getBookmarkForProvider(providerId, userId);
   if (existing) {
     await deleteBookmark(existing.id);
@@ -66,4 +72,3 @@ export async function toggleBookmarkForProvider(providerId: string, userId: stri
     return true;
   }
 }
-

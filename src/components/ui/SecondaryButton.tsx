@@ -8,7 +8,8 @@ const secondaryButtonVariants = cva(
     variants: {
       variant: {
         text: 'bg-transparent border-border text-content-muted hover:text-content hover:bg-neutral-50',
-        'with-icon': 'bg-transparent border-border text-content-muted hover:text-content hover:bg-neutral-50 gap-2',
+        'with-icon':
+          'bg-transparent border-border text-content-muted hover:text-content hover:bg-neutral-50 gap-2',
       },
       size: {
         base: 'h-12 px-4', // 48px height with base text
@@ -27,8 +28,7 @@ const secondaryButtonVariants = cva(
 );
 
 export interface SecondaryButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof secondaryButtonVariants> {
+  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof secondaryButtonVariants> {
   /**
    * Icon to display as leading icon (24px) - only used with variant="with-icon"
    */
@@ -41,24 +41,24 @@ export interface SecondaryButtonProps
  * Secondary button component with two variants:
  * 1. text - No leading icon, just text
  * 2. with-icon - Leading icon (24px) + text
- * 
+ *
  * Features:
  * - Both variants use size base (48px height)
  * - Consistent secondary styling with hover states
  * - Accessible button semantics
  * - Loading and disabled states
- * 
+ *
  * @example
  * ```tsx
  * import { Icon } from '@/components/ui';
- * 
+ *
  * // Text variant (no icon)
  * <SecondaryButton variant="text" onClick={handleClick}>
  *   Cancel
  * </SecondaryButton>
- * 
+ *
  * // With icon variant (24px leading icon)
- * <SecondaryButton 
+ * <SecondaryButton
  *   variant="with-icon"
  *   leadingIcon={<Icon icon="material-symbols:mail-outline" className="h-6 w-6" />}
  *   onClick={handleClick}
@@ -68,20 +68,23 @@ export interface SecondaryButtonProps
  * ```
  */
 const SecondaryButton = forwardRef<HTMLButtonElement, SecondaryButtonProps>(
-  ({ 
-    className, 
-    variant, 
-    size, 
-    fullWidth, 
-    leadingIcon, 
-    loading = false, 
-    loadingText, 
-    children, 
-    disabled, 
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      fullWidth,
+      leadingIcon,
+      loading = false,
+      loadingText,
+      children,
+      disabled,
+      ...props
+    },
+    ref,
+  ) => {
     const isDisabled = disabled || loading;
-    
+
     return (
       <button
         ref={ref}
@@ -90,13 +93,9 @@ const SecondaryButton = forwardRef<HTMLButtonElement, SecondaryButtonProps>(
         {...props}
       >
         {variant === 'with-icon' && leadingIcon && !loading && (
-          <span className="flex items-center justify-center w-6 h-6">
-            {leadingIcon}
-          </span>
+          <span className="flex h-6 w-6 items-center justify-center">{leadingIcon}</span>
         )}
-        <span className="text-center">
-          {loading ? (loadingText || children) : children}
-        </span>
+        <span className="text-center">{loading ? loadingText || children : children}</span>
       </button>
     );
   },

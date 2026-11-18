@@ -15,8 +15,10 @@ const { capturedPins, mockSupabaseFrom } = vi.hoisted(() => {
     chain.select = vi.fn(() => chain);
     chain.not = vi.fn(() => chain);
     chain.eq = vi.fn(() => chain);
-    chain.then = (onfulfilled?: (v: { data: unknown[] }) => unknown, onrejected?: (e: unknown) => unknown) =>
-      Promise.resolve({ data }).then(onfulfilled, onrejected);
+    chain.then = (
+      onfulfilled?: (v: { data: unknown[] }) => unknown,
+      onrejected?: (e: unknown) => unknown,
+    ) => Promise.resolve({ data }).then(onfulfilled, onrejected);
     return chain;
   }
   return {
@@ -86,11 +88,21 @@ vi.mock('@/components/layout/PageContent', () => ({
 }));
 
 vi.mock('@/features/search/components/SectionSelector', () => ({
-  SectionSelector: ({ onSectionChange }: { onSectionChange: (section: 'food' | 'ummah' | 'store') => void }) => (
+  SectionSelector: ({
+    onSectionChange,
+  }: {
+    onSectionChange: (section: 'food' | 'ummah' | 'store') => void;
+  }) => (
     <div>
-      <button type="button" onClick={() => onSectionChange('food')}>Section food</button>
-      <button type="button" onClick={() => onSectionChange('ummah')}>Section ummah</button>
-      <button type="button" onClick={() => onSectionChange('store')}>Section store</button>
+      <button type="button" onClick={() => onSectionChange('food')}>
+        Section food
+      </button>
+      <button type="button" onClick={() => onSectionChange('ummah')}>
+        Section ummah
+      </button>
+      <button type="button" onClick={() => onSectionChange('store')}>
+        Section store
+      </button>
     </div>
   ),
 }));
@@ -165,19 +177,33 @@ describe('Plan 208 mobile map switch', () => {
 
   it('[post-fix] passes provider pins to SearchMap when location data is returned', async () => {
     const locationData = [
-      { provider_id: 'p1', location_latitude: 52.52, location_longitude: 13.405, providers: { provider_name: 'Test Restaurant' } },
-      { provider_id: 'p2', location_latitude: 48.14, location_longitude: 11.58, providers: [{ provider_name: 'Second Place' }] },
+      {
+        provider_id: 'p1',
+        location_latitude: 52.52,
+        location_longitude: 13.405,
+        providers: { provider_name: 'Test Restaurant' },
+      },
+      {
+        provider_id: 'p2',
+        location_latitude: 48.14,
+        location_longitude: 11.58,
+        providers: [{ provider_name: 'Second Place' }],
+      },
     ];
     // Override default empty chain with one that returns pin data
-    mockSupabaseFrom.mockReturnValueOnce((() => {
-      const chain: Record<string, unknown> = {};
-      chain.select = vi.fn(() => chain);
-      chain.not = vi.fn(() => chain);
-      chain.eq = vi.fn(() => chain);
-      chain.then = (onfulfilled?: (v: { data: unknown[] }) => unknown, onrejected?: (e: unknown) => unknown) =>
-        Promise.resolve({ data: locationData }).then(onfulfilled, onrejected);
-      return chain;
-    })());
+    mockSupabaseFrom.mockReturnValueOnce(
+      (() => {
+        const chain: Record<string, unknown> = {};
+        chain.select = vi.fn(() => chain);
+        chain.not = vi.fn(() => chain);
+        chain.eq = vi.fn(() => chain);
+        chain.then = (
+          onfulfilled?: (v: { data: unknown[] }) => unknown,
+          onrejected?: (e: unknown) => unknown,
+        ) => Promise.resolve({ data: locationData }).then(onfulfilled, onrejected);
+        return chain;
+      })(),
+    );
 
     mockIsMobile = true;
     mockSection = 'food';

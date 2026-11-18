@@ -30,7 +30,8 @@ vi.mock('@/lib/route-guard', () => ({
   shouldServeNotFound: vi.fn(async () => false),
 }));
 
-const anonymous = (pathname: string) => shouldRedirectToWaitlist(pathname, false, undefined, undefined);
+const anonymous = (pathname: string) =>
+  shouldRedirectToWaitlist(pathname, false, undefined, undefined);
 
 describe('#694 AC1: anonymous /create/recommend is not redirected to /food', () => {
   it('shouldRedirectToWaitlist returns false with the app not launched and no access token', async () => {

@@ -1,6 +1,7 @@
 # Python Vulnerabilities
 
 ## Code Execution
+
 ```python
 # VULNERABLE - arbitrary code execution
 eval(user_input)
@@ -13,6 +14,7 @@ data = ast.literal_eval(user_input)  # Only literals
 ```
 
 ## Unsafe Deserialization
+
 ```python
 # VULNERABLE - can execute code
 import pickle
@@ -30,6 +32,7 @@ data = yaml.safe_load(user_input)
 ```
 
 ## SQL Injection
+
 ```python
 # VULNERABLE
 cursor.execute(f"SELECT * FROM users WHERE id = {user_id}")
@@ -45,6 +48,7 @@ User.objects.raw(f"SELECT * FROM ... {user_id}")  # VULNERABLE
 ```
 
 ## Command Injection
+
 ```python
 # VULNERABLE
 os.system(f"convert {filename}")
@@ -56,6 +60,7 @@ shlex.quote(filename)  # If shell=True is required
 ```
 
 ## Path Traversal
+
 ```python
 # VULNERABLE
 path = os.path.join(UPLOAD_DIR, user_filename)
@@ -70,6 +75,7 @@ if not str(target).startswith(str(base)):
 ```
 
 ## Flask/Django Issues
+
 ```python
 # VULNERABLE - XSS in Flask
 return f"<h1>{user_input}</h1>"
@@ -87,6 +93,7 @@ CORS_ALLOWED_ORIGINS = ["https://example.com"]  # SAFE
 ```
 
 ## SSRF
+
 ```python
 # VULNERABLE
 import requests

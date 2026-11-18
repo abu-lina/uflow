@@ -14,7 +14,8 @@ export function usePWAInstall() {
   useEffect(() => {
     // Check if the app is already installed
     const checkInstalled = () => {
-      const installed = window.matchMedia('(display-mode: standalone)').matches ||
+      const installed =
+        window.matchMedia('(display-mode: standalone)').matches ||
         (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
       setIsInstalled(installed);
       return installed;
@@ -27,13 +28,17 @@ export function usePWAInstall() {
     }
 
     // Check if it's iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
+    const isIOSDevice =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+      !(window as Window & { MSStream?: unknown }).MSStream;
     setIsIOS(isIOSDevice);
-    console.log('[PWA] Device detection', { 
-      isIOSDevice, 
+    console.log('[PWA] Device detection', {
+      isIOSDevice,
       userAgent: navigator.userAgent,
       isInstalled: installed,
-      displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser'
+      displayMode: window.matchMedia('(display-mode: standalone)').matches
+        ? 'standalone'
+        : 'browser',
     });
 
     // Handle the beforeinstallprompt event

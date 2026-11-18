@@ -36,7 +36,7 @@ export function MobileHeader({
           {variant === 'splash' ? (
             /* Splash Header - Centered Logo (removed decorative motion fade-in) */
             <div className="flex w-full flex-row items-center justify-center">
-              <div className="animate-fade-in h-10 w-10">
+              <div className="h-10 w-10 animate-fade-in">
                 <Logo className="h-10 w-10" height={40} width={40} />
               </div>
             </div>

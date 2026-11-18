@@ -32,18 +32,18 @@ interface UseContainerScrollOptions {
 
 /**
  * Hook for detecting scroll direction in a specific container with iOS optimizations
- * 
+ *
  * Features:
  * - Hide header when scrolling down, show when scrolling up
  * - Always show at top of page
  * - iOS rubber band effect protection
  * - Jitter prevention with minimum delta
  * - Throttled with requestAnimationFrame for performance
- * 
+ *
  * @example
  * ```tsx
  * const { isHeaderVisible } = useContainerScroll();
- * 
+ *
  * return (
  *   <div className={`header ${isHeaderVisible ? 'show' : 'hide'}`}>
  *     ...
@@ -71,7 +71,9 @@ export function useContainerScroll(options: UseContainerScrollOptions = {}) {
       const contentContainer = scrollContainerRef.current;
 
       if (!contentContainer) {
-        console.warn(`useContainerScroll: Container not found with selector "${containerSelector}"`);
+        console.warn(
+          `useContainerScroll: Container not found with selector "${containerSelector}"`,
+        );
         return;
       }
 
@@ -134,4 +136,3 @@ export function useContainerScroll(options: UseContainerScrollOptions = {}) {
 
   return { isHeaderVisible };
 }
-

@@ -25,7 +25,7 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
     { code: 'ps' as const, name: t('language.pashtu'), iso: 'PS' },
   ].sort((a, b) => a.name.localeCompare(b.name));
 
-  const currentLanguage = languages.find(lang => lang.code === language);
+  const currentLanguage = languages.find((lang) => lang.code === language);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -82,14 +82,16 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
           aria-expanded={isOpen}
           aria-haspopup="true"
           aria-label={`${t('language.switchTo')} ${currentLanguage?.name || language}`}
-          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+          className="flex items-center gap-1 rounded-lg bg-white/10 px-2 py-1 transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
           disabled={isChanging}
           onClick={() => setIsOpen(!isOpen)}
         >
-          <span aria-hidden="true" className="text-xs font-medium uppercase text-white">{currentLanguage?.iso}</span>
-          <Icon 
+          <span aria-hidden="true" className="text-xs font-medium uppercase text-white">
+            {currentLanguage?.iso}
+          </span>
+          <Icon
             aria-hidden="true"
-            className={`w-3.5 h-3.5 text-white transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            className={`h-3.5 w-3.5 text-white transition-transform ${isOpen ? 'rotate-180' : ''}`}
             icon="lucide:chevron-down"
           />
         </button>
@@ -98,7 +100,7 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
           <div
             ref={dropdownRef}
             aria-label={t('language.current')}
-            className="absolute right-0 top-full mt-1 w-40 bg-background rounded-lg shadow-lg border border-border z-50"
+            className="absolute right-0 top-full z-50 mt-1 w-40 rounded-lg border border-border bg-background shadow-lg"
             dir={['ar', 'ur', 'ps'].includes(language) ? 'rtl' : 'ltr'}
             role="menu"
           >
@@ -106,8 +108,8 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
               <button
                 key={lang.code}
                 aria-label={lang.name}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-neutral-50 transition-colors first:rounded-t-lg last:rounded-b-lg focus:outline-none focus:bg-neutral-50 ${
-                  language === lang.code ? 'bg-primary/10 text-primary font-medium' : 'text-content'
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none ${
+                  language === lang.code ? 'bg-primary/10 font-medium text-primary' : 'text-content'
                 }`}
                 role="menuitem"
                 onClick={() => handleLanguageChange(lang.code)}
@@ -119,9 +121,9 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
                 }}
               >
                 <span className="text-xs font-medium uppercase">{lang.iso}</span>
-                <span className="text-sm flex-1">{lang.name}</span>
+                <span className="flex-1 text-sm">{lang.name}</span>
                 {language === lang.code && (
-                  <Icon aria-hidden="true" className="w-4 h-4 text-primary" icon="lucide:check" />
+                  <Icon aria-hidden="true" className="h-4 w-4 text-primary" icon="lucide:check" />
                 )}
               </button>
             ))}
@@ -133,19 +135,20 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
 
   // Toggle variant
   if (variant === 'toggle') {
-    const nextLanguageIndex = (languages.findIndex(lang => lang.code === language) + 1) % languages.length;
+    const nextLanguageIndex =
+      (languages.findIndex((lang) => lang.code === language) + 1) % languages.length;
     const nextLanguage = languages[nextLanguageIndex];
-    
+
     return (
       <button
         aria-label={`${t('language.switchTo')} ${nextLanguage.name}`}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 ${className}`}
+        className={`flex items-center gap-2 rounded-lg bg-neutral-100 px-3 py-2 transition-colors hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary/50 ${className}`}
         disabled={isChanging}
         onClick={() => handleLanguageChange(nextLanguage.code)}
       >
         <span className="text-xs font-medium uppercase">{currentLanguage?.iso}</span>
         {isChanging && (
-          <Icon aria-hidden="true" className="w-4 h-4 animate-spin" icon="lucide:loader-2" />
+          <Icon aria-hidden="true" className="h-4 w-4 animate-spin" icon="lucide:loader-2" />
         )}
       </button>
     );
@@ -153,23 +156,26 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
 
   // Default dropdown variant
   return (
-    <div className={`relative ${className}`} dir={['ar', 'ur', 'ps'].includes(language) ? 'rtl' : 'ltr'}>
+    <div
+      className={`relative ${className}`}
+      dir={['ar', 'ur', 'ps'].includes(language) ? 'rtl' : 'ltr'}
+    >
       <button
         ref={buttonRef}
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label={`${t('language.switchTo')} ${currentLanguage?.name || language}`}
-        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+        className="flex items-center gap-1 rounded-lg bg-neutral-100 px-3 py-2 transition-colors hover:bg-neutral-200 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
         disabled={isChanging}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="text-xs font-medium uppercase">{currentLanguage?.iso}</span>
         {isChanging ? (
-          <Icon aria-hidden="true" className="w-4 h-4 animate-spin" icon="lucide:loader-2" />
+          <Icon aria-hidden="true" className="h-4 w-4 animate-spin" icon="lucide:loader-2" />
         ) : (
-          <Icon 
+          <Icon
             aria-hidden="true"
-            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
             icon="lucide:chevron-down"
           />
         )}
@@ -178,25 +184,21 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div 
-            aria-hidden="true"
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-          />
-          
+          <div aria-hidden="true" className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+
           {/* Dropdown */}
           <div
             ref={dropdownRef}
             aria-label={t('language.current')}
-            className="absolute right-0 top-full mt-1 w-48 bg-background rounded-lg shadow-lg border border-border z-20"
+            className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-border bg-background shadow-lg"
             role="menu"
           >
             {languages.map((lang) => (
               <button
                 key={lang.code}
                 aria-label={lang.name}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-neutral-50 transition-colors first:rounded-t-lg last:rounded-b-lg focus:outline-none focus:bg-neutral-50 ${
-                  language === lang.code ? 'bg-primary/10 text-primary font-medium' : 'text-content'
+                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-neutral-50 focus:bg-neutral-50 focus:outline-none ${
+                  language === lang.code ? 'bg-primary/10 font-medium text-primary' : 'text-content'
                 }`}
                 role="menuitem"
                 onClick={() => handleLanguageChange(lang.code)}
@@ -208,9 +210,9 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
                 }}
               >
                 <span className="text-xs font-medium uppercase">{lang.iso}</span>
-                <span className="text-sm font-medium flex-1">{lang.name}</span>
+                <span className="flex-1 text-sm font-medium">{lang.name}</span>
                 {language === lang.code && (
-                  <Icon aria-hidden="true" className="w-4 h-4 text-primary" icon="lucide:check" />
+                  <Icon aria-hidden="true" className="h-4 w-4 text-primary" icon="lucide:check" />
                 )}
               </button>
             ))}
@@ -220,4 +222,3 @@ export function LanguageSwitcher({ className = '', variant = 'dropdown' }: Langu
     </div>
   );
 }
-

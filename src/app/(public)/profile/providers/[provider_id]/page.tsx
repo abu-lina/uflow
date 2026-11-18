@@ -5,13 +5,17 @@ import { ProfileProviderDetailButtons } from '@/features/providers/pages/Profile
 import { getProviderById } from '@/services/providers';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-export default async function ProfileProviderDetailPage({ params }: { params: Promise<{ provider_id: string }> }) {
+export default async function ProfileProviderDetailPage({
+  params,
+}: {
+  params: Promise<{ provider_id: string }>;
+}) {
   const { provider_id } = await params;
   const provider = await getProviderById(provider_id, createSupabaseServerClient());
   if (!provider) return notFound();
 
   return (
-    <ProviderDetailPage 
+    <ProviderDetailPage
       backPath="/profile"
       customActionButtons={<ProfileProviderDetailButtons providerId={provider_id} />}
       provider={provider}

@@ -12,7 +12,10 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/providers/LanguageProvider', () => ({
-  useLanguage: () => ({ language: 'en', t: (key: string) => (key === 'common.back' ? 'Back' : key) }),
+  useLanguage: () => ({
+    language: 'en',
+    t: (key: string) => (key === 'common.back' ? 'Back' : key),
+  }),
 }));
 
 const createPages = [

@@ -11,7 +11,17 @@ describe('Guardrails — Function-Calling Gate', () => {
     it('returns ok when tool calls are present (in-scope query)', () => {
       const counter = createRedirectCounter();
       const result = checkGuardrail(
-        { role: 'assistant', content: null, tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'search_providers', arguments: '{}' } }] },
+        {
+          role: 'assistant',
+          content: null,
+          tool_calls: [
+            {
+              id: 'call_1',
+              type: 'function',
+              function: { name: 'search_providers', arguments: '{}' },
+            },
+          ],
+        },
         counter,
       );
       expect(result.status).toBe('ok');
@@ -23,7 +33,13 @@ describe('Guardrails — Function-Calling Gate', () => {
         {
           role: 'assistant',
           content: 'Let me search for that',
-          tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'search_providers', arguments: '{}' } }],
+          tool_calls: [
+            {
+              id: 'call_1',
+              type: 'function',
+              function: { name: 'search_providers', arguments: '{}' },
+            },
+          ],
         },
         counter,
       );
@@ -42,10 +58,7 @@ describe('Guardrails — Function-Calling Gate', () => {
 
     it('returns redirect on null content with no tool calls', () => {
       const counter = createRedirectCounter();
-      const result = checkGuardrail(
-        { role: 'assistant', content: null },
-        counter,
-      );
+      const result = checkGuardrail({ role: 'assistant', content: null }, counter);
       expect(result.status).toBe('redirect');
     });
 
@@ -72,17 +85,20 @@ describe('Guardrails — Function-Calling Gate', () => {
       const counter = createRedirectCounter();
 
       // First redirect
-      checkGuardrail(
-        { role: 'assistant', content: 'Bitte frag nach UFlow-Diensten.' },
-        counter,
-      );
+      checkGuardrail({ role: 'assistant', content: 'Bitte frag nach UFlow-Diensten.' }, counter);
 
       // Then successful tool call (resets counter)
       checkGuardrail(
         {
           role: 'assistant',
           content: 'Ich suche für dich',
-          tool_calls: [{ id: 'call_2', type: 'function', function: { name: 'search_providers', arguments: '{}' } }],
+          tool_calls: [
+            {
+              id: 'call_2',
+              type: 'function',
+              function: { name: 'search_providers', arguments: '{}' },
+            },
+          ],
         },
         counter,
       );

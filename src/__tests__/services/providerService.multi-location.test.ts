@@ -20,16 +20,16 @@ function setupSupabaseMock() {
         delete: () => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) }),
         // #606 duplicate scan reads providers before inserting.
         select: () => ({
-            // #606 R1 scan chain: .not().in().gt().order().limit() — empty
-            // first page ends the keyset loop immediately.
-            not: () => ({
-              in: () => ({
-                gt: () => ({
-                  order: () => ({ limit: async () => ({ data: [], error: null }) }),
-                }),
+          // #606 R1 scan chain: .not().in().gt().order().limit() — empty
+          // first page ends the keyset loop immediately.
+          not: () => ({
+            in: () => ({
+              gt: () => ({
+                order: () => ({ limit: async () => ({ data: [], error: null }) }),
               }),
             }),
           }),
+        }),
       };
     }
     if (table === 'provider_offers' || table === 'provider_needs') {

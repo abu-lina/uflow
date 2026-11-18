@@ -5,10 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase/admin';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { getUserFromCookie } = await import('@/lib/supabase/getUserFromCookie');
     const user = await getUserFromCookie();
@@ -19,13 +16,13 @@ export async function GET(
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to admin menu API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to admin menu API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -53,12 +50,9 @@ export async function GET(
       'Error in admin menu API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request) }
+      { ...getRequestMetadata(request) },
     );
 
-    return NextResponse.json(
-      { error: 'Failed to fetch menu items' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch menu items' }, { status: 500 });
   }
 }

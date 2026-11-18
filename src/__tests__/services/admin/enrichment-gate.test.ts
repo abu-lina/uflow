@@ -14,9 +14,7 @@ vi.mock('@/lib/supabase/admin', () => ({
  * The implementation does:
  *   .from('food_menu').select('name_de, name_en').eq('provider_id', id)
  */
-function setupFoodMenuMock(
-  returnValue: () => Promise<{ data: unknown; error: unknown }>
-) {
+function setupFoodMenuMock(returnValue: () => Promise<{ data: unknown; error: unknown }>) {
   const mockEq = vi.fn().mockImplementation(returnValue);
   const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
   mockFrom.mockImplementation((table: string) => {
@@ -52,7 +50,7 @@ describe('checkMenuForAlcohol', () => {
           { name_de: 'Cola', name_en: null },
         ],
         error: null,
-      })
+      }),
     );
 
     const result = await checkMenuForAlcohol(validProviderId);
@@ -69,7 +67,7 @@ describe('checkMenuForAlcohol', () => {
           { name_de: 'Cola', name_en: null },
         ],
         error: null,
-      })
+      }),
     );
 
     const result = await checkMenuForAlcohol(validProviderId);
@@ -88,7 +86,7 @@ describe('checkMenuForAlcohol', () => {
           { name_de: 'Cocktail Klassiker', name_en: null },
         ],
         error: null,
-      })
+      }),
     );
 
     const result = await checkMenuForAlcohol(validProviderId);
@@ -107,7 +105,7 @@ describe('checkMenuForAlcohol', () => {
           // "Beer" isn't in the keyword list either
         ],
         error: null,
-      })
+      }),
     );
 
     const result = await checkMenuForAlcohol(validProviderId);
@@ -116,9 +114,7 @@ describe('checkMenuForAlcohol', () => {
   });
 
   it('throws error on database failure', async () => {
-    setupFoodMenuMock(() =>
-      Promise.resolve({ data: null, error: { message: 'DB error' } })
-    );
+    setupFoodMenuMock(() => Promise.resolve({ data: null, error: { message: 'DB error' } }));
 
     await expect(checkMenuForAlcohol(validProviderId)).rejects.toThrow('DB error');
   });

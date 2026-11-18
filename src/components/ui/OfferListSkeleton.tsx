@@ -1,6 +1,6 @@
 /**
  * OfferListSkeleton
- * 
+ *
  * Skeleton loading component for the offers list.
  * Matches the actual layout of the offers page for better perceived performance.
  */
@@ -57,4 +57,3 @@ export function OfferListSkeleton() {
     </div>
   );
 }
-

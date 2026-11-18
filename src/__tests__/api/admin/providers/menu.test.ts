@@ -48,18 +48,24 @@ describe('GET /api/admin/providers/[id]/menu', () => {
   it('returns 401 when user is not authenticated', async () => {
     mockGetUserFromCookie.mockResolvedValue(null);
 
-    const response = await GET(createRequest(`http://localhost/api/admin/providers/${VALID_ID}/menu`), {
-      params: Promise.resolve({ id: VALID_ID }),
-    });
+    const response = await GET(
+      createRequest(`http://localhost/api/admin/providers/${VALID_ID}/menu`),
+      {
+        params: Promise.resolve({ id: VALID_ID }),
+      },
+    );
     expect(response.status).toBe(401);
   });
 
   it('returns 403 when user is not admin/moderator', async () => {
     mockIsAdminOrModerator.mockResolvedValue(false);
 
-    const response = await GET(createRequest(`http://localhost/api/admin/providers/${VALID_ID}/menu`), {
-      params: Promise.resolve({ id: VALID_ID }),
-    });
+    const response = await GET(
+      createRequest(`http://localhost/api/admin/providers/${VALID_ID}/menu`),
+      {
+        params: Promise.resolve({ id: VALID_ID }),
+      },
+    );
     expect(response.status).toBe(403);
   });
 
@@ -77,9 +83,12 @@ describe('GET /api/admin/providers/[id]/menu', () => {
     ];
     mockOrder.mockResolvedValue({ data: mockItems, error: null });
 
-    const response = await GET(createRequest(`http://localhost/api/admin/providers/${VALID_ID}/menu`), {
-      params: Promise.resolve({ id: VALID_ID }),
-    });
+    const response = await GET(
+      createRequest(`http://localhost/api/admin/providers/${VALID_ID}/menu`),
+      {
+        params: Promise.resolve({ id: VALID_ID }),
+      },
+    );
     expect(response.status).toBe(200);
 
     const json = await response.json();
@@ -92,9 +101,12 @@ describe('GET /api/admin/providers/[id]/menu', () => {
   it('returns empty array when no menu items exist', async () => {
     mockOrder.mockResolvedValue({ data: [], error: null });
 
-    const response = await GET(createRequest(`http://localhost/api/admin/providers/${VALID_ID}/menu`), {
-      params: Promise.resolve({ id: VALID_ID }),
-    });
+    const response = await GET(
+      createRequest(`http://localhost/api/admin/providers/${VALID_ID}/menu`),
+      {
+        params: Promise.resolve({ id: VALID_ID }),
+      },
+    );
     expect(response.status).toBe(200);
 
     const json = await response.json();

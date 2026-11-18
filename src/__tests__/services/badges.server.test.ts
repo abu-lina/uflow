@@ -36,7 +36,10 @@ describe('badges.getBadgesForEntity', () => {
         select: (value: string) => typeof queryBuilder;
         eq: (column: string, value: unknown) => typeof queryBuilder;
         order: (column: string, options: { ascending: boolean }) => typeof queryBuilder;
-        then: (onFulfilled: (value: unknown) => unknown, onRejected?: (reason: unknown) => unknown) => Promise<unknown>;
+        then: (
+          onFulfilled: (value: unknown) => unknown,
+          onRejected?: (reason: unknown) => unknown,
+        ) => Promise<unknown>;
       } = {
         select: () => queryBuilder,
         eq: (column, value) => {

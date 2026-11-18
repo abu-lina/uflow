@@ -6,9 +6,7 @@ import { QuickReplies } from '@/features/chat/components/QuickReplies';
 describe('QuickReplies', () => {
   it('single-select: calls onSelect immediately with the option text', () => {
     const onSelect = vi.fn();
-    render(
-      <QuickReplies options={['Ja', 'Nein']} onSelect={onSelect} singleSelect />,
-    );
+    render(<QuickReplies options={['Ja', 'Nein']} onSelect={onSelect} singleSelect />);
     fireEvent.click(screen.getByText('Ja'));
     expect(onSelect).toHaveBeenCalledWith('Ja');
   });

@@ -39,10 +39,13 @@ export function NearMeOpenNowFilters({
   t,
 }: NearMeOpenNowFiltersProps) {
   const showPermissionDenied =
-    nearMeActive && (geoStatus === 'denied' || geoStatus === 'unavailable' || geoStatus === 'timeout');
+    nearMeActive &&
+    (geoStatus === 'denied' || geoStatus === 'unavailable' || geoStatus === 'timeout');
   const showPermissionDeniedHint = nearMeActive && geoStatus === 'denied';
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase() : '';
-  const isIOS = /iphone|ipad|ipod/.test(userAgent) || (userAgent.includes('macintosh') && navigator.maxTouchPoints > 1);
+  const isIOS =
+    /iphone|ipad|ipod/.test(userAgent) ||
+    (userAgent.includes('macintosh') && navigator.maxTouchPoints > 1);
   const isAndroid = userAgent.includes('android');
   const permissionDeniedHintKey = isIOS
     ? 'suchen.nearMe.permissionDeniedHintIos'
@@ -93,9 +96,7 @@ export function NearMeOpenNowFilters({
               key={km}
               aria-pressed={radiusKm === km}
               className={`rounded-md px-2.5 py-1 font-inter-tight text-sm font-semibold transition-colors ${
-                radiusKm === km
-                  ? 'bg-primary text-white'
-                  : 'bg-neutral-100 text-text-secondary'
+                radiusKm === km ? 'bg-primary text-white' : 'bg-neutral-100 text-text-secondary'
               }`}
               type="button"
               onClick={() => onRadiusChange(km)}
@@ -109,7 +110,9 @@ export function NearMeOpenNowFilters({
       {showPermissionDenied ? (
         <p aria-live="polite" className="px-0.5 text-sm text-text-muted" role="status">
           <span className="block">{t('suchen.nearMe.permissionDenied')}</span>
-          {showPermissionDeniedHint ? <span className="block text-xs">{t(permissionDeniedHintKey)}</span> : null}
+          {showPermissionDeniedHint ? (
+            <span className="block text-xs">{t(permissionDeniedHintKey)}</span>
+          ) : null}
         </p>
       ) : null}
     </div>

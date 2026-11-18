@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     if (!isAllowed) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     if (!validation.success) {
       return NextResponse.json(
         { error: validation.error.issues[0]?.message ?? 'Invalid request body' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       if (!emailValidation.success) {
         return NextResponse.json(
           { error: emailValidation.error.issues[0]?.message ?? 'Invalid email format' },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -51,15 +51,14 @@ export async function POST(request: NextRequest) {
     const sanitizedCityName = cityName.trim().slice(0, 100);
 
     if (sanitizedCityName.length === 0) {
-      return NextResponse.json(
-        { error: 'City name is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'City name is required' }, { status: 400 });
     }
 
     // Check for authenticated session
     const supabase = createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     let userEmail: string;
 
@@ -71,7 +70,7 @@ export async function POST(request: NextRequest) {
       if (!rawEmail) {
         return NextResponse.json(
           { error: 'Email is required for anonymous users' },
-          { status: 400 }
+          { status: 400 },
         );
       }
       // Normalize email to lowercase
@@ -80,22 +79,17 @@ export async function POST(request: NextRequest) {
 
     // Use admin client to upsert waitlist entry (bypasses RLS)
     const admin = getSupabaseAdmin();
-    const { error: upsertError } = await admin
-      .from('waitlist')
-      .upsert(
-        {
-          email: userEmail,
-          selected_city: sanitizedCityName,
-        },
-        { onConflict: 'email' }
-      );
+    const { error: upsertError } = await admin.from('waitlist').upsert(
+      {
+        email: userEmail,
+        selected_city: sanitizedCityName,
+      },
+      { onConflict: 'email' },
+    );
 
     if (upsertError) {
       console.error('City interest upsert error:', upsertError);
-      return NextResponse.json(
-        { error: 'Failed to register interest' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to register interest' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -104,9 +98,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('City interest subscribe error:', error);
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
 }

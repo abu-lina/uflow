@@ -55,19 +55,13 @@ function IconSlot({ imageUrl, label }: { imageUrl: string | null; label: string 
   if (imageUrl) {
     return (
       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl">
-        <Image
-          fill
-          alt={label}
-          className="object-cover"
-          sizes="48px"
-          src={imageUrl}
-        />
+        <Image fill alt={label} className="object-cover" sizes="48px" src={imageUrl} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+    <div className="bg-background-selection flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary">
       <UtensilsCrossed aria-hidden="true" className="h-5 w-5" />
     </div>
   );
@@ -96,11 +90,7 @@ export function WasCategoryResults({
   }, [query]);
 
   if (isLoading) {
-    return (
-      <p className="py-2 text-center text-sm text-text-muted">
-        {t('suchen.was.loading')}
-      </p>
-    );
+    return <p className="py-2 text-center text-sm text-text-muted">{t('suchen.was.loading')}</p>;
   }
 
   if (isError) {
@@ -114,19 +104,29 @@ export function WasCategoryResults({
   const shouldShowRecent = recentSearches.length > 0;
   const shouldShowAllRestaurants = selectedWas?.type !== 'all-restaurants';
 
-  if (items.length === 0 && recentSearches.length === 0 && !selectedWas && !shouldShowAllRestaurants) {
+  if (
+    items.length === 0 &&
+    recentSearches.length === 0 &&
+    !selectedWas &&
+    !shouldShowAllRestaurants
+  ) {
     return null;
   }
 
   const visibleRecentSearches = isShowAllPreviewEnabled
-    ? (showAllRecent ? recentSearches : recentSearches.slice(0, 3))
+    ? showAllRecent
+      ? recentSearches
+      : recentSearches.slice(0, 3)
     : recentSearches.slice(0, 3);
   const visiblePopularItems = isShowAllPreviewEnabled
-    ? (showAllPopular ? items : items.slice(0, 3))
+    ? showAllPopular
+      ? items
+      : items.slice(0, 3)
     : items.slice(0, 3);
   const shouldShowPopular = !shouldShowRecent && items.length > 0;
   const hasMorePopularItems = isShowAllPreviewEnabled && !showAllPopular && items.length > 3;
-  const hasMoreRecentSearches = isShowAllPreviewEnabled && !showAllRecent && recentSearches.length > 3;
+  const hasMoreRecentSearches =
+    isShowAllPreviewEnabled && !showAllRecent && recentSearches.length > 3;
 
   const CategoryRow = ({ category }: { category: FoodCategory }) => {
     const label = category.name_de || category.name_en || '';
@@ -167,19 +167,20 @@ export function WasCategoryResults({
               {t('suchen.was.selectionLabel')}
             </p>
             <div className="space-y-1">
-              <div className="flex w-full items-center justify-between rounded-xl bg-background-selection px-2 py-3">
+              <div className="bg-background-selection flex w-full items-center justify-between rounded-xl px-2 py-3">
                 <div className="flex min-w-0 items-center gap-3">
                   {selectedWas.type === 'category' ? (
                     <IconSlot
                       imageUrl={getCategoryImageUrl(
                         selectedWas.categoryImages ??
-                          items.find((item) => item.category_id === selectedWas.categoryId)?.category_images ??
+                          items.find((item) => item.category_id === selectedWas.categoryId)
+                            ?.category_images ??
                           null,
                       )}
                       label={selectedWas.label}
                     />
                   ) : selectedWas.type === 'all-restaurants' ? (
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                    <div className="bg-background-selection flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary">
                       <LayoutGrid aria-hidden="true" className="h-5 w-5" />
                     </div>
                   ) : null}
@@ -188,8 +189,11 @@ export function WasCategoryResults({
                       {selectedWas.label}
                     </p>
                     {selectedWas.type === 'dish' ? (
-                      <p className="truncate font-inter text-sm text-text-muted">{t('suchen.was.dishLabel')}</p>
-                    ) : selectedWas.type === 'category' && selectedWas.providerCount !== undefined ? (
+                      <p className="truncate font-inter text-sm text-text-muted">
+                        {t('suchen.was.dishLabel')}
+                      </p>
+                    ) : selectedWas.type === 'category' &&
+                      selectedWas.providerCount !== undefined ? (
                       <p className="truncate font-inter text-sm text-text-muted">
                         {t('suchen.was.categoryCount', { count: selectedWas.providerCount })}
                       </p>
@@ -216,7 +220,7 @@ export function WasCategoryResults({
               ariaLabel={t('suchen.was.allRestaurants')}
               className="transition-colors hover:bg-neutral-muted"
               icon={
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background-selection text-primary">
+                <div className="bg-background-selection flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-primary">
                   <LayoutGrid aria-hidden="true" className="h-5 w-5" />
                 </div>
               }
@@ -268,7 +272,8 @@ export function WasCategoryResults({
                       <IconSlot
                         imageUrl={getCategoryImageUrl(
                           recent.categoryImages ??
-                            items.find((item) => item.category_id === recent.categoryId)?.category_images ??
+                            items.find((item) => item.category_id === recent.categoryId)
+                              ?.category_images ??
                             null,
                         )}
                         label={recent.label}
@@ -303,9 +308,11 @@ export function WasCategoryResults({
         {t('suchen.was.cuisineLabel')}
       </p>
       <div className="space-y-1">
-        {(isShowAllPreviewEnabled ? (showAllCuisines ? items : items.slice(0, 3)) : items).map((category) => (
-          <CategoryRow key={category.category_id} category={category} />
-        ))}
+        {(isShowAllPreviewEnabled ? (showAllCuisines ? items : items.slice(0, 3)) : items).map(
+          (category) => (
+            <CategoryRow key={category.category_id} category={category} />
+          ),
+        )}
       </div>
       {isShowAllPreviewEnabled && !showAllCuisines && items.length > 3 ? (
         <button

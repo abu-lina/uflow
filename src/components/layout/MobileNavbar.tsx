@@ -30,7 +30,7 @@ export function MobileNavbar({
         style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         {/* Removed decorative motion slide-up animation (Plan 007) */}
-        <div className="animate-fade-in w-full max-w-[345px]">
+        <div className="w-full max-w-[345px] animate-fade-in">
           <Button
             fullWidth
             className={className}

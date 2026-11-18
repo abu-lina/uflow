@@ -81,12 +81,7 @@ describe('ProviderImageFallback', () => {
 
     expect(() =>
       render(
-        <ProviderImageFallback
-          providerName=""
-          categoryId=""
-          providerId=""
-          anonymousName="Test"
-        />,
+        <ProviderImageFallback providerName="" categoryId="" providerId="" anonymousName="Test" />,
       ),
     ).not.toThrow();
 
@@ -102,22 +97,12 @@ describe('ProviderImageFallback', () => {
     ).not.toThrow();
 
     expect(() =>
-      render(
-        <ProviderImageFallback
-          providerName="Emoji 🍕🎉"
-          categoryId="food"
-          providerId="p6"
-        />,
-      ),
+      render(<ProviderImageFallback providerName="Emoji 🍕🎉" categoryId="food" providerId="p6" />),
     ).not.toThrow();
 
     expect(() =>
       render(
-        <ProviderImageFallback
-          providerName={veryLongName}
-          categoryId="food"
-          providerId="p7"
-        />,
+        <ProviderImageFallback providerName={veryLongName} categoryId="food" providerId="p7" />,
       ),
     ).not.toThrow();
   });

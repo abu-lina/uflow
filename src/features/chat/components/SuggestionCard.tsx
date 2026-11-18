@@ -23,7 +23,7 @@ interface SuggestionCardProps {
 
 const cardContent = (icon: ReactNode, title: string, subtitle?: string) => (
   <>
-    <div className="w-12 h-12 rounded-[10px] bg-primary/10 flex items-center justify-center flex-shrink-0">
+    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] bg-primary/10">
       {icon}
     </div>
     <div className="flex-1">
@@ -33,8 +33,20 @@ const cardContent = (icon: ReactNode, title: string, subtitle?: string) => (
   </>
 );
 
-export function SuggestionCard({ icon, title, subtitle, onClick, disabled, className, href }: SuggestionCardProps) {
-  const containerClass = cn('flex items-center gap-4 text-left w-full', disabled && 'pointer-events-none opacity-50', className);
+export function SuggestionCard({
+  icon,
+  title,
+  subtitle,
+  onClick,
+  disabled,
+  className,
+  href,
+}: SuggestionCardProps) {
+  const containerClass = cn(
+    'flex items-center gap-4 text-left w-full',
+    disabled && 'pointer-events-none opacity-50',
+    className,
+  );
 
   if (href) {
     return (
@@ -52,9 +64,5 @@ export function SuggestionCard({ icon, title, subtitle, onClick, disabled, class
     );
   }
 
-  return (
-    <div className={containerClass}>
-      {cardContent(icon, title, subtitle)}
-    </div>
-  );
+  return <div className={containerClass}>{cardContent(icon, title, subtitle)}</div>;
 }

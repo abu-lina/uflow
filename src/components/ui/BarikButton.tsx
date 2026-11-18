@@ -18,32 +18,32 @@ interface BarikButtonProps {
 export function BarikButton({ text = 'Allahuma Barik', className = '' }: BarikButtonProps) {
   const gradientId = useId();
   return (
-    <div className={`relative rounded-[12px] size-full ${className}`} data-name="Buttons">
+    <div className={`relative size-full rounded-[12px] ${className}`} data-name="Buttons">
       {/* Gold gradient border using wrapper technique */}
-      <motion.div 
+      <motion.div
         animate={{ opacity: 1 }}
         className="absolute inset-0 rounded-[12px]"
         initial={{ opacity: 0 }}
         style={{
           background: COLORS.gold.gradient,
         }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
+        transition={{ duration: 0.5, ease: 'easeInOut' }}
       />
       {/* White background with padding to create border effect */}
       <div className="absolute inset-[1.5px] rounded-[10.5px] bg-white" />
-      
+
       {/* Content */}
-      <div className="relative flex flex-row items-center justify-center size-full">
-        <motion.div 
+      <div className="relative flex size-full flex-row items-center justify-center">
+        <motion.div
           animate={{ opacity: 1 }}
-          className="box-border content-stretch flex gap-[5.143px] items-center justify-center overflow-clip px-[17.143px] py-0 relative size-full"
+          className="relative box-border flex size-full content-stretch items-center justify-center gap-[5.143px] overflow-clip px-[17.143px] py-0"
           initial={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
         >
           {/* Ornament icon with gold gradient */}
-          <motion.div 
+          <motion.div
             animate={{ opacity: 1, scale: 1 }}
-            className="relative shrink-0 size-[24px]" 
+            className="relative size-[24px] shrink-0"
             data-name="Ornament"
             initial={{ opacity: 0, scale: 0.92 }}
             transition={{
@@ -52,8 +52,16 @@ export function BarikButton({ text = 'Allahuma Barik', className = '' }: BarikBu
               ease: [0.25, 0.1, 0.25, 1],
             }}
           >
-            <div className="absolute inset-[16.85%_16.94%_16.48%_16.49%]" data-name="image 3 (Traced)">
-              <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
+            <div
+              className="absolute inset-[16.85%_16.94%_16.48%_16.49%]"
+              data-name="image 3 (Traced)"
+            >
+              <svg
+                className="block size-full"
+                fill="none"
+                preserveAspectRatio="none"
+                viewBox="0 0 16 16"
+              >
                 <defs>
                   <linearGradient id={gradientId} x1="0%" x2="100%" y1="0%" y2="0%">
                     <stop offset="4.348%" stopColor={COLORS.gold.start} />
@@ -62,7 +70,12 @@ export function BarikButton({ text = 'Allahuma Barik', className = '' }: BarikBu
                   </linearGradient>
                 </defs>
                 <g id="image 3 (Traced)">
-                  <path clipRule="evenodd" d={ORNAMENT_PATHS.p3767f370} fill={`url(#${gradientId})`} fillRule="evenodd" />
+                  <path
+                    clipRule="evenodd"
+                    d={ORNAMENT_PATHS.p3767f370}
+                    fill={`url(#${gradientId})`}
+                    fillRule="evenodd"
+                  />
                   <path d={ORNAMENT_PATHS.p3c97df80} fill={`url(#${gradientId})`} />
                   <path d={ORNAMENT_PATHS.p3028d580} fill={`url(#${gradientId})`} />
                   <path d={ORNAMENT_PATHS.p1778e980} fill={`url(#${gradientId})`} />
@@ -77,9 +90,9 @@ export function BarikButton({ text = 'Allahuma Barik', className = '' }: BarikBu
             </div>
           </motion.div>
           {/* Text with gold gradient */}
-          <motion.div 
+          <motion.div
             animate={{ opacity: 1 }}
-            className="flex flex-col font-['Inter_Tight:Medium',sans-serif] font-medium justify-center leading-[0] relative shrink-0 text-[16px] text-center text-nowrap" 
+            className="relative flex shrink-0 flex-col justify-center text-nowrap text-center font-['Inter_Tight:Medium',sans-serif] text-[16px] font-medium leading-[0]"
             initial={{ opacity: 0 }}
             style={{
               background: COLORS.gold.gradient,
@@ -89,11 +102,10 @@ export function BarikButton({ text = 'Allahuma Barik', className = '' }: BarikBu
             }}
             transition={{ delay: 0.15, duration: 0.45, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <p className="leading-[normal] whitespace-pre">{text}</p>
+            <p className="whitespace-pre leading-[normal]">{text}</p>
           </motion.div>
         </motion.div>
       </div>
     </div>
   );
 }
-

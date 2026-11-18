@@ -10,7 +10,7 @@ interface UseProviderOptions {
 
 /**
  * Hook for fetching and caching provider data
- * 
+ *
  * Features:
  * - Client-side caching (5 minutes)
  * - Instant navigation if data already cached
@@ -42,7 +42,7 @@ export function useProvider({ providerId, enabled = true, initialData }: UseProv
  */
 export function usePrefetchProvider() {
   const queryClient = useQueryClient();
-  
+
   return (providerId: string) => {
     queryClient.prefetchQuery({
       queryKey: ['provider', providerId],

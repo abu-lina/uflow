@@ -1,6 +1,6 @@
 /**
  * TDD tests for buildProviderShapeFromCommunityService transform (Plan 082)
- * 
+ *
  * Tests written BEFORE the function was implemented.
  * Red → Green verified per TDD gate procedure.
  */
@@ -101,26 +101,28 @@ describe('buildProviderShapeFromCommunityService (Plan 082)', () => {
   it('[post-fix PASSES] maps badge data for trust section', () => {
     const withBadges: CommunityService = {
       ...baseService,
-      badges: [{
-        id: 'badge-1',
-        entity_id: 'cs-42',
-        entity_type: EntityType.COMMUNITY_SERVICE,
-        badge_type_id: 'bt-1',
-        trust_level: 'verified' as import('@/types/badges').TrustLevel,
-        confirmation_count: 0,
-        created_at: '2026-01-01T00:00:00.000Z',
-        updated_at: '2026-01-01T00:00:00.000Z',
-        badge_type: {
-          id: 'bt-1',
-          badge_key: 'HALAL' as import('@/types/badges').BadgeKey,
-          labels: { de: 'Halal', en: 'Halal' },
-          description: null,
-          icon_name: 'halal-icon',
-          is_active: true,
+      badges: [
+        {
+          id: 'badge-1',
+          entity_id: 'cs-42',
+          entity_type: EntityType.COMMUNITY_SERVICE,
+          badge_type_id: 'bt-1',
+          trust_level: 'verified' as import('@/types/badges').TrustLevel,
+          confirmation_count: 0,
           created_at: '2026-01-01T00:00:00.000Z',
           updated_at: '2026-01-01T00:00:00.000Z',
+          badge_type: {
+            id: 'bt-1',
+            badge_key: 'HALAL' as import('@/types/badges').BadgeKey,
+            labels: { de: 'Halal', en: 'Halal' },
+            description: null,
+            icon_name: 'halal-icon',
+            is_active: true,
+            created_at: '2026-01-01T00:00:00.000Z',
+            updated_at: '2026-01-01T00:00:00.000Z',
+          },
         },
-      }],
+      ],
     };
     const result = buildProviderShapeFromCommunityService(withBadges);
     expect(result.badges).toHaveLength(1);

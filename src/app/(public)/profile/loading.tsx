@@ -10,7 +10,7 @@ export default function ProfileLoading() {
         <div className="mb-6 flex items-center gap-4">
           {/* Avatar skeleton */}
           <div className="h-20 w-20 rounded-full bg-gray-200"></div>
-          
+
           {/* User info skeleton */}
           <div className="flex-1">
             <div className="mb-2 h-8 w-48 rounded bg-gray-200"></div>

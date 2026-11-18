@@ -152,7 +152,7 @@ describe('ProviderEditForm — hideSocialInitiatives prop (Plan 083 D9)', () => 
         localStoragePrefix="test_"
         provider={mockProvider}
         subPageBaseUrl="/dashboard/test/edit"
-      />
+      />,
     );
 
     // Default: Soziale Initiativen button MUST be visible
@@ -167,7 +167,7 @@ describe('ProviderEditForm — hideSocialInitiatives prop (Plan 083 D9)', () => 
         localStoragePrefix="test_"
         provider={mockProvider}
         subPageBaseUrl="/dashboard/test/edit"
-      />
+      />,
     );
 
     // With hideSocialInitiatives=true: button MUST NOT be in the DOM
@@ -182,7 +182,7 @@ describe('ProviderEditForm — hideSocialInitiatives prop (Plan 083 D9)', () => 
         localStoragePrefix="test_"
         provider={mockProvider}
         subPageBaseUrl="/dashboard/test/edit"
-      />
+      />,
     );
 
     expect(screen.getByText('Soziale Initiativen')).toBeInTheDocument();

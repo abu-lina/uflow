@@ -48,25 +48,34 @@ describe('GET /api/admin/providers/[id]/delivery-links', () => {
   it('returns 401 when user is not authenticated', async () => {
     mockGetUserFromCookie.mockResolvedValue(null);
 
-    const response = await GET(createRequest(`http://localhost/api/admin/providers/${VALID_ID}/delivery-links`), {
-      params: Promise.resolve({ id: VALID_ID }),
-    });
+    const response = await GET(
+      createRequest(`http://localhost/api/admin/providers/${VALID_ID}/delivery-links`),
+      {
+        params: Promise.resolve({ id: VALID_ID }),
+      },
+    );
     expect(response.status).toBe(401);
   });
 
   it('returns 403 when user is not admin/moderator', async () => {
     mockIsAdminOrModerator.mockResolvedValue(false);
 
-    const response = await GET(createRequest(`http://localhost/api/admin/providers/${VALID_ID}/delivery-links`), {
-      params: Promise.resolve({ id: VALID_ID }),
-    });
+    const response = await GET(
+      createRequest(`http://localhost/api/admin/providers/${VALID_ID}/delivery-links`),
+      {
+        params: Promise.resolve({ id: VALID_ID }),
+      },
+    );
     expect(response.status).toBe(403);
   });
 
   it('returns 400 for invalid UUID', async () => {
-    const response = await GET(createRequest('http://localhost/api/admin/providers/bad-id/delivery-links'), {
-      params: Promise.resolve({ id: 'bad-id' }),
-    });
+    const response = await GET(
+      createRequest('http://localhost/api/admin/providers/bad-id/delivery-links'),
+      {
+        params: Promise.resolve({ id: 'bad-id' }),
+      },
+    );
     expect(response.status).toBe(400);
   });
 
@@ -77,9 +86,12 @@ describe('GET /api/admin/providers/[id]/delivery-links', () => {
     ];
     mockOrder.mockResolvedValue({ data: mockLinks, error: null });
 
-    const response = await GET(createRequest(`http://localhost/api/admin/providers/${VALID_ID}/delivery-links`), {
-      params: Promise.resolve({ id: VALID_ID }),
-    });
+    const response = await GET(
+      createRequest(`http://localhost/api/admin/providers/${VALID_ID}/delivery-links`),
+      {
+        params: Promise.resolve({ id: VALID_ID }),
+      },
+    );
     expect(response.status).toBe(200);
 
     const json = await response.json();
@@ -92,9 +104,12 @@ describe('GET /api/admin/providers/[id]/delivery-links', () => {
   it('returns empty array when no delivery links exist', async () => {
     mockOrder.mockResolvedValue({ data: [], error: null });
 
-    const response = await GET(createRequest(`http://localhost/api/admin/providers/${VALID_ID}/delivery-links`), {
-      params: Promise.resolve({ id: VALID_ID }),
-    });
+    const response = await GET(
+      createRequest(`http://localhost/api/admin/providers/${VALID_ID}/delivery-links`),
+      {
+        params: Promise.resolve({ id: VALID_ID }),
+      },
+    );
     expect(response.status).toBe(200);
 
     const json = await response.json();

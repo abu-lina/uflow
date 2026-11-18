@@ -52,7 +52,9 @@ describe('getProviderForAdmin', () => {
       error: null,
     });
 
-    const result = await getProviderForAdmin(validProviderId) as AdminProviderWithExtensions | null;
+    const result = (await getProviderForAdmin(
+      validProviderId,
+    )) as AdminProviderWithExtensions | null;
 
     expect(result).not.toBeNull();
     expect(result?.provider_name).toBe('Test Food');
@@ -98,12 +100,16 @@ describe('getProviderForAdmin', () => {
       error: null,
     });
 
-    const result = await getProviderForAdmin(validProviderId) as AdminProviderWithExtensions | null;
+    const result = (await getProviderForAdmin(
+      validProviderId,
+    )) as AdminProviderWithExtensions | null;
 
     expect(result?.store_providers?.certificate_url).toBe('https://example.com/cert.pdf');
     expect((result as Record<string, unknown>)['food_menu']).toHaveLength(1);
     expect((result as Record<string, unknown>)['provider_delivery_links']).toHaveLength(1);
-    const links = (result as Record<string, unknown>)['provider_delivery_links'] as Array<Record<string, unknown>>;
+    const links = (result as Record<string, unknown>)['provider_delivery_links'] as Array<
+      Record<string, unknown>
+    >;
     expect(links[0].platform).toBe('wolt');
   });
 
@@ -141,7 +147,12 @@ describe('getProviderForAdmin', () => {
       error: null,
     });
 
-    const result = await getProviderForAdmin(validProviderId) as AdminProviderWithExtensions | null;
-    expect((result as Record<string, unknown>)['category']).toEqual({ name_de: 'Restaurant', name_en: 'Restaurant' });
+    const result = (await getProviderForAdmin(
+      validProviderId,
+    )) as AdminProviderWithExtensions | null;
+    expect((result as Record<string, unknown>)['category']).toEqual({
+      name_de: 'Restaurant',
+      name_en: 'Restaurant',
+    });
   });
 });

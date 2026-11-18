@@ -13,19 +13,19 @@ export const accountService = {
         // This includes both owned providers and recommendations
         // (user_created_id is always set, so this covers all their entries)
         supabase.from('providers').delete().eq('user_created_id', userId),
-        
+
         // Delete user's bookmarks
         supabase.from('bookmarks').delete().eq('user_id', userId),
-        
+
         // Delete user's profile data from users table
         supabase.from('users').delete().eq('user_id', userId),
       ];
 
       // Execute all deletions
       const deletionResults = await Promise.allSettled(deletionPromises);
-      
+
       // Check if any deletions failed
-      const failedDeletions = deletionResults.filter(result => result.status === 'rejected');
+      const failedDeletions = deletionResults.filter((result) => result.status === 'rejected');
       if (failedDeletions.length > 0) {
         console.error('Some data deletions failed:', failedDeletions);
         // Continue with user deletion even if some data deletions failed
@@ -33,13 +33,13 @@ export const accountService = {
 
       // Finally, delete the user from auth
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      
+
       if (authError) {
         // If admin deletion fails, try to delete via RPC function
         const { error: rpcError } = await supabase.rpc('delete_user_account', {
-          user_id: userId
+          user_id: userId,
         });
-        
+
         if (rpcError) {
           throw new Error(`Failed to delete user account: ${rpcError.message}`);
         }
@@ -48,7 +48,9 @@ export const accountService = {
       return { success: true };
     } catch (error) {
       console.error('Account deletion error:', error);
-      throw new Error(`Failed to delete account: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to delete account: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -59,7 +61,7 @@ export const accountService = {
   deleteAccountViaRPC: async (userId: string) => {
     try {
       const { error } = await supabase.rpc('delete_user_account', {
-        user_id: userId
+        user_id: userId,
       });
 
       if (error) {
@@ -71,5 +73,5 @@ export const accountService = {
       console.error('Account deletion error:', error);
       throw error;
     }
-  }
+  },
 };

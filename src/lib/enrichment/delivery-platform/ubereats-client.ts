@@ -40,19 +40,13 @@ function toCitySlug(city: string): string {
 }
 
 export function parsePriceToCents(priceStr: string): number {
-  const cleaned = priceStr
-    .replace(/[€$]/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.')
-    .trim();
+  const cleaned = priceStr.replace(/[€$]/g, '').replace(/\./g, '').replace(',', '.').trim();
   const parsed = parseFloat(cleaned);
   if (isNaN(parsed)) return 0;
   return Math.round(parsed * 100);
 }
 
-function extractStoreFromStateEntry(
-  entry: Record<string, unknown>,
-): UberEatsSearchResult | null {
+function extractStoreFromStateEntry(entry: Record<string, unknown>): UberEatsSearchResult | null {
   const store = entry.store as Record<string, unknown> | undefined;
   if (!store) return null;
   const name = store.title as string | undefined;
@@ -125,9 +119,7 @@ export function extractSearchResultsFromState(
   return results;
 }
 
-export function extractMenuFromState(
-  state: Record<string, unknown>,
-): UberEatsMenuCategory[] {
+export function extractMenuFromState(state: Record<string, unknown>): UberEatsMenuCategory[] {
   const categories: UberEatsMenuCategory[] = [];
 
   const storeData = state.store as Record<string, unknown> | undefined;
@@ -204,9 +196,7 @@ export function extractRestaurantFromState(
   };
 }
 
-export async function extractSearchResultsFromDom(
-  page: Page,
-): Promise<UberEatsSearchResult[]> {
+export async function extractSearchResultsFromDom(page: Page): Promise<UberEatsSearchResult[]> {
   return page.evaluate(() => {
     const results: Array<{
       name: string;
@@ -248,8 +238,7 @@ export async function extractRestaurantDataFromDom(
   return page.evaluate(
     ({ slug }: { slug: string }) => {
       const nameEl =
-        document.querySelector('[data-testid="store-name"]') ??
-        document.querySelector('h1');
+        document.querySelector('[data-testid="store-name"]') ?? document.querySelector('h1');
       const name = nameEl?.textContent?.trim() ?? '';
 
       if (!name) return null;
@@ -291,10 +280,7 @@ export async function extractRestaurantDataFromDom(
           const priceText = priceEl?.textContent?.trim() ?? '';
           const priceCents = priceText
             ? (() => {
-                const cleaned = priceText
-                  .replace(/[€$]/g, '')
-                  .replace(',', '.')
-                  .trim();
+                const cleaned = priceText.replace(/[€$]/g, '').replace(',', '.').trim();
                 const parsed = parseFloat(cleaned);
                 return isNaN(parsed) ? 0 : Math.round(parsed * 100);
               })()
@@ -351,7 +337,7 @@ class PlaywrightUberEatsClient {
             err.message.includes('playwright'))
         ) {
           throw new Error(
-            "Playwright browser not installed. Run `npx playwright install chromium`.",
+            'Playwright browser not installed. Run `npx playwright install chromium`.',
           );
         }
         throw err;
@@ -379,9 +365,7 @@ class PlaywrightUberEatsClient {
     const now = Date.now();
     const elapsed = now - this.lastRequestTime;
     if (elapsed < this.config.requestDelayMs) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, this.config.requestDelayMs - elapsed),
-      );
+      await new Promise((resolve) => setTimeout(resolve, this.config.requestDelayMs - elapsed));
     }
     this.lastRequestTime = Date.now();
   }
@@ -398,23 +382,23 @@ class PlaywrightUberEatsClient {
     const citySlug = toCitySlug(city);
 
     try {
-      await page.goto(
-        `https://www.ubereats.com/de/location/${citySlug}`,
-        {
-          timeout: 30000,
-          waitUntil: 'networkidle',
-        },
-      );
+      await page.goto(`https://www.ubereats.com/de/location/${citySlug}`, {
+        timeout: 30000,
+        waitUntil: 'networkidle',
+      });
 
       // Try parsing embedded __INITIAL_STATE__ first
       const initialState = await page.evaluate(() => {
-        return ((window as unknown as Record<string, unknown>).__INITIAL_STATE__ as Record<string, unknown>) ?? null;
+        return (
+          ((window as unknown as Record<string, unknown>).__INITIAL_STATE__ as Record<
+            string,
+            unknown
+          >) ?? null
+        );
       });
 
       if (initialState && typeof initialState === 'object') {
-        const fromState = extractSearchResultsFromState(
-          initialState as Record<string, unknown>,
-        );
+        const fromState = extractSearchResultsFromState(initialState as Record<string, unknown>);
         if (fromState.length > 0) return fromState;
       }
 
@@ -434,24 +418,23 @@ class PlaywrightUberEatsClient {
     const page = await context.newPage();
 
     try {
-      await page.goto(
-        `https://www.ubereats.com/de/store/${slug}`,
-        {
-          timeout: 30000,
-          waitUntil: 'networkidle',
-        },
-      );
+      await page.goto(`https://www.ubereats.com/de/store/${slug}`, {
+        timeout: 30000,
+        waitUntil: 'networkidle',
+      });
 
       // Try parsing embedded __INITIAL_STATE__ first
       const initialState = await page.evaluate(() => {
-        return ((window as unknown as Record<string, unknown>).__INITIAL_STATE__ as Record<string, unknown>) ?? null;
+        return (
+          ((window as unknown as Record<string, unknown>).__INITIAL_STATE__ as Record<
+            string,
+            unknown
+          >) ?? null
+        );
       });
 
       if (initialState && typeof initialState === 'object') {
-        const fromState = extractRestaurantFromState(
-          slug,
-          initialState as Record<string, unknown>,
-        );
+        const fromState = extractRestaurantFromState(slug, initialState as Record<string, unknown>);
         if (fromState) return fromState;
       }
 
@@ -474,10 +457,6 @@ class PlaywrightUberEatsClient {
   }
 }
 
-export function createUberEatsClient(
-  config?: UberEatsClientConfig,
-): UberEatsClient {
+export function createUberEatsClient(config?: UberEatsClientConfig): UberEatsClient {
   return new PlaywrightUberEatsClient(config);
 }
-
-

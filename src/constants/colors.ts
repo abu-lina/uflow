@@ -11,11 +11,11 @@ export const COLORS = {
   // - Hover: hover:bg-primary-dark
   // - Pressed: active:bg-primary-darker
   // - Selected: bg-primary-light
-  primary: '#589D96',         // Default state (breaker-bay-400)
-  primaryDark: '#438983',     // Hover state (breaker-bay-500)
-  primaryDarker: '#356e6a',   // Pressed/clicked state (breaker-bay-600)
-  primaryLight: '#b8d6d2',    // Light backgrounds/selected (breaker-bay-200)
-  
+  primary: '#589D96', // Default state (breaker-bay-400)
+  primaryDark: '#438983', // Hover state (breaker-bay-500)
+  primaryDarker: '#356e6a', // Pressed/clicked state (breaker-bay-600)
+  primaryLight: '#b8d6d2', // Light backgrounds/selected (breaker-bay-200)
+
   // Legacy aliases (for backward compatibility)
   /** @deprecated Use `primaryDark` instead */
   primaryHover: '#438983',
@@ -23,7 +23,7 @@ export const COLORS = {
   primaryPressed: '#356e6a',
   /** @deprecated Use `primaryLight` instead */
   primaryActive: '#b8d6d2',
-  
+
   // Legacy aliases (for backward compatibility)
   /** @deprecated Use `primary` instead */
   mint: '#589D96',
@@ -33,7 +33,7 @@ export const COLORS = {
   mintPressed: '#49837D',
   /** @deprecated Use `primaryLight` instead */
   mintLight: '#BFDBD8',
-  
+
   // Gold gradient colors (for Barik button)
   gold: {
     start: '#d2b581',
@@ -41,14 +41,14 @@ export const COLORS = {
     end: '#af8650',
     gradient: 'linear-gradient(to right, #d2b581 4.348%, #e5d1a0 52.174%, #af8650 100%)',
   },
-  
+
   // Semantic colors
   white: '#FFFFFF',
   black: '#232323',
   neutral: '#CDCDCD',
   neutralLight: '#EEEEEE',
   border: '#D4D4D4',
-  
+
   // Legacy aliases (for backward compatibility)
   /** @deprecated Use `neutral` instead */
   grey: '#CDCDCD',
@@ -76,5 +76,3 @@ export const COLORS_RGBA = {
     shadow: 'rgba(88, 157, 150, 0.1)',
   },
 } as const;
-
-

@@ -52,18 +52,14 @@ export async function GET(
       );
     }
 
-    const { data: messages } = await measureDependency(
-      ctx,
-      'supabase.messages.get',
-      async () => {
-        const result = await supabase
-          .from('messages')
-          .select('role, content, tool_calls, created_at')
-          .eq('conversation_id', id)
-          .order('created_at', { ascending: true });
-        return result;
-      },
-    );
+    const { data: messages } = await measureDependency(ctx, 'supabase.messages.get', async () => {
+      const result = await supabase
+        .from('messages')
+        .select('role, content, tool_calls, created_at')
+        .eq('conversation_id', id)
+        .order('created_at', { ascending: true });
+      return result;
+    });
 
     logRequestTiming(ctx);
 
@@ -103,18 +99,14 @@ export async function DELETE(
     const { id } = await params;
     const supabase = createSupabaseServerClient();
 
-    const { error } = await measureDependency(
-      ctx,
-      'supabase.conversations.delete',
-      async () => {
-        const result = await supabase
-          .from('conversations')
-          .update({ is_active: false })
-          .eq('id', id)
-          .eq('user_id', user.id);
-        return result;
-      },
-    );
+    const { error } = await measureDependency(ctx, 'supabase.conversations.delete', async () => {
+      const result = await supabase
+        .from('conversations')
+        .update({ is_active: false })
+        .eq('id', id)
+        .eq('user_id', user.id);
+      return result;
+    });
 
     if (error) {
       logRequestTiming(ctx);

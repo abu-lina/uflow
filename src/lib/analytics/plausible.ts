@@ -27,10 +27,7 @@ declare global {
  * @param name - Event name (e.g., 'contact_intent_triggered', 'provider_profile_completed')
  * @param props - Optional properties (no PII, no free-text)
  */
-export function trackEvent(
-  name: string,
-  props?: Record<string, string | number | boolean>,
-): void {
+export function trackEvent(name: string, props?: Record<string, string | number | boolean>): void {
   if (typeof window === 'undefined' || typeof window.plausible !== 'function') {
     return;
   }

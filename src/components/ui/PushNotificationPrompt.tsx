@@ -39,13 +39,13 @@ interface PushNotificationPromptProps {
 
 /**
  * Push Notification Prompt Component
- * 
+ *
  * Displays a prompt to request push notification permission
  * Only shows if:
  * - Push notifications are supported
  * - Permission is not already granted
  * - User is authenticated
- * 
+ *
  * @example
  * ```tsx
  * <PushNotificationPrompt
@@ -63,12 +63,7 @@ export function PushNotificationPrompt({
   onDismiss,
 }: PushNotificationPromptProps) {
   const { user } = useAuth();
-  const {
-    permission,
-    isSupported,
-    isSubscribed,
-    subscribe,
-  } = usePushNotifications();
+  const { permission, isSupported, isSubscribed, subscribe } = usePushNotifications();
 
   const [isVisible, setIsVisible] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -80,11 +75,11 @@ export function PushNotificationPrompt({
       const key = getVapidPublicKeySafe();
       const rawEnv = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!key) {
-        console.warn(
-          '⚠️ VAPID Public Key not found. Push notifications will be disabled.'
-        );
+        console.warn('⚠️ VAPID Public Key not found. Push notifications will be disabled.');
         console.warn('Raw env value:', rawEnv);
-        console.warn('Make sure NEXT_PUBLIC_VAPID_PUBLIC_KEY is in .env.local (no quotes) and restart the dev server.');
+        console.warn(
+          'Make sure NEXT_PUBLIC_VAPID_PUBLIC_KEY is in .env.local (no quotes) and restart the dev server.',
+        );
       } else {
         console.log('✅ VAPID Public Key is configured');
         console.log('Key length:', key.length);
@@ -135,15 +130,7 @@ export function PushNotificationPrompt({
     }, showDelay);
 
     return () => clearTimeout(timer);
-  }, [
-    autoShow,
-    isDismissed,
-    isSupported,
-    permission,
-    isSubscribed,
-    user,
-    showDelay,
-  ]);
+  }, [autoShow, isDismissed, isSupported, permission, isSubscribed, user, showDelay]);
 
   const handleSubscribe = async () => {
     if (!user) return;
@@ -175,12 +162,8 @@ export function PushNotificationPrompt({
           subscription: {
             endpoint: subscription.endpoint,
             keys: {
-              p256dh: arrayBufferToBase64(
-                subscription.getKey('p256dh') as ArrayBuffer
-              ),
-              auth: arrayBufferToBase64(
-                subscription.getKey('auth') as ArrayBuffer
-              ),
+              p256dh: arrayBufferToBase64(subscription.getKey('p256dh') as ArrayBuffer),
+              auth: arrayBufferToBase64(subscription.getKey('auth') as ArrayBuffer),
             },
           },
           userId: user.id,
@@ -224,13 +207,8 @@ export function PushNotificationPrompt({
   }
 
   return (
-    <div
-      className={cn(
-        'fixed bottom-20 left-0 right-0 z-50 mx-auto max-w-md px-4',
-        className
-      )}
-    >
-      <div className="rounded-xl bg-background p-4 shadow-lg border border-border">
+    <div className={cn('fixed bottom-20 left-0 right-0 z-50 mx-auto max-w-md px-4', className)}>
+      <div className="rounded-xl border border-border bg-background p-4 shadow-lg">
         <div className="flex items-start gap-3">
           {/* Icon */}
           <div className="flex-shrink-0">
@@ -240,11 +218,11 @@ export function PushNotificationPrompt({
           </div>
 
           {/* Content */}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-content-heading mb-1">
+          <div className="min-w-0 flex-1">
+            <h3 className="mb-1 text-sm font-semibold text-content-heading">
               Enable Notifications
             </h3>
-            <p className="text-xs text-content leading-relaxed mb-3">
+            <p className="mb-3 text-xs leading-relaxed text-content">
               Get notified about important updates, new messages, and more.
             </p>
 
@@ -285,9 +263,5 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
-

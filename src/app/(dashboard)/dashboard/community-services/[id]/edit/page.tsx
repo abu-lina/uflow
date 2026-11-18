@@ -13,7 +13,9 @@ interface AdminCommunityServiceEditPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default function AdminCommunityServiceEditPage({ params }: AdminCommunityServiceEditPageProps) {
+export default function AdminCommunityServiceEditPage({
+  params,
+}: AdminCommunityServiceEditPageProps) {
   const { id: communityServiceId } = use(params);
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -121,7 +123,21 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
     } finally {
       setSaving(false);
     }
-  }, [communityServiceId, name, description, street, zip, city, country, email, phone, website, instagram, queryClient, router]);
+  }, [
+    communityServiceId,
+    name,
+    description,
+    street,
+    zip,
+    city,
+    country,
+    email,
+    phone,
+    website,
+    instagram,
+    queryClient,
+    router,
+  ]);
 
   const handleBack = () => {
     router.push(`/community-services/${communityServiceId}`);
@@ -142,16 +158,20 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({})) as { error?: string };
+          const errorData = (await response.json().catch(() => ({}))) as { error?: string };
           toast.error(errorData.error || 'Review action failed');
           return;
         }
 
-        const responseData = await response.json() as { data?: { review_status?: string } };
+        const responseData = (await response.json()) as { data?: { review_status?: string } };
         setCommunityService((prev) =>
           prev
-            ? { ...prev, review_status: responseData.data?.review_status as CommunityService['review_status'] }
-            : prev
+            ? {
+                ...prev,
+                review_status: responseData.data
+                  ?.review_status as CommunityService['review_status'],
+              }
+            : prev,
         );
 
         await Promise.all([
@@ -163,8 +183,8 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
           reviewStatus === 'approved'
             ? 'Community service approved'
             : reviewStatus === 'rejected'
-            ? 'Community service rejected'
-            : 'Revision requested'
+              ? 'Community service rejected'
+              : 'Revision requested',
         );
         setShowRejectModal(false);
         setRejectFeedback('');
@@ -174,17 +194,13 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
         setReviewing(false);
       }
     },
-    [communityServiceId, queryClient]
+    [communityServiceId, queryClient],
   );
 
   if (loading) {
     return (
-      <div className="flex h-screen-fix flex-col">
-        <PageHeader
-          title={t('editProvider.title')}
-          variant="back-and-title"
-          onBack={handleBack}
-        />
+      <div className="h-screen-fix flex flex-col">
+        <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={handleBack} />
         <main className="flex flex-1 items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </main>
@@ -194,12 +210,8 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
 
   if (error || !communityService) {
     return (
-      <div className="flex h-screen-fix flex-col">
-        <PageHeader
-          title={t('editProvider.title')}
-          variant="back-and-title"
-          onBack={handleBack}
-        />
+      <div className="h-screen-fix flex flex-col">
+        <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={handleBack} />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
           <p className="text-center text-gray-500">{error || 'Community service not found'}</p>
           <button
@@ -215,22 +227,22 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
   }
 
   return (
-    <div className="flex h-screen-fix flex-col">
-      <PageHeader
-        title={t('editProvider.title')}
-        variant="back-and-title"
-        onBack={handleBack}
-      />
-      <main className="flex flex-1 flex-col overflow-y-auto pt-[calc(env(safe-area-inset-top)+24px+40px)] px-6 pb-24">
+    <div className="h-screen-fix flex flex-col">
+      <PageHeader title={t('editProvider.title')} variant="back-and-title" onBack={handleBack} />
+      <main className="flex flex-1 flex-col overflow-y-auto px-6 pb-24 pt-[calc(env(safe-area-inset-top)+24px+40px)]">
         <div className="mx-auto w-full max-w-lg space-y-6">
           {/* Status badge */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-gray-500">Status:</span>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              communityService.review_status === 'approved' ? 'bg-green-100 text-green-800' :
-              communityService.review_status === 'rejected' ? 'bg-red-100 text-red-800' :
-              'bg-yellow-100 text-yellow-800'
-            }`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                communityService.review_status === 'approved'
+                  ? 'bg-green-100 text-green-800'
+                  : communityService.review_status === 'rejected'
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-yellow-100 text-yellow-800'
+              }`}
+            >
               {communityService.review_status || 'pending'}
             </span>
           </div>
@@ -251,7 +263,10 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
 
           {/* Description */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="cs-description">
+            <label
+              className="mb-1 block text-sm font-medium text-gray-700"
+              htmlFor="cs-description"
+            >
               {t('editProvider.description')}
             </label>
             <textarea
@@ -265,7 +280,9 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
 
           {/* Address section */}
           <fieldset>
-            <legend className="mb-2 text-sm font-semibold text-gray-700">{t('editProvider.location')}</legend>
+            <legend className="mb-2 text-sm font-semibold text-gray-700">
+              {t('editProvider.location')}
+            </legend>
             <div className="space-y-3">
               <input
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -302,7 +319,9 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
 
           {/* Contact section */}
           <fieldset>
-            <legend className="mb-2 text-sm font-semibold text-gray-700">{t('editProvider.contact')}</legend>
+            <legend className="mb-2 text-sm font-semibold text-gray-700">
+              {t('editProvider.contact')}
+            </legend>
             <div className="space-y-3">
               <input
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
@@ -362,7 +381,10 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
                 className="flex-1 rounded-xl border border-gray-300 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
                 disabled={reviewing}
                 type="button"
-                onClick={() => { setShowRejectModal(false); setRejectFeedback(''); }}
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectFeedback('');
+                }}
               >
                 Abbrechen
               </button>
@@ -380,7 +402,7 @@ export default function AdminCommunityServiceEditPage({ params }: AdminCommunity
       )}
 
       {/* Sticky save + review footer */}
-      <div className="sticky bottom-0 border-t border-gray-200 bg-white px-6 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] space-y-2">
+      <div className="sticky bottom-0 space-y-2 border-t border-gray-200 bg-white px-6 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
         <button
           className="w-full rounded-xl bg-primary py-3 font-medium text-white transition-colors hover:bg-primary-dark active:bg-primary-darker disabled:opacity-50"
           disabled={saving || !name.trim()}

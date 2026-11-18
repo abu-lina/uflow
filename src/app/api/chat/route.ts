@@ -9,22 +9,15 @@ import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { sendChatRequest, streamChatCompletion } from '@/lib/openrouter';
 import { executeToolCall, TOOL_DEFINITIONS } from '@/features/chat/services/tool-executor';
-import {
-  checkGuardrail,
-  createRedirectCounter,
-} from '@/features/chat/services/guardrails';
+import { checkGuardrail, createRedirectCounter } from '@/features/chat/services/guardrails';
 import { buildSystemPrompt } from '@/features/chat/prompts/system-prompt';
 import { MAX_MESSAGE_LENGTH } from '@/features/chat/types';
 import type { ChatMessage } from '@/features/chat/types';
 import type { ProviderCardData } from '@/features/chat/types';
 import { getFeatureFlag } from '@/config/feature-flags';
 
-const CHAT_HISTORY_LIMIT = parseInt(
-  process.env.CHAT_HISTORY_LIMIT || '30',
-  10,
-);
+const CHAT_HISTORY_LIMIT = parseInt(process.env.CHAT_HISTORY_LIMIT || '30', 10);
 const MAX_TOOL_CALLS = 2;
-
 
 function extractOptions(content: string): string[] | undefined {
   if (!content) return undefined;
@@ -32,42 +25,43 @@ function extractOptions(content: string): string[] | undefined {
   // Pattern 1: Numbered list (1. Option, 2. Option)
   const numberedMatch = content.match(/^\d+\.\s+(.+)$/gm);
   if (numberedMatch && numberedMatch.length >= 2) {
-    return numberedMatch.map(m => m.replace(/^\d+\.\s+/, '').trim());
+    return numberedMatch.map((m) => m.replace(/^\d+\.\s+/, '').trim());
   }
-  
+
   // Pattern 3: Bullet points (• or -)
   const bulletMatch = content.match(/^[•-]\s+(.+)$/gm);
   if (bulletMatch && bulletMatch.length >= 2) {
-    return bulletMatch.map(m => m.replace(/^[•-]\s+/, '').trim());
+    return bulletMatch.map((m) => m.replace(/^[•-]\s+/, '').trim());
   }
-  
+
   // Pattern 4: Newline-separated simple options (plain text list without numbers)
-  const lineMatch = content.match(/^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&()/,.-]*(?: [A-Za-zÄÖÜäöüß&()/,.-]+)*$/gm);
+  const lineMatch = content.match(
+    /^[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&()/,.-]*(?: [A-Za-zÄÖÜäöüß&()/,.-]+)*$/gm,
+  );
   if (lineMatch && lineMatch.length >= 3) {
     const filtered = lineMatch
-      .map(l => l.trim())
-      .filter(l => l.length > 2 && l.length < 100 && !l.endsWith('?'));
+      .map((l) => l.trim())
+      .filter((l) => l.length > 2 && l.length < 100 && !l.endsWith('?'));
     if (filtered.length >= 3) {
       return filtered;
     }
   }
-    
+
   // Pattern 5: Comma-separated list after "Vorschläge" or similar (e.g. "zur Auswahl: A, B, C")
   const colonList = content.match(/[Vv]orschl[äa]ge[^:]*:\s*(.{5,400}?)(?:\.\s|[?!]|\n\n|$)/);
   if (colonList) {
     const items = colonList[1]
       .split(',')
-      .map(i => i.trim())
-      .filter(i => i.length > 2 && i.length < 60 && !i.endsWith('?') && !i.endsWith(':'));
+      .map((i) => i.trim())
+      .filter((i) => i.length > 2 && i.length < 60 && !i.endsWith('?') && !i.endsWith(':'));
     if (items.length >= 3) {
       // Remove numbering if present
-      return items.map(i => i.replace(/^\d+\.\s*/, ''));
+      return items.map((i) => i.replace(/^\d+\.\s*/, ''));
     }
   }
-  
+
   return undefined;
 }
-
 
 // Async helper: reads SSE stream content, saves to DB after stream ends
 async function saveStreamToDb(
@@ -115,10 +109,13 @@ async function saveStreamToDb(
       content: assistantContent || 'Entschuldigung, ich konnte keine Antwort generieren.',
       token_count: 0,
     });
-    await supabase.from('conversations').update({
-      updated_at: new Date().toISOString(),
-      redirect_count: redirectCount,
-    }).eq('id', conversationId);
+    await supabase
+      .from('conversations')
+      .update({
+        updated_at: new Date().toISOString(),
+        redirect_count: redirectCount,
+      })
+      .eq('id', conversationId);
   } catch (e) {
     console.error('[saveStreamToDb error]', e);
   }
@@ -204,14 +201,12 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
         }
 
         const convId = crypto.randomUUID();
-        const { error: insertError } = await supabase
-          .from('conversations')
-          .insert({
-            id: convId,
-            user_id: user.id,
-            title: trimmedMessage.slice(0, 100),
-            is_active: true,
-          });
+        const { error: insertError } = await supabase.from('conversations').insert({
+          id: convId,
+          user_id: user.id,
+          title: trimmedMessage.slice(0, 100),
+          is_active: true,
+        });
 
         if (insertError) {
           throw new Error(`Failed to create conversation: ${insertError.message}`);
@@ -221,43 +216,56 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
       },
     );
 
-    const history = await measureDependency(
-      ctx,
-      'supabase.messages.load',
-      async () => {
-        const { data: recentMessages } = await supabase
-          .from('messages')
-          .select('role, content, tool_calls, created_at')
-          .eq('conversation_id', conversationId)
-          .order('created_at', { ascending: true })
-          .limit(CHAT_HISTORY_LIMIT);
+    const history = await measureDependency(ctx, 'supabase.messages.load', async () => {
+      const { data: recentMessages } = await supabase
+        .from('messages')
+        .select('role, content, tool_calls, created_at')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true })
+        .limit(CHAT_HISTORY_LIMIT);
 
-        return (recentMessages || []) as ChatMessage[];
-      },
-    );
+      return (recentMessages || []) as ChatMessage[];
+    });
 
     const systemPrompt = await buildSystemPrompt(true);
 
     // Detect registration mode: check if first message or any recent message indicates registration
-    const firstUserMsg = history.find(m => m.role === 'user')?.content || '';
-    const isRegistrationMode = /(?:registrieren|anmelden|eintragen|hinzufügen|neues restaurant|neuen laden)/i.test(firstUserMsg);
+    const firstUserMsg = history.find((m) => m.role === 'user')?.content || '';
+    const isRegistrationMode =
+      /(?:registrieren|anmelden|eintragen|hinzufügen|neues restaurant|neuen laden)/i.test(
+        firstUserMsg,
+      );
 
     // Detect if the last assistant message was a confirmation prompt and user is confirming
-    const lastAssistantMsg = [...history].reverse().find(m => m.role === 'assistant')?.content || '';
-    const isConfirmationResponse = isRegistrationMode
-      && /(?:korrekt|registrieren|bestätig|soll ich)/i.test(lastAssistantMsg)
-      && /^(?:ja|yes|korrekt|stimmt|passt|genau|ok|okay|sicher|mach|bitte|do it|go ahead)\b/i.test(trimmedMessage.trim());
+    const lastAssistantMsg =
+      [...history].reverse().find((m) => m.role === 'assistant')?.content || '';
+    const isConfirmationResponse =
+      isRegistrationMode &&
+      /(?:korrekt|registrieren|bestätig|soll ich)/i.test(lastAssistantMsg) &&
+      /^(?:ja|yes|korrekt|stimmt|passt|genau|ok|okay|sicher|mach|bitte|do it|go ahead)\b/i.test(
+        trimmedMessage.trim(),
+      );
 
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
-      ...(isRegistrationMode ? [{
-        role: 'system' as const,
-        content: 'CRITICAL: You are in REGISTRATION MODE. The user is answering your registration questions. Do NOT call search_providers. Continue collecting registration data.',
-      }] : []),
-      ...(isConfirmationResponse ? [{
-        role: 'system' as const,
-        content: 'URGENT: The user has CONFIRMED the registration. You MUST call register_provider NOW with all collected data. Do NOT ask any more questions. Do NOT show the summary again. CALL THE TOOL IMMEDIATELY. Use listing_type "food" for restaurants. Pass the category name directly as category_id — it will be resolved automatically.',
-      }] : []),
+      ...(isRegistrationMode
+        ? [
+            {
+              role: 'system' as const,
+              content:
+                'CRITICAL: You are in REGISTRATION MODE. The user is answering your registration questions. Do NOT call search_providers. Continue collecting registration data.',
+            },
+          ]
+        : []),
+      ...(isConfirmationResponse
+        ? [
+            {
+              role: 'system' as const,
+              content:
+                'URGENT: The user has CONFIRMED the registration. You MUST call register_provider NOW with all collected data. Do NOT ask any more questions. Do NOT show the summary again. CALL THE TOOL IMMEDIATELY. Use listing_type "food" for restaurants. Pass the category name directly as category_id — it will be resolved automatically.',
+            },
+          ]
+        : []),
       ...history,
       { role: 'user', content: trimmedMessage },
     ];
@@ -266,22 +274,19 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
     // In registration mode, remove search tools to prevent accidental searches
     const availableTools = isRegistrationMode
-      ? TOOL_DEFINITIONS.filter(t => t.function.name !== 'search_providers')
+      ? TOOL_DEFINITIONS.filter((t) => t.function.name !== 'search_providers')
       : TOOL_DEFINITIONS;
 
     // Force register_provider tool call when user confirms registration
     const toolChoice = isConfirmationResponse
       ? { type: 'function' as const, function: { name: 'register_provider' } }
-      : 'auto' as const;
+      : ('auto' as const);
 
-    let llmResponse = await measureDependency(
-      ctx,
-      'openrouter.chat_completion',
-      () =>
-        sendChatRequest(messages, {
-          tools: availableTools,
-          tool_choice: toolChoice,
-        }),
+    let llmResponse = await measureDependency(ctx, 'openrouter.chat_completion', () =>
+      sendChatRequest(messages, {
+        tools: availableTools,
+        tool_choice: toolChoice,
+      }),
     );
 
     let toolCalls = llmResponse.message.tool_calls || [];
@@ -289,9 +294,10 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     let providerResults: ProviderCardData[] | undefined;
 
     // Only check guardrails on the first message — follow-ups are part of an established flow
-    const guardrailResult = history.length === 0
-      ? checkGuardrail(llmResponse.message, redirectCounter)
-      : { status: 'ok' } as ReturnType<typeof checkGuardrail>;
+    const guardrailResult =
+      history.length === 0
+        ? checkGuardrail(llmResponse.message, redirectCounter)
+        : ({ status: 'ok' } as ReturnType<typeof checkGuardrail>);
 
     if (guardrailResult.status === 'block') {
       const blockContent =
@@ -341,10 +347,8 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
       for (const toolCall of toolCalls) {
         let toolResult: string;
         try {
-          toolResult = await measureDependency(
-            ctx,
-            `tool.${toolCall.function.name}`,
-            () => executeToolCall(toolCall, user.id),
+          toolResult = await measureDependency(ctx, `tool.${toolCall.function.name}`, () =>
+            executeToolCall(toolCall, user.id),
           );
         } catch (error) {
           toolResult = JSON.stringify({
@@ -376,10 +380,10 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
       }
 
       // Stream the follow-up response via SSE
-      const streamBody = await streamChatCompletion(
-        messages,
-        { max_tokens: 768, model: 'mistral-small-latest' },
-      );
+      const streamBody = await streamChatCompletion(messages, {
+        max_tokens: 768,
+        model: 'mistral-small-latest',
+      });
 
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
@@ -391,9 +395,11 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
 
           try {
             // First, send conversation_id
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ conversation_id: conversationId })}
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ conversation_id: conversationId })}
 
-`));
+`),
+            );
 
             while (true) {
               const { done, value } = await reader.read();
@@ -410,13 +416,19 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                   try {
                     const opts = extractOptions(collectedContent || '');
                     if (opts && opts.length > 0) {
-                      controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
+                      controller.enqueue(
+                        encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'),
+                      );
                     }
                   } catch {
                     // Option extraction is best-effort; never block stream completion
                   }
                   if (providerResults && providerResults.length > 0) {
-                    controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
+                    controller.enqueue(
+                      encoder.encode(
+                        'data: ' + JSON.stringify({ results: providerResults }) + '\n\n',
+                      ),
+                    );
                   }
                   controller.enqueue(encoder.encode('data: [DONE]\n\n'));
 
@@ -432,13 +444,17 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                     await adminDb.from('messages').insert({
                       conversation_id: conversationId,
                       role: 'assistant',
-                      content: collectedContent || 'Entschuldigung, ich konnte keine Antwort generieren.',
+                      content:
+                        collectedContent || 'Entschuldigung, ich konnte keine Antwort generieren.',
                       token_count: 0,
                     });
-                    await adminDb.from('conversations').update({
-                      updated_at: new Date().toISOString(),
-                      redirect_count: redirectCounter.count,
-                    }).eq('id', conversationId);
+                    await adminDb
+                      .from('conversations')
+                      .update({
+                        updated_at: new Date().toISOString(),
+                        redirect_count: redirectCounter.count,
+                      })
+                      .eq('id', conversationId);
                   } catch (e) {
                     console.error('[Tool stream save error]', e);
                   }
@@ -452,9 +468,11 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                   const content = parsed.choices?.[0]?.delta?.content;
                   if (content) {
                     collectedContent += content;
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}
+                    controller.enqueue(
+                      encoder.encode(`data: ${JSON.stringify({ content })}
 
-`));
+`),
+                    );
                   }
                 } catch {
                   // Skip unparseable chunks
@@ -478,10 +496,10 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     }
     // Stream all responses for typewriter effect
     if (toolCallCount === 0 && (guardrailResult.status as string) !== 'block') {
-      const streamBody = await streamChatCompletion(
-        messages,
-        { max_tokens: 768, model: 'mistral-small-latest' },
-      );
+      const streamBody = await streamChatCompletion(messages, {
+        max_tokens: 768,
+        model: 'mistral-small-latest',
+      });
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
@@ -490,7 +508,9 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
           let buf = '';
           let collectedContent = '';
           try {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ conversation_id: conversationId })}\n\n`));
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ conversation_id: conversationId })}\n\n`),
+            );
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
@@ -504,31 +524,55 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
                   try {
                     const opts = extractOptions(collectedContent || '');
                     if (opts && opts.length > 0) {
-                      controller.enqueue(encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'));
+                      controller.enqueue(
+                        encoder.encode('data: ' + JSON.stringify({ options: opts }) + '\n\n'),
+                      );
                     }
                   } catch {
                     // Option extraction is best-effort; never block stream completion
                   }
                   if (providerResults && providerResults.length > 0) {
-                    controller.enqueue(encoder.encode('data: ' + JSON.stringify({ results: providerResults }) + '\n\n'));
+                    controller.enqueue(
+                      encoder.encode(
+                        'data: ' + JSON.stringify({ results: providerResults }) + '\n\n',
+                      ),
+                    );
                   }
                   controller.enqueue(encoder.encode('data: [DONE]\n\n'));
                   controller.close();
                   return;
                 }
-                try { const p = JSON.parse(d); const c = p.choices?.[0]?.delta?.content; if (c) { collectedContent += c; controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`)); } } catch { /* Skip unparseable chunks */ }
+                try {
+                  const p = JSON.parse(d);
+                  const c = p.choices?.[0]?.delta?.content;
+                  if (c) {
+                    collectedContent += c;
+                    controller.enqueue(
+                      encoder.encode(`data: ${JSON.stringify({ content: c })}\n\n`),
+                    );
+                  }
+                } catch {
+                  /* Skip unparseable chunks */
+                }
               }
             }
-          } catch (e) { controller.error(e); }
+          } catch (e) {
+            controller.error(e);
+          }
         },
       });
       const [clientStream, saveStream] = stream.tee();
-      saveStreamToDb(saveStream, conversationId, trimmedMessage, redirectCounter.count).catch(e =>
-        console.error('[Stream save error]', e)
+      saveStreamToDb(saveStream, conversationId, trimmedMessage, redirectCounter.count).catch((e) =>
+        console.error('[Stream save error]', e),
       );
 
       return new Response(clientStream, {
-        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Correlation-ID': ctx.correlationId },
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          'X-Correlation-ID': ctx.correlationId,
+        },
       });
     }
 
@@ -537,19 +581,15 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     (llmResponse.message as Record<string, unknown>).tool_calls = undefined;
     // Ensure we never return empty content to the client
     if (!llmResponse.message.content) {
-      llmResponse.message.content = 'Entschuldigung, es gab ein Problem. Bitte versuche es erneut oder starte eine neue Registrierung mit "Ich möchte ein Restaurant registrieren".';
+      llmResponse.message.content =
+        'Entschuldigung, es gab ein Problem. Bitte versuche es erneut oder starte eine neue Registrierung mit "Ich möchte ein Restaurant registrieren".';
     }
-
-
-
 
     const finalMessage = llmResponse.message;
     const options = extractOptions(finalMessage.content || '');
     // Strip redundant lists from content when options are available as buttons
     if (options && options.length > 0 && finalMessage.content) {
-      let cleaned = finalMessage.content
-        .replace(/^\d+\.\s+.+$/gm, '')
-        .replace(/^[•-]\s+.+$/gm, '');
+      let cleaned = finalMessage.content.replace(/^\d+\.\s+.+$/gm, '').replace(/^[•-]\s+.+$/gm, '');
       // Strip lines that match extracted options exactly
       for (const opt of options) {
         const escaped = opt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -577,9 +617,10 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
         conversation_id: conversationId,
         role: 'assistant',
         content: finalMessage.content || '',
-        tool_calls: (finalMessage.tool_calls && finalMessage.tool_calls.length > 0)
-          ? JSON.parse(JSON.stringify(finalMessage.tool_calls))
-          : null,
+        tool_calls:
+          finalMessage.tool_calls && finalMessage.tool_calls.length > 0
+            ? JSON.parse(JSON.stringify(finalMessage.tool_calls))
+            : null,
         token_count: totalTokens,
       });
 
@@ -621,10 +662,13 @@ export async function POST(request: Request): Promise<NextResponse | Response> {
     logRequestTiming(ctx);
     console.error('[API /chat] Error:', error);
 
-    const message =
-      error instanceof Error ? error.message : 'Internal server error';
+    const message = error instanceof Error ? error.message : 'Internal server error';
 
-    if (message.includes('API error') || message.includes('fetch') || message.includes('No AI provider')) {
+    if (
+      message.includes('API error') ||
+      message.includes('fetch') ||
+      message.includes('No AI provider')
+    ) {
       return NextResponse.json(
         { error: 'Chat service is temporarily unavailable. Please try again later.' },
         { status: 503, headers: { 'X-Correlation-ID': ctx.correlationId } },

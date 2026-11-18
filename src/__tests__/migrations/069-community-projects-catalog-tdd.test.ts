@@ -25,14 +25,18 @@ describe('Plan 095 migration 069 contract', () => {
     const sql = readFileSync(migrationPath, 'utf8');
 
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS public.community_projects');
-    expect(sql).toContain('community_service_id UUID NOT NULL REFERENCES public.community_services(community_service_id) ON DELETE CASCADE');
+    expect(sql).toContain(
+      'community_service_id UUID NOT NULL REFERENCES public.community_services(community_service_id) ON DELETE CASCADE',
+    );
     expect(sql).toContain('price_currency TEXT NOT NULL DEFAULT');
     expect(sql).toMatch(/is_active\s+BOOLEAN\s+NOT\s+NULL\s+DEFAULT\s+true/i);
     expect(sql).toContain('GENERATED ALWAYS AS');
     expect(sql).toContain('ENABLE ROW LEVEL SECURITY');
     expect(sql).toContain('CREATE OR REPLACE FUNCTION public.search_community_projects');
     expect(sql).toContain('SECURITY INVOKER');
-    expect(sql).toMatch(/ALTER TABLE\s+public\.categories\s+ADD COLUMN IF NOT EXISTS\s+applicable_section/i);
+    expect(sql).toMatch(
+      /ALTER TABLE\s+public\.categories\s+ADD COLUMN IF NOT EXISTS\s+applicable_section/i,
+    );
     expect(sql).toContain('community_project_count');
     expect(sql).toContain('RAISE NOTICE');
   });

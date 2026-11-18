@@ -54,7 +54,7 @@ describe('deleteProvider', () => {
     });
 
     await expect(deleteProvider('test-id')).rejects.toThrow(
-      'Failed to delete provider: Database connection failed'
+      'Failed to delete provider: Database connection failed',
     );
   });
 });

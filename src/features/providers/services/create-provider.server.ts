@@ -20,10 +20,7 @@ export type CreateProviderPayload = Omit<ProviderFormData, 'images' | 'certifica
 /** Error codes the /api/providers route maps to statuses and the client maps
  * to localised copy. Opaque by contract (#577/#582): never leak internals. */
 export type ProviderSubmitErrorCode =
-  | 'CATEGORY_UNKNOWN'
-  | 'CITY_NOT_SUPPORTED'
-  | 'HALAL_ATTESTATION_REQUIRED'
-  | 'PROVIDER_DUPLICATE';
+  'CATEGORY_UNKNOWN' | 'CITY_NOT_SUPPORTED' | 'HALAL_ATTESTATION_REQUIRED' | 'PROVIDER_DUPLICATE';
 
 export interface DuplicateProviderMatch {
   /** Only ever set for approved matches. A pending row is RLS-invisible to
@@ -217,10 +214,7 @@ async function resolveListingType(
 /** Folds diacritics (ä→a, é→e, ß→ss) so 'München' and 'munchen' compare
  * equal in duplicate and city lookups. */
 function stripDiacritics(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/ß/g, 'ss');
+  return value.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss');
 }
 
 /** R1 normalisation (#606): lowercase, diacritic strip, punctuation

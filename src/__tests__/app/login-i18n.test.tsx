@@ -171,6 +171,8 @@ describe('Login page i18n (issue #586)', () => {
     for (const literal of OLD_GERMAN) {
       expect(text).not.toContain(literal);
     }
-    expect(mockToastError.mock.calls.flat().map(String).join(' ')).not.toMatch(/Anmeldung|Anmeldedaten/);
+    expect(mockToastError.mock.calls.flat().map(String).join(' ')).not.toMatch(
+      /Anmeldung|Anmeldedaten/,
+    );
   });
 });

@@ -16,9 +16,12 @@ const t = (key: string, params?: Record<string, string | number>) => {
     'suchen.nearMe.chipLabelWithRadius': `In der Nähe (${params?.km ?? ''} km)`,
     'suchen.nearMe.radiusLabel': 'Radius:',
     'suchen.nearMe.permissionDenied': 'Standort nicht verfügbar',
-    'suchen.nearMe.permissionDeniedHintIos': 'Standort gesperrt. Öffne Einstellungen → Datenschutz → Ortungsdienste.',
-    'suchen.nearMe.permissionDeniedHintAndroid': 'Standort gesperrt. Erlaube den Zugriff in den Browser-Einstellungen.',
-    'suchen.nearMe.permissionDeniedHintFallback': 'Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.',
+    'suchen.nearMe.permissionDeniedHintIos':
+      'Standort gesperrt. Öffne Einstellungen → Datenschutz → Ortungsdienste.',
+    'suchen.nearMe.permissionDeniedHintAndroid':
+      'Standort gesperrt. Erlaube den Zugriff in den Browser-Einstellungen.',
+    'suchen.nearMe.permissionDeniedHintFallback':
+      'Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.',
     'suchen.openNow.chipLabel': 'Jetzt geöffnet',
   };
   return map[key] ?? key;
@@ -194,7 +197,9 @@ describe('NearMeOpenNowFilters', () => {
   });
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows iOS-specific recovery hint', () => {
-    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148');
+    setUserAgent(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148',
+    );
 
     render(
       <NearMeOpenNowFilters
@@ -216,7 +221,9 @@ describe('NearMeOpenNowFilters', () => {
   });
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows Android-specific recovery hint', () => {
-    setUserAgent('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36');
+    setUserAgent(
+      'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+    );
 
     render(
       <NearMeOpenNowFilters
@@ -238,7 +245,9 @@ describe('NearMeOpenNowFilters', () => {
   });
 
   it('[pre-fix FAILS / post-fix PASSES] denied state shows fallback recovery hint', () => {
-    setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36');
+    setUserAgent(
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    );
 
     render(
       <NearMeOpenNowFilters
@@ -255,7 +264,9 @@ describe('NearMeOpenNowFilters', () => {
 
     expect(screen.getByText('Standort nicht verfügbar')).toBeInTheDocument();
     expect(
-      screen.getByText('Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.'),
+      screen.getByText(
+        'Standort gesperrt. Bitte erlaube den Standortzugriff in deinen Geräteeinstellungen.',
+      ),
     ).toBeInTheDocument();
   });
 

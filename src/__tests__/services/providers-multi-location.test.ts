@@ -75,7 +75,14 @@ function setupChain() {
   mockSingle.mockResolvedValue({ data: null, error: { code: 'PGRST116', message: 'not found' } });
 }
 
-import { getProviderById, getProviders, transformProviderToSearchResult, fetchProviderCities, fetchPopularCities, fetchFilteredCities } from '@/services/providers';
+import {
+  getProviderById,
+  getProviders,
+  transformProviderToSearchResult,
+  fetchProviderCities,
+  fetchPopularCities,
+  fetchFilteredCities,
+} from '@/services/providers';
 import type { Provider } from '@/services/providers';
 import type { Location } from '@/types/location';
 
@@ -83,7 +90,10 @@ describe('multi-location provider service', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     setupChain();
-    mockFrom.mockReturnValue({ select: mockSelect, insert: vi.fn().mockResolvedValue({ error: null }) });
+    mockFrom.mockReturnValue({
+      select: mockSelect,
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    });
   });
 
   describe('getProviderById', () => {
@@ -161,7 +171,23 @@ describe('multi-location provider service', () => {
 
     it('[post-fix PASSES] passes through locations from provider to SearchResult', () => {
       const mockLocations: Location[] = [
-        { location_id: 'loc-1', provider_id: 'p-1', location_name: 'Berlin Mitte', address_street: 'Str 1', address_zip: '10115', address_city: 'Berlin', address_country: 'DE', location_latitude: null, location_longitude: null, opening_hours: null, show_address: true, contact_phone: null, is_primary: true, created_at: null, updated_at: null },
+        {
+          location_id: 'loc-1',
+          provider_id: 'p-1',
+          location_name: 'Berlin Mitte',
+          address_street: 'Str 1',
+          address_zip: '10115',
+          address_city: 'Berlin',
+          address_country: 'DE',
+          location_latitude: null,
+          location_longitude: null,
+          opening_hours: null,
+          show_address: true,
+          contact_phone: null,
+          is_primary: true,
+          created_at: null,
+          updated_at: null,
+        },
       ];
       const provider: Provider = {
         provider_id: 'p-1',
@@ -209,11 +235,7 @@ describe('multi-location provider service', () => {
 
     it('[post-fix PASSES] fetchPopularCities reads from providers.address_city (not locations)', async () => {
       mockReturns.mockResolvedValueOnce({
-        data: [
-          { address_city: 'Berlin' },
-          { address_city: 'Berlin' },
-          { address_city: 'Hamburg' },
-        ],
+        data: [{ address_city: 'Berlin' }, { address_city: 'Berlin' }, { address_city: 'Hamburg' }],
         error: null,
       });
 

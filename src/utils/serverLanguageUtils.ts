@@ -1,6 +1,6 @@
 /**
  * Server-side language detection utilities
- * 
+ *
  * This file contains server-only utilities that use next/headers.
  * DO NOT import this file in client components.
  */
@@ -16,12 +16,12 @@ const VALID_LANGUAGES: ServerLanguage[] = ['de', 'en', 'ar', 'tr', 'ur', 'ps'];
 
 // Language mapping for variants (must match client-side)
 const LANGUAGE_MAPPING: Record<string, ServerLanguage> = {
-  'en': 'en',
-  'de': 'de',
-  'ar': 'ar',
-  'tr': 'tr',
-  'ur': 'ur',
-  'ps': 'ps',
+  en: 'en',
+  de: 'de',
+  ar: 'ar',
+  tr: 'tr',
+  ur: 'ur',
+  ps: 'ps',
   'en-us': 'en',
   'en-gb': 'en',
   'en-ca': 'en',
@@ -53,24 +53,24 @@ function normalizeLanguageCode(lang: string): string {
 /**
  * Detect language from server-side request (headers only)
  * Used in server components and API routes
- * 
+ *
  * Note: We no longer use cookies for language preference to avoid requiring cookie consent.
  * Client-side uses localStorage, and server-side uses Accept-Language header.
- * 
+ *
  * Detection priority:
  * 1. Accept-Language header (auto-detection from browser)
  * 2. Default fallback to German
- * 
+ *
  * @returns Promise resolving to the detected language code
  */
 export async function detectLanguageFromServer(): Promise<ServerLanguage> {
   try {
     const headersList = await headers();
-    
+
     // Check Accept-Language header for auto-detection
     // This matches browser language preferences
     const acceptLanguage = headersList.get('accept-language');
-    
+
     if (!acceptLanguage) {
       return 'de'; // Default fallback
     }
@@ -79,7 +79,7 @@ export async function detectLanguageFromServer(): Promise<ServerLanguage> {
     // Sort by quality to respect user's language preference order
     const languages = acceptLanguage
       .split(',')
-      .map(lang => {
+      .map((lang) => {
         const [code, qValue] = lang.trim().split(';q=');
         return {
           code: code.toLowerCase().trim(),
@@ -99,7 +99,7 @@ export async function detectLanguageFromServer(): Promise<ServerLanguage> {
           return detected;
         }
       }
-      
+
       // Check normalized language code
       if (lang.normalized in LANGUAGE_MAPPING) {
         const detected = LANGUAGE_MAPPING[lang.normalized];
@@ -116,4 +116,3 @@ export async function detectLanguageFromServer(): Promise<ServerLanguage> {
     return 'de'; // Safe fallback
   }
 }
-

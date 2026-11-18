@@ -8,10 +8,7 @@ interface EmailVerificationAlertProps {
   onResend: () => void;
 }
 
-export default function EmailVerificationAlert({
-  message,
-  onResend,
-}: EmailVerificationAlertProps) {
+export default function EmailVerificationAlert({ message, onResend }: EmailVerificationAlertProps) {
   return (
     <motion.div
       animate={{ opacity: 1, y: 0 }}
@@ -30,9 +27,7 @@ export default function EmailVerificationAlert({
         {/* Content */}
         <div className="flex flex-1 flex-col">
           {/* Message */}
-          <p className="font-inter-tight text-sm leading-[19px] text-content">
-            {message}
-          </p>
+          <p className="font-inter-tight text-sm leading-[19px] text-content">{message}</p>
 
           {/* Resend Link */}
           <button
@@ -47,4 +42,3 @@ export default function EmailVerificationAlert({
     </motion.div>
   );
 }
-

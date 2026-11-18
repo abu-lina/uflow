@@ -25,17 +25,17 @@ export interface UsePushNotificationsReturn {
 
 /**
  * Hook for managing push notifications in PWA
- * 
+ *
  * Features:
  * - Checks browser support for push notifications
  * - Manages notification permission state
  * - Handles subscription/unsubscription
  * - Provides subscription status
- * 
+ *
  * @example
  * ```tsx
  * const { permission, subscribe, isSupported } = usePushNotifications();
- * 
+ *
  * const handleSubscribe = async () => {
  *   const subscription = await subscribe(VAPID_PUBLIC_KEY);
  *   // Send subscription to backend
@@ -53,9 +53,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
     const checkSupport = () => {
       const supported =
-        'serviceWorker' in navigator &&
-        'PushManager' in window &&
-        'Notification' in window;
+        'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
       setIsSupported(supported);
 
@@ -109,7 +107,9 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 
     if (Notification.permission === 'denied') {
       setPermission('denied');
-      throw new Error('Notification permission was previously denied. Please enable it in browser settings.');
+      throw new Error(
+        'Notification permission was previously denied. Please enable it in browser settings.',
+      );
     }
 
     try {
@@ -167,7 +167,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         throw error;
       }
     },
-    [isSupported, requestPermission]
+    [isSupported, requestPermission],
   );
 
   /**
@@ -229,9 +229,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   // Add padding if needed
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
 
   // Decode base64
   const rawData = window.atob(base64);
@@ -244,5 +242,3 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
   return outputArray;
 }
-
-

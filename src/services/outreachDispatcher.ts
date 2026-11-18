@@ -44,9 +44,7 @@ export function buildOutreachTokenUrl(baseUrl: string, rawToken: string): string
  */
 function getBaseUrl(): string {
   return (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    'https://ummahflow.com'
+    process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://ummahflow.com'
   );
 }
 
@@ -58,9 +56,7 @@ function getBaseUrl(): string {
  * Process the outreach queue, dispatching pending outreach records.
  * Returns results for each processed record.
  */
-export async function processOutreachQueue(
-  limit: number = 10
-): Promise<DispatchResult[]> {
+export async function processOutreachQueue(limit: number = 10): Promise<DispatchResult[]> {
   const pending = await getPendingOutreach(limit);
 
   if (pending.length === 0) {
@@ -90,9 +86,7 @@ export async function processOutreachQueue(
 /**
  * Dispatch a single outreach record based on its channel.
  */
-export async function dispatchSingleOutreach(
-  outreach: ProviderOutreach
-): Promise<DispatchResult> {
+export async function dispatchSingleOutreach(outreach: ProviderOutreach): Promise<DispatchResult> {
   const { id, selectedChannel, candidateEmail, candidatePhone, candidateInstagram } = outreach;
 
   // Get the contact value for the selected channel
@@ -132,10 +126,7 @@ export async function dispatchSingleOutreach(
 /**
  * Dispatch email outreach.
  */
-async function dispatchEmail(
-  outreach: ProviderOutreach,
-  email: string
-): Promise<DispatchResult> {
+async function dispatchEmail(outreach: ProviderOutreach, email: string): Promise<DispatchResult> {
   const { id, providerId, language } = outreach;
 
   try {
@@ -202,7 +193,7 @@ async function dispatchEmail(
 async function createManualTask(
   outreach: ProviderOutreach,
   channel: OutreachChannel,
-  contactValue: string
+  contactValue: string,
 ): Promise<DispatchResult> {
   try {
     await createOutreachTask({

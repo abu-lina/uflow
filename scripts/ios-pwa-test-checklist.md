@@ -5,6 +5,7 @@
 Based on automated checks performed:
 
 ### ✅ Server-Side (All Working)
+
 - ✅ Service worker file exists at `/sw.js` (24KB)
 - ✅ Service worker has correct headers (`application/javascript; charset=utf-8`)
 - ✅ Service worker has `no-cache` headers
@@ -21,6 +22,7 @@ The following items require manual testing since server-side checks all pass:
 ## Step 1: Verify Container Configuration
 
 **Run on Hetzner server:**
+
 ```bash
 # SSH to server
 ssh root@91.98.207.106
@@ -31,6 +33,7 @@ cd /var/www/uflow  # or wherever your project is
 ```
 
 **Expected output:**
+
 - ✅ UAT container is running
 - ✅ PWA is enabled (DISABLE_PWA=false)
 - ✅ Service worker exists in container (~24KB)
@@ -49,10 +52,12 @@ Since `cf-cache-status: DYNAMIC` is already showing, Cloudflare configuration ap
 **Location:** Rules → Page Rules
 
 **Look for:**
+
 - URL Pattern: `https://uat.ummahflow.com/sw.js*`
 - Settings: Cache Level = Bypass
 
 **If it doesn't exist:**
+
 1. Create new Page Rule
 2. URL Pattern: `https://uat.ummahflow.com/sw.js*`
 3. Add Setting: Cache Level → Bypass
@@ -64,11 +69,13 @@ Since `cf-cache-status: DYNAMIC` is already showing, Cloudflare configuration ap
 **Location:** Security → Settings → Configuration Rules
 
 **Look for:**
+
 - Rule name: "Skip Browser Integrity Check" (or similar)
 - Field: URI Path equals `/api/manifest`
 - Action: Skip Browser Integrity Check
 
 **If it doesn't exist:**
+
 1. Go to Security → Settings
 2. Find Browser Integrity Check section
 3. Create Configuration Rule
@@ -96,6 +103,7 @@ Since `cf-cache-status: DYNAMIC` is already showing, Cloudflare configuration ap
 ### 3a. Complete Cache Clear (Critical!)
 
 **On your iPhone:**
+
 1. **Remove existing PWA from home screen** (long press → Remove)
 2. **Settings → Safari → Clear History and Website Data**
 3. Tap "Clear History and Data" and confirm
@@ -109,13 +117,14 @@ Since `cf-cache-status: DYNAMIC` is already showing, Cloudflare configuration ap
 3. Wait for page to fully load (count to 10)
 
 **On Mac (with iPhone connected):**
+
 1. Safari → Develop → [Your iPhone] → [uat.ummahflow.com]
 2. Open Console tab
 3. Paste and run:
 
 ```javascript
 // Check service worker registration
-navigator.serviceWorker.getRegistrations().then(regs => {
+navigator.serviceWorker.getRegistrations().then((regs) => {
   console.log(`Found ${regs.length} service worker(s)`);
   if (regs.length > 0) {
     console.log('State:', regs[0].active?.state);
@@ -135,12 +144,14 @@ if (navigator.serviceWorker.controller) {
 ```
 
 **Expected output:**
+
 - Found 1 service worker(s)
 - State: activated
 - ✅ Service worker is registered
 - ✅ Page is controlled by service worker
 
 **If no service worker found:**
+
 - Check browser console for errors
 - Verify service worker file is accessible: `curl https://uat.ummahflow.com/sw.js`
 - Container might need rebuild with `DISABLE_PWA=false`
@@ -148,27 +159,33 @@ if (navigator.serviceWorker.controller) {
 ### 3c. PWA Metadata Test
 
 **In Mac Safari console (connected to iPhone):**
+
 ```javascript
 // Check PWA metadata
 const checks = {
   'Manifest link': document.querySelector('link[rel="manifest"]')?.href,
   'Apple PWA capable': document.querySelector('meta[name="apple-mobile-web-app-capable"]')?.content,
-  'Apple status bar': document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.content,
-  'Theme color': document.querySelector('meta[name="theme-color"]')?.content
+  'Apple status bar': document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+    ?.content,
+  'Theme color': document.querySelector('meta[name="theme-color"]')?.content,
 };
 
 console.table(checks);
 
 // Verify manifest content
 fetch('/api/manifest')
-  .then(r => r.json())
-  .then(m => {
+  .then((r) => r.json())
+  .then((m) => {
     console.log('Manifest display:', m.display); // Should be "standalone"
-    console.log('Has 180x180 icon:', m.icons.some(i => i.sizes === '180x180'));
+    console.log(
+      'Has 180x180 icon:',
+      m.icons.some((i) => i.sizes === '180x180'),
+    );
   });
 ```
 
 **Expected output:**
+
 - Manifest link: /api/manifest
 - Apple PWA capable: yes
 - Manifest display: standalone
@@ -192,6 +209,7 @@ fetch('/api/manifest')
    - ❌ **Bookmark Mode**: Safari UI still visible (address bar at top, toolbar at bottom)
 
 **If in PWA mode, test in console:**
+
 ```javascript
 // Connect via Mac Safari → Develop → [iPhone] → [uat.ummahflow.com]
 console.log('Display mode:', window.matchMedia('(display-mode: standalone)').matches);
@@ -211,11 +229,13 @@ console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
 ### Issue: Still shows Safari UI (bookmark mode)
 
 **Possible causes:**
+
 1. Service worker registered AFTER adding to home screen
 2. iOS cached the "not a PWA" state
 3. Old PWA installation not fully removed
 
 **Solution:**
+
 1. Remove PWA from home screen completely
 2. Settings → Safari → Clear History and Website Data
 3. **Restart iPhone** (power off, power on)
@@ -225,11 +245,13 @@ console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
 ### Issue: No service worker in console
 
 **Possible causes:**
+
 1. Container has `DISABLE_PWA=true`
 2. Service worker file not built into container
 3. Service worker registration error
 
 **Solution:**
+
 1. Run container diagnostic script on server
 2. Check Docker container environment: `docker exec uflow-uat env | grep DISABLE_PWA`
 3. If wrong, rebuild: `./scripts/deploy-uat.sh`
@@ -238,10 +260,12 @@ console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
 ### Issue: 403 error on manifest
 
 **Possible causes:**
+
 1. Cloudflare Browser Integrity Check blocking API request
 2. CORS issue
 
 **Solution:**
+
 1. Add Browser Integrity Check exception (see Step 2b)
 2. Purge Cloudflare cache
 3. Test with: `curl -I https://uat.ummahflow.com/api/manifest` (should be 200)
@@ -251,6 +275,7 @@ console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
 ## Success Criteria
 
 ### Must All Be True:
+
 - ✅ Service worker registered and active in iOS Safari console
 - ✅ PWA launches from home screen WITHOUT Safari UI
 - ✅ App shows in standalone mode (window.matchMedia check)
@@ -267,37 +292,40 @@ console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
 // Comprehensive PWA Status Check
 async function checkPWAStatus() {
   console.log('=== PWA Status Check ===\n');
-  
+
   // 1. Service Worker
   const regs = await navigator.serviceWorker.getRegistrations();
   console.log('1. Service Worker:', regs.length > 0 ? '✅ Registered' : '❌ Not registered');
   if (regs.length > 0) {
     console.log('   State:', regs[0].active?.state);
   }
-  
+
   // 2. Page Control
   console.log('2. Page controlled:', navigator.serviceWorker.controller ? '✅ Yes' : '❌ No');
-  
+
   // 3. Display Mode
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
   console.log('3. Display mode:', isStandalone ? '✅ Standalone (PWA)' : '❌ Browser');
-  
+
   // 4. iOS Standalone
   console.log('4. iOS standalone:', navigator.standalone ? '✅ Yes' : '❌ No');
-  
+
   // 5. Manifest
   try {
-    const manifest = await fetch('/api/manifest').then(r => r.json());
+    const manifest = await fetch('/api/manifest').then((r) => r.json());
     console.log('5. Manifest:', manifest.display === 'standalone' ? '✅ Correct' : '❌ Wrong');
-    console.log('   Has 180x180 icon:', manifest.icons.some(i => i.sizes === '180x180') ? '✅ Yes' : '❌ No');
+    console.log(
+      '   Has 180x180 icon:',
+      manifest.icons.some((i) => i.sizes === '180x180') ? '✅ Yes' : '❌ No',
+    );
   } catch (e) {
     console.log('5. Manifest: ❌ Error loading');
   }
-  
+
   // 6. Metadata
   const capable = document.querySelector('meta[name="apple-mobile-web-app-capable"]');
   console.log('6. Apple PWA capable:', capable?.content === 'yes' ? '✅ Yes' : '❌ No');
-  
+
   console.log('\n=== End Check ===');
 }
 
@@ -318,4 +346,3 @@ checkPWAStatus();
 8. ✅ Verify standalone mode
 
 If all checks pass but PWA still installs as bookmark, the issue is likely iOS Safari caching. A complete device restart and waiting period usually resolves this.
-

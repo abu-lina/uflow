@@ -43,9 +43,7 @@ describe('buildCardsFromClientDataset', () => {
 
   it('falls back to link when social_media is empty', () => {
     const cards = buildCardsFromClientDataset({
-      businesses: [
-        { id: 1, name: 'Example', social_media: '', link: 'https://example.com' },
-      ],
+      businesses: [{ id: 1, name: 'Example', social_media: '', link: 'https://example.com' }],
       standorte: [],
       branchen: [],
       standortRelations: [],

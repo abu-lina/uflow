@@ -41,9 +41,7 @@ export function WasMealResults({
 
   if (isLoading) {
     return (
-      <p className="mt-4 py-2 text-center text-sm text-text-muted">
-        {t('suchen.was.loading')}
-      </p>
+      <p className="mt-4 py-2 text-center text-sm text-text-muted">{t('suchen.was.loading')}</p>
     );
   }
 
@@ -65,7 +63,9 @@ export function WasMealResults({
   }
 
   const visibleItems = isShowAllPreviewEnabled
-    ? (showAllDishes ? items : items.slice(0, 3))
+    ? showAllDishes
+      ? items
+      : items.slice(0, 3)
     : items;
   const hasMoreDishes = isShowAllPreviewEnabled && !showAllDishes && items.length > 3;
 

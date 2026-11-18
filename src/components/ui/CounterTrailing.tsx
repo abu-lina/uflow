@@ -71,7 +71,9 @@ export function CounterTrailing({
         <MinusIcon />
       </button>
 
-      <p className="min-w-[12px] text-center font-inter-tight text-base font-medium text-text-primary">{value}</p>
+      <p className="min-w-[12px] text-center font-inter-tight text-base font-medium text-text-primary">
+        {value}
+      </p>
 
       <button
         aria-label={incrementAriaLabel}

@@ -42,13 +42,13 @@ interface IconWithTitleProps {
 
 /**
  * Reusable component that displays an optional icon above a title with 40px gap.
- * 
+ *
  * Structure: (icon) + (title + text container)
- * 
+ *
  * This component provides consistent spacing and styling for icon + title combinations
  * used throughout the application, particularly in empty states and auth flows.
  * Designed to work with Material Symbols via @iconify/react with different sizing strategies.
- * 
+ *
  * Features:
  * - Optional icon display (omit icon prop to show title only)
  * - Size variants: 'responsive' (48px->64px->96px) or 'large' (always 96px)
@@ -58,11 +58,11 @@ interface IconWithTitleProps {
  * - Flexible for different scenarios (no icon for login, large icon for saved page)
  * - Customizable styling via className props
  * - Title and description text are grouped in one container div
- * 
+ *
  * @example
  * ```tsx
  * import { Icon } from '@/components/ui';
- * 
+ *
  * // With responsive icon sizing and description
  * <IconWithTitle
  *   icon={<Icon icon="material-symbols:lock-outline" className="w-full h-full text-content-heading" />}
@@ -72,21 +72,21 @@ interface IconWithTitleProps {
  *     Du musst angemeldet sein, um gespeicherte Inhalte zu sehen.
  *   </p>
  * </IconWithTitle>
- * 
+ *
  * // Large icon for pages with plenty of vertical space
  * <IconWithTitle
  *   icon={<Icon icon="material-symbols:lock-outline" className="w-full h-full text-content-heading" />}
  *   title="Anmeldung erforderlich"
  *   size="large"
  * />
- * 
+ *
  * // Extra large icon for modal states and critical actions
  * <IconWithTitle
  *   icon={<Icon icon="material-symbols:delete-outline" className="w-full h-full text-content-heading" />}
  *   title="Konto löschen"
  *   size="xl"
  * />
- * 
+ *
  * // No icon (title only - good when icon is in header)
  * <IconWithTitle
  *   title="Willkommen bei Ummah Flow"
@@ -103,12 +103,12 @@ export function IconWithTitle({
   titleClassName = '',
   size = 'responsive',
 }: IconWithTitleProps) {
-  const iconSizeClasses = 
-    size === 'xl' 
+  const iconSizeClasses =
+    size === 'xl'
       ? 'w-icon-4xl h-icon-4xl'
-      : size === 'large' 
-      ? 'w-icon-3xl h-icon-3xl' 
-      : 'w-icon-xl h-icon-xl sm:w-icon-2xl sm:h-icon-2xl lg:w-icon-3xl lg:h-icon-3xl';
+      : size === 'large'
+        ? 'w-icon-3xl h-icon-3xl'
+        : 'w-icon-xl h-icon-xl sm:w-icon-2xl sm:h-icon-2xl lg:w-icon-3xl lg:h-icon-3xl';
 
   return (
     <div className={cn('flex flex-col items-center gap-10', className)}>
@@ -118,21 +118,22 @@ export function IconWithTitle({
           {icon}
         </div>
       )}
-      
+
       {/* Title and text container */}
       <div className={cn('flex flex-col items-center gap-2', titleTextClassName)}>
         {/* Title */}
-        <h2 className={cn(
-          'text-center text-3xl font-semibold leading-tight text-content-heading',
-          titleClassName
-        )}>
+        <h2
+          className={cn(
+            'text-center text-3xl font-semibold leading-tight text-content-heading',
+            titleClassName,
+          )}
+        >
           {title}
         </h2>
-        
+
         {/* Additional content (description text) */}
         {children}
       </div>
     </div>
   );
 }
-

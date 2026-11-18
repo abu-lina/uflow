@@ -17,9 +17,7 @@ vi.mock('@/app/(public)/providers/renderProvidersPage', () => ({
 
 vi.mock('@/lib/city-slug', () => ({
   findCityBySlug: vi.fn(async (slug: string) => {
-    const match = CITY_ROWS.find(
-      (row) => row.city_name.toLowerCase().replace('ü', 'ue') === slug,
-    );
+    const match = CITY_ROWS.find((row) => row.city_name.toLowerCase().replace('ü', 'ue') === slug);
     return match ? match.city_name : null;
   }),
 }));

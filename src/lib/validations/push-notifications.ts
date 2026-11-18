@@ -1,6 +1,6 @@
 /**
  * Push Notification Validation Schemas
- * 
+ *
  * Input validation for push notification endpoints
  */
 
@@ -125,7 +125,7 @@ export function validateNotificationUrl(url: unknown): string | undefined {
   // Validate absolute URLs
   try {
     const parsed = new URL(trimmed);
-    
+
     // Block dangerous protocols
     if (parsed.protocol === 'javascript:' || parsed.protocol === 'data:') {
       throw new Error('Invalid URL protocol');
@@ -204,7 +204,7 @@ export function validateNotificationImageUrl(url: unknown): string | undefined {
   // Validate absolute URLs
   try {
     const parsed = new URL(trimmed);
-    
+
     // Block dangerous protocols
     if (parsed.protocol === 'javascript:' || parsed.protocol === 'data:') {
       throw new Error('Invalid URL protocol');
@@ -223,4 +223,3 @@ export function validateNotificationImageUrl(url: unknown): string | undefined {
     throw error;
   }
 }
-

@@ -59,9 +59,7 @@ function generateCorrelationId(): string {
     return crypto.randomUUID();
   }
   // Fallback: generate a pseudo-random ID
-  return 'xxxx-xxxx-xxxx'.replace(/x/g, () =>
-    Math.floor(Math.random() * 16).toString(16),
-  );
+  return 'xxxx-xxxx-xxxx'.replace(/x/g, () => Math.floor(Math.random() * 16).toString(16));
 }
 
 /**
@@ -159,9 +157,7 @@ export function logRequestTiming(ctx: RequestContext): void {
     console.log(JSON.stringify(logEntry));
   } else {
     // Human-readable format for development
-    const depStr = ctx.dependencies
-      .map((d) => `${d.operation}:${d.durationMs}ms`)
-      .join(', ');
+    const depStr = ctx.dependencies.map((d) => `${d.operation}:${d.durationMs}ms`).join(', ');
     console.log(
       `[PERF] ${ctx.route} ${totalDurationMs}ms (deps: ${depStr || 'none'}) [${ctx.correlationId}]`,
     );

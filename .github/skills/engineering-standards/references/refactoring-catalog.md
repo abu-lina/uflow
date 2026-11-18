@@ -3,7 +3,9 @@
 Quick reference for common refactoring techniques.
 
 ## Extract Method
+
 **When:** Code block can be grouped with descriptive name
+
 ```
 # Before
 def process():
@@ -24,7 +26,9 @@ def validate_input(x, y):
 ```
 
 ## Extract Class
+
 **When:** Class has multiple responsibilities
+
 ```
 # Before
 class Order:
@@ -44,7 +48,9 @@ class OrderNotifier:
 ```
 
 ## Replace Conditional with Polymorphism
+
 **When:** Switch/case on type
+
 ```
 # Before
 def calculate_pay(employee):
@@ -64,7 +70,9 @@ class SalariedEmployee:
 ```
 
 ## Introduce Parameter Object
+
 **When:** Same parameters appear together
+
 ```
 # Before
 def search(start_date, end_date, min_price, max_price): ...
@@ -81,7 +89,9 @@ def search(criteria: SearchCriteria): ...
 ```
 
 ## Replace Magic Number with Constant
+
 **When:** Literal values with meaning
+
 ```
 # Before
 if velocity > 343: return "supersonic"
@@ -92,7 +102,9 @@ if velocity > SPEED_OF_SOUND_MPS: return "supersonic"
 ```
 
 ## Guard Clause (Replace Nested Conditional)
+
 **When:** Deep nesting obscures logic
+
 ```
 # Before
 def process(x):

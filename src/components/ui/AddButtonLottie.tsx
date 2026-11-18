@@ -20,4 +20,3 @@ export function AddButtonLottie({ className = '', height = 240 }: AddButtonLotti
     />
   );
 }
-

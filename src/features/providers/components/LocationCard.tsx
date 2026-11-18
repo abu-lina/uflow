@@ -42,9 +42,7 @@ export function LocationCard({ location, isSelected = false, onSelect }: Locatio
               Hauptstandort
             </span>
           )}
-          {address && (
-            <p className="mt-1 text-sm text-gray-600">{address}</p>
-          )}
+          {address && <p className="mt-1 text-sm text-gray-600">{address}</p>}
           {location.opening_hours && (
             <p className="mt-1 text-xs text-gray-500">
               <Icon className="mr-1 inline-block h-3 w-3" icon="mdi:clock-outline" />

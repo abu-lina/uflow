@@ -28,10 +28,18 @@ describe('Food search prefix matching migration contract', () => {
     expect(sql).toContain('DROP FUNCTION IF EXISTS public.search_food_categories(TEXT, INTEGER);');
 
     // Explicit function privileges must be restored after drop/recreate.
-    expect(sql).toContain('REVOKE ALL ON FUNCTION public.search_food_categories(TEXT, INTEGER) FROM PUBLIC;');
-    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.search_food_categories(TEXT, INTEGER) TO anon;');
-    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.search_food_categories(TEXT, INTEGER) TO authenticated;');
-    expect(sql).toContain('GRANT EXECUTE ON FUNCTION public.search_food_categories(TEXT, INTEGER) TO service_role;');
+    expect(sql).toContain(
+      'REVOKE ALL ON FUNCTION public.search_food_categories(TEXT, INTEGER) FROM PUBLIC;',
+    );
+    expect(sql).toContain(
+      'GRANT EXECUTE ON FUNCTION public.search_food_categories(TEXT, INTEGER) TO anon;',
+    );
+    expect(sql).toContain(
+      'GRANT EXECUTE ON FUNCTION public.search_food_categories(TEXT, INTEGER) TO authenticated;',
+    );
+    expect(sql).toContain(
+      'GRANT EXECUTE ON FUNCTION public.search_food_categories(TEXT, INTEGER) TO service_role;',
+    );
 
     // Category names should be normalized for UI display:
     // - remove trailing "Küche"
@@ -49,6 +57,8 @@ describe('Food search prefix matching migration contract', () => {
     expect(sql).not.toContain('.ilike.');
 
     // GROUP BY safety: menu-item rank ordering must aggregate the rank expression.
-    expect(sql).toContain("MAX(\n      GREATEST(\n        ts_rank(to_tsvector('german', mi.name_de), plainto_tsquery('german', qt.normalized))");
+    expect(sql).toContain(
+      "MAX(\n      GREATEST(\n        ts_rank(to_tsvector('german', mi.name_de), plainto_tsquery('german', qt.normalized))",
+    );
   });
 });

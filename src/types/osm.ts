@@ -3,12 +3,7 @@
  */
 
 export type OSMPlaceType =
-  | 'mosque'
-  | 'restaurant'
-  | 'shop'
-  | 'fast_food'
-  | 'islamic_center'
-  | 'unknown';
+  'mosque' | 'restaurant' | 'shop' | 'fast_food' | 'islamic_center' | 'unknown';
 
 export type OSMElementType = 'node' | 'way' | 'relation';
 

@@ -65,7 +65,13 @@ vi.mock('@/hooks/useGeolocation', () => ({
 }));
 
 vi.mock('@/features/search/hooks/useNearMe', () => ({
-  useNearMe: () => ({ isActive: false, results: [], isLoading: false, error: null, refetch: vi.fn() }),
+  useNearMe: () => ({
+    isActive: false,
+    results: [],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
 }));
 
 vi.mock('@/features/search/components/DiscoveryHeader', () => ({
@@ -120,9 +126,7 @@ describe('#674 AC3: RootPageContent hands discovery to the section route', () =>
   it('sends an onboarded stage 2 user to the map view of their onboarding city', async () => {
     render(<RootPageContent />);
 
-    await waitFor(() =>
-      expect(mockReplace).toHaveBeenCalledWith('/food?location=Berlin&view=map'),
-    );
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/food?location=Berlin&view=map'));
   });
 
   it('keeps the query string when a stage 3 user is sent on: /?view=list keeps view=list', async () => {

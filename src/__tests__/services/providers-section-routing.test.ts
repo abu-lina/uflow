@@ -38,12 +38,54 @@ const mockSelect = vi.fn();
 const mockRpc = vi.fn();
 
 function setupChain() {
-  mockSelect.mockReturnValue({ eq: mockEq, order: mockOrder, limit: mockLimit, range: mockRange, or: mockOr, returns: mockReturns });
-  mockEq.mockReturnValue({ eq: mockEq, order: mockOrder, limit: mockLimit, range: mockRange, or: mockOr, returns: mockReturns });
-  mockOrder.mockReturnValue({ eq: mockEq, order: mockOrder, limit: mockLimit, range: mockRange, or: mockOr, returns: mockReturns });
-  mockLimit.mockReturnValue({ eq: mockEq, order: mockOrder, limit: mockLimit, range: mockRange, or: mockOr, returns: mockReturns });
-  mockRange.mockReturnValue({ eq: mockEq, order: mockOrder, limit: mockLimit, range: mockRange, or: mockOr, returns: mockReturns });
-  mockOr.mockReturnValue({ eq: mockEq, order: mockOrder, limit: mockLimit, range: mockRange, or: mockOr, returns: mockReturns });
+  mockSelect.mockReturnValue({
+    eq: mockEq,
+    order: mockOrder,
+    limit: mockLimit,
+    range: mockRange,
+    or: mockOr,
+    returns: mockReturns,
+  });
+  mockEq.mockReturnValue({
+    eq: mockEq,
+    order: mockOrder,
+    limit: mockLimit,
+    range: mockRange,
+    or: mockOr,
+    returns: mockReturns,
+  });
+  mockOrder.mockReturnValue({
+    eq: mockEq,
+    order: mockOrder,
+    limit: mockLimit,
+    range: mockRange,
+    or: mockOr,
+    returns: mockReturns,
+  });
+  mockLimit.mockReturnValue({
+    eq: mockEq,
+    order: mockOrder,
+    limit: mockLimit,
+    range: mockRange,
+    or: mockOr,
+    returns: mockReturns,
+  });
+  mockRange.mockReturnValue({
+    eq: mockEq,
+    order: mockOrder,
+    limit: mockLimit,
+    range: mockRange,
+    or: mockOr,
+    returns: mockReturns,
+  });
+  mockOr.mockReturnValue({
+    eq: mockEq,
+    order: mockOrder,
+    limit: mockLimit,
+    range: mockRange,
+    or: mockOr,
+    returns: mockReturns,
+  });
   mockReturns.mockResolvedValue({ data: [], error: null });
   mockRpc.mockResolvedValue({ data: [], error: null });
 }
@@ -66,7 +108,16 @@ beforeEach(() => {
 
 describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)', () => {
   it('[post-fix M-5] UMMAH section routes to providers with listing_type=ummah', async () => {
-    const { results } = await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'ummah', undefined);
+    const { results } = await searchProvidersAndCommunityServices(
+      '',
+      null,
+      '',
+      0,
+      5,
+      undefined,
+      'ummah',
+      undefined,
+    );
 
     // M-5: ummah section now uses searchProvidersOnly with listingType='ummah'
     expect(mockSearchCommunityServices).not.toHaveBeenCalled();
@@ -90,7 +141,7 @@ describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)'
     expect(mockEq).toHaveBeenCalledWith('listing_type', 'store');
   });
 
-  it("defaults to food section when section is undefined (D9)", async () => {
+  it('defaults to food section when section is undefined (D9)', async () => {
     await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, undefined, undefined);
     expect(mockEq).toHaveBeenCalledWith('listing_type', 'food');
   });
@@ -105,16 +156,35 @@ describe('searchProvidersAndCommunityServices — section routing (Plan 089 M2)'
 
   it('no cross-section leakage: FOOD does not return community services', async () => {
     mockSearchCommunityServices.mockResolvedValue([
-      { community_service_id: 'cs-1', community_service_name: 'Mosque', offers_ids: [], needs_ids: [], created_at: '2026-01-01', updated_at: '2026-01-01' },
+      {
+        community_service_id: 'cs-1',
+        community_service_name: 'Mosque',
+        offers_ids: [],
+        needs_ids: [],
+        created_at: '2026-01-01',
+        updated_at: '2026-01-01',
+      },
     ]);
 
-    const { results } = await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food', undefined);
+    const { results } = await searchProvidersAndCommunityServices(
+      '',
+      null,
+      '',
+      0,
+      5,
+      undefined,
+      'food',
+      undefined,
+    );
     const communityServiceResults = results.filter((r) => r.type !== 'provider');
     expect(communityServiceResults).toHaveLength(0);
   });
 
   it('[pre-fix FAILS] applies AND filter predicates for selected values in providers query', async () => {
-    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food', ['muslim', 'parken']);
+    await searchProvidersAndCommunityServices('', null, '', 0, 5, undefined, 'food', [
+      'muslim',
+      'parken',
+    ]);
 
     expect(mockEq).toHaveBeenCalledWith('muslim_owned', true);
     expect(mockEq).toHaveBeenCalledWith('has_parking', true);

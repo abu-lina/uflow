@@ -1,6 +1,12 @@
 // React Query hooks for community services with caching
 import { useQuery } from '@tanstack/react-query';
-import { getCommunityServicesForProvider, getCommunityServices, getCommunityServicesByCategory, getCommunityServiceById, type CommunityService } from '@/services/communityServices';
+import {
+  getCommunityServicesForProvider,
+  getCommunityServices,
+  getCommunityServicesByCategory,
+  getCommunityServiceById,
+  type CommunityService,
+} from '@/services/communityServices';
 
 // Hook for fetching a single community service by ID (Plan 082: M2)
 // Mirrors useProvider() pattern: 5-min stale time, SSR initialData support, enabled flag
@@ -10,7 +16,11 @@ interface UseCommunityServiceOptions {
   enabled?: boolean;
 }
 
-export function useCommunityService({ communityServiceId, initialData, enabled = true }: UseCommunityServiceOptions) {
+export function useCommunityService({
+  communityServiceId,
+  initialData,
+  enabled = true,
+}: UseCommunityServiceOptions) {
   return useQuery<CommunityService | null, Error>({
     queryKey: ['community-service', communityServiceId],
     queryFn: async () => {
@@ -31,7 +41,10 @@ export function useCommunityService({ communityServiceId, initialData, enabled =
 }
 
 // Hook for getting community services for a specific provider
-export function useCommunityServicesForProvider(providerId: string, initialData?: CommunityService[]) {
+export function useCommunityServicesForProvider(
+  providerId: string,
+  initialData?: CommunityService[],
+) {
   return useQuery<CommunityService[], Error>({
     queryKey: ['community-services', 'provider', providerId],
     queryFn: () => getCommunityServicesForProvider(providerId),
@@ -78,7 +91,7 @@ export function useCommunityServicesByCategory(categoryId: string) {
 // Helper hook for getting cached data without triggering a fetch
 export function useCachedCommunityServices(providerId: string) {
   const { data, isLoading, error } = useCommunityServicesForProvider(providerId);
-  
+
   return {
     communityServices: data || [],
     isLoading,

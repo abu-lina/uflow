@@ -20,18 +20,18 @@ interface TitleSectionProps {
 
 /**
  * Standardized title section with centered content.
- * 
+ *
  * This component is designed to work within PageContentWrapper and centers
- * the content (typically TitleAndText or IconWithTitle) with responsive spacing 
+ * the content (typically TitleAndText or IconWithTitle) with responsive spacing
  * (24px mobile, 32px tablet+) and max-width constraints for optimal small screen display.
- * 
+ *
  * Note: No padding is applied here since PageContentWrapper handles the container padding.
- * 
+ *
  * @example
  * ```tsx
  * <PageContentWrapper>
  *   <TitleSection>
- *     <TitleAndText 
+ *     <TitleAndText
  *       title="Welcome Title"
  *       description="Description text"
  *     />
@@ -42,19 +42,14 @@ interface TitleSectionProps {
  * </PageContentWrapper>
  * ```
  */
-export function TitleSection({ 
-  children, 
+export function TitleSection({
+  children,
   className = '',
-  maxWidth = 'max-w-xs sm:max-w-md md:max-w-lg'
+  maxWidth = 'max-w-xs sm:max-w-md md:max-w-lg',
 }: TitleSectionProps) {
   return (
-    <div className={cn('flex flex-col items-center gap-6 sm:gap-8 w-full', className)}>
-      <div className={cn(
-        'flex flex-col items-center w-full mx-auto',
-        maxWidth
-      )}>
-        {children}
-      </div>
+    <div className={cn('flex w-full flex-col items-center gap-6 sm:gap-8', className)}>
+      <div className={cn('mx-auto flex w-full flex-col items-center', maxWidth)}>{children}</div>
     </div>
   );
 }

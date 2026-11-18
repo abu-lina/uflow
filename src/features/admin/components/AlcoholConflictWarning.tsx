@@ -56,7 +56,7 @@ export function AlcoholConflictWarning({
     setError(null);
     try {
       const res = await fetch(
-        `/api/admin/enrichment/alcohol-conflicts?providerId=${encodeURIComponent(providerId)}`
+        `/api/admin/enrichment/alcohol-conflicts?providerId=${encodeURIComponent(providerId)}`,
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
@@ -92,20 +92,16 @@ export function AlcoholConflictWarning({
     <div className="rounded-lg border border-amber-300 bg-amber-50 p-4" role="alert">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 shrink-0">
-          <Icon
-            className="h-5 w-5 text-amber-600"
-            icon="lucide:triangle-alert"
-          />
+          <Icon className="h-5 w-5 text-amber-600" icon="lucide:triangle-alert" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-semibold text-amber-800">
             Menu contains alcohol-related items
           </h3>
           <p className="mt-1 text-sm text-amber-700">
-            Automated enrichment (e.g. Wolt) imported menu items that contain
-            alcohol keywords{' '}
-            <strong>({uniqueKeywords.join(', ')})</strong>.
-            These may not have been visible during your website review.
+            Automated enrichment (e.g. Wolt) imported menu items that contain alcohol keywords{' '}
+            <strong>({uniqueKeywords.join(', ')})</strong>. These may not have been visible during
+            your website review.
           </p>
           {itemPreview.length > 0 && (
             <ul className="mt-2 list-inside list-disc space-y-0.5 text-sm text-amber-700">
@@ -113,9 +109,7 @@ export function AlcoholConflictWarning({
                 <li key={i}>{name}</li>
               ))}
               {remainingCount > 0 && (
-                <li className="list-none text-amber-500">
-                  … and {remainingCount} more
-                </li>
+                <li className="list-none text-amber-500">… and {remainingCount} more</li>
               )}
             </ul>
           )}

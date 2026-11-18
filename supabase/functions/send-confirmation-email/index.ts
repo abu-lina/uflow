@@ -25,7 +25,10 @@ interface WebhookPayload {
 }
 
 // Email templates matching your existing design
-const getEmailTemplate = (language: string, confirmationUrl: string): { subject: string; html: string } => {
+const getEmailTemplate = (
+  language: string,
+  confirmationUrl: string,
+): { subject: string; html: string } => {
   if (language === 'de') {
     return {
       subject: 'Willkommen bei Ummah Flow! Bitte bestätigen Sie Ihre E-Mail',
@@ -80,10 +83,10 @@ const getEmailTemplate = (language: string, confirmationUrl: string): { subject:
     </div>
   </div>
 </body>
-</html>`
+</html>`,
     };
   }
-  
+
   // English template
   return {
     subject: 'Welcome to Ummah Flow! Please confirm your email',
@@ -138,7 +141,7 @@ const getEmailTemplate = (language: string, confirmationUrl: string): { subject:
     </div>
   </div>
 </body>
-</html>`
+</html>`,
   };
 };
 
@@ -149,10 +152,10 @@ serve(async (req) => {
     if (webhookSecret) {
       const signature = req.headers.get('x-webhook-signature');
       if (!signature) {
-        return new Response(
-          JSON.stringify({ error: 'Missing webhook signature' }),
-          { status: 401, headers: { 'Content-Type': 'application/json' } }
-        );
+        return new Response(JSON.stringify({ error: 'Missing webhook signature' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
       // Note: In production, you should verify the signature using crypto.subtle
       // For now, we'll skip verification for simplicity
@@ -166,23 +169,23 @@ serve(async (req) => {
 
     // Validate required data
     if (!user || !user.email) {
-      return new Response(
-        JSON.stringify({ error: 'Missing user or email' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Missing user or email' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY not set');
-      return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     // Detect language from user metadata or default to English
     const language = user.user_metadata?.language || user.user_metadata?.preferred_language || 'en';
-    
+
     // Build confirmation URL
     // Supabase provides token_hash in email_data for confirmation emails
     const confirmationUrl = email_data.token_hash
@@ -199,7 +202,7 @@ serve(async (req) => {
     const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -214,35 +217,33 @@ serve(async (req) => {
 
     if (!resendResponse.ok) {
       console.error('Resend API error:', resendData);
-      return new Response(
-        JSON.stringify({ error: 'Failed to send email', details: resendData }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Failed to send email', details: resendData }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Email sent successfully:', resendData);
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: 'Confirmation email sent',
-        email_id: resendData.id 
+        email_id: resendData.id,
       }),
-      { 
-        status: 200, 
-        headers: { 'Content-Type': 'application/json' } 
-      }
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      },
     );
-
   } catch (error) {
     console.error('Error in send-confirmation-email function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error', 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+      JSON.stringify({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
       }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
     );
   }
 });
-

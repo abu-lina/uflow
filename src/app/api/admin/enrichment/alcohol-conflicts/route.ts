@@ -34,13 +34,13 @@ export async function GET(request: Request) {
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to enrichment alcohol-conflicts API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to enrichment alcohol-conflicts API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     if (isRateLimited) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     if (!providerId) {
       return NextResponse.json(
         { error: 'providerId query parameter is required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -69,11 +69,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json(result);
   } catch (err) {
-    logger.error(
-      'Error checking menu for alcohol',
-      err instanceof Error ? err : undefined,
-      { error: err instanceof Error ? err.message : String(err) }
-    );
+    logger.error('Error checking menu for alcohol', err instanceof Error ? err : undefined, {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

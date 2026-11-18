@@ -22,7 +22,11 @@ vi.mock('@/providers/LanguageProvider', () => ({
 
 // Mock FooterAction
 vi.mock('@/components/ui/FooterAction', () => ({
-  FooterAction: ({ actionButton }: { actionButton: { label: string; onClick: () => void; 'aria-label': string } }) => (
+  FooterAction: ({
+    actionButton,
+  }: {
+    actionButton: { label: string; onClick: () => void; 'aria-label': string };
+  }) => (
     <button aria-label={actionButton['aria-label']} onClick={actionButton.onClick}>
       {actionButton.label}
     </button>

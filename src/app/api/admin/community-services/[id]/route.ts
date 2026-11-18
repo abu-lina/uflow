@@ -9,10 +9,7 @@ import { getCommunityServiceForAdmin } from '@/services/admin/communityServiceEd
  * Fetch a single community service by ID for admin editing.
  * Only admins and moderators can access this endpoint.
  */
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { getUserFromCookie } = await import('@/lib/supabase/getUserFromCookie');
     const user = await getUserFromCookie();
@@ -23,13 +20,13 @@ export async function GET(
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to admin community-services API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to admin community-services API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -53,12 +50,9 @@ export async function GET(
       'Error in admin community-services API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request) }
+      { ...getRequestMetadata(request) },
     );
 
-    return NextResponse.json(
-      { error: 'Failed to fetch community service' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch community service' }, { status: 500 });
   }
 }

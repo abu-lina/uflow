@@ -1,8 +1,5 @@
 import type { UberEatsClient, UberEatsSearchResult } from './ubereats-types';
-import type {
-  DeliveryPlatformSnapshot,
-  DeliveryEnrichmentResult,
-} from '../delivery-enricher';
+import type { DeliveryPlatformSnapshot, DeliveryEnrichmentResult } from '../delivery-enricher';
 import { StaticCityGeocoder } from './geocoder';
 import { stringSimilarity } from './provider-matcher';
 import { detectAlcohol } from './alcohol-detector';
@@ -30,9 +27,7 @@ function findBestMatch(
   return best && bestScore >= MATCH_THRESHOLD ? best : null;
 }
 
-function extractMenuNames(
-  categories: { items: { name: string }[] }[],
-): string[] {
+function extractMenuNames(categories: { items: { name: string }[] }[]): string[] {
   const names: string[] = [];
   for (const cat of categories) {
     for (const item of cat.items) {
@@ -70,11 +65,7 @@ export async function enrichFromUberEats(
       };
     }
 
-    const venues = await client.searchRestaurants(
-      address_city,
-      coords.lat,
-      coords.lon,
-    );
+    const venues = await client.searchRestaurants(address_city, coords.lat, coords.lon);
     if (venues.length === 0) {
       return {
         providerId: provider_id,
@@ -122,9 +113,7 @@ export async function enrichFromUberEats(
     return {
       providerId: provider_id,
       venueSlug: match.slug,
-      matchConfidence: match.rating
-        ? Math.min(match.rating / 5, 1)
-        : null,
+      matchConfidence: match.rating ? Math.min(match.rating / 5, 1) : null,
       candidates,
       error: null,
     };

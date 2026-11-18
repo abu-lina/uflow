@@ -3,7 +3,7 @@ import { useState } from 'react';
 /**
  * Hook to manage pressed/active state for interactive elements
  * Handles both mouse and touch events for cross-platform support
- * 
+ *
  * @returns Object with isPressed state and event handlers
  */
 export function usePressedState() {
@@ -19,4 +19,3 @@ export function usePressedState() {
 
   return { isPressed, ...handlers };
 }
-

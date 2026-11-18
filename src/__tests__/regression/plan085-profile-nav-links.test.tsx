@@ -52,13 +52,9 @@ vi.mock('next/image', () => ({
 
 // -- next/link ---------------------------------------------------------------
 vi.mock('next/link', () => ({
-  default: ({
-    children,
-    href,
-  }: {
-    children: React.ReactNode;
-    href: string;
-  }) => <a href={href}>{children}</a>,
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 // -- Auth / Language / isMobile hooks ----------------------------------------
@@ -136,13 +132,7 @@ vi.mock('@/features/auth/services/authService', () => ({
 // -- UI component mocks ------------------------------------------------------
 // MobileProfileProviderCard: render a button so we can click it and capture onClick
 vi.mock('@/components/shared/MobileProfileProviderCard', () => ({
-  MobileProfileProviderCard: ({
-    title,
-    onClick,
-  }: {
-    title: string;
-    onClick?: () => void;
-  }) => (
+  MobileProfileProviderCard: ({ title, onClick }: { title: string; onClick?: () => void }) => (
     <button data-testid={`mobile-card-${title}`} onClick={onClick} type="button">
       {title}
     </button>
@@ -151,13 +141,7 @@ vi.mock('@/components/shared/MobileProfileProviderCard', () => ({
 
 // SelectableCard: render a button so we can click it and capture onClick
 vi.mock('@/components/shared/SelectableCard', () => ({
-  SelectableCard: ({
-    title,
-    onClick,
-  }: {
-    title: string;
-    onClick?: () => void;
-  }) => (
+  SelectableCard: ({ title, onClick }: { title: string; onClick?: () => void }) => (
     <button data-testid={`selectable-card-${title}`} onClick={onClick} type="button">
       {title}
     </button>
@@ -173,11 +157,7 @@ vi.mock('@/components/shared/UserNavigationTabs', () => ({
     onTabChange: (tab: string) => void;
   }) => (
     <div>
-      <button
-        data-testid="tab-created"
-        type="button"
-        onClick={() => onTabChange('created')}
-      >
+      <button data-testid="tab-created" type="button" onClick={() => onTabChange('created')}>
         Created
       </button>
       <button
@@ -198,14 +178,16 @@ vi.mock('@/features/providers/ProviderCreateForm', () => ({
 
 // Layout passthrough mocks
 vi.mock('@/components/layout/ScrollablePageLayout', () => ({
-  ScrollablePageLayout: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
-  ),
+  ScrollablePageLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 vi.mock('@/components/layout/PageContent', () => ({
-  PageContent: ({ children }: { children: React.ReactNode; className?: string; maxWidth?: string }) => (
-    <div>{children}</div>
-  ),
+  PageContent: ({
+    children,
+  }: {
+    children: React.ReactNode;
+    className?: string;
+    maxWidth?: string;
+  }) => <div>{children}</div>,
 }));
 vi.mock('@/components/layout/ContentSection', () => ({
   ContentSection: ({ children }: { children: React.ReactNode; className?: string }) => (

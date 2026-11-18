@@ -15,10 +15,11 @@ interface AnimatedHeartIconProps {
 }
 
 // Iconamoon heart SVG path (viewBox 0 0 24 24) - fallback for non-Figma mode
-const HEART_PATH = 'M19.071 13.142L13.414 18.8a2 2 0 0 1-2.828 0l-5.657-5.657A5 5 0 1 1 12 6.072a5 5 0 0 1 7.071 7.07';
+const HEART_PATH =
+  'M19.071 13.142L13.414 18.8a2 2 0 0 1-2.828 0l-5.657-5.657A5 5 0 1 1 12 6.072a5 5 0 0 1 7.071 7.07';
 
-export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({ 
-  filled = false, 
+export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({
+  filled = false,
   animate = false,
   animateFill = false, // Only animate fill on user interaction, not initial mount
   className = '',
@@ -26,12 +27,12 @@ export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({
   useFigmaPath = false,
 }: AnimatedHeartIconProps) {
   const heartPath = useFigmaPath ? HEART_PATH_FIGMA : HEART_PATH;
-  const viewBox = useFigmaPath ? "0 0 16 16" : "0 0 24 24";
-  const strokeWidth = useFigmaPath ? "1.33333" : "2";
+  const viewBox = useFigmaPath ? '0 0 16 16' : '0 0 24 24';
+  const strokeWidth = useFigmaPath ? '1.33333' : '2';
 
   // For saved hearts on initial mount, render static (no animation wrapper)
   const shouldRenderStatic = filled && !animate && !animateFill;
-  
+
   const iconContent = (
     <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox={viewBox}>
       <g id="iconamoon:heart">
@@ -40,7 +41,7 @@ export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({
             <>
               {/* Stage 1: Draw stroke outline */}
               <motion.path
-                animate={{ 
+                animate={{
                   opacity: [0, 1],
                   pathLength: 1,
                 }}
@@ -54,11 +55,11 @@ export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({
                 transition={{
                   opacity: {
                     duration: 0.3,
-                    ease: "easeOut",
+                    ease: 'easeOut',
                   },
                   pathLength: {
                     duration: 0.5,
-                    ease: "easeInOut",
+                    ease: 'easeInOut',
                   },
                 }}
               />
@@ -75,7 +76,7 @@ export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({
                 transition={{
                   delay: 0.5,
                   duration: 0.3,
-                  ease: "easeOut",
+                  ease: 'easeOut',
                 }}
               />
             </>
@@ -107,7 +108,7 @@ export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({
 
   if (shouldRenderStatic) {
     return (
-      <div 
+      <div
         className={`relative shrink-0 ${className}`}
         data-name="iconamoon:heart"
         style={{ height: size, width: size }}
@@ -118,14 +119,18 @@ export const AnimatedHeartIcon = memo(function AnimatedHeartIcon({
   }
 
   return (
-    <motion.div 
-      animate={animate ? {
-        opacity: 1,
-        scale: [0.9, 1.1, 1.05, 1],
-      } : {
-        opacity: 1,
-        scale: 1,
-      }}
+    <motion.div
+      animate={
+        animate
+          ? {
+              opacity: 1,
+              scale: [0.9, 1.1, 1.05, 1],
+            }
+          : {
+              opacity: 1,
+              scale: 1,
+            }
+      }
       className={`relative shrink-0 ${className}`}
       data-name="iconamoon:heart"
       initial={false}

@@ -10,7 +10,7 @@ import {
 
 /**
  * React hook for managing onboarding state
- * 
+ *
  * Provides a React-friendly interface to the onboarding state utility
  * with automatic re-rendering when state changes
  */
@@ -40,7 +40,7 @@ export function useOnboardingState() {
       submittedAt: new Date().toISOString(),
       waitlistToken,
     };
-    
+
     setOnboardingState(newState);
     setState(newState);
   };
@@ -75,17 +75,16 @@ export function useOnboardingState() {
     email: state?.email ?? null,
     waitlistToken: state?.waitlistToken ?? null,
     submittedAt: state?.submittedAt ?? null,
-    
+
     // Loading state
     isLoading,
-    
+
     // Actions
     unlockEarlyAccess,
     resetOnboarding,
     updateState,
-    
+
     // Raw state (for advanced usage)
     state,
   };
 }
-

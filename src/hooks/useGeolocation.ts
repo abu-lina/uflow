@@ -4,12 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { logApp } from '@/lib/logger';
 
 export type GeolocationStatus =
-  | 'idle'
-  | 'prompting'
-  | 'granted'
-  | 'denied'
-  | 'unavailable'
-  | 'timeout';
+  'idle' | 'prompting' | 'granted' | 'denied' | 'unavailable' | 'timeout';
 
 export interface GeolocationCoords {
   latitude: number;
@@ -49,10 +44,7 @@ export function isStandaloneDisplayMode(): boolean {
     return true;
   }
 
-  if (
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function'
-  ) {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
     return window.matchMedia('(display-mode: standalone)').matches === true;
   }
 
@@ -163,11 +155,11 @@ export function useGeolocation(): UseGeolocationResult {
       logOutcome(terminalStatus, undefined, requestStartTime, true);
     }, WATCHDOG_MS);
 
-    navigator.geolocation.getCurrentPosition(
-      handleSuccess,
-      handleError,
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 5 * 60 * 1000 },
-    );
+    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 5 * 60 * 1000,
+    });
   }, [clearWatchdog]);
 
   const reset = useCallback(() => {

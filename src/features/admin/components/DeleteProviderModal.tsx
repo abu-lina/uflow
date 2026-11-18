@@ -31,11 +31,14 @@ export function DeleteProviderModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isLoading, onClose]);
 
-  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && !isLoading) {
-      onClose();
-    }
-  }, [isLoading, onClose]);
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget && !isLoading) {
+        onClose();
+      }
+    },
+    [isLoading, onClose],
+  );
 
   return (
     <AnimatePresence>
@@ -57,15 +60,13 @@ export function DeleteProviderModal({
             initial={{ opacity: 0, scale: 0.95 }}
             role="dialog"
           >
-            <h2
-              className="mb-2 text-lg font-semibold text-content-heading"
-              id={titleId}
-            >
+            <h2 className="mb-2 text-lg font-semibold text-content-heading" id={titleId}>
               Delete Provider
             </h2>
 
             <p className="mb-6 text-sm text-content">
-              Are you sure you want to delete <strong>{providerName}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{providerName}</strong>? This action cannot be
+              undone.
             </p>
 
             <div className="flex gap-3">

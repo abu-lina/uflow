@@ -49,12 +49,12 @@ describe('fetchAllValidCities', () => {
     vi.mocked(supabase.from).mockImplementation(mockFrom as any);
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
+
     const result = await fetchAllValidCities();
 
     expect(result).toEqual([]);
     expect(consoleSpy).toHaveBeenCalled();
-    
+
     consoleSpy.mockRestore();
   });
 

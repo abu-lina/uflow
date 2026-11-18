@@ -123,12 +123,19 @@ interface AdminMockOptions {
 }
 
 function makeAdminClient(opts: AdminMockOptions = {}) {
-  const providerInsert = vi.fn().mockResolvedValue(
-    opts.failInsert ? { error: { message: 'insert denied by constraint xyz' } } : { error: null },
-  );
+  const providerInsert = vi
+    .fn()
+    .mockResolvedValue(
+      opts.failInsert ? { error: { message: 'insert denied by constraint xyz' } } : { error: null },
+    );
   const category =
     opts.category === undefined
-      ? ({ applicable_section: 'food', slug: 'turkish', name_en: 'Turkish', name_de: 'Türkisch' } as CategoryRow)
+      ? ({
+          applicable_section: 'food',
+          slug: 'turkish',
+          name_en: 'Turkish',
+          name_de: 'Türkisch',
+        } as CategoryRow)
       : opts.category;
 
   const client = {
@@ -221,9 +228,8 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     } as never);
     // Safe default: a lookup that ran and found nothing. Tests that exercise
     // the fallback set their own outcome; nothing here may hit the network.
-    const { lookupCanonicalCity } = await import(
-      '@/features/providers/services/city-geocode.server'
-    );
+    const { lookupCanonicalCity } =
+      await import('@/features/providers/services/city-geocode.server');
     vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'no_match' });
     vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -469,26 +475,23 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     });
 
     it('a case variant canonicalises to the cities row before insert', async () => {
-      const { response, providerInsert } = await postRecommend(
-        validBody({ city: 'BERLIN' }),
-        { cities: ['Berlin'] },
-      );
+      const { response, providerInsert } = await postRecommend(validBody({ city: 'BERLIN' }), {
+        cities: ['Berlin'],
+      });
       expect(response.status).toBe(200);
       expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Berlin');
     });
 
     it('catalog miss → geocoder resolves: the canonical name is stored, not the typed one', async () => {
-      const { lookupCanonicalCity } = await import(
-        '@/features/providers/services/city-geocode.server'
-      );
+      const { lookupCanonicalCity } =
+        await import('@/features/providers/services/city-geocode.server');
       vi.mocked(lookupCanonicalCity).mockResolvedValue({
         kind: 'resolved',
         canonicalName: 'Neu-Ulm',
       });
-      const { response, providerInsert } = await postRecommend(
-        validBody({ city: 'neu ulm' }),
-        { cities: ['Berlin', 'München'] },
-      );
+      const { response, providerInsert } = await postRecommend(validBody({ city: 'neu ulm' }), {
+        cities: ['Berlin', 'München'],
+      });
       expect(response.status).toBe(200);
       expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Neu-Ulm');
       expect(lookupCanonicalCity).toHaveBeenCalledWith('neu ulm');
@@ -498,14 +501,12 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
       // Settled at the #606 gate: a geocoder outage must never block a
       // recommendation — pending human review is the backstop. 'frankfurt'
       // resolves through CITY_ALIASES to 'Frankfurt am Main'.
-      const { lookupCanonicalCity } = await import(
-        '@/features/providers/services/city-geocode.server'
-      );
+      const { lookupCanonicalCity } =
+        await import('@/features/providers/services/city-geocode.server');
       vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'unavailable' });
-      const { response, providerInsert } = await postRecommend(
-        validBody({ city: 'frankfurt' }),
-        { cities: ['Berlin', 'München'] },
-      );
+      const { response, providerInsert } = await postRecommend(validBody({ city: 'frankfurt' }), {
+        cities: ['Berlin', 'München'],
+      });
       expect(response.status).toBe(200);
       expect(providerInsert.mock.calls[0][0][0].address_city).toBe('Frankfurt am Main');
     });
@@ -513,9 +514,8 @@ describe('#606 POST /api/providers — no more 500s on honest input', () => {
     it('a geocoder-resolved city and the same catalog town still collide under R1 → 409', async () => {
       // The fallback city is stored canonicalised and goes through the same
       // normalised duplicate scan as any catalog city.
-      const { lookupCanonicalCity } = await import(
-        '@/features/providers/services/city-geocode.server'
-      );
+      const { lookupCanonicalCity } =
+        await import('@/features/providers/services/city-geocode.server');
       vi.mocked(lookupCanonicalCity).mockResolvedValue({
         kind: 'resolved',
         canonicalName: 'Berlin',

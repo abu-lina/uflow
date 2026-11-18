@@ -86,10 +86,7 @@ const SUBMIT_ERROR_MAP: Record<
  * /api/providers/recommend — and stamped onto the parsed body so the
  * service never trusts a client-sent value.
  */
-export async function handleProviderSubmit(
-  request: NextRequest,
-  submissionSource?: 'recommend',
-) {
+export async function handleProviderSubmit(request: NextRequest, submissionSource?: 'recommend') {
   try {
     // Resolve the actor from the session first so the rate limit can key on it.
     const user = await getUserFromCookie();

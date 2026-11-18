@@ -40,7 +40,7 @@ const DEFAULT_CONFIG: Required<WoltClientConfig> = {
 };
 
 function asArray<T>(value: unknown): T[] {
-  return Array.isArray(value) ? value as T[] : [];
+  return Array.isArray(value) ? (value as T[]) : [];
 }
 
 class WoltHttpClient implements WoltClient {
@@ -57,7 +57,7 @@ class WoltHttpClient implements WoltClient {
     await this.rateLimit();
 
     const url = `https://consumer-api.wolt.com/v1/pages/restaurants?lat=${lat}&lon=${lon}`;
-    const data = await this.fetchWithRetry(url) as Record<string, unknown>;
+    const data = (await this.fetchWithRetry(url)) as Record<string, unknown>;
 
     const sections = asArray<Record<string, unknown>>(data?.sections);
     const venues: WoltVenue[] = [];
@@ -86,7 +86,7 @@ class WoltHttpClient implements WoltClient {
     await this.rateLimit();
 
     const url = `https://restaurant-api.wolt.com/v4/venues/slug/${venueSlug}/menu/data?unit_prices=true&show_weighted_items=true&show_subcategories=true`;
-    const data = await this.fetchWithRetry(url) as Record<string, unknown>;
+    const data = (await this.fetchWithRetry(url)) as Record<string, unknown>;
 
     const items: Array<{ name: string; description?: string; category?: string }> = [];
     const categories: Array<{ name: string; items: string[] }> = [];
@@ -125,9 +125,7 @@ class WoltHttpClient implements WoltClient {
     const now = Date.now();
     const elapsed = now - this.lastRequestTime;
     if (elapsed < this.config.requestDelayMs) {
-      await new Promise((resolve) =>
-        setTimeout(resolve, this.config.requestDelayMs - elapsed)
-      );
+      await new Promise((resolve) => setTimeout(resolve, this.config.requestDelayMs - elapsed));
     }
     this.lastRequestTime = Date.now();
   }
@@ -149,7 +147,9 @@ class WoltHttpClient implements WoltClient {
         await new Promise((resolve) => setTimeout(resolve, backoff));
         return this.fetchWithRetry(url, attempt + 1);
       }
-      throw new Error(`Wolt API error: HTTP ${response.status} after ${this.config.maxRetries} retries`);
+      throw new Error(
+        `Wolt API error: HTTP ${response.status} after ${this.config.maxRetries} retries`,
+      );
     }
 
     if (response.status === 404) {
@@ -160,10 +160,7 @@ class WoltHttpClient implements WoltClient {
   }
 }
 
-export function createWoltClient(
-  config?: WoltClientConfig,
-  geocoder?: Geocoder
-): WoltClient {
+export function createWoltClient(config?: WoltClientConfig, geocoder?: Geocoder): WoltClient {
   if (!geocoder) {
     throw new Error('Geocoder is required for WoltClient');
   }

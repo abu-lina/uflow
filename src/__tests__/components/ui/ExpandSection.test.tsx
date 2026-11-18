@@ -18,7 +18,7 @@ describe('ExpandSection', () => {
     render(
       <ExpandSection title="Test Section" defaultOpen>
         Body content
-      </ExpandSection>
+      </ExpandSection>,
     );
     expect(screen.getByText('Body content')).toBeInTheDocument();
   });
@@ -43,7 +43,7 @@ describe('ExpandSection', () => {
 
     const button = screen.getByRole('button', { name: /Test Section/i });
     const svg = button.querySelector('svg');
-    
+
     // Initially not rotated
     expect(svg).not.toHaveClass('rotate-180');
 

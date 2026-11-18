@@ -65,7 +65,7 @@ const waitlistTemplates = {
     </div>
   </div>
 </body>
-</html>`
+</html>`,
   },
   user: {
     subject: "You're on the waitlist!",
@@ -116,7 +116,7 @@ const waitlistTemplates = {
     </div>
   </div>
 </body>
-</html>`
+</html>`,
   },
   unknown: {
     subject: "You're on the waitlist!",
@@ -167,8 +167,8 @@ const waitlistTemplates = {
     </div>
   </div>
 </body>
-</html>`
-  }
+</html>`,
+  },
 };
 
 /**
@@ -178,11 +178,11 @@ const waitlistTemplates = {
  */
 export const sendWaitlistConfirmationEmail = async (
   email: string,
-  isProvider: boolean | null
+  isProvider: boolean | null,
 ): Promise<void> => {
   try {
     const resend = getResendClient();
-    
+
     // Select appropriate template based on provider status
     let template;
     if (isProvider === true) {
@@ -192,24 +192,17 @@ export const sendWaitlistConfirmationEmail = async (
     } else {
       template = waitlistTemplates.unknown;
     }
-    
+
     await resend.emails.send({
       from: 'noreply@ummahflow.com',
       to: email,
       subject: template.subject,
-      html: template.html
+      html: template.html,
     });
-    
+
     console.log(`[Waitlist] Confirmation email sent to ${email} (provider: ${isProvider})`);
   } catch (error) {
     // Log error but don't throw - we don't want email failures to block waitlist signup
     console.error('[Waitlist] Failed to send confirmation email:', error);
   }
 };
-
-
-
-
-
-
-

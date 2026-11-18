@@ -107,7 +107,9 @@ function parseBuildOutput(output) {
     }
 
     // Parse route lines (format: "├ ƒ /providers    209 B    307 kB")
-    const routeMatch = line.match(/[├└]\s*[ƒ○●]\s*(\S+)\s+([\d.]+\s*(?:B|kB|MB))\s+([\d.]+\s*(?:B|kB|MB))/);
+    const routeMatch = line.match(
+      /[├└]\s*[ƒ○●]\s*(\S+)\s+([\d.]+\s*(?:B|kB|MB))\s+([\d.]+\s*(?:B|kB|MB))/,
+    );
     if (routeMatch) {
       const [, route, size, firstLoadJS] = routeMatch;
       results.routes[route] = {
@@ -254,9 +256,7 @@ function main() {
   if (passes.length > 0) {
     console.log('✅ Passing budgets:\n');
     for (const p of passes) {
-      console.log(
-        `   ${p.route}: ${formatSize(p.actual)} / ${formatSize(p.max)} (${p.percent}%)`,
-      );
+      console.log(`   ${p.route}: ${formatSize(p.actual)} / ${formatSize(p.max)} (${p.percent}%)`);
     }
     console.log('');
   }

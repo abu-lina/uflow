@@ -8,8 +8,6 @@ export const UMMAH_FILTER_KEY_TO_PARAM = {
 
 export type UmmahFilterKey = keyof typeof UMMAH_FILTER_KEY_TO_PARAM;
 
-export const UMMAH_FILTER_KEYS = Object.keys(
-  UMMAH_FILTER_KEY_TO_PARAM,
-) as UmmahFilterKey[];
+export const UMMAH_FILTER_KEYS = Object.keys(UMMAH_FILTER_KEY_TO_PARAM) as UmmahFilterKey[];
 
 export const UMMAH_FILTER_KEY_SET: ReadonlySet<string> = new Set(UMMAH_FILTER_KEYS);

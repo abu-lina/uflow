@@ -6,10 +6,7 @@
  * counterpart of the SQL RPC function's DO UPDATE SET allowlist.
  */
 import { describe, it, expect } from 'vitest';
-import {
-  SOURCE_CONTROLLED_FIELDS,
-  ADMIN_CONTROLLED_FIELDS,
-} from '@/lib/import/joinhalal-fields';
+import { SOURCE_CONTROLLED_FIELDS, ADMIN_CONTROLLED_FIELDS } from '@/lib/import/joinhalal-fields';
 
 describe('JoinHalal upsert field classification (Plan 052)', () => {
   it('source-controlled and admin-controlled field sets are disjoint', () => {
@@ -52,7 +49,7 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
     for (const field of importPayloadFields) {
       expect(
         allClassified.has(field),
-        `Field '${field}' is not classified as source-controlled or admin-controlled`
+        `Field '${field}' is not classified as source-controlled or admin-controlled`,
       ).toBe(true);
     }
   });
@@ -80,7 +77,7 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
         'no_alcohol',
         'verification_method',
         'has_certificate',
-      ].sort()
+      ].sort(),
     );
   });
 
@@ -98,7 +95,7 @@ describe('JoinHalal upsert field classification (Plan 052)', () => {
         'provider_images',
         'show_address',
         'needs_ids',
-      ].sort()
+      ].sort(),
     );
   });
 });
@@ -117,10 +114,7 @@ describe('Plan 055 — provider_description schema drift regression', () => {
   it('RPC contract does not depend on provider_description column', () => {
     // The combined set of all fields referenced by the RPC must not include
     // provider_description, which is absent in production environments.
-    const allRpcFields = new Set<string>([
-      ...SOURCE_CONTROLLED_FIELDS,
-      ...ADMIN_CONTROLLED_FIELDS,
-    ]);
+    const allRpcFields = new Set<string>([...SOURCE_CONTROLLED_FIELDS, ...ADMIN_CONTROLLED_FIELDS]);
     expect(allRpcFields.has('provider_description')).toBe(false);
   });
 });

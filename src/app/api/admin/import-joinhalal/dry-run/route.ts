@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   if (!hasAccess) {
     return NextResponse.json(
       { error: 'Forbidden — admin or moderator access required' },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
   if (!VALID_LIMITS.has(limit as ImportLimit | number | string)) {
     return NextResponse.json(
       { error: 'Invalid limit. Must be one of: 10, 50, 100, "all"' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -72,10 +72,7 @@ export async function POST(request: Request) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
-    return NextResponse.json(
-      { error: 'Server configuration error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -104,7 +101,7 @@ export async function POST(request: Request) {
           error: 'Dry-run timed out',
           detail: `The operation exceeded the ${ROUTE_TIMEOUT_MS / 1000}s route budget. Try a smaller limit or use the CLI for large imports.`,
         },
-        { status: 504 }
+        { status: 504 },
       );
     }
 

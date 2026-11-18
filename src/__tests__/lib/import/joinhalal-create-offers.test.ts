@@ -63,7 +63,7 @@ describe('createMissingOffers', () => {
           created_by: null,
         }),
       ]),
-      { onConflict: 'name_de', ignoreDuplicates: true }
+      { onConflict: 'name_de', ignoreDuplicates: true },
     );
 
     // Returns newly created offer records
@@ -83,10 +83,10 @@ describe('createMissingOffers', () => {
     await createMissingOffers(mockSupabase as never, ['Döner']);
 
     // Verify upsert was called with ignoreDuplicates
-    expect(mockUpsert).toHaveBeenCalledWith(
-      expect.any(Array),
-      { onConflict: 'name_de', ignoreDuplicates: true }
-    );
+    expect(mockUpsert).toHaveBeenCalledWith(expect.any(Array), {
+      onConflict: 'name_de',
+      ignoreDuplicates: true,
+    });
   });
 
   it('deduplicates input Speisen before inserting (case-insensitive)', async () => {

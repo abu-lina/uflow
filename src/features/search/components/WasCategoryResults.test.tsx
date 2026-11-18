@@ -67,9 +67,7 @@ describe('WasCategoryResults (Plan 098)', () => {
     render(
       <WasCategoryResults
         items={[]}
-        recentSearches={[
-          { label: 'Burger', type: 'dish', dishName: 'Burger' },
-        ]}
+        recentSearches={[{ label: 'Burger', type: 'dish', dishName: 'Burger' }]}
         selectedWas={null}
         isLoading={false}
         isError={false}
@@ -142,10 +140,42 @@ describe('WasCategoryResults (Plan 098)', () => {
     render(
       <WasCategoryResults
         items={[
-          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
-          { category_id: 'cat-2', name_de: 'Turkish', name_en: 'Turkish', description_de: '', description_en: '', provider_count: 6, category_images: null },
-          { category_id: 'cat-3', name_de: 'Afghan', name_en: 'Afghan', description_de: '', description_en: '', provider_count: 3, category_images: null },
-          { category_id: 'cat-4', name_de: 'Syrian', name_en: 'Syrian', description_de: '', description_en: '', provider_count: 2, category_images: null },
+          {
+            category_id: 'cat-1',
+            name_de: 'Levantine',
+            name_en: 'Levantine',
+            description_de: '',
+            description_en: '',
+            provider_count: 5,
+            category_images: null,
+          },
+          {
+            category_id: 'cat-2',
+            name_de: 'Turkish',
+            name_en: 'Turkish',
+            description_de: '',
+            description_en: '',
+            provider_count: 6,
+            category_images: null,
+          },
+          {
+            category_id: 'cat-3',
+            name_de: 'Afghan',
+            name_en: 'Afghan',
+            description_de: '',
+            description_en: '',
+            provider_count: 3,
+            category_images: null,
+          },
+          {
+            category_id: 'cat-4',
+            name_de: 'Syrian',
+            name_en: 'Syrian',
+            description_de: '',
+            description_en: '',
+            provider_count: 2,
+            category_images: null,
+          },
         ]}
         recentSearches={[]}
         selectedWas={null}
@@ -172,12 +202,26 @@ describe('WasCategoryResults (Plan 098)', () => {
     render(
       <WasCategoryResults
         items={[
-          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
-          { category_id: 'cat-2', name_de: 'Turkish', name_en: 'Turkish', description_de: '', description_en: '', provider_count: 6, category_images: null },
+          {
+            category_id: 'cat-1',
+            name_de: 'Levantine',
+            name_en: 'Levantine',
+            description_de: '',
+            description_en: '',
+            provider_count: 5,
+            category_images: null,
+          },
+          {
+            category_id: 'cat-2',
+            name_de: 'Turkish',
+            name_en: 'Turkish',
+            description_de: '',
+            description_en: '',
+            provider_count: 6,
+            category_images: null,
+          },
         ]}
-        recentSearches={[
-          { label: 'Burger', type: 'dish', dishName: 'Burger' },
-        ]}
+        recentSearches={[{ label: 'Burger', type: 'dish', dishName: 'Burger' }]}
         selectedWas={null}
         isLoading={false}
         isError={false}
@@ -198,7 +242,15 @@ describe('WasCategoryResults (Plan 098)', () => {
     render(
       <WasCategoryResults
         items={[
-          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
+          {
+            category_id: 'cat-1',
+            name_de: 'Levantine',
+            name_en: 'Levantine',
+            description_de: '',
+            description_en: '',
+            provider_count: 5,
+            category_images: null,
+          },
         ]}
         recentSearches={[]}
         selectedWas={null}
@@ -226,8 +278,24 @@ describe('WasCategoryResults (Plan 169 — Alle Restaurants)', () => {
     render(
       <WasCategoryResults
         items={[
-          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
-          { category_id: 'cat-2', name_de: 'Turkish', name_en: 'Turkish', description_de: '', description_en: '', provider_count: 6, category_images: null },
+          {
+            category_id: 'cat-1',
+            name_de: 'Levantine',
+            name_en: 'Levantine',
+            description_de: '',
+            description_en: '',
+            provider_count: 5,
+            category_images: null,
+          },
+          {
+            category_id: 'cat-2',
+            name_de: 'Turkish',
+            name_en: 'Turkish',
+            description_de: '',
+            description_en: '',
+            provider_count: 6,
+            category_images: null,
+          },
         ]}
         recentSearches={[]}
         selectedWas={null}
@@ -252,7 +320,15 @@ describe('WasCategoryResults (Plan 169 — Alle Restaurants)', () => {
     render(
       <WasCategoryResults
         items={[
-          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
+          {
+            category_id: 'cat-1',
+            name_de: 'Levantine',
+            name_en: 'Levantine',
+            description_de: '',
+            description_en: '',
+            provider_count: 5,
+            category_images: null,
+          },
         ]}
         recentSearches={[]}
         selectedWas={null}
@@ -276,12 +352,26 @@ describe('WasCategoryResults (Plan 169 — Alle Restaurants)', () => {
     render(
       <WasCategoryResults
         items={[
-          { category_id: 'cat-1', name_de: 'Levantine', name_en: 'Levantine', description_de: '', description_en: '', provider_count: 5, category_images: null },
-          { category_id: 'cat-2', name_de: 'Turkish', name_en: 'Turkish', description_de: '', description_en: '', provider_count: 6, category_images: null },
+          {
+            category_id: 'cat-1',
+            name_de: 'Levantine',
+            name_en: 'Levantine',
+            description_de: '',
+            description_en: '',
+            provider_count: 5,
+            category_images: null,
+          },
+          {
+            category_id: 'cat-2',
+            name_de: 'Turkish',
+            name_en: 'Turkish',
+            description_de: '',
+            description_en: '',
+            provider_count: 6,
+            category_images: null,
+          },
         ]}
-        recentSearches={[
-          { label: 'Burger', type: 'dish', dishName: 'Burger' },
-        ]}
+        recentSearches={[{ label: 'Burger', type: 'dish', dishName: 'Burger' }]}
         selectedWas={null}
         isLoading={false}
         isError={false}

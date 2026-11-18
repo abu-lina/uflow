@@ -28,10 +28,10 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
   const { user: clientUser, isLoading: loading } = useAuth();
   const router = useRouter();
   const { t } = useLanguage();
-  
+
   // Use client-side user if server-side user is null
   const effectiveUser: SupabaseUser | null = user || (clientUser as SupabaseUser | null);
-  
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -42,8 +42,6 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
       router.replace('/login');
     }
   }, [effectiveUser, loading, router]);
-
-
 
   const handleDeleteClick = () => {
     setShowConfirmation(true);
@@ -65,10 +63,10 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
 
       // Perform hard deletion from database
       await accountService.deleteAccount(effectiveUser.id);
-      
+
       // Sign out the user
       await authService.signOut();
-      
+
       // Redirect to home page
       router.push('/?auth=required');
     } catch (err) {
@@ -84,7 +82,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <Loader2 className="mb-4 h-8 w-8 animate-spin text-gray-600 mx-auto" />
+          <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-gray-600" />
           <p className="text-gray-600">{t('profile.checkingAuth')}</p>
         </div>
       </div>
@@ -96,7 +94,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <Lock className="mb-4 h-8 w-8 text-gray-600 mx-auto" />
+          <Lock className="mx-auto mb-4 h-8 w-8 text-gray-600" />
           <p className="text-gray-600">{t('profile.authRequired')}</p>
         </div>
       </div>
@@ -105,7 +103,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
 
   return (
     <PageLayout hasBackground={false} maxWidth="full">
-      <PageHeader 
+      <PageHeader
         title={t('profile.deleteAccount')}
         variant="back-and-title"
         onBack={() => router.back()}
@@ -126,27 +124,25 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
           <IconWithTitle
             icon={<BrokenHeartIcon size={96} />}
             size="large"
-            title={
-              (() => {
-                const titleText = t('profile.yourDataYourDecision');
-                const parts = titleText.split('\n');
-                return (
-                  <>
-                    {parts[0] || titleText}
-                    {parts[1] && (
-                      <>
-                        <br />
-                        {parts[1]}
-                      </>
-                    )}
-                  </>
-                );
-              })()
-            }
+            title={(() => {
+              const titleText = t('profile.yourDataYourDecision');
+              const parts = titleText.split('\n');
+              return (
+                <>
+                  {parts[0] || titleText}
+                  {parts[1] && (
+                    <>
+                      <br />
+                      {parts[1]}
+                    </>
+                  )}
+                </>
+              );
+            })()}
             titleClassName="font-inter-tight text-3xl font-medium leading-[39px] text-black"
           >
             <div className="w-full">
-              <div className="font-inter text-[16px] font-light leading-[24px] text-black space-y-4 text-justify">
+              <div className="space-y-4 text-justify font-inter text-[16px] font-light leading-[24px] text-black">
                 <p>{t('profile.deleteAccountIntro')}</p>
                 <p>{t('profile.deleteAccountWarning')}</p>
                 <p>{t('profile.deleteAccountPrivacy')}</p>
@@ -187,26 +183,14 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
               <h3 className="text-lg font-semibold text-content-heading">
                 {t('profile.confirmDeleteTitle')}
               </h3>
-              <p className="mt-2 text-sm text-gray-600">
-                {t('profile.confirmDeleteDescription')}
-              </p>
+              <p className="mt-2 text-sm text-gray-600">{t('profile.confirmDeleteDescription')}</p>
             </div>
-            
+
             <div className="flex gap-3">
-              <Button
-                fullWidth
-                className="flex-1"
-                variant="cancel"
-                onClick={handleCancelDelete}
-              >
+              <Button fullWidth className="flex-1" variant="cancel" onClick={handleCancelDelete}>
                 {t('common.cancel')}
               </Button>
-              <Button
-                fullWidth
-                className="flex-1"
-                variant="danger"
-                onClick={handleConfirmDelete}
-              >
+              <Button fullWidth className="flex-1" variant="danger" onClick={handleConfirmDelete}>
                 {t('profile.confirmDelete')}
               </Button>
             </div>

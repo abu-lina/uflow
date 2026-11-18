@@ -4,11 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type {
-  EntityType,
-  BadgeType,
-  BadgeWithConfirmationStatus,
-} from '@/types/badges';
+import type { EntityType, BadgeType, BadgeWithConfirmationStatus } from '@/types/badges';
 
 // ============================================================================
 // BADGE FETCHING HOOKS
@@ -23,7 +19,7 @@ import type {
 export function useBadges(
   entityId: string | null | undefined,
   entityType: EntityType,
-  enabled: boolean = true
+  enabled: boolean = true,
 ) {
   const [badges, setBadges] = useState<BadgeWithConfirmationStatus[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -40,7 +36,7 @@ export function useBadges(
 
     try {
       const response = await fetch(
-        `/api/badges/entity?entityId=${entityId}&entityType=${entityType}`
+        `/api/badges/entity?entityId=${entityId}&entityType=${entityType}`,
       );
 
       if (!response.ok) {
@@ -221,21 +217,21 @@ export function useRevokeBadge() {
 /**
  * Combined hook for badge management
  * Provides badge data and actions (confirm/revoke) in one hook
- * 
+ *
  * @param entityId - The entity ID
  * @param entityType - The entity type
  * @param enabled - Whether to enable the query (default: true)
- * 
+ *
  * @example
  * ```tsx
  * const { badges, confirmBadge, revokeBadge, loading } = useBadgeManagement(
  *   providerId,
  *   'provider'
  * );
- * 
+ *
  * // Confirm a badge
  * await confirmBadge(badgeId);
- * 
+ *
  * // Revoke a badge
  * await revokeBadge(badgeId);
  * ```
@@ -243,13 +239,14 @@ export function useRevokeBadge() {
 export function useBadgeManagement(
   entityId: string | null | undefined,
   entityType: EntityType,
-  enabled: boolean = true
+  enabled: boolean = true,
 ) {
-  const { badges, loading: fetchLoading, error: fetchError, refetch } = useBadges(
-    entityId,
-    entityType,
-    enabled
-  );
+  const {
+    badges,
+    loading: fetchLoading,
+    error: fetchError,
+    refetch,
+  } = useBadges(entityId, entityType, enabled);
   const { confirmBadge, loading: confirmLoading, error: confirmError } = useConfirmBadge();
   const { revokeBadge, loading: revokeLoading, error: revokeError } = useRevokeBadge();
 
@@ -258,7 +255,7 @@ export function useBadgeManagement(
       await confirmBadge(badgeId);
       await refetch(); // Refetch badges to update UI
     },
-    [confirmBadge, refetch]
+    [confirmBadge, refetch],
   );
 
   const handleRevokeBadge = useCallback(
@@ -266,7 +263,7 @@ export function useBadgeManagement(
       await revokeBadge(badgeId);
       await refetch(); // Refetch badges to update UI
     },
-    [revokeBadge, refetch]
+    [revokeBadge, refetch],
   );
 
   return {
@@ -380,4 +377,3 @@ export function useUnverifyBadge() {
     error,
   };
 }
-

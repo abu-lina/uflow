@@ -29,7 +29,9 @@ describe('resolveGalleryImage hierarchy', () => {
     // Post-fix: resolveGalleryImage accepts categoryImages JSONB, picks deterministically
     const resolved = resolveGalleryImage(null, TURKISH_CATEGORY_IMAGES, 'provider-2');
 
-    expect(resolved).toMatch(/^https:\/\/.*supabase\.co\/storage\/v1\/object\/public\/category-images\//);
+    expect(resolved).toMatch(
+      /^https:\/\/.*supabase\.co\/storage\/v1\/object\/public\/category-images\//,
+    );
     expect(resolved).toMatch(/\.webp$/);
     expect(resolved).not.toContain('/images/categories/');
   });

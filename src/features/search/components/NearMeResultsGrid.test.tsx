@@ -19,7 +19,9 @@ vi.mock('@/features/providers/components/ProviderCard', () => ({
     <div>
       {provider_name} — {distanceKm} km
       <span data-testid={`category-id-${provider_name}`}>{category_id ?? 'null'}</span>
-      <span data-testid={`category-name-${provider_name}`}>{category?.name_de ?? category?.name_en ?? 'missing'}</span>
+      <span data-testid={`category-name-${provider_name}`}>
+        {category?.name_de ?? category?.name_en ?? 'missing'}
+      </span>
     </div>
   ),
 }));
@@ -132,7 +134,9 @@ describe('NearMeResultsGrid', () => {
       />,
     );
 
-    expect(screen.getByText('Search is currently unavailable. Please try again.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Search is currently unavailable. Please try again.'),
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button'));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });

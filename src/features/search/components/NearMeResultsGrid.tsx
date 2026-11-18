@@ -66,7 +66,9 @@ export function NearMeResultsGrid({
   }
 
   if (results.length === 0) {
-    return <EmptyState description={t('suchen.empty.noNearby')} title={t('suchen.nearMe.emptyTitle')} />;
+    return (
+      <EmptyState description={t('suchen.empty.noNearby')} title={t('suchen.nearMe.emptyTitle')} />
+    );
   }
 
   return (

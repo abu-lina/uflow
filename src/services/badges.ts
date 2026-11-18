@@ -1,7 +1,7 @@
 /**
  * Badge Service Layer
  * Handles all badge-related database operations
- * 
+ *
  * This service supports both server-side (API routes) and client-side usage.
  * For server-side usage, pass the server client from createSupabaseServerClient().
  * For client-side usage, omit the client parameter to use the default client.
@@ -80,7 +80,7 @@ export async function getBadgeTypes(client?: SupabaseClient): Promise<BadgeType[
  */
 export async function getBadgeTypeById(
   badgeTypeId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<BadgeType | null> {
   try {
     const supabase = getSupabaseClient(client);
@@ -112,7 +112,7 @@ export async function getBadgeTypeById(
  */
 export async function getBadgeTypeByKey(
   badgeKey: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<BadgeType | null> {
   try {
     const supabase = getSupabaseClient(client);
@@ -150,13 +150,11 @@ export async function getBadgeTypeByKey(
 export async function getBadgesForEntity(
   entityId: string,
   entityType: EntityType,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<ProviderBadgeWithType[]> {
   try {
     const supabase = getSupabaseClient(client);
-    let query = supabase
-      .from('provider_badges')
-      .select(`
+    let query = supabase.from('provider_badges').select(`
         *,
         badge_type:badge_types(*)
       `);
@@ -171,7 +169,9 @@ export async function getBadgesForEntity(
       throw error;
     }
 
-    return ((data || []).map((row: Record<string, unknown>) => mapBadgeRowWithLegacyFields(row)) as unknown) as ProviderBadgeWithType[];
+    return (data || []).map((row: Record<string, unknown>) =>
+      mapBadgeRowWithLegacyFields(row),
+    ) as unknown as ProviderBadgeWithType[];
   } catch (error) {
     console.error('Error in getBadgesForEntity:', error);
     throw error;
@@ -187,7 +187,7 @@ export async function getBadgesForEntity(
 export async function getBadgesForEntities(
   entityIds: string[],
   entityType: EntityType,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<Map<string, ProviderBadgeWithType[]>> {
   if (entityIds.length === 0) {
     return new Map();
@@ -195,9 +195,7 @@ export async function getBadgesForEntities(
 
   try {
     const supabase = getSupabaseClient(client);
-    const baseQuery = supabase
-      .from('provider_badges')
-      .select(`
+    const baseQuery = supabase.from('provider_badges').select(`
         *,
         badge_type:badge_types(*)
       `);
@@ -240,7 +238,7 @@ export async function getBadgesForEntityWithConfirmationStatus(
   entityId: string,
   entityType: EntityType,
   userId: string | null,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<BadgeWithConfirmationStatus[]> {
   try {
     const supabase = getSupabaseClient(client);
@@ -273,9 +271,7 @@ export async function getBadgesForEntityWithConfirmationStatus(
       throw error;
     }
 
-    const confirmedBadgeIds = new Set(
-      (confirmations || []).map((c) => c.provider_badge_id)
-    );
+    const confirmedBadgeIds = new Set((confirmations || []).map((c) => c.provider_badge_id));
 
     return badges.map((badge) => ({
       ...badge,
@@ -294,16 +290,18 @@ export async function getBadgesForEntityWithConfirmationStatus(
  */
 export async function getProviderBadgeById(
   badgeId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<ProviderBadgeWithType | null> {
   try {
     const supabase = getSupabaseClient(client);
     const { data, error } = await supabase
       .from('provider_badges')
-      .select(`
+      .select(
+        `
         *,
         badge_type:badge_types(*)
-      `)
+      `,
+      )
       .eq('id', badgeId)
       .single();
 
@@ -329,7 +327,7 @@ export async function getProviderBadgeById(
  */
 export async function createProviderBadge(
   input: CreateProviderBadgeInput,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<ProviderBadge> {
   try {
     const supabase = getSupabaseClient(client);
@@ -363,16 +361,10 @@ export async function createProviderBadge(
  * @param badgeId - The badge ID
  * @param client - Optional Supabase client (use server client for API routes)
  */
-export async function deleteProviderBadge(
-  badgeId: string,
-  client?: SupabaseClient
-): Promise<void> {
+export async function deleteProviderBadge(badgeId: string, client?: SupabaseClient): Promise<void> {
   try {
     const supabase = getSupabaseClient(client);
-    const { error } = await supabase
-      .from('provider_badges')
-      .delete()
-      .eq('id', badgeId);
+    const { error } = await supabase.from('provider_badges').delete().eq('id', badgeId);
 
     if (error) {
       logSupabaseError('deleteProviderBadge', error);
@@ -393,7 +385,7 @@ export async function deleteProviderBadge(
 export async function getBadgeStatsForEntity(
   entityId: string,
   entityType: EntityType,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<BadgeStats> {
   try {
     const badges = await getBadgesForEntity(entityId, entityType, client);
@@ -442,7 +434,7 @@ export async function getBadgeStatsForEntity(
 export async function hasUserConfirmedBadge(
   badgeId: string,
   userId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<boolean> {
   try {
     const supabase = getSupabaseClient(client);
@@ -475,11 +467,11 @@ export async function hasUserConfirmedBadge(
 export async function confirmBadge(
   badgeId: string,
   userId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<{ success: boolean; trust_level: TrustLevel; already_confirmed: boolean }> {
   try {
     const supabase = getSupabaseClient(client);
-    
+
     // Check if already confirmed
     const alreadyConfirmed = await hasUserConfirmedBadge(badgeId, userId, client);
 
@@ -494,12 +486,10 @@ export async function confirmBadge(
     }
 
     // Insert confirmation
-    const { error: insertError } = await supabase
-      .from('badge_confirmations')
-      .insert({
-        provider_badge_id: badgeId,
-        user_id: userId,
-      });
+    const { error: insertError } = await supabase.from('badge_confirmations').insert({
+      provider_badge_id: badgeId,
+      user_id: userId,
+    });
 
     if (insertError) {
       // Check if it's a unique constraint violation (race condition)
@@ -538,11 +528,11 @@ export async function confirmBadge(
 export async function revokeConfirmation(
   badgeId: string,
   userId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<{ success: boolean; trust_level: TrustLevel }> {
   try {
     const supabase = getSupabaseClient(client);
-    
+
     // Delete confirmation
     const { error } = await supabase
       .from('badge_confirmations')
@@ -575,7 +565,7 @@ export async function revokeConfirmation(
  */
 export async function getBadgeConfirmations(
   badgeId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<BadgeConfirmation[]> {
   try {
     const supabase = getSupabaseClient(client);
@@ -614,11 +604,11 @@ export async function verifyBadge(
   badgeId: string,
   adminUserId: string,
   reason?: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<{ success: boolean; verification: BadgeVerification }> {
   try {
     const supabase = getSupabaseClient(client);
-    
+
     // Update badge trust level to UMMAH_FLOW_VERIFIED
     const { error: updateError } = await supabase
       .from('provider_badges')
@@ -664,11 +654,11 @@ export async function verifyBadge(
  */
 export async function unverifyBadge(
   badgeId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<{ success: boolean; trust_level: TrustLevel }> {
   try {
     const supabase = getSupabaseClient(client);
-    
+
     // Get current badge to check confirmation count
     const badge = await getProviderBadgeById(badgeId, client);
 
@@ -712,7 +702,7 @@ export async function unverifyBadge(
  */
 export async function getBadgeVerifications(
   badgeId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<BadgeVerification[]> {
   try {
     const supabase = getSupabaseClient(client);
@@ -743,7 +733,7 @@ export async function getBadgeVerifications(
  */
 export async function getBadgeWithDetails(
   badgeId: string,
-  client?: SupabaseClient
+  client?: SupabaseClient,
 ): Promise<BadgeWithDetails | null> {
   try {
     const [badge, confirmations, verifications] = await Promise.all([
@@ -802,4 +792,3 @@ export async function getConfirmationThreshold(client?: SupabaseClient): Promise
     return 5; // Default threshold
   }
 }
-

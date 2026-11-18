@@ -1,11 +1,11 @@
 /**
  * Script to convert Lottie JSON files to GIF using Puppeteer
- * 
+ *
  * This script:
  * 1. Reads a Lottie JSON file
  * 2. Renders frames using Puppeteer (headless browser)
  * 3. Converts frames to GIF
- * 
+ *
  * Usage: npx tsx scripts/lottie-to-gif.ts <file-path> [output-path]
  * Example: npx tsx scripts/lottie-to-gif.ts "imports/lottie/animation.json" "public/animations/animation.gif"
  */
@@ -50,7 +50,7 @@ async function convertLottieToGif(
     height?: number;
     fps?: number;
     quality?: number;
-  } = {}
+  } = {},
 ): Promise<void> {
   console.log(`\n🎬 Converting Lottie to GIF\n`);
   console.log(`📂 Input: ${inputPath}`);
@@ -62,43 +62,47 @@ async function convertLottieToGif(
     const fileContent = fs.readFileSync(inputPath, 'utf8');
     lottieData = JSON.parse(fileContent);
   } catch (error) {
-    console.error(`❌ Error: Failed to parse JSON file: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(
+      `❌ Error: Failed to parse JSON file: ${error instanceof Error ? error.message : String(error)}`,
+    );
     process.exit(1);
   }
 
   // Get original dimensions
   const originalWidth = lottieData.w || 1920;
   const originalHeight = lottieData.h || 1080;
-  
+
   // Limit dimensions for GIF (GIF format has size limitations)
   // Scale down if too large, maintaining aspect ratio
   const maxDimension = 800; // Max width or height
   let canvasWidth = options.width || originalWidth;
   let canvasHeight = options.height || originalHeight;
-  
+
   if (canvasWidth > maxDimension || canvasHeight > maxDimension) {
     const scale = Math.min(maxDimension / canvasWidth, maxDimension / canvasHeight);
     canvasWidth = Math.round(canvasWidth * scale);
     canvasHeight = Math.round(canvasHeight * scale);
     console.log(`⚠️  Scaling down to ${canvasWidth}x${canvasHeight} for GIF compatibility\n`);
   }
-  
+
   const fps = options.fps || lottieData.fr || 30;
   const frameRate = fps;
   const startFrame = lottieData.ip || 0;
   const endFrame = lottieData.op || 60;
-  
+
   // Limit frame count for GIF (too many frames can cause issues)
   const maxFrames = 300;
   let totalFrames = endFrame - startFrame;
   let frameStep = 1;
-  
+
   if (totalFrames > maxFrames) {
     frameStep = Math.ceil(totalFrames / maxFrames);
     totalFrames = Math.ceil(totalFrames / frameStep);
-    console.log(`⚠️  Sampling frames (every ${frameStep} frames) to limit to ${totalFrames} frames\n`);
+    console.log(
+      `⚠️  Sampling frames (every ${frameStep} frames) to limit to ${totalFrames} frames\n`,
+    );
   }
-  
+
   const quality = options.quality || 10;
 
   console.log(`📐 Canvas: ${canvasWidth} x ${canvasHeight}`);
@@ -192,7 +196,10 @@ async function convertLottieToGif(
       // Resize if needed using sharp
       if (canvasWidth !== originalWidth || canvasHeight !== originalHeight) {
         const resized = await sharp(screenshot)
-          .resize(canvasWidth, canvasHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .resize(canvasWidth, canvasHeight, {
+            fit: 'contain',
+            background: { r: 0, g: 0, b: 0, alpha: 0 },
+          })
           .png()
           .toBuffer();
         frameBuffers.push(resized);
@@ -212,7 +219,7 @@ async function convertLottieToGif(
     // Create animated GIF using sharp
     // Adjust delay based on frame step to maintain original timing
     const delay = Math.round((1000 / frameRate) * frameStep);
-    
+
     // Save frames as temporary files (sharp needs file paths for animated GIFs)
     const tempDir = path.join(path.dirname(outputPath), '.temp-gif-frames');
     if (!fs.existsSync(tempDir)) {
@@ -232,7 +239,10 @@ async function convertLottieToGif(
       animated: true,
       limitInputPixels: false,
     })
-      .resize(canvasWidth, canvasHeight, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .resize(canvasWidth, canvasHeight, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
       .gif({
         delay: delay,
         loop: 0,
@@ -274,12 +284,16 @@ const outputPath = process.argv[3];
 if (!inputPath) {
   console.error('❌ Error: Input file path is required');
   console.log('\nUsage: npx tsx scripts/lottie-to-gif.ts <input-path> [output-path]');
-  console.log('Example: npx tsx scripts/lottie-to-gif.ts "imports/lottie/animation.json" "public/animations/animation.gif"\n');
+  console.log(
+    'Example: npx tsx scripts/lottie-to-gif.ts "imports/lottie/animation.json" "public/animations/animation.gif"\n',
+  );
   process.exit(1);
 }
 
 // Resolve absolute paths
-const resolvedInputPath = path.isAbsolute(inputPath) ? inputPath : path.resolve(process.cwd(), inputPath);
+const resolvedInputPath = path.isAbsolute(inputPath)
+  ? inputPath
+  : path.resolve(process.cwd(), inputPath);
 
 if (!fs.existsSync(resolvedInputPath)) {
   console.error(`❌ Error: Input file not found: ${resolvedInputPath}`);
@@ -289,7 +303,9 @@ if (!fs.existsSync(resolvedInputPath)) {
 // Determine output path
 let resolvedOutputPath: string;
 if (outputPath) {
-  resolvedOutputPath = path.isAbsolute(outputPath) ? outputPath : path.resolve(process.cwd(), outputPath);
+  resolvedOutputPath = path.isAbsolute(outputPath)
+    ? outputPath
+    : path.resolve(process.cwd(), outputPath);
 } else {
   // Default: same directory, .gif extension
   const inputDir = path.dirname(resolvedInputPath);

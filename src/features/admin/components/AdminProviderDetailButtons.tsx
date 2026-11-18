@@ -11,7 +11,10 @@ interface AdminProviderDetailButtonsProps {
   variant: 'mobile' | 'desktop';
 }
 
-export function AdminProviderDetailButtons({ providerId, variant }: AdminProviderDetailButtonsProps) {
+export function AdminProviderDetailButtons({
+  providerId,
+  variant,
+}: AdminProviderDetailButtonsProps) {
   const router = useRouter();
   const { t } = useLanguage();
 

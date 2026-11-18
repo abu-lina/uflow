@@ -177,9 +177,7 @@ async function doCreateProviderOrService(
   // the client only picks which door to knock on — it can never toggle the
   // check itself.
   const submitUrl =
-    formData.submissionSource === 'recommend'
-      ? '/api/providers/recommend'
-      : '/api/providers';
+    formData.submissionSource === 'recommend' ? '/api/providers/recommend' : '/api/providers';
 
   const response = await fetch(submitUrl, {
     method: 'POST',

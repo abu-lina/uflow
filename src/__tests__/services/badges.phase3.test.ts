@@ -77,7 +77,7 @@ describe('badges service phase 3 typed FKs', () => {
       expect.objectContaining({
         provider_id: 'provider-1',
         badge_type_id: 'bt-1',
-      })
+      }),
     );
   });
 });

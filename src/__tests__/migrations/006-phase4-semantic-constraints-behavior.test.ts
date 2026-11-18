@@ -48,8 +48,18 @@ function runSqlExpectFailure(dbName: string, sql: string) {
 describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral checks', () => {
   const dbName = `phase4_semantic_${randomUUID().replace(/-/g, '').slice(0, 16)}`;
   const scratchDir = mkdtempSync(join(tmpdir(), 'phase4-semantic-'));
-  const enumMigrationPath = join(process.cwd(), 'supabase', 'migrations', '0060_plan_145_enum_value.sql');
-  const migrationPath = join(process.cwd(), 'supabase', 'migrations', '0061_phase4_semantic_constraints.sql');
+  const enumMigrationPath = join(
+    process.cwd(),
+    'supabase',
+    'migrations',
+    '0060_plan_145_enum_value.sql',
+  );
+  const migrationPath = join(
+    process.cwd(),
+    'supabase',
+    'migrations',
+    '0061_phase4_semantic_constraints.sql',
+  );
   const enumMigrationSqlPath = join(scratchDir, '0060_plan_145_enum_value.sql');
   const migrationSqlPath = join(scratchDir, '0061_phase4_semantic_constraints.sql');
 
@@ -82,16 +92,32 @@ describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral 
 
       INSERT INTO public.providers (listing_type, accepts_donations)
       VALUES (NULL, TRUE);
-      `
+      `,
     );
 
     // Apply prerequisite migration 0060: adds 'ummah' to listing_type_enum
-    const applyEnumResult = runCommand('psql', ['-d', dbName, '-v', 'ON_ERROR_STOP=1', '-f', enumMigrationSqlPath]);
+    const applyEnumResult = runCommand('psql', [
+      '-d',
+      dbName,
+      '-v',
+      'ON_ERROR_STOP=1',
+      '-f',
+      enumMigrationSqlPath,
+    ]);
     if (applyEnumResult.status !== 0) {
-      throw new Error(applyEnumResult.stderr || applyEnumResult.stdout || 'failed to apply migration 0060 (enum)');
+      throw new Error(
+        applyEnumResult.stderr || applyEnumResult.stdout || 'failed to apply migration 0060 (enum)',
+      );
     }
 
-    const applyResult = runCommand('psql', ['-d', dbName, '-v', 'ON_ERROR_STOP=1', '-f', migrationSqlPath]);
+    const applyResult = runCommand('psql', [
+      '-d',
+      dbName,
+      '-v',
+      'ON_ERROR_STOP=1',
+      '-f',
+      migrationSqlPath,
+    ]);
     if (applyResult.status !== 0) {
       throw new Error(applyResult.stderr || applyResult.stdout || 'failed to apply migration 006');
     }
@@ -103,12 +129,15 @@ describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral 
   });
 
   it('backfills NULL listing_type to ummah and enforces NOT NULL', () => {
-    const nullCount = runSql(dbName, `SELECT COUNT(*) FROM public.providers WHERE listing_type IS NULL;`);
+    const nullCount = runSql(
+      dbName,
+      `SELECT COUNT(*) FROM public.providers WHERE listing_type IS NULL;`,
+    );
     expect(nullCount).toBe('0');
 
     const ummahCount = runSql(
       dbName,
-      `SELECT COUNT(*) FROM public.providers WHERE listing_type = 'ummah'::public.listing_type_enum;`
+      `SELECT COUNT(*) FROM public.providers WHERE listing_type = 'ummah'::public.listing_type_enum;`,
     );
     expect(ummahCount).toBe('1');
 
@@ -120,7 +149,7 @@ describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral 
       WHERE table_schema = 'public'
         AND table_name = 'providers'
         AND column_name = 'listing_type';
-      `
+      `,
     );
     expect(isNullable).toBe('NO');
   });
@@ -128,14 +157,14 @@ describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral 
   it('rejects invalid food-only and business-only combinations on insert', () => {
     const invalidFoodOnly = runSqlExpectFailure(
       dbName,
-      `INSERT INTO public.providers (listing_type, no_alcohol) VALUES ('business', TRUE);`
+      `INSERT INTO public.providers (listing_type, no_alcohol) VALUES ('business', TRUE);`,
     );
     expect(invalidFoodOnly.status).not.toBe(0);
     expect(invalidFoodOnly.stderr).toContain('providers_listing_type_food_only_ck');
 
     const invalidBusinessOnly = runSqlExpectFailure(
       dbName,
-      `INSERT INTO public.providers (listing_type, no_gambling) VALUES ('food', TRUE);`
+      `INSERT INTO public.providers (listing_type, no_gambling) VALUES ('food', TRUE);`,
     );
     expect(invalidBusinessOnly.status).not.toBe(0);
     expect(invalidBusinessOnly.stderr).toContain('providers_listing_type_business_only_ck');
@@ -144,7 +173,7 @@ describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral 
   it('rejects invalid ummah-only combinations on insert', () => {
     const invalidUmmahOnly = runSqlExpectFailure(
       dbName,
-      `INSERT INTO public.providers (listing_type, accepts_donations) VALUES ('food', TRUE);`
+      `INSERT INTO public.providers (listing_type, accepts_donations) VALUES ('food', TRUE);`,
     );
     expect(invalidUmmahOnly.status).not.toBe(0);
     expect(invalidUmmahOnly.stderr).toContain('providers_listing_type_ummah_only_ck');
@@ -162,7 +191,7 @@ describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral 
 
       INSERT INTO public.providers (listing_type, accepts_donations)
       VALUES ('ummah', TRUE);
-      `
+      `,
     );
 
     const validCount = runSql(dbName, `SELECT COUNT(*) FROM public.providers;`);
@@ -180,7 +209,7 @@ describe.skipIf(!LOCAL_POSTGRES)('migration 006 semantic constraints behavioral 
         ORDER BY id
         LIMIT 1
       );
-      `
+      `,
     );
 
     expect(invalidUpdate.status).not.toBe(0);

@@ -10,7 +10,10 @@ interface SkeletonGridProps {
   className?: string;
 }
 
-export const SkeletonGrid = memo(function SkeletonGrid({ count = 8, className = '' }: SkeletonGridProps) {
+export const SkeletonGrid = memo(function SkeletonGrid({
+  count = 8,
+  className = '',
+}: SkeletonGridProps) {
   const skeletonCards = Array.from({ length: count }, (_, index) => (
     <motion.div
       key={index}

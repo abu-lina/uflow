@@ -4,12 +4,13 @@ description: TDD workflow and test strategy patterns including test pyramid, cov
 license: MIT
 metadata:
   author: groupzer0
-  version: "1.1"
+  version: '1.1'
 ---
 
 # Testing Patterns
 
 Systematic approach to effective testing. Use this skill when:
+
 - Writing or changing tests (load anti-patterns reference)
 - Designing test strategies for new features
 - Reviewing test coverage adequacy
@@ -36,26 +37,27 @@ Systematic approach to effective testing. Use this skill when:
 
 ### Why TDD?
 
-| Benefit | How TDD Delivers |
-|---------|------------------|
-| **Prevents over-mocking** | You see what test needs before mocking |
-| **No test-only production code** | Minimal implementation = no extras |
-| **Tests real behavior** | Failing test proves it tests something real |
-| **Better design** | Testable code = loosely coupled code |
+| Benefit                          | How TDD Delivers                            |
+| -------------------------------- | ------------------------------------------- |
+| **Prevents over-mocking**        | You see what test needs before mocking      |
+| **No test-only production code** | Minimal implementation = no extras          |
+| **Tests real behavior**          | Failing test proves it tests something real |
+| **Better design**                | Testable code = loosely coupled code        |
 
 ### When TDD Applies
 
-| Situation | TDD? | Notes |
-|-----------|------|-------|
-| New features | ✅ Always | Core workflow |
-| Behavior changes | ✅ Always | Modify test first, then code |
-| Bug fixes | ✅ Preferred | Write test reproducing bug first |
-| Pure refactors | ⚠️ Optional | Existing tests should cover |
-| Exploratory spikes | ❌ Skip | But TDD rewrite after |
+| Situation          | TDD?         | Notes                            |
+| ------------------ | ------------ | -------------------------------- |
+| New features       | ✅ Always    | Core workflow                    |
+| Behavior changes   | ✅ Always    | Modify test first, then code     |
+| Bug fixes          | ✅ Preferred | Write test reproducing bug first |
+| Pure refactors     | ⚠️ Optional  | Existing tests should cover      |
+| Exploratory spikes | ❌ Skip      | But TDD rewrite after            |
 
 ### TDD Violations
 
 **If implementation arrives without tests:**
+
 1. Reject with "TDD Required"
 2. Specify which tests should exist
 3. Implementation writes tests first, then code
@@ -77,6 +79,7 @@ See [references/testing-anti-patterns.md](references/testing-anti-patterns.md) f
 ```
 
 ### Unit Tests
+
 **What:** Test single function/class in isolation
 **When:** All business logic, utilities, data transformations
 **Speed:** Milliseconds
@@ -95,6 +98,7 @@ def test_order_discount():
 ```
 
 ### Integration Tests
+
 **What:** Test component interactions
 **When:** Database queries, API contracts, service boundaries
 **Speed:** Seconds
@@ -110,6 +114,7 @@ def test_user_repository_finds_by_email():
 ```
 
 ### E2E Tests
+
 **What:** Test full user workflows
 **When:** Critical paths, smoke tests, happy paths
 **Speed:** Minutes
@@ -147,11 +152,11 @@ def test_user_can_checkout():
 
 ### Coverage Targets
 
-| Type | Target | Notes |
-|------|--------|-------|
-| Unit | 80%+ | Focus on logic, not coverage number |
-| Integration | Critical paths | Don't test every permutation |
-| E2E | Happy paths only | 5-10 core scenarios |
+| Type        | Target           | Notes                               |
+| ----------- | ---------------- | ----------------------------------- |
+| Unit        | 80%+             | Focus on logic, not coverage number |
+| Integration | Critical paths   | Don't test every permutation        |
+| E2E         | Happy paths only | 5-10 core scenarios                 |
 
 ---
 
@@ -160,6 +165,7 @@ def test_user_can_checkout():
 ### Systematic Approach
 
 **For numeric inputs:**
+
 - Zero
 - Negative numbers
 - Very large numbers (overflow)
@@ -167,6 +173,7 @@ def test_user_can_checkout():
 - Boundary values (n-1, n, n+1)
 
 **For string inputs:**
+
 - Empty string
 - Very long string
 - Unicode/emoji
@@ -175,6 +182,7 @@ def test_user_can_checkout():
 - SQL/HTML injection attempts
 
 **For collections:**
+
 - Empty
 - Single element
 - Many elements
@@ -182,6 +190,7 @@ def test_user_can_checkout():
 - null/undefined elements
 
 **For dates:**
+
 - Leap years
 - Timezone boundaries
 - DST transitions
@@ -191,14 +200,14 @@ def test_user_can_checkout():
 ### Example Matrix
 
 ```markdown
-| Input | Scenario | Expected |
-|-------|----------|----------|
-| price | 0 | Free item handling |
-| price | -5 | Validation error |
+| Input | Scenario  | Expected             |
+| ----- | --------- | -------------------- |
+| price | 0         | Free item handling   |
+| price | -5        | Validation error     |
 | price | 999999.99 | Large number display |
-| name | "" | Required field error |
-| name | "a"*1000 | Truncation or error |
-| email | "test" | Invalid format error |
+| name  | ""        | Required field error |
+| name  | "a"*1000  | Truncation or error  |
+| email | "test"    | Invalid format error |
 ```
 
 ---
@@ -207,11 +216,11 @@ def test_user_can_checkout():
 
 ### When to Mock
 
-| Context | Mock What? | Reason |
-|---------|------------|--------|
-| Unit tests | External dependencies (DB, network, time) | Isolation + speed |
-| Integration tests | External services only | Test real component interaction |
-| E2E tests | Nothing | Test real system |
+| Context           | Mock What?                                | Reason                          |
+| ----------------- | ----------------------------------------- | ------------------------------- |
+| Unit tests        | External dependencies (DB, network, time) | Isolation + speed               |
+| Integration tests | External services only                    | Test real component interaction |
+| E2E tests         | Nothing                                   | Test real system                |
 
 > ⚠️ **TDD prevents over-mocking**: If you write the test first and watch it fail, you know exactly what needs mocking.
 
@@ -255,14 +264,14 @@ spy_logger = Mock(wraps=real_logger)
 
 ## Test Quality Checklist
 
-| Quality | Check |
-|---------|-------|
-| **Readable** | Can a new dev understand in 30 seconds? |
-| **Isolated** | Does it fail independently of other tests? |
-| **Fast** | Unit tests < 100ms, Integration < 5s? |
-| **Deterministic** | Same result every run? |
-| **Focused** | One assertion per test (or logical group)? |
-| **Maintainable** | Will this break for wrong reasons? |
+| Quality           | Check                                      |
+| ----------------- | ------------------------------------------ |
+| **Readable**      | Can a new dev understand in 30 seconds?    |
+| **Isolated**      | Does it fail independently of other tests? |
+| **Fast**          | Unit tests < 100ms, Integration < 5s?      |
+| **Deterministic** | Same result every run?                     |
+| **Focused**       | One assertion per test (or logical group)? |
+| **Maintainable**  | Will this break for wrong reasons?         |
 
 ---
 

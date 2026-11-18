@@ -49,20 +49,12 @@ export function ExpandSection({
         className="flex w-full items-center justify-between p-4"
         onClick={handleToggle}
       >
-        <h3 className="font-inter-tight text-lg font-semibold text-content-heading">
-          {title}
-        </h3>
+        <h3 className="font-inter-tight text-lg font-semibold text-content-heading">{title}</h3>
         <ChevronDown
-          className={`h-6 w-6 text-gray-600 transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`}
+          className={`h-6 w-6 text-gray-600 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
-      {isOpen && (
-        <div className="border-t border-border-light px-4 pb-4">
-          {children}
-        </div>
-      )}
+      {isOpen && <div className="border-t border-border-light px-4 pb-4">{children}</div>}
     </div>
   );
 }

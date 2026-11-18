@@ -63,7 +63,7 @@ describe('updateProviderFields — community service RPC payload', () => {
         listingType: 'food',
         communityServiceIds: ['550e8400-e29b-41d4-a716-446655440001'],
       },
-      'admin-user-id'
+      'admin-user-id',
     );
 
     expect(mockRpc).toHaveBeenCalledWith('admin_update_provider', {
@@ -86,7 +86,7 @@ describe('updateProviderFields — community service RPC payload', () => {
     await updateProviderFields(
       '123e4567-e89b-12d3-a456-426614174000',
       { providerName: 'Name Only' },
-      'admin-id'
+      'admin-id',
     );
 
     const callArg = mockRpc.mock.calls[0][1];
@@ -104,7 +104,7 @@ describe('updateProviderFields — community service RPC payload', () => {
         providerName: 'Test',
         communityServiceIds: [],
       },
-      'admin-id'
+      'admin-id',
     );
 
     const callArg = mockRpc.mock.calls[0][1];
@@ -125,11 +125,9 @@ describe('updateProviderFields — edge cases', () => {
     await updateProviderFields(
       '123e4567-e89b-12d3-a456-426614174000',
       {
-        menuItems: [
-          { name_de: 'Döner', price_cents: 850, sort_order: 1, is_available: true },
-        ],
+        menuItems: [{ name_de: 'Döner', price_cents: 850, sort_order: 1, is_available: true }],
       },
-      'admin-id'
+      'admin-id',
     );
 
     const callArg = mockRpc.mock.calls[0][1];
@@ -143,11 +141,7 @@ describe('updateProviderFields — edge cases', () => {
 
     const { updateProviderFields } = await import('@/services/admin/providerEdit');
 
-    await updateProviderFields(
-      '123e4567-e89b-12d3-a456-426614174000',
-      {},
-      'admin-id'
-    );
+    await updateProviderFields('123e4567-e89b-12d3-a456-426614174000', {}, 'admin-id');
 
     const callArg = mockRpc.mock.calls[0][1];
     expect(callArg.p_data).toEqual({});
@@ -168,15 +162,13 @@ describe('updateProviderFields — edge cases', () => {
         noAlcohol: true,
         noPork: true,
         noGambling: false,
-        menuItems: [
-          { name_de: 'Kebab', price_cents: 700, sort_order: 0, is_available: true },
-        ],
+        menuItems: [{ name_de: 'Kebab', price_cents: 700, sort_order: 0, is_available: true }],
         deliveryLinks: [
           { platform: 'wolt', platform_url: 'https://wolt.com/venue/test', is_active: true },
         ],
         communityServiceIds: ['550e8400-e29b-41d4-a716-446655440001'],
       },
-      'admin-id'
+      'admin-id',
     );
 
     const callArg = mockRpc.mock.calls[0][1];
@@ -186,9 +178,7 @@ describe('updateProviderFields — edge cases', () => {
     expect(callArg.p_data.food_providers.no_alcohol).toBe(true);
     expect(callArg.p_data.menu_items).toHaveLength(1);
     expect(callArg.p_data.delivery_links).toHaveLength(1);
-    expect(callArg.p_data.community_service_ids).toEqual([
-      '550e8400-e29b-41d4-a716-446655440001',
-    ]);
+    expect(callArg.p_data.community_service_ids).toEqual(['550e8400-e29b-41d4-a716-446655440001']);
   });
 
   it('handles store provider with store-specific fields', async () => {
@@ -209,7 +199,7 @@ describe('updateProviderFields — edge cases', () => {
           '550e8400-e29b-41d4-a716-446655440002',
         ],
       },
-      'admin-id'
+      'admin-id',
     );
 
     const callArg = mockRpc.mock.calls[0][1];
@@ -229,8 +219,8 @@ describe('updateProviderFields — edge cases', () => {
       updateProviderFields(
         '123e4567-e89b-12d3-a456-426614174000',
         { communityServiceIds: ['550e8400-e29b-41d4-a716-446655440001'] },
-        'admin-id'
-      )
+        'admin-id',
+      ),
     ).rejects.toThrow('RPC failed');
   });
 });

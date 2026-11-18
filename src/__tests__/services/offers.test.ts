@@ -61,13 +61,12 @@ describe('offers service', () => {
       await searchOffers('test-query');
 
       // Fallback should use explicit columns, not select('*')
-      expect(mockSelect).toHaveBeenCalledWith(
-        expect.stringContaining('offer_id')
-      );
+      expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('offer_id'));
       // Must NOT be called with '*'
       const selectCalls = mockSelect.mock.calls;
       const fallbackSelectCall = selectCalls.find(
-        (call: unknown[]) => typeof call[0] === 'string' && call[0] !== '*, category:categories(name_de, name_en)'
+        (call: unknown[]) =>
+          typeof call[0] === 'string' && call[0] !== '*, category:categories(name_de, name_en)',
       );
       expect(fallbackSelectCall).toBeDefined();
       if (fallbackSelectCall) {
@@ -97,7 +96,14 @@ describe('offers service', () => {
     it('returns RPC results when available', async () => {
       mockRpc.mockResolvedValueOnce({
         data: [
-          { offer_id: 'o1', name_de: 'Angebot', name_en: 'Offer', category_id: 'c1', created_by: 'u1', created_at: '2024-01-01' },
+          {
+            offer_id: 'o1',
+            name_de: 'Angebot',
+            name_en: 'Offer',
+            category_id: 'c1',
+            created_by: 'u1',
+            created_at: '2024-01-01',
+          },
         ],
         error: null,
       });
@@ -147,7 +153,9 @@ describe('offers service', () => {
         error: { message: 'rpc failed' },
       });
 
-      await expect(searchFoodConcepts({ search_query: 'doe', limit_count: 20 })).rejects.toBeTruthy();
+      await expect(
+        searchFoodConcepts({ search_query: 'doe', limit_count: 20 }),
+      ).rejects.toBeTruthy();
       expect(mockRpc).toHaveBeenCalledWith('search_food_concepts', {
         search_query: 'doe',
         limit_count: 20,

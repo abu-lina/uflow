@@ -15,11 +15,11 @@ This is the **easiest and most reliable** method:
 
 ```sql
 -- Get all table creation statements
-SELECT 
-  'CREATE TABLE ' || schemaname || '.' || tablename || ' (' || 
+SELECT
+  'CREATE TABLE ' || schemaname || '.' || tablename || ' (' ||
   string_agg(
-    column_name || ' ' || 
-    CASE 
+    column_name || ' ' ||
+    CASE
       WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
       WHEN data_type = 'character' THEN 'CHAR(' || character_maximum_length || ')'
       WHEN data_type = 'numeric' THEN 'NUMERIC(' || numeric_precision || ',' || numeric_scale || ')'
@@ -67,8 +67,8 @@ supabase db dump \
 
 ```sql
 -- Get all tables
-SELECT table_name 
-FROM information_schema.tables 
+SELECT table_name
+FROM information_schema.tables
 WHERE table_schema = 'public'
 ORDER BY table_name;
 
@@ -94,17 +94,3 @@ If you have all your migrations in `supabase/migrations/`, you can:
 2. Then extract the schema from that fresh database
 
 This ensures you have the complete, up-to-date schema.
-
-
-
-
-
-
-
-
-
-
-
-
-
-

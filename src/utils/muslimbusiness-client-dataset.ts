@@ -85,7 +85,7 @@ export function buildCardsFromClientDataset(input: ClientDatasetInput): ClientDa
       const email = (business.email ?? '').trim();
       const telefon = (business.telefonnummer ?? '').trim();
 
-      const socialMedia = ((business.social_media ?? '').trim() || (business.link ?? '').trim());
+      const socialMedia = (business.social_media ?? '').trim() || (business.link ?? '').trim();
 
       return {
         id: business.id,

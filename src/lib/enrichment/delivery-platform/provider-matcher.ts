@@ -27,8 +27,15 @@ const DEFAULT_CONFIG: ProviderMatchConfig = {
 };
 
 const SUFFIXES = [
-  ' gmbh & co. kg', ' ug & co. kg', ' restaurant', ' e. k.', ' e. v.',
-  ' gmbh', ' e.k.', ' e.v.', ' ug',
+  ' gmbh & co. kg',
+  ' ug & co. kg',
+  ' restaurant',
+  ' e. k.',
+  ' e. v.',
+  ' gmbh',
+  ' e.k.',
+  ' e.v.',
+  ' ug',
 ];
 
 export function normalizeName(name: string): string {
@@ -40,7 +47,10 @@ export function normalizeName(name: string): string {
     }
   }
 
-  result = result.replace(/[^a-zäöüß0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  result = result
+    .replace(/[^a-zäöüß0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   return result;
 }
@@ -61,7 +71,7 @@ export function matchProviderToVenues<T extends VenueLike>(
   providerName: string,
   providerCity: string,
   venues: T[],
-  config?: ProviderMatchConfig
+  config?: ProviderMatchConfig,
 ): MatchCandidate<T> | null {
   const cfg = { ...DEFAULT_CONFIG, ...config };
 

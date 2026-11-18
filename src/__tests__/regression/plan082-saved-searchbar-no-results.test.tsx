@@ -165,22 +165,21 @@ describe('Plan 082 - Saved page empty-state searchbar regression', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockUseQuery
-      .mockReturnValueOnce({
-        data: [
-          {
-            id: 'provider-1',
-            name: 'Alpha Provider',
-            address_street: 'Main St',
-            address_city: 'Berlin',
-            category: { name_de: 'Gesundheit' },
-            images: null,
-            type: 'provider',
-          },
-        ],
-        isLoading: false,
-        error: null,
-      });
+    mockUseQuery.mockReturnValueOnce({
+      data: [
+        {
+          id: 'provider-1',
+          name: 'Alpha Provider',
+          address_street: 'Main St',
+          address_city: 'Berlin',
+          category: { name_de: 'Gesundheit' },
+          images: null,
+          type: 'provider',
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
   });
 
   it('[post-fix PASSES] keeps SearchBar visible when search has no matching saved providers', () => {

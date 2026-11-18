@@ -1,6 +1,6 @@
 /**
  * Data Export Service
- * 
+ *
  * Handles user data export functionality (GDPR Right to Portability)
  */
 
@@ -25,11 +25,11 @@ export const dataExportService = {
 
       // Get the blob from response
       const blob = await response.blob();
-      
+
       // Get filename from Content-Disposition header or use default
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = `my-data-${Date.now()}.json`;
-      
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
         if (filenameMatch && filenameMatch[1]) {
@@ -44,7 +44,7 @@ export const dataExportService = {
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      
+
       // Cleanup
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);

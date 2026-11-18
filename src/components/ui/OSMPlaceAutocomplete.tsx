@@ -93,7 +93,7 @@ function getPlaceTypeLabel(placeType: OSMPlaceType, t: (key: string) => string):
 
 /**
  * OSM Place Autocomplete component
- * 
+ *
  * Features:
  * - Search for Muslim places (mosques, halal restaurants, shops) within a city
  * - Real-time suggestions as user types
@@ -124,100 +124,110 @@ export function OSMPlaceAutocomplete({
   const isMounted = useIsMounted();
 
   // Fetch suggestions from OSM service
-  const fetchSuggestions = useCallback(async (query: string) => {
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+  const fetchSuggestions = useCallback(
+    async (query: string) => {
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-    // Create new abort controller
-    abortControllerRef.current = new AbortController();
+      // Create new abort controller
+      abortControllerRef.current = new AbortController();
 
-    if (query.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    if (!cityName || !cityName.trim()) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const places = await searchPlacesInCity(query, cityName);
-      setSuggestions(places);
-      setShowSuggestions(true);
-      setSelectedIndex(-1);
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        // Request was cancelled, ignore
+      if (query.length < 2) {
+        setSuggestions([]);
+        setShowSuggestions(false);
         return;
       }
-      console.error('Error fetching place suggestions:', error);
-      setSuggestions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [cityName]);
+
+      if (!cityName || !cityName.trim()) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const places = await searchPlacesInCity(query, cityName);
+        setSuggestions(places);
+        setShowSuggestions(true);
+        setSelectedIndex(-1);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          // Request was cancelled, ignore
+          return;
+        }
+        console.error('Error fetching place suggestions:', error);
+        setSuggestions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [cityName],
+  );
 
   // Fetch suggestions - stable reference
   const fetchSuggestionsStable = useRef(fetchSuggestions);
   fetchSuggestionsStable.current = fetchSuggestions;
 
   // Handle input change with debouncing
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInputValue(newValue);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      setInputValue(newValue);
 
-    // Clear existing debounce timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
+      // Clear existing debounce timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
 
-    // Debounce API calls (wait 500ms after user stops typing)
-    if (newValue.length >= 2 && cityName) {
-      debounceTimerRef.current = setTimeout(() => {
-        fetchSuggestionsStable.current(newValue);
-      }, 500);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  }, [cityName]);
+      // Debounce API calls (wait 500ms after user stops typing)
+      if (newValue.length >= 2 && cityName) {
+        debounceTimerRef.current = setTimeout(() => {
+          fetchSuggestionsStable.current(newValue);
+        }, 500);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    },
+    [cityName],
+  );
 
   // Handle suggestion click
-  const handleSuggestionClick = useCallback((place: OSMPlace) => {
-    setInputValue(place.name);
-    setShowSuggestions(false);
-    onPlaceSelect(place);
-  }, [onPlaceSelect]);
+  const handleSuggestionClick = useCallback(
+    (place: OSMPlace) => {
+      setInputValue(place.name);
+      setShowSuggestions(false);
+      onPlaceSelect(place);
+    },
+    [onPlaceSelect],
+  );
 
   // Handle keyboard navigation
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showSuggestions || suggestions.length === 0) {
-      return;
-    }
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!showSuggestions || suggestions.length === 0) {
+        return;
+      }
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => 
-        prev < suggestions.length - 1 ? prev + 1 : prev
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
-    } else if (e.key === 'Enter' && selectedIndex >= 0) {
-      e.preventDefault();
-      handleSuggestionClick(suggestions[selectedIndex]);
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
-      setSelectedIndex(-1);
-    }
-  }, [showSuggestions, suggestions, selectedIndex, handleSuggestionClick]);
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+      } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        handleSuggestionClick(suggestions[selectedIndex]);
+      } else if (e.key === 'Escape') {
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+      }
+    },
+    [showSuggestions, suggestions, selectedIndex, handleSuggestionClick],
+  );
 
   // Cleanup on unmount
   useEffect(() => {
@@ -252,23 +262,17 @@ export function OSMPlaceAutocomplete({
   return (
     <div className={cn('relative w-full', className)}>
       {/* Search icon on the left */}
-      <div className="absolute left-0 top-0 flex items-center h-full pl-0 z-10 pointer-events-none">
+      <div className="pointer-events-none absolute left-0 top-0 z-10 flex h-full items-center pl-0">
         <Icon
-          className={cn(
-            'h-4 w-4 text-content-muted transition-opacity',
-            isLoading && 'opacity-0'
-          )}
+          className={cn('h-4 w-4 text-content-muted transition-opacity', isLoading && 'opacity-0')}
           icon={isLoading ? 'mdi:loading' : 'mdi:magnify'}
         />
       </div>
 
       {/* Loading indicator on the right */}
       {isLoading && (
-        <div className="absolute right-0 top-0 flex items-center h-full pr-0 z-10">
-          <Icon
-            className="h-4 w-4 text-content-muted animate-spin"
-            icon="mdi:loading"
-          />
+        <div className="absolute right-0 top-0 z-10 flex h-full items-center pr-0">
+          <Icon className="h-4 w-4 animate-spin text-content-muted" icon="mdi:loading" />
         </div>
       )}
 
@@ -283,7 +287,7 @@ export function OSMPlaceAutocomplete({
           'pl-6', // Add left padding for search icon
           isLoading && 'pr-6', // Add right padding when loading
           error && 'text-danger',
-          isDisabled && 'opacity-50 cursor-not-allowed'
+          isDisabled && 'cursor-not-allowed opacity-50',
         )}
         placeholder={placeholder || t('create.importOsm.searchPlaceholder')}
         role="combobox"
@@ -303,7 +307,7 @@ export function OSMPlaceAutocomplete({
       {/* Suggestions dropdown */}
       {showSuggestions && (
         <div
-          className="absolute z-50 mt-1 w-full max-h-[300px] overflow-y-auto rounded-2xl border border-border bg-background shadow-lg"
+          className="absolute z-50 mt-1 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-border bg-background shadow-lg"
           id="osm-place-suggestions"
           role="listbox"
         >
@@ -331,7 +335,7 @@ export function OSMPlaceAutocomplete({
                   className={cn(
                     'w-full px-4 py-3 text-left transition-colors',
                     'hover:bg-neutral-muted',
-                    isSelected && 'bg-primary/5'
+                    isSelected && 'bg-primary/5',
                   )}
                   role="option"
                   type="button"
@@ -343,7 +347,9 @@ export function OSMPlaceAutocomplete({
                       <Icon
                         className={cn(
                           'h-4 w-4 flex-shrink-0',
-                          place.placeType === 'mosque' || place.placeType === 'islamic_center' ? 'text-primary' : 'text-content-muted'
+                          place.placeType === 'mosque' || place.placeType === 'islamic_center'
+                            ? 'text-primary'
+                            : 'text-content-muted',
                         )}
                         icon={getPlaceTypeIcon(place.placeType)}
                       />
@@ -376,7 +382,7 @@ export function OSMPlaceAutocomplete({
 
       {/* Error message */}
       {error && (
-        <div className="mt-1 text-xs text-danger flex items-center gap-1">
+        <div className="mt-1 flex items-center gap-1 text-xs text-danger">
           <Icon className="h-3 w-3" icon="mdi:alert-circle" />
           <span>{error}</span>
         </div>
@@ -390,9 +396,7 @@ export function OSMPlaceAutocomplete({
       )}
 
       {isMounted && !error && cityName && inputValue.length > 0 && inputValue.length < 2 && (
-        <div className="mt-1 text-xs text-content-muted">
-          {t('create.importOsm.typeToSearch')}
-        </div>
+        <div className="mt-1 text-xs text-content-muted">{t('create.importOsm.typeToSearch')}</div>
       )}
     </div>
   );

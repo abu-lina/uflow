@@ -67,7 +67,7 @@ describe('DELETE /api/admin/providers/[id]', () => {
 
     const response = await DELETE(
       createRequest(`http://localhost/api/admin/providers/${VALID_ID}`),
-      { params: Promise.resolve({ id: VALID_ID }) }
+      { params: Promise.resolve({ id: VALID_ID }) },
     );
     expect(response.status).toBe(401);
 
@@ -80,7 +80,7 @@ describe('DELETE /api/admin/providers/[id]', () => {
 
     const response = await DELETE(
       createRequest(`http://localhost/api/admin/providers/${VALID_ID}`),
-      { params: Promise.resolve({ id: VALID_ID }) }
+      { params: Promise.resolve({ id: VALID_ID }) },
     );
     expect(response.status).toBe(403);
 
@@ -95,7 +95,7 @@ describe('DELETE /api/admin/providers/[id]', () => {
 
     const response = await DELETE(
       createRequest(`http://localhost/api/admin/providers/${VALID_ID}`),
-      { params: Promise.resolve({ id: VALID_ID }) }
+      { params: Promise.resolve({ id: VALID_ID }) },
     );
     expect(response.status).toBe(429);
 
@@ -104,10 +104,9 @@ describe('DELETE /api/admin/providers/[id]', () => {
   });
 
   it('returns 400 for invalid UUID path param', async () => {
-    const response = await DELETE(
-      createRequest('http://localhost/api/admin/providers/bad-id'),
-      { params: Promise.resolve({ id: 'bad-id' }) }
-    );
+    const response = await DELETE(createRequest('http://localhost/api/admin/providers/bad-id'), {
+      params: Promise.resolve({ id: 'bad-id' }),
+    });
     expect(response.status).toBe(400);
 
     const json = await response.json();
@@ -117,7 +116,7 @@ describe('DELETE /api/admin/providers/[id]', () => {
   it('returns 200 on successful delete', async () => {
     const response = await DELETE(
       createRequest(`http://localhost/api/admin/providers/${VALID_ID}`),
-      { params: Promise.resolve({ id: VALID_ID }) }
+      { params: Promise.resolve({ id: VALID_ID }) },
     );
     expect(response.status).toBe(200);
 
@@ -126,10 +125,9 @@ describe('DELETE /api/admin/providers/[id]', () => {
   });
 
   it('calls deleteProvider with the correct ID', async () => {
-    await DELETE(
-      createRequest(`http://localhost/api/admin/providers/${VALID_ID}`),
-      { params: Promise.resolve({ id: VALID_ID }) }
-    );
+    await DELETE(createRequest(`http://localhost/api/admin/providers/${VALID_ID}`), {
+      params: Promise.resolve({ id: VALID_ID }),
+    });
 
     expect(mockDeleteProvider).toHaveBeenCalledWith(VALID_ID);
   });
@@ -138,10 +136,9 @@ describe('DELETE /api/admin/providers/[id]', () => {
     const { logAdminAction } = await import('@/lib/audit/adminAudit');
     const mockLogAdminAction = logAdminAction as ReturnType<typeof vi.fn>;
 
-    await DELETE(
-      createRequest(`http://localhost/api/admin/providers/${VALID_ID}`),
-      { params: Promise.resolve({ id: VALID_ID }) }
-    );
+    await DELETE(createRequest(`http://localhost/api/admin/providers/${VALID_ID}`), {
+      params: Promise.resolve({ id: VALID_ID }),
+    });
 
     expect(mockLogAdminAction).toHaveBeenCalledWith(
       ADMIN_USER.id,
@@ -149,7 +146,7 @@ describe('DELETE /api/admin/providers/[id]', () => {
       'provider',
       VALID_ID,
       { providerId: VALID_ID },
-      expect.objectContaining({ ipAddress: '127.0.0.1', userAgent: 'test-agent' })
+      expect.objectContaining({ ipAddress: '127.0.0.1', userAgent: 'test-agent' }),
     );
   });
 
@@ -158,7 +155,7 @@ describe('DELETE /api/admin/providers/[id]', () => {
 
     const response = await DELETE(
       createRequest(`http://localhost/api/admin/providers/${VALID_ID}`),
-      { params: Promise.resolve({ id: VALID_ID }) }
+      { params: Promise.resolve({ id: VALID_ID }) },
     );
     expect(response.status).toBe(404);
 
@@ -171,7 +168,7 @@ describe('DELETE /api/admin/providers/[id]', () => {
 
     const response = await DELETE(
       createRequest(`http://localhost/api/admin/providers/${VALID_ID}`),
-      { params: Promise.resolve({ id: VALID_ID }) }
+      { params: Promise.resolve({ id: VALID_ID }) },
     );
     expect(response.status).toBe(500);
 

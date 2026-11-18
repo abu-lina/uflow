@@ -13,8 +13,14 @@ function HalalSealIcon() {
       <div className="absolute -left-8 top-10 h-20 w-44 rounded-[999px] bg-[#5ea79f]/55 mix-blend-multiply" />
       <div className="absolute left-0 top-12 h-12 w-full rounded-[999px] bg-[#90cfc4]/50 mix-blend-soft-light" />
       <div className="absolute inset-[2px] rounded-full border border-[#4c8e88]/55" />
-      <div className="absolute inset-0 flex items-center justify-center" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.35)' }}>
-        <span className="font-inter-tight text-[44px] font-semibold leading-none text-[#f2f6f5]" lang="ar">
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ textShadow: '0 2px 6px rgba(0,0,0,0.35)' }}
+      >
+        <span
+          className="font-inter-tight text-[44px] font-semibold leading-none text-[#f2f6f5]"
+          lang="ar"
+        >
           حلال
         </span>
       </div>

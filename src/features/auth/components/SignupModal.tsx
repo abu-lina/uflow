@@ -32,21 +32,24 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwörter stimmen nicht überein.');
       return;
     }
-    
+
     if (!termsAccepted || !privacyAccepted) {
-      setError(t('legal.consentRequired') || 'Sie müssen den Allgemeinen Geschäftsbedingungen und der Datenschutzrichtlinie zustimmen.');
+      setError(
+        t('legal.consentRequired') ||
+          'Sie müssen den Allgemeinen Geschäftsbedingungen und der Datenschutzrichtlinie zustimmen.',
+      );
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const { data, error: signupError } = await signUpWithLanguage(
         formData.email,
@@ -54,15 +57,15 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
         language,
         undefined, // honeypot
         termsAccepted,
-        privacyAccepted
+        privacyAccepted,
       );
-      
+
       if (signupError) {
         setError(signupError.message || 'Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
         setIsLoading(false);
         return;
       }
-      
+
       if (data) {
         onClose();
       }
@@ -115,7 +118,9 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
                 disabled={isLoading}
                 label="Passwort"
                 placeholder="Mindestens 8 Zeichen, Buchstabe und Zahl"
-                rightIcon={showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                rightIcon={
+                  showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />
+                }
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
                 variant="with-icon"
@@ -128,7 +133,9 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
                 disabled={isLoading}
                 label="Passwort bestätigen"
                 placeholder="Passwort wiederholen"
-                rightIcon={showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                rightIcon={
+                  showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />
+                }
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
                 variant="with-icon"
@@ -136,27 +143,27 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
                 onRightIconClick={() => setShowConfirmPassword(!showConfirmPassword)}
               />
             </FormInputGroup>
-            
+
             {/* Error Message */}
             {error && (
               <div className="mt-2">
                 <div className="rounded-2xl border border-danger/20 bg-danger-soft p-4 shadow-sm">
-                  <p className="font-inter-tight text-sm leading-[19px] text-danger">
-                    {error}
-                  </p>
+                  <p className="font-inter-tight text-sm leading-[19px] text-danger">{error}</p>
                 </div>
               </div>
             )}
-            
+
             {/* Consent Checkbox */}
             <div className="mt-3">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2">
                 <input
                   required
-                  aria-label={t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'}
+                  aria-label={
+                    t('legal.acceptTerms') || 'Accept Terms of Service and Privacy Policy'
+                  }
                   aria-required="true"
                   checked={termsAccepted && privacyAccepted}
-                  className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-2 flex-shrink-0"
+                  className="h-4 w-4 flex-shrink-0 rounded border-border text-primary focus:ring-2 focus:ring-primary"
                   disabled={isLoading}
                   type="checkbox"
                   onChange={(e) => {
@@ -168,18 +175,20 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
                   {t('legal.acceptTermsText') || 'Ich akzeptiere die '}
                   <Link className="underline hover:text-primary" href="/terms">
                     {t('legal.termsOfService') || 'Allgemeinen Geschäftsbedingungen'}
-                  </Link>
-                  {' '}{t('legal.and') || 'und'}{' '}
+                  </Link>{' '}
+                  {t('legal.and') || 'und'}{' '}
                   <Link className="underline hover:text-primary" href="/privacy-policy">
                     {t('legal.privacyPolicy') || 'Datenschutzrichtlinie'}
                   </Link>
-                  . {t('legal.privacyStatement') || 'Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.'}
+                  .{' '}
+                  {t('legal.privacyStatement') ||
+                    'Deine Privatsphäre und Werte sind uns wichtig – wir verkaufen deine Daten niemals.'}
                 </span>
               </label>
             </div>
-            
+
             <button
-              className="mt-3 w-full rounded-2xl bg-primary py-4 text-base font-medium text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-3 w-full rounded-2xl bg-primary py-4 text-base font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isLoading}
               type="submit"
             >
@@ -188,10 +197,7 @@ export function SignupModal({ onClose, onSwitchMode }: SignupModalProps) {
           </form>
           {onSwitchMode && (
             <div className="mt-8 flex w-full justify-center">
-              <LinkButton
-                type="button"
-                onClick={onSwitchMode}
-              >
+              <LinkButton type="button" onClick={onSwitchMode}>
                 Bereits ein Konto? Jetzt anmelden.
               </LinkButton>
             </div>

@@ -5,5 +5,5 @@ export function deriveReviewStatus(
   noPork: boolean,
   noGambling: boolean,
 ): DerivedReviewStatus {
-  return (noAlcohol && noPork && noGambling) ? 'approved' : 'rejected';
+  return noAlcohol && noPork && noGambling ? 'approved' : 'rejected';
 }

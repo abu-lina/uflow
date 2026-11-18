@@ -15,10 +15,10 @@ interface LegalLinksModalProps {
 
 /**
  * Legal Links Modal
- * 
+ *
  * Bottom sheet modal displaying legal links (Impressum, Privacy Policy, Terms of Service).
  * Used in Stage 1/2 early access screens where Profile menu is not available.
- * 
+ *
  * Features:
  * - Bottom sheet on mobile, centered on desktop
  * - Backdrop with blur
@@ -104,11 +104,9 @@ export function LegalLinksModal({ isOpen, onClose }: LegalLinksModalProps) {
       >
         {/* Modal Content */}
         <div
-          className="relative flex w-full max-w-[392px] flex-col gap-4 rounded-t-[32px] bg-white p-4 md:rounded-[24px] md:max-w-[480px] md:p-6"
+          className="relative flex w-full max-w-[392px] flex-col gap-4 rounded-t-[32px] bg-white p-4 md:max-w-[480px] md:rounded-[24px] md:p-6"
           style={{
-            transform: isClosing
-              ? 'translateY(100%) scale(0.95)'
-              : 'translateY(0) scale(1)',
+            transform: isClosing ? 'translateY(100%) scale(0.95)' : 'translateY(0) scale(1)',
             transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
@@ -137,8 +135,8 @@ export function LegalLinksModal({ isOpen, onClose }: LegalLinksModalProps) {
             <button
               className={cn(
                 'flex w-full items-center justify-between rounded-sm border border-border bg-white p-4 text-left transition-all duration-150',
-                'hover:bg-neutral-muted hover:border-primary',
-                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
+                'hover:border-primary hover:bg-neutral-muted',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
               )}
               type="button"
               onClick={() => handleLinkClick('/impressum')}
@@ -157,8 +155,8 @@ export function LegalLinksModal({ isOpen, onClose }: LegalLinksModalProps) {
             <button
               className={cn(
                 'flex w-full items-center justify-between rounded-sm border border-border bg-white p-4 text-left transition-all duration-150',
-                'hover:bg-neutral-muted hover:border-primary',
-                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
+                'hover:border-primary hover:bg-neutral-muted',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
               )}
               type="button"
               onClick={() => handleLinkClick('/privacy-policy')}
@@ -177,8 +175,8 @@ export function LegalLinksModal({ isOpen, onClose }: LegalLinksModalProps) {
             <button
               className={cn(
                 'flex w-full items-center justify-between rounded-sm border border-border bg-white p-4 text-left transition-all duration-150',
-                'hover:bg-neutral-muted hover:border-primary',
-                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
+                'hover:border-primary hover:bg-neutral-muted',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
               )}
               type="button"
               onClick={() => handleLinkClick('/terms')}

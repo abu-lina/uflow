@@ -1,13 +1,13 @@
 /**
  * Client-side cookie utilities
- * 
+ *
  * These utilities can be used in client components to set cookies
  * that will be readable by the server on subsequent requests.
  */
 
 /**
  * Set a cookie with proper attributes
- * 
+ *
  * @param name - Cookie name
  * @param value - Cookie value
  * @param options - Cookie options (maxAge in days, path, etc.)
@@ -20,7 +20,7 @@ export function setCookie(
     path?: string;
     sameSite?: 'strict' | 'lax' | 'none';
     secure?: boolean;
-  } = {}
+  } = {},
 ): void {
   if (typeof document === 'undefined') {
     return; // Server-side, skip
@@ -39,7 +39,7 @@ export function setCookie(
 
   // Build cookie string
   let cookieString = `${name}=${encodeURIComponent(value)}; path=${path}; expires=${expirationDate.toUTCString()}; SameSite=${sameSite}`;
-  
+
   if (secure) {
     cookieString += '; Secure';
   }
@@ -50,7 +50,7 @@ export function setCookie(
 
 /**
  * Get a cookie value by name
- * 
+ *
  * @param name - Cookie name
  * @returns Cookie value or null if not found
  */
@@ -77,7 +77,7 @@ export function getCookie(name: string): string | null {
 
 /**
  * Delete a cookie
- * 
+ *
  * @param name - Cookie name
  * @param path - Cookie path (must match the path used when setting)
  */

@@ -1,6 +1,6 @@
 /**
  * EmailVerificationAlert Component - Usage Examples
- * 
+ *
  * A clean, accessible alert component for email verification warnings
  * Built with uFlow design system (Tailwind CSS + Framer Motion)
  */
@@ -18,9 +18,7 @@ export function EmailVerificationAlertExamples() {
 
   return (
     <div className="flex flex-col gap-8 p-8">
-      <h1 className="font-inter-tight text-2xl font-semibold">
-        EmailVerificationAlert Examples
-      </h1>
+      <h1 className="font-inter-tight text-2xl font-semibold">EmailVerificationAlert Examples</h1>
 
       {/* Example 1: German message (default) */}
       <div>
@@ -46,9 +44,7 @@ export function EmailVerificationAlertExamples() {
 
       {/* Example 3: Custom message */}
       <div>
-        <h2 className="mb-4 font-inter-tight text-lg font-medium">
-          Example 3: Custom Message
-        </h2>
+        <h2 className="mb-4 font-inter-tight text-lg font-medium">Example 3: Custom Message</h2>
         <EmailVerificationAlert
           message="Dein Konto ist noch nicht aktiviert. Bitte bestätige deine E-Mail-Adresse."
           onResend={handleResendEmail}
@@ -61,10 +57,8 @@ export function EmailVerificationAlertExamples() {
           Example 4: Within Login Form Context
         </h2>
         <div className="max-w-md rounded-lg border border-border bg-white p-6">
-          <h3 className="mb-4 font-inter-tight text-lg font-semibold">
-            Anmelden
-          </h3>
-          
+          <h3 className="mb-4 font-inter-tight text-lg font-semibold">Anmelden</h3>
+
           {/* Mock form fields */}
           <div className="mb-4 flex flex-col gap-3">
             <input
@@ -100,10 +94,10 @@ export function EmailVerificationAlertExamples() {
 
 /**
  * Integration Guide:
- * 
+ *
  * 1. Import the component:
  *    import EmailVerificationAlert from '@/components/ui/EmailVerificationAlert';
- * 
+ *
  * 2. Use it in your login form:
  *    {error && isEmailConfirmationError && (
  *      <EmailVerificationAlert
@@ -111,7 +105,7 @@ export function EmailVerificationAlertExamples() {
  *        onResend={handleResendConfirmation}
  *      />
  *    )}
- * 
+ *
  * 3. Define your resend handler:
  *    const handleResendConfirmation = async () => {
  *      // Your resend email logic here
@@ -120,7 +114,7 @@ export function EmailVerificationAlertExamples() {
  *        body: JSON.stringify({ email: userEmail })
  *      });
  *    };
- * 
+ *
  * Features:
  * - ✅ Smooth fade-in + slide-up animation (Framer Motion)
  * - ✅ Accessible (role="alert", aria-live="assertive")
@@ -129,4 +123,3 @@ export function EmailVerificationAlertExamples() {
  * - ✅ Keyboard navigation support
  * - ✅ Focus-visible ring for accessibility
  */
-

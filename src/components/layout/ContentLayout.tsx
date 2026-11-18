@@ -28,11 +28,11 @@ interface ContentLayoutProps {
 
 /**
  * Reusable layout component for pages with title and actions sections.
- * 
+ *
  * This component encapsulates the common pattern used across pages:
  * - TitleSection with proper spacing and centering
  * - ContentSection with proper form/button layout
- * 
+ *
  * Replaces the repetitive pattern of:
  * ```tsx
  * <div className="flex w-full flex-col">
@@ -40,7 +40,7 @@ interface ContentLayoutProps {
  *   <ContentSection>...</ContentSection>
  * </div>
  * ```
- * 
+ *
  * @example
  * ```tsx
  * <PageContentWrapper centerVertically={true}>
@@ -73,14 +73,10 @@ export function ContentLayout({
   return (
     <div className={cn('flex w-full flex-col', className)}>
       {/* Title Section */}
-      <TitleSection className={titleClassName}>
-        {titleSection}
-      </TitleSection>
+      <TitleSection className={titleClassName}>{titleSection}</TitleSection>
 
       {/* Actions Section */}
-      <ContentSection className={actionsClassName}>
-        {actionsSection}
-      </ContentSection>
+      <ContentSection className={actionsClassName}>{actionsSection}</ContentSection>
     </div>
   );
 }

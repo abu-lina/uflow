@@ -1,7 +1,4 @@
-import type {
-  LieferandoClient,
-  LieferandoSearchResult,
-} from './lieferando-types';
+import type { LieferandoClient, LieferandoSearchResult } from './lieferando-types';
 import type { Geocoder } from './geocoder';
 import type { DeliveryPlatformSnapshot, DeliveryEnrichmentResult } from '../delivery-enricher';
 import { matchProviderToVenues } from './provider-matcher';

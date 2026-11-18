@@ -42,7 +42,7 @@ function parseTime(timeStr: string): string | null {
 }
 
 export function normalizeWoltOpeningHours(
-  woltHours: WoltOpeningHour[] | null | undefined
+  woltHours: WoltOpeningHour[] | null | undefined,
 ): OpeningHours | null {
   if (!woltHours || woltHours.length === 0) return null;
 

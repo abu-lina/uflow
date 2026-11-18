@@ -14,13 +14,13 @@ export const typographyTokens = {
   },
 
   fontSize: {
-    xs: ['0.694rem', { lineHeight: '1rem' }],       // 11px
-    sm: ['0.833rem', { lineHeight: '1.25rem' }],    // 13px
-    base: ['1rem', { lineHeight: '1.5rem' }],       // 16px
-    lg: ['1.2rem', { lineHeight: '1.625rem' }],    // 19px
-    xl: ['1.44rem', { lineHeight: '1.875rem' }],    // 23px
+    xs: ['0.694rem', { lineHeight: '1rem' }], // 11px
+    sm: ['0.833rem', { lineHeight: '1.25rem' }], // 13px
+    base: ['1rem', { lineHeight: '1.5rem' }], // 16px
+    lg: ['1.2rem', { lineHeight: '1.625rem' }], // 19px
+    xl: ['1.44rem', { lineHeight: '1.875rem' }], // 23px
     '2xl': ['1.728rem', { lineHeight: '2.125rem' }], // 27px
-    '3xl': ['2.074rem', { lineHeight: '2.25rem' }],  // 33px
+    '3xl': ['2.074rem', { lineHeight: '2.25rem' }], // 33px
     '4xl': ['2.488rem', { lineHeight: '2.625rem' }], // 40px
     '5xl': ['2.986rem', { lineHeight: '3.125rem' }], // 48px
   },

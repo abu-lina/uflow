@@ -26,7 +26,8 @@ export function ProvidersPageHeader({
       className="fixed left-0 right-0 top-0 z-50 sm:hidden"
       style={{
         // Smooth transition for all properties including backdrop-filter
-        transition: 'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
+        transition:
+          'background 300ms ease-in-out, backdrop-filter 300ms ease-in-out, -webkit-backdrop-filter 300ms ease-in-out, border-bottom 300ms ease-in-out',
         // Glassy blur effect - always applied for consistent visual effect
         // backdropFilter blurs everything behind the header element
         // blur(20px) creates the frosted glass blur effect
@@ -68,4 +69,3 @@ export function ProvidersPageHeader({
     </header>
   );
 }
-

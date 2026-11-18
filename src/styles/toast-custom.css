@@ -1,18 +1,18 @@
 /* Custom toast styles using design tokens */
 [data-sonner-toast] {
   /* Use CSS custom properties for maintainability */
-  --toast-warning-bg: #FDF5E6;
-  --toast-warning-border: #EFBC73;
-  --toast-warning-text: #C48A3A;
-  --toast-warning-button: #E6A94C;
-  --toast-warning-button-hover: #C48A3A;
-  
-  --toast-success-bg: #7BC4A9;
-  --toast-success-border: #4CA987;
-  --toast-success-text: #3D8A6D;
-  
-  --toast-info-bg: #4F9BAE;
-  --toast-info-border: #4F9BAE;
+  --toast-warning-bg: #fdf5e6;
+  --toast-warning-border: #efbc73;
+  --toast-warning-text: #c48a3a;
+  --toast-warning-button: #e6a94c;
+  --toast-warning-button-hover: #c48a3a;
+
+  --toast-success-bg: #7bc4a9;
+  --toast-success-border: #4ca987;
+  --toast-success-text: #3d8a6d;
+
+  --toast-info-bg: #4f9bae;
+  --toast-info-border: #4f9bae;
   --toast-info-text: #ffffff;
 }
 
@@ -36,5 +36,5 @@
 
 [data-sonner-toast] [data-action]:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #EFBC73;
+  box-shadow: 0 0 0 2px #efbc73;
 }

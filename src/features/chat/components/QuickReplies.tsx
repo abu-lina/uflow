@@ -15,7 +15,10 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
   if (!options.length) return null;
 
   // Detect multi-select mode: options contain "(Ja/Nein)" or are binary choices
-  const isMultiSelect = !singleSelect && (options.length >= 3 || options.some(o => o.includes('?') || o.includes('(Ja') || o.includes('Nein')));
+  const isMultiSelect =
+    !singleSelect &&
+    (options.length >= 3 ||
+      options.some((o) => o.includes('?') || o.includes('(Ja') || o.includes('Nein')));
 
   const toggleOption = (index: number) => {
     const next = new Set(selected);
@@ -29,10 +32,11 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
 
   const confirmSelection = () => {
     const selectedTexts = Array.from(selected)
-      .map(i => options[i]
-        .replace(/\s*\(Ja\/Nein\)\s*/g, '')  // Remove "(Ja/Nein)" suffix
-        .replace(/\?.*$/, '')                      // Remove question mark and everything after
-        .trim()
+      .map((i) =>
+        options[i]
+          .replace(/\s*\(Ja\/Nein\)\s*/g, '') // Remove "(Ja/Nein)" suffix
+          .replace(/\?.*$/, '') // Remove question mark and everything after
+          .trim(),
       )
       .filter(Boolean)
       .join(', ');
@@ -41,15 +45,15 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
 
   if (isMultiSelect) {
     return (
-      <div className="flex flex-col gap-2 mt-3" data-testid="quick-replies">
+      <div className="mt-3 flex flex-col gap-2" data-testid="quick-replies">
         <div className="flex flex-wrap gap-2">
           {options.map((option, i) => (
             <button
               key={i}
-              className={`px-3 py-1.5 text-sm border rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`rounded-xl border px-3 py-1.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 selected.has(i)
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-primary/10 text-primary-dark border-primary/20 hover:bg-primary/20 hover:border-primary/30'
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-primary/20 bg-primary/10 text-primary-dark hover:border-primary/30 hover:bg-primary/20'
               }`}
               disabled={disabled}
               type="button"
@@ -61,7 +65,7 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
         </div>
         {selected.size > 0 && (
           <button
-            className="self-start px-4 py-1.5 text-sm font-medium bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors"
+            className="self-start rounded-xl bg-primary px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
             disabled={disabled}
             onClick={confirmSelection}
           >
@@ -74,11 +78,11 @@ export function QuickReplies({ options, onSelect, disabled, singleSelect }: Quic
 
   // Single-select mode
   return (
-    <div className="flex flex-wrap gap-2 mt-3" data-testid="quick-replies">
+    <div className="mt-3 flex flex-wrap gap-2" data-testid="quick-replies">
       {options.map((option, i) => (
         <button
           key={i}
-          className="px-3 py-1.5 text-sm bg-primary/10 text-primary-dark border border-primary/20 rounded-xl hover:bg-primary/20 hover:border-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-xl border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm text-primary-dark transition-colors hover:border-primary/30 hover:bg-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={disabled}
           type="button"
           onClick={() => onSelect(option)}

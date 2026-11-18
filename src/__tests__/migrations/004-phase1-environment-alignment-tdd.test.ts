@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 describe('Phase 1 environment alignment migration contract', () => {
   const migrationPath = path.resolve(
     process.cwd(),
-    'supabase/migrations/004_phase1_environment_alignment.sql'
+    'supabase/migrations/004_phase1_environment_alignment.sql',
   );
 
   it('creates migration 004 for consent_logs/deletion_logs schema parity', () => {
@@ -23,7 +23,11 @@ describe('Phase 1 environment alignment migration contract', () => {
     expect(sql).toContain('deletion_logs');
 
     expect(sql).toContain('ENABLE ROW LEVEL SECURITY');
-    expect(sql).toContain('GRANT ALL ON TABLE public.consent_logs TO anon, authenticated, service_role');
-    expect(sql).toContain('GRANT ALL ON TABLE public.deletion_logs TO anon, authenticated, service_role');
+    expect(sql).toContain(
+      'GRANT ALL ON TABLE public.consent_logs TO anon, authenticated, service_role',
+    );
+    expect(sql).toContain(
+      'GRANT ALL ON TABLE public.deletion_logs TO anon, authenticated, service_role',
+    );
   });
 });

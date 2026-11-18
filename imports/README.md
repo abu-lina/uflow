@@ -51,6 +51,7 @@ imports/
 ## Scripts
 
 Common processing scripts:
+
 - `scripts/remove-lottie-watermark.ts` - Remove watermarks from Lottie files
 - Add more scripts as needed for other resource types
 

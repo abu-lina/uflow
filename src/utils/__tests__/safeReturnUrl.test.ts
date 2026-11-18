@@ -24,12 +24,14 @@ describe('#698 AC1: returns returnUrl only if, after decoding, it is a same-orig
     expect(getSafeReturnUrl('/%0A/evil.example', FALLBACK)).toBe(FALLBACK);
   });
 
-  it.each(['/%0A//evil.example', '/%0D//evil.example', '/%09//evil.example', '/%0A/%0A/evil.example'])(
-    'returns the fallback when stripped whitespace leaves extra slashes: %j',
-    raw => {
-      expect(getSafeReturnUrl(raw, FALLBACK)).toBe(FALLBACK);
-    }
-  );
+  it.each([
+    '/%0A//evil.example',
+    '/%0D//evil.example',
+    '/%09//evil.example',
+    '/%0A/%0A/evil.example',
+  ])('returns the fallback when stripped whitespace leaves extra slashes: %j', (raw) => {
+    expect(getSafeReturnUrl(raw, FALLBACK)).toBe(FALLBACK);
+  });
 
   it('returns the value the URL parser checked, not the raw decoded input', () => {
     expect(getSafeReturnUrl('/create%09/recommend', FALLBACK)).toBe('/create/recommend');
@@ -68,11 +70,11 @@ describe('#698 AC2: rejects the listed attacks and accepts the listed paths', ()
     'javascript:alert(1)',
     '%2F%2Fevil.example',
     '',
-  ])('rejects %j', raw => {
+  ])('rejects %j', (raw) => {
     expect(getSafeReturnUrl(raw, FALLBACK)).toBe(FALLBACK);
   });
 
-  it.each(['/create/recommend', '/profile?tab=saved', '/p/123#reviews'])('accepts %j', raw => {
+  it.each(['/create/recommend', '/profile?tab=saved', '/p/123#reviews'])('accepts %j', (raw) => {
     expect(getSafeReturnUrl(raw, FALLBACK)).toBe(raw);
   });
 });

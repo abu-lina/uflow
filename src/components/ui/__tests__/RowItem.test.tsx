@@ -28,11 +28,7 @@ describe('RowItem', () => {
 
   it('renders as div when selectable is false', () => {
     const { container } = render(
-      <RowItem
-        icon={<span data-testid="row-icon">I</span>}
-        subtitle="Subtitle"
-        title="Static"
-      />,
+      <RowItem icon={<span data-testid="row-icon">I</span>} subtitle="Subtitle" title="Static" />,
     );
 
     expect(screen.queryByRole('button', { name: /static/i })).not.toBeInTheDocument();

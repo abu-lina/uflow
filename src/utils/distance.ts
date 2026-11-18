@@ -14,7 +14,7 @@ export function formatDistance(distanceKm: number | null | undefined): string | 
   }
 
   if (distanceKm < 1) {
-    const meters = Math.round(distanceKm * 1000 / 10) * 10;
+    const meters = Math.round((distanceKm * 1000) / 10) * 10;
     return `${meters} m`;
   }
 

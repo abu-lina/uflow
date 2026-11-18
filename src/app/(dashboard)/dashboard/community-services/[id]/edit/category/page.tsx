@@ -102,7 +102,10 @@ export default function CsEditCategoryPage({ params }: { params: Promise<{ id: s
   }, []);
 
   const filteredCategories = categories.filter((category) => {
-    const categoryName = language === 'en' ? (category.name_en || category.name_de || '') : (category.name_de || category.name_en || '');
+    const categoryName =
+      language === 'en'
+        ? category.name_en || category.name_de || ''
+        : category.name_de || category.name_en || '';
     return categoryName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
@@ -114,26 +117,28 @@ export default function CsEditCategoryPage({ params }: { params: Promise<{ id: s
   };
 
   return (
-    <div className="flex h-screen-fix flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+    <div className="h-screen-fix flex flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
       <header
-        className={`fixed left-0 right-0 top-0 z-50 bg-white/10 backdrop-blur-3xl pt-[calc(env(safe-area-inset-top)+24px)] transition-all duration-500 ease-in-out ${
+        className={`fixed left-0 right-0 top-0 z-50 bg-white/10 pt-[calc(env(safe-area-inset-top)+24px)] backdrop-blur-3xl transition-all duration-500 ease-in-out ${
           isHeaderSticky ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         }`}
       >
-        <div className="flex items-start w-full max-w-[393px] mx-auto pl-7 pr-4 h-10">
+        <div className="mx-auto flex h-10 w-full max-w-[393px] items-start pl-7 pr-4">
           <button
             aria-label={t('editProvider.back')}
-            className="flex items-center justify-center w-8 h-8 -ml-1"
+            className="-ml-1 flex h-8 w-8 items-center justify-center"
             onClick={() => router.back()}
           >
-            <Icon className="w-8 h-8 text-[#272727]" icon="material-symbols:chevron-left" />
+            <Icon className="h-8 w-8 text-[#272727]" icon="material-symbols:chevron-left" />
           </button>
-          <h1 className="text-xl font-semibold text-content-heading">{t('editProvider.editCategory.title')}</h1>
+          <h1 className="text-xl font-semibold text-content-heading">
+            {t('editProvider.editCategory.title')}
+          </h1>
         </div>
       </header>
 
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-[393px] mx-auto px-4 pt-[calc(env(safe-area-inset-top)+24px+40px+24px)] pb-safe-bottom">
+        <div className="mx-auto w-full max-w-[393px] px-4 pb-safe-bottom pt-[calc(env(safe-area-inset-top)+24px+40px+24px)]">
           <div className="mb-4">
             <div className="relative">
               <Icon
@@ -170,14 +175,12 @@ export default function CsEditCategoryPage({ params }: { params: Promise<{ id: s
                     key={category.category_id}
                     className={`w-full rounded-xl px-4 py-2 text-left transition-all duration-200 ${
                       selectedCategoryId === category.category_id
-                        ? 'bg-primary-light text-content-heading border border-primary'
-                        : 'bg-white text-[#232323] border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                        ? 'border border-primary bg-primary-light text-content-heading'
+                        : 'border border-gray-200 bg-white text-[#232323] hover:border-gray-300 hover:bg-gray-50'
                     }`}
                     onClick={() => handleCategorySelect(category.category_id)}
                   >
-                    <span className="text-sm font-medium">
-                      {categoryName}
-                    </span>
+                    <span className="text-sm font-medium">{categoryName}</span>
                   </button>
                 );
               })

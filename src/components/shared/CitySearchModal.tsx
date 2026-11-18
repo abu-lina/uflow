@@ -33,9 +33,9 @@ interface CitySearchModalProps {
 
 /**
  * City Search Modal
- * 
+ *
  * Allows users to search for any city in the world using Nominatim (OpenStreetMap).
- * 
+ *
  * Features:
  * - Global city search
  * - Debounced search input
@@ -44,11 +44,7 @@ interface CitySearchModalProps {
  * - Keyboard navigation
  * - Accessibility support
  */
-export function CitySearchModal({
-  isOpen,
-  onClose,
-  onCitySelected,
-}: CitySearchModalProps) {
+export function CitySearchModal({ isOpen, onClose, onCitySelected }: CitySearchModalProps) {
   const { t } = useLanguage();
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,19 +97,19 @@ export function CitySearchModal({
       // Filter by place type: city, town, village
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
-        `format=json&` +
-        `q=${encodeURIComponent(query)}&` +
-        `addressdetails=1&` +
-        `limit=10&` +
-        `featuretype=city,town,village&` +
-        `countrycodes=`, // Empty = all countries
+          `format=json&` +
+          `q=${encodeURIComponent(query)}&` +
+          `addressdetails=1&` +
+          `limit=10&` +
+          `featuretype=city,town,village&` +
+          `countrycodes=`, // Empty = all countries
         {
           signal: abortControllerRef.current.signal,
           headers: {
             'User-Agent': 'UmmahFlow/1.0', // Required by Nominatim ToS
             'Accept-Language': 'de,en', // Prefer German, fallback to English
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -121,7 +117,7 @@ export function CitySearchModal({
       }
 
       const data: NominatimCityResult[] = await response.json();
-      
+
       // Filter and format results, replacing Israel with Palestine
       const formattedCities = data
         .filter((result) => {
@@ -134,7 +130,11 @@ export function CitySearchModal({
           return {
             ...result,
             // Extract city name (prefer city, fallback to town/village)
-            cityName: result.address?.city || result.address?.town || result.address?.village || result.name,
+            cityName:
+              result.address?.city ||
+              result.address?.town ||
+              result.address?.village ||
+              result.name,
             country: country,
             address: {
               ...result.address,
@@ -200,9 +200,7 @@ export function CitySearchModal({
       handleClose();
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex((prev) => 
-        prev < cities.length - 1 ? prev + 1 : prev
-      );
+      setSelectedIndex((prev) => (prev < cities.length - 1 ? prev + 1 : prev));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
@@ -237,11 +235,9 @@ export function CitySearchModal({
       >
         {/* Modal Content */}
         <div
-          className="relative flex w-full max-w-[392px] flex-col gap-4 rounded-t-[32px] bg-white p-4 md:rounded-[24px] md:max-w-[480px] md:p-6"
+          className="relative flex w-full max-w-[392px] flex-col gap-4 rounded-t-[32px] bg-white p-4 md:max-w-[480px] md:rounded-[24px] md:p-6"
           style={{
-            transform: isClosing
-              ? 'translateY(100%) scale(0.95)'
-              : 'translateY(0) scale(1)',
+            transform: isClosing ? 'translateY(100%) scale(0.95)' : 'translateY(0) scale(1)',
             transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
             maxHeight: '80vh',
           }}
@@ -296,7 +292,7 @@ export function CitySearchModal({
               {searchQuery && !isLoading && (
                 <button
                   aria-label={t('common.delete')}
-                  className="flex items-center justify-center p-1 rounded hover:bg-neutral-light"
+                  className="flex items-center justify-center rounded p-1 hover:bg-neutral-light"
                   type="button"
                   onClick={() => {
                     setSearchQuery('');
@@ -332,7 +328,8 @@ export function CitySearchModal({
               </p>
             ) : (
               cities.map((city, index) => {
-                const cityName = city.address?.city || city.address?.town || city.address?.village || city.name;
+                const cityName =
+                  city.address?.city || city.address?.town || city.address?.village || city.name;
                 const country = normalizeCountryNameForDisplay(city.address?.country || '');
                 const isSelected = index === selectedIndex;
 
@@ -342,9 +339,9 @@ export function CitySearchModal({
                     animate={{ opacity: 1, x: 0 }}
                     className={cn(
                       'flex items-center justify-between rounded-sm border border-border bg-white p-4 text-left transition-all duration-150',
-                      'hover:bg-neutral-muted hover:border-primary',
+                      'hover:border-primary hover:bg-neutral-muted',
                       'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
-                      isSelected && 'bg-primary/5 border-primary'
+                      isSelected && 'border-primary bg-primary/5',
                     )}
                     initial={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2, delay: index * 0.03 }}
@@ -356,9 +353,7 @@ export function CitySearchModal({
                       <span className="font-inter-tight text-base font-semibold text-content-heading">
                         {cityName}
                       </span>
-                      {country && (
-                        <span className="text-sm text-content-muted">{country}</span>
-                      )}
+                      {country && <span className="text-sm text-content-muted">{country}</span>}
                     </div>
                     <Icon
                       className="size-5 text-primary"
@@ -376,4 +371,3 @@ export function CitySearchModal({
 
   return createPortal(modalContent, document.body);
 }
-

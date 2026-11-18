@@ -5,7 +5,7 @@ import { isAdminOrModerator } from '@/lib/auth/roles';
 
 /**
  * POST /api/admin/refresh-session
- * 
+ *
  * Manually refresh the authentication session and sync tokens to cookies
  * Useful when automatic token refresh fails or tokens are expired
  * Requires admin or moderator role
@@ -16,7 +16,7 @@ export async function POST() {
   if (!user) {
     return NextResponse.json(
       { error: 'Unauthorized', message: 'You must be logged in to access this endpoint' },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -25,7 +25,7 @@ export async function POST() {
   if (!hasAccess) {
     return NextResponse.json(
       { error: 'Forbidden', message: 'Admin or Moderator access required' },
-      { status: 403 }
+      { status: 403 },
     );
   }
   try {
@@ -34,11 +34,11 @@ export async function POST() {
 
     if (!refreshToken) {
       return NextResponse.json(
-        { 
+        {
           error: 'No refresh token found',
           message: 'Please log in again to get a fresh session',
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -46,10 +46,7 @@ export async function POST() {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.json(
-        { error: 'Server configuration error' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
     // Refresh the token
@@ -67,16 +64,16 @@ export async function POST() {
     if (!refreshRes.ok) {
       const errorText = await refreshRes.text();
       return NextResponse.json(
-        { 
+        {
           error: 'Failed to refresh token',
           details: errorText,
           message: 'Your session has expired. Please log in again.',
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    const refreshData = await refreshRes.json() as { 
+    const refreshData = (await refreshRes.json()) as {
       access_token: string;
       refresh_token: string;
       expires_in: number;
@@ -113,14 +110,14 @@ export async function POST() {
         error: 'Failed to refresh session',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 /**
  * GET /api/admin/refresh-session
- * 
+ *
  * Check if session refresh is available
  * Requires admin or moderator role
  */
@@ -130,7 +127,7 @@ export async function GET() {
   if (!user) {
     return NextResponse.json(
       { error: 'Unauthorized', message: 'You must be logged in to access this endpoint' },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -139,7 +136,7 @@ export async function GET() {
   if (!hasAccess) {
     return NextResponse.json(
       { error: 'Forbidden', message: 'Admin or Moderator access required' },
-      { status: 403 }
+      { status: 403 },
     );
   }
   try {
@@ -151,7 +148,7 @@ export async function GET() {
       hasAccessToken: !!accessToken,
       hasRefreshToken: !!refreshToken,
       canRefresh: !!refreshToken,
-      message: refreshToken 
+      message: refreshToken
         ? 'Session can be refreshed. Call POST /api/admin/refresh-session to refresh.'
         : 'No refresh token available. Please log in again.',
     });
@@ -161,8 +158,7 @@ export async function GET() {
         error: 'Failed to check session',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

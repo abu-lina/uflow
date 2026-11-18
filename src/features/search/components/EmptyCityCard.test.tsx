@@ -53,7 +53,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true, city: 'Berlin' }),
-        } as Response)
+        } as Response),
       );
       global.fetch = mockFetch as any;
 
@@ -69,7 +69,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cityName: 'Berlin' }),
-          })
+          }),
         );
       });
     });
@@ -79,7 +79,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true, city: 'Munich' }),
-        } as Response)
+        } as Response),
       );
       global.fetch = mockFetch as any;
 
@@ -89,7 +89,9 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
       fireEvent.click(notifyButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/Done! We'll let you know when Munich goes live/)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Done! We'll let you know when Munich goes live/),
+        ).toBeInTheDocument();
       });
     });
 
@@ -98,7 +100,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
         Promise.resolve({
           ok: false,
           json: () => Promise.resolve({ error: 'Server error' }),
-        } as Response)
+        } as Response),
       );
       global.fetch = mockFetch as any;
 
@@ -147,7 +149,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true, city: 'Leipzig' }),
-        } as Response)
+        } as Response),
       );
       global.fetch = mockFetch as any;
 
@@ -165,7 +167,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
           expect.objectContaining({
             method: 'POST',
             body: JSON.stringify({ cityName: 'Leipzig', email: 'anon@example.com' }),
-          })
+          }),
         );
       });
     });
@@ -175,7 +177,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true, city: 'Nuremberg' }),
-        } as Response)
+        } as Response),
       );
       global.fetch = mockFetch as any;
 
@@ -188,7 +190,9 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
       fireEvent.click(notifyButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/Done! We'll let you know when Nuremberg goes live/)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Done! We'll let you know when Nuremberg goes live/),
+        ).toBeInTheDocument();
       });
 
       // Note: success state replaces the form, so email input won't exist anymore
@@ -209,7 +213,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
         Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true, city: 'Dortmund' }),
-        } as Response)
+        } as Response),
       );
       global.fetch = mockFetch as any;
 
@@ -229,7 +233,7 @@ describe('EmptyCityCard (Plan 093 M1)', () => {
         Promise.resolve({
           ok: false,
           json: () => Promise.resolve({ error: 'Failed' }),
-        } as Response)
+        } as Response),
       );
       global.fetch = mockFetch as any;
 

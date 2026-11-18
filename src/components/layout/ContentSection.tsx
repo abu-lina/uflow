@@ -21,14 +21,14 @@ interface ContentSectionProps {
 
 /**
  * Standardized content section for pages.
- * 
+ *
  * This component is designed to work within PageContentWrapper which provides
  * the base 16px padding from device edges and handles mobile navigation spacing.
- * Content within this section should extend to fill the available space 
+ * Content within this section should extend to fill the available space
  * with proper internal padding.
- * 
+ *
  * Used for forms, action buttons, or any other content sections.
- * 
+ *
  * @example
  * ```tsx
  * <PageContentWrapper>
@@ -44,17 +44,19 @@ interface ContentSectionProps {
  * </PageContentWrapper>
  * ```
  */
-export function ContentSection({ 
-  children, 
+export function ContentSection({
+  children,
   className = '',
-  includeMobileSpacing = false // Default to false since PageContentWrapper handles this
+  includeMobileSpacing = false, // Default to false since PageContentWrapper handles this
 }: ContentSectionProps) {
   return (
-    <div className={cn(
-      'flex w-full flex-col gap-6',
-      includeMobileSpacing && 'mobile-nav-spacing',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex w-full flex-col gap-6',
+        includeMobileSpacing && 'mobile-nav-spacing',
+        className,
+      )}
+    >
       {children}
     </div>
   );

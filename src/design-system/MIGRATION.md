@@ -6,66 +6,66 @@ This document maps hardcoded colors and undefined tokens to semantic design syst
 
 ### Brand / primary
 
-| Hardcoded | Replace with |
-|-----------|--------------|
-| `bg-[#589d96]` | `bg-primary` |
-| `bg-[#4a8a84]` | `bg-primary-dark` |
-| `text-[#589d96]` | `text-primary` |
-| `border-[#589d96]` | `border-primary` |
+| Hardcoded              | Replace with                |
+| ---------------------- | --------------------------- |
+| `bg-[#589d96]`         | `bg-primary`                |
+| `bg-[#4a8a84]`         | `bg-primary-dark`           |
+| `text-[#589d96]`       | `text-primary`              |
+| `border-[#589d96]`     | `border-primary`            |
 | `#589d96` (inline/CSS) | `hsl(var(--color-primary))` |
-| `#438983` | `primary-dark` |
-| `#356e6a` | `primary-darker` |
-| `#b8d6d2` | `primary-light` |
+| `#438983`              | `primary-dark`              |
+| `#356e6a`              | `primary-darker`            |
+| `#b8d6d2`              | `primary-light`             |
 
 ### Success / green
 
-| Hardcoded | Replace with |
-|-----------|--------------|
-| `bg-[#4CA987]` | `bg-success` |
-| `text-[#4CA987]` | `text-success` |
+| Hardcoded              | Replace with                                   |
+| ---------------------- | ---------------------------------------------- |
+| `bg-[#4CA987]`         | `bg-success`                                   |
+| `text-[#4CA987]`       | `text-success`                                 |
 | `#4a8a84` (teal-green) | `bg-primary-dark` or `bg-success` (by context) |
 
 ### Danger / red
 
-| Hardcoded | Replace with |
-|-----------|--------------|
-| `bg-[#D86363]` | `bg-danger` |
-| `bg-[#B84F4F]` | `bg-danger-dark` |
-| `text-[#D86363]` | `text-danger` |
-| `text-red-500` | `text-danger` |
+| Hardcoded         | Replace with     |
+| ----------------- | ---------------- |
+| `bg-[#D86363]`    | `bg-danger`      |
+| `bg-[#B84F4F]`    | `bg-danger-dark` |
+| `text-[#D86363]`  | `text-danger`    |
+| `text-red-500`    | `text-danger`    |
 | `outline-red-500` | `outline-danger` |
 
 ### Warning / orange
 
-| Hardcoded | Replace with |
-|-----------|--------------|
-| `bg-[#E6A94C]` | `bg-warning` |
+| Hardcoded        | Replace with   |
+| ---------------- | -------------- |
+| `bg-[#E6A94C]`   | `bg-warning`   |
 | `text-[#E6A94C]` | `text-warning` |
 
 ### Neutral / gray
 
-| Hardcoded | Replace with |
-|-----------|--------------|
-| `#0b0b0b` | `text-content-heading` or `text-text-primary` |
-| `#3d3d3d` | `text-content` or `text-text-primary` |
-| `#888888` | `text-content-muted` or `text-text-muted` |
-| `#232323` | `text-text-primary` |
-| `#D4D4D4` | `border-border` or `border` |
-| `#E7E7E7` | `border-border-light` or `bg-neutral-100` |
-| `#EEEEEE` | `bg-neutral-100` |
-| `#F6F6F6` | `bg-neutral-50` or `bg-neutral-muted` |
-| `#CDCDCD` | `bg-neutral-300` or `neutral` |
-| `#f5f5f5` | `bg-neutral-50` (or keep gradient) |
-| `#fbfbfb` | `bg-neutral-50` |
-| `gray-300` | `neutral-300` or `border` |
+| Hardcoded  | Replace with                                  |
+| ---------- | --------------------------------------------- |
+| `#0b0b0b`  | `text-content-heading` or `text-text-primary` |
+| `#3d3d3d`  | `text-content` or `text-text-primary`         |
+| `#888888`  | `text-content-muted` or `text-text-muted`     |
+| `#232323`  | `text-text-primary`                           |
+| `#D4D4D4`  | `border-border` or `border`                   |
+| `#E7E7E7`  | `border-border-light` or `bg-neutral-100`     |
+| `#EEEEEE`  | `bg-neutral-100`                              |
+| `#F6F6F6`  | `bg-neutral-50` or `bg-neutral-muted`         |
+| `#CDCDCD`  | `bg-neutral-300` or `neutral`                 |
+| `#f5f5f5`  | `bg-neutral-50` (or keep gradient)            |
+| `#fbfbfb`  | `bg-neutral-50`                               |
+| `gray-300` | `neutral-300` or `border`                     |
 
 ### White / black
 
-| Hardcoded | Replace with |
-|-----------|--------------|
-| `#FFFFFF` | `bg-background` or `bg-white` |
-| `#000000` | `text-text-primary` (dark) or `bg-overlay` |
-| `bg-black/40` | Keep or use `bg-overlay/40` |
+| Hardcoded     | Replace with                               |
+| ------------- | ------------------------------------------ |
+| `#FFFFFF`     | `bg-background` or `bg-white`              |
+| `#000000`     | `text-text-primary` (dark) or `bg-overlay` |
+| `bg-black/40` | Keep or use `bg-overlay/40`                |
 
 ---
 
@@ -73,12 +73,12 @@ This document maps hardcoded colors and undefined tokens to semantic design syst
 
 These class names were used but not defined in Tailwind. Replace with the following.
 
-| Undefined / legacy | Replace with |
-|--------------------|--------------|
-| `text-uFlowDarkGrey` | `text-content` or `text-text-primary` |
-| `outline-uFlowDarkGrey` | `outline-border` or `outline-border-default` |
-| `bg-card` | `bg-surface` or `bg-card` (now defined) |
-| `text-card-foreground` | `text-card-foreground` (now defined) or `text-text-primary` |
+| Undefined / legacy      | Replace with                                                |
+| ----------------------- | ----------------------------------------------------------- |
+| `text-uFlowDarkGrey`    | `text-content` or `text-text-primary`                       |
+| `outline-uFlowDarkGrey` | `outline-border` or `outline-border-default`                |
+| `bg-card`               | `bg-surface` or `bg-card` (now defined)                     |
+| `text-card-foreground`  | `text-card-foreground` (now defined) or `text-text-primary` |
 
 ---
 
@@ -86,14 +86,14 @@ These class names were used but not defined in Tailwind. Replace with the follow
 
 Prefer the new names in new code; old names remain supported during migration.
 
-| Deprecated | New |
-|------------|-----|
-| `text-content` | `text-text-primary` or keep `text-content` |
-| `text-content-heading` | `text-text-primary` or `text-content-heading` |
-| `text-content-muted` | `text-text-muted` or `text-content-muted` |
-| `bg-neutral` (old semantic) | `bg-neutral-300` or `bg-neutral` |
-| `bg-neutral-light` | `bg-neutral-100` or `bg-neutral-light` |
-| `bg-neutral-muted` | `bg-neutral-50` or `bg-neutral-muted` |
+| Deprecated                  | New                                           |
+| --------------------------- | --------------------------------------------- |
+| `text-content`              | `text-text-primary` or keep `text-content`    |
+| `text-content-heading`      | `text-text-primary` or `text-content-heading` |
+| `text-content-muted`        | `text-text-muted` or `text-content-muted`     |
+| `bg-neutral` (old semantic) | `bg-neutral-300` or `bg-neutral`              |
+| `bg-neutral-light`          | `bg-neutral-100` or `bg-neutral-light`        |
+| `bg-neutral-muted`          | `bg-neutral-50` or `bg-neutral-muted`         |
 
 ---
 

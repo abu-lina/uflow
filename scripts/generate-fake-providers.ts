@@ -1,11 +1,11 @@
 /**
  * Script to generate fake provider test data
- * 
+ *
  * This script generates realistic fake providers using Faker.js and inserts them into the database.
- * 
- * Usage: 
+ *
+ * Usage:
  *   npx tsx scripts/generate-fake-providers.ts [count] [city]
- * 
+ *
  * Examples:
  *   npx tsx scripts/generate-fake-providers.ts 10              # Generate 10 providers (random cities)
  *   npx tsx scripts/generate-fake-providers.ts 10 Stuttgart    # Generate 10 providers in Stuttgart
@@ -25,7 +25,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('❌ Error: Missing Supabase credentials');
-  console.error('   Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in .env.local');
+  console.error(
+    '   Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in .env.local',
+  );
   process.exit(1);
 }
 
@@ -116,17 +118,19 @@ function generateFakeProvider(
   categories: Category[],
   offers: Offer[],
   needs: Need[],
-  city?: string | null
+  city?: string | null,
 ): FakeProvider {
   // If city is specified, ensure providers have addresses (unless explicitly online)
   const isOnlineBusiness = city ? false : faker.datatype.boolean({ probability: 0.3 });
-  const hasAddress = !isOnlineBusiness && (city ? true : faker.datatype.boolean({ probability: 0.8 }));
+  const hasAddress =
+    !isOnlineBusiness && (city ? true : faker.datatype.boolean({ probability: 0.8 }));
   const showAddress = hasAddress && (city ? true : faker.datatype.boolean({ probability: 0.7 }));
-  
+
   // Random category (or null)
-  const category = categories.length > 0 && faker.datatype.boolean({ probability: 0.9 })
-    ? faker.helpers.arrayElement(categories)
-    : null;
+  const category =
+    categories.length > 0 && faker.datatype.boolean({ probability: 0.9 })
+      ? faker.helpers.arrayElement(categories)
+      : null;
 
   // Random offers (0-3)
   const numOffers = faker.number.int({ min: 0, max: Math.min(3, offers.length) });
@@ -137,7 +141,13 @@ function generateFakeProvider(
   const selectedNeeds = faker.helpers.arrayElements(needs, numNeeds);
 
   // Random review status (mostly approved for testing)
-  const reviewStatuses: Array<'pending' | 'approved' | 'rejected'> = ['approved', 'approved', 'approved', 'pending', 'rejected'];
+  const reviewStatuses: Array<'pending' | 'approved' | 'rejected'> = [
+    'approved',
+    'approved',
+    'approved',
+    'pending',
+    'rejected',
+  ];
   const reviewStatus = faker.helpers.arrayElement(reviewStatuses);
 
   // Generate location if address is shown
@@ -157,19 +167,52 @@ function generateFakeProvider(
 
   // German city names (used if no specific city is provided)
   const germanCities = [
-    'Berlin', 'München', 'Hamburg', 'Köln', 'Frankfurt', 'Stuttgart',
-    'Düsseldorf', 'Dortmund', 'Essen', 'Leipzig', 'Bremen', 'Dresden',
-    'Hannover', 'Nürnberg', 'Duisburg', 'Bochum', 'Wuppertal', 'Bielefeld',
-    'Bonn', 'Münster', 'Karlsruhe', 'Mannheim', 'Augsburg', 'Wiesbaden',
-    'Gelsenkirchen', 'Mönchengladbach', 'Braunschweig', 'Chemnitz', 'Kiel',
-    'Aachen', 'Halle', 'Magdeburg', 'Freiburg', 'Krefeld', 'Lübeck',
+    'Berlin',
+    'München',
+    'Hamburg',
+    'Köln',
+    'Frankfurt',
+    'Stuttgart',
+    'Düsseldorf',
+    'Dortmund',
+    'Essen',
+    'Leipzig',
+    'Bremen',
+    'Dresden',
+    'Hannover',
+    'Nürnberg',
+    'Duisburg',
+    'Bochum',
+    'Wuppertal',
+    'Bielefeld',
+    'Bonn',
+    'Münster',
+    'Karlsruhe',
+    'Mannheim',
+    'Augsburg',
+    'Wiesbaden',
+    'Gelsenkirchen',
+    'Mönchengladbach',
+    'Braunschweig',
+    'Chemnitz',
+    'Kiel',
+    'Aachen',
+    'Halle',
+    'Magdeburg',
+    'Freiburg',
+    'Krefeld',
+    'Lübeck',
   ];
 
   // Use specified city or random selection
   // If city is specified, all providers with addresses should use it
-  const selectedCity = city 
-    ? (hasAddress ? city : null)  // If city specified and has address, use it
-    : (hasAddress && showAddress ? faker.helpers.arrayElement(germanCities) : null);
+  const selectedCity = city
+    ? hasAddress
+      ? city
+      : null // If city specified and has address, use it
+    : hasAddress && showAddress
+      ? faker.helpers.arrayElement(germanCities)
+      : null;
 
   const provider: FakeProvider = {
     provider_name: faker.company.name(),
@@ -191,11 +234,12 @@ function generateFakeProvider(
     provider_owner_id: null, // Can be set if you want to test ownership
     user_created_id: null, // Can be set if you want to test user tracking
     review_status: reviewStatus,
-    review_feedback: reviewStatus === 'rejected' && faker.datatype.boolean({ probability: 0.5 })
-      ? faker.lorem.sentence()
-      : null,
-    offers_ids: selectedOffers.map(o => o.offer_id),
-    needs_ids: selectedNeeds.map(n => n.need_id),
+    review_feedback:
+      reviewStatus === 'rejected' && faker.datatype.boolean({ probability: 0.5 })
+        ? faker.lorem.sentence()
+        : null,
+    offers_ids: selectedOffers.map((o) => o.offer_id),
+    needs_ids: selectedNeeds.map((n) => n.need_id),
     show_address: showAddress,
   };
 
@@ -237,9 +281,14 @@ async function generateProviders(count: number, city?: string | null) {
 
   // Insert providers
   console.log('💾 Inserting providers into database...');
-  
+
   // Insert providers one by one to catch individual errors
-  const results: Array<{ provider_name: string; provider_id?: string; review_status?: string; error?: string }> = [];
+  const results: Array<{
+    provider_name: string;
+    provider_id?: string;
+    review_status?: string;
+    error?: string;
+  }> = [];
   let successCount = 0;
   let errorCount = 0;
 
@@ -291,7 +340,7 @@ async function generateProviders(count: number, city?: string | null) {
     console.log('');
   }
 
-  return results.filter(r => !r.error);
+  return results.filter((r) => !r.error);
 }
 
 // Main execution
@@ -299,10 +348,10 @@ async function main() {
   try {
     const countArg = process.argv[2];
     const cityArg = process.argv[3];
-    
+
     // Parse count (first argument)
     const count = countArg ? parseInt(countArg, 10) : 5;
-    
+
     if (isNaN(count) || count < 1) {
       console.error('❌ Error: Count must be a positive number');
       console.error('   Usage: npx tsx scripts/generate-fake-providers.ts [count] [city]');

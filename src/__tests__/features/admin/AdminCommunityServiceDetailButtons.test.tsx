@@ -59,9 +59,7 @@ describe('AdminCommunityServiceDetailButtons', () => {
   });
 
   it('navigates to community service admin edit page on mobile click', () => {
-    render(
-      <AdminCommunityServiceDetailButtons communityServiceId="abc-123" variant="mobile" />,
-    );
+    render(<AdminCommunityServiceDetailButtons communityServiceId="abc-123" variant="mobile" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Service' }));
 
@@ -69,9 +67,7 @@ describe('AdminCommunityServiceDetailButtons', () => {
   });
 
   it('navigates to community service admin edit page on desktop click', () => {
-    render(
-      <AdminCommunityServiceDetailButtons communityServiceId="abc-123" variant="desktop" />,
-    );
+    render(<AdminCommunityServiceDetailButtons communityServiceId="abc-123" variant="desktop" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Service' }));
 

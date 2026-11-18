@@ -20,28 +20,28 @@ interface LinkButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 
 /**
  * Reusable link button component for text-based navigation buttons.
- * 
+ *
  * This component provides consistent styling for link-style buttons used
  * throughout the application, particularly in auth flows.
- * 
+ *
  * Features:
  * - Consistent typography (text-base font-medium)
  * - Brand color scheme with hover states
  * - Proper accessibility with button semantics
  * - Customizable variants for different use cases
- * 
+ *
  * @example
  * ```tsx
  * // Primary link button (default)
  * <LinkButton onClick={() => router.push('/signup')}>
  *   Noch kein Konto? Jetzt registrieren.
  * </LinkButton>
- * 
+ *
  * // With custom className
  * <LinkButton className="text-sm" onClick={handleClick}>
  *   Custom Link Text
  * </LinkButton>
- * 
+ *
  * // Secondary variant
  * <LinkButton variant="secondary" onClick={handleAction}>
  *   Alternative Action
@@ -61,14 +61,14 @@ export const LinkButton = forwardRef<HTMLButtonElement, LinkButtonProps>(
         className={cn(
           'h-6 text-center text-base font-medium leading-[19px] transition-colors',
           variantClasses[variant],
-          className
+          className,
         )}
         {...props}
       >
         {children}
       </button>
     );
-  }
+  },
 );
 
 LinkButton.displayName = 'LinkButton';

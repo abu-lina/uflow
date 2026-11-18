@@ -18,9 +18,7 @@ import type { Category, Offer } from '@/lib/import/joinhalal';
 // ---------------------------------------------------------------------------
 
 /** Minimal category list to resolve the restaurant slug */
-const CATEGORIES: Category[] = [
-  { category_id: 'cat-001', name_de: 'Restaurant' },
-];
+const CATEGORIES: Category[] = [{ category_id: 'cat-001', name_de: 'Restaurant' }];
 
 /** Empty offers list (offers are not part of the rejection rule) */
 const OFFERS: Offer[] = [];
@@ -71,7 +69,7 @@ const HTML_NO_ALKOHOL = makeHtmlWithHalalMerkmale('Handgeschächtet, Lieferung')
  * Avoids ESLint no-non-null-assertion warnings in tests.
  */
 function expectRecord(
-  result: ReturnType<typeof transformPage>
+  result: ReturnType<typeof transformPage>,
 ): NonNullable<ReturnType<typeof transformPage>['record']> {
   expect(result.record).not.toBeNull();
   if (!result.record) throw new Error('record is null');
@@ -84,22 +82,30 @@ function expectRecord(
 
 describe('transformPage — Alkoholverkauf auto-rejection (Plan 051)', () => {
   it('[post-fix PASSES] sets review_status to rejected when Halal Merkmale contains Alkoholverkauf', () => {
-    const record = expectRecord(transformPage(HTML_ALKOHOLVERKAUF, TEST_URL, CATEGORIES, false, OFFERS));
+    const record = expectRecord(
+      transformPage(HTML_ALKOHOLVERKAUF, TEST_URL, CATEGORIES, false, OFFERS),
+    );
     expect(record.review_status).toBe('rejected');
   });
 
   it('[post-fix PASSES] keeps review_status as pending when Halal Merkmale lacks Alkoholverkauf', () => {
-    const record = expectRecord(transformPage(HTML_NO_ALKOHOL, TEST_URL, CATEGORIES, false, OFFERS));
+    const record = expectRecord(
+      transformPage(HTML_NO_ALKOHOL, TEST_URL, CATEGORIES, false, OFFERS),
+    );
     expect(record.review_status).toBe('pending');
   });
 
   it('[post-fix PASSES] keeps review_status as pending when no additionalProperty is present', () => {
-    const record = expectRecord(transformPage(HTML_NO_ADDITIONAL_PROPERTY, TEST_URL, CATEGORIES, false, OFFERS));
+    const record = expectRecord(
+      transformPage(HTML_NO_ADDITIONAL_PROPERTY, TEST_URL, CATEGORIES, false, OFFERS),
+    );
     expect(record.review_status).toBe('pending');
   });
 
   it('[post-fix PASSES] preserves import-bot provenance on auto-rejected records', () => {
-    const record = expectRecord(transformPage(HTML_ALKOHOLVERKAUF, TEST_URL, CATEGORIES, false, OFFERS));
+    const record = expectRecord(
+      transformPage(HTML_ALKOHOLVERKAUF, TEST_URL, CATEGORIES, false, OFFERS),
+    );
     expect(record.user_created_id).toBe(IMPORT_BOT_UUID);
   });
 });
@@ -113,24 +119,26 @@ describe('transformPage — Alkoholverkauf auto-rejection (Plan 051)', () => {
  * value (e.g. "Asiatisch") but the visible HTML badges contain the given
  * badge texts. Simulates the real-world Dakju/Triple B pattern.
  */
-function makeHtmlWithBadgeFallback(
-  jsonLdValue: string | null,
-  badgeTexts: string[]
-): string {
-  const additionalProperty = jsonLdValue !== null
-    ? `,"additionalProperty":[{"@type":"PropertyValue","name":"Halal-Merkmale","value":"${jsonLdValue}"}]`
-    : '';
+function makeHtmlWithBadgeFallback(jsonLdValue: string | null, badgeTexts: string[]): string {
+  const additionalProperty =
+    jsonLdValue !== null
+      ? `,"additionalProperty":[{"@type":"PropertyValue","name":"Halal-Merkmale","value":"${jsonLdValue}"}]`
+      : '';
 
-  const badgeListItems = badgeTexts.map(
-    (text) => `<li class="flexify ts-action"><div class="ts-action-con"><div class="ts-action-icon"><i class="lar la-check-circle"></i></div>${text}</div></li>`
-  ).join('\n');
+  const badgeListItems = badgeTexts
+    .map(
+      (text) =>
+        `<li class="flexify ts-action"><div class="ts-action-con"><div class="ts-action-icon"><i class="lar la-check-circle"></i></div>${text}</div></li>`,
+    )
+    .join('\n');
 
-  const badgeSection = badgeTexts.length > 0
-    ? `<div><h3 class="elementor-heading-title elementor-size-default">Halal Merkmale</h3></div>
+  const badgeSection =
+    badgeTexts.length > 0
+      ? `<div><h3 class="elementor-heading-title elementor-size-default">Halal Merkmale</h3></div>
        <div class="elementor-widget elementor-widget-ts-advanced-list">
          <ul class="flexify simplify-ul ts-advanced-list">${badgeListItems}</ul>
        </div>`
-    : '';
+      : '';
 
   return `<!DOCTYPE html><html><head>
 <script type="application/ld+json" class="rank-math-schema-pro">
@@ -155,9 +163,7 @@ const HTML_BADGE_FALLBACK_POSITIVE = makeHtmlWithBadgeFallback('Asiatisch', [
 ]);
 
 /** Triple B pattern: JSON-LD has null-ish value, visible badge says Kein Alkoholverkauf */
-const HTML_BADGE_FALLBACK_NEGATIVE = makeHtmlWithBadgeFallback(null, [
-  'Kein Alkoholverkauf',
-]);
+const HTML_BADGE_FALLBACK_NEGATIVE = makeHtmlWithBadgeFallback(null, ['Kein Alkoholverkauf']);
 
 /** No badges at all, JSON-LD non-decisive */
 const HTML_BADGE_FALLBACK_NONE = makeHtmlWithBadgeFallback('Asiatisch', []);
@@ -165,21 +171,21 @@ const HTML_BADGE_FALLBACK_NONE = makeHtmlWithBadgeFallback('Asiatisch', []);
 describe('transformPage — HTML badge fallback (Plan 057)', () => {
   it('rejects when JSON-LD has non-alcohol value but visible badge says Alkoholverkauf', () => {
     const record = expectRecord(
-      transformPage(HTML_BADGE_FALLBACK_POSITIVE, TEST_URL, CATEGORIES, false, OFFERS)
+      transformPage(HTML_BADGE_FALLBACK_POSITIVE, TEST_URL, CATEGORIES, false, OFFERS),
     );
     expect(record.review_status).toBe('rejected');
   });
 
   it('keeps pending when JSON-LD is empty but visible badge says Kein Alkoholverkauf', () => {
     const record = expectRecord(
-      transformPage(HTML_BADGE_FALLBACK_NEGATIVE, TEST_URL, CATEGORIES, false, OFFERS)
+      transformPage(HTML_BADGE_FALLBACK_NEGATIVE, TEST_URL, CATEGORIES, false, OFFERS),
     );
     expect(record.review_status).toBe('pending');
   });
 
   it('keeps pending when JSON-LD has non-alcohol value and no visible badges', () => {
     const record = expectRecord(
-      transformPage(HTML_BADGE_FALLBACK_NONE, TEST_URL, CATEGORIES, false, OFFERS)
+      transformPage(HTML_BADGE_FALLBACK_NONE, TEST_URL, CATEGORIES, false, OFFERS),
     );
     expect(record.review_status).toBe('pending');
   });

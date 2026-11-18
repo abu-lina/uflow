@@ -155,7 +155,12 @@ describe('generic matcher (LieferandoSearchResult)', () => {
     [key: string]: unknown;
   }
 
-  function makeLFRestaurant(name: string, slug: string, city: string, active = true): LieferandoLike {
+  function makeLFRestaurant(
+    name: string,
+    slug: string,
+    city: string,
+    active = true,
+  ): LieferandoLike {
     return { name, slug, city, isActive: active };
   }
 
@@ -172,9 +177,7 @@ describe('generic matcher (LieferandoSearchResult)', () => {
   });
 
   it('returns null for no match across different types', () => {
-    const venues = [
-      makeLFRestaurant('Asia Imbiss', 'asia-imbiss-789', 'Hamburg'),
-    ];
+    const venues = [makeLFRestaurant('Asia Imbiss', 'asia-imbiss-789', 'Hamburg')];
     const result = matchProviderToVenues('Döner Haus', 'Berlin', venues);
     expect(result).toBeNull();
   });

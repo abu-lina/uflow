@@ -30,22 +30,22 @@ interface TitleAndTextProps {
 
 /**
  * Reusable Title + Paragraph component for consistent text sections.
- * 
+ *
  * Features:
  * - Title: text-3xl, center-aligned, uses content-heading color (#0b0b0b)
  * - Description: text-base, center-aligned
  * - Fixed 8px gap between title and paragraph (space-y-2)
  * - Mobile-focused design
  * - Minimal div structure for better semantic HTML
- * 
+ *
  * @example
  * ```tsx
  * // Props-based usage (recommended)
- * <TitleAndText 
+ * <TitleAndText
  *   title="Welcome to Ummah Flow"
  *   description="Discover Muslim offers near you insha'Allah."
  * />
- * 
+ *
  * // Children-based usage for custom content
  * <TitleAndText>
  *   <h2 className="custom-title">Custom Title</h2>
@@ -63,29 +63,29 @@ export function TitleAndText({
 }: TitleAndTextProps) {
   // If children are provided, render them (for custom content control)
   if (children) {
-    return (
-      <div className={cn('space-y-2', className)}>
-        {children}
-      </div>
-    );
+    return <div className={cn('space-y-2', className)}>{children}</div>;
   }
 
   // Default props-based rendering - minimal semantic structure
   return (
     <div className={cn('space-y-2', className)}>
       {title && (
-        <h2 className={cn(
-          'text-center text-3xl font-semibold leading-tight text-content-heading',
-          titleClassName
-        )}>
+        <h2
+          className={cn(
+            'text-center text-3xl font-semibold leading-tight text-content-heading',
+            titleClassName,
+          )}
+        >
           {title}
         </h2>
       )}
       {description && (
-        <p className={cn(
-          'text-center text-base leading-normal text-content-muted',
-          descriptionClassName
-        )}>
+        <p
+          className={cn(
+            'text-center text-base leading-normal text-content-muted',
+            descriptionClassName,
+          )}
+        >
           {description}
         </p>
       )}

@@ -21,7 +21,11 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 import { detectAlcohol } from '../src/lib/enrichment/delivery-platform/alcohol-detector';
-import { matchProviderToVenues, normalizeName, stringSimilarity } from '../src/lib/enrichment/delivery-platform/provider-matcher';
+import {
+  matchProviderToVenues,
+  normalizeName,
+  stringSimilarity,
+} from '../src/lib/enrichment/delivery-platform/provider-matcher';
 import type { WoltVenue } from '../src/lib/enrichment/delivery-platform/wolt-client';
 import { detectConflict } from '../src/lib/enrichment/joinhalal-enricher';
 import type { OpeningHours, OpeningHoursDay } from '../src/types/openingHours';
@@ -73,8 +77,8 @@ interface ApifyWoltVenue {
     category: string;
   }>;
   openingTimesSchedule: Array<{
-    day: string;   // "Monday", "Tuesday", etc.
-    open: string;  // "11:00" or "Closed"
+    day: string; // "Monday", "Tuesday", etc.
+    open: string; // "11:00" or "Closed"
     close: string;
   }>;
 }
@@ -98,14 +102,19 @@ interface EnrichedVenue {
 // ─── Day name to index mapping ────────────────────────────────────────────────
 
 const DAY_NAME_TO_INDEX: Record<string, number> = {
-  'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
-  'friday': 4, 'saturday': 5, 'sunday': 6,
+  monday: 0,
+  tuesday: 1,
+  wednesday: 2,
+  thursday: 3,
+  friday: 4,
+  saturday: 5,
+  sunday: 6,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function normalizeApifyOpeningHours(
-  schedule: Array<{ day: string; open: string; close: string }> | null | undefined
+  schedule: Array<{ day: string; open: string; close: string }> | null | undefined,
 ): OpeningHours | null {
   if (!schedule || !Array.isArray(schedule) || schedule.length === 0) return null;
 
@@ -131,14 +140,14 @@ function normalizeApifyOpeningHours(
   }
 
   // If all days are null, return null
-  const hasAnyOpen = Object.values(hours).some(v => v !== null && v !== undefined);
+  const hasAnyOpen = Object.values(hours).some((v) => v !== null && v !== undefined);
   return hasAnyOpen ? hours : null;
 }
 
 function slugToName(slug: string): string {
   return slug
     .split('-')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 }
 
@@ -195,7 +204,9 @@ async function main(): Promise<void> {
   // 2. Fetch eligible providers for matching
   const { data: dbProviders, error: provError } = await supabase
     .from('providers')
-    .select('provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible')
+    .select(
+      'provider_id, provider_name, address_city, listing_type, opening_hours, enrichment_eligible',
+    )
     .eq('listing_type', 'food')
     .eq('enrichment_eligible', true)
     .not('address_city', 'is', null);
@@ -208,7 +219,7 @@ async function main(): Promise<void> {
   console.log(`  📋 ${dbProviders?.length ?? 0} eligible food providers in database\n`);
 
   // 3. Fetch no_alcohol values from food_providers
-  const providerIds = (dbProviders ?? []).map(p => p.provider_id);
+  const providerIds = (dbProviders ?? []).map((p) => p.provider_id);
   let noAlcoholMap: Record<string, boolean | null> = {};
   if (providerIds.length > 0) {
     const { data: fpData } = await supabase
@@ -271,11 +282,7 @@ async function main(): Promise<void> {
     }
 
     // Match provider to Apify venues in this city
-    const match = matchProviderToVenues(
-      provider.provider_name,
-      city,
-      woltVenuesByCity[city],
-    );
+    const match = matchProviderToVenues(provider.provider_name, city, woltVenuesByCity[city]);
 
     if (!match) {
       result.error = 'No name match';
@@ -286,7 +293,7 @@ async function main(): Promise<void> {
     // Found a match — find the full Apify venue data
     const matchedSlug = match.woltVenue.slug;
     const apifyVenue = apifyVenues.find(
-      av => av.slug === matchedSlug && av.city?.trim() === city
+      (av) => av.slug === matchedSlug && av.city?.trim() === city,
     );
 
     if (!apifyVenue) {
@@ -296,7 +303,7 @@ async function main(): Promise<void> {
     }
 
     // Extract data
-    const menuNames = (apifyVenue.menuItems ?? []).map(m => m.name);
+    const menuNames = (apifyVenue.menuItems ?? []).map((m) => m.name);
     const alcoholResult = detectAlcohol(menuNames);
     const openingHours = normalizeApifyOpeningHours(apifyVenue.openingTimesSchedule);
 
@@ -366,24 +373,22 @@ async function main(): Promise<void> {
     // Write candidates
     if (isWrite && candidates.length > 0) {
       for (const c of candidates) {
-        const { error } = await supabase
-          .from('enrichment_candidates')
-          .upsert(
-            {
-              provider_id: c.provider_id,
-              source: c.source,
-              source_url: c.source_url,
-              field_name: c.field_name,
-              proposed_value: c.proposed_value,
-              current_value: c.current_value,
-              status: 'pending',
-              enriched_at: new Date().toISOString(),
-            },
-            {
-              onConflict: 'provider_id,field_name,source',
-              ignoreDuplicates: true,
-            }
-          );
+        const { error } = await supabase.from('enrichment_candidates').upsert(
+          {
+            provider_id: c.provider_id,
+            source: c.source,
+            source_url: c.source_url,
+            field_name: c.field_name,
+            proposed_value: c.proposed_value,
+            current_value: c.current_value,
+            status: 'pending',
+            enriched_at: new Date().toISOString(),
+          },
+          {
+            onConflict: 'provider_id,field_name,source',
+            ignoreDuplicates: true,
+          },
+        );
 
         if (error) {
           console.error(`     ❌ Failed to write candidate: ${error.message}`);
@@ -393,19 +398,20 @@ async function main(): Promise<void> {
 
     // Write delivery link
     if (isWrite) {
-      await supabase
-        .from('provider_delivery_links')
-        .upsert({
+      await supabase.from('provider_delivery_links').upsert(
+        {
           provider_id: provider.provider_id,
           platform: 'wolt',
           platform_url: apifyVenue.url,
           platform_slug: apifyVenue.slug,
           is_active: apifyVenue.delivers,
           last_verified_at: new Date().toISOString(),
-        }, {
+        },
+        {
           onConflict: 'provider_id,platform',
           ignoreDuplicates: false,
-        });
+        },
+      );
     }
 
     results.push(result);
@@ -413,9 +419,11 @@ async function main(): Promise<void> {
 
   // 6. Report
   console.log(`\n${'─'.repeat(60)}`);
-  const matched = results.filter(r => !r.error).length;
-  const withAlcoholSignal = results.filter(r => r.alcoholSignal && r.alcoholSignal !== 'no_signal').length;
-  const withHours = results.filter(r => r.openingHours !== null).length;
+  const matched = results.filter((r) => !r.error).length;
+  const withAlcoholSignal = results.filter(
+    (r) => r.alcoholSignal && r.alcoholSignal !== 'no_signal',
+  ).length;
+  const withHours = results.filter((r) => r.openingHours !== null).length;
 
   console.log(`  📊 Import Summary`);
   console.log(`     Venues loaded: ${apifyVenues.length}`);
@@ -431,7 +439,7 @@ async function main(): Promise<void> {
   for (const r of results) {
     const status = r.error
       ? `⚠️  ${r.error}`
-      : `✅ ${r.name} (slug: ${r.slug}) [alcohol: ${r.alcoholSignal}, hours: ${r.openingHours ? Object.keys(r.openingHours).filter(k => (r.openingHours as any)[k] !== null).length + ' days' : 'none'}, confidence: ${r.matchConfidence?.toFixed(2) ?? 'N/A'}]`;
+      : `✅ ${r.name} (slug: ${r.slug}) [alcohol: ${r.alcoholSignal}, hours: ${r.openingHours ? Object.keys(r.openingHours).filter((k) => (r.openingHours as any)[k] !== null).length + ' days' : 'none'}, confidence: ${r.matchConfidence?.toFixed(2) ?? 'N/A'}]`;
     console.log(`     ${r.providerName} → ${status}`);
   }
 

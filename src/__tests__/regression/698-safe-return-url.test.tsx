@@ -82,7 +82,7 @@ describe('#698 AC3: all seven returnUrl read sites go through the helper', () =>
     expect(source).not.toMatch(/decodeURIComponent\(returnUrl\)/);
   });
 
-  describe.each(UNSAFE)('with returnUrl=%s', raw => {
+  describe.each(UNSAFE)('with returnUrl=%s', (raw) => {
     it('login: a logged-in user goes to /profile', () => {
       withReturnUrl(raw);
       logIn();

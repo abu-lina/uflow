@@ -58,7 +58,7 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     return () => {
-      images.forEach(file => {
+      images.forEach((file) => {
         const url = URL.createObjectURL(file);
         URL.revokeObjectURL(url);
       });
@@ -69,15 +69,15 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
     const files = event.target.files;
     if (files) {
       const newImages = Array.from(files);
-      setImages(prev => [...prev, ...newImages]);
+      setImages((prev) => [...prev, ...newImages]);
     }
   };
 
   const removeImage = (index: number, isExisting: boolean) => {
     if (isExisting) {
-      setExistingImageUrls(prev => prev.filter((_, i) => i !== index));
+      setExistingImageUrls((prev) => prev.filter((_, i) => i !== index));
     } else {
-      setImages(prev => prev.filter((_, i) => i !== index));
+      setImages((prev) => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -125,7 +125,7 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
       if (allImages.length > 0) {
         localStorage.setItem(
           `admin_cs_edit_images_${communityServiceId}`,
-          JSON.stringify({ urls: allImages })
+          JSON.stringify({ urls: allImages }),
         );
       } else {
         localStorage.removeItem(`admin_cs_edit_images_${communityServiceId}`);
@@ -147,31 +147,32 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
   ];
 
   return (
-    <div className="flex h-screen-fix flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
-      <PageHeader title={t('editProvider.editImages.title')} variant="back-and-title" onBack={() => router.back()} />
+    <div className="h-screen-fix flex flex-col bg-gradient-to-b from-[#F5F5F5] to-[#FBFBFB]">
+      <PageHeader
+        title={t('editProvider.editImages.title')}
+        variant="back-and-title"
+        onBack={() => router.back()}
+      />
       <HeaderSpacer />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="w-full px-safe-24 pt-8 pb-24">
+        <div className="px-safe-24 w-full pb-24 pt-8">
           <div className="flex w-full flex-col gap-4">
             <div className="relative">
               <input
                 multiple
                 accept="image/*"
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                 type="file"
                 onChange={handleImageUpload}
               />
               <button
-                className="flex w-full h-[54px] flex-col justify-center items-start p-4 gap-4 bg-white border border-[#D4D4D4] rounded-[12px] hover:bg-gray-50"
+                className="flex h-[54px] w-full flex-col items-start justify-center gap-4 rounded-[12px] border border-[#D4D4D4] bg-white p-4 hover:bg-gray-50"
                 type="button"
               >
-                <div className="flex flex-row items-center p-0 gap-3 w-full h-6">
-                  <Icon
-                    className="w-6 h-6 text-[#232323]"
-                    icon="lucide:image-up"
-                  />
-                  <span className="font-inter-tight font-semibold text-base leading-[19px] text-[#232323]">
+                <div className="flex h-6 w-full flex-row items-center gap-3 p-0">
+                  <Icon className="h-6 w-6 text-[#232323]" icon="lucide:image-up" />
+                  <span className="font-inter-tight text-base font-semibold leading-[19px] text-[#232323]">
                     {t('editProvider.editImages.uploadButton')}
                   </span>
                 </div>
@@ -180,18 +181,25 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
           </div>
 
           {allDisplayImages.length > 0 && (
-            <div className="flex w-full flex-col gap-4 mt-8">
+            <div className="mt-8 flex w-full flex-col gap-4">
               <h3 className="text-sm font-medium text-[#232323]">
-                {t('editProvider.editImages.selectedImages').replace('{{count}}', allDisplayImages.length.toString())}
+                {t('editProvider.editImages.selectedImages').replace(
+                  '{{count}}',
+                  allDisplayImages.length.toString(),
+                )}
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {allDisplayImages.map((item, idx) => {
-                  const imageUrl = item.type === 'existing' ? item.url : URL.createObjectURL(item.file);
+                  const imageUrl =
+                    item.type === 'existing' ? item.url : URL.createObjectURL(item.file);
                   return (
-                    <div key={idx} className="relative w-full h-[160px] rounded-[12px] overflow-hidden bg-gray-100">
+                    <div
+                      key={idx}
+                      className="relative h-[160px] w-full overflow-hidden rounded-[12px] bg-gray-100"
+                    >
                       <img
                         alt={`Preview ${idx + 1}`}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                         src={imageUrl}
                         onError={(e) => {
                           console.error('Error loading image preview:', e);
@@ -209,7 +217,7 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
                         }}
                       >
                         <Icon
-                          className="w-4 h-4 text-[#232323]"
+                          className="h-4 w-4 text-[#232323]"
                           icon="material-symbols:close-rounded"
                         />
                       </button>
@@ -221,10 +229,10 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
           )}
 
           {allDisplayImages.length === 0 && (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 mt-12">
+            <div className="mt-12 flex flex-1 flex-col items-center justify-center gap-4">
               <Icon className="h-16 w-16 text-gray-300" icon="lucide:image" />
               <div className="text-center">
-                <p className="text-sm text-gray-500 mb-2">
+                <p className="mb-2 text-sm text-gray-500">
                   {t('editProvider.editImages.noImagesSelected')}
                 </p>
                 <p className="text-xs text-gray-400">
@@ -238,7 +246,9 @@ export default function CsEditImagesPage({ params }: { params: Promise<{ id: str
 
       <FooterAction
         actionButton={{
-          label: isUploading ? t('editProvider.editImages.saving') : t('editProvider.editImages.save'),
+          label: isUploading
+            ? t('editProvider.editImages.saving')
+            : t('editProvider.editImages.save'),
           icon: isUploading ? 'lucide:loader-2' : 'lucide:save',
           onClick: handleSave,
           variant: 'primary',

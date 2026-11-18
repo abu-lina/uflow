@@ -3,6 +3,7 @@
 ## JavaScript/TypeScript
 
 ### Jest
+
 ```javascript
 // Test
 test('calculates total with discount', () => {
@@ -22,6 +23,7 @@ test('fetches user', async () => {
 ```
 
 ### Vitest
+
 ```javascript
 import { describe, it, expect, vi } from 'vitest';
 
@@ -35,6 +37,7 @@ it('works like jest', () => {
 ## Python
 
 ### pytest
+
 ```python
 # Test
 def test_calculate_total():
@@ -70,6 +73,7 @@ def test_discount(input, expected):
 ## Java
 
 ### JUnit 5
+
 ```java
 @Test
 void calculatesTotal() {
@@ -87,7 +91,7 @@ void handlesEdgeCases(int value) {
 class OrderTest {
     @Mock EmailService emailService;
     @InjectMocks OrderService orderService;
-    
+
     @Test
     void sendsConfirmation() {
         orderService.complete(order);
@@ -99,6 +103,7 @@ class OrderTest {
 ## Go
 
 ### testing package
+
 ```go
 func TestCalculateTotal(t *testing.T) {
     got := CalculateTotal(100, 0.2)
@@ -137,17 +142,17 @@ import * as vscode from 'vscode';
 import * as assert from 'assert';
 
 suite('Extension Test Suite', () => {
-    vscode.window.showInformationMessage('Start tests');
+  vscode.window.showInformationMessage('Start tests');
 
-    test('activates extension', async () => {
-        const ext = vscode.extensions.getExtension('publisher.extension');
-        await ext?.activate();
-        assert.ok(ext?.isActive);
-    });
+  test('activates extension', async () => {
+    const ext = vscode.extensions.getExtension('publisher.extension');
+    await ext?.activate();
+    assert.ok(ext?.isActive);
+  });
 
-    test('registers commands', async () => {
-        const commands = await vscode.commands.getCommands();
-        assert.ok(commands.includes('extension.myCommand'));
-    });
+  test('registers commands', async () => {
+    const commands = await vscode.commands.getCommands();
+    assert.ok(commands.includes('extension.myCommand'));
+  });
 });
 ```

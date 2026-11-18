@@ -21,7 +21,9 @@ export function setSelectedCityCoords(coords: CityCoords | null): void {
 
 export function getSelectedCityCoords(): CityCoords | null {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as Partial<CityCoords> | null;
+    const parsed = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) ?? 'null',
+    ) as Partial<CityCoords> | null;
     return typeof parsed?.lat === 'number' && typeof parsed?.lon === 'number'
       ? { lat: parsed.lat, lon: parsed.lon }
       : null;

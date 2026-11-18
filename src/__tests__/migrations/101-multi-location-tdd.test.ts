@@ -52,7 +52,7 @@ describe('migration 101 multi-location support', () => {
     expect(sql).toContain('CREATE OR REPLACE FUNCTION sync_primary_location_city()');
     expect(sql).toContain('RETURNS TRIGGER');
     expect(sql).toContain('UPDATE providers p SET address_city');
-    expect(sql).toContain('TG_OP = \'DELETE\'');
+    expect(sql).toContain("TG_OP = 'DELETE'");
     expect(sql).toContain('OLD.is_primary');
     expect(sql).toContain('NEW.is_primary = TRUE');
   });
@@ -76,7 +76,9 @@ describe('migration 101 multi-location support', () => {
 
   it('has idempotent backfill with WHERE NOT EXISTS', () => {
     expect(sql).toContain('WHERE NOT EXISTS');
-    expect(sql).toContain('SELECT 1 FROM public.locations WHERE locations.provider_id = providers.provider_id');
+    expect(sql).toContain(
+      'SELECT 1 FROM public.locations WHERE locations.provider_id = providers.provider_id',
+    );
     expect(sql).toContain('show_address, contact_phone, TRUE');
   });
 });

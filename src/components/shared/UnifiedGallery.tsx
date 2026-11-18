@@ -5,7 +5,11 @@ import Image from 'next/image';
 import { useImageFallback } from '@/hooks/useImageFallback';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Category } from '@/services/categories';
-import { PLACEHOLDER_IMAGE, getCategoryCardBackgroundColor, parseCategoryImages } from '@/utils/imageUtils';
+import {
+  PLACEHOLDER_IMAGE,
+  getCategoryCardBackgroundColor,
+  parseCategoryImages,
+} from '@/utils/imageUtils';
 
 interface UnifiedGalleryProps {
   categoryId: string;
@@ -14,11 +18,11 @@ interface UnifiedGalleryProps {
   className?: string;
 }
 
-export default function UnifiedGallery({ 
-  categoryId, 
-  category, 
+export default function UnifiedGallery({
+  categoryId,
+  category,
   entityType,
-  className = "flex aspect-[16/9] min-h-[240px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/9] md:hidden md:aspect-[16/9]"
+  className = 'flex aspect-[16/9] min-h-[240px] w-full overflow-hidden rounded-[29px] sm:aspect-[16/9] md:hidden md:aspect-[16/9]',
 }: UnifiedGalleryProps) {
   const { t } = useLanguage();
   const { images, loading, error } = useImageFallback({
@@ -62,9 +66,13 @@ export default function UnifiedGallery({
           <div
             key={index}
             className="relative h-full w-1/3 overflow-hidden"
-            style={categoryUrls.has(imageUrl) ? {
-              backgroundColor: getCategoryCardBackgroundColor(categoryId, String(index)),
-            } : undefined}
+            style={
+              categoryUrls.has(imageUrl)
+                ? {
+                    backgroundColor: getCategoryCardBackgroundColor(categoryId, String(index)),
+                  }
+                : undefined
+            }
           >
             <Image
               fill
@@ -72,10 +80,11 @@ export default function UnifiedGallery({
                 effectiveSrc === PLACEHOLDER_IMAGE
                   ? t('providers.placeholderImage', { index: index + 1 })
                   : effectiveSrc.includes('provider-images') || effectiveSrc.includes('providers')
-                  ? t('providers.providerImage', { index: index + 1 })
-                  : effectiveSrc.includes('community-service-images') || effectiveSrc.includes('community-services')
-                  ? t('providers.communityServiceImage', { index: index + 1 })
-                  : t('providers.categoryImage', { index: index + 1 })
+                    ? t('providers.providerImage', { index: index + 1 })
+                    : effectiveSrc.includes('community-service-images') ||
+                        effectiveSrc.includes('community-services')
+                      ? t('providers.communityServiceImage', { index: index + 1 })
+                      : t('providers.categoryImage', { index: index + 1 })
               }
               className="border border-white object-cover"
               loading={index === 0 ? 'eager' : 'lazy'}

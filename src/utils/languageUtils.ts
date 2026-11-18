@@ -1,9 +1,9 @@
 /**
  * Client-side language detection utilities
- * 
+ *
  * This file contains client-safe utilities that can be used in both
  * client and server components (without server-only APIs).
- * 
+ *
  * For server-side language detection with cookies/headers, use
  * @/utils/serverLanguageUtils instead.
  */
@@ -23,11 +23,11 @@ export function detectUserLanguage(): SupportedLanguage {
   try {
     // Get browser language preference
     const browserLang = navigator.language || navigator.languages?.[0];
-    
+
     if (browserLang) {
       // Extract language code (e.g., 'en-US' -> 'en')
       const langCode = browserLang.split('-')[0].toLowerCase();
-      
+
       // Check if it's a supported language
       if (langCode === 'en') {
         return 'en';
@@ -47,24 +47,24 @@ export function detectUserLanguage(): SupportedLanguage {
 export function getLocalizedDescription(
   descriptionDe?: string | null,
   descriptionEn?: string | null,
-  fallback?: string
+  fallback?: string,
 ): string {
   const userLang = detectUserLanguage();
-  
+
   // Try to get description in user's preferred language
   if (userLang === 'en' && descriptionEn) {
     return descriptionEn;
   }
-  
+
   if (descriptionDe) {
     return descriptionDe;
   }
-  
+
   // Fallback to English if German is not available
   if (descriptionEn) {
     return descriptionEn;
   }
-  
+
   // Final fallback
   return fallback || '';
 }
@@ -72,18 +72,14 @@ export function getLocalizedDescription(
 /**
  * Get the appropriate name based on user's language preference
  */
-export function getLocalizedName(
-  nameDe: string,
-  nameEn?: string | null
-): string {
+export function getLocalizedName(nameDe: string, nameEn?: string | null): string {
   const userLang = detectUserLanguage();
-  
+
   // Try to get name in user's preferred language
   if (userLang === 'en' && nameEn) {
     return nameEn;
   }
-  
+
   // Fallback to German name
   return nameDe;
 }
-

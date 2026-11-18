@@ -67,11 +67,9 @@ describe('useGeolocation', () => {
   });
 
   it('transitions to denied when the browser reports PERMISSION_DENIED', async () => {
-    const getCurrentPosition = vi.fn(
-      (_success: PositionCallback, error: PositionErrorCallback) => {
-        error({ code: 1, message: 'denied' } as GeolocationPositionError);
-      },
-    );
+    const getCurrentPosition = vi.fn((_success: PositionCallback, error: PositionErrorCallback) => {
+      error({ code: 1, message: 'denied' } as GeolocationPositionError);
+    });
     Object.defineProperty(navigator, 'geolocation', {
       value: { getCurrentPosition },
       configurable: true,
@@ -89,11 +87,9 @@ describe('useGeolocation', () => {
   });
 
   it('transitions to timeout when the browser reports TIMEOUT', async () => {
-    const getCurrentPosition = vi.fn(
-      (_success: PositionCallback, error: PositionErrorCallback) => {
-        error({ code: 3, message: 'timeout' } as GeolocationPositionError);
-      },
-    );
+    const getCurrentPosition = vi.fn((_success: PositionCallback, error: PositionErrorCallback) => {
+      error({ code: 3, message: 'timeout' } as GeolocationPositionError);
+    });
     Object.defineProperty(navigator, 'geolocation', {
       value: { getCurrentPosition },
       configurable: true,
@@ -285,11 +281,9 @@ describe('useGeolocation', () => {
   it('[pre-fix FAILS / post-fix PASSES] watchdog clears when error fires before deadline', async () => {
     vi.useFakeTimers();
 
-    const getCurrentPosition = vi.fn(
-      (_success: PositionCallback, error: PositionErrorCallback) => {
-        error({ code: 3, message: 'timeout' } as GeolocationPositionError);
-      },
-    );
+    const getCurrentPosition = vi.fn((_success: PositionCallback, error: PositionErrorCallback) => {
+      error({ code: 3, message: 'timeout' } as GeolocationPositionError);
+    });
     Object.defineProperty(navigator, 'geolocation', {
       value: { getCurrentPosition },
       configurable: true,
@@ -362,11 +356,9 @@ describe('useGeolocation', () => {
   it('[pre-fix FAILS / post-fix PASSES] logs outcome with status, errorCode, standalone and elapsedMs on terminal state', async () => {
     vi.useFakeTimers();
 
-    const getCurrentPosition = vi.fn(
-      (_success: PositionCallback, error: PositionErrorCallback) => {
-        error({ code: 1, message: 'denied' } as GeolocationPositionError);
-      },
-    );
+    const getCurrentPosition = vi.fn((_success: PositionCallback, error: PositionErrorCallback) => {
+      error({ code: 1, message: 'denied' } as GeolocationPositionError);
+    });
     Object.defineProperty(navigator, 'geolocation', {
       value: { getCurrentPosition },
       configurable: true,
@@ -430,9 +422,9 @@ describe('useGeolocation', () => {
         value: false,
         configurable: true,
       });
-      window.matchMedia = vi
-        .fn()
-        .mockImplementation((query: string) => ({ matches: query === '(display-mode: standalone)' })) as typeof window.matchMedia;
+      window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(display-mode: standalone)',
+      })) as typeof window.matchMedia;
 
       expect(isStandaloneDisplayMode()).toBe(true);
     });

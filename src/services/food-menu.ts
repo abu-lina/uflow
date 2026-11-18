@@ -32,9 +32,7 @@ export async function searchFoodMenuItems(
   return Array.isArray(data) ? (data as FoodMenuItemRaw[]) : [];
 }
 
-export async function getProviderMenu(
-  providerId: string,
-): Promise<ProviderMenuItemRow[]> {
+export async function getProviderMenu(providerId: string): Promise<ProviderMenuItemRow[]> {
   const { data, error } = await supabase
     .from('food_menu')
     .select('id, provider_id, name_de, name_en, price_cents, is_available, sort_order')

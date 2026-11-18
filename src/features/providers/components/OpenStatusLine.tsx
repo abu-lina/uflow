@@ -55,7 +55,10 @@ export function OpenStatusLine({ provider, locationId }: OpenStatusLineProps) {
       >
         {statusLabel}
       </span>
-      <span aria-hidden className="mx-0.5 inline-flex size-4 items-center justify-center font-inter text-base font-medium leading-none text-uFlowText2">
+      <span
+        aria-hidden
+        className="mx-0.5 inline-flex size-4 items-center justify-center font-inter text-base font-medium leading-none text-uFlowText2"
+      >
         •
       </span>
       <span className="font-inter text-base font-medium leading-normal text-uFlowText2">

@@ -25,7 +25,7 @@ function createMockWoltClient(overrides?: Partial<WoltClient>): WoltClient {
       lat: 52.52,
       lon: 13.405,
     }),
-fetchMenuData: vi.fn().mockResolvedValue({ items: [], categories: [] }),
+    fetchMenuData: vi.fn().mockResolvedValue({ items: [], categories: [] }),
     // Note: menu extraction uses venue_preview_items from discovery API
     ...overrides,
   };

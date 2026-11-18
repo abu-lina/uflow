@@ -18,29 +18,25 @@ export async function GET(request: NextRequest) {
 
     // 2. Validate parameters
     if (!entityId || entityId.trim() === '') {
-      return NextResponse.json(
-        { error: 'entityId parameter is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'entityId parameter is required' }, { status: 400 });
     }
 
     if (!entityType || entityType !== 'provider') {
-      return NextResponse.json(
-        { error: 'entityType must be "provider"' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'entityType must be "provider"' }, { status: 400 });
     }
 
     // 3. Check if user is authenticated (optional)
     const supabase = createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     // 4. Fetch badges with confirmation status (pass server client)
     const badges = await getBadgesForEntityWithConfirmationStatus(
       entityId,
       entityType,
       user?.id || null,
-      supabase // Pass server client for proper authentication context
+      supabase, // Pass server client for proper authentication context
     );
 
     // 5. Return badges (hide confirmation_count per user preference)
@@ -66,25 +62,17 @@ export async function GET(request: NextRequest) {
       data: badgesResponse,
       error: null,
     });
-
   } catch (error) {
     console.error('[BADGE GET ENTITY API] Error:', error);
-    
+
     // Handle specific error cases
     if (error instanceof Error) {
       // Entity not found
       if (error.message.includes('not found')) {
-        return NextResponse.json(
-          { error: 'Entity not found' },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: 'Entity not found' }, { status: 404 });
       }
     }
 
-    return NextResponse.json(
-      { error: 'Failed to fetch badges' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch badges' }, { status: 500 });
   }
 }
-

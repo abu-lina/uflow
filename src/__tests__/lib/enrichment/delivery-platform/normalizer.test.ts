@@ -94,9 +94,7 @@ describe('normalizeWoltOpeningHours', () => {
   });
 
   it('handles 24h format', () => {
-    const hours = [
-      { day: 0, opens: '00:00', closes: '24:00' },
-    ];
+    const hours = [{ day: 0, opens: '00:00', closes: '24:00' }];
     const result = normalizeWoltOpeningHours(hours);
     expect(result).not.toBeNull();
     expect(result!.monday).toEqual({ open: '00:00', close: '24:00' });

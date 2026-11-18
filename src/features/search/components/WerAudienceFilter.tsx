@@ -54,7 +54,6 @@ const AUDIENCES: AudienceItem[] = [
 ];
 
 function AudienceIcon({ kind }: { kind: 'maenner' | 'frauen' | 'kinder' }) {
-
   if (kind === 'maenner') {
     return (
       <Image
@@ -114,8 +113,7 @@ export function WerAudienceFilter({ t, onSelectionChange, resetSignal }: WerAudi
     setHasUserInteracted(false);
   }, [resetSignal]);
 
-  const selectedAudienceSummary = AUDIENCES
-    .filter(({ key }) => counts[key] > 0)
+  const selectedAudienceSummary = AUDIENCES.filter(({ key }) => counts[key] > 0)
     .map(({ labelKey }) => t(labelKey))
     .join(', ');
   const hasSelection = selectedAudienceSummary.length > 0;
@@ -140,7 +138,9 @@ export function WerAudienceFilter({ t, onSelectionChange, resetSignal }: WerAudi
           <RowItem
             key={key}
             icon={
-              <div className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${bgClass}`}>
+              <div
+                className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${bgClass}`}
+              >
                 <AudienceIcon kind={iconKind} />
               </div>
             }
@@ -157,7 +157,10 @@ export function WerAudienceFilter({ t, onSelectionChange, resetSignal }: WerAudi
                   setHasUserInteracted(true);
                   setCounts((prev) => {
                     const currentValue = prev[key];
-                    const selectedTotal = Object.values(prev).reduce((sum, value) => sum + value, 0);
+                    const selectedTotal = Object.values(prev).reduce(
+                      (sum, value) => sum + value,
+                      0,
+                    );
 
                     if (currentValue === 0 || (currentValue === 1 && selectedTotal === 1)) {
                       return prev;

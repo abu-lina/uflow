@@ -1,6 +1,6 @@
 /**
  * Environment Configuration
- * 
+ *
  * Centralized environment variable access with validation and type safety.
  * This ensures all required environment variables are properly configured.
  */
@@ -15,7 +15,7 @@ function validateEnvVar(key: string, value: string | undefined): string {
   if (!value || value.trim() === '') {
     throw new Error(
       `Missing required environment variable: ${key}. ` +
-      'Please check your .env.local file and ensure the variable is set.'
+        'Please check your .env.local file and ensure the variable is set.',
     );
   }
   return value;
@@ -25,7 +25,7 @@ function validateEnvVar(key: string, value: string | undefined): string {
  * Get VAPID public key for push notifications
  * @returns VAPID public key
  * @throws Error if not configured
- * 
+ *
  * @example
  * ```ts
  * try {
@@ -61,4 +61,3 @@ export function isVapidConfigured(): boolean {
   const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   return !!key && key.trim() !== '';
 }
-

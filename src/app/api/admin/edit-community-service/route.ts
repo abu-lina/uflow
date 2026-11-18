@@ -23,28 +23,30 @@ export async function PATCH(request: Request) {
 
     const hasAccess = await isAdminOrModerator(user.id);
     if (!hasAccess) {
-      logger.warn(
-        'Forbidden access attempt to edit-community-service API',
-        { userId: user.id, ...getRequestMetadata(request) }
-      );
+      logger.warn('Forbidden access attempt to edit-community-service API', {
+        userId: user.id,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Forbidden - Admin or Moderator access required' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     // Rate limiting — reuse the admin review limiter
     const identifier = getClientIdentifier(request, user.id);
-    const isRateLimited = !rateLimiters.adminReview.perHour(identifier) ||
-                          !rateLimiters.adminReview.perMinute(identifier);
+    const isRateLimited =
+      !rateLimiters.adminReview.perHour(identifier) ||
+      !rateLimiters.adminReview.perMinute(identifier);
     if (isRateLimited) {
-      logger.warn(
-        'Rate limit exceeded for edit-community-service API',
-        { userId: user.id, identifier, ...getRequestMetadata(request) }
-      );
+      logger.warn('Rate limit exceeded for edit-community-service API', {
+        userId: user.id,
+        identifier,
+        ...getRequestMetadata(request),
+      });
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -64,16 +66,14 @@ export async function PATCH(request: Request) {
           'Invalid request body for edit-community-service',
           {
             communityServiceId:
-              typeof body?.communityServiceId === 'string'
-                ? body.communityServiceId
-                : '[invalid]',
+              typeof body?.communityServiceId === 'string' ? body.communityServiceId : '[invalid]',
             communityServiceName:
               typeof body?.communityServiceName === 'string'
                 ? String(body.communityServiceName).slice(0, 100)
                 : '[absent]',
             error: validationError.message,
           },
-          { ...getRequestMetadata(request), userId: user.id }
+          { ...getRequestMetadata(request), userId: user.id },
         );
       }
       return NextResponse.json(
@@ -81,17 +81,13 @@ export async function PATCH(request: Request) {
           error: 'Invalid request body',
           details: validationError instanceof Error ? validationError.message : 'Validation failed',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const { communityServiceId, ...editFields } = validatedData;
 
-    const updatedCS = await updateCommunityServiceFields(
-      communityServiceId,
-      editFields,
-      user.id
-    );
+    const updatedCS = await updateCommunityServiceFields(communityServiceId, editFields, user.id);
 
     // Audit log
     await logAdminAction(
@@ -106,7 +102,7 @@ export async function PATCH(request: Request) {
       {
         ipAddress: getClientIp(request),
         userAgent: getUserAgent(request),
-      }
+      },
     );
 
     return NextResponse.json({
@@ -119,22 +115,16 @@ export async function PATCH(request: Request) {
     });
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('CONFLICT:')) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
 
     logger.error(
       'Error in edit-community-service API',
       error instanceof Error ? error : new Error(String(error)),
       {},
-      { ...getRequestMetadata(request) }
+      { ...getRequestMetadata(request) },
     );
 
-    return NextResponse.json(
-      { error: 'Failed to update community service' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update community service' }, { status: 500 });
   }
 }

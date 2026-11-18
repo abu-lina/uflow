@@ -97,14 +97,16 @@ export function CitySelectionModal({
       // CRITICAL: Persist city BEFORE API call
       localStorage.setItem('selectedCity', city.city_name);
       sessionStorage.setItem('selectedCity', city.city_name);
-      
+
       // Dispatch custom event to notify useAppStage hook immediately
-      window.dispatchEvent(new CustomEvent('city-selected', { detail: { cityName: city.city_name } }));
-      
+      window.dispatchEvent(
+        new CustomEvent('city-selected', { detail: { cityName: city.city_name } }),
+      );
+
       // CRITICAL: Ensure onboarding state exists when city is selected
       // Always create state, even without email (for pre-launch flow)
       const onboardingState = getOnboardingState();
-      
+
       if (!onboardingState) {
         // Create onboarding state (with or without email)
         setOnboardingState({
@@ -115,19 +117,19 @@ export function CitySelectionModal({
           waitlistToken: waitlistToken?.trim() || undefined,
         });
       }
-      
+
       // Only update waitlist API if email is provided (for future compatibility)
       if (email && email.trim()) {
         const body: Record<string, unknown> = {
           email: email.trim(),
           selected_city: city.city_name,
         };
-        
+
         // Include token if provided (API will also check cookie as fallback)
         if (waitlistToken && waitlistToken.trim()) {
           body.waitlistToken = waitlistToken.trim();
         }
-        
+
         // Update waitlist entry with selected city
         const response = await fetch('/api/waitlist/update', {
           method: 'PATCH',
@@ -163,7 +165,7 @@ export function CitySelectionModal({
 
   // Filter cities by search query
   const filteredCities = cities.filter((city) =>
-    city.city_name.toLowerCase().includes(searchQuery.toLowerCase())
+    city.city_name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   // Get status for a city
@@ -230,7 +232,7 @@ export function CitySelectionModal({
         {/* Modal Content */}
         <motion.div
           animate={{ y: 0, scale: 1 }}
-          className="relative flex w-full max-w-[392px] flex-col rounded-t-[32px] bg-white md:rounded-[24px] md:max-w-[480px] max-h-[85vh] md:max-h-[80vh]"
+          className="relative flex max-h-[85vh] w-full max-w-[392px] flex-col rounded-t-[32px] bg-white md:max-h-[80vh] md:max-w-[480px] md:rounded-[24px]"
           initial={{ y: 100, scale: 0.95 }}
           style={{
             transform: isClosing ? 'translateY(100%) scale(0.95)' : 'translateY(0) scale(1)',
@@ -239,7 +241,7 @@ export function CitySelectionModal({
           transition={{ duration: 0.3, ease: 'easeOut' }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-neutral-muted">
+          <div className="flex items-center justify-between border-b border-neutral-muted p-4">
             <h2
               className="font-inter-tight text-xl font-semibold text-content-heading"
               id="city-modal-title"
@@ -285,14 +287,15 @@ export function CitySelectionModal({
               <div className="flex flex-col gap-2">
                 {filteredCities.map((city) => {
                   const status = getCityStatus(city);
-                  const isCurrentCity = currentCity && city.city_name.toLowerCase() === currentCity.toLowerCase();
+                  const isCurrentCity =
+                    currentCity && city.city_name.toLowerCase() === currentCity.toLowerCase();
                   return (
                     <button
                       key={city.id}
                       aria-label={`${city.city_name} - ${status.label}${isCurrentCity ? ' (Current)' : ''}`}
-                      className={`flex items-center justify-between p-4 rounded-xl transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`flex items-center justify-between rounded-xl p-4 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                         isCurrentCity
-                          ? 'bg-primary-light border border-primary'
+                          ? 'border border-primary bg-primary-light'
                           : 'bg-neutral-soft hover:bg-neutral-muted'
                       }`}
                       disabled={isSubmitting}
@@ -301,13 +304,15 @@ export function CitySelectionModal({
                     >
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <span className={`font-inter-tight font-medium ${
-                            isCurrentCity ? 'text-primary' : 'text-content-heading'
-                          }`}>
+                          <span
+                            className={`font-inter-tight font-medium ${
+                              isCurrentCity ? 'text-primary' : 'text-content-heading'
+                            }`}
+                          >
                             {city.city_name}
                           </span>
                           {isCurrentCity && (
-                            <Icon 
+                            <Icon
                               aria-hidden="true"
                               className="size-4 text-primary"
                               icon="lucide:check-circle"

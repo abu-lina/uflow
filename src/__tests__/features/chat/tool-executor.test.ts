@@ -39,7 +39,7 @@ vi.mock('@/lib/supabase/client', () => ({
     limit: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn(),
     insert: vi.fn().mockReturnValue({ error: null }),
-  upsert: vi.fn().mockResolvedValue({ error: null }),
+    upsert: vi.fn().mockResolvedValue({ error: null }),
     delete: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     rpc: vi.fn(),
@@ -82,13 +82,17 @@ import { getProviderById, fetchProviderCities, checkCityExists } from '@/service
 describe('Tool Executor', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    mockGetOpenStatus.mockReturnValue({ visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null });
+    mockGetOpenStatus.mockReturnValue({
+      visible: false,
+      isOpen: false,
+      nextChangeTime: null,
+      nextChangeDay: null,
+    });
     // Default: a lookup that ran and found nothing. Tests exercise the
     // catalog-hit or fail-open branches by stubbing explicitly — 'Berlin'
     // below goes through a real catalog match, not fail-open.
-    const { lookupCanonicalCity } = await import(
-      '@/features/providers/services/city-geocode.server'
-    );
+    const { lookupCanonicalCity } =
+      await import('@/features/providers/services/city-geocode.server');
     vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'no_match' });
   });
 
@@ -120,9 +124,7 @@ describe('Tool Executor', () => {
         function: { name: 'nonexistent_tool', arguments: '{}' },
       };
 
-      await expect(executeToolCall(toolCall)).rejects.toThrow(
-        'Unknown tool: nonexistent_tool',
-      );
+      await expect(executeToolCall(toolCall)).rejects.toThrow('Unknown tool: nonexistent_tool');
     });
 
     describe('get_cities', () => {
@@ -179,9 +181,7 @@ describe('Tool Executor', () => {
           },
         };
 
-        await expect(executeToolCall(toolCall)).rejects.toThrow(
-          'provider_id is required',
-        );
+        await expect(executeToolCall(toolCall)).rejects.toThrow('provider_id is required');
       });
     });
 
@@ -246,7 +246,7 @@ describe('Tool Executor', () => {
 
         expect(mockRpcSearch).toHaveBeenCalledWith('search_providers_chat', {
           p_search_query: '',
-          p_category_filter: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          p_category_filter: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
           p_city_filter: 'Berlin',
           p_listing_type_filter: 'food',
           p_muslim_owned: null,
@@ -276,16 +276,22 @@ describe('Tool Executor', () => {
 
       it('[Plan 199] annotates each result with is_open computed from opening_hours', async () => {
         const mockResults = [
-          { provider_id: 'p1', provider_name: 'Open Burger', opening_hours: { monday: { open: '00:00', close: '23:59' } } },
+          {
+            provider_id: 'p1',
+            provider_name: 'Open Burger',
+            opening_hours: { monday: { open: '00:00', close: '23:59' } },
+          },
           { provider_id: 'p2', provider_name: 'Closed Burger', opening_hours: { monday: null } },
           { provider_id: 'p3', provider_name: 'No Hours Data Burger', opening_hours: null },
         ];
         mockRpcSearch.mockResolvedValue({ data: mockResults, error: null });
         mockGetOpenStatus.mockImplementation((hours: unknown) => {
-          if (hours === null) return { visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null };
+          if (hours === null)
+            return { visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null };
           const h = hours as { monday: unknown };
-          return h.monday ? { visible: true, isOpen: true, nextChangeTime: null, nextChangeDay: null }
-                          : { visible: true, isOpen: false, nextChangeTime: null, nextChangeDay: null };
+          return h.monday
+            ? { visible: true, isOpen: true, nextChangeTime: null, nextChangeDay: null }
+            : { visible: true, isOpen: false, nextChangeTime: null, nextChangeDay: null };
         });
 
         const toolCall: ToolCall = {
@@ -301,23 +307,35 @@ describe('Tool Executor', () => {
         const parsed = JSON.parse(result);
 
         expect(parsed.results).toHaveLength(3);
-        expect(parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p1').is_open).toBe(true);
-        expect(parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p2').is_open).toBe(false);
-        expect(parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p3').is_open).toBeNull();
+        expect(
+          parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p1').is_open,
+        ).toBe(true);
+        expect(
+          parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p2').is_open,
+        ).toBe(false);
+        expect(
+          parsed.results.find((r: { provider_id: string }) => r.provider_id === 'p3').is_open,
+        ).toBeNull();
       });
 
       it('[Plan 199] open_now: true filters out closed and unknown-status providers', async () => {
         const mockResults = [
-          { provider_id: 'p1', provider_name: 'Open Burger', opening_hours: { monday: { open: '00:00', close: '23:59' } } },
+          {
+            provider_id: 'p1',
+            provider_name: 'Open Burger',
+            opening_hours: { monday: { open: '00:00', close: '23:59' } },
+          },
           { provider_id: 'p2', provider_name: 'Closed Burger', opening_hours: { monday: null } },
           { provider_id: 'p3', provider_name: 'No Hours Data Burger', opening_hours: null },
         ];
         mockRpcSearch.mockResolvedValue({ data: mockResults, error: null });
         mockGetOpenStatus.mockImplementation((hours: unknown) => {
-          if (hours === null) return { visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null };
+          if (hours === null)
+            return { visible: false, isOpen: false, nextChangeTime: null, nextChangeDay: null };
           const h = hours as { monday: unknown };
-          return h.monday ? { visible: true, isOpen: true, nextChangeTime: null, nextChangeDay: null }
-                          : { visible: true, isOpen: false, nextChangeTime: null, nextChangeDay: null };
+          return h.monday
+            ? { visible: true, isOpen: true, nextChangeTime: null, nextChangeDay: null }
+            : { visible: true, isOpen: false, nextChangeTime: null, nextChangeDay: null };
         });
 
         const toolCall: ToolCall = {
@@ -377,9 +395,8 @@ describe('Tool Executor', () => {
         expect(parsed.review_status).toBe('pending');
         expect(parsed.provider_id).toBeDefined();
 
-        const { lookupCanonicalCity } = await import(
-          '@/features/providers/services/city-geocode.server'
-        );
+        const { lookupCanonicalCity } =
+          await import('@/features/providers/services/city-geocode.server');
         expect(lookupCanonicalCity).not.toHaveBeenCalled();
       });
 
@@ -414,9 +431,8 @@ describe('Tool Executor', () => {
         };
         const { getSupabaseAdmin } = await import('@/lib/supabase/admin');
         vi.mocked(getSupabaseAdmin).mockReturnValue(mockAdminForCity as any);
-        const { lookupCanonicalCity } = await import(
-          '@/features/providers/services/city-geocode.server'
-        );
+        const { lookupCanonicalCity } =
+          await import('@/features/providers/services/city-geocode.server');
         vi.mocked(lookupCanonicalCity).mockResolvedValue({ kind: 'no_match' });
 
         const toolCall: ToolCall = {
@@ -439,9 +455,7 @@ describe('Tool Executor', () => {
       });
 
       it('[G3] maps chat args to typed registration form data', async () => {
-        const { mapChatArgsToFormData } = await import(
-          '@/features/chat/services/tool-executor'
-        );
+        const { mapChatArgsToFormData } = await import('@/features/chat/services/tool-executor');
 
         const args = {
           name: 'Test Restaurant',
@@ -468,9 +482,7 @@ describe('Tool Executor', () => {
       });
 
       it('[G3] validates that formData has all required ProviderFormData fields', async () => {
-        const { mapChatArgsToFormData } = await import(
-          '@/features/chat/services/tool-executor'
-        );
+        const { mapChatArgsToFormData } = await import('@/features/chat/services/tool-executor');
 
         const args = {
           name: 'Minimal Store',
@@ -482,11 +494,29 @@ describe('Tool Executor', () => {
         const result = await mapChatArgsToFormData(args, 'user-456');
 
         const requiredFields = [
-          'creationMode', 'entityType', 'title', 'category', 'description',
-          'isOnlineBusiness', 'street', 'zip', 'city', 'country', 'showAddress',
-          'website', 'instagram', 'phone', 'email', 'offers_ids', 'needs_ids',
-          'images', 'selectedCommunityServiceIds', 'tags',
-          'socialCategory', 'socialTitle', 'socialDescription',
+          'creationMode',
+          'entityType',
+          'title',
+          'category',
+          'description',
+          'isOnlineBusiness',
+          'street',
+          'zip',
+          'city',
+          'country',
+          'showAddress',
+          'website',
+          'instagram',
+          'phone',
+          'email',
+          'offers_ids',
+          'needs_ids',
+          'images',
+          'selectedCommunityServiceIds',
+          'tags',
+          'socialCategory',
+          'socialTitle',
+          'socialDescription',
         ] as const;
 
         for (const field of requiredFields) {

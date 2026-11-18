@@ -44,11 +44,11 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
 
 /**
  * Reusable page layout component that provides consistent structure and styling.
- * 
+ *
  * This component eliminates nested container issues and provides a clean,
  * maintainable layout foundation for all pages. It replaces the complex nested
  * div structure that was causing DOM bloat and inconsistent styling.
- * 
+ *
  * **Before (Complex nested structure):**
  * ```tsx
  * <div className="relative flex h-screen w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl mx-auto flex-col bg-gradient-to-b from-neutral-50 to-neutral-50">
@@ -61,7 +61,7 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
  *   </main>
  * </div>
  * ```
- * 
+ *
  * **After (Clean single container):**
  * ```tsx
  * <PageLayout maxWidth="sm">
@@ -72,7 +72,7 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
  *   </PageContentWrapper>
  * </PageLayout>
  * ```
- * 
+ *
  * **Benefits:**
  * - Reduces DOM nesting depth by 2-3 levels
  * - Background gradient handled centrally by RootClientLayout (no duplicates)
@@ -81,7 +81,7 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
  * - Single source of truth for layout structure
  * - Easier to maintain and update globally
  * - Clean separation between layout and background concerns
- * 
+ *
  * @example
  * ```tsx
  * // Recommended usage - background is handled by RootClientLayout
@@ -91,7 +91,7 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
  *     <LoginForm />
  *   </PageContentWrapper>
  * </PageLayout>
- * 
+ *
  * // Custom max-width (background still handled by RootClientLayout)
  * <PageLayout maxWidth="lg" hasBackground={false}>
  *   <PageHeader title="Dashboard" />
@@ -102,18 +102,22 @@ const maxWidthMap: Record<MaxWidthVariant, string> = {
  * ```
  */
 export const PageLayout = forwardRef<HTMLDivElement, PageLayoutProps>(
-  ({ 
-    children, 
-    className = '',
-    maxWidth = 'sm',
-    hasBackground = true,
-    fullHeight = true,
-    ...props
-  }, ref) => {
+  (
+    {
+      children,
+      className = '',
+      maxWidth = 'sm',
+      hasBackground = true,
+      fullHeight = true,
+      ...props
+    },
+    ref,
+  ) => {
     // Handle both predefined variants and custom strings
-    const maxWidthClass = typeof maxWidth === 'string' && maxWidth in maxWidthMap 
-      ? maxWidthMap[maxWidth as MaxWidthVariant]
-      : maxWidth;
+    const maxWidthClass =
+      typeof maxWidth === 'string' && maxWidth in maxWidthMap
+        ? maxWidthMap[maxWidth as MaxWidthVariant]
+        : maxWidth;
 
     return (
       <div
@@ -127,14 +131,14 @@ export const PageLayout = forwardRef<HTMLDivElement, PageLayoutProps>(
           fullHeight && 'flex-1',
           // Background handling
           hasBackground && 'bg-gradient-to-b from-neutral-50 to-neutral-50',
-          className
+          className,
         )}
         {...props}
       >
         {children}
       </div>
     );
-  }
+  },
 );
 
 PageLayout.displayName = 'PageLayout';

@@ -19,7 +19,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     expect(screen.getByText(/delete provider/i)).toBeInTheDocument();
@@ -32,7 +32,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     expect(screen.queryByText(/delete provider/i)).not.toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('DeleteProviderModal', () => {
         providerName="Amazing Bakery"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     expect(screen.getByText(/Amazing Bakery/i)).toBeInTheDocument();
@@ -58,7 +58,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     expect(screen.getByText(/cannot be undone/i)).toBeInTheDocument();
@@ -71,7 +71,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const deleteButton = screen.getByRole('button', { name: /delete/i });
@@ -87,7 +87,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
@@ -103,7 +103,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -118,7 +118,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const deleteButton = screen.getByRole('button', { name: /deleting/i });
@@ -136,7 +136,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     expect(screen.getByText('Deleting...')).toBeInTheDocument();
@@ -149,7 +149,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const dialog = screen.getByRole('dialog');
@@ -165,7 +165,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const deleteButton = screen.getByRole('button', { name: /deleting/i });
@@ -181,7 +181,7 @@ describe('DeleteProviderModal', () => {
         providerName="Test Provider"
         onClose={mockOnClose}
         onConfirm={mockOnConfirm}
-      />
+      />,
     );
 
     const backdrop = screen.getByRole('presentation');

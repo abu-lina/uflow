@@ -51,8 +51,8 @@ describe('searchFoodNearMe', () => {
   it('throws when the RPC returns an error', async () => {
     mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'boom' } });
 
-    await expect(
-      searchFoodNearMe({ lat: 52.52, lon: 13.405, radiusKm: 5 }),
-    ).rejects.toEqual({ message: 'boom' });
+    await expect(searchFoodNearMe({ lat: 52.52, lon: 13.405, radiusKm: 5 })).rejects.toEqual({
+      message: 'boom',
+    });
   });
 });

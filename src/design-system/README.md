@@ -19,7 +19,7 @@ import { ThemeProvider } from '@/design-system';
 
 <ThemeProvider defaultTheme="default" storageKey="uflow-theme">
   <App />
-</ThemeProvider>
+</ThemeProvider>;
 ```
 
 ### Theme Switcher
@@ -29,7 +29,7 @@ Use `ThemeSwitcher` where you want users to change theme (e.g. settings or heade
 ```tsx
 import { ThemeSwitcher } from '@/design-system';
 
-<ThemeSwitcher className="..." />
+<ThemeSwitcher className="..." />;
 ```
 
 ### Using tokens in components
@@ -60,14 +60,14 @@ In custom CSS:
 
 ### Colors
 
-| Token | Usage |
-|-------|--------|
-| **Brand** | `primary`, `primary-light`, `primary-dark`, `primary-darker` |
-| **Semantic** | `success`, `warning`, `danger`, `info` (each: DEFAULT, light, dark, soft) |
-| **Neutral** | `neutral-50` … `neutral-950` |
-| **Surface** | `background`, `surface` |
-| **Text** | `text-primary`, `text-secondary`, `text-muted`, `text-inverse` (via `text-text-*` or `content.*`) |
-| **Border** | `border`, `border-light`, `border-muted` |
+| Token        | Usage                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| **Brand**    | `primary`, `primary-light`, `primary-dark`, `primary-darker`                                      |
+| **Semantic** | `success`, `warning`, `danger`, `info` (each: DEFAULT, light, dark, soft)                         |
+| **Neutral**  | `neutral-50` … `neutral-950`                                                                      |
+| **Surface**  | `background`, `surface`                                                                           |
+| **Text**     | `text-primary`, `text-secondary`, `text-muted`, `text-inverse` (via `text-text-*` or `content.*`) |
+| **Border**   | `border`, `border-light`, `border-muted`                                                          |
 
 ### Typography
 

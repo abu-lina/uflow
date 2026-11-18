@@ -3,7 +3,7 @@ interface BrokenHeartIconProps {
   size?: number;
 }
 
-export function BrokenHeartIcon({ className = "", size = 24 }: BrokenHeartIconProps) {
+export function BrokenHeartIcon({ className = '', size = 24 }: BrokenHeartIconProps) {
   return (
     <svg
       className={className}

@@ -80,7 +80,7 @@ export function WaitlistFlowDebug() {
       sessionStorage.removeItem('waitlistToken');
       sessionStorage.removeItem('selectedCity');
       sessionStorage.removeItem('interestCount');
-      
+
       // Reload page to reset state
       window.location.reload();
     } catch (e) {
@@ -126,7 +126,7 @@ export function WaitlistFlowDebug() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 z-[9999] max-h-[80vh] w-96 overflow-y-auto rounded-lg bg-white p-4 shadow-2xl border border-gray-200">
+    <div className="fixed bottom-4 left-4 z-[9999] max-h-[80vh] w-96 overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-lg font-semibold">Waitlist Flow Debug</h3>
         <button
@@ -141,30 +141,41 @@ export function WaitlistFlowDebug() {
       <div className="space-y-4">
         {/* Current State */}
         <div>
-          <h4 className="font-semibold text-sm mb-2">Current State</h4>
+          <h4 className="mb-2 text-sm font-semibold">Current State</h4>
           <div className="rounded bg-gray-100 p-2">
             <div className="text-sm">
-              <div><strong>State:</strong> {currentState}</div>
-              <div><strong>Initialized:</strong> {isInitialized ? 'Yes' : 'No'}</div>
-              <div><strong>Loading:</strong> {isLoading ? 'Yes' : 'No'}</div>
+              <div>
+                <strong>State:</strong> {currentState}
+              </div>
+              <div>
+                <strong>Initialized:</strong> {isInitialized ? 'Yes' : 'No'}
+              </div>
+              <div>
+                <strong>Loading:</strong> {isLoading ? 'Yes' : 'No'}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Flow Data */}
         <div>
-          <h4 className="font-semibold text-sm mb-2">Flow Data</h4>
+          <h4 className="mb-2 text-sm font-semibold">Flow Data</h4>
           <div className="rounded bg-gray-100 p-2">
             <div className="text-sm">
-              <div><strong>Email:</strong> {flowData.email || 'None'}</div>
-              <div><strong>Token:</strong> {flowData.waitlistToken ? `${flowData.waitlistToken.substring(0, 20)}...` : 'None'}</div>
+              <div>
+                <strong>Email:</strong> {flowData.email || 'None'}
+              </div>
+              <div>
+                <strong>Token:</strong>{' '}
+                {flowData.waitlistToken ? `${flowData.waitlistToken.substring(0, 20)}...` : 'None'}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Manual State Transitions */}
         <div>
-          <h4 className="font-semibold text-sm mb-2">Manual Transitions</h4>
+          <h4 className="mb-2 text-sm font-semibold">Manual Transitions</h4>
           <div className="flex flex-col gap-2">
             {currentState === 'splash' && (
               <Button size="sm" variant="secondary" onClick={handleContinue}>
@@ -210,8 +221,8 @@ export function WaitlistFlowDebug() {
 
         {/* Storage Data */}
         <div>
-          <h4 className="font-semibold text-sm mb-2">localStorage</h4>
-          <div className="rounded bg-gray-100 p-2 max-h-32 overflow-y-auto">
+          <h4 className="mb-2 text-sm font-semibold">localStorage</h4>
+          <div className="max-h-32 overflow-y-auto rounded bg-gray-100 p-2">
             <pre className="text-xs">
               {Object.keys(localStorageData).length > 0
                 ? JSON.stringify(localStorageData, null, 2)
@@ -229,8 +240,8 @@ export function WaitlistFlowDebug() {
         </div>
 
         <div>
-          <h4 className="font-semibold text-sm mb-2">sessionStorage</h4>
-          <div className="rounded bg-gray-100 p-2 max-h-32 overflow-y-auto">
+          <h4 className="mb-2 text-sm font-semibold">sessionStorage</h4>
+          <div className="max-h-32 overflow-y-auto rounded bg-gray-100 p-2">
             <pre className="text-xs">
               {Object.keys(sessionStorageData).length > 0
                 ? JSON.stringify(sessionStorageData, null, 2)
@@ -249,12 +260,7 @@ export function WaitlistFlowDebug() {
 
         {/* Reset Flow */}
         <div>
-          <Button
-            fullWidth
-            size="sm"
-            variant="danger"
-            onClick={handleResetFlow}
-          >
+          <Button fullWidth size="sm" variant="danger" onClick={handleResetFlow}>
             Reset Flow & Reload
           </Button>
         </div>

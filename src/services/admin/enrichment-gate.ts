@@ -34,9 +34,7 @@ export interface MenuAlcoholCheckResult {
  * Returns details about which items matched and which keywords were found,
  * so the reviewer can make an informed decision before approving.
  */
-export async function checkMenuForAlcohol(
-  providerId: string
-): Promise<MenuAlcoholCheckResult> {
+export async function checkMenuForAlcohol(providerId: string): Promise<MenuAlcoholCheckResult> {
   const supabase = getSupabaseAdmin();
 
   const { data: menuItems, error } = await supabase
@@ -67,7 +65,12 @@ export async function checkMenuForAlcohol(
   const detection = detectAlcohol(itemNames);
 
   if (detection.signal !== 'definite_alcohol') {
-    return { hasAlcohol: false, matchedItemNames: [], matchedKeywords: [], totalMenuItems: menuItems.length };
+    return {
+      hasAlcohol: false,
+      matchedItemNames: [],
+      matchedKeywords: [],
+      totalMenuItems: menuItems.length,
+    };
   }
 
   return {
