@@ -176,7 +176,7 @@ export function ProvidersContent({
 
   // Plan 220: Near-me state — geolocation-based (matches home page pattern)
   // Initialize from ?near_me=1 URL param (set by desktop header chip)
-  const nearMeFromUrl = searchParams.get('near_me') === '1';
+  const nearMeFromUrl = dq.nearMe;
   const [nearMeActive, setNearMeActive] = useState(nearMeFromUrl);
 
   const geolocation = useGeolocation();
@@ -227,6 +227,8 @@ export function ProvidersContent({
       deferPinsUntilMapOpened: true,
       section,
       filters: normalizedFilters,
+      openNow: dq.openNow,
+      view: dq.view,
     },
   );
 

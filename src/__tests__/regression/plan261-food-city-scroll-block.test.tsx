@@ -85,6 +85,7 @@ describe('Plan 261 deferred map pins', () => {
     const { result } = renderHook(() =>
       useMapDiscovery(geo, 'list', null, makeUrlSync(params), {
         deferPinsUntilMapOpened: true,
+        view: 'map',
       }),
     );
 

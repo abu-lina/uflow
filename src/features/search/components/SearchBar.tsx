@@ -16,6 +16,7 @@ import { getNearMePermissionHintKey } from '@/features/search/utils/nearMePermis
 import {
   buildNearMeLink,
   buildTierChangeLink,
+  readDiscoveryQueryInBrowser,
   TIER_CYCLE,
   type HalalTier,
 } from '@/features/search/discoveryQuery';
@@ -53,14 +54,9 @@ function SearchBarContent({
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const { searchQuery, setSearchQuery, selectedLocation, setSelectedLocation, selectedSection } =
     useSearch();
-  const statusParam = searchParams.get('status');
-  const selectedReviewStatus =
-    statusParam === 'approved' ||
-    statusParam === 'pending' ||
-    statusParam === 'rejected' ||
-    statusParam === 'needs_revision'
-      ? statusParam
-      : null;
+  const dq = readDiscoveryQueryInBrowser(pathname, new URLSearchParams(searchParams.toString()));
+  const selectedReviewStatus = dq.status as
+    'approved' | 'pending' | 'rejected' | 'needs_revision' | null;
   const adminReviewScope =
     isAdmin && selectedSection !== 'ummah' ? (selectedReviewStatus ?? 'all') : undefined;
 
@@ -73,22 +69,11 @@ function SearchBarContent({
   // Available filter keys fetched from DB, with counts per city/section
   const [availableFilters, setAvailableFilters] = useState<{ key: string; count: number }[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState<string[]>(() => {
-    const p = new URLSearchParams(searchParams.toString());
-    return p.get('filters')?.split(',').filter(Boolean) ?? [];
-  });
+  const [selectedFilters, setSelectedFilters] = useState<string[]>(() => dq.filters ?? []);
   const [hasMounted, setHasMounted] = useState(false);
-  // Initialize near-me and open-now from URL params
-  const [nearMeActive, setNearMeActive] = useState(
-    () => new URLSearchParams(searchParams.toString()).get('near_me') === '1',
-  );
-  const [openNowActive, setOpenNowActive] = useState(
-    () => new URLSearchParams(searchParams.toString()).get('open_now') === '1',
-  );
-  const [activeTier, setActiveTier] = useState<HalalTier | null>(() => {
-    const p = new URLSearchParams(searchParams.toString()).get('tier');
-    return p === 'bronze' || p === 'silver' || p === 'gold' ? p : null;
-  });
+  const [nearMeActive, setNearMeActive] = useState(() => dq.nearMe);
+  const [openNowActive, setOpenNowActive] = useState(() => dq.openNow);
+  const [activeTier, setActiveTier] = useState<HalalTier | null>(() => dq.tier ?? null);
 
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [suggestions, setSuggestions] = useState<
@@ -185,8 +170,8 @@ function SearchBarContent({
   // Sync state with URL params only on initial mount or when the page changes
   useEffect(() => {
     if (!hasSyncedFromUrl.current) {
-      const q = searchParams.get('q') || '';
-      const location = searchParams.get('location') ?? LOCATION_ALL;
+      const q = dq.q || '';
+      const location = dq.location || LOCATION_ALL;
       setSearchQuery(q);
       setSelectedLocation(location);
       hasSyncedFromUrl.current = true;
