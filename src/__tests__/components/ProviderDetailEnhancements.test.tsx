@@ -74,9 +74,7 @@ describe('Provider detail enhancements (Plan 113)', () => {
   it('shows halal popup on first open and tracks open count', async () => {
     render(<ProviderDetailPage provider={providerWithEnhancements} />);
 
-    expect(
-      screen.getAllByText('Restaurants on Ummah Flow are checked for halal compliance').length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText('What Ummah Flow checks').length).toBeGreaterThan(0);
 
     await waitFor(() => {
       expect(localStorage.getItem('uf_halal_popup_view_count')).toBe('1');
