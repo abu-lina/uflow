@@ -110,6 +110,8 @@ interface ProvidersContentProps {
       provider's primary while the filter is on. */
   displayCategory?: { name_de: string; name_en?: string } | null;
   pageCategory?: string | null;
+  routeCity?: string | null;
+  routeCategoryName?: string | null;
 }
 
 export function ProvidersContent({
@@ -122,6 +124,8 @@ export function ProvidersContent({
   initialSection,
   displayCategory,
   pageCategory,
+  routeCity,
+  routeCategoryName,
 }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -628,6 +632,13 @@ export function ProvidersContent({
 
   return (
     <>
+      {routeCity && (
+        <h1 className="sr-only">
+          {routeCategoryName
+            ? t('search.categoryInCity', { category: routeCategoryName, city: routeCity })
+            : t('search.foodInCity', { city: routeCity })}
+        </h1>
+      )}
       {infoIconPortal}
       {languageSwitcherPortal}
       <LegalLinksModal isOpen={showLegalModal} onClose={() => setShowLegalModal(false)} />

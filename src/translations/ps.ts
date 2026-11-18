@@ -173,6 +173,8 @@ export const ps = {
     personSingular: '{{count}} کس',
     personPlural: '{{count}} کسانو',
     searchButton: 'لټون',
+    foodInCity: 'په {{city}} کې حلال خواړه',
+    categoryInCity: 'په {{city}} کې {{category}}',
     suggestions: {
       provider: 'رسټوران',
       cuisine: 'خواړه',

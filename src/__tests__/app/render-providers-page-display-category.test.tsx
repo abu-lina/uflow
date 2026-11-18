@@ -44,7 +44,11 @@ const KEBAB_DOENER = {
 
 async function contentProps(opts: Parameters<typeof renderProvidersPage>[0]) {
   const element = (await renderProvidersPage(opts)) as ReactElement;
-  const content = element.props.children as ReactElement;
+  const children = Array.isArray(element.props.children)
+    ? element.props.children
+    : [element.props.children];
+  const suspense = children.find((c: ReactElement) => c && c.props?.children);
+  const content = suspense.props.children as ReactElement;
   expect(content.type).toBe(ProvidersContent);
   return content.props as Record<string, unknown>;
 }
