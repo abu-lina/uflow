@@ -109,6 +109,7 @@ interface ProvidersContentProps {
       server-side. The results grid shows it on every card instead of each
       provider's primary while the filter is on. */
   displayCategory?: { name_de: string; name_en?: string } | null;
+  pageCategory?: string | null;
 }
 
 export function ProvidersContent({
@@ -120,6 +121,7 @@ export function ProvidersContent({
   initialFilters,
   initialSection,
   displayCategory,
+  pageCategory,
 }: ProvidersContentProps = {}) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -151,7 +153,11 @@ export function ProvidersContent({
   // Priority: ?section= > infer from ?category= (only when category param IS present) > default 'food' (D9)
   const section = resolveSectionFromRoute(pathname, new URLSearchParams(searchParams.toString()));
 
-  const dq = readDiscoveryQueryInBrowser(pathname, new URLSearchParams(searchParams.toString()));
+  const dq = readDiscoveryQueryInBrowser(
+    pathname,
+    new URLSearchParams(searchParams.toString()),
+    pageCategory ? { category: pageCategory } : undefined,
+  );
   const location = defaultLocation ?? dq.location;
   const scopeCity = mapCity ?? (location || null);
   const query = dq.q;

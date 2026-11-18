@@ -91,6 +91,7 @@ export async function renderProvidersPage(opts: {
         initialSection={dq.section}
         mapCenter={mapCenter}
         mapCity={routeCity}
+        pageCategory={routeCategory}
       />
     </Suspense>
   );
