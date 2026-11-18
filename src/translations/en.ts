@@ -175,6 +175,8 @@ export const en = {
     personSingular: '{{count}} Person',
     personPlural: '{{count}} People',
     searchButton: 'Search',
+    foodInCity: 'Halal Food in {{city}}',
+    categoryInCity: '{{category}} in {{city}}',
     suggestions: {
       provider: 'Restaurant',
       cuisine: 'Cuisine',

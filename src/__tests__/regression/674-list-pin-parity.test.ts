@@ -141,8 +141,15 @@ async function foodListIds(params: Record<string, string>, routeCity?: string) {
     searchParams: Promise.resolve(params),
     routeSection: 'food',
     routeCity,
-  })) as ReactElement<{ children: ReactElement<{ initialData: { results: SearchResult[] } }> }>;
-  return element.props.children.props.initialData.results.map((r) => r.id);
+  })) as ReactElement;
+  const children = Array.isArray(element.props.children)
+    ? element.props.children
+    : [element.props.children];
+  const suspense = children.find((c: ReactElement) => c && c.props?.children);
+  const content = suspense.props.children as ReactElement<{
+    initialData: { results: SearchResult[] };
+  }>;
+  return content.props.initialData.results.map((r) => r.id);
 }
 
 async function pinIds(opts: { city?: string | null; filters?: SearchFilterKey[] }) {
