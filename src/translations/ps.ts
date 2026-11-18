@@ -1277,7 +1277,7 @@ export const ps = {
       closeAria: 'تړل',
       halalMeatDefinitionTitle: 'حلال غوښه څه ده؟',
       halalMeatDefinition:
-        'حلال غوښه د هغو ځناورو څخه ترلاسه کیږي چې د اسلامي لارښوونو مطابق حلالیږي:\n\n• <strong><span style=\\"background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600\\">بسم الله</span></strong> ویل کیږي\n• تیره چاړه ګړندی پرې کوي\n• وینه په بشپړ ډول بهیږي\n\nد ذبح دمخه بې هوشه شوو ځناورو غوښه حلال <strong>نه</strong> ګڼل کیږي.',
+        'حلال غوښه د هغو ځناورو څخه ترلاسه کیږي چې د اسلامي لارښوونو مطابق حلالیږي:\n\n• <strong><span style="background:linear-gradient(90deg,#D2B581 4.35%,#E5D1A0 52.17%,#AF8650 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:600">بسم الله</span></strong> ویل کیږي\n• تیره چاړه ګړندی پرې کوي\n• وینه په بشپړ ډول بهیږي\n\nد ذبح دمخه بې هوشه شوو ځناورو غوښه حلال <strong>نه</strong> ګڼل کیږي.',
     },
     container: {
       addressTapToNavigate: 'د تګ راتګ لپاره پر پته ټک وکړئ',
