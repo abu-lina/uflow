@@ -163,7 +163,7 @@ describe('robots.txt — #950', () => {
 
     const rules = Array.isArray(result.rules) ? result.rules : [result.rules];
     const disallowAll = rules.some(
-      (r: { userAgent: string; disallow: string | string[] }) =>
+      (r) =>
         (r.userAgent === '*' || Array.isArray(r.userAgent)) &&
         (r.disallow === '/' || (Array.isArray(r.disallow) && r.disallow.includes('/'))),
     );
