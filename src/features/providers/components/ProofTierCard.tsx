@@ -7,6 +7,7 @@ import {
   ChevronDown,
   Dices,
   FileCheck,
+  Info,
   MapPin,
   PiggyBank,
   SquareMenu,
@@ -15,6 +16,7 @@ import {
 import { HalalIcon as HugeHalalIcon } from 'hugeicons-react';
 import type { ReactNode } from 'react';
 
+import { HalalMeatDefinitionPopup } from '@/features/providers/components/HalalMeatDefinitionPopup';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import { computeSealTier } from '@/features/providers/computeSealTier';
@@ -214,6 +216,7 @@ function GoldAttestationSection({
 interface CheckItem {
   icon: ReactNode;
   labelKey: string;
+  hasInfoButton?: boolean;
 }
 
 function getCheckItems(
@@ -239,6 +242,7 @@ function getCheckItems(
       {
         icon: <HugeHalalIcon aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkClaimsMeatHalal',
+        hasInfoButton: true,
       },
     ];
   }
@@ -260,6 +264,7 @@ function getCheckItems(
       {
         icon: <HugeHalalIcon aria-hidden className="h-6 w-6" />,
         labelKey: 'providerDetail.proofTier.checkMeatIsHalal',
+        hasInfoButton: true,
       },
     ];
   }
@@ -286,15 +291,33 @@ function getCheckItems(
   return items;
 }
 
-function VerifiedChecklist({ items, t }: { items: CheckItem[]; t: (key: string) => string }) {
+function VerifiedChecklist({
+  items,
+  t,
+  onInfoClick,
+}: {
+  items: CheckItem[];
+  t: (key: string) => string;
+  onInfoClick?: () => void;
+}) {
   return (
     <div>
-      {items.map(({ icon, labelKey }) => (
+      {items.map(({ icon, labelKey, hasInfoButton }) => (
         <div key={labelKey} className="flex w-full items-center gap-1 rounded-xl">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-primary">
             {icon}
           </span>
           <span className="text-sm font-semibold text-content-heading">{t(labelKey)}</span>
+          {hasInfoButton && onInfoClick ? (
+            <button
+              aria-label={t('providerDetail.popup.halalMeatDefinitionTitle')}
+              className="ms-1 rounded-full p-0.5 text-content/50 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              type="button"
+              onClick={onInfoClick}
+            >
+              <Info aria-hidden className="h-4 w-4" />
+            </button>
+          ) : null}
         </div>
       ))}
     </div>
@@ -334,6 +357,7 @@ export function ProofTierCard({
   const [isVerifiedExpanded, setIsVerifiedExpanded] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMissingExpanded, setIsMissingExpanded] = useState(false);
+  const [isMeatInfoOpen, setIsMeatInfoOpen] = useState(false);
 
   const tier = computeSealTier(
     verificationMethod,
@@ -441,7 +465,7 @@ export function ProofTierCard({
       </button>
       {isVerifiedExpanded ? (
         <div className="mt-2">
-          <VerifiedChecklist items={checkItems} t={t} />
+          <VerifiedChecklist items={checkItems} t={t} onInfoClick={() => setIsMeatInfoOpen(true)} />
         </div>
       ) : null}
 
@@ -464,7 +488,11 @@ export function ProofTierCard({
           </button>
           {isMissingExpanded ? (
             <div className="mt-2">
-              <VerifiedChecklist items={getCheckItems(nextTier, verificationMethod)} t={t} />
+              <VerifiedChecklist
+                items={getCheckItems(nextTier, verificationMethod)}
+                t={t}
+                onInfoClick={() => setIsMeatInfoOpen(true)}
+              />
             </div>
           ) : null}
         </>
@@ -503,6 +531,8 @@ export function ProofTierCard({
           t={t}
         />
       ) : null}
+
+      <HalalMeatDefinitionPopup isOpen={isMeatInfoOpen} onClose={() => setIsMeatInfoOpen(false)} />
     </section>
   );
 }
