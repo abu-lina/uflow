@@ -4,6 +4,8 @@
  * Red phase — this test MUST fail before migration and pass after.
  */
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
@@ -166,9 +168,6 @@ describe('#937 AC2: readDiscoveryQueryInBrowser parity', () => {
 // ── AC3: no hand-read of discovery params in migrated files ────────────
 
 describe('#937 AC3: no direct query string reads for discovery params', () => {
-  const { readFileSync } = require('node:fs');
-  const { resolve } = require('node:path');
-  // __dirname = src/__tests__/features/search → 4 levels up = project root
   const PROJECT_ROOT = resolve(__dirname, '../../../../');
 
   function readSource(relPath: string): string {
