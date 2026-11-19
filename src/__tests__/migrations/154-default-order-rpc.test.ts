@@ -23,13 +23,12 @@ describe('#953 migration 154: city population and default-order RPC', () => {
 
   it('orders by population desc, then city, name and provider_id for stable paging', () => {
     expect(sql).toMatch(
-      /ORDER BY c\.population DESC NULLS LAST, p\.address_city ASC, p\.provider_name ASC, p\.provider_id ASC/,
+      /ORDER BY c\.population DESC NULLS LAST, lower\(NULLIF\(btrim\(p\.address_city\), ''\)\) ASC NULLS LAST, p\.provider_name ASC, p\.provider_id ASC/,
     );
   });
 
   it('joins cities on city_name without multiplying providers', () => {
-    expect(sql).toMatch(/GROUP BY city_name/);
-    expect(sql).toContain('c.city_name = p.address_city');
+    expect(sql).toMatch(/GROUP BY lower\(btrim\(city_name\)\)/);
   });
 
   it('runs as the caller so RLS still applies', () => {
@@ -43,5 +42,11 @@ describe('#953 migration 154: city population and default-order RPC', () => {
     for (const role of ['anon', 'authenticated', 'service_role']) {
       expect(sql).toContain(`GRANT EXECUTE ON FUNCTION ${sig} TO ${role};`);
     }
+  });
+
+  it("matches cities ignoring case and spaces, and treats '' as no city ('Frankfurt Am Main' ranks with Frankfurt)", () => {
+    expect(sql).toContain("c.city_key = lower(NULLIF(btrim(p.address_city), ''))");
+    expect(sql).toContain('WHERE lower(btrim(c.city_name)) = lower(btrim(v.city_name))');
+    expect(sql).toContain("('Frankfurt am Main', 773000)");
   });
 });

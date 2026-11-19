@@ -6,11 +6,14 @@
 -- then city name, provider name, provider_id (stable paging). The app applies the
 -- page-1 brand cap and paginates over this list.
 --
--- Join key: providers.address_city = cities.city_name (no FK exists).
+-- Join key: lower(btrim(providers.address_city)) = lower(btrim(cities.city_name)),
+-- an exact match ignoring case and surrounding spaces (prod has 'Frankfurt Am Main'
+-- and 'LANGEN'); '' counts as no city. No FK exists, no fuzzy matching.
 -- Written against the live PROD schema (owner-run query, 2026-11-19; cities.population
 -- absent, city_name text). Not run against prod; DEV/UAT parity is unverified.
--- Indexes: idx_cities_name (cities.city_name) and idx_providers_city
--- (providers.address_city) already exist from 001_baseline; none added here.
+-- Indexes: 096 already has idx_cities_name_lower_trim and
+-- idx_providers_city_lower_trim_approved on LOWER(TRIM(..)), the same expression
+-- as this join; none added here.
 -- Idempotent: ADD COLUMN IF NOT EXISTS is metadata-only, CREATE OR REPLACE FUNCTION.
 -- Population figures: Destatis 2023, rounded to nearest 1000. Cities missing
 -- from the list keep NULL and sort last.
@@ -105,7 +108,7 @@ FROM (VALUES
   ('Halle (Saale)', 238000),
   ('Mülheim an der Ruhr', 170000)
 ) AS v(city_name, population)
-WHERE c.city_name = v.city_name;
+WHERE lower(btrim(c.city_name)) = lower(btrim(v.city_name));
 
 CREATE OR REPLACE FUNCTION public.get_default_order_providers(
   section_filter text DEFAULT NULL,
@@ -120,13 +123,13 @@ AS $$
   SELECT p.provider_id, p.provider_name
   FROM public.providers p
   LEFT JOIN (
-    SELECT city_name, max(population) AS population
+    SELECT lower(btrim(city_name)) AS city_key, max(population) AS population
     FROM public.cities
-    GROUP BY city_name
-  ) c ON c.city_name = p.address_city
+    GROUP BY lower(btrim(city_name))
+  ) c ON c.city_key = lower(NULLIF(btrim(p.address_city), ''))
   WHERE (section_filter IS NULL OR p.listing_type::text = section_filter)
     AND (review_status_filter = 'all' OR p.review_status::text = review_status_filter)
-  ORDER BY c.population DESC NULLS LAST, p.address_city ASC, p.provider_name ASC, p.provider_id ASC;
+  ORDER BY c.population DESC NULLS LAST, lower(NULLIF(btrim(p.address_city), '')) ASC NULLS LAST, p.provider_name ASC, p.provider_id ASC;
 $$;
 
 REVOKE ALL ON FUNCTION public.get_default_order_providers(text, text) FROM PUBLIC;
