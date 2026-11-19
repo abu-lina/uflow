@@ -96,7 +96,7 @@ export const ar = {
     hero: {
       title:
         'من <span class="text-primary">المسلمين</span><br class="block sm:hidden" /> إلى <span class="text-primary">المسلمين</span>',
-      subtitle: 'سوق حلال، شفاف ومبارك – لك ولأمتك.',
+      subtitle: 'منصة حلال، شفافة ومباركة – لك ولأمتك.',
       getStarted: 'اكتشف أمتك',
       learnMore: 'اعرف المزيد',
     },
@@ -1020,7 +1020,7 @@ export const ar = {
   },
   waitlist: {
     title: 'انضم إلى التدفق',
-    description: 'ساعد في بناء أول سوق للمسلمين. انضم إلى قائمة الانتظار واحصل على وصول مبكر.',
+    description: 'ساعد في بناء أول منصة للمسلمين. انضم إلى قائمة الانتظار واحصل على وصول مبكر.',
     joinButton: 'انضم إلى قائمة الانتظار',
     joining: 'جارٍ الانضمام...',
     emailPlaceholder: 'أدخل بريدك الإلكتروني',

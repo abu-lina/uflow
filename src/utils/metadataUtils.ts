@@ -20,27 +20,31 @@ const metadataContent: Record<ServerLanguage, { title: string; description: stri
   de: {
     title: 'Ummah Flow',
     description:
-      'Ummah Flow - der erste halal konforme Marktplatz der Muslime miteinander verbindet',
+      'Halal essen in deiner Stadt. Ummah Flow zeigt dir geprüfte Restaurants — transparent und mit Barakah.',
   },
   en: {
     title: 'Ummah Flow',
-    description: 'Ummah Flow - the first halal-compliant marketplace connecting Muslims',
+    description:
+      'Halal food in your city. Ummah Flow shows you verified restaurants — transparent and with Barakah.',
   },
   ar: {
     title: 'Ummah Flow',
-    description: 'Ummah Flow - أول سوق حلال يربط المسلمين ببعضهم البعض',
+    description: 'أكل حلال في مدينتك. يُريك Ummah Flow المطاعم المعتمدة — بشفافية وبركة.',
   },
   tr: {
     title: 'Ummah Flow',
-    description: 'Ummah Flow - Müslümanları birbirine bağlayan ilk helal uyumlu pazar yeri',
+    description:
+      'Şehrinde helal yemek. Ummah Flow sana doğrulanmış restoranları gösterir — şeffaf ve bereketli.',
   },
   ur: {
     title: 'Ummah Flow',
-    description: 'Ummah Flow - مسلمانوں کو آپس میں جوڑنے والی پہلی حلال مارکیٹ پلیس',
+    description:
+      'آپ کے شہر میں حلال کھانا۔ Ummah Flow آپ کو تصدیق شدہ ریستوران دکھاتا ہے — شفاف اور برکت کے ساتھ۔',
   },
   ps: {
     title: 'Ummah Flow',
-    description: 'Ummah Flow - د مسلمانانو سره نښلونکي لومړۍ حلال بازار',
+    description:
+      'ستاسو ښار کې حلال خواړه. Ummah Flow تاسو ته تصدیق شوي رستورانونه ښیي — روښانه او د برکت سره.',
   },
 };
 
@@ -57,7 +61,7 @@ export function generateLocalizedMetadata(language: ServerLanguage, siteUrl: str
       template: `%s | ${content.title}`,
     },
     description: content.description,
-    keywords: ['halal', 'marktplatz', 'muslime', 'community', 'islamic marketplace'],
+    keywords: ['halal', 'plattform', 'muslime', 'community', 'islamic platform'],
     authors: [{ name: 'Ummah Flow' }],
     creator: 'Ummah Flow',
     publisher: 'Ummah Flow',

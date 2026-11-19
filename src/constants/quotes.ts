@@ -11,7 +11,7 @@ export const quotes: Quote[] = [
       'Als Muslim fehlt mir eine zentrale App, die mir halal Restaurants sowie muslimische Shops und Services zeigt.',
   },
   {
-    heading: 'Ein Marktplatz mit Barakah.',
+    heading: 'Eine Plattform mit Barakah.',
     quote:
       'Empfiehl Orte, entdecke neue Angebote und unterstütze muslimische Anbieter - inshaAllah.',
   },
