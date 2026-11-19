@@ -9,6 +9,8 @@
 -- Join key: providers.address_city = cities.city_name (no FK exists).
 -- Written against the live PROD schema (owner-run query, 2026-11-19; cities.population
 -- absent, city_name text). Not run against prod; DEV/UAT parity is unverified.
+-- Indexes: idx_cities_name (cities.city_name) and idx_providers_city
+-- (providers.address_city) already exist from 001_baseline; none added here.
 -- Idempotent: ADD COLUMN IF NOT EXISTS is metadata-only, CREATE OR REPLACE FUNCTION.
 -- Population figures: Destatis 2023, rounded to nearest 1000. Cities missing
 -- from the list keep NULL and sort last.
@@ -126,5 +128,10 @@ AS $$
     AND (review_status_filter = 'all' OR p.review_status::text = review_status_filter)
   ORDER BY c.population DESC NULLS LAST, p.address_city ASC, p.provider_name ASC, p.provider_id ASC;
 $$;
+
+REVOKE ALL ON FUNCTION public.get_default_order_providers(text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_default_order_providers(text, text) TO anon;
+GRANT EXECUTE ON FUNCTION public.get_default_order_providers(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_default_order_providers(text, text) TO service_role;
 
 COMMIT;

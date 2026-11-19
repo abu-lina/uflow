@@ -129,6 +129,7 @@ type Extra = {
   location?: string;
   admin?: Parameters<typeof searchProviders>[5];
   barakah?: Parameters<typeof searchProviders>[7];
+  tier?: Parameters<typeof searchProviders>[9];
 };
 const page = (c: SupabaseClient, limit: number, offset: number, x: Extra = {}) =>
   searchProviders(
@@ -141,6 +142,7 @@ const page = (c: SupabaseClient, limit: number, offset: number, x: Extra = {}) =
     'food',
     x.barakah,
     c,
+    x.tier,
   );
 
 describe('#953 default order without a city, paged through the database', () => {
@@ -229,6 +231,15 @@ describe('#953 filters combine with the ranking', () => {
     const { providers } = await page(client, 13, 0, { barakah: ['muslim_owned' as never] });
     expect(ids(providers)).toEqual(['b-other-01']);
     expect(calls.selects[0].startsWith('provider_id')).toBe(true);
+  });
+});
+
+describe('#953 tier filter combines with the ranking', () => {
+  it('embeds food_providers!inner in the id-only query', async () => {
+    const { client, calls } = makeClient(RANK, { matching: new Set(['b-other-02']) });
+    const { providers } = await page(client, 13, 0, { tier: 'gold' });
+    expect(ids(providers)).toEqual(['b-other-02']);
+    expect(calls.selects[0]).toContain('food_providers!inner');
   });
 });
 

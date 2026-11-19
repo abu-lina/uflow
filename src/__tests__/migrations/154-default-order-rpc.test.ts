@@ -36,4 +36,12 @@ describe('#953 migration 154: city population and default-order RPC', () => {
     expect(sql).toContain('SECURITY INVOKER');
     expect(sql).not.toMatch(/SECURITY DEFINER/);
   });
+
+  it('limits execute to anon, authenticated and service_role (as migrations 137/141)', () => {
+    const sig = 'public.get_default_order_providers(text, text)';
+    expect(sql).toContain(`REVOKE ALL ON FUNCTION ${sig} FROM PUBLIC;`);
+    for (const role of ['anon', 'authenticated', 'service_role']) {
+      expect(sql).toContain(`GRANT EXECUTE ON FUNCTION ${sig} TO ${role};`);
+    }
+  });
 });

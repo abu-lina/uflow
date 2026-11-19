@@ -3,6 +3,9 @@ export function brandOf(name: string): string {
   return name.split(' | ')[0].trim();
 }
 
+/** Rows the brand cap covers: the first page of the default list. */
+export const BRAND_CAP_WINDOW = 12;
+
 /**
  * #953: with the list in population order, defer entries so no brand holds more
  * than `maxPerBrand` of the first `window` rows. Everything after the window
@@ -10,7 +13,7 @@ export function brandOf(name: string): string {
  */
 export function applyBrandCap<T extends { provider_name: string }>(
   rows: T[],
-  window = 12,
+  window = BRAND_CAP_WINDOW,
   maxPerBrand = 2,
 ): T[] {
   const firstPage: T[] = [];

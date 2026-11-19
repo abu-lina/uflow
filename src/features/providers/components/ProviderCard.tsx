@@ -505,19 +505,22 @@ export const ProviderCard = React.memo(
                       className="flex w-full min-w-0 items-center gap-2"
                       data-testid="delivery-only"
                     >
-                      <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-[7.2px] border border-border bg-background/70 px-2 font-inter-tight text-sm font-medium text-content">
+                      <span className="inline-flex h-6 max-w-[60%] shrink-0 items-center gap-1 rounded-[7.2px] border border-border bg-background/70 px-2 font-inter-tight text-xs font-medium text-content sm:text-sm">
                         <Icon aria-hidden="true" className="h-4 w-4" icon="mdi:moped-outline" />
                         {t('providers.deliveryOnly')}
                       </span>
                       {virtualVenueCity && (
-                        <span className="min-w-0 truncate font-inter text-xs font-normal text-uFlowText2 sm:text-sm">
+                        <span
+                          className="min-w-0 truncate font-inter text-xs font-normal text-uFlowText2 sm:text-sm"
+                          title={virtualVenueCity}
+                        >
                           {virtualVenueCity}
                         </span>
                       )}
                     </div>
                   ) : (
                     <button
-                      className="w-full min-w-0 truncate text-left font-inter text-xs font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline sm:text-sm"
+                      className="w-full min-w-0 truncate text-start font-inter text-xs font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline sm:text-sm"
                       disabled={
                         !isAddressNavigable(
                           primaryLocation?.address_street ?? address_street ?? undefined,
