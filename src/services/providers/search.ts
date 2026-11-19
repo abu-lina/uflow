@@ -13,7 +13,7 @@ import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
 import type { HalalTier } from '@/features/search/discoveryQuery';
-import { CITY_POPULATION } from '@/constants/cityPopulations';
+import { applyBrandCap } from './default-order';
 
 async function loadProviderRelationIds(
   providerIds: string[],
@@ -60,24 +60,6 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
     const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
     const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
     return dateB - dateA;
-  });
-}
-
-/**
- * Sorts results for the default no-city view (#953):
- * city population desc → name asc → id asc.
- * Cities absent from the population map sort last.
- */
-export function sortByDefaultOrder<
-  T extends { id: string; name: string; address_city: string | null },
->(results: T[]): T[] {
-  return [...results].sort((a, b) => {
-    const popA = a.address_city ? (CITY_POPULATION[a.address_city] ?? 0) : 0;
-    const popB = b.address_city ? (CITY_POPULATION[b.address_city] ?? 0) : 0;
-    if (popB !== popA) return popB - popA;
-    const nameCompare = a.name.localeCompare(b.name, 'de');
-    if (nameCompare !== 0) return nameCompare;
-    return a.id.localeCompare(b.id);
   });
 }
 
@@ -273,9 +255,8 @@ async function searchProvidersOnly(
 
   const hasMore = rawProviders.length > pageSize;
   const results = rawProviders.slice(0, pageSize).map(transformProviderToSearchResult);
-  const sortedResults = isValidLocation(location)
-    ? sortByCreationDate(results)
-    : sortByDefaultOrder(results);
+  // No city: the database already returned the page in default order (#953).
+  const sortedResults = isValidLocation(location) ? sortByCreationDate(results) : results;
 
   return { results: sortedResults, hasMore, totalCount };
 }
@@ -326,9 +307,13 @@ export async function searchProviders(
   const tierEmbed = minHalalTier
     ? ', food_providers!inner(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
     : '';
-  const selectFields = hasCategoryFilter
-    ? `${baseSelectFields}${tierEmbed}, provider_categories!inner(category_id)`
-    : `${baseSelectFields}${tierEmbed}`;
+  const categoryEmbed = hasCategoryFilter ? ', provider_categories!inner(category_id)' : '';
+  // #953: with no city and paging, the default order lives in an RPC. Phase A
+  // applies every filter and returns ids only; phase B loads the page's rows.
+  const ranked = !isValidLocation(location) && limit !== undefined;
+  const selectFields = ranked
+    ? `provider_id${tierEmbed}${categoryEmbed}`
+    : `${baseSelectFields}${tierEmbed}${categoryEmbed}`;
 
   // Plan 058: admin queries must use the service-role client to bypass RLS.
   // The caller (API route) passes the admin client directly via the `client` parameter
@@ -384,21 +369,18 @@ export async function searchProviders(
     }
   }
 
-  // Apply pagination if provided
-  if (limit !== undefined) {
-    req = req.limit(limit);
-  }
-  if (offset !== undefined) {
-    req = req.range(offset, offset + (limit || 1000) - 1);
-  }
-
-  // With a city filter, keep created_at DESC (existing behaviour, AC5).
-  // Without a city, sort by name + id so DB pages are deterministic across
-  // the in-app population sort (#953).
-  if (isValidLocation(location)) {
-    req = req.order('created_at', { ascending: false });
+  if (ranked) {
+    // shortcut: one id-only fetch capped at 5000 rows (PostgREST max-rows may clamp lower), upgrade when a section nears 1000 providers.
+    req = req.range(0, 4999);
   } else {
-    req = req.order('provider_name', { ascending: true }).order('provider_id', { ascending: true });
+    if (limit !== undefined) {
+      req = req.limit(limit);
+    }
+    if (offset !== undefined) {
+      req = req.range(offset, offset + (limit || 1000) - 1);
+    }
+    // With a city filter, keep created_at DESC (existing behaviour).
+    req = req.order('created_at', { ascending: false });
   }
 
   const matchedMenuItemsByProvider = new Map<string, string[]>();
@@ -437,11 +419,40 @@ export async function searchProviders(
     req = req.eq('address_city', location);
   }
 
-  const { data, error, count } = await req.returns<Provider[]>();
+  const { data: fetched, error, count } = await req.returns<Provider[]>();
   if (error) throw error;
 
   // Plan 229: Extract totalCount from Supabase count header
-  const totalCount = count ?? 0;
+  let totalCount = count ?? 0;
+  let data = fetched;
+
+  if (ranked) {
+    const matching = new Set((fetched ?? []).map((row) => row.provider_id));
+    const { data: ranking, error: rankError } = await supabase.rpc('get_default_order_providers', {
+      section_filter: listingType ?? null,
+      review_status_filter: adminOptions?.status ?? 'approved',
+    });
+    if (rankError) throw rankError;
+
+    const ordered = applyBrandCap(
+      ((ranking ?? []) as Array<{ provider_id: string; provider_name: string }>).filter((row) =>
+        matching.has(row.provider_id),
+      ),
+    );
+    totalCount = ordered.length;
+    const start = offset ?? 0;
+    const pageIds = ordered.slice(start, start + (limit ?? 0)).map((row) => row.provider_id);
+    if (pageIds.length === 0) return { providers: [], totalCount };
+
+    const { data: pageRows, error: pageError } = await supabase
+      .from('providers')
+      .select(`${baseSelectFields}${tierEmbed}`)
+      .in('provider_id', pageIds)
+      .returns<Provider[]>();
+    if (pageError) throw pageError;
+    const byId = new Map((pageRows ?? []).map((row) => [row.provider_id, row]));
+    data = pageIds.flatMap((id) => byId.get(id) ?? []);
+  }
 
   if (!Array.isArray(data) || data.length === 0) {
     return { providers: [], totalCount };

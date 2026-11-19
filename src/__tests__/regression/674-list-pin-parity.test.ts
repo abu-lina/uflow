@@ -94,7 +94,20 @@ function fakeClient(): SupabaseClient {
       Promise.resolve({ data: rows, error: null, count: rows.length }).then(resolve, reject);
     return builder;
   };
-  return { from } as unknown as SupabaseClient;
+  // Stands in for get_default_order_providers (#953): section + status filter, name order.
+  const rpc = (
+    _name: string,
+    args: { section_filter: string | null; review_status_filter: string },
+  ) =>
+    Promise.resolve({
+      data: PROVIDERS.filter(
+        (p) =>
+          (!args.section_filter || p.listing_type === args.section_filter) &&
+          p.review_status === args.review_status_filter,
+      ).map((p) => ({ provider_id: p.provider_id, provider_name: p.provider_name })),
+      error: null,
+    });
+  return { from, rpc } as unknown as SupabaseClient;
 }
 
 const { client } = vi.hoisted(() => ({ client: { current: null as SupabaseClient | null } }));

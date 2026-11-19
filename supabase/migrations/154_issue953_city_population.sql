@@ -1,11 +1,16 @@
--- Migration 154: add population to cities for default-order sorting (#953)
+-- Migration 154: city population + default-order RPC (#953)
 --
--- The default /food list ordered newest-first surfaced one chain's bulk-import
--- rows on the first screen. The fix sorts by city population DESC so Berlin
--- and Hamburg providers lead. The column is nullable; unknown cities sort last
--- in-app via the CITY_POPULATION constant in src/constants/cityPopulations.ts.
+-- The default list with no city (/food, stores, ummah) was newest-first, so one
+-- chain's bulk import filled the first screen. get_default_order_providers
+-- returns provider ids in the order the owner chose: city population desc,
+-- then city name, provider name, provider_id (stable paging). The app applies the
+-- page-1 brand cap and paginates over this list.
 --
--- Population figures: Destatis 2023, rounded to nearest 1000.
+-- Join key: providers.address_city = cities.city_name (no FK exists).
+-- Verified against the live DEV/UAT schema on 2026-11-19 (cities.population
+-- absent, city_name text). Production parity is unconfirmed.
+-- Population figures: Destatis 2023, rounded to nearest 1000. Cities missing
+-- from the list keep NULL and sort last.
 
 BEGIN;
 
@@ -13,83 +18,112 @@ ALTER TABLE public.cities
   ADD COLUMN IF NOT EXISTS population integer;
 
 COMMENT ON COLUMN public.cities.population IS
-  'Approximate city population (Destatis 2023). Used for default listing order on /food with no city filter (#953).';
+  'Approximate city population (Destatis 2023). Drives the default list order with no city filter (#953).';
 
--- Seed major German cities that appear in providers.address_city
-UPDATE public.cities SET population = 3645000 WHERE city_name = 'Berlin';
-UPDATE public.cities SET population = 1853000 WHERE city_name = 'Hamburg';
-UPDATE public.cities SET population = 1488000 WHERE city_name = 'München';
-UPDATE public.cities SET population = 1084000 WHERE city_name = 'Köln';
-UPDATE public.cities SET population =  773000 WHERE city_name = 'Frankfurt';
-UPDATE public.cities SET population =  634000 WHERE city_name = 'Stuttgart';
-UPDATE public.cities SET population =  620000 WHERE city_name = 'Leipzig';
-UPDATE public.cities SET population =  619000 WHERE city_name = 'Düsseldorf';
-UPDATE public.cities SET population =  588000 WHERE city_name = 'Dortmund';
-UPDATE public.cities SET population =  579000 WHERE city_name = 'Essen';
-UPDATE public.cities SET population =  563000 WHERE city_name = 'Bremen';
-UPDATE public.cities SET population =  556000 WHERE city_name = 'Dresden';
-UPDATE public.cities SET population =  537000 WHERE city_name = 'Hannover';
-UPDATE public.cities SET population =  515000 WHERE city_name = 'Nürnberg';
-UPDATE public.cities SET population =  496000 WHERE city_name = 'Duisburg';
-UPDATE public.cities SET population =  365000 WHERE city_name = 'Bochum';
-UPDATE public.cities SET population =  355000 WHERE city_name = 'Wuppertal';
-UPDATE public.cities SET population =  334000 WHERE city_name = 'Bielefeld';
-UPDATE public.cities SET population =  331000 WHERE city_name = 'Bonn';
-UPDATE public.cities SET population =  317000 WHERE city_name = 'Münster';
-UPDATE public.cities SET population =  309000 WHERE city_name = 'Mannheim';
-UPDATE public.cities SET population =  308000 WHERE city_name = 'Karlsruhe';
-UPDATE public.cities SET population =  296000 WHERE city_name = 'Augsburg';
-UPDATE public.cities SET population =  278000 WHERE city_name = 'Wiesbaden';
-UPDATE public.cities SET population =  261000 WHERE city_name = 'Mönchengladbach';
-UPDATE public.cities SET population =  260000 WHERE city_name = 'Gelsenkirchen';
-UPDATE public.cities SET population =  249000 WHERE city_name = 'Braunschweig';
-UPDATE public.cities SET population =  249000 WHERE city_name = 'Aachen';
-UPDATE public.cities SET population =  248000 WHERE city_name = 'Chemnitz';
-UPDATE public.cities SET population =  242000 WHERE city_name = 'Kiel';
-UPDATE public.cities SET population =  238000 WHERE city_name = 'Halle';
-UPDATE public.cities SET population =  232000 WHERE city_name = 'Magdeburg';
-UPDATE public.cities SET population =  231000 WHERE city_name = 'Freiburg';
-UPDATE public.cities SET population =  227000 WHERE city_name = 'Krefeld';
-UPDATE public.cities SET population =  218000 WHERE city_name = 'Mainz';
-UPDATE public.cities SET population =  216000 WHERE city_name = 'Lübeck';
-UPDATE public.cities SET population =  213000 WHERE city_name = 'Erfurt';
-UPDATE public.cities SET population =  211000 WHERE city_name = 'Oberhausen';
-UPDATE public.cities SET population =  209000 WHERE city_name = 'Rostock';
-UPDATE public.cities SET population =  202000 WHERE city_name = 'Kassel';
-UPDATE public.cities SET population =  189000 WHERE city_name = 'Hagen';
-UPDATE public.cities SET population =  183000 WHERE city_name = 'Potsdam';
-UPDATE public.cities SET population =  180000 WHERE city_name = 'Hamm';
-UPDATE public.cities SET population =  177000 WHERE city_name = 'Saarbrücken';
-UPDATE public.cities SET population =  172000 WHERE city_name = 'Ludwigshafen';
-UPDATE public.cities SET population =  171000 WHERE city_name = 'Oldenburg';
-UPDATE public.cities SET population =  170000 WHERE city_name = 'Mülheim';
-UPDATE public.cities SET population =  165000 WHERE city_name = 'Osnabrück';
-UPDATE public.cities SET population =  163000 WHERE city_name = 'Leverkusen';
-UPDATE public.cities SET population =  160000 WHERE city_name = 'Heidelberg';
-UPDATE public.cities SET population =  157000 WHERE city_name = 'Darmstadt';
-UPDATE public.cities SET population =  155000 WHERE city_name = 'Solingen';
-UPDATE public.cities SET population =  155000 WHERE city_name = 'Regensburg';
-UPDATE public.cities SET population =  155000 WHERE city_name = 'Herne';
-UPDATE public.cities SET population =  151000 WHERE city_name = 'Paderborn';
-UPDATE public.cities SET population =  151000 WHERE city_name = 'Neuss';
-UPDATE public.cities SET population =  141000 WHERE city_name = 'Ingolstadt';
-UPDATE public.cities SET population =  130000 WHERE city_name = 'Offenbach';
-UPDATE public.cities SET population =  130000 WHERE city_name = 'Fürth';
-UPDATE public.cities SET population =  127000 WHERE city_name = 'Würzburg';
-UPDATE public.cities SET population =  126000 WHERE city_name = 'Ulm';
-UPDATE public.cities SET population =  125000 WHERE city_name = 'Pforzheim';
-UPDATE public.cities SET population =  124000 WHERE city_name = 'Heilbronn';
-UPDATE public.cities SET population =  124000 WHERE city_name = 'Wolfsburg';
-UPDATE public.cities SET population =  119000 WHERE city_name = 'Göttingen';
-UPDATE public.cities SET population =  117000 WHERE city_name = 'Bottrop';
-UPDATE public.cities SET population =  115000 WHERE city_name = 'Reutlingen';
-UPDATE public.cities SET population =  115000 WHERE city_name = 'Bremerhaven';
-UPDATE public.cities SET population =  115000 WHERE city_name = 'Recklinghausen';
-UPDATE public.cities SET population =  114000 WHERE city_name = 'Koblenz';
-UPDATE public.cities SET population =  113000 WHERE city_name = 'Erlangen';
-UPDATE public.cities SET population =  112000 WHERE city_name = 'Trier';
-UPDATE public.cities SET population =  110000 WHERE city_name = 'Remscheid';
-UPDATE public.cities SET population =  108000 WHERE city_name = 'Jena';
-UPDATE public.cities SET population =  103000 WHERE city_name = 'Salzgitter';
+UPDATE public.cities c
+SET population = v.population
+FROM (VALUES
+  ('Berlin', 3645000),
+  ('Hamburg', 1853000),
+  ('München', 1488000),
+  ('Köln', 1084000),
+  ('Frankfurt', 773000),
+  ('Stuttgart', 634000),
+  ('Leipzig', 620000),
+  ('Düsseldorf', 619000),
+  ('Dortmund', 588000),
+  ('Essen', 579000),
+  ('Bremen', 563000),
+  ('Dresden', 556000),
+  ('Hannover', 537000),
+  ('Nürnberg', 515000),
+  ('Duisburg', 496000),
+  ('Bochum', 365000),
+  ('Wuppertal', 355000),
+  ('Bielefeld', 334000),
+  ('Bonn', 331000),
+  ('Münster', 317000),
+  ('Mannheim', 309000),
+  ('Karlsruhe', 308000),
+  ('Augsburg', 296000),
+  ('Wiesbaden', 278000),
+  ('Mönchengladbach', 261000),
+  ('Gelsenkirchen', 260000),
+  ('Braunschweig', 249000),
+  ('Aachen', 249000),
+  ('Chemnitz', 248000),
+  ('Kiel', 242000),
+  ('Halle', 238000),
+  ('Magdeburg', 232000),
+  ('Freiburg', 231000),
+  ('Krefeld', 227000),
+  ('Mainz', 218000),
+  ('Lübeck', 216000),
+  ('Erfurt', 213000),
+  ('Oberhausen', 211000),
+  ('Rostock', 209000),
+  ('Kassel', 202000),
+  ('Hagen', 189000),
+  ('Potsdam', 183000),
+  ('Hamm', 180000),
+  ('Saarbrücken', 177000),
+  ('Ludwigshafen', 172000),
+  ('Oldenburg', 171000),
+  ('Mülheim', 170000),
+  ('Osnabrück', 165000),
+  ('Leverkusen', 163000),
+  ('Heidelberg', 160000),
+  ('Darmstadt', 157000),
+  ('Solingen', 155000),
+  ('Regensburg', 155000),
+  ('Herne', 155000),
+  ('Paderborn', 151000),
+  ('Neuss', 151000),
+  ('Ingolstadt', 141000),
+  ('Offenbach', 130000),
+  ('Fürth', 130000),
+  ('Würzburg', 127000),
+  ('Ulm', 126000),
+  ('Pforzheim', 125000),
+  ('Heilbronn', 124000),
+  ('Wolfsburg', 124000),
+  ('Göttingen', 119000),
+  ('Bottrop', 117000),
+  ('Reutlingen', 115000),
+  ('Bremerhaven', 115000),
+  ('Recklinghausen', 115000),
+  ('Koblenz', 114000),
+  ('Erlangen', 113000),
+  ('Trier', 112000),
+  ('Remscheid', 110000),
+  ('Jena', 108000),
+  ('Salzgitter', 103000),
+  ('Frankfurt am Main', 773000),
+  ('Halle (Saale)', 238000),
+  ('Mülheim an der Ruhr', 170000)
+) AS v(city_name, population)
+WHERE c.city_name = v.city_name;
+
+CREATE OR REPLACE FUNCTION public.get_default_order_providers(
+  section_filter text DEFAULT NULL,
+  review_status_filter text DEFAULT 'approved'
+)
+RETURNS TABLE (provider_id uuid, provider_name text)
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $$
+  SELECT p.provider_id, p.provider_name
+  FROM public.providers p
+  LEFT JOIN (
+    SELECT city_name, max(population) AS population
+    FROM public.cities
+    GROUP BY city_name
+  ) c ON c.city_name = p.address_city
+  WHERE (section_filter IS NULL OR p.listing_type::text = section_filter)
+    AND (review_status_filter = 'all' OR p.review_status::text = review_status_filter)
+  ORDER BY c.population DESC NULLS LAST, p.address_city ASC, p.provider_name ASC, p.provider_id ASC;
+$$;
 
 COMMIT;

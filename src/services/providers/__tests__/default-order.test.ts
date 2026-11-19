@@ -41,15 +41,15 @@ describe('#953 applyBrandCap: no more than 2 of the first 12 share a brand', () 
     ]);
   });
 
-  it('puts the deferred entries after the first page, in input order (later pages stay plain order)', () => {
+  it('keeps the rest in plain input order after the first page', () => {
     const rest = applyBrandCap(input).slice(12);
     expect(rest.map((r) => r.provider_id)).toEqual([
+      ...loco.slice(2).map((r) => r.provider_id),
       'o10',
       'o11',
       'o12',
       'o13',
       'o14',
-      ...loco.slice(2).map((r) => r.provider_id),
     ]);
   });
 

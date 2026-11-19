@@ -123,8 +123,8 @@ describe('#953 default order without a city, paged through the database', () => 
     const page2 = await searchProviders('', '', '', 13, 12, undefined, 'food', undefined, client);
     const seen = [...ids(page1.providers).slice(0, 12), ...ids(page2.providers).slice(0, 12)];
     expect(new Set(seen).size).toBe(seen.length);
-    // Cap window is 12: deferred Loco rows follow in population order after the others.
-    expect(seen.slice(12, 14)).toEqual(['b-other-10', 'b-other-11']);
+    // Past the 12-row cap window the list is plain population order again.
+    expect(seen.slice(12, 14)).toEqual(['a-loco-2', 'a-loco-3']);
   });
 
   it('keeps totalCount equal to the number of matching providers', async () => {
