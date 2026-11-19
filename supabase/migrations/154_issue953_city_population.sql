@@ -7,8 +7,9 @@
 -- page-1 brand cap and paginates over this list.
 --
 -- Join key: providers.address_city = cities.city_name (no FK exists).
--- Verified against the live DEV/UAT schema on 2026-11-19 (cities.population
--- absent, city_name text). Production parity is unconfirmed.
+-- Written against the live PROD schema (owner-run query, 2026-11-19; cities.population
+-- absent, city_name text). Not run against prod; DEV/UAT parity is unverified.
+-- Idempotent: ADD COLUMN IF NOT EXISTS is metadata-only, CREATE OR REPLACE FUNCTION.
 -- Population figures: Destatis 2023, rounded to nearest 1000. Cities missing
 -- from the list keep NULL and sort last.
 

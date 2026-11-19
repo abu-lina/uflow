@@ -155,9 +155,11 @@ export const ProviderCard = React.memo(
           ? locations.find((l: Location) => l.is_primary) || locations[0]
           : null;
 
-      const isVirtualVenue =
-        (address_street?.toLowerCase().includes('virtual venue') ?? false) ||
-        (primaryLocation?.address_street?.toLowerCase().includes('virtual venue') ?? false);
+      // Import text marks delivery-only kitchens; the owner chose this match (#953).
+      const isVirtualVenue = [address_street, primaryLocation?.address_street].some((street) =>
+        street?.toLowerCase().includes('virtual venue'),
+      );
+      const virtualVenueCity = primaryLocation?.address_city ?? address_city;
 
       let address = '';
       if (primaryLocation) {
@@ -499,9 +501,20 @@ export const ProviderCard = React.memo(
                     </div>
                   )}
                   {isVirtualVenue ? (
-                    <span className="w-full min-w-0 truncate font-inter text-xs font-normal text-uFlowText2 sm:text-sm">
-                      {t('providers.deliveryOnly')}
-                    </span>
+                    <div
+                      className="flex w-full min-w-0 items-center gap-2"
+                      data-testid="delivery-only"
+                    >
+                      <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-[7.2px] border border-border bg-background/70 px-2 font-inter-tight text-sm font-medium text-content">
+                        <Icon aria-hidden="true" className="h-4 w-4" icon="mdi:moped-outline" />
+                        {t('providers.deliveryOnly')}
+                      </span>
+                      {virtualVenueCity && (
+                        <span className="min-w-0 truncate font-inter text-xs font-normal text-uFlowText2 sm:text-sm">
+                          {virtualVenueCity}
+                        </span>
+                      )}
+                    </div>
                   ) : (
                     <button
                       className="w-full min-w-0 truncate text-left font-inter text-xs font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline sm:text-sm"
