@@ -49,4 +49,11 @@ describe('#953 migration 154: city population and default-order RPC', () => {
     expect(sql).toContain('WHERE lower(btrim(c.city_name)) = lower(btrim(v.city_name))');
     expect(sql).toContain("('Frankfurt am Main', 773000)");
   });
+
+  it("scopes 'all' to the four moderation statuses, like the unranked query (no removed_by_owner)", () => {
+    expect(sql).toContain(
+      "(review_status_filter = 'all' AND p.review_status::text IN ('approved', 'pending', 'rejected', 'needs_revision'))",
+    );
+    expect(sql).not.toContain('removed_by_owner');
+  });
 });

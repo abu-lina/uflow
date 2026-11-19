@@ -507,7 +507,9 @@ export const ProviderCard = React.memo(
                     >
                       <span className="inline-flex h-6 max-w-[60%] shrink-0 items-center gap-1 rounded-[7.2px] border border-border bg-background/70 px-2 font-inter-tight text-xs font-medium text-content sm:text-sm">
                         <Icon aria-hidden="true" className="h-4 w-4" icon="mdi:moped-outline" />
-                        {t('providers.deliveryOnly')}
+                        <span className="min-w-0 truncate" title={t('providers.deliveryOnly')}>
+                          {t('providers.deliveryOnly')}
+                        </span>
                       </span>
                       {virtualVenueCity && (
                         <span

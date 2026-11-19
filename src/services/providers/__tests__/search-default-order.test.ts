@@ -34,6 +34,7 @@ function makeClient(rank: RankRow[], opts: { matching?: Set<string>; rpcError?: 
     address_city: 'X',
     created_at: '2026-01-01T00:00:00Z',
   });
+  let idOnlyCalls = 0;
   const clamp = <T>(rows: T[], range: [number, number] | null): T[] => {
     const [from, to] = range ?? [0, MAX_ROWS - 1];
     return rows.slice(from, Math.min(to, from + MAX_ROWS - 1) + 1);
@@ -43,6 +44,7 @@ function makeClient(rank: RankRow[], opts: { matching?: Set<string>; rpcError?: 
     let idOnly = false;
     let pageIds: string[] | null = null;
     let range: [number, number] | null = null;
+    let orderedById = false;
     const builder: Record<string, unknown> = {};
     const chain = () => builder;
     for (const m of ['not', 'or', 'limit', 'gte', 'lte', 'neq', 'is', 'ilike']) {
@@ -63,6 +65,7 @@ function makeClient(rank: RankRow[], opts: { matching?: Set<string>; rpcError?: 
     };
     builder.order = (column: string, o?: { ascending?: boolean }) => {
       calls.orders.push({ column, ascending: o?.ascending ?? true });
+      if (column === 'provider_id') orderedById = true;
       return builder;
     };
     builder.in = (col: string, ids: string[]) => {
@@ -75,9 +78,20 @@ function makeClient(rank: RankRow[], opts: { matching?: Set<string>; rpcError?: 
       if (idOnly) {
         const all = rank
           .filter((r) => !opts.matching || opts.matching.has(r.provider_id))
-          .map((r) => ({ provider_id: r.provider_id }))
-          .sort((a, b) => a.provider_id.localeCompare(b.provider_id));
-        return resolve({ data: clamp(all, range), error: null, count: all.length });
+          .map((r) => ({ provider_id: r.provider_id }));
+        // Without a total ORDER BY Postgres may return rows in a different order per
+        // request; rotate per call so overlapping or missing pages show up.
+        const sorted = orderedById
+          ? all.sort((a, b) => a.provider_id.localeCompare(b.provider_id))
+          : [
+              ...all.slice((++idOnlyCalls * 7) % Math.max(all.length, 1)),
+              ...all.slice(0, (idOnlyCalls * 7) % Math.max(all.length, 1)),
+            ];
+        // count: 'exact' + an offset past the last row is a 416 (PGRST103), as in PostgREST.
+        if (range && range[0] > 0 && range[0] >= sorted.length) {
+          return resolve({ data: null, error: { code: 'PGRST103' }, count: sorted.length });
+        }
+        return resolve({ data: clamp(sorted, range), error: null, count: sorted.length });
       }
       const rows = pageIds
         ? rank
@@ -206,6 +220,46 @@ describe('#953 more providers than PostgREST max_rows (1000)', () => {
     const { providers, totalCount } = await page(client, 13, 1100, { category: CATEGORY_ID });
     expect(totalCount).toBe(1500);
     expect(ids(providers)[0]).toBe('p-1100');
+  });
+});
+
+describe('#953 boundaries around max_rows', () => {
+  const rows = (n: number): RankRow[] =>
+    Array.from({ length: n }, (_, i) => ({
+      provider_id: `q-${String(i).padStart(4, '0')}`,
+      provider_name: `Name ${i}`,
+    }));
+  const every = (r: RankRow[]) => new Set(r.map((x) => x.provider_id));
+
+  it.each([999, 1000, 1001, 2000])('serves the last row of %i ranked providers', async (n) => {
+    const { client } = makeClient(rows(n));
+    const { providers, totalCount } = await page(client, 13, n - 1);
+    expect(totalCount).toBe(n);
+    expect(ids(providers)).toEqual([`q-${String(n - 1).padStart(4, '0')}`]);
+  });
+
+  it.each([1000, 2000])(
+    'reads exactly %i matching ids without a 416 on the empty next range',
+    async (n) => {
+      const data = rows(n);
+      const { client } = makeClient(data, { matching: every(data) });
+      const { totalCount, providers } = await page(client, 13, n - 1, { category: CATEGORY_ID });
+      expect(totalCount).toBe(n);
+      expect(providers).toHaveLength(1);
+    },
+  );
+
+  it('returns an empty page past the end instead of failing', async () => {
+    const { client } = makeClient(rows(30));
+    expect(await page(client, 13, 5000)).toEqual({ providers: [], totalCount: 30 });
+  });
+
+  it('orders the id-only query totally, so ranges never overlap or skip', async () => {
+    const data = rows(1500);
+    const { client, calls } = makeClient(data, { matching: every(data) });
+    const { totalCount } = await page(client, 13, 0, { category: CATEGORY_ID });
+    expect(totalCount).toBe(1500);
+    expect(calls.orders).toContainEqual({ column: 'provider_id', ascending: true });
   });
 });
 

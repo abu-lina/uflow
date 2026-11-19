@@ -78,6 +78,9 @@ async function fetchAllPages<T>(
   const rows: T[] = [];
   for (let from = 0; ; from += POSTGREST_MAX_ROWS) {
     const { data, error } = await run(from, from + POSTGREST_MAX_ROWS - 1);
+    // With count: 'exact', a range starting at the total (an exact multiple of the
+    // page) is a 416; PGRST103 there just means there is nothing left to read.
+    if ((error as { code?: string } | null)?.code === 'PGRST103' && from > 0) return rows;
     if (error) throw error;
     rows.push(...(data ?? []));
     if (!data || data.length < POSTGREST_MAX_ROWS) return rows;

@@ -128,7 +128,10 @@ AS $$
     GROUP BY lower(btrim(city_name))
   ) c ON c.city_key = lower(NULLIF(btrim(p.address_city), ''))
   WHERE (section_filter IS NULL OR p.listing_type::text = section_filter)
-    AND (review_status_filter = 'all' OR p.review_status::text = review_status_filter)
+    AND (
+      (review_status_filter = 'all' AND p.review_status::text IN ('approved', 'pending', 'rejected', 'needs_revision'))
+      OR p.review_status::text = review_status_filter
+    )
   ORDER BY c.population DESC NULLS LAST, lower(NULLIF(btrim(p.address_city), '')) ASC NULLS LAST, p.provider_name ASC, p.provider_id ASC;
 $$;
 

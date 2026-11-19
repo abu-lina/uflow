@@ -11,6 +11,9 @@ import { isAdminOrModerator } from '@/lib/auth/roles';
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { parseDiscoveryQueryForRoute, type ReviewStatus } from '@/features/search/discoveryQuery';
 
+/** Largest page the route serves; the admin hook asks for 50. */
+const MAX_PAGE_SIZE = 50;
+
 /**
  * GET /api/providers/search
  *
@@ -45,8 +48,11 @@ export async function GET(request: Request): Promise<NextResponse> {
     const { searchParams } = new URL(request.url);
     const dq = parseDiscoveryQueryForRoute(searchParams);
 
-    const page = parseInt(searchParams.get('page') || '0', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') || '12', 10);
+    // Bound both: pageSize feeds an .in() list of ids, so a huge value would build an oversized URL.
+    const rawPage = parseInt(searchParams.get('page') || '0', 10);
+    const rawPageSize = parseInt(searchParams.get('pageSize') || '12', 10);
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 0;
+    const pageSize = rawPageSize >= 1 ? Math.min(rawPageSize, MAX_PAGE_SIZE) : 12;
 
     // Plan 058: Admin status filter
     let adminOptions: { status: ReviewStatus; isAdmin: true } | undefined;
