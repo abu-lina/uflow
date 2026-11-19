@@ -106,8 +106,6 @@ vi.mock('@/providers/LanguageProvider', () => ({
 vi.mock('@/providers/search-provider', () => ({
   LOCATION_ALL: '',
   useSearch: () => ({
-    selectedCategory: null,
-    setSelectedCategory: vi.fn(),
     searchQuery: '',
     setSearchQuery: vi.fn(),
     selectedLocation: '',

@@ -211,8 +211,6 @@ export const mockSession = {
 
 // Mock search context
 export const mockSearchContext = {
-  selectedCategory: null,
-  setSelectedCategory: () => {},
   searchQuery: '',
   setSearchQuery: () => {},
   selectedLocation: '',
