@@ -402,6 +402,7 @@ export const ps = {
     locationsCount: '{{count}} ځایونه',
     halalLevel: 'د حلال کچه {{level}}',
     online: 'آنلاین',
+    deliveryOnly: 'یوازې سپارنه',
     donations: 'خیرات',
     initiativesSupported: 'ملاتړ شوي نوښتونه',
     ourBarakahEffect: 'زموږ د برکت اغیزه',

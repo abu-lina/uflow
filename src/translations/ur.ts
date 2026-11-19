@@ -404,6 +404,7 @@ export const ur = {
     locationsCount: '{{count}} مقامات',
     halalLevel: 'حلال سطح {{level}}',
     online: 'آن لائن',
+    deliveryOnly: 'صرف ڈیلیوری',
     donations: 'عطیات',
     initiativesSupported: 'منصوبوں کی حمایت',
     ourBarakahEffect: 'ہمارا برکت اثر',

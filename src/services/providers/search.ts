@@ -13,6 +13,7 @@ import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
 import type { HalalTier } from '@/features/search/discoveryQuery';
+import { CITY_POPULATION } from '@/constants/cityPopulations';
 
 async function loadProviderRelationIds(
   providerIds: string[],
@@ -59,6 +60,24 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
     const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
     const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
     return dateB - dateA;
+  });
+}
+
+/**
+ * Sorts results for the default no-city view (#953):
+ * city population desc → name asc → id asc.
+ * Cities absent from the population map sort last.
+ */
+export function sortByDefaultOrder<
+  T extends { id: string; name: string; address_city: string | null },
+>(results: T[]): T[] {
+  return [...results].sort((a, b) => {
+    const popA = a.address_city ? (CITY_POPULATION[a.address_city] ?? 0) : 0;
+    const popB = b.address_city ? (CITY_POPULATION[b.address_city] ?? 0) : 0;
+    if (popB !== popA) return popB - popA;
+    const nameCompare = a.name.localeCompare(b.name, 'de');
+    if (nameCompare !== 0) return nameCompare;
+    return a.id.localeCompare(b.id);
   });
 }
 
@@ -254,7 +273,9 @@ async function searchProvidersOnly(
 
   const hasMore = rawProviders.length > pageSize;
   const results = rawProviders.slice(0, pageSize).map(transformProviderToSearchResult);
-  const sortedResults = sortByCreationDate(results);
+  const sortedResults = isValidLocation(location)
+    ? sortByCreationDate(results)
+    : sortByDefaultOrder(results);
 
   return { results: sortedResults, hasMore, totalCount };
 }
@@ -371,8 +392,14 @@ export async function searchProviders(
     req = req.range(offset, offset + (limit || 1000) - 1);
   }
 
-  // Always order by created_at descending for consistent pagination
-  req = req.order('created_at', { ascending: false });
+  // With a city filter, keep created_at DESC (existing behaviour, AC5).
+  // Without a city, sort by name + id so DB pages are deterministic across
+  // the in-app population sort (#953).
+  if (isValidLocation(location)) {
+    req = req.order('created_at', { ascending: false });
+  } else {
+    req = req.order('provider_name', { ascending: true }).order('provider_id', { ascending: true });
+  }
 
   const matchedMenuItemsByProvider = new Map<string, string[]>();
   if (query) {

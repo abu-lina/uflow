@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { sortByDefaultOrder } from '@/services/providers/search';
 
-type MinProvider = { provider_id: string; provider_name: string; address_city: string | null };
+type MinResult = { id: string; name: string; address_city: string | null };
 
-function make(id: string, name: string, city: string | null): MinProvider {
-  return { provider_id: id, provider_name: name, address_city: city };
+function make(id: string, name: string, city: string | null): MinResult {
+  return { id, name, address_city: city };
 }
 
 describe('#953 default order: city population desc, name asc, id asc', () => {
@@ -28,17 +28,13 @@ describe('#953 default order: city population desc, name asc, id asc', () => {
       make('3', 'Mango Grill', 'Berlin'),
     ];
     const result = sortByDefaultOrder(input);
-    expect(result.map((r) => r.provider_name)).toEqual([
-      'Alpha Kebab',
-      'Mango Grill',
-      'Zaza Chicken',
-    ]);
+    expect(result.map((r) => r.name)).toEqual(['Alpha Kebab', 'Mango Grill', 'Zaza Chicken']);
   });
 
-  it('uses provider_id as tiebreaker for same city + same name', () => {
+  it('uses id as tiebreaker for same city + same name', () => {
     const input = [make('z-id', 'Same Name', 'Berlin'), make('a-id', 'Same Name', 'Berlin')];
     const result = sortByDefaultOrder(input);
-    expect(result[0].provider_id).toBe('a-id');
+    expect(result[0].id).toBe('a-id');
   });
 
   it('places providers with unknown city at the end', () => {
@@ -48,8 +44,8 @@ describe('#953 default order: city population desc, name asc, id asc', () => {
     expect(result[1].address_city).toBeNull();
   });
 
-  it('no more than 2 of the first 12 results share the same brand prefix', () => {
-    // Simulate a bulk-import scenario: 9 "Loco Chicken" entries from various cities
+  it('no more than 2 of the first 12 results share the same brand prefix when big cities have diverse providers', () => {
+    // Realistic: 9 "Loco Chicken" from small cities, but Berlin has 12 diverse providers
     const locoCities = [
       'Chemnitz',
       'Dresden',
@@ -64,15 +60,24 @@ describe('#953 default order: city population desc, name asc, id asc', () => {
     const locoEntries = locoCities.map((city, i) =>
       make(`loco-${i}`, `Loco Chicken | ${city}`, city),
     );
-    // 3 Berlin providers from other brands
-    const berlinEntries = [
-      make('b1', 'Al-Sham', 'Berlin'),
-      make('b2', 'Halal Bros', 'Berlin'),
-      make('b3', 'Kabul Kitchen', 'Berlin'),
+    const berlinNames = [
+      'Al-Sham',
+      'Halal Bros',
+      'Kabul Kitchen',
+      'Bosporus Grill',
+      'Marmara',
+      'Al-Nour',
+      'Türkis',
+      'Shawarma Palace',
+      'Kebab House',
+      'Al-Madina',
+      'Falafel Corner',
+      'Istanbul Restaurant',
     ];
+    const berlinEntries = berlinNames.map((name, i) => make(`b${i}`, name, 'Berlin'));
     const result = sortByDefaultOrder([...locoEntries, ...berlinEntries]);
     const first12 = result.slice(0, 12);
-    const locoCounts = first12.filter((r) => r.provider_name.startsWith('Loco Chicken')).length;
+    const locoCounts = first12.filter((r) => r.name.startsWith('Loco Chicken')).length;
     expect(locoCounts).toBeLessThanOrEqual(2);
   });
 });
