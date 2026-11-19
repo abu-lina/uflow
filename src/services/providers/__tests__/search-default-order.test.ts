@@ -10,17 +10,23 @@ import { fetchFilteredCities } from '@/services/providers/cities';
 
 type RankRow = { provider_id: string; provider_name: string };
 
+/** supabase/config.toml max_rows: PostgREST never returns more rows per request. */
+const MAX_ROWS = 1000;
+const CATEGORY_ID = '11111111-2222-3333-4444-555555555555';
+
 /**
- * Minimal Supabase fake. `rank` is what the default-order RPC returns (already
- * in population order). The providers table answers an id-only select with
- * every id (phase A) and a full select with the rows named by `.in('provider_id')`,
- * in reverse order so the service has to restore the ranked order itself.
+ * Minimal Supabase fake with PostgREST's max_rows clamp. `rank` is what the
+ * default-order RPC holds (already in population order). `matching` narrows the
+ * id-only providers select, standing in for category/tier/barakah filters. A
+ * full select returns the rows named by `.in('provider_id')`, reversed, so the
+ * service has to restore the ranked order itself.
  */
-function makeClient(rank: RankRow[]) {
+function makeClient(rank: RankRow[], opts: { matching?: Set<string>; rpcError?: boolean } = {}) {
   const calls = {
     rpc: [] as Array<{ name: string; args: Record<string, unknown> }>,
     orders: [] as Array<{ column: string; ascending: boolean }>,
     eqs: [] as Array<[string, unknown]>,
+    selects: [] as string[],
   };
   const providerRow = (r: RankRow) => ({
     provider_id: r.provider_id,
@@ -28,16 +34,26 @@ function makeClient(rank: RankRow[]) {
     address_city: 'X',
     created_at: '2026-01-01T00:00:00Z',
   });
+  const clamp = <T>(rows: T[], range: [number, number] | null): T[] => {
+    const [from, to] = range ?? [0, MAX_ROWS - 1];
+    return rows.slice(from, Math.min(to, from + MAX_ROWS - 1) + 1);
+  };
 
   const from = (table: string) => {
     let idOnly = false;
     let pageIds: string[] | null = null;
+    let range: [number, number] | null = null;
     const builder: Record<string, unknown> = {};
     const chain = () => builder;
-    for (const m of ['not', 'or', 'limit', 'range', 'gte', 'lte', 'neq', 'is', 'ilike']) {
+    for (const m of ['not', 'or', 'limit', 'gte', 'lte', 'neq', 'is', 'ilike']) {
       builder[m] = chain;
     }
+    builder.range = (a: number, b: number) => {
+      range = [a, b];
+      return builder;
+    };
     builder.select = (fields: string) => {
+      calls.selects.push(fields);
       idOnly = fields.startsWith('provider_id');
       return builder;
     };
@@ -45,8 +61,8 @@ function makeClient(rank: RankRow[]) {
       calls.eqs.push([col, val]);
       return builder;
     };
-    builder.order = (column: string, opts?: { ascending?: boolean }) => {
-      calls.orders.push({ column, ascending: opts?.ascending ?? true });
+    builder.order = (column: string, o?: { ascending?: boolean }) => {
+      calls.orders.push({ column, ascending: o?.ascending ?? true });
       return builder;
     };
     builder.in = (col: string, ids: string[]) => {
@@ -57,29 +73,41 @@ function makeClient(rank: RankRow[]) {
     builder.then = (resolve: (v: unknown) => unknown) => {
       if (table !== 'providers') return resolve({ data: [], error: null, count: 0 });
       if (idOnly) {
-        return resolve({
-          data: rank.map((r) => ({ provider_id: r.provider_id })),
-          error: null,
-          count: rank.length,
-        });
+        const all = rank
+          .filter((r) => !opts.matching || opts.matching.has(r.provider_id))
+          .map((r) => ({ provider_id: r.provider_id }))
+          .sort((a, b) => a.provider_id.localeCompare(b.provider_id));
+        return resolve({ data: clamp(all, range), error: null, count: all.length });
       }
-      const rows = rank
-        .filter((r) => pageIds?.includes(r.provider_id))
-        .map(providerRow)
-        .reverse();
+      const rows = pageIds
+        ? rank
+            .filter((r) => pageIds?.includes(r.provider_id))
+            .map(providerRow)
+            .reverse()
+        : rank.map(providerRow);
       return resolve({ data: rows, error: null, count: rows.length });
     };
     return builder;
   };
 
-  const client = {
-    from,
-    rpc: (name: string, args: Record<string, unknown>) => {
-      calls.rpc.push({ name, args });
-      return Promise.resolve({ data: rank, error: null });
-    },
-  } as unknown as SupabaseClient;
-  return { client, calls };
+  const rpc = (name: string, args: Record<string, unknown>) => {
+    calls.rpc.push({ name, args });
+    let range: [number, number] | null = null;
+    const b: Record<string, unknown> = {};
+    b.range = (x: number, y: number) => {
+      range = [x, y];
+      return b;
+    };
+    b.then = (resolve: (v: unknown) => unknown) =>
+      resolve(
+        opts.rpcError
+          ? { data: null, error: { message: 'function does not exist' } }
+          : { data: clamp(rank, range), error: null },
+      );
+    return b;
+  };
+
+  return { client: { from, rpc } as unknown as SupabaseClient, calls };
 }
 
 const loco = Array.from({ length: 9 }, (_, i) => ({
@@ -95,22 +123,32 @@ const RANK: RankRow[] = [...loco, ...others];
 
 const ids = (providers: Array<{ provider_id: string }>) => providers.map((p) => p.provider_id);
 
+type Extra = {
+  q?: string;
+  category?: string;
+  location?: string;
+  admin?: Parameters<typeof searchProviders>[5];
+  barakah?: Parameters<typeof searchProviders>[7];
+};
+const page = (c: SupabaseClient, limit: number, offset: number, x: Extra = {}) =>
+  searchProviders(
+    x.q ?? '',
+    x.category ?? '',
+    x.location ?? '',
+    limit,
+    offset,
+    x.admin,
+    'food',
+    x.barakah,
+    c,
+  );
+
 describe('#953 default order without a city, paged through the database', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('page 1 holds at most 2 of one brand among its first 12', async () => {
     const { client } = makeClient(RANK);
-    const { providers } = await searchProviders(
-      '',
-      '',
-      '',
-      13,
-      0,
-      undefined,
-      'food',
-      undefined,
-      client,
-    );
+    const { providers } = await page(client, 13, 0);
     const brandCount = providers
       .slice(0, 12)
       .filter((p) => p.provider_name.startsWith('Loco Chicken')).length;
@@ -119,8 +157,8 @@ describe('#953 default order without a city, paged through the database', () => 
 
   it('page 2 continues page 1 without duplicates or gaps', async () => {
     const { client } = makeClient(RANK);
-    const page1 = await searchProviders('', '', '', 13, 0, undefined, 'food', undefined, client);
-    const page2 = await searchProviders('', '', '', 13, 12, undefined, 'food', undefined, client);
+    const page1 = await page(client, 13, 0);
+    const page2 = await page(client, 13, 12);
     const seen = [...ids(page1.providers).slice(0, 12), ...ids(page2.providers).slice(0, 12)];
     expect(new Set(seen).size).toBe(seen.length);
     // Past the 12-row cap window the list is plain population order again.
@@ -129,27 +167,68 @@ describe('#953 default order without a city, paged through the database', () => 
 
   it('keeps totalCount equal to the number of matching providers', async () => {
     const { client } = makeClient(RANK);
-    const { totalCount } = await searchProviders(
-      '',
-      '',
-      '',
-      13,
-      0,
-      undefined,
-      'food',
-      undefined,
-      client,
-    );
-    expect(totalCount).toBe(RANK.length);
+    expect((await page(client, 13, 0)).totalCount).toBe(RANK.length);
   });
 
-  it('asks the RPC for the food section', async () => {
+  it('asks the RPC for the food section and approved status', async () => {
     const { client, calls } = makeClient(RANK);
-    await searchProviders('', '', '', 13, 0, undefined, 'food', undefined, client);
+    await page(client, 13, 0);
     expect(calls.rpc[0]).toMatchObject({
       name: 'get_default_order_providers',
       args: { section_filter: 'food', review_status_filter: 'approved' },
     });
+  });
+
+  it('admin callers get population order for the status they asked for', async () => {
+    const { client, calls } = makeClient(RANK);
+    await page(client, 13, 0, { admin: { status: 'all', isAdmin: true } });
+    expect(calls.rpc[0].args.review_status_filter).toBe('all');
+  });
+});
+
+describe('#953 more providers than PostgREST max_rows (1000)', () => {
+  const BIG: RankRow[] = Array.from({ length: 1500 }, (_, i) => ({
+    provider_id: `p-${String(i).padStart(4, '0')}`,
+    provider_name: `Name ${i}`,
+  }));
+
+  it('reports the true totalCount and serves a page past row 1000', async () => {
+    const { client } = makeClient(BIG);
+    const { providers, totalCount } = await page(client, 13, 1200);
+    expect(totalCount).toBe(1500);
+    expect(ids(providers).slice(0, 12)).toEqual(BIG.slice(1200, 1212).map((r) => r.provider_id));
+  });
+
+  it('keeps ranked order when a filter forces the id-only query too', async () => {
+    const { client } = makeClient(BIG, { matching: new Set(BIG.map((r) => r.provider_id)) });
+    const { providers, totalCount } = await page(client, 13, 1100, { category: CATEGORY_ID });
+    expect(totalCount).toBe(1500);
+    expect(ids(providers)[0]).toBe('p-1100');
+  });
+});
+
+describe('#953 filters combine with the ranking', () => {
+  it('keeps only matching providers, in ranked order', async () => {
+    const matching = new Set(['b-other-05', 'a-loco-3', 'b-other-01', 'a-loco-0', 'b-other-19']);
+    const { client, calls } = makeClient(RANK, { matching });
+    const { providers, totalCount } = await page(client, 13, 0, { category: CATEGORY_ID });
+    expect(totalCount).toBe(5);
+    expect(ids(providers)).toEqual([
+      'a-loco-0',
+      'a-loco-3',
+      'b-other-01',
+      'b-other-05',
+      'b-other-19',
+    ]);
+    expect(calls.selects[0]).toContain('provider_categories!inner(category_id)');
+    expect(calls.eqs).toContainEqual(['provider_categories.category_id', CATEGORY_ID]);
+  });
+
+  it('runs the id-only query for barakah filters', async () => {
+    const { client, calls } = makeClient(RANK, { matching: new Set(['b-other-01']) });
+    const { providers } = await page(client, 13, 0, { barakah: ['muslim_owned' as never] });
+    expect(ids(providers)).toEqual(['b-other-01']);
+    expect(calls.selects[0].startsWith('provider_id')).toBe(true);
   });
 });
 
@@ -157,10 +236,10 @@ describe('#953 every no-city caller uses the population order', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it.each(['food', 'store', 'ummah'] as const)(
-    'the %s section calls the RPC with its section',
+    'the %s section calls the RPC with its section and reports hasMore correctly',
     async (section) => {
       const { client, calls } = makeClient(RANK);
-      const res = await searchProvidersAndCommunityServices(
+      const first = await searchProvidersAndCommunityServices(
         '',
         '',
         '',
@@ -171,8 +250,21 @@ describe('#953 every no-city caller uses the population order', () => {
         undefined,
         client,
       );
+      const last = await searchProvidersAndCommunityServices(
+        '',
+        '',
+        '',
+        2,
+        12,
+        undefined,
+        section,
+        undefined,
+        client,
+      );
       expect(calls.rpc[0].args.section_filter).toBe(section);
-      expect(res.results.length).toBeGreaterThan(0);
+      expect(first.hasMore).toBe(true);
+      expect(last.results).toHaveLength(RANK.length - 24);
+      expect(last.hasMore).toBe(false);
     },
   );
 
@@ -183,12 +275,32 @@ describe('#953 every no-city caller uses the population order', () => {
   });
 });
 
-describe("#953 AC3: choosing a city keeps today's order", () => {
-  it('orders by created_at desc and does not call the ranking RPC', async () => {
+describe('#953 stays on created_at order where the owner did not ask for the new one', () => {
+  it('AC3: choosing a city orders by created_at desc and skips the ranking RPC', async () => {
     const { client, calls } = makeClient(RANK);
-    await searchProviders('', '', 'Berlin', 13, 0, undefined, 'food', undefined, client);
+    await page(client, 13, 0, { location: 'Berlin' });
     expect(calls.orders).toEqual([{ column: 'created_at', ascending: false }]);
     expect(calls.rpc.map((c) => c.name)).not.toContain('get_default_order_providers');
     expect(calls.eqs).toContainEqual(['address_city', 'Berlin']);
+  });
+
+  it('free-text search keeps created_at order and skips the ranking RPC', async () => {
+    const { client, calls } = makeClient(RANK);
+    await page(client, 13, 0, { q: 'pizza' });
+    expect(calls.orders).toEqual([{ column: 'created_at', ascending: false }]);
+    expect(calls.rpc.map((c) => c.name)).not.toContain('get_default_order_providers');
+  });
+
+  it('falls back to created_at order and logs when the RPC is missing (migration not applied yet)', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { client, calls } = makeClient(RANK, { rpcError: true });
+    const { providers } = await page(client, 13, 0);
+    expect(providers.length).toBeGreaterThan(0);
+    expect(calls.orders).toEqual([{ column: 'created_at', ascending: false }]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('get_default_order_providers'),
+      expect.anything(),
+    );
+    errorSpy.mockRestore();
   });
 });
