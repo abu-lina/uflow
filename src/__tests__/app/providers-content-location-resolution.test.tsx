@@ -39,8 +39,6 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/providers/search-provider', () => ({
   useSearch: () => ({
-    selectedCategory: null,
-    setSelectedCategory: vi.fn(),
     searchQuery: '',
     setSearchQuery: vi.fn(),
     get selectedLocation() {

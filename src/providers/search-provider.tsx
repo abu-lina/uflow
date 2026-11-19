@@ -9,8 +9,6 @@ export type { Section };
 export type SearchContextType = {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  selectedCategory: string | null;
-  setSelectedCategory: (category: string | null) => void;
   selectedLocation: string;
   setSelectedLocation: (location: string) => void;
   /** Plan 089: Active section. Defaults to 'food' per D9. */
@@ -26,7 +24,6 @@ export const LOCATION_ALL = '';
 
 export function SearchProvider({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState(LOCATION_ALL);
   // Plan 089: Default section is FOOD per D9
   const [selectedSection, setSelectedSection] = useState<Section>('food');
@@ -36,8 +33,6 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
       value={{
         searchQuery,
         setSearchQuery,
-        selectedCategory,
-        setSelectedCategory,
         selectedLocation,
         setSelectedLocation,
         selectedSection,

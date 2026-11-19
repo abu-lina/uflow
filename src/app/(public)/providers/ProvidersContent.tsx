@@ -143,8 +143,6 @@ export function ProvidersContent({
 
   // Get search context to sync with URL parameters
   const {
-    selectedCategory,
-    setSelectedCategory,
     searchQuery,
     setSearchQuery,
     selectedLocation,
@@ -427,13 +425,8 @@ export function ProvidersContent({
     [router],
   );
 
-  // Sync location/category/query with search context - only when they actually change
+  // Sync location/query/section with search context - only when they actually change
   useEffect(() => {
-    // Use resolved location as source of truth (defaultLocation > URL param > context > fallback)
-    // This prevents unnecessary re-renders and state conflicts
-    if (category !== selectedCategory) {
-      setSelectedCategory(category);
-    }
     if (query !== searchQuery) {
       setSearchQuery(query);
     }
@@ -448,11 +441,8 @@ export function ProvidersContent({
     if (section !== selectedSection) {
       setSelectedSection(section);
     }
-    // ESLint warning is intentionally ignored here to prevent infinite loops
-    // The setter functions are stable and don't need to be in dependencies
-    // Including searchQuery, selectedCategory, selectedLocation would cause infinite re-renders
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, query, location, defaultLocation, section]); // Include defaultLocation to sync when it changes
+  }, [query, location, defaultLocation, section]);
 
   // Prefetch likely next pages after initial load (performance optimization)
   useEffect(() => {
