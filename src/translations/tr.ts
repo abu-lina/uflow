@@ -96,7 +96,7 @@ export const tr = {
     hero: {
       title:
         '<span class="text-primary">Müslümanlar</span><br class="block sm:hidden" /> için <span class="text-primary">Müslümanlar</span> tarafından',
-      subtitle: 'Helal, şeffaf ve bereketli bir pazar yeri – sen ve ümmetin için.',
+      subtitle: 'Helal, şeffaf ve bereketli bir platform – sen ve ümmetin için.',
       getStarted: 'Ümmetini Keşfet',
       learnMore: 'Daha Fazla Bilgi',
     },
@@ -1034,7 +1034,7 @@ export const tr = {
   waitlist: {
     title: 'Akışa Katıl',
     description:
-      'Müslümanlar için ilk pazar yerini oluşturmaya yardımcı olun. Bekleme listesine katılın ve erken erişim sağlayın.',
+      'Müslümanlar için ilk platformu oluşturmaya yardımcı olun. Bekleme listesine katılın ve erken erişim sağlayın.',
     joinButton: 'Bekleme Listesine Katıl',
     joining: 'Katılıyor...',
     emailPlaceholder: 'E-postanızı girin',

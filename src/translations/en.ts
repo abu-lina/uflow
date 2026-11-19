@@ -98,7 +98,7 @@ export const en = {
     hero: {
       title:
         'From <span class="text-primary">Muslims</span><br class="block sm:hidden" /> for <span class="text-primary">Muslims</span>',
-      subtitle: 'A marketplace: Halal, transparent and with Barakah – for you and your Ummah.',
+      subtitle: 'A platform: Halal, transparent and with Barakah – for you and your Ummah.',
       getStarted: 'Discover your Ummah',
       learnMore: 'Learn More',
     },
@@ -1029,7 +1029,7 @@ export const en = {
   waitlist: {
     title: 'Join the Flow',
     description:
-      'Help build the first marketplace for Muslims. Join the waitlist and secure early access.',
+      'Help build the first platform for Muslims. Join the waitlist and secure early access.',
     joinButton: 'Join Waitlist',
     joining: 'Joining...',
     emailPlaceholder: 'Enter your email',
