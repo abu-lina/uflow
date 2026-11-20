@@ -59,18 +59,16 @@ import { updateProviderReview } from '@/services/admin/providers';
 const mockReview = updateProviderReview as ReturnType<typeof vi.fn>;
 const validId = '123e4567-e89b-12d3-a456-426614174000';
 
-const approve = () =>
+const approve = (halal?: Record<string, boolean | null>) =>
   PATCH(
     new Request('http://localhost:3000/api/admin/review-provider', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ providerId: validId, reviewStatus: 'approved' }),
+      body: JSON.stringify({ providerId: validId, reviewStatus: 'approved', halal }),
     }),
   );
 
-const values = [true, false, null] as const;
-const grid = values.flatMap((a) => values.flatMap((b) => values.map((c) => [a, b, c] as const)));
-const fields = ['no_alcohol', 'no_pork', 'no_gambling'] as const;
+const allTrue = { no_alcohol: true, no_pork: true, no_gambling: true };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -85,34 +83,52 @@ beforeEach(() => {
   });
 });
 
-describe('PATCH /api/admin/review-provider — food grid (#987)', () => {
-  it.each(grid)('answers (%s, %s, %s) pass only when all true', async (a, b, c) => {
-    foodRow = { no_alcohol: a, no_pork: b, no_gambling: c };
-    const answers = [a, b, c];
+// The full 3x3x3 grid runs against the RPC in scripts/db/test-halal-gate.sql; the route
+// pre-check shares classifyAttestation, so one case per outcome is enough here.
+describe('PATCH /api/admin/review-provider — food pre-check (#987)', () => {
+  it('approves when all three stored answers are true', async () => {
+    foodRow = allTrue;
+    expect((await approve()).status).toBe(200);
+    expect(mockReview).toHaveBeenCalled();
+  });
 
+  it('with one stored false, I get 422 naming it in denied[]', async () => {
+    foodRow = { ...allTrue, no_pork: false };
     const res = await approve();
-
-    if (answers.every((v) => v === true)) {
-      expect(res.status).toBe(200);
-      expect(mockReview).toHaveBeenCalled();
-      return;
-    }
     expect(res.status).toBe(422);
-    const json = await res.json();
-    expect(json.denied).toEqual(fields.filter((_, i) => answers[i] === false));
-    expect(json.unanswered).toEqual(fields.filter((_, i) => answers[i] === null));
+    expect(await res.json()).toMatchObject({ denied: ['no_pork'], unanswered: [] });
+    expect(mockReview).not.toHaveBeenCalled();
+  });
+
+  it('with one stored null, I get 422 naming it in unanswered[]', async () => {
+    foodRow = { ...allTrue, no_gambling: null };
+    const res = await approve();
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({ denied: [], unanswered: ['no_gambling'] });
     expect(mockReview).not.toHaveBeenCalled();
   });
 
   it('with no food_providers row and no payload, I get 422 with all three unanswered', async () => {
-    foodRow = null;
-
     const res = await approve();
-
     expect(res.status).toBe(422);
-    const json = await res.json();
-    expect(json.denied).toEqual([]);
-    expect(json.unanswered).toEqual([...fields]);
+    expect(await res.json()).toMatchObject({
+      denied: [],
+      unanswered: ['no_alcohol', 'no_pork', 'no_gambling'],
+    });
     expect(mockReview).not.toHaveBeenCalled();
+  });
+
+  it('payload path: a submitted null overrides a stored true', async () => {
+    foodRow = allTrue;
+    const res = await approve({ noAlcohol: null });
+    expect(res.status).toBe(422);
+    expect(await res.json()).toMatchObject({ unanswered: ['no_alcohol'] });
+    expect(mockReview).not.toHaveBeenCalled();
+  });
+
+  it('payload path: all three submitted true approves with no stored row', async () => {
+    const res = await approve({ noAlcohol: true, noPork: true, noGambling: true });
+    expect(res.status).toBe(200);
+    expect(mockReview).toHaveBeenCalled();
   });
 });

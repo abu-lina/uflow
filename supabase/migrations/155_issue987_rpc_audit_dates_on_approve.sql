@@ -1,8 +1,9 @@
 -- #987: Redefine admin_review_provider (same signature, no new overload).
 -- Migration 151 set last_verified_at / next_audit_due only when a halal payload
 -- was sent, so approving an already-all-true food row with no payload left them
--- NULL. Stamp them after the gate passes, whatever the payload. Body is 151's
--- otherwise; the gate itself (food and store) is unchanged.
+-- NULL. Stamp them once, after the gate passes (step 2b), whatever the payload, so
+-- the payload upsert no longer sets them. Body is 151's otherwise; the gate itself
+-- (food and store) is unchanged.
 
 BEGIN;
 
@@ -80,12 +81,6 @@ BEGIN
         certificate_url = CASE WHEN p_halal ? 'certificate_url'
                             THEN NULLIF(p_halal->>'certificate_url', '')
                             ELSE food_providers.certificate_url END,
-        last_verified_at = CASE WHEN p_review_status = 'approved'
-                             THEN now()
-                             ELSE food_providers.last_verified_at END,
-        next_audit_due = CASE WHEN p_review_status = 'approved'
-                           THEN now() + interval '6 months'
-                           ELSE food_providers.next_audit_due END,
         updated_at = now();
     ELSE
       INSERT INTO public.store_providers (
