@@ -1126,11 +1126,10 @@ describe('Removed agent paths (#980)', { timeout: spawnTestTimeoutMs }, () => {
       cwd: repoRoot,
       encoding: 'utf8',
     });
-    // LEARNINGS.md is a dated incident log, archived history like docs/ai/learnings/.
     const archived = [
-      'docs/ai/LEARNINGS.md',
       'docs/ai/learnings/',
-      'agent-output/',
+      'agent-output/_archive/',
+      'agent-output/artifacts/branch-cleanup-2026-10-05/',
       'public/animations/',
     ];
     const hits = result.stdout

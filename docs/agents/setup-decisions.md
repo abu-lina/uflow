@@ -59,4 +59,6 @@ Historical pipeline output stays under `agent-output/_archive/`.
 
 ## Notes kept from the old AGENTS.md
 
+Context budget: sessions target 100k tokens by clearing at phase boundaries, not by compaction. Subagents are not capped; they're scoped by brief.
+
 `gh` quirks seen on 2.67.0: `gh issue view --comments` and `gh pr edit` fail on a deprecated GraphQL field. Use `gh issue view N --json title,body,labels,comments` and `gh api -X PATCH repos/{owner}/{repo}/pulls/N`.
