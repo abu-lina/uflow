@@ -514,7 +514,6 @@ export const CommunityServiceDetailModal: React.FC<CommunityServiceDetailModalPr
                             key={provider.provider_id}
                             className="flex w-full items-center gap-4 rounded-lg py-2 pl-0 pr-2 text-left transition-colors hover:bg-gray-50 active:bg-gray-100"
                             onClick={() => {
-                              onClose();
                               router.push(`/p/${provider.provider_id}`);
                             }}
                           >

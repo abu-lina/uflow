@@ -5,6 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 
 // Pathname this tab entered the app on (direct link, new tab, external referrer).
 // router.back() from there is a no-op or leaves uFlow, so we fall back instead.
+// shortcut: a hard reload, a query-only change, or re-entering the entry page in-app falls
+// back to /food, and it assumes in-app links push history; move to sessionStorage or
+// history.state if those cases matter.
 let entryPathname: string | null = null;
 
 /** Mount once in the root layout so useBackOrFallback knows where the tab entered. */
