@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
-import { StrictMode } from 'react';
+import { StrictMode, useState, type ReactNode } from 'react';
 import { renderHook, act, cleanup } from '@testing-library/react';
 import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
 
@@ -207,11 +207,31 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
   it('toggling the view under StrictMode replaces the URL exactly once (no router update during render)', () => {
     // A pending update on the component makes React run the view updater during
     // render; StrictMode double-invokes it, so a replace() inside it fires twice.
-    const params = new URLSearchParams();
-    const { result } = renderHook(
-      () => useMapDiscovery(geo, 'list', null, makeUrlSync(params, '/food')),
-      { wrapper: StrictMode },
+    // RouterStub stands in for Next's Router: replace() sets state on a parent
+    // component, so a call during render logs "Cannot update a component".
+    let setRouterUrl: (url: string) => void = () => {};
+    function RouterStub({ children }: { children: ReactNode }) {
+      const [, setUrl] = useState('/food');
+      setRouterUrl = setUrl;
+      return children;
+    }
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <StrictMode>
+        <RouterStub>{children}</RouterStub>
+      </StrictMode>
     );
+    const urlSync = {
+      searchParams: new URLSearchParams(),
+      pathname: '/food',
+      replace: (url: string, options?: { scroll?: boolean }) => {
+        mockReplace(url, options);
+        setRouterUrl(url);
+      },
+    };
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { result } = renderHook(() => useMapDiscovery(geo, 'list', null, urlSync), {
+      wrapper,
+    });
     expect(mockReplace).not.toHaveBeenCalled();
 
     act(() => {
@@ -219,6 +239,11 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
       result.current.toggleViewMode();
     });
 
+    const routerUpdateDuringRender = consoleError.mock.calls.some((args) =>
+      String(args[0]).includes('Cannot update a component'),
+    );
+    consoleError.mockRestore();
+    expect(routerUpdateDuringRender).toBe(false);
     expect(result.current.viewMode).toBe('map');
     expect(mockReplace).toHaveBeenCalledTimes(1);
     expect(mockReplace).toHaveBeenCalledWith('/food?view=map', { scroll: false });
