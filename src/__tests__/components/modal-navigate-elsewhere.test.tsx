@@ -38,7 +38,7 @@ describe('modal buttons that navigate elsewhere only push the target (#986)', ()
       />,
     );
 
-    fireEvent.click(screen.getByAltText('Zakat Foundation').closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: /Zakat Foundation/ }));
 
     expect(mockRouterPush).toHaveBeenCalledWith('/community-services/cs-001');
     expect(onClose).not.toHaveBeenCalled();
@@ -58,7 +58,7 @@ describe('modal buttons that navigate elsewhere only push the target (#986)', ()
     );
 
     fireEvent.click(await screen.findByText('Supporters'));
-    fireEvent.click((await screen.findByText('Big Burger House')).closest('button')!);
+    fireEvent.click(await screen.findByRole('button', { name: /Big Burger House/ }));
 
     expect(mockRouterPush).toHaveBeenCalledWith('/p/prov-42');
     expect(onClose).not.toHaveBeenCalled();
