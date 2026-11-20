@@ -6,7 +6,9 @@ import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 function isCrossOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');
   if (!origin) return false;
-  const host = request.headers.get('x-forwarded-host') ?? request.headers.get('host');
+  // x-forwarded-host can be a comma-separated chain; the first entry is the client-facing host.
+  const host =
+    request.headers.get('x-forwarded-host')?.split(',')[0].trim() ?? request.headers.get('host');
   try {
     return new URL(origin).host !== host;
   } catch {
@@ -38,7 +40,9 @@ export async function DELETE(request: Request) {
   try {
     const admin = getSupabaseAdmin();
 
-    // Best-effort audit row, as the old RPC wrote; user_id is set null once the auth user is gone.
+    // Best-effort audit row, as the old RPC wrote. Written before the delete, so a failed
+    // delete leaves a "requested" row. Migration 004 gives user_id an ON DELETE SET NULL FK;
+    // where it is absent (085's column comment says no FK) the pseudonymous UUID stays.
     const { error: logError } = await admin
       .from('deletion_logs')
       .insert({ user_id: user.id, reason: 'User requested account deletion' });
