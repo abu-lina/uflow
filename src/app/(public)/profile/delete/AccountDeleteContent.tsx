@@ -57,12 +57,8 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
     setShowConfirmation(false);
 
     try {
-      if (!effectiveUser?.id) {
-        throw new Error('User ID not found');
-      }
-
-      // Perform hard deletion from database
-      await accountService.deleteAccount(effectiveUser.id);
+      // Perform hard deletion on the server
+      await accountService.deleteAccount();
 
       // Sign out the user
       await authService.signOut();
