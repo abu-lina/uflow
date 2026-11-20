@@ -2,7 +2,7 @@
 # Lane helpers for the foreman + crew workflow (docs/agents/foreman.md).
 # Source from ~/.zshrc:  source ~/your-project/scripts/lane.sh
 #
-#   lane <issue> [slug] [claude|copilot|devin|opencode] [model|effort]
+#   lane <issue> [slug] [claude|copilot|opencode] [model|effort]
 #   lane_done <issue> [--force]           remove a merged lane
 #   lane_status                           one line per lane: branch + PR state + CI
 #
@@ -16,7 +16,6 @@ if [ -n "${ZSH_VERSION:-}" ]; then
   function lane { "$_lane_wrapper_bin" start "$@"; }
   function lane_done { "$_lane_wrapper_bin" 'done' "$@"; }
   function lane_status { "$_lane_wrapper_bin" status "$@"; }
-  function foreman { "$_lane_wrapper_bin" foreman "$@"; }
   return 0
 fi
 
@@ -116,7 +115,7 @@ _lane_type() {
 }
 
 # Default Claude model when none is specified. Heavier work gets a stronger model.
-# No-op for non-Claude agents (copilot/devin/opencode control their own models).
+# No-op for non-Claude agents (copilot/opencode control their own models).
 _lane_default_model() {
   local agent="$1" issue_type="$2"
   [[ "$agent" != "claude" ]] && return 0
@@ -131,6 +130,8 @@ _lane_default_model() {
 _lane_prompt() {
   local issue="$1"
   printf 'You are a lane. Read AGENTS.md, then docs/agents/lane.md, then work on GitHub issue #%s.
+
+LANE NOTES — maintain .lane-notes.md per docs/agents/lane.md (git-ignored, read by the foreman for status).
 
 AUTO-SKILLS — load these before writing any code, no exceptions:
 - mattpocock-skills:tdd — every feature lane, before the first test
@@ -147,85 +148,7 @@ FALLBACK — if no skill above clearly covers a step: /using-agent-skills, then 
 Start with step 0 of lane.md and stop at any "stop and ask" condition. Before stopping, comment on the issue so the foreman is notified.' "$issue"
 }
 
-_foreman_prompt() {
-  cat <<'PROMPT'
-You are the foreman. Read AGENTS.md, then docs/agents/foreman.md. Never write code. Propose lanes and wait for approval from the owner before starting them.
-
-Use the Herdr skill included below instead of discovering commands with --help. Watch running lanes with `herdr agent wait <lane> --until blocked --until done`, then report when a lane needs the owner.
-PROMPT
-  HERDR_ENV=1 herdr --skill
-}
-
-_agent_model_args() {
-  local agent="$1" choice="$2"
-  [[ -z "$choice" ]] && return 0
-  if [[ "$agent" == copilot ]]; then
-    case "$choice" in
-      none | minimal | low | medium | high | xhigh | max)
-        agent_args+=(--reasoning-effort "$choice")
-        ;;
-      *) agent_args+=(--model "$choice") ;;
-    esac
-  elif [[ "$agent" == claude ]]; then
-    # --reasoning-effort is not supported in Claude Code 2.1.x; skip effort levels silently
-    case "$choice" in
-      none | minimal | low | medium | high | xhigh | max) ;;
-      *) agent_args+=(--model "$choice") ;;
-    esac
-  else
-    agent_args+=(--model "$choice")
-  fi
-}
-
-_herdr_root_pane() {
-  local pane
-  pane="$(printf '%s\n' "$1" | jq -r '.result.root_pane.pane_id // empty')" || return 1
-  [[ -n "$pane" ]] || return 1
-  printf '%s\n' "$pane"
-}
-
-foreman() {
-  local agent="${1:-devin}" model="${2:-}" root get_output tab_response pane start_output prompt config_dir
-  local -a agent_args
-  agent_args=()
-  [[ "$agent" == copilot || "$agent" == devin || "$agent" == claude ]] || { echo "agent must be copilot, devin, or claude" >&2; return 1; }
-  [[ "$agent" == devin && -z "$model" ]] && model="claude-opus-5-5-high"
-
-  root="$(_lane_root)" || { echo "not inside a git repo" >&2; return 1; }
-  [[ "$root" == */.worktrees/* ]] && { echo "run foreman from the main checkout, not a worktree" >&2; return 1; }
-
-  # Herdr can list a name for a dead agent, so ask for the agent itself: agent_not_found means no live foreman.
-  if get_output="$(herdr agent get foreman 2>&1)"; then
-    herdr agent focus foreman
-    return $?
-  fi
-  [[ "$(printf '%s\n' "$get_output" | jq -r '.error.code // empty' 2>/dev/null)" == agent_not_found ]] ||
-    { printf 'could not check for a running foreman: %s\n' "$get_output" >&2; return 1; }
-  [[ -n "${HERDR_WORKSPACE_ID:-}" ]] || { echo "HERDR_WORKSPACE_ID is not set; run foreman inside Herdr" >&2; return 1; }
-
-  _agent_model_args "$agent" "$model" || return 1
-  if [[ "$agent" == devin ]]; then
-    # Normal mode plus foreman.json rules: read-only commands run without prompts, writes are denied.
-    config_dir="$(mktemp -d "${TMPDIR:-/tmp}/foreman-config.XXXXXX")" || return 1
-    (umask 077 && cp "$root/.devin/foreman.json" "$config_dir/foreman.json" && chmod 600 "$config_dir/foreman.json") ||
-      { echo "could not copy $root/.devin/foreman.json" >&2; return 1; }
-    agent_args+=(--config "$config_dir/foreman.json")
-  fi
-  prompt="$(_foreman_prompt)" || { echo "could not load the Herdr skill" >&2; return 1; }
-
-  # The caller's pane is busy running this function, so the agent gets a fresh tab's root pane.
-  tab_response="$(herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd "$root" --label foreman --focus 2>&1)" ||
-    { printf 'could not create the foreman tab: %s\n' "$tab_response" >&2; return 1; }
-  pane="$(_herdr_root_pane "$tab_response")" ||
-    { echo "Herdr did not return a root pane for the foreman tab" >&2; return 1; }
-
-  start_output="$(herdr agent start foreman --kind "$agent" --pane "$pane" -- "${agent_args[@]}" 2>&1)" ||
-    { printf 'could not start the foreman in pane %s: %s\n' "$pane" "$start_output" >&2; return 1; }
-  herdr agent prompt foreman "$prompt"
-}
-
 # Build the agent CLI command string for use inside a rex pane.
-# Side effect for devin: writes a temp sandbox config.
 _lane_agent_cmd() {
   local agent="$1" model="${2:-}" dir="$3"
   local model_flag=""
@@ -272,35 +195,6 @@ _lane_agent_cmd() {
       local quoted_flags
       quoted_flags="$(printf '%q ' "${flags[@]}")"
       printf 'cd %q && copilot %s' "$dir" "$quoted_flags"
-      ;;
-    devin)
-      local root git_common_dir config_dir config_file
-      root="$(git rev-parse --show-toplevel)" || return 1
-      git_common_dir="$(git -C "$root" rev-parse --path-format=absolute --git-common-dir)" ||
-        { echo "could not resolve the repository's git common directory" >&2; return 1; }
-      config_dir="$(mktemp -d "${TMPDIR:-/tmp}/lane-config.XXXXXX")" || return 1
-      config_file="$config_dir/lane.json"
-      (umask 077 && jq -n --arg git_common_dir "$git_common_dir" '{
-        "permissions": {
-          "allow": ["Write(\($git_common_dir))"]
-        },
-        "sandbox": {
-          "excluded": {
-            "allow": [
-              "Exec(gh issue comment)",
-              "Exec(gh pr create --draft)",
-              "Exec(gh pr checks)",
-              "Exec(gh pr view)"
-            ]
-          }
-        }
-      }' > "$config_file") ||
-        { echo "could not write Devin lane sandbox config" >&2; return 1; }
-      local -a flags=(--permission-mode accept-edits --sandbox --config "$config_file")
-      [[ -n "$model" ]] && flags+=(--model "$model")
-      local quoted_flags
-      quoted_flags="$(printf '%q ' "${flags[@]}")"
-      printf 'cd %q && devin %s' "$dir" "$quoted_flags"
       ;;
     opencode)
       # shortcut: opencode CLI flags TBD; update once opencode CLI stabilises
@@ -382,9 +276,9 @@ _lane_rex_open() {
 
 lane() {
   local issue="${1:-}" slug="${2:-}" agent="${3:-claude}" model="${4:-}"
-  [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [claude|copilot|devin|opencode] [model|effort]" >&2; return 1; }
-  [[ "$agent" == claude || "$agent" == copilot || "$agent" == devin || "$agent" == opencode ]] ||
-    { echo "agent must be claude, copilot, devin, or opencode" >&2; return 1; }
+  [[ -z "$issue" ]] && { echo "usage: lane <issue> [slug] [claude|copilot|opencode] [model|effort]" >&2; return 1; }
+  [[ "$agent" == claude || "$agent" == copilot || "$agent" == opencode ]] ||
+    { echo "agent must be claude, copilot, or opencode" >&2; return 1; }
 
   [[ -n "${REX_SESSION:-}" ]] || { printf 'REX_SESSION is not set; run lane from a Rex terminal\n' >&2; return 1; }
   [[ -n "${REX_BLOCK:-}" ]] || { printf 'REX_BLOCK is not set; run lane from a Rex terminal\n' >&2; return 1; }
@@ -414,6 +308,11 @@ lane() {
       fi
       # Clear stale signal state from the previous session.
       rm -f "$dir/.lane-signal" "$dir/.lane-signal-sent"
+      # Update Rex coordinates so the Stop hook targets the current session.
+      sed -i '' '/^REX_SESSION_ID=/d;/^FOREMAN_BLOCK=/d' "$dir/.env.lane"
+      printf 'REX_SESSION_ID=%s\nFOREMAN_BLOCK=%s\n' "$REX_SESSION" "$REX_BLOCK" >> "$dir/.env.lane"
+      # Sync Claude Code hooks from main checkout so the worktree runs the latest version.
+      [[ -d "$root/scripts/hooks" ]] && cp -f "$root"/scripts/hooks/*.sh "$dir/scripts/hooks/" 2>/dev/null
     fi
     printf 'lane #%s: %s on %s\n' "$issue" "$dir" "$branch"
     _lane_rex_open "$agent" "$model" "$dir" "$dir/.env.lane" "$issue"
@@ -426,7 +325,7 @@ lane() {
   [[ -z "$model" ]] && model="$(_lane_default_model "$agent" "$issue_type")"
   branch="$issue_type/$issue-$slug"
   dir="$root/.worktrees/$issue-$slug"
-  _lane_base > /dev/null || return 1
+  _lane_base >/dev/null || return 1
   _lane_check_main || return 1
   if ! git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
     gh issue develop "$issue" --name "$branch" --base main || return 1

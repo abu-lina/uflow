@@ -18,11 +18,9 @@ The foreman handles every mechanical step — from idea detection through auto-m
 ## Prerequisites
 
 1. Check that `$REX_SESSION` is set:
-
    ```bash
    echo "$REX_SESSION"
    ```
-
    If empty: set it now (`REX_SESSION=<your-session-name>`) or fall back to serial mode — open lane panes by hand, one at a time, and tell the PO that parallel monitoring is unavailable until Rex is configured.
 
 2. Confirm `scripts/lane.sh` is sourced in your shell (`~/.zshrc` or equivalent). Without it, `scripts/lane start` will not resolve.
@@ -71,7 +69,6 @@ The foreman handles every mechanical step — from idea detection through auto-m
 2. **Conditional** (complex issues: schema changes, new subsystems, multi-domain, P0/P1): run `superpowers:writing-plans` to produce a step-by-step implementation plan before the lane starts.
 
 > **HARD GATE — UI lanes must have a design brief before the lane starts:** If the lane touches any user-facing UI (admin tool, public page, component), invoke `ui-taste` and read both `reference/operate.md` and `reference/polish.md` BEFORE writing the Lane Brief. The brief must specify all of the following — if any are missing, the brief is incomplete:
->
 > - Mobile layout
 > - Desktop layout (or explicit note: "mobile-only, hidden on desktop")
 > - Loading state
@@ -79,8 +76,7 @@ The foreman handles every mechanical step — from idea detection through auto-m
 > - Error state with retry
 > - Interactive states for all controls (selected, disabled, busy)
 >
-> _Incident 2026-11-08 (#874):_ UI lane brief omitted desktop layout and all states. Required 6+ reactive fix cycles after PO saw the page. All issues were predictable from a 10-minute upfront pass.
-
+> *Incident 2026-11-08 (#874):* UI lane brief omitted desktop layout and all states. Required 6+ reactive fix cycles after PO saw the page. All issues were predictable from a 10-minute upfront pass.
 3. Pick agent and tier, then propose to the PO:
    - **Strong** (`claude` or `copilot`): 6+ ACs, security/data-sensitive, cross-cutting refactor, expected diff > 200 non-test lines. Default to `claude`.
    - **Cheap** (`opencode`): everything else — config, scripts, docs, 5 or fewer ACs.
@@ -99,7 +95,7 @@ The foreman handles every mechanical step — from idea detection through auto-m
 >
 > The foreman never reads `src/`, `app/`, or component files. Permitted reads: `AGENTS.md`, `docs/agents/`, issue bodies, and `scripts/`.
 >
-> _Incident 2026-11-10 (#877):_ Foreman announced "Starting lane" then spent its entire context reading source files, cleaning stale git state, and searching for removed commands. Never ran the script.
+> *Incident 2026-11-10 (#877):* Foreman announced "Starting lane" then spent its entire context reading source files, cleaning stale git state, and searching for removed commands. Never ran the script.
 
 ## Stage 3 — Active implementation
 
@@ -118,13 +114,12 @@ The lane runs independently:
 **Foreman during implementation:** watch all active panes via Rex for block signals. Never interrupt a lane that is running cleanly.
 
 > **HARD GATE — foreman never edits worktree files:** When a lane is silent, slow, or stuck, the foreman's ONLY permitted responses are:
->
 > 1. `SendMessage` to probe the lane.
 > 2. Escalate to the PO if the lane is unresponsive.
 >
 > The foreman MUST NOT edit, create, or delete any file inside `.worktrees/<issue>-<slug>/`, regardless of how small the fix appears. This includes quick bug fixes, seed data, design system corrections, and config changes. All such work goes to the lane via `SendMessage`. Doing it directly creates ghost commits not owned by the lane, violates the lane/foreman split, and sets a precedent that breaks the entire workflow.
 >
-> _Incident 2026-11-08 (#874):_ foreman directly fixed a PostgREST bug, rewrote a component for design system alignment, and seeded test data — all should have gone to the lane via `SendMessage`.
+> *Incident 2026-11-08 (#874):* foreman directly fixed a PostgREST bug, rewrote a component for design system alignment, and seeded test data — all should have gone to the lane via `SendMessage`.
 
 ## Stage 4 — Checkpoint
 
@@ -132,7 +127,7 @@ The lane runs independently:
 
 1. Foreman opens a Rex pane with the dev server in the lane's worktree:
    ```bash
-   rex split -s "$REX_SESSION" -b "$REX_BLOCK" --split=bottom -- bash -c "cd .worktrees/<issue>-<slug> && npm run dev"
+   rex split -s "$REX_SESSION" -b "$REX_BLOCK" --split=below -- bash -c "cd .worktrees/<issue>-<slug> && npm run dev"
    ```
 2. Foreman sends the PO a text summary: what was built + what to verify on localhost.
 3. PO verifies on localhost.
@@ -145,21 +140,18 @@ The lane runs independently:
 **Hook gate:** A `UserPromptSubmit` hook nudges the foreman to dispatch all reviewers before opening the PR. This is the second hook-enforced gate.
 
 **Universal reviewers (every PR):**
-
 - `pm-ai-shipping:intended-vs-implemented` — did the lane build what the issue asked?
 - `mattpocock-skills:code-review` — technical quality
 - `security-audit` + `pm-ai-shipping:security-audit-static` — security
 - `ponytail:ponytail-review` — minimalism
 
 **Additional for Frontend/UI lanes:**
-
 - `ui-taste` — aesthetic and UX quality
 - `impeccable:impeccable-finish-reviewer` — correctness and completeness
 
-Dispatch all reviewers in parallel as subagents (Agent tool, fresh context, scoped to the diff). Wait for all results. Fix Critical and Important issues before proceeding.
+Dispatch all reviewers in parallel as subagents (Agent tool, fresh context, scoped to the diff). Each reviewer writes its findings to `.review-results/<reviewer-name>.md` in the lane's worktree. Wait for all results. Fix Critical and Important issues before proceeding.
 
 If code review forces a fix:
-
 1. Lane implements the fix.
 2. Foreman writes a TRAP memory file to `~/.claude/projects/.../memory/`.
 3. Lane updates `docs/ai/learnings/<issue>.md`.
@@ -169,7 +161,6 @@ If code review forces a fix:
 1. Open PR (draft if still fixing, ready when clean):
    ```bash
    gh pr create --title "..." --body "Closes #<issue>
-   ```
 
 <summary>" --draft
    ```
@@ -181,12 +172,10 @@ If code review forces a fix:
    Auto-merge requires branch protection with at least one required status check. If the repo has no required checks configured, GitHub will reject the call even if "Allow auto-merge" is enabled in repo settings; the fallback prints a warning and continues. GitHub merges when all required status checks pass. No agent stays alive to watch.
 
 3. **On merge event:** foreman auto-rebases all other active lanes:
-
    ```bash
    git -C .worktrees/<other-issue>-<slug> fetch origin main
    git -C .worktrees/<other-issue>-<slug> rebase origin/main
    ```
-
    If a rebased lane is at Checkpoint: warn PO to re-verify (see Stage 4 edge case).
 
 4. **Merge order:** first-green-merges-first (GitHub races). For truly independent lanes, order does not matter. Rebase-and-retry handles rare file collisions.
@@ -194,12 +183,10 @@ If code review forces a fix:
 ## Stage 7 — Learning capture
 
 **Lane writes:**
-
 - `docs/ai/learnings/<issue>.md` — title + one-sentence learning + PR number (per AGENTS.md)
 - `.learnings/LEARNINGS.md` + `ERRORS.md` — automated by `self-improving-agent`
 
 **Foreman writes (only if code review forced a fix):**
-
 - TRAP memory file at `~/.claude/projects/<project>/memory/trap_<slug>.md`
 - Format: rule + **Why:** + **How to apply:**
 
@@ -208,7 +195,6 @@ Include the learning sentence in the PR body and final issue comment.
 ## Parallel lanes
 
 **Rules:**
-
 - Maximum 3 active lanes at once.
 - No two active lanes may share an `area:*` label. If lanes A and B both have `area:auth`, one must wait.
 - Merge order is first-green-merges-first. GitHub races determine order for independent lanes.
@@ -225,7 +211,6 @@ Include the learning sentence in the PR body and final issue comment.
 A lane is blocked when it fires a block signal without reaching Handoff.
 
 **Block signal causes:**
-
 - Schema change needed (not in the original AC)
 - Missing or ambiguous AC
 - Test requires touching files outside the lane's diff
