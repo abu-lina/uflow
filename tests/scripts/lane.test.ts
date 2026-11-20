@@ -1558,3 +1558,44 @@ describe('lane and foreman agent options', { timeout: spawnTestTimeoutMs }, () =
     expect(prompt).toMatch(/wait for approval/);
   });
 });
+
+describe('Devin paths removed (#980)', { timeout: spawnTestTimeoutMs }, () => {
+  // Built at runtime so this file does not count as a hit itself.
+  const removedAgent = ['dev', 'in'].join('');
+  const repoRoot = new URL('../..', import.meta.url).pathname;
+
+  it(`git grep -il ${removedAgent} only hits archived history`, () => {
+    const result = spawnSync('git', ['grep', '-il', removedAgent], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+    });
+    const archived = ['docs/ai/learnings/', 'agent-output/', 'public/animations/'];
+    const hits = result.stdout
+      .split('\n')
+      .filter(Boolean)
+      .filter((file) => !archived.some((dir) => file.startsWith(dir)));
+    expect(hits).toEqual([]);
+  });
+
+  it('scripts/lane foreman no longer exists', () => {
+    const result = spawnSync('zsh', ['-f', '-c', `${shellQuote(laneEntrypoint)} foreman`], {
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain('usage:');
+    expect(result.stderr).not.toContain('foreman');
+  });
+
+  it(`scripts/lane start rejects ${removedAgent} as a lane agent`, () => {
+    const result = spawnSync('bash', [laneEntrypoint, 'start', '980', 'x', removedAgent], {
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('agent must be claude, copilot, or opencode');
+  });
+
+  it('git-ignores .lane-notes.md so lane done does not see it as uncommitted', () => {
+    const result = spawnSync('git', ['check-ignore', '-q', '.lane-notes.md'], { cwd: repoRoot });
+    expect(result.status).toBe(0);
+  });
+});
