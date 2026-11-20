@@ -94,6 +94,7 @@ export async function getMapLocations(
   if (minTier === 'gold') {
     query = query
       .eq('providers.food_providers.has_certificate', true)
+      // filter(), not not(): the typed not() recurses too deep on a nested path
       .filter('providers.food_providers.certificate_url', 'not.is', null);
   } else if (minTier === 'silver') {
     query = query.or(
