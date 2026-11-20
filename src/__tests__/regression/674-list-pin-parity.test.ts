@@ -70,7 +70,7 @@ function valueAt(row: Row, path: string): unknown {
   return path.split('.').reduce<unknown>((value, key) => (value as Row | undefined)?.[key], row);
 }
 
-/** Minimal PostgREST builder over the fixture: applies eq / not-is-null / in. */
+/** Minimal PostgREST builder over the fixture: applies eq / not-is-null / in (filter only as not.is). */
 function fakeClient(): SupabaseClient {
   const tables: Record<string, Row[]> = { providers: PROVIDERS, locations: LOCATIONS };
   const from = (table: string) => {
@@ -87,10 +87,13 @@ function fakeClient(): SupabaseClient {
     builder.returns = chain();
     builder.eq = (col: string, value: unknown) =>
       chain(() => (rows = rows.filter((r) => valueAt(r, col) === value)))();
-    builder.not = (col: string, op: string, value: unknown) =>
+    const notIsNull = (col: string, op: string, value: unknown) =>
       chain(() => {
         if (op === 'is' && value === null) rows = rows.filter((r) => valueAt(r, col) != null);
       })();
+    builder.not = notIsNull;
+    builder.filter = (col: string, op: string, value: unknown) =>
+      notIsNull(col, op.replace(/^not\./, ''), value);
     builder.in = (col: string, values: unknown[]) =>
       chain(() => (rows = rows.filter((r) => values.includes(valueAt(r, col)))))();
     builder.then = (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>

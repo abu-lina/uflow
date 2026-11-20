@@ -12,6 +12,8 @@ const mockEq = vi.fn();
 const mockOrder = vi.fn();
 const mockLimit = vi.fn();
 const mockOr = vi.fn();
+const mockFilter = vi.fn();
+const mockReturns = vi.fn();
 
 // The query builder is awaited directly, so the chain must be thenable.
 type QueryResult = { data: unknown[] | null; error: { message: string } | null };
@@ -24,6 +26,8 @@ const chain: Record<string, any> = {
   order: mockOrder,
   limit: mockLimit,
   or: mockOr,
+  filter: mockFilter,
+  returns: mockReturns,
 };
 
 function setResult(result: QueryResult) {
@@ -43,7 +47,16 @@ vi.mock('@/lib/supabase/client', () => ({
 describe('getMapLocations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    for (const m of [mockSelect, mockNot, mockEq, mockOrder, mockLimit, mockOr]) {
+    for (const m of [
+      mockSelect,
+      mockNot,
+      mockEq,
+      mockOrder,
+      mockLimit,
+      mockOr,
+      mockFilter,
+      mockReturns,
+    ]) {
       m.mockReturnValue(chain);
     }
     setResult({ data: [], error: null });

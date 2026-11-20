@@ -71,11 +71,12 @@ export async function getMapLocations(
     ? ', food_providers!inner(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
     : '';
 
+  // Typed as string: the select-type parser cannot read an interpolated embed.
+  const select: string = `provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories!providers_category_id_fkey(name_de, name_en, category_images)${tierEmbed})`;
+
   let query = supabase
     .from('locations')
-    .select(
-      `provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories!providers_category_id_fkey(name_de, name_en, category_images)${tierEmbed})`,
-    )
+    .select(select)
     .not('location_latitude', 'is', null)
     .not('location_longitude', 'is', null)
     .eq('providers.listing_type', section)
@@ -93,7 +94,7 @@ export async function getMapLocations(
   if (minTier === 'gold') {
     query = query
       .eq('providers.food_providers.has_certificate', true)
-      .not('providers.food_providers.certificate_url', 'is', null);
+      .filter('providers.food_providers.certificate_url', 'not.is', null);
   } else if (minTier === 'silver') {
     query = query.or(
       'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.eq.onsite,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
@@ -108,11 +109,12 @@ export async function getMapLocations(
 
   const { data, error } = await query
     .order('provider_id', { ascending: true })
-    .limit(MAP_LOCATIONS_LIMIT);
+    .limit(MAP_LOCATIONS_LIMIT)
+    .returns<RawLocationRow[]>();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return Array.isArray(data) ? (data as RawLocationRow[]) : [];
+  return Array.isArray(data) ? data : [];
 }
