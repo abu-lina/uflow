@@ -399,6 +399,7 @@ export const ar = {
     locationsCount: '{{count}} مواقع',
     halalLevel: 'مستوى الحلال {{level}}',
     online: 'عبر الإنترنت',
+    deliveryOnly: 'توصيل فقط',
     donations: 'التبرعات',
     initiativesSupported: 'المبادرات المدعومة',
     ourBarakahEffect: 'تأثير البركة لدينا',

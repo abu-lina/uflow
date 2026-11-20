@@ -13,6 +13,7 @@ import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
 import type { HalalTier } from '@/features/search/discoveryQuery';
+import { applyBrandCap } from './default-order';
 
 async function loadProviderRelationIds(
   providerIds: string[],
@@ -60,6 +61,46 @@ function sortByCreationDate(results: SearchResult[]): SearchResult[] {
     const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
     return dateB - dateA;
   });
+}
+
+type RankedProvider = { provider_id: string; provider_name: string };
+
+/** PostgREST max_rows (supabase/config.toml); every request returns at most this many rows. */
+const POSTGREST_MAX_ROWS = 1000;
+
+/**
+ * Reads a query in full by walking ranges of POSTGREST_MAX_ROWS.
+ * shortcut: one request per 1000 rows, upgrade to a single paged RPC if a section grows past a few thousand providers.
+ */
+async function fetchAllPages<T>(
+  run: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let from = 0; ; from += POSTGREST_MAX_ROWS) {
+    const { data, error } = await run(from, from + POSTGREST_MAX_ROWS - 1);
+    // With count: 'exact', a range starting at the total (an exact multiple of the
+    // page) is a 416; PGRST103 there just means there is nothing left to read.
+    if ((error as { code?: string } | null)?.code === 'PGRST103' && from > 0) return rows;
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < POSTGREST_MAX_ROWS) return rows;
+  }
+}
+
+/** Providers of a section in default order (migration 154): population desc, city, name, id. */
+function fetchDefaultOrderRanking(
+  supabase: SupabaseClient,
+  section: string | undefined,
+  status: string | undefined,
+): Promise<RankedProvider[]> {
+  return fetchAllPages<RankedProvider>((from, to) =>
+    supabase
+      .rpc('get_default_order_providers', {
+        section_filter: section ?? null,
+        review_status_filter: status ?? 'approved',
+      })
+      .range(from, to),
+  );
 }
 
 /**
@@ -254,7 +295,8 @@ async function searchProvidersOnly(
 
   const hasMore = rawProviders.length > pageSize;
   const results = rawProviders.slice(0, pageSize).map(transformProviderToSearchResult);
-  const sortedResults = sortByCreationDate(results);
+  // No city: the database already returned the page in default order (#953).
+  const sortedResults = isValidLocation(location) ? sortByCreationDate(results) : results;
 
   return { results: sortedResults, hasMore, totalCount };
 }
@@ -305,14 +347,34 @@ export async function searchProviders(
   const tierEmbed = minHalalTier
     ? ', food_providers!inner(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
     : '';
-  const selectFields = hasCategoryFilter
-    ? `${baseSelectFields}${tierEmbed}, provider_categories!inner(category_id)`
-    : `${baseSelectFields}${tierEmbed}`;
-
+  const categoryEmbed = hasCategoryFilter ? ', provider_categories!inner(category_id)' : '';
   // Plan 058: admin queries must use the service-role client to bypass RLS.
   // The caller (API route) passes the admin client directly via the `client` parameter
   // after verifying isAdminOrModerator().
   const supabase = getSupabaseClient(client);
+
+  // #953: the default list (no city, no search text, paged) takes its order from
+  // an RPC. The owner's decision covers only that list; search text and a chosen
+  // city keep created_at order. If the RPC is missing (deploy before migration
+  // 154) fall back to created_at and log instead of blanking the list.
+  let ranking: RankedProvider[] | null = null;
+  if (!isValidLocation(location) && !query && limit !== undefined) {
+    try {
+      ranking = await fetchDefaultOrderRanking(supabase, listingType, adminOptions?.status);
+    } catch (rankError) {
+      console.error(
+        '[searchProviders] get_default_order_providers failed, using created_at',
+        rankError,
+      );
+    }
+  }
+  const ranked = ranking !== null;
+  // Filters the ranking RPC does not know about need an id-only query (phase A);
+  // without them the ranking alone decides the page.
+  const needsIdQuery = ranked && (hasCategoryFilter || !!barakahFilters?.length || !!minHalalTier);
+  const selectFields = needsIdQuery
+    ? `provider_id${tierEmbed}${categoryEmbed}`
+    : `${baseSelectFields}${tierEmbed}${categoryEmbed}`;
 
   // Plan 229: Use count: 'exact' to get the total matching count alongside data.
   let req = supabase.from('providers').select(selectFields, { count: 'exact' });
@@ -363,16 +425,19 @@ export async function searchProviders(
     }
   }
 
-  // Apply pagination if provided
-  if (limit !== undefined) {
-    req = req.limit(limit);
+  if (ranked) {
+    // The ranked path pages in memory below; the id-only query is read in full.
+    req = req.order('provider_id', { ascending: true });
+  } else {
+    if (limit !== undefined) {
+      req = req.limit(limit);
+    }
+    if (offset !== undefined) {
+      req = req.range(offset, offset + (limit || 1000) - 1);
+    }
+    // With a city filter or search text, keep created_at DESC (existing behaviour).
+    req = req.order('created_at', { ascending: false });
   }
-  if (offset !== undefined) {
-    req = req.range(offset, offset + (limit || 1000) - 1);
-  }
-
-  // Always order by created_at descending for consistent pagination
-  req = req.order('created_at', { ascending: false });
 
   const matchedMenuItemsByProvider = new Map<string, string[]>();
   if (query) {
@@ -410,11 +475,42 @@ export async function searchProviders(
     req = req.eq('address_city', location);
   }
 
-  const { data, error, count } = await req.returns<Provider[]>();
-  if (error) throw error;
+  let totalCount = 0;
+  let data: Provider[] | null = null;
 
-  // Plan 229: Extract totalCount from Supabase count header
-  const totalCount = count ?? 0;
+  if (ranking) {
+    // Phase A (only with filters the RPC lacks): ids matching every filter.
+    const matching = needsIdQuery
+      ? new Set(
+          (
+            await fetchAllPages<Provider>((from, to) => req.range(from, to).returns<Provider[]>())
+          ).map((row) => row.provider_id),
+        )
+      : null;
+    const ordered = applyBrandCap(
+      matching ? ranking.filter((row) => matching.has(row.provider_id)) : ranking,
+    );
+    totalCount = ordered.length;
+    const start = offset ?? 0;
+    const pageIds = ordered.slice(start, start + (limit ?? 0)).map((row) => row.provider_id);
+    if (pageIds.length === 0) return { providers: [], totalCount };
+
+    // Phase B: load the page's rows, then restore the ranked order.
+    const { data: pageRows, error: pageError } = await supabase
+      .from('providers')
+      .select(`${baseSelectFields}${tierEmbed}`)
+      .in('provider_id', pageIds)
+      .returns<Provider[]>();
+    if (pageError) throw pageError;
+    const byId = new Map((pageRows ?? []).map((row) => [row.provider_id, row]));
+    data = pageIds.flatMap((id) => byId.get(id) ?? []);
+  } else {
+    const { data: fetched, error, count } = await req.returns<Provider[]>();
+    if (error) throw error;
+    // Plan 229: Extract totalCount from Supabase count header
+    totalCount = count ?? 0;
+    data = fetched;
+  }
 
   if (!Array.isArray(data) || data.length === 0) {
     return { providers: [], totalCount };

@@ -401,6 +401,7 @@ export const en = {
     locationsCount: '{{count}} locations',
     halalLevel: 'Halal level {{level}}',
     online: 'Online',
+    deliveryOnly: 'Delivery only',
     donations: 'Donations',
     initiativesSupported: 'Initiatives supported',
     ourBarakahEffect: 'Our Barakah Effect',

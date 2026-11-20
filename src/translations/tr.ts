@@ -400,6 +400,7 @@ export const tr = {
     locationsCount: '{{count}} konum',
     halalLevel: 'Helal seviyesi {{level}}',
     online: 'Çevrimiçi',
+    deliveryOnly: 'Yalnızca teslimat',
     donations: 'Bağışlar',
     initiativesSupported: 'Desteklenen girişimler',
     ourBarakahEffect: 'Bereket Etkimiz',

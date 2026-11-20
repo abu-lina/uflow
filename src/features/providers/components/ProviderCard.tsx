@@ -155,6 +155,12 @@ export const ProviderCard = React.memo(
           ? locations.find((l: Location) => l.is_primary) || locations[0]
           : null;
 
+      // Import text marks delivery-only kitchens; the owner chose this match (#953).
+      const isVirtualVenue = [address_street, primaryLocation?.address_street].some((street) =>
+        street?.toLowerCase().includes('virtual venue'),
+      );
+      const virtualVenueCity = primaryLocation?.address_city ?? address_city;
+
       let address = '';
       if (primaryLocation) {
         const {
@@ -494,30 +500,52 @@ export const ProviderCard = React.memo(
                       )}
                     </div>
                   )}
-                  <button
-                    className="w-full min-w-0 truncate text-left font-inter text-xs font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline sm:text-sm"
-                    disabled={
-                      !isAddressNavigable(
-                        primaryLocation?.address_street ?? address_street ?? undefined,
-                        primaryLocation?.address_zip ?? address_zip ?? undefined,
-                        primaryLocation?.address_city ?? address_city ?? undefined,
-                      )
-                    }
-                    title={address ? `${address} - ${t('providers.addressTapToNavigate')}` : ''}
-                    onClick={() => {
-                      if (
-                        isAddressNavigable(
+                  {isVirtualVenue ? (
+                    <div
+                      className="flex w-full min-w-0 items-center gap-2"
+                      data-testid="delivery-only"
+                    >
+                      <span className="inline-flex h-6 max-w-[60%] shrink-0 items-center gap-1 rounded-[7.2px] border border-border bg-background/70 px-2 font-inter-tight text-xs font-medium text-content sm:text-sm">
+                        <Icon aria-hidden="true" className="h-4 w-4" icon="mdi:moped-outline" />
+                        <span className="min-w-0 truncate" title={t('providers.deliveryOnly')}>
+                          {t('providers.deliveryOnly')}
+                        </span>
+                      </span>
+                      {virtualVenueCity && (
+                        <span
+                          className="min-w-0 truncate font-inter text-xs font-normal text-uFlowText2 sm:text-sm"
+                          title={virtualVenueCity}
+                        >
+                          {virtualVenueCity}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      className="w-full min-w-0 truncate text-start font-inter text-xs font-normal text-uFlowText2 hover:text-blue-600 hover:underline disabled:cursor-default disabled:hover:text-uFlowText2 disabled:hover:no-underline sm:text-sm"
+                      disabled={
+                        !isAddressNavigable(
                           primaryLocation?.address_street ?? address_street ?? undefined,
                           primaryLocation?.address_zip ?? address_zip ?? undefined,
                           primaryLocation?.address_city ?? address_city ?? undefined,
                         )
-                      ) {
-                        openNavigation(address);
                       }
-                    }}
-                  >
-                    {address}
-                  </button>
+                      title={address ? `${address} - ${t('providers.addressTapToNavigate')}` : ''}
+                      onClick={() => {
+                        if (
+                          isAddressNavigable(
+                            primaryLocation?.address_street ?? address_street ?? undefined,
+                            primaryLocation?.address_zip ?? address_zip ?? undefined,
+                            primaryLocation?.address_city ?? address_city ?? undefined,
+                          )
+                        ) {
+                          openNavigation(address);
+                        }
+                      }}
+                    >
+                      {address}
+                    </button>
+                  )}
                   {locations && locations.length > 1 && (
                     <div className="mt-1 inline-flex h-6 max-w-full items-center justify-center overflow-hidden rounded-[7.2px] border border-border bg-background/70 px-2 backdrop-blur-[1.50px]">
                       <span className="truncate whitespace-nowrap font-inter-tight text-sm font-medium text-content">

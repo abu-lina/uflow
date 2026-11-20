@@ -207,7 +207,7 @@ describe('providers service', () => {
         status: 'all',
         isAdmin: true,
       };
-      await searchProviders('Munchies', '', '', 12, 0, adminOptions, 'food');
+      await searchProviders('Munchies', '', 'Berlin', 12, 0, adminOptions, 'food');
 
       expect(mockRpc).toHaveBeenCalledWith(
         'search_providers_for_query',
@@ -223,7 +223,7 @@ describe('providers service', () => {
     });
 
     it('[post-fix PASSES] selects category_images for overview fallback stock image rendering', async () => {
-      await searchProviders('', '', '', 12, 0);
+      await searchProviders('', '', 'Berlin', 12, 0);
 
       expect(mockSelect).toHaveBeenCalledWith(
         expect.stringContaining(
@@ -237,7 +237,7 @@ describe('providers service', () => {
       const CATEGORY_ID = '11111111-2222-3333-4444-555555555555';
 
       it('embeds provider_categories!inner and filters on the junction column (case 43)', async () => {
-        await searchProviders('', CATEGORY_ID, '', 12, 0);
+        await searchProviders('', CATEGORY_ID, 'Berlin', 12, 0);
 
         expect(mockSelect).toHaveBeenCalledWith(
           expect.stringContaining('provider_categories!inner(category_id)'),
@@ -248,7 +248,7 @@ describe('providers service', () => {
       });
 
       it('adds no provider_categories embed without a category filter (case 44)', async () => {
-        await searchProviders('', '', '', 12, 0);
+        await searchProviders('', '', 'Berlin', 12, 0);
 
         const selectArg = mockSelect.mock.calls[0][0] as string;
         expect(selectArg).not.toContain('provider_categories');
@@ -270,7 +270,7 @@ describe('providers service', () => {
           count: 1,
         });
 
-        const { providers } = await searchProviders('', CATEGORY_ID, '', 12, 0);
+        const { providers } = await searchProviders('', CATEGORY_ID, 'Berlin', 12, 0);
 
         expect(providers).toHaveLength(1);
         expect('provider_categories' in providers[0]).toBe(false);
@@ -280,7 +280,7 @@ describe('providers service', () => {
       it('keeps totalCount from the count header (case 46)', async () => {
         mockReturns.mockResolvedValueOnce({ data: [], error: null, count: 7 });
 
-        const { totalCount } = await searchProviders('', CATEGORY_ID, '', 12, 0);
+        const { totalCount } = await searchProviders('', CATEGORY_ID, 'Berlin', 12, 0);
 
         expect(totalCount).toBe(7);
       });
@@ -328,7 +328,7 @@ describe('providers service', () => {
           mockFrom.mockReturnValue({ select: mockSelect });
           mockReturns.mockResolvedValue({ data: [], error: null, count: 0 });
 
-          const { providers } = await searchProviders('', label, '', 12, 0);
+          const { providers } = await searchProviders('', label, 'Berlin', 12, 0);
 
           expect(providers).toEqual([]);
           // The query runs normally with no category constraint attached.
@@ -343,7 +343,7 @@ describe('providers service', () => {
       it('still treats empty/null category as no filter', async () => {
         mockReturns.mockResolvedValueOnce({ data: [], error: null, count: 0 });
 
-        await searchProviders('', '', '', 12, 0);
+        await searchProviders('', '', 'Berlin', 12, 0);
 
         expect(mockSelect).toHaveBeenCalled();
         const selectArg = mockSelect.mock.calls[0][0] as string;

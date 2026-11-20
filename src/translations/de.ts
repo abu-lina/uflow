@@ -403,6 +403,7 @@ export const de = {
     locationsCount: '{{count}} Standorte',
     halalLevel: 'Halal-Stufe {{level}}',
     online: 'Online',
+    deliveryOnly: 'Nur Lieferung',
     donations: 'Spenden',
     initiativesSupported: 'Initiativen unterstützt',
     ourBarakahEffect: 'Unser Barakah Effekt',
