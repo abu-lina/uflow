@@ -60,11 +60,6 @@ BEGIN
   IF v_approved < min_approved_food THEN
     RAISE EXCEPTION 'ABORT: only % approved food providers (expected about 157); wrong database? nothing changed', v_approved;
   END IF;
-  -- [run-only]
-  IF v_approved <> expected_approved_food THEN
-    RAISE EXCEPTION 'ABORT: found % approved food providers, expected_approved_food is %; nothing changed', v_approved, expected_approved_food;
-  END IF;
-  -- [/run-only]
 
   SELECT count(*) INTO v_missing FROM public.providers p
     WHERE p.listing_type = 'food' AND p.review_status = 'approved'
@@ -73,6 +68,11 @@ BEGIN
     RAISE EXCEPTION 'ABORT: % approved food providers have no food_providers row; nothing changed', v_missing;
   END IF;
 
+  -- [run-only]
+  IF v_approved <> expected_approved_food THEN
+    RAISE EXCEPTION 'ABORT: found % approved food providers, expected_approved_food is %; nothing changed', v_approved, expected_approved_food;
+  END IF;
+  -- [/run-only]
   SELECT count(*) INTO v_before FROM public.food_providers fp JOIN public.providers p USING (provider_id)
     WHERE p.listing_type = 'food' AND p.review_status = 'approved'
       AND fp.no_alcohol AND fp.no_pork AND fp.no_gambling;

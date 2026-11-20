@@ -1,7 +1,8 @@
 -- Step 2 of 5: REHEARSAL. Paste into the Supabase SQL Editor and run (click in the editor, deselect any
 -- text, then Run). Nothing is saved.
--- Runs the same lock, update, archive and after-checks as step 3 (the constants and the N check are the
--- only differences), then ALWAYS ends with an error, so everything is rolled back. The error you want is:
+-- Runs the same lock, update, archive and after-checks as step 3. It differs from step 3 only by skipping
+-- the db-name check, the expected_approved_food and expected_changed checks, the marker comment and the
+-- result SELECT, and by ALWAYS ending with an error, so everything is rolled back. The error you want is:
 --   REHEARSAL OK: N rows would change; rolled back
 -- Write N down: step 3 needs it. Any other error starting with ABORT means a check failed; see README.md.
 -- This file can only ever end in an error, so it cannot commit. Keep it separate from step 3.

@@ -4,6 +4,8 @@ Plain SQL versions of `scripts/db/backfill-987-food-halal.sql` and `restore-987-
 
 What the backfill does: every approved food provider that isn't yet all of `no_alcohol`, `no_pork`, `no_gambling` = true gets all three set to true. The old values go to the archive table first.
 
+Explicit `false` answers on approved food providers are overwritten with `true`, and there is no per-row opt-out. If a row should stay `false`, stop, fix the data, and redo steps 1 and 2. The step 1 list is the moment to spot such rows.
+
 ## What actually protects you from the wrong project
 
 Every Supabase project's database is named `postgres`, so `expected_db_name` only catches a connection to some other kind of database. It does not tell prod from UAT. The real protections are:
@@ -38,7 +40,7 @@ WHERE tgrelid = 'public.food_providers'::regclass AND NOT tgisinternal;
 5. Step 2, note N.
 6. Step 3 with the three constants edited.
 7. Step 4 with the four constants edited; `ALL CHECKS` is `true`.
-8. Purge caches (CDN / ISR), then spot-check a few formerly false providers on the public pages, and one provider of another listing type (it must be unchanged).
+8. Purge caches (CDN / ISR). The run sets `updated_at = now()` on every changed row (about 101 on prod), so anything that sorts, caches or listens on `updated_at` treats them as freshly edited. Then spot-check a few formerly false providers on the public pages, and one provider of another listing type (it must be unchanged).
 9. Export `public.halal_backfill_987_archive` to a CSV on your machine as the second copy.
 
 ## Order
