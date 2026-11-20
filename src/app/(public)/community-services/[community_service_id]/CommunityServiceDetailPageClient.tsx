@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 import { useCommunityService } from '@/hooks/useCommunityServices';
@@ -86,7 +86,6 @@ export function CommunityServiceDetailPageClient({
   communityServiceId,
   initialData,
 }: CommunityServiceDetailPageClientProps) {
-  const router = useRouter();
   const { isAdmin } = useIsAdmin();
   const {
     data: communityService,
@@ -111,16 +110,6 @@ export function CommunityServiceDetailPageClient({
     mql.addEventListener('change', handler);
     return () => mql.removeEventListener('change', handler);
   }, []);
-
-  // Handle browser back button
-  useEffect(() => {
-    const handlePopState = () => {
-      router.back();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [router]);
 
   const handleClose = useBackOrFallback();
 

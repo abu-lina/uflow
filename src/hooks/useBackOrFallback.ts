@@ -1,29 +1,28 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 
-// Set once the app has done a client-side navigation in this tab. A direct link,
-// a new tab or an external referrer leaves it false, so router.back() would be a no-op.
-// shortcut: stays true after the user pops back to the entry page; track history depth if that matters.
-let hasInAppHistory = false;
+// Pathname this tab entered the app on (direct link, new tab, external referrer).
+// router.back() from there is a no-op or leaves uFlow, so we fall back instead.
+let entryPathname: string | null = null;
 
-/** Mount once in the root layout so useBackOrFallback knows whether history is ours. */
+/** Mount once in the root layout so useBackOrFallback knows where the tab entered. */
 export function useTrackInAppNavigation() {
   const pathname = usePathname();
-  const firstPathname = useRef(pathname);
 
   useEffect(() => {
-    if (pathname !== firstPathname.current) hasInAppHistory = true;
+    entryPathname ??= pathname;
   }, [pathname]);
 }
 
 /** Close/back handler: go back inside uFlow, otherwise navigate to `fallback`. */
 export function useBackOrFallback(fallback = '/food') {
   const router = useRouter();
+  const pathname = usePathname();
 
   return useCallback(() => {
-    if (hasInAppHistory) router.back();
+    if (entryPathname !== null && pathname !== entryPathname) router.back();
     else router.push(fallback);
-  }, [router, fallback]);
+  }, [router, pathname, fallback]);
 }

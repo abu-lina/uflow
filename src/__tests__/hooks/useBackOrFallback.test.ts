@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { renderHook } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const back = vi.fn();
 const push = vi.fn();
@@ -22,6 +22,10 @@ describe('useBackOrFallback (#986)', () => {
     back.mockClear();
     push.mockClear();
     pathname = '/p/1';
+  });
+
+  afterEach(() => {
+    Object.defineProperty(document, 'referrer', { value: '', configurable: true });
   });
 
   it('direct entry falls back to /food', async () => {
@@ -62,5 +66,20 @@ describe('useBackOrFallback (#986)', () => {
 
     expect(back).toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it('returning to the entry page falls back to /food', async () => {
+    const { useBackOrFallback, useTrackInAppNavigation } = await load();
+    const tracker = renderHook(() => useTrackInAppNavigation());
+    pathname = '/food';
+    tracker.rerender();
+    pathname = '/p/1';
+    tracker.rerender();
+    const { result } = renderHook(() => useBackOrFallback());
+
+    result.current();
+
+    expect(push).toHaveBeenCalledWith('/food');
+    expect(back).not.toHaveBeenCalled();
   });
 });
