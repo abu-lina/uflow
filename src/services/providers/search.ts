@@ -91,13 +91,12 @@ async function fetchAllPages<T>(
 function fetchDefaultOrderRanking(
   supabase: SupabaseClient,
   section: string | undefined,
-  status: string | undefined,
 ): Promise<RankedProvider[]> {
   return fetchAllPages<RankedProvider>((from, to) =>
     supabase
       .rpc('get_default_order_providers', {
         section_filter: section ?? null,
-        review_status_filter: status ?? 'approved',
+        review_status_filter: 'approved',
       })
       .range(from, to),
   );
@@ -355,12 +354,13 @@ export async function searchProviders(
 
   // #953: the default list (no city, no search text, paged) takes its order from
   // an RPC. The owner's decision covers only that list; search text and a chosen
-  // city keep created_at order. If the RPC is missing (deploy before migration
+  // city keep created_at order, and so do admin status tabs (#983: a review queue
+  // is newest-first). If the RPC is missing (deploy before migration
   // 154) fall back to created_at and log instead of blanking the list.
   let ranking: RankedProvider[] | null = null;
-  if (!isValidLocation(location) && !query && limit !== undefined) {
+  if (!isValidLocation(location) && !query && limit !== undefined && !adminOptions?.status) {
     try {
-      ranking = await fetchDefaultOrderRanking(supabase, listingType, adminOptions?.status);
+      ranking = await fetchDefaultOrderRanking(supabase, listingType);
     } catch (rankError) {
       console.error(
         '[searchProviders] get_default_order_providers failed, using created_at',
