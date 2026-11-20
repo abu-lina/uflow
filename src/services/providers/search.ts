@@ -13,6 +13,7 @@ import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
 import type { HalalTier } from '@/features/search/discoveryQuery';
+import { TIER_EMBED, TIER_OR_RULES } from './tierFilter';
 import { applyBrandCap } from './default-order';
 
 async function loadProviderRelationIds(
@@ -344,9 +345,7 @@ export async function searchProviders(
   // #939: When tier filtering is active, use !inner to INNER JOIN
   // food_providers — this excludes providers without a food_providers row
   // (tier = null). Column-level filters are applied after the query is built.
-  const tierEmbed = minHalalTier
-    ? ', food_providers!inner(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
-    : '';
+  const tierEmbed = minHalalTier ? `, ${TIER_EMBED}` : '';
   const categoryEmbed = hasCategoryFilter ? ', provider_categories!inner(category_id)' : '';
   // Plan 058: admin queries must use the service-role client to bypass RLS.
   // The caller (API route) passes the admin client directly via the `client` parameter
@@ -409,19 +408,8 @@ export async function searchProviders(
       req = req
         .eq('food_providers.has_certificate', true)
         .not('food_providers.certificate_url', 'is', null);
-    } else if (minHalalTier === 'silver') {
-      // silver+ = gold OR (onsite + attestation).
-      // Gold = has_certificate + certificate_url, no attestation needed.
-      req = req.or(
-        'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.eq.onsite,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
-        { foreignTable: 'food_providers' },
-      );
     } else {
-      // bronze+ = gold OR (any verification_method + attestation)
-      req = req.or(
-        'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.not.is.null,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
-        { foreignTable: 'food_providers' },
-      );
+      req = req.or(TIER_OR_RULES[minHalalTier], { foreignTable: 'food_providers' });
     }
   }
 

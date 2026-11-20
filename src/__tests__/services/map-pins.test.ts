@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getMapLocations, MAP_LOCATIONS_LIMIT } from '@/services/providers/map-pins';
+import { TIER_EMBED, TIER_OR_RULES } from '@/services/providers/tierFilter';
 
 const mockSelect = vi.fn();
 const mockNot = vi.fn();
@@ -114,23 +115,37 @@ describe('getMapLocations', () => {
     expect(mockNot).toHaveBeenCalledWith('location_longitude', 'is', null);
   });
 
-  // Expected strings are the list's #939 tier rules (search.ts)
-  it.each([
-    [
-      'silver',
-      'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.eq.onsite,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
-    ],
-    [
-      'bronze',
-      'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.not.is.null,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
-    ],
-  ] as const)('filters %s tier on the nested food_providers embed (#982)', async (tier, rule) => {
-    await getMapLocations({ section: 'food', tier });
+  it('filters gold tier on the nested food_providers embed (#982)', async () => {
+    await getMapLocations({ section: 'food', tier: 'gold' });
 
-    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('food_providers!inner('));
-    expect(mockOr).toHaveBeenCalledWith(rule, {
-      referencedTable: 'providers.food_providers',
-    });
+    expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining(TIER_EMBED));
+    expect(mockEq).toHaveBeenCalledWith('providers.food_providers.has_certificate', true);
+    expect(mockFilter).toHaveBeenCalledWith(
+      'providers.food_providers.certificate_url',
+      'not.is',
+      null,
+    );
+    expect(mockOr).not.toHaveBeenCalled();
+  });
+
+  it.each(['silver', 'bronze'] as const)(
+    'filters %s tier on the nested food_providers embed (#982)',
+    async (tier) => {
+      await getMapLocations({ section: 'food', tier });
+
+      expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining(TIER_EMBED));
+      expect(mockOr).toHaveBeenCalledWith(TIER_OR_RULES[tier], {
+        referencedTable: 'providers.food_providers',
+      });
+    },
+  );
+
+  it('adds no tier join for a value outside the allowlist (#982)', async () => {
+    await getMapLocations({ section: 'food', tier: 'platinum' as never });
+
+    expect(mockSelect).toHaveBeenCalledWith(expect.not.stringContaining('food_providers'));
+    expect(mockOr).not.toHaveBeenCalled();
+    expect(mockFilter).not.toHaveBeenCalled();
   });
 
   it('ignores tier outside the food section, like the list (#982)', async () => {
@@ -138,6 +153,8 @@ describe('getMapLocations', () => {
 
     expect(mockSelect).toHaveBeenCalledWith(expect.not.stringContaining('food_providers'));
     expect(mockEq).not.toHaveBeenCalledWith('providers.food_providers.has_certificate', true);
+    expect(mockOr).not.toHaveBeenCalled();
+    expect(mockFilter).not.toHaveBeenCalled();
   });
 
   it('returns an empty array when data is null', async () => {
