@@ -88,6 +88,24 @@ describe('DELETE /api/user/delete-account', () => {
     expect(calls).toEqual([]);
   });
 
+  it('accepts a same-origin request behind a proxy chain in x-forwarded-host', async () => {
+    signedIn();
+    const { deleteUser } = mockAdmin();
+    const req = new NextRequest('http://internal:3000/api/user/delete-account', {
+      method: 'DELETE',
+      headers: {
+        host: 'internal:3000',
+        origin: 'https://ummahflow.com',
+        'x-forwarded-host': 'ummahflow.com, internal:3000',
+      },
+    });
+
+    const res = await DELETE(req);
+
+    expect(res.status).toBe(200);
+    expect(deleteUser).toHaveBeenCalledWith(USER_ID);
+  });
+
   it('returns 429 and deletes nothing when rate limited', async () => {
     signedIn();
     vi.mocked(checkRateLimit).mockReturnValue(false);
