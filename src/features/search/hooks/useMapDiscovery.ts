@@ -201,20 +201,25 @@ export function useMapDiscovery(
   // consumer defers pins, skip until the map has been opened once.
   useEffect(() => {
     if (deferPins && !hasOpenedMap) return;
+    // A slower earlier response (e.g. the previous tier) must not overwrite a newer one.
+    let cancelled = false;
     const load = async () => {
       setPinsLoading(true);
       setPinsError(null);
       try {
         const filters = filterKey ? (filterKey.split(',') as SearchFilterKey[]) : undefined;
         const rows = await getMapLocations({ section, city, reviewStatus, filters, tier });
-        setAllRows(rows);
+        if (!cancelled) setAllRows(rows);
       } catch (err) {
-        setPinsError(err instanceof Error ? err : new Error(String(err)));
+        if (!cancelled) setPinsError(err instanceof Error ? err : new Error(String(err)));
       } finally {
-        setPinsLoading(false);
+        if (!cancelled) setPinsLoading(false);
       }
     };
     void load();
+    return () => {
+      cancelled = true;
+    };
   }, [reviewStatus, deferPins, hasOpenedMap, section, city, filterKey, tier]);
 
   // Compute map pins from allRows, filtering by open-now when active
