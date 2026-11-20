@@ -190,4 +190,11 @@ $$;
 COMMENT ON FUNCTION public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz) IS
   'Issue #548/#886/#987: one atomic review decision — persists submitted halal answers (key-presence, NULL round-trips), stamps last_verified_at/next_audit_due on food_providers on every approval, re-asserts the halal gate on post-write values, then sets review_status + reviewed_by/reviewed_at. Raises NOT_FOUND, FORBIDDEN, CONFLICT, or HALAL_GATE.';
 
+-- Every caller uses the service-role client (the function trusts the caller-supplied
+-- p_reviewer_id, so anon/authenticated must not be able to reach it). Idempotent.
+REVOKE ALL ON FUNCTION public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz)
+  TO service_role;
+
 COMMIT;

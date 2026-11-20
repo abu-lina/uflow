@@ -1,6 +1,6 @@
 -- #987: admin_review_provider gate. LOCAL DB ONLY, always rolls back.
 --   psql -X "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -v ON_ERROR_STOP=1 -f scripts/db/test-halal-gate.sql
--- Covers: 3x3x3 grid (stored answers, no payload), the same grid via payload with rollback of the
+-- Covers: EXECUTE grants, 3x3x3 grid (stored answers, no payload), the same grid via payload with rollback of the
 -- answers on failure, missing row, audit dates, non-approve statuses, CONFLICT, and a store listing.
 -- Expects a seeded local DB with one admin user and one approved food provider with a food_providers row.
 BEGIN;
@@ -25,6 +25,17 @@ BEGIN
     JOIN public.food_providers fp USING (provider_id)
     WHERE p.listing_type = 'food' AND p.review_status = 'approved' ORDER BY p.provider_id LIMIT 1;
   IF v_admin IS NULL OR v_pid IS NULL THEN RAISE EXCEPTION 'seed data missing'; END IF;
+
+  -- Grants: only service_role may execute the RPC (migration 155).
+  IF has_function_privilege('anon', 'public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz)', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'anon or authenticated can still execute admin_review_provider';
+  END IF;
+  IF NOT has_function_privilege('service_role', 'public.admin_review_provider(uuid, public.review_status, text, uuid, jsonb, timestamptz)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'service_role cannot execute admin_review_provider';
+  END IF;
+  -- Everything below runs as service_role, the role every caller uses.
+  SET LOCAL ROLE service_role;
 
   -- Grid: stored answers, approve with no payload.
   FOREACH a IN ARRAY v_vals LOOP FOREACH b IN ARRAY v_vals LOOP FOREACH c IN ARRAY v_vals LOOP
