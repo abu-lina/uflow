@@ -601,7 +601,6 @@ export const ProviderDetailModal: React.FC<ProviderDetailModalProps> = ({
                       <button
                         className="flex w-[160px] flex-shrink-0 flex-col items-start transition-transform active:scale-[0.98]"
                         onClick={() => {
-                          onClose();
                           if (communityServices[0]?.community_service_id) {
                             router.push(
                               `/community-services/${communityServices[0].community_service_id}`,

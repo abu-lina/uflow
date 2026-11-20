@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import dynamic from 'next/dynamic';
 
 import { useProvider } from '@/hooks/useProvider';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
+import { useBackOrFallback } from '@/hooks/useBackOrFallback';
 import { useLanguage } from '@/providers/LanguageProvider';
 import type { Provider } from '@/services/providers';
 import type { CommunityService } from '@/services/communityServices';
@@ -60,7 +61,6 @@ export function ProviderDetailPageClient({
   initialCommunityServices,
   screeningSlot,
 }: ProviderDetailPageClientProps) {
-  const router = useRouter();
   const { isAdmin } = useIsAdmin();
   const { t } = useLanguage();
   const {
@@ -87,10 +87,7 @@ export function ProviderDetailPageClient({
     return () => mql.removeEventListener('change', handler);
   }, []);
 
-  // Handle modal close - navigate back to providers page
-  const handleModalClose = () => {
-    router.back();
-  };
+  const handleModalClose = useBackOrFallback();
 
   // Show loading skeleton while fetching (only if no initial data)
   if (isLoading && !initialData) {

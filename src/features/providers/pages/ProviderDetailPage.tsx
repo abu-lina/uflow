@@ -9,6 +9,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { MobileProviderDetail } from '@/features/providers/components/MobileProviderDetail';
 import { BookmarkButton } from '@/components/ui/BookmarkButton';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useBackOrFallback } from '@/hooks/useBackOrFallback';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import {
   getAllTrustedImageUrls,
@@ -59,6 +60,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
   const HALAL_POPUP_MAX_VIEWS = 10;
 
   const router = useRouter();
+  const goBack = useBackOrFallback();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { t, language } = useLanguage();
@@ -109,7 +111,7 @@ export const ProviderDetailPage: React.FC<ProviderDetailPageProps> = ({
     if (backPath) {
       router.push(backPath);
     } else {
-      router.back();
+      goBack();
     }
   };
   const isMobile = useIsMobile();

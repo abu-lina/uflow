@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
+import { useBackOrFallback } from '@/hooks/useBackOrFallback';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { useLanguage } from '@/providers/LanguageProvider';
 import {
@@ -25,7 +25,7 @@ interface MobileProviderDetailProps {
 }
 
 export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ provider, onBack }) => {
-  const router = useRouter();
+  const goBack = useBackOrFallback();
   const { t, language } = useLanguage();
 
   // Helper function to get category name based on language
@@ -42,7 +42,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
     if (onBack) {
       onBack();
     } else {
-      router.back();
+      goBack();
     }
   };
 
@@ -141,12 +141,16 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
 
           {/* Back Button - Left Chevron */}
           <div className="absolute left-0 top-0 z-10 flex h-[63.78px] w-full items-start justify-start p-4">
+            {/* 40px hit area around the 32px visual; -m-1 keeps the visual in place */}
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-[9.53514px] border-[0.794595px] border-[#CDCDCD] bg-white/70 backdrop-blur-[1.98649px]"
+              aria-label={t('providerDetail.container.back')}
+              className="-m-1 flex size-10 items-center justify-center rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               type="button"
               onClick={handleBack}
             >
-              <ChevronLeft className="h-5 w-5 text-[#232323]" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-[9.53514px] border-[0.794595px] border-[#CDCDCD] bg-white/70 backdrop-blur-[1.98649px]">
+                <ChevronLeft aria-hidden className="h-5 w-5 text-[#232323]" />
+              </span>
             </button>
           </div>
 
