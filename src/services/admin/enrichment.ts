@@ -427,6 +427,21 @@ export async function approveCandidate(
     return { success: false, error: `Failed to update provider: ${updateError.message}` };
   }
 
+  // #987: a non-true attestation drops an approved provider below the bar. Only approved rows move.
+  if (isFoodProviderField && candidate.proposed_value !== true) {
+    const { error: flipError } = await supabase
+      .from('providers')
+      .update({ review_status: 'needs_revision' })
+      .eq('provider_id', candidate.provider_id)
+      .eq('review_status', 'approved');
+    if (flipError) {
+      return {
+        success: false,
+        error: `Failed to flag provider for revision: ${flipError.message}`,
+      };
+    }
+  }
+
   // 4. Mark candidate as applied
   const { error: statusError } = await supabase
     .from('enrichment_candidates')

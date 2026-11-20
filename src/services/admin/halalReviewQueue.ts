@@ -152,6 +152,21 @@ export async function confirmHalalReview(
     return { success: false, error: 'Provider has no food provider record to update' };
   }
 
+  // #987: a confirmed false drops an approved provider below the bar. Only approved rows move.
+  if (HALAL_FIELDS.some((f) => values[f] !== true)) {
+    const { error: flipError } = await supabase
+      .from('providers')
+      .update({ review_status: 'needs_revision' })
+      .eq('provider_id', providerId)
+      .eq('review_status', 'approved');
+    if (flipError) {
+      return {
+        success: false,
+        error: `Failed to flag provider for revision: ${flipError.message}`,
+      };
+    }
+  }
+
   const { error: statusError } = await supabase
     .from('enrichment_candidates')
     .update({ status: 'applied', reviewed_at: new Date().toISOString(), reviewer_id: reviewerId })
