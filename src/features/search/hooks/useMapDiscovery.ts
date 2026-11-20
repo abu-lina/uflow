@@ -118,7 +118,7 @@ export function useMapDiscovery(
   const initialView: ViewMode =
     urlView === 'map' ? 'map' : urlView === 'list' ? 'list' : defaultViewMode;
 
-  const [viewMode, _setViewMode] = useState<ViewMode>(initialView);
+  const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const deferPins = options?.deferPinsUntilMapOpened ?? false;
   const section = options?.section;
   const city = options?.city;
@@ -169,20 +169,15 @@ export function useMapDiscovery(
     return buildViewToggleLink(currentUrl, nextView, defaultViewRef.current);
   }, []);
 
-  // Wrapped setViewMode that also syncs URL when urlSync is provided.
-  const setViewMode: React.Dispatch<React.SetStateAction<ViewMode>> = useCallback(
-    (action) => {
-      _setViewMode((prev) => {
-        const next = typeof action === 'function' ? action(prev) : action;
-        if (next !== prev) {
-          const url = buildViewUrl(next);
-          if (url) urlSyncRef.current?.replace(url, { scroll: false });
-        }
-        return next;
-      });
-    },
-    [buildViewUrl],
-  );
+  // Sync the URL after a view change commits; replace() inside a setState
+  // updater would update the Router during render (#992).
+  const syncedViewRef = useRef(viewMode);
+  useEffect(() => {
+    if (viewMode === syncedViewRef.current) return;
+    syncedViewRef.current = viewMode;
+    const url = buildViewUrl(viewMode);
+    if (url) urlSyncRef.current?.replace(url, { scroll: false });
+  }, [viewMode, buildViewUrl]);
 
   const toggleViewMode = useCallback(() => {
     if (viewMode === 'map') {
