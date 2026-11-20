@@ -8,6 +8,7 @@
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
 import { FOOD_PROVIDER_FIELDS, isAdminField } from '@/lib/enrichment/enrichment-fields';
 import { applyDeliveryLinksCandidate } from '@/services/admin/enrichment-delivery-links';
+import { flagApprovedProviderForRevision } from '@/services/admin/flagForRevision';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -302,7 +303,7 @@ export async function getHistoryCandidates(
 export async function approveCandidate(
   candidateId: string,
   reviewerId: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; flaggedForRevision?: boolean }> {
   const supabase = getSupabaseAdmin();
 
   // 1. Fetch the candidate
@@ -413,6 +414,14 @@ export async function approveCandidate(
   }
 
   const isFoodProviderField = FOOD_PROVIDER_FIELDS.includes(candidate.field_name);
+  // #987: a non-true attestation drops an approved provider below the bar. Flip first (fails safe).
+  let flaggedForRevision = false;
+  if (isFoodProviderField && candidate.proposed_value !== true) {
+    const flip = await flagApprovedProviderForRevision(supabase, candidate.provider_id, reviewerId);
+    if (flip.error) return { success: false, error: flip.error };
+    flaggedForRevision = flip.flagged;
+  }
+
   const { error: updateError } = isFoodProviderField
     ? await supabase
         .from('food_providers')
@@ -441,7 +450,7 @@ export async function approveCandidate(
     return { success: false, error: `Failed to update candidate status: ${statusError.message}` };
   }
 
-  return { success: true };
+  return flaggedForRevision ? { success: true, flaggedForRevision } : { success: true };
 }
 
 /**

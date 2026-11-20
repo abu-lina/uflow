@@ -164,7 +164,9 @@ export async function POST(request: Request) {
         { ipAddress: getClientIp(request), userAgent: getUserAgent(request) },
       );
 
-      return NextResponse.json({ success: true });
+      return NextResponse.json(
+        result.flaggedForRevision ? { success: true, flaggedForRevision: true } : { success: true },
+      );
     }
 
     // ─── Reject ───────────────────────────────────────────────────────────

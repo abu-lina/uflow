@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase/admin';
+import { flagApprovedProviderForRevision } from '@/services/admin/flagForRevision';
 
 const HALAL_FIELDS = ['no_alcohol', 'no_pork', 'no_gambling'] as const;
 type HalalField = (typeof HALAL_FIELDS)[number];
@@ -115,7 +116,7 @@ export async function confirmHalalReview(
   providerId: string,
   values: HalalToggles,
   reviewerId: string,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; flaggedForRevision?: boolean }> {
   if (!UUID_REGEX.test(providerId)) return { success: false, error: 'Invalid provider id' };
   const supabase = getSupabaseAdmin();
 
@@ -134,6 +135,15 @@ export async function confirmHalalReview(
   const now = new Date();
   const sixMonthsLater = new Date(now);
   sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
+
+  // #987: a confirmed false drops an approved provider below the bar. Flip first (fails safe);
+  // an approved row already passes the gate, so an all-true confirm needs no flip.
+  let flaggedForRevision = false;
+  if (HALAL_FIELDS.some((f) => values[f] !== true)) {
+    const flip = await flagApprovedProviderForRevision(supabase, providerId, reviewerId);
+    if (flip.error) return { success: false, error: flip.error };
+    flaggedForRevision = flip.flagged;
+  }
 
   const { data: updated, error: updateError } = await supabase
     .from('food_providers')
@@ -162,5 +172,5 @@ export async function confirmHalalReview(
     return { success: false, error: `Failed to update candidate status: ${statusError.message}` };
   }
 
-  return { success: true };
+  return flaggedForRevision ? { success: true, flaggedForRevision } : { success: true };
 }

@@ -17,8 +17,11 @@ function chain(table: string) {
     {
       get(_, op: string) {
         if (op === 'then') {
-          return (resolve: (v: unknown) => void) =>
-            resolve(results[table] ?? { data: [], error: null });
+          // An array is a queue of results, one per awaited query on that table.
+          return (resolve: (v: unknown) => void) => {
+            const r = results[table];
+            resolve((Array.isArray(r) ? r.shift() : r) ?? { data: [], error: null });
+          };
         }
         return (...args: unknown[]) => {
           calls.push({ table, op, args });
@@ -30,6 +33,7 @@ function chain(table: string) {
   return c;
 }
 
+vi.mock('@/lib/audit/adminAudit', () => ({ logAdminAction: vi.fn() }));
 vi.mock('@/lib/supabase/admin', () => ({
   getSupabaseAdmin: () => ({ from: (table: string) => chain(table) }),
 }));
@@ -215,6 +219,72 @@ describe('confirmHalalReview', () => {
     const result = await confirmHalalReview('nope', values, 'admin-1');
     expect(result.success).toBe(false);
     expect(calls).toHaveLength(0);
+  });
+
+  describe('#987 post-approval flip', () => {
+    const ownerOk = { data: { provider_owner_id: null }, error: null };
+    const flipped = { data: [{ provider_id: P1 }], error: null };
+    const isFlip = (c: Call) =>
+      c.table === 'providers' &&
+      c.op === 'update' &&
+      (c.args[0] as Record<string, unknown>).review_status === 'needs_revision';
+    const isWrite = (c: Call) => c.table === 'food_providers' && c.op === 'update';
+    const candidatesApplied = () =>
+      calls.some((c) => c.table === 'enrichment_candidates' && c.op === 'update');
+
+    it('when an admin confirms a false on an approved provider, it is flipped to needs_revision before the write (approved rows only)', async () => {
+      results.providers = [ownerOk, flipped];
+      results.food_providers = { data: [{ provider_id: P1 }], error: null };
+
+      const result = await confirmHalalReview(P1, values, 'admin-1');
+
+      expect(result).toEqual({ success: true, flaggedForRevision: true });
+      expect(calls.findIndex(isFlip)).toBeGreaterThanOrEqual(0);
+      expect(calls.findIndex(isFlip)).toBeLessThan(calls.findIndex(isWrite));
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          table: 'providers',
+          op: 'eq',
+          args: ['review_status', 'approved'],
+        }),
+      );
+    });
+
+    it('when an admin confirms all true, status is not touched', async () => {
+      results.providers = ownerOk;
+      results.food_providers = { data: [{ provider_id: P1 }], error: null };
+
+      const result = await confirmHalalReview(
+        P1,
+        { no_alcohol: true, no_pork: true, no_gambling: true },
+        'admin-1',
+      );
+
+      expect(result).toEqual({ success: true });
+      expect(calls.some(isFlip)).toBe(false);
+    });
+
+    it('when the flip fails, the write is skipped and candidates stay pending', async () => {
+      results.providers = [ownerOk, { data: null, error: { message: 'boom' } }];
+      results.food_providers = { data: [{ provider_id: P1 }], error: null };
+
+      const result = await confirmHalalReview(P1, values, 'admin-1');
+
+      expect(result.success).toBe(false);
+      expect(calls.some(isWrite)).toBe(false);
+      expect(candidatesApplied()).toBe(false);
+    });
+
+    it('when the write fails after the flip, it returns an error and candidates stay pending', async () => {
+      results.providers = [ownerOk, flipped];
+      results.food_providers = { data: null, error: { message: 'write failed' } };
+
+      const result = await confirmHalalReview(P1, values, 'admin-1');
+
+      expect(result.success).toBe(false);
+      expect(calls.some(isFlip)).toBe(true);
+      expect(candidatesApplied()).toBe(false);
+    });
   });
 
   it('[TDD gate] sets last_verified_at and next_audit_due when confirming review (#886)', async () => {

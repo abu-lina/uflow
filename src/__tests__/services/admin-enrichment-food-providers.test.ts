@@ -13,6 +13,8 @@ vi.mock('@/lib/supabase/admin', () => ({
   }),
 }));
 
+vi.mock('@/lib/audit/adminAudit', () => ({ logAdminAction: vi.fn() }));
+
 import { approveCandidate, bulkApproveByProvider } from '@/services/admin/enrichment';
 import { isAdminField } from '@/lib/enrichment/enrichment-fields';
 
@@ -45,7 +47,13 @@ function setupSupabase(candidates: ReturnType<typeof candidate>[]) {
         single: vi.fn().mockResolvedValue({ data: { provider_owner_id: null }, error: null }),
         update: vi.fn((payload: unknown) => {
           providerUpdates.push(payload);
-          return { eq: vi.fn().mockResolvedValue({ error: null }) };
+          const done = Promise.resolve({ error: null });
+          const second = Object.assign(Promise.resolve({ error: null }), {
+            select: vi
+              .fn()
+              .mockResolvedValue({ data: [{ provider_id: PROVIDER_ID }], error: null }),
+          });
+          return { eq: vi.fn(() => Object.assign(done, { eq: vi.fn(() => second) })) };
         }),
       };
     }
@@ -126,7 +134,10 @@ describe('#842 approve = apply for halal candidates', () => {
     expect(writes.foodProviderUpdates).toHaveLength(1);
     expect(writes.foodProviderUpdates[0].payload).toEqual({ no_pork: false });
     expect(writes.foodProviderUpdates[0].eqs).toEqual([['provider_id', PROVIDER_ID]]);
-    expect(writes.providerUpdates).toHaveLength(0);
+    // #987: the only providers write is the needs_revision flip, never the attestation itself.
+    expect(writes.providerUpdates).toEqual([
+      expect.objectContaining({ review_status: 'needs_revision' }),
+    ]);
     expect(writes.candidateUpdates[0].payload.status).toBe('applied');
   });
 
