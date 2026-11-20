@@ -33,6 +33,7 @@ function chain(table: string) {
   return c;
 }
 
+vi.mock('@/lib/audit/adminAudit', () => ({ logAdminAction: vi.fn() }));
 vi.mock('@/lib/supabase/admin', () => ({
   getSupabaseAdmin: () => ({ from: (table: string) => chain(table) }),
 }));
@@ -222,22 +223,24 @@ describe('confirmHalalReview', () => {
 
   describe('#987 post-approval flip', () => {
     const ownerOk = { data: { provider_owner_id: null }, error: null };
-    const flips = () =>
-      calls.filter(
-        (c) =>
-          c.table === 'providers' &&
-          c.op === 'update' &&
-          (c.args[0] as Record<string, unknown>).review_status === 'needs_revision',
-      );
+    const flipped = { data: [{ provider_id: P1 }], error: null };
+    const isFlip = (c: Call) =>
+      c.table === 'providers' &&
+      c.op === 'update' &&
+      (c.args[0] as Record<string, unknown>).review_status === 'needs_revision';
+    const isWrite = (c: Call) => c.table === 'food_providers' && c.op === 'update';
+    const candidatesApplied = () =>
+      calls.some((c) => c.table === 'enrichment_candidates' && c.op === 'update');
 
-    it('when an admin confirms a false on an approved food provider, it becomes needs_revision (only approved rows)', async () => {
-      results.providers = [ownerOk, { data: null, error: null }];
+    it('when an admin confirms a false on an approved provider, it is flipped to needs_revision before the write (approved rows only)', async () => {
+      results.providers = [ownerOk, flipped];
       results.food_providers = { data: [{ provider_id: P1 }], error: null };
 
       const result = await confirmHalalReview(P1, values, 'admin-1');
 
-      expect(result).toEqual({ success: true });
-      expect(flips()).toHaveLength(1);
+      expect(result).toEqual({ success: true, flaggedForRevision: true });
+      expect(calls.findIndex(isFlip)).toBeGreaterThanOrEqual(0);
+      expect(calls.findIndex(isFlip)).toBeLessThan(calls.findIndex(isWrite));
       expect(calls).toContainEqual(
         expect.objectContaining({
           table: 'providers',
@@ -258,19 +261,29 @@ describe('confirmHalalReview', () => {
       );
 
       expect(result).toEqual({ success: true });
-      expect(flips()).toHaveLength(0);
+      expect(calls.some(isFlip)).toBe(false);
     });
 
-    it('when the flip fails, it returns an error and leaves candidates pending', async () => {
+    it('when the flip fails, the write is skipped and candidates stay pending', async () => {
       results.providers = [ownerOk, { data: null, error: { message: 'boom' } }];
       results.food_providers = { data: [{ provider_id: P1 }], error: null };
 
       const result = await confirmHalalReview(P1, values, 'admin-1');
 
       expect(result.success).toBe(false);
-      expect(calls.some((c) => c.table === 'enrichment_candidates' && c.op === 'update')).toBe(
-        false,
-      );
+      expect(calls.some(isWrite)).toBe(false);
+      expect(candidatesApplied()).toBe(false);
+    });
+
+    it('when the write fails after the flip, it returns an error and candidates stay pending', async () => {
+      results.providers = [ownerOk, flipped];
+      results.food_providers = { data: null, error: { message: 'write failed' } };
+
+      const result = await confirmHalalReview(P1, values, 'admin-1');
+
+      expect(result.success).toBe(false);
+      expect(calls.some(isFlip)).toBe(true);
+      expect(candidatesApplied()).toBe(false);
     });
   });
 

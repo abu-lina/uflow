@@ -38,11 +38,19 @@ vi.mock('@/lib/supabase/admin', () => ({
   getSupabaseAdmin: () => ({ from: (table: string) => chain(table) }),
 }));
 
+vi.mock('@/lib/audit/adminAudit', () => ({ logAdminAction: vi.fn() }));
+
 import { approveCandidate } from '@/services/admin/enrichment';
 
 const PROVIDER_ID = '11111111-1111-4111-8111-111111111111';
 
-function setup(proposed: unknown, flipResult: unknown = { data: null, error: null }) {
+const flipped = { data: [{ provider_id: PROVIDER_ID }], error: null };
+
+function setup(
+  proposed: unknown,
+  flipResult: unknown = flipped,
+  writeResult: unknown = { data: null, error: null },
+) {
   results = {
     enrichment_candidates: [
       {
@@ -59,17 +67,16 @@ function setup(proposed: unknown, flipResult: unknown = { data: null, error: nul
       { data: null, error: null },
     ],
     providers: [{ data: { provider_owner_id: null }, error: null }, flipResult],
-    food_providers: [{ data: null, error: null }],
+    food_providers: [writeResult],
   };
 }
 
-const flips = () =>
-  calls.filter(
-    (c) =>
-      c.table === 'providers' &&
-      c.op === 'update' &&
-      (c.args[0] as Record<string, unknown>).review_status === 'needs_revision',
-  );
+const idx = (pred: (c: Call) => boolean) => calls.findIndex(pred);
+const isFlip = (c: Call) =>
+  c.table === 'providers' &&
+  c.op === 'update' &&
+  (c.args[0] as Record<string, unknown>).review_status === 'needs_revision';
+const isWrite = (c: Call) => c.table === 'food_providers' && c.op === 'update';
 const markedApplied = () =>
   calls.some(
     (c) =>
@@ -84,13 +91,17 @@ beforeEach(() => {
 });
 
 describe('approveCandidate post-approval flip (#987)', () => {
-  it('when I apply a false enrichment candidate, the approved provider becomes needs_revision', async () => {
+  it('when I apply a false candidate, the approved provider is flipped to needs_revision before the write', async () => {
     setup(false);
 
     const result = await approveCandidate('c1', 'admin-1');
 
-    expect(result).toEqual({ success: true });
-    expect(flips()).toHaveLength(1);
+    expect(result).toEqual({ success: true, flaggedForRevision: true });
+    expect(idx(isFlip)).toBeGreaterThanOrEqual(0);
+    expect(idx(isFlip)).toBeLessThan(idx(isWrite));
+    const flip = calls.find(isFlip)?.args[0] as Record<string, unknown>;
+    expect(flip).toMatchObject({ reviewed_by: 'admin-1' });
+    expect(flip.review_feedback).toBeTruthy();
     expect(calls).toContainEqual(
       expect.objectContaining({
         table: 'providers',
@@ -101,21 +112,41 @@ describe('approveCandidate post-approval flip (#987)', () => {
     expect(markedApplied()).toBe(true);
   });
 
-  it('when I apply a true enrichment candidate, status is not touched', async () => {
+  it('when the provider is no longer approved, nothing is flagged and the write still happens', async () => {
+    setup(false, { data: [], error: null });
+
+    const result = await approveCandidate('c1', 'admin-1');
+
+    expect(result).toEqual({ success: true });
+    expect(calls.some(isWrite)).toBe(true);
+  });
+
+  it('when I apply a true candidate, status is not touched', async () => {
     setup(true);
 
     const result = await approveCandidate('c1', 'admin-1');
 
     expect(result).toEqual({ success: true });
-    expect(flips()).toHaveLength(0);
+    expect(calls.some(isFlip)).toBe(false);
   });
 
-  it('when the flip fails, it returns an error and does not mark the candidate applied', async () => {
+  it('when the flip fails, the write is skipped and the candidate is not marked applied', async () => {
     setup(false, { data: null, error: { message: 'boom' } });
 
     const result = await approveCandidate('c1', 'admin-1');
 
     expect(result.success).toBe(false);
+    expect(calls.some(isWrite)).toBe(false);
+    expect(markedApplied()).toBe(false);
+  });
+
+  it('when the write fails after the flip, it returns an error and does not mark the candidate applied', async () => {
+    setup(false, flipped, { data: null, error: { message: 'write failed' } });
+
+    const result = await approveCandidate('c1', 'admin-1');
+
+    expect(result.success).toBe(false);
+    expect(calls.some(isFlip)).toBe(true);
     expect(markedApplied()).toBe(false);
   });
 });

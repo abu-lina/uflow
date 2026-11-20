@@ -59,7 +59,9 @@ export async function POST(request: Request) {
       userAgent: getUserAgent(request),
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(
+      result.flaggedForRevision ? { success: true, flaggedForRevision: true } : { success: true },
+    );
   } catch (err) {
     logger.error('Error confirming halal review', err instanceof Error ? err : undefined, {
       error: err instanceof Error ? err.message : String(err),
