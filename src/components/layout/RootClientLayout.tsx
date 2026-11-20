@@ -19,6 +19,7 @@ import { useAuth } from '@/providers/auth-provider';
 import { useLanguage } from '@/providers/LanguageProvider';
 import { getFeatureFlag } from '@/config/feature-flags';
 import { useAppStage } from '@/hooks/useAppStage';
+import { useTrackInAppNavigation } from '@/hooks/useBackOrFallback';
 import {
   shouldShowMobileFooter,
   shouldShowCityEarlyAccessNavbar,
@@ -34,6 +35,7 @@ interface RootClientLayoutProps {
 
 export function RootClientLayout({ children }: RootClientLayoutProps) {
   const pathname = usePathname();
+  useTrackInAppNavigation();
   const router = useRouter();
   const { user } = useAuth();
   const { isSplashVisible, onboardingStep } = useSplash();

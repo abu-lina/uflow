@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
+import { useBackOrFallback } from '@/hooks/useBackOrFallback';
 import { useImageSwipe } from '@/hooks/useImageSwipe';
 import { useLanguage } from '@/providers/LanguageProvider';
 import {
@@ -25,7 +25,7 @@ interface MobileProviderDetailProps {
 }
 
 export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ provider, onBack }) => {
-  const router = useRouter();
+  const goBack = useBackOrFallback();
   const { t, language } = useLanguage();
 
   // Helper function to get category name based on language
@@ -42,7 +42,7 @@ export const MobileProviderDetail: React.FC<MobileProviderDetailProps> = ({ prov
     if (onBack) {
       onBack();
     } else {
-      router.back();
+      goBack();
     }
   };
 
