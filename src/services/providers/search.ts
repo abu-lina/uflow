@@ -13,6 +13,7 @@ import { transformProviderToSearchResult } from './types';
 import { ALL_CATEGORIES_LABELS } from '@/constants/allCategoriesLabels';
 import { isValidCategoryId } from '@/lib/categoryFilter';
 import type { HalalTier } from '@/features/search/discoveryQuery';
+import { TIER_EMBED, TIER_OR_RULES } from './tierFilter';
 import { applyBrandCap } from './default-order';
 
 async function loadProviderRelationIds(
@@ -91,13 +92,12 @@ async function fetchAllPages<T>(
 function fetchDefaultOrderRanking(
   supabase: SupabaseClient,
   section: string | undefined,
-  status: string | undefined,
 ): Promise<RankedProvider[]> {
   return fetchAllPages<RankedProvider>((from, to) =>
     supabase
       .rpc('get_default_order_providers', {
         section_filter: section ?? null,
-        review_status_filter: status ?? 'approved',
+        review_status_filter: 'approved',
       })
       .range(from, to),
   );
@@ -295,7 +295,8 @@ async function searchProvidersOnly(
 
   const hasMore = rawProviders.length > pageSize;
   const results = rawProviders.slice(0, pageSize).map(transformProviderToSearchResult);
-  // No city: the database already returned the page in default order (#953).
+  // No city: the database already returned the page in order, population order
+  // for the public list (#953) or created_at desc for admin status tabs (#983).
   const sortedResults = isValidLocation(location) ? sortByCreationDate(results) : results;
 
   return { results: sortedResults, hasMore, totalCount };
@@ -344,9 +345,7 @@ export async function searchProviders(
   // #939: When tier filtering is active, use !inner to INNER JOIN
   // food_providers — this excludes providers without a food_providers row
   // (tier = null). Column-level filters are applied after the query is built.
-  const tierEmbed = minHalalTier
-    ? ', food_providers!inner(verification_method, has_certificate, certificate_url, no_alcohol, no_pork, no_gambling)'
-    : '';
+  const tierEmbed = minHalalTier ? `, ${TIER_EMBED}` : '';
   const categoryEmbed = hasCategoryFilter ? ', provider_categories!inner(category_id)' : '';
   // Plan 058: admin queries must use the service-role client to bypass RLS.
   // The caller (API route) passes the admin client directly via the `client` parameter
@@ -355,12 +354,13 @@ export async function searchProviders(
 
   // #953: the default list (no city, no search text, paged) takes its order from
   // an RPC. The owner's decision covers only that list; search text and a chosen
-  // city keep created_at order. If the RPC is missing (deploy before migration
+  // city keep created_at order, and so do admin status tabs (#983: a review queue
+  // is newest-first). If the RPC is missing (deploy before migration
   // 154) fall back to created_at and log instead of blanking the list.
   let ranking: RankedProvider[] | null = null;
-  if (!isValidLocation(location) && !query && limit !== undefined) {
+  if (!isValidLocation(location) && !query && limit !== undefined && !adminOptions?.status) {
     try {
-      ranking = await fetchDefaultOrderRanking(supabase, listingType, adminOptions?.status);
+      ranking = await fetchDefaultOrderRanking(supabase, listingType);
     } catch (rankError) {
       console.error(
         '[searchProviders] get_default_order_providers failed, using created_at',
@@ -409,19 +409,8 @@ export async function searchProviders(
       req = req
         .eq('food_providers.has_certificate', true)
         .not('food_providers.certificate_url', 'is', null);
-    } else if (minHalalTier === 'silver') {
-      // silver+ = gold OR (onsite + attestation).
-      // Gold = has_certificate + certificate_url, no attestation needed.
-      req = req.or(
-        'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.eq.onsite,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
-        { foreignTable: 'food_providers' },
-      );
     } else {
-      // bronze+ = gold OR (any verification_method + attestation)
-      req = req.or(
-        'and(has_certificate.eq.true,certificate_url.not.is.null),and(verification_method.not.is.null,or(no_alcohol.eq.true,no_pork.eq.true,no_gambling.eq.true))',
-        { foreignTable: 'food_providers' },
-      );
+      req = req.or(TIER_OR_RULES[minHalalTier], { foreignTable: 'food_providers' });
     }
   }
 

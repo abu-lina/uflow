@@ -225,6 +225,7 @@ export function ProvidersContent({
       deferPinsUntilMapOpened: true,
       section,
       filters: normalizedFilters,
+      tier: activeTier,
       openNow: dq.openNow,
       view: dq.view,
     },

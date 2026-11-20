@@ -112,6 +112,18 @@ describe('#674 AC5: section route map uses the list scope', () => {
     );
   });
 
+  it('passes the list tier to the map pin query (#982)', async () => {
+    nav.search = 'location=Stuttgart&view=map&open_now=1&tier=gold';
+
+    render(<ProvidersContent initialSection="food" />);
+
+    await waitFor(() =>
+      expect(mockGetMapLocations).toHaveBeenCalledWith(
+        expect.objectContaining({ section: 'food', tier: 'gold' }),
+      ),
+    );
+  });
+
   it('does not pass the list city (?location=) to the map pin query (#605)', async () => {
     nav.search = 'view=map&location=Berlin';
 
