@@ -1,8 +1,10 @@
--- Step 2 of 5: REHEARSAL. Paste into the Supabase SQL Editor and run. Nothing is saved.
--- Does the real work of step 3 (same locks, same update, same archive, same checks), then ALWAYS ends with
--- an error, so everything is rolled back. The error you want to see is:
+-- Step 2 of 5: REHEARSAL. Paste into the Supabase SQL Editor and run (click in the editor, deselect any
+-- text, then Run). Nothing is saved.
+-- Runs the same lock, update, archive and after-checks as step 3 (the constants and the N check are the
+-- only differences), then ALWAYS ends with an error, so everything is rolled back. The error you want is:
 --   REHEARSAL OK: N rows would change; rolled back
 -- Write N down: step 3 needs it. Any other error starting with ABORT means a check failed; see README.md.
+-- This file can only ever end in an error, so it cannot commit. Keep it separate from step 3.
 DO $$
 DECLARE
   min_approved_food int := 100;
@@ -15,6 +17,8 @@ DECLARE
   v_after int;
   v_below int;
 BEGIN
+  PERFORM set_config('lock_timeout', '10s', true);
+
   LOCK TABLE public.food_providers IN SHARE ROW EXCLUSIVE MODE;
 
   CREATE TABLE IF NOT EXISTS public.halal_backfill_987_archive (
@@ -41,7 +45,7 @@ BEGIN
     WHERE p.listing_type = 'food' AND p.review_status = 'approved'
       AND NOT EXISTS (SELECT 1 FROM public.food_providers fp WHERE fp.provider_id = p.provider_id);
   IF v_missing > 0 THEN
-    RAISE EXCEPTION 'ABORT: % approved food providers have no food_providers row', v_missing;
+    RAISE EXCEPTION 'ABORT: % approved food providers have no food_providers row; nothing changed', v_missing;
   END IF;
 
   SELECT count(*) INTO v_before FROM public.food_providers fp JOIN public.providers p USING (provider_id)
@@ -51,6 +55,7 @@ BEGIN
     WHERE p.listing_type = 'food' AND p.review_status = 'approved'
       AND NOT (fp.no_alcohol IS TRUE AND fp.no_pork IS TRUE AND fp.no_gambling IS TRUE)
       AND NOT EXISTS (SELECT 1 FROM public.halal_backfill_987_archive a WHERE a.provider_id = fp.provider_id);
+
   WITH o AS (
     SELECT fp.provider_id, fp.no_alcohol, fp.no_pork, fp.no_gambling, fp.updated_at
     FROM public.food_providers fp
@@ -82,12 +87,14 @@ BEGIN
       AND NOT (fp.no_alcohol IS TRUE AND fp.no_pork IS TRUE AND fp.no_gambling IS TRUE);
 
   IF v_changed <> v_candidates OR v_archived <> v_candidates THEN
-    RAISE EXCEPTION 'ABORT: candidates %, changed %, archived %', v_candidates, v_changed, v_archived;
+    RAISE EXCEPTION 'ABORT: candidates %, changed %, archived %; nothing changed', v_candidates, v_changed, v_archived;
   END IF;
   IF v_below <> 0 OR v_after <> v_before + v_changed THEN
-    RAISE EXCEPTION 'ABORT: below the bar after = %, all-true before % + changed % <> after %',
+    RAISE EXCEPTION 'ABORT: below the bar after = %, all-true before % + changed % <> after %; nothing changed',
       v_below, v_before, v_changed, v_after;
   END IF;
 
+  -- [rehearsal-only]
   RAISE EXCEPTION 'REHEARSAL OK: % rows would change; rolled back', v_changed;
+  -- [/rehearsal-only]
 END $$;

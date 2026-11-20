@@ -1,15 +1,20 @@
--- Step 3 of 5: REAL RUN (commits). Paste into the Supabase SQL Editor and run.
+-- Step 3 of 5: REAL RUN (commits). Paste into the Supabase SQL Editor and run (click in the editor, deselect
+-- any text, then Run; the editor runs only the selected text).
 -- Sets no_alcohol / no_pork / no_gambling = true on every approved food provider that is not yet all
 -- true, and archives the old values in public.halal_backfill_987_archive (the same table the psql
 -- version uses). Nothing is written unless every check passes; any failed check aborts the whole run.
 --
--- >>> EDIT THE TWO CONSTANTS BELOW BEFORE RUNNING <<<
---   expected_db_name : the name of the database you mean to change (Supabase shows it as "postgres").
---   expected_changed : N from step 2 ("REHEARSAL OK: N rows would change").
--- Leave min_approved_food alone. The run aborts if the values are not edited or do not match.
+-- >>> EDIT THE THREE CONSTANTS BELOW BEFORE RUNNING <<<
+--   expected_db_name       : "postgres". Every Supabase project's database has this name, so this only
+--                            catches a connection to some other kind of database. It does NOT tell prod
+--                            from UAT. Check the project ref in the dashboard URL before every run.
+--   expected_approved_food : "approved_food" from the TOTAL row of step 1 (the exact count).
+--   expected_changed       : N from step 2 ("REHEARSAL OK: N rows would change").
+-- Leave min_approved_food alone. The run aborts if a constant is not edited or does not match.
 DO $$
 DECLARE
   expected_db_name text := 'EDIT_ME';
+  expected_approved_food int := -1;
   expected_changed int := -1;
   min_approved_food int := 100;
   v_approved int;
@@ -21,12 +26,18 @@ DECLARE
   v_after int;
   v_below int;
 BEGIN
+  PERFORM set_config('lock_timeout', '10s', true);
+  -- [run-only]
   IF current_database() <> expected_db_name THEN
     RAISE EXCEPTION 'ABORT: connected to database "%", expected_db_name is "%"; nothing changed', current_database(), expected_db_name;
+  END IF;
+  IF expected_approved_food < 0 THEN
+    RAISE EXCEPTION 'ABORT: set expected_approved_food to approved_food from step 1; nothing changed';
   END IF;
   IF expected_changed < 0 THEN
     RAISE EXCEPTION 'ABORT: set expected_changed to N from step 2; nothing changed';
   END IF;
+  -- [/run-only]
 
   LOCK TABLE public.food_providers IN SHARE ROW EXCLUSIVE MODE;
 
@@ -49,6 +60,11 @@ BEGIN
   IF v_approved < min_approved_food THEN
     RAISE EXCEPTION 'ABORT: only % approved food providers (expected about 157); wrong database? nothing changed', v_approved;
   END IF;
+  -- [run-only]
+  IF v_approved <> expected_approved_food THEN
+    RAISE EXCEPTION 'ABORT: found % approved food providers, expected_approved_food is %; nothing changed', v_approved, expected_approved_food;
+  END IF;
+  -- [/run-only]
 
   SELECT count(*) INTO v_missing FROM public.providers p
     WHERE p.listing_type = 'food' AND p.review_status = 'approved'
@@ -64,9 +80,11 @@ BEGIN
     WHERE p.listing_type = 'food' AND p.review_status = 'approved'
       AND NOT (fp.no_alcohol IS TRUE AND fp.no_pork IS TRUE AND fp.no_gambling IS TRUE)
       AND NOT EXISTS (SELECT 1 FROM public.halal_backfill_987_archive a WHERE a.provider_id = fp.provider_id);
+  -- [run-only]
   IF v_candidates <> expected_changed THEN
     RAISE EXCEPTION 'ABORT: found % rows to change, expected_changed is %; nothing changed', v_candidates, expected_changed;
   END IF;
+  -- [/run-only]
 
   WITH o AS (
     SELECT fp.provider_id, fp.no_alcohol, fp.no_pork, fp.no_gambling, fp.updated_at
@@ -98,16 +116,21 @@ BEGIN
     WHERE p.listing_type = 'food' AND p.review_status = 'approved'
       AND NOT (fp.no_alcohol IS TRUE AND fp.no_pork IS TRUE AND fp.no_gambling IS TRUE);
 
-  IF v_changed <> expected_changed OR v_archived <> expected_changed THEN
-    RAISE EXCEPTION 'ABORT: expected %, changed %, archived %; nothing changed', expected_changed, v_changed, v_archived;
+  IF v_changed <> v_candidates OR v_archived <> v_candidates THEN
+    RAISE EXCEPTION 'ABORT: candidates %, changed %, archived %; nothing changed', v_candidates, v_changed, v_archived;
   END IF;
   IF v_below <> 0 OR v_after <> v_before + v_changed THEN
     RAISE EXCEPTION 'ABORT: below the bar after = %, all-true before % + changed % <> after %; nothing changed',
       v_below, v_before, v_changed, v_after;
   END IF;
 
-  EXECUTE format('COMMENT ON TABLE public.halal_backfill_987_archive IS %L',
-    'backfill-987 applied via SQL Editor script; changed ' || v_changed || ' rows at ' || now()::text);
+  -- [run-only]
+  -- Only a run that changed rows writes the marker, so a no-op re-run keeps the original note.
+  IF v_changed > 0 THEN
+    EXECUTE format('COMMENT ON TABLE public.halal_backfill_987_archive IS %L',
+      'backfill-987 applied via SQL Editor script; changed ' || v_changed || ' rows at ' || now()::text);
+  END IF;
+  -- [/run-only]
 END $$;
 
 -- Result of the run: archived rows in total (compare with N, then run step 4).
