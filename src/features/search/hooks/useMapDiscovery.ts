@@ -5,6 +5,7 @@ import { getMapLocations } from '@/services/providers';
 import type { RawLocationRow } from '@/services/providers';
 import type { Section } from '@/config/sectionFilters';
 import type { SearchFilterKey } from '@/features/search/constants/filterKeys';
+import type { HalalTier } from '@/features/search/discoveryQuery';
 import { filterOpenNow } from '@/utils/filterOpenNow';
 import type { MapPin } from '@/features/search/components/SearchMap';
 import { buildViewToggleLink } from '@/features/search/discoveryQuery';
@@ -99,6 +100,7 @@ export function useMapDiscovery(
     section?: Section;
     city?: string | null;
     filters?: SearchFilterKey[];
+    tier?: HalalTier;
     openNow?: boolean;
     view?: string | null;
   },
@@ -122,6 +124,7 @@ export function useMapDiscovery(
   const city = options?.city;
   // Joined to a string so a new array with the same keys doesn't refetch.
   const filterKey = options?.filters?.join(',') ?? '';
+  const tier = options?.tier;
   const [hasOpenedMap, setHasOpenedMap] = useState(initialView === 'map');
   const [allRows, setAllRows] = useState<RawLocationRow[]>([]);
   const [pinsLoading, setPinsLoading] = useState(!deferPins);
@@ -203,7 +206,7 @@ export function useMapDiscovery(
       setPinsError(null);
       try {
         const filters = filterKey ? (filterKey.split(',') as SearchFilterKey[]) : undefined;
-        const rows = await getMapLocations({ section, city, reviewStatus, filters });
+        const rows = await getMapLocations({ section, city, reviewStatus, filters, tier });
         setAllRows(rows);
       } catch (err) {
         setPinsError(err instanceof Error ? err : new Error(String(err)));
@@ -212,7 +215,7 @@ export function useMapDiscovery(
       }
     };
     void load();
-  }, [reviewStatus, deferPins, hasOpenedMap, section, city, filterKey]);
+  }, [reviewStatus, deferPins, hasOpenedMap, section, city, filterKey, tier]);
 
   // Compute map pins from allRows, filtering by open-now when active
   const pins = useMemo<MapPin[]>(() => {

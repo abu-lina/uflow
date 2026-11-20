@@ -11,6 +11,7 @@ const mockNot = vi.fn();
 const mockEq = vi.fn();
 const mockOrder = vi.fn();
 const mockLimit = vi.fn();
+const mockOr = vi.fn();
 
 // The query builder is awaited directly, so the chain must be thenable.
 type QueryResult = { data: unknown[] | null; error: { message: string } | null };
@@ -22,6 +23,7 @@ const chain: Record<string, any> = {
   eq: mockEq,
   order: mockOrder,
   limit: mockLimit,
+  or: mockOr,
 };
 
 function setResult(result: QueryResult) {
@@ -41,7 +43,7 @@ vi.mock('@/lib/supabase/client', () => ({
 describe('getMapLocations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    for (const m of [mockSelect, mockNot, mockEq, mockOrder, mockLimit]) {
+    for (const m of [mockSelect, mockNot, mockEq, mockOrder, mockLimit, mockOr]) {
       m.mockReturnValue(chain);
     }
     setResult({ data: [], error: null });
@@ -97,6 +99,25 @@ describe('getMapLocations', () => {
 
     expect(mockNot).toHaveBeenCalledWith('location_latitude', 'is', null);
     expect(mockNot).toHaveBeenCalledWith('location_longitude', 'is', null);
+  });
+
+  it.each(['silver', 'bronze'] as const)(
+    'filters %s tier on the nested food_providers embed (#982)',
+    async (tier) => {
+      await getMapLocations({ section: 'food', tier });
+
+      expect(mockSelect).toHaveBeenCalledWith(expect.stringContaining('food_providers!inner('));
+      expect(mockOr).toHaveBeenCalledWith(expect.any(String), {
+        referencedTable: 'providers.food_providers',
+      });
+    },
+  );
+
+  it('ignores tier outside the food section, like the list (#982)', async () => {
+    await getMapLocations({ section: 'store', tier: 'gold' });
+
+    expect(mockSelect).toHaveBeenCalledWith(expect.not.stringContaining('food_providers'));
+    expect(mockEq).not.toHaveBeenCalledWith('providers.food_providers.has_certificate', true);
   });
 
   it('returns an empty array when data is null', async () => {
