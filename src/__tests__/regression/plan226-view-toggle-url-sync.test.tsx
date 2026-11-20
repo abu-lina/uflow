@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+import { StrictMode } from 'react';
 import { renderHook, act, cleanup } from '@testing-library/react';
 import { useMapDiscovery } from '@/features/search/hooks/useMapDiscovery';
 
@@ -199,5 +200,27 @@ describe('Plan 226 useMapDiscovery URL sync', () => {
     expect(url).toContain('q=shawarma');
     expect(url).not.toContain('view=');
     expect(url).toBe('/food?q=shawarma');
+  });
+
+  // ── #992: router update must not run inside a setState updater ─────────────
+
+  it('toggling the view under StrictMode replaces the URL exactly once (no router update during render)', () => {
+    // A pending update on the component makes React run the view updater during
+    // render; StrictMode double-invokes it, so a replace() inside it fires twice.
+    const params = new URLSearchParams();
+    const { result } = renderHook(
+      () => useMapDiscovery(geo, 'list', null, makeUrlSync(params, '/food')),
+      { wrapper: StrictMode },
+    );
+    expect(mockReplace).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.setHeaderHeight(200);
+      result.current.toggleViewMode();
+    });
+
+    expect(result.current.viewMode).toBe('map');
+    expect(mockReplace).toHaveBeenCalledTimes(1);
+    expect(mockReplace).toHaveBeenCalledWith('/food?view=map', { scroll: false });
   });
 });
