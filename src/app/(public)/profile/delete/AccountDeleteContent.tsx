@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2, AlertTriangle, Loader2, Lock } from 'lucide-react';
 
@@ -35,6 +35,11 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   // Handle authentication state
   useEffect(() => {
@@ -56,21 +61,29 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
     setError(null);
     setShowConfirmation(false);
 
+    let outcome: Awaited<ReturnType<typeof accountService.deleteAccount>>;
     try {
-      // Perform hard deletion on the server
-      await accountService.deleteAccount();
-
-      // Sign out the user
-      await authService.signOut();
-
-      // Redirect to home page
-      router.push('/?auth=required');
+      outcome = await accountService.deleteAccount();
     } catch (err) {
       console.error('Error deleting account:', err);
-      setError(err instanceof Error ? err.message : t('profile.errorDeletingAccount'));
-    } finally {
+      setError(t('profile.errorDeletingAccount'));
       setIsDeleting(false);
+      return;
     }
+
+    if (outcome === 'signed-out') {
+      router.replace('/login');
+      return;
+    }
+
+    // The account is already gone; a failed sign-out must not block the redirect.
+    try {
+      await authService.signOut();
+    } catch (err) {
+      console.error('Sign-out after account deletion failed:', err);
+    }
+    // isDeleting stays true so the buttons don't re-enable before navigation.
+    router.push('/?auth=required');
   };
 
   // Show loading while auth is being checked
@@ -110,7 +123,7 @@ export function AccountDeleteContent({ user }: AccountDeleteContentProps) {
       <PageContentWrapper includeMobileNavSpacing={false} maxWidth="full" padding="lg-safe">
         {/* Error Message */}
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-4" role="alert">
+          <div ref={errorRef} className="mb-4 rounded-lg bg-red-50 p-4" role="alert" tabIndex={-1}>
             <p className="text-center text-red-600">{error}</p>
           </div>
         )}
