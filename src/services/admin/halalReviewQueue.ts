@@ -135,6 +135,23 @@ export async function confirmHalalReview(
   const sixMonthsLater = new Date(now);
   sixMonthsLater.setMonth(sixMonthsLater.getMonth() + 6);
 
+  // #987: a confirmed false drops an approved provider below the bar. Only approved rows move.
+  // Flip before the write so a failure leaves a flagged provider, never a public one with a false answer.
+  // Assumes approved rows already pass the gate, so an all-true confirm needs no flip.
+  if (HALAL_FIELDS.some((f) => values[f] !== true)) {
+    const { error: flipError } = await supabase
+      .from('providers')
+      .update({ review_status: 'needs_revision' })
+      .eq('provider_id', providerId)
+      .eq('review_status', 'approved');
+    if (flipError) {
+      return {
+        success: false,
+        error: `Failed to flag provider for revision: ${flipError.message}`,
+      };
+    }
+  }
+
   const { data: updated, error: updateError } = await supabase
     .from('food_providers')
     .update({
@@ -150,21 +167,6 @@ export async function confirmHalalReview(
     return { success: false, error: `Failed to update provider: ${updateError.message}` };
   if (!updated || updated.length === 0) {
     return { success: false, error: 'Provider has no food provider record to update' };
-  }
-
-  // #987: a confirmed false drops an approved provider below the bar. Only approved rows move.
-  if (HALAL_FIELDS.some((f) => values[f] !== true)) {
-    const { error: flipError } = await supabase
-      .from('providers')
-      .update({ review_status: 'needs_revision' })
-      .eq('provider_id', providerId)
-      .eq('review_status', 'approved');
-    if (flipError) {
-      return {
-        success: false,
-        error: `Failed to flag provider for revision: ${flipError.message}`,
-      };
-    }
   }
 
   const { error: statusError } = await supabase

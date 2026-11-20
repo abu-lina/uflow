@@ -413,21 +413,8 @@ export async function approveCandidate(
   }
 
   const isFoodProviderField = FOOD_PROVIDER_FIELDS.includes(candidate.field_name);
-  const { error: updateError } = isFoodProviderField
-    ? await supabase
-        .from('food_providers')
-        .update({ [candidate.field_name]: candidate.proposed_value })
-        .eq('provider_id', candidate.provider_id)
-    : await supabase
-        .from('providers')
-        .update(providerUpdatePayload)
-        .eq('provider_id', candidate.provider_id);
-
-  if (updateError) {
-    return { success: false, error: `Failed to update provider: ${updateError.message}` };
-  }
-
   // #987: a non-true attestation drops an approved provider below the bar. Only approved rows move.
+  // Flip before the write so a failure leaves a flagged provider, never a public one with a false answer.
   if (isFoodProviderField && candidate.proposed_value !== true) {
     const { error: flipError } = await supabase
       .from('providers')
@@ -440,6 +427,20 @@ export async function approveCandidate(
         error: `Failed to flag provider for revision: ${flipError.message}`,
       };
     }
+  }
+
+  const { error: updateError } = isFoodProviderField
+    ? await supabase
+        .from('food_providers')
+        .update({ [candidate.field_name]: candidate.proposed_value })
+        .eq('provider_id', candidate.provider_id)
+    : await supabase
+        .from('providers')
+        .update(providerUpdatePayload)
+        .eq('provider_id', candidate.provider_id);
+
+  if (updateError) {
+    return { success: false, error: `Failed to update provider: ${updateError.message}` };
   }
 
   // 4. Mark candidate as applied

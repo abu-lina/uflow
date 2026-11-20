@@ -52,8 +52,11 @@ echo "== restore returns the original values exactly"
 psql "$DB" -X -v ON_ERROR_STOP=1 -v finish=COMMIT -f restore-987-food-halal.sql >/dev/null
 [ "$(snap)" = "$S0" ] || fail "restore did not return the original data"
 
+echo "== refuses a commit without i_am_prod"
+OUT=$(psql "$DB" -X -v mode=run -v finish=COMMIT -f backfill-987-food-halal.sql 2>&1); grep -q "i_am_prod" <<<"$OUT" || fail "did not demand i_am_prod"
+
 echo "== refuses a small DB without allow_small"
-OUT=$(psql "$DB" -X -v mode=run -v finish=COMMIT -f backfill-987-food-halal.sql 2>&1); grep -q REFUSING <<<"$OUT" || fail "did not refuse a small DB"
+OUT=$(psql "$DB" -X -v mode=run -v finish=COMMIT -v i_am_prod=yes -f backfill-987-food-halal.sql 2>&1); grep -q REFUSING <<<"$OUT" || fail "did not refuse a small DB"
 [ "$(snap)" = "$S0" ] || fail "refused run changed data"
 
 q "DROP TABLE public.halal_backfill_987_archive" >/dev/null

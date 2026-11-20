@@ -5,8 +5,8 @@
 --     psql "$DB_URL" -v mode=dry -f scripts/db/backfill-987-food-halal.sql
 --   Rehearsal (does the work, then rolls back; default finish):
 --     psql "$DB_URL" -v mode=run -f scripts/db/backfill-987-food-halal.sql
---   Real run (commits):
---     psql "$DB_URL" -v mode=run -v finish=COMMIT -f scripts/db/backfill-987-food-halal.sql
+--   Real run (commits; -v i_am_prod=yes confirms $DB_URL is prod, not UAT or a copy):
+--     psql "$DB_URL" -v mode=run -v finish=COMMIT -v i_am_prod=yes -f scripts/db/backfill-987-food-halal.sql
 --   Local testing against a small DB only: add -v allow_small=1
 --
 -- Safety: one transaction; the old values are archived from the same UPDATE ... RETURNING
@@ -19,6 +19,7 @@
 \if :{?mode} \else \set mode dry \endif
 \if :{?finish} \else \set finish ROLLBACK \endif
 \if :{?allow_small} \else \set allow_small 0 \endif
+\if :{?i_am_prod} \else \set i_am_prod no \endif
 SELECT (:'mode' = 'run') AS is_run \gset
 
 BEGIN;
@@ -34,6 +35,15 @@ CREATE TABLE IF NOT EXISTS public.halal_backfill_987_archive (
 );
 -- Owner-owned. Not exposed through the Data API.
 ALTER TABLE public.halal_backfill_987_archive ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.halal_backfill_987_archive FROM anon, authenticated;
+
+-- Guard: a real commit needs an explicit prod confirmation (the row count cannot tell prod from a copy).
+SELECT (:'mode' = 'run' AND :'finish' = 'COMMIT' AND :allow_small <> 1 AND :'i_am_prod' <> 'yes') AS unconfirmed \gset
+\if :unconfirmed
+  \echo 'REFUSING: a COMMIT run needs -v i_am_prod=yes (confirm DB_URL is prod)'
+  ROLLBACK;
+  \quit
+\endif
 
 -- Guard: refuse an empty or non-prod-looking DB (prod has 157 approved food providers).
 SELECT count(*) AS approved_food FROM public.providers
