@@ -16,9 +16,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type Row = Record<string, unknown>;
 
+// #982: a food_providers row with a certificate is gold tier
+const GOLD = { has_certificate: true, certificate_url: 'https://example.com/cert.pdf' };
+
 const PROVIDERS: Row[] = [
   // Berlin, muslim-owned, geocoded: list + pin
-  provider('p-geo', { address_city: 'Berlin', muslim_owned: true }),
+  provider('p-geo', { address_city: 'Berlin', muslim_owned: true, food_providers: GOLD }),
   // Berlin, muslim-owned, no coordinates: list only
   provider('p-no-coords', { address_city: 'Berlin', muslim_owned: true }),
   // Berlin, not muslim-owned: excluded from the filtered list
@@ -67,7 +70,7 @@ function valueAt(row: Row, path: string): unknown {
   return path.split('.').reduce<unknown>((value, key) => (value as Row | undefined)?.[key], row);
 }
 
-/** Minimal PostgREST builder over the fixture: applies eq / not-is-null / in. */
+/** Minimal PostgREST builder over the fixture: applies eq / not-is-null / in (filter only as not.is). */
 function fakeClient(): SupabaseClient {
   const tables: Record<string, Row[]> = { providers: PROVIDERS, locations: LOCATIONS };
   const from = (table: string) => {
@@ -84,10 +87,15 @@ function fakeClient(): SupabaseClient {
     builder.returns = chain();
     builder.eq = (col: string, value: unknown) =>
       chain(() => (rows = rows.filter((r) => valueAt(r, col) === value)))();
-    builder.not = (col: string, op: string, value: unknown) =>
+    const notIsNull = (col: string, op: string, value: unknown) =>
       chain(() => {
         if (op === 'is' && value === null) rows = rows.filter((r) => valueAt(r, col) != null);
       })();
+    builder.not = notIsNull;
+    builder.filter = (col: string, op: string, value: unknown) => {
+      if (op !== 'not.is') throw new Error(`fake filter: unsupported operator ${op}`);
+      return notIsNull(col, 'is', value);
+    };
     builder.in = (col: string, values: unknown[]) =>
       chain(() => (rows = rows.filter((r) => values.includes(valueAt(r, col)))))();
     builder.then = (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
@@ -148,6 +156,7 @@ import { renderProvidersPage } from '@/app/(public)/providers/renderProvidersPag
 import { getMapLocations, searchProvidersAndCommunityServices } from '@/services/providers';
 import type { SearchResult } from '@/services/providers';
 import type { SearchFilterKey } from '@/features/search/constants/filterKeys';
+import type { HalalTier } from '@/features/search/discoveryQuery';
 
 async function foodListIds(params: Record<string, string>, routeCity?: string) {
   const element = (await renderProvidersPage({
@@ -165,7 +174,11 @@ async function foodListIds(params: Record<string, string>, routeCity?: string) {
   return content.props.initialData.results.map((r) => r.id);
 }
 
-async function pinIds(opts: { city?: string | null; filters?: SearchFilterKey[] }) {
+async function pinIds(opts: {
+  city?: string | null;
+  filters?: SearchFilterKey[];
+  tier?: HalalTier;
+}) {
   const rows = await getMapLocations({ section: 'food', ...opts }, client.current ?? undefined);
   return rows
     .filter((row) => row.location_latitude !== null && row.location_longitude !== null)
@@ -217,6 +230,29 @@ describe('#674 AC5: map pins are a subset of the list', () => {
     const listIds = await foodListIds({ filters: 'muslim' }, 'Berlin');
     const pins = await pinIds({ city: 'Berlin', filters: ['muslim'] });
 
+    expect(pins.filter((id) => !listIds.includes(id))).toEqual([]);
+  });
+});
+
+describe('#982: map pins respect tier like the list', () => {
+  it('tier=gold pins are only gold providers, all in the gold list', async () => {
+    const list = await searchProvidersAndCommunityServices(
+      '',
+      null,
+      '',
+      0,
+      50,
+      undefined,
+      'food',
+      undefined,
+      undefined,
+      'gold',
+    );
+    const listIds = list.results.map((r) => r.id);
+
+    const pins = await pinIds({ tier: 'gold' });
+
+    expect(pins).toEqual(['p-geo']);
     expect(pins.filter((id) => !listIds.includes(id))).toEqual([]);
   });
 });

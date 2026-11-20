@@ -7,6 +7,8 @@ import {
 } from '@/features/search/constants/filterKeys';
 import { getSupabaseClient } from './client';
 import type { OpeningHours } from '@/types/openingHours';
+import { parseTier, type HalalTier } from '@/features/search/discoveryQuery';
+import { TIER_EMBED, TIER_OR_RULES } from './tierFilter';
 
 /** Raw row shape returned by the locations+providers join query for map pins. */
 export interface RawLocationRow {
@@ -52,6 +54,7 @@ export interface MapLocationsOptions {
   city?: string | null;
   reviewStatus?: string | null;
   filters?: SearchFilterKey[];
+  tier?: HalalTier;
 }
 
 /**
@@ -59,16 +62,21 @@ export interface MapLocationsOptions {
  * pins for a section/city/filter scope are a subset of its list (#674).
  */
 export async function getMapLocations(
-  { section = DEFAULT_SECTION, city, reviewStatus, filters }: MapLocationsOptions = {},
+  { section = DEFAULT_SECTION, city, reviewStatus, filters, tier }: MapLocationsOptions = {},
   client?: SupabaseClient,
 ): Promise<RawLocationRow[]> {
   const supabase = getSupabaseClient(client);
+  // #982: tier applies to food only, as in searchProvidersAndCommunityServices.
+  // parseTier drops values outside the allowlist, so they add no join.
+  const minTier = section === 'food' ? parseTier(tier ?? null) : undefined;
+  const tierEmbed = minTier ? `, ${TIER_EMBED}` : '';
+
+  // Typed as string: the select-type parser cannot read an interpolated embed.
+  const select: string = `provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories!providers_category_id_fkey(name_de, name_en, category_images)${tierEmbed})`;
 
   let query = supabase
     .from('locations')
-    .select(
-      'provider_id, location_latitude, location_longitude, providers!inner(provider_name, listing_type, review_status, opening_hours, provider_images, address_city, category_id, categories!providers_category_id_fkey(name_de, name_en, category_images))',
-    )
+    .select(select)
     .not('location_latitude', 'is', null)
     .not('location_longitude', 'is', null)
     .eq('providers.listing_type', section)
@@ -82,13 +90,24 @@ export async function getMapLocations(
     query = query.eq(`providers.${SEARCH_FILTER_KEY_TO_PROVIDER_COLUMN[filterKey]}`, true);
   }
 
+  // #982: same tier rules as searchProviders (#939), on the nested embed
+  if (minTier === 'gold') {
+    query = query
+      .eq('providers.food_providers.has_certificate', true)
+      // filter(), not not(): the typed not() recurses too deep on a nested path
+      .filter('providers.food_providers.certificate_url', 'not.is', null);
+  } else if (minTier) {
+    query = query.or(TIER_OR_RULES[minTier], { referencedTable: 'providers.food_providers' });
+  }
+
   const { data, error } = await query
     .order('provider_id', { ascending: true })
-    .limit(MAP_LOCATIONS_LIMIT);
+    .limit(MAP_LOCATIONS_LIMIT)
+    .returns<RawLocationRow[]>();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return Array.isArray(data) ? (data as RawLocationRow[]) : [];
+  return Array.isArray(data) ? data : [];
 }
