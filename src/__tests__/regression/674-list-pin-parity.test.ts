@@ -92,8 +92,10 @@ function fakeClient(): SupabaseClient {
         if (op === 'is' && value === null) rows = rows.filter((r) => valueAt(r, col) != null);
       })();
     builder.not = notIsNull;
-    builder.filter = (col: string, op: string, value: unknown) =>
-      notIsNull(col, op.replace(/^not\./, ''), value);
+    builder.filter = (col: string, op: string, value: unknown) => {
+      if (op !== 'not.is') throw new Error(`fake filter: unsupported operator ${op}`);
+      return notIsNull(col, 'is', value);
+    };
     builder.in = (col: string, values: unknown[]) =>
       chain(() => (rows = rows.filter((r) => values.includes(valueAt(r, col)))))();
     builder.then = (resolve: (v: unknown) => unknown, reject?: (e: unknown) => unknown) =>
