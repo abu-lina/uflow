@@ -90,7 +90,7 @@ describe('DELETE /api/user/delete-account', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ success: true });
     expect(calls).toEqual([
-      { table: 'providers', column: 'user_created_id', value: USER_ID },
+      { table: 'providers', column: 'provider_owner_id', value: USER_ID },
       { table: 'bookmarks', column: 'user_id', value: USER_ID },
       { table: 'users', column: 'user_id', value: USER_ID },
       { table: 'auth.users', column: 'id', value: USER_ID },

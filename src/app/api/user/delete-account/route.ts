@@ -21,8 +21,9 @@ export async function DELETE(request: Request) {
 
   const admin = getSupabaseAdmin();
   const steps: [table: string, column: string][] = [
-    // user_created_id is set on owned providers and recommendations alike
-    ['providers', 'user_created_id'],
+    // Owned providers only, as the RLS-bound browser delete and the RPC did; recommendations
+    // stay (user_created_id is set null) so a listing claimed by someone else survives.
+    ['providers', 'provider_owner_id'],
     ['bookmarks', 'user_id'],
     ['users', 'user_id'],
   ];

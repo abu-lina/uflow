@@ -6,6 +6,8 @@
 -- not the caller's own when the call carries a user identity. Body is the
 -- baseline's otherwise. Idempotent.
 
+BEGIN;
+
 CREATE OR REPLACE FUNCTION public.delete_user_account(user_id uuid) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
@@ -34,3 +36,5 @@ GRANT EXECUTE ON FUNCTION public.delete_user_account(uuid) TO service_role;
 
 REVOKE ALL ON FUNCTION public.cleanup_orphaned_files() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.cleanup_orphaned_files() TO service_role;
+
+COMMIT;
