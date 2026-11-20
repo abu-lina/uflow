@@ -195,11 +195,25 @@ describe('#953 default order without a city, paged through the database', () => 
     });
   });
 
-  it('admin callers get population order for the status they asked for', async () => {
+  it('logged out with no city and no search text, the list keeps the RPC population order', async () => {
     const { client, calls } = makeClient(RANK);
-    await page(client, 13, 0, { admin: { status: 'all', isAdmin: true } });
-    expect(calls.rpc[0].args.review_status_filter).toBe('all');
+    const { providers } = await page(client, 30, 0);
+    expect(calls.rpc.map((c) => c.name)).toContain('get_default_order_providers');
+    // Past the 12-row brand-cap window the RPC order is served as-is.
+    expect(ids(providers).slice(12)).toEqual([...ids(loco).slice(2), ...ids(others).slice(10)]);
   });
+});
+
+describe('#983 admin status tabs list newest submissions first', () => {
+  it.each(['pending', 'rejected', 'needs_revision', 'all'] as const)(
+    'the %s tab orders by created_at desc and skips the ranking RPC',
+    async (status) => {
+      const { client, calls } = makeClient(RANK);
+      await page(client, 13, 0, { admin: { status, isAdmin: true } });
+      expect(calls.rpc.map((c) => c.name)).not.toContain('get_default_order_providers');
+      expect(calls.orders).toEqual([{ column: 'created_at', ascending: false }]);
+    },
+  );
 });
 
 describe('#953 more providers than PostgREST max_rows (1000)', () => {
