@@ -6,7 +6,7 @@ Context for future sessions. Written 2026-10-13 when the plan-ID pipeline was re
 
 - Solo developer, Next.js 15 marketplace (~115k lines), macOS.
 - Agents: Claude Code (lane default) and GitHub Copilot CLI (`copilot --no-remote`). Local only. No `--cloud`, `/handoff` or `/delegate`.
-- Terminal: Ghostty + Herdr + zsh. Herdr workspaces and named agents are the only agent surface.
+- Terminal: Rex + zsh. Rex panes are the only agent surface.
 - Goal: parallel work with strict TDD and ~100k tokens of context per session.
 
 ## Decisions
@@ -19,17 +19,17 @@ Context for future sessions. Written 2026-10-13 when the plan-ID pipeline was re
 6. **Shared rules live in `AGENTS.md`** (under 16 KiB, most important first). Tool files (`.github/copilot-instructions.md`) only point to it.
 7. **Prove one lane end to end** before running lanes in parallel.
 8. **PR loop**: open a draft at first push with `Closes #N`, fix CI, answer reviews, stop after 3 failed fix attempts. See `docs/agents/pr-loop.md`.
-9. **Foreman status** reads Herdr's `working` / `blocked` / `idle` / `done` agent states and issue comments. `herdr agent wait <lane> --until blocked --until done` replaces polling.
-10. **Worktree per lane** in `.worktrees/<issue>-<slug>/`, `.env.lane` contains only `PORT` and `PLAYWRIGHT_BASE_URL`, `node_modules` cloned with `cp -c`, `PORT=3000 + issue % 1000`. Tests and dev server run inside the worktree.
-11. **Cleanup**: `lane_done <issue>` after merge removes the Herdr workspace and checkout. GitHub auto-deletes merged branches. Workspaces whose checkout path disappeared are reported in status.
+9. **Foreman status** comes from the lane's `.lane-signal` (delivered to the foreman's Rex pane by the Stop hook), issue comments and `lane_status`.
+10. **Worktree per lane** in `.worktrees/<issue>-<slug>/`, `.env.lane` contains `PORT`, `PLAYWRIGHT_BASE_URL`, `ISSUE` and the Rex coordinates (`REX_SESSION_ID`, `FOREMAN_BLOCK`, `LANE_BLOCK`), `node_modules` cloned with `cp -c`, `PORT=3000 + issue % 1000`. Tests and dev server run inside the worktree.
+11. **Cleanup**: `lane_done <issue>` after merge closes the lane's Rex pane and removes the checkout and local branch. GitHub auto-deletes merged branches.
 12. **Merge order**: branches must be up to date (ruleset enforces it). After each merge only the next PR in line is updated, via `gh pr update-branch`. Lanes never rebase.
-13. **Resume** a lane from the main checkout (`lane <issue>` focuses its existing Herdr workspace); never run `lane` inside `.worktrees/`.
+13. **Resume** a lane from the main checkout (`lane <issue>` closes the old Rex pane and opens a new one in the existing worktree); never run `lane` inside `.worktrees/`.
 14. **One learning file per issue.** Each lane adds `docs/ai/learnings/<issue>.md` in its PR and includes the one-sentence learning in the PR body and final issue comment. A shared `LEARNINGS.md` append would conflict on `gh pr update-branch` (#612); per-issue files mean no conflicts on update-branch, no bypass push, and no foreman writes.
 15. **Auto-dispatch is off.** `scripts/agent-dispatch.sh` and `agent-monitor.sh` were removed; the foreman proposes and the owner approves.
-16. **Herdr is the only agent surface.** VS Code remains an editor for hand-edits, not an agent surface. The foreman starts in the main repository workspace; lanes start in the root pane returned by Herdr worktree creation. Lanes accept a per-invocation model, and Copilot also accepts a reasoning-effort value.
+16. **Rex is the only agent surface.** VS Code remains an editor for hand-edits, not an agent surface. The foreman runs in the main checkout; `lane start` opens each lane in a new Rex pane split from the foreman's. Lanes accept a per-invocation model, and Copilot also accepts a reasoning-effort value.
 17. **Permissions are scoped where possible.** Copilot lanes auto-approve only the required write, npm/npx, git, and selected GitHub issue/PR tools, with explicit denies for merge, rebase, `.env.local` writes, and PR merge. The CLI cannot deny force-push at subcommand granularity, so preventing it remains an `AGENTS.md` rule, not a permission mechanism. Never use `--allow-all-paths`, `--allow-all`, or `--yolo`: they remove path checks or grant permissions beyond the lane's needs.
 18. **Folder trust was checked against current CLI help.** Copilot has no per-launch trust flag; `trustedFolders` can grant a specific path persistently in settings, while `COPILOT_ALLOW_ALL=true` also suppresses the prompt but auto-approves every tool and is not used. No trust setting is changed automatically for a new worktree.
-19. **Lane environment files stay minimal.** `.env.lane` contains only `PORT` and `PLAYWRIGHT_BASE_URL`; lane creation does not copy `.env.local`. An earlier lane created its own small placeholder and passed CI without access to the owner's larger `.env.local`. Keep `[ui.toast] delivery = "system"` in Herdr config for desktop notifications when a lane blocks.
+19. **Lane environment files.** `.env.lane` holds only ports, the issue number and Rex coordinates. Lane creation copies `.env.local` from the main checkout so the dev server boots; real secrets live in GitHub secrets, not in `.env.local`.
 
 ## Repo facts the decisions rest on (verified 2026-10-13)
 

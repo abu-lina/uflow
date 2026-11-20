@@ -18,7 +18,7 @@ for f in lane lane_done lane_status; do
   (( \${+functions[$f]} )) || echo "missing $f"
 done
 (( \${+functions[foreman]} )) && echo "unexpected foreman"
-print -l \${(k)functions} | grep -E '^_(lane|foreman|agent|herdr)_' || true`);
+print -l \${(k)functions} | grep -E '^_(lane|foreman|agent)_' || true`);
     expect(result.status).toBe(0);
     expect(result.stdout).toBe('');
   });
@@ -49,7 +49,7 @@ source ${shellQuote(laneSh)}
         `#!/usr/bin/env bash\nprintf '%s\\n' "$@" > "${dir}/args"\nexit ${exitCode}\n`,
       );
       chmodSync(join(scripts, 'lane'), 0o755);
-      for (const tool of ['herdr', 'gh', 'git']) {
+      for (const tool of ['gh', 'git']) {
         writeFileSync(join(bin, tool), '#!/bin/sh\nexit 0\n');
         chmodSync(join(bin, tool), 0o755);
       }

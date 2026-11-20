@@ -28,10 +28,6 @@ import { spawnTestTimeoutMs } from './helpers/timeout';
 const ciWorkflow = readFileSync(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
 const laneGuide = readFileSync(new URL('../../docs/agents/lane.md', import.meta.url), 'utf8');
 const foremanGuide = readFileSync(new URL('../../docs/agents/foreman.md', import.meta.url), 'utf8');
-const setupDecisions = readFileSync(
-  new URL('../../docs/agents/setup-decisions.md', import.meta.url),
-  'utf8',
-);
 
 const createLintStubs = (fixture: string) => {
   const bin = join(fixture, 'bin');
@@ -70,7 +66,6 @@ const startCopilotLane = (
   options: StartOptions = {},
 ) => {
   const bin = join(fixture, 'bin');
-  const herdrCalls = join(fixture, 'herdr-calls.log');
   const ghCalls = join(fixture, 'gh-calls.log');
   const tmuxLog = join(fixture, 'tmux.log');
   const rexLog = join(fixture, 'rex.log');
@@ -83,14 +78,6 @@ const startCopilotLane = (
   prepareRoot?.(root);
   writeStub(bin, 'gh', ghStub);
   writeStub(bin, 'tmux', `#!/bin/sh\nprintf '%s\\n' "$*" >> "$TMUX_LOG"\n`);
-  // Minimal herdr stub — lane.sh no longer calls herdr for lane start (Rex handles it).
-  writeStub(
-    bin,
-    'herdr',
-    `#!/bin/sh
-{ printf '%s' "$*" | tr '\\n' ' '; printf '\\n'; } >> "$HERDR_CALLS"
-`,
-  );
   // Rex stub: returns a fake block_id on split, an instant shell prompt on capture,
   // and logs the agent command args (one per line) so tests can assert on flags.
   writeStub(
@@ -133,7 +120,6 @@ esac
       REX_SESSION: TEST_REX_SESSION,
       REX_BLOCK: TEST_REX_BLOCK,
       PATH: `${bin}:${process.env.PATH}`,
-      HERDR_CALLS: herdrCalls,
       GH_CALLS: ghCalls,
       TMUX_LOG: tmuxLog,
       REX_LOG: rexLog,
@@ -150,7 +136,6 @@ esac
     rexArgs,
     rexPrompt,
     result,
-    herdrCalls: () => lines(herdrCalls),
     ghCalls: () => lines(ghCalls),
     tmuxCalls: () => lines(tmuxLog),
     rexCalls: () => lines(rexLog),
@@ -188,7 +173,6 @@ const runLaneDone = (
 ) => {
   const { root } = createLaneRepo(fixture);
   const bin = join(fixture, 'bin');
-  const herdrLog = join(fixture, 'herdr.log');
   const lsofLog = join(fixture, 'lsof.log');
   const dir = join(root, '.worktrees', '636-fixture');
   mkdirSync(join(root, '.worktrees'));
@@ -197,37 +181,20 @@ const runLaneDone = (
   prepare({ root, dir });
   writeStub(bin, 'gh', `#!/bin/sh\nprintf '%s\\n' "$PR_STATE"\n`);
   writeStub(bin, 'lsof', `#!/bin/sh\nprintf '%s\\n' "$*" >> "$LSOF_LOG"\nexit ${lsofStatus}\n`);
-  writeStub(
-    bin,
-    'herdr',
-    `#!/bin/sh
-printf '%s\\n' "$*" >> "$HERDR_LOG"
-case "$1 $2" in
-  "workspace list")
-    printf '{"result":{"workspaces":[{"workspace_id":"workspace-636","worktree":{"checkout_path":"%s"}}]}}\\n' "$LANE_DIR"
-    ;;
-  "worktree remove") [ -d "$LANE_DIR" ] && printf '%s\\n' 'checkout still present' >> "$HERDR_LOG" ;;
-esac
-`,
-  );
   const result = spawnSync('bash', [laneEntrypoint, 'done', '636'], {
     cwd: root,
     encoding: 'utf8',
     env: testEnv({
       PATH: `${bin}:${process.env.PATH}`,
-      HERDR_LOG: herdrLog,
       LSOF_LOG: lsofLog,
       LANE_DIR: dir,
       PR_STATE: prState,
     }),
   });
-  const calls = existsSync(herdrLog)
-    ? readFileSync(herdrLog, 'utf8').split('\n').filter(Boolean)
-    : [];
   const lsofCalls = existsSync(lsofLog)
     ? readFileSync(lsofLog, 'utf8').split('\n').filter(Boolean)
     : [];
-  return { root, dir, result, calls, lsofCalls };
+  return { root, dir, result, lsofCalls };
 };
 
 describe('lane shell helpers', { timeout: spawnTestTimeoutMs }, () => {
@@ -286,15 +253,6 @@ describe('lane shell helpers', { timeout: spawnTestTimeoutMs }, () => {
     const bin = join(fixture, 'bin');
     try {
       mkdirSync(bin);
-      writeFileSync(
-        join(bin, 'herdr'),
-        `#!/bin/sh
-case "$1 $2" in
-  "agent list"|"workspace list") printf '%s\\n' '{"result":{}}' ;;
-esac
-`,
-        { mode: 0o755 },
-      );
       writeFileSync(join(bin, 'jq'), '#!/bin/sh\ncat >/dev/null\n', { mode: 0o755 });
 
       const env = testEnv({ PATH: `${bin}:${process.env.PATH}` });
@@ -611,12 +569,6 @@ typeset -p worktree branch pr_info > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
     }
   });
 
-  it.skip('keeps learnings in the lane PR without a foreman follow-up commit', () => {
-    expect(foremanGuide).toMatch(/lane's learning file lands in its PR/i);
-    expect(foremanGuide).toMatch(/foreman edits no files after merge/i);
-    expect(foremanGuide).not.toMatch(/push(?:ing)? (?:the )?LEARNINGS commit/i);
-  });
-
   it('creates the linked branch and worktree and opens a Rex pane', () => {
     withFixture('lane-worktree-', (fixture) => {
       const { root, result, ghCalls, rexCalls } = startCopilotLane(fixture);
@@ -795,7 +747,6 @@ typeset -p worktree branch pr_info > "$VARIABLE_DECLARATIONS" 2>&1 || true`,
         `PORT=3641\nPLAYWRIGHT_BASE_URL=http://127.0.0.1:3641\nISSUE=641\nREX_SESSION_ID=${TEST_REX_SESSION}\nFOREMAN_BLOCK=${TEST_REX_BLOCK}\n`,
       );
       writeStub(bin, 'gh', ghStub);
-      writeStub(bin, 'herdr', '#!/bin/sh\n');
       writeStub(
         bin,
         'rex',
@@ -841,49 +792,45 @@ esac
   describe('lane done guards', () => {
     it('refuses to clean up a lane whose PR is not merged', () => {
       withFixture('lane-done-open-', (fixture) => {
-        const { dir, result, calls } = runLaneDone(fixture, () => {}, { prState: 'OPEN' });
+        const { dir, result } = runLaneDone(fixture, () => {}, { prState: 'OPEN' });
 
         expect(result.status).toBe(1);
         expect(result.stderr).toContain("PR for fix/636-fixture is 'OPEN', not MERGED");
-        expect(calls.filter((call) => call.startsWith('worktree remove'))).toEqual([]);
         expect(existsSync(dir)).toBe(true);
       });
     });
 
     it('refuses to clean up a lane with uncommitted changes', () => {
       withFixture('lane-done-dirty-', (fixture) => {
-        const { dir, result, calls } = runLaneDone(fixture, ({ dir: lane }) =>
+        const { dir, result } = runLaneDone(fixture, ({ dir: lane }) =>
           writeFileSync(join(lane, 'wip.txt'), 'wip\n'),
         );
 
         expect(result.status).toBe(1);
         expect(result.stderr).toContain(`${dir} has uncommitted changes`);
-        expect(calls.filter((call) => call.startsWith('worktree remove'))).toEqual([]);
         expect(existsSync(dir)).toBe(true);
       });
     });
 
     it('refuses to clean up a lane with unpushed commits', () => {
       withFixture('lane-done-unpushed-', (fixture) => {
-        const { dir, result, calls } = runLaneDone(fixture, ({ dir: lane }) =>
+        const { dir, result } = runLaneDone(fixture, ({ dir: lane }) =>
           commitFile(lane, 'unpushed.txt', 'local\n', 'unpushed lane work'),
         );
 
         expect(result.status).toBe(1);
         expect(result.stderr).toContain(`${dir} has unpushed commits`);
-        expect(calls.filter((call) => call.startsWith('worktree remove'))).toEqual([]);
         expect(existsSync(dir)).toBe(true);
       });
     });
 
     it('refuses to clean up a lane whose port still has a listener', () => {
       withFixture('lane-done-listening-', (fixture) => {
-        const { dir, result, calls, lsofCalls } = runLaneDone(fixture, () => {}, { lsofStatus: 0 });
+        const { dir, result, lsofCalls } = runLaneDone(fixture, () => {}, { lsofStatus: 0 });
 
         expect(result.status).toBe(1);
         expect(result.stderr).toContain('a process still listens on :3636');
         expect(lsofCalls.join('\n')).toContain('-iTCP:3636');
-        expect(calls.filter((call) => call.startsWith('worktree remove'))).toEqual([]);
         expect(existsSync(dir)).toBe(true);
       });
     });
@@ -918,29 +865,6 @@ esac
       expect(lines[0]).toBe('WORKTREE\tBRANCH\tPR\tCI');
       expect(lines.some((l) => l.includes('fix/641-existing'))).toBe(true);
     });
-  });
-
-  it('records the Herdr notification and environment decisions', () => {
-    expect(setupDecisions).toContain('Herdr');
-    expect(setupDecisions).toContain('delivery = "system"');
-    expect(setupDecisions).toContain('.env.local');
-  });
-
-  it.skip('keeps issue-comment reporting in the lane instructions', () => {
-    expect(laneGuide).toContain('commenting on the issue');
-    expect(foremanGuide).toContain('issue comments');
-    withFixture('lane-prompt-comment-', (fixture) => {
-      const { herdrCalls } = startCopilotLane(fixture);
-      const prompt = herdrCalls().find((call) => call.startsWith('agent prompt'));
-      expect(prompt).toContain('comment on the issue');
-    });
-  });
-
-  it.skip('documents model defaults and scoped permission decisions', () => {
-    expect(foremanGuide).toContain('claude-opus-5-5-high');
-    expect(setupDecisions).toContain('Ghostty');
-    expect(setupDecisions).toContain('trustedFolders');
-    expect(setupDecisions).toContain('allow-all-paths');
   });
 });
 describe('lane worktree git hooks (#655)', { timeout: spawnTestTimeoutMs }, () => {
@@ -1126,8 +1050,10 @@ describe('Removed agent paths (#980)', { timeout: spawnTestTimeoutMs }, () => {
       cwd: repoRoot,
       encoding: 'utf8',
     });
-    // LEARNINGS.md is frozen archived history (owner decision on #980).
+    // LEARNINGS.md is frozen archived history (owner decision on #980); .gitignore keeps a
+    // guard so a leftover local token file can't be committed.
     const archived = [
+      '.gitignore',
       'docs/ai/LEARNINGS.md',
       'docs/ai/learnings/',
       'agent-output/_archive/',

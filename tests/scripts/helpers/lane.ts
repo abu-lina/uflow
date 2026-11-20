@@ -75,23 +75,6 @@ case "$1 $2" in
 esac
 `;
 
-// Case body for a stub herdr: creates a real git worktree and returns a root pane.
-export const herdrWorktreeCreateCase = `  "worktree create")
-    shift 2
-    while [ "$#" -gt 0 ]; do
-      case "$1" in
-        --cwd) repo="$2"; shift 2 ;;
-        --branch) branch="$2"; shift 2 ;;
-        --base) base="$2"; shift 2 ;;
-        --path) path="$2"; shift 2 ;;
-        *) shift ;;
-      esac
-    done
-    git -C "$repo" worktree add -b "$branch" "$path" "$base" >/dev/null || exit 1
-    printf '%s\\n' '{"result":{"root_pane":{"pane_id":"pane-lane"}}}'
-    ;;
-`;
-
 /** Sanitized copy of process.env — prevents real Rex panes when vitest runs inside a Rex terminal. */
 export const testEnv = (overrides: Record<string, string | undefined> = {}) =>
   ({

@@ -169,6 +169,9 @@ supabase/seed-multi-location-example.sql
 # rather than generating one here, so the root AGENTS.md is committed.
 /CLAUDE.md
 
+# leftover local agent config (may hold tokens; never commit)
+.devin/*.local.json
+
 # Local media (audio/video drops, contact sheets); new files over 5 MB are also rejected by .husky/pre-commit
 imports/**/*.mp3
 imports/**/*.mp4
