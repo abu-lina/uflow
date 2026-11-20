@@ -1,4 +1,0 @@
-{
-  "error": { "code": "agent_not_found", "message": "agent target foreman-fixture not found" },
-  "id": "cli:agent:get"
-}

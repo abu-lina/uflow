@@ -19,13 +19,13 @@ Install all skills globally: `npx skills add <repo> --global`
 
 Auto-trigger `grill-with-docs` whenever intent is detected (gap, problem, or desired behaviour). Do not skip this for fuzzy requests — the grill produces the ACs the lane needs.
 
-| When                                     | Skill                                                            | Output                                                                         |
-| ---------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Any detected intent (feature/change/gap) | `grill-with-docs` (mattpocock-skills grilling + domain-modeling) | `CONTEXT.md` + `docs/adr/<issue-slug>.md` — auto-triggered on intent detection |
-| Exploring approaches during shaping      | `superpowers:brainstorming`                                      | Approach options before committing to a direction                              |
-| User-facing feature                      | `pm-execution:job-stories`                                       | Job stories for issue body ACs                                                 |
-| Internal / infra change                  | `pm-execution:write-stories`                                     | Dev-oriented stories for issue body ACs                                        |
-| P0/P1 issues or `area:auth` / `area:db`  | `pm-execution:pre-mortem` + `pm-execution:test-scenarios`        | Risk analysis + scenario list — run before `gh issue create`                   |
+| When                                                            | Skill                                                              | Output                                                                          |
+| --------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| Any detected intent (feature/change/gap)                        | `grill-with-docs` (mattpocock-skills grilling + domain-modeling)   | `CONTEXT.md` + `docs/adr/<issue-slug>.md` — auto-triggered on intent detection  |
+| Exploring approaches during shaping                             | `superpowers:brainstorming`                                        | Approach options before committing to a direction                               |
+| User-facing feature                                             | `pm-execution:job-stories`                                         | Job stories for issue body ACs                                                  |
+| Internal / infra change                                         | `pm-execution:write-stories`                                       | Dev-oriented stories for issue body ACs                                         |
+| P0/P1 issues or `area:auth` / `area:db`                         | `pm-execution:pre-mortem` + `pm-execution:test-scenarios`          | Risk analysis + scenario list — run before `gh issue create`                    |
 
 Skip shaping for confirmed bugs with a clear reproduction — go straight to lane start.
 
@@ -46,24 +46,24 @@ Skip shaping for confirmed bugs with a clear reproduction — go straight to lan
 
 ## Checkpoint / Handoff (Stage 4)
 
-| When                            | Action                                                                                                                          |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Lane finishes implementation    | Lane fires `handoff` skill — structured signal to foreman.                                                                      |
-| Foreman receives handoff signal | Open Rex dev-server pane: `rex split -s "$REX_SESSION" --split=bottom -- bash -c "cd .worktrees/<issue>-<slug> && npm run dev"` |
+| When                            | Action                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lane finishes implementation    | Lane fires `handoff` skill — structured signal to foreman.                                                                                          |
+| Foreman receives handoff signal | Open Rex dev-server pane: `rex split -s "$REX_SESSION" --split=below -- bash -c "cd .worktrees/<issue>-<slug> && npm run dev"` |
 
 PO verifies on localhost. Any positive reply ("looks good", "ship it", "yes", "approved") proceeds to code review.
 
 ## Review (Stage 5)
 
-| When                  | Skill                                    | Notes                                                                                                                                               |
-| --------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Every PR (runs first) | `pm-ai-shipping:intended-vs-implemented` | Auto. Did the lane build what the issue asked?                                                                                                      |
-| Every PR              | `impeccable`                             | Auto. Code quality pass.                                                                                                                            |
-| Every PR              | `mattpocock-skills:code-review`          | Auto. Standards + spec, two-axis.                                                                                                                   |
-| Every PR              | `security-audit`                         | Auto. Run in addition to the above.                                                                                                                 |
-| Every PR              | `pm-ai-shipping:security-audit-static`   | Static security analysis — runs alongside security-audit                                                                                            |
-| Frontend / UI lanes   | `ui-taste`, `frontend-design`            | Auto for `area:ui`, `area:map`, `area:dashboard`, `area:admin`. `ui-taste` for aesthetic/UX quality; `frontend-design` mandatory before lane brief. |
-| Frontend / UI lanes   | `impeccable:impeccable-finish-reviewer`  | Auto for Frontend lanes. Correctness and completeness.                                                                                              |
+| When                                      | Skill                                    | Notes                                                                       |
+| ----------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------- |
+| Every PR (runs first)                     | `pm-ai-shipping:intended-vs-implemented` | Auto. Did the lane build what the issue asked?                              |
+| Every PR                                  | `impeccable`                             | Auto. Code quality pass.                                                    |
+| Every PR                                  | `mattpocock-skills:code-review`          | Auto. Standards + spec, two-axis.                                           |
+| Every PR                                  | `security-audit`                         | Auto. Run in addition to the above.                                         |
+| Every PR                                  | `pm-ai-shipping:security-audit-static`   | Static security analysis — runs alongside security-audit |
+| Frontend / UI lanes                       | `ui-taste`, `frontend-design`            | Auto for `area:ui`, `area:map`, `area:dashboard`, `area:admin`. `ui-taste` for aesthetic/UX quality; `frontend-design` mandatory before lane brief. |
+| Frontend / UI lanes                       | `impeccable:impeccable-finish-reviewer`  | Auto for Frontend lanes. Correctness and completeness.                      |
 
 Dispatch all reviewers in parallel as subagents (Agent tool, fresh context, scoped to the diff). Wait for all results before opening the PR.
 
@@ -81,19 +81,19 @@ The foreman maps `area:*` labels to skill buckets and applies the corresponding 
 
 **Labels:** `area:ui`, `area:map`, `area:dashboard`, `area:providers`, `area:admin`
 
-| Mode      | Skills                                                                                                                                                                       |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mode      | Skills                                                                                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Auto      | `vercel-react-best-practices`, `vercel-composition-patterns`, `agent-skills:frontend-ui-engineering`, `ui-taste`, `frontend-design`, `impeccable:impeccable-finish-reviewer` |
-| On demand | `figma:figma-spec`, `figma:figma-design-to-code`, `image-to-ui`                                                                                                              |
+| On demand | `figma:figma-spec`, `figma:figma-design-to-code`, `image-to-ui`                                                                                              |
 
 ### Backend bucket
 
 **Labels:** `area:auth`, `area:search`, `area:db`, `area:imports`, `area:providers`, `area:admin`
 
-| Mode      | Skills                                                                                                                                           |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Mode      | Skills                                                                                                                                       |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Auto      | `supabase`, `supabase-postgres-best-practices`, `agent-skills:api-and-interface-design`, `security-audit`, `agent-skills:security-and-hardening` |
-| On demand | `agent-skills:observability-and-instrumentation`                                                                                                 |
+| On demand | `agent-skills:observability-and-instrumentation`                                                                                             |
 
 ### Infra bucket
 
@@ -110,12 +110,10 @@ The foreman maps `area:*` labels to skill buckets and applies the corresponding 
 ## Learning / TRAP flow (Stage 7)
 
 **Lane writes (every lane):**
-
 - `docs/ai/learnings/<issue>.md` — title + one-sentence learning + PR number
 - `.learnings/LEARNINGS.md` + `ERRORS.md` — automated by `self-improving-agent`
 
 **Foreman writes (only if code review forced a fix):**
-
 - TRAP memory file at `~/.claude/projects/<project>/memory/trap_<slug>.md`
 - Format: rule + **Why:** + **How to apply:**
 

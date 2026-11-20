@@ -5,8 +5,8 @@ Context for future sessions. Written 2026-10-13 when the plan-ID pipeline was re
 ## Environment
 
 - Solo developer, Next.js 15 marketplace (~115k lines), macOS.
-- Agents: GitHub Copilot CLI (primary, `copilot --no-remote`) and Devin CLI. Local only. No `--cloud`, `/handoff` or `/delegate`.
-- Terminal: Ghostty + Herdr + zsh. Herdr workspaces and named agents are the only agent surface.
+- Agents: Claude Code (lane default) and GitHub Copilot CLI (`copilot --no-remote`). Local only. No `--cloud`, `/handoff` or `/delegate`.
+- Terminal: Rex + zsh. Rex panes are the only agent surface.
 - Goal: parallel work with strict TDD and ~100k tokens of context per session.
 
 ## Decisions
@@ -16,20 +16,20 @@ Context for future sessions. Written 2026-10-13 when the plan-ID pipeline was re
 3. **TDD per lane**: failing tests from acceptance criteria in a separate first commit, then implement, refactor, verify (`type-check`, `lint`, `vitest run`, `build`).
 4. **Issues**: labels `P0`-`P3`, `ready`, `area:*`, plus the existing `type:*`. Only `ready` issues with acceptance criteria get a lane. Parallel lanes never share an `area:*`. Large issues are split into sub-issues first.
 5. **Git rules**: work only inside your worktree; stage by explicit path; never commit `.env*`; push only your branch; never merge, push to `main`, or rebase unless asked. The owner merges, one PR at a time.
-6. **Shared rules live in `AGENTS.md`** (under 16 KiB, most important first). Tool files (`.github/copilot-instructions.md`, `.devin/*`) only point to it.
+6. **Shared rules live in `AGENTS.md`** (under 16 KiB, most important first). Tool files (`.github/copilot-instructions.md`) only point to it.
 7. **Prove one lane end to end** before running lanes in parallel.
 8. **PR loop**: open a draft at first push with `Closes #N`, fix CI, answer reviews, stop after 3 failed fix attempts. See `docs/agents/pr-loop.md`.
-9. **Foreman status** reads Herdr's `working` / `blocked` / `idle` / `done` agent states and issue comments. `herdr agent wait <lane> --until blocked --until done` replaces polling.
-10. **Worktree per lane** in `.worktrees/<issue>-<slug>/`, `.env.lane` contains only `PORT` and `PLAYWRIGHT_BASE_URL`, `node_modules` cloned with `cp -c`, `PORT=3000 + issue % 1000`. Tests and dev server run inside the worktree.
-11. **Cleanup**: `lane_done <issue>` after merge removes the Herdr workspace and checkout. GitHub auto-deletes merged branches. Workspaces whose checkout path disappeared are reported in status.
+9. **Foreman status** comes from the lane's `.lane-signal` (delivered to the foreman's Rex pane by the Stop hook), issue comments and `lane_status`.
+10. **Worktree per lane** in `.worktrees/<issue>-<slug>/`, `.env.lane` contains `PORT`, `PLAYWRIGHT_BASE_URL`, `ISSUE` and the Rex coordinates (`REX_SESSION_ID`, `FOREMAN_BLOCK`, `LANE_BLOCK`), `node_modules` cloned with `cp -c`, `PORT=3000 + issue % 1000`. Tests and dev server run inside the worktree.
+11. **Cleanup**: `lane_done <issue>` after merge closes the lane's Rex pane and removes the checkout and local branch. GitHub auto-deletes merged branches.
 12. **Merge order**: branches must be up to date (ruleset enforces it). After each merge only the next PR in line is updated, via `gh pr update-branch`. Lanes never rebase.
-13. **Resume** a lane from the main checkout (`lane <issue>` focuses its existing Herdr workspace); never run `lane` inside `.worktrees/`.
+13. **Resume** a lane from the main checkout (`lane <issue>` closes the old Rex pane and opens a new one in the existing worktree); never run `lane` inside `.worktrees/`.
 14. **One learning file per issue.** Each lane adds `docs/ai/learnings/<issue>.md` in its PR and includes the one-sentence learning in the PR body and final issue comment. A shared `LEARNINGS.md` append would conflict on `gh pr update-branch` (#612); per-issue files mean no conflicts on update-branch, no bypass push, and no foreman writes.
 15. **Auto-dispatch is off.** `scripts/agent-dispatch.sh` and `agent-monitor.sh` were removed; the foreman proposes and the owner approves.
-16. **Herdr is the only agent surface.** VS Code remains an editor for hand-edits, not an agent surface. The foreman starts in the main repository workspace; lanes start in the root pane returned by Herdr worktree creation. The default foreman is Devin on `claude-opus-5-5-high`; lanes default to Copilot on Auto. Both accept a per-invocation model, and Copilot also accepts a reasoning-effort value. The foreman prompt includes `herdr --skill`.
-17. **Permissions are scoped where possible.** Copilot lanes auto-approve only the required write, npm/npx, git, and selected GitHub issue/PR tools, with explicit denies for merge, rebase, `.env.local` writes, and PR merge. The CLI cannot deny force-push at subcommand granularity, so preventing it remains an `AGENTS.md` rule, not a permission mechanism. Devin lanes use `accept-edits` with `--sandbox`. `foreman()` starts Devin in Normal mode with `--config` pointing to a private 0600 copy of `.devin/foreman.json`; the copy absorbs Devin state writes, and each start uses the committed rules. `--config` replaces rather than merges with `~/.config/devin/config.json`. Never use `--allow-all-paths`, `--allow-all`, or `--yolo`: they remove path checks or grant permissions beyond the lane's needs.
-18. **Folder trust was checked against current CLI help.** Copilot has no per-launch trust flag; `trustedFolders` can grant a specific path persistently in settings, while `COPILOT_ALLOW_ALL=true` also suppresses the prompt but auto-approves every tool and is not used. Devin exposes `--respect-workspace-trust false`, which skips the trust check for that invocation; it is not used. No trust setting is changed automatically for a new worktree.
-19. **Lane environment files stay minimal.** `.env.lane` contains only `PORT` and `PLAYWRIGHT_BASE_URL`; lane creation does not copy `.env.local`. An earlier lane created its own small placeholder and passed CI without access to the owner's larger `.env.local`. Keep `[ui.toast] delivery = "system"` in Herdr config for desktop notifications when a lane blocks.
+16. **Rex is the only agent surface.** VS Code remains an editor for hand-edits, not an agent surface. The foreman runs in the main checkout; `lane start` opens each lane in a new Rex pane split from the foreman's. Lanes accept a per-invocation model, and Copilot also accepts a reasoning-effort value.
+17. **Permissions are scoped where possible.** Copilot lanes auto-approve only the required write, npm/npx, git, and selected GitHub issue/PR tools, with explicit denies for merge, rebase, `.env.local` writes, and PR merge. The CLI cannot deny force-push at subcommand granularity, so preventing it remains an `AGENTS.md` rule, not a permission mechanism. Never use `--allow-all-paths`, `--allow-all`, or `--yolo`: they remove path checks or grant permissions beyond the lane's needs.
+18. **Folder trust was checked against current CLI help.** Copilot has no per-launch trust flag; `trustedFolders` can grant a specific path persistently in settings, while `COPILOT_ALLOW_ALL=true` also suppresses the prompt but auto-approves every tool and is not used. No trust setting is changed automatically for a new worktree.
+19. **Lane environment files.** `.env.lane` holds only ports, the issue number and Rex coordinates. Lane creation copies `.env.local` from the main checkout so the dev server boots; real secrets live in GitHub secrets, not in `.env.local`.
 
 ## Repo facts the decisions rest on (verified 2026-10-13)
 
@@ -50,15 +50,15 @@ Context for future sessions. Written 2026-10-13 when the plan-ID pipeline was re
 ## Removed in this refactor
 
 - `.github/agents/` (15 role profiles), `.github/prompts/`, five `.github/skills/` (document-lifecycle, memory-contract, release-procedures, cross-repo-contract, code-review-standards).
-- `.devin/skills/orchestrator/` flows and `.devin/agents/` worker profiles (replaced by pointers).
+- The old orchestrator skill, its worker profiles and the foreman config (#981, #980).
 - `.cursor/` and `.opencode/` (tools not in use).
 - `docs/ai/parallel-sessions.md`, `agent-output/.next-id`, `START_HERE.md`, `docs/expert-roles.md`, `docs/guides/VSCODE_AGENTS_SETUP.md`.
 - `scripts/agent-dispatch.sh`, `scripts/agent-monitor.sh` and `tests/scripts/agent-*.test.ts`.
 
 Historical pipeline output stays under `agent-output/_archive/`.
 
-## Devin notes kept from the old AGENTS.md
+## Notes kept from the old AGENTS.md
 
-Context budget: sessions target 100k tokens by clearing at phase boundaries, not by compaction. If a session ever needs a hard cap, launch with `devin --compaction-thresholds 90000,90000,100000` (per launch, never exported globally). `DEVIN_COMPACTION_THRESHOLDS` is the env form. Both are undocumented; verified present in CLI 3000.11.3. Subagents are not capped; they're scoped by brief.
+Context budget: sessions target 100k tokens by clearing at phase boundaries, not by compaction. Subagents are not capped; they're scoped by brief.
 
 `gh` quirks seen on 2.67.0: `gh issue view --comments` and `gh pr edit` fail on a deprecated GraphQL field. Use `gh issue view N --json title,body,labels,comments` and `gh api -X PATCH repos/{owner}/{repo}/pulls/N`.

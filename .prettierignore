@@ -46,7 +46,6 @@ agent-output/
 docs/
 tests/performance/
 tools/
-.devin/
 
 # Corrupted file (AI-generated garbage after line 15, unparseable)
 scripts/verify-vapid-config.js

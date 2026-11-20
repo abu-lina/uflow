@@ -156,6 +156,7 @@ imports/lottie/.temp-gif-frames/.flowbaby/
 # Parallel lane worktrees (see docs/agents/lane.md)
 .worktrees/
 .env.lane
+.lane-notes.md
 .env.local.localdb
 .env.local.remote-backup
 supabase/seed-multi-location-example.sql
@@ -168,7 +169,7 @@ supabase/seed-multi-location-example.sql
 # rather than generating one here, so the root AGENTS.md is committed.
 /CLAUDE.md
 
-# devin local config (may hold tokens; never commit)
+# leftover local agent config (may hold tokens; never commit)
 .devin/*.local.json
 
 # Local media (audio/video drops, contact sheets); new files over 5 MB are also rejected by .husky/pre-commit

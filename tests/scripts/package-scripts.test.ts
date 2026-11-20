@@ -23,7 +23,7 @@ describe('CI and validate agree on format:check (#613)', () => {
 
   it('.prettierignore covers directories nobody formats today', () => {
     const ignoreFile = readFileSync(join(process.cwd(), '.prettierignore'), 'utf8');
-    const requiredIgnores = ['agent-output/', 'docs/', 'tests/performance/', 'tools/', '.devin/'];
+    const requiredIgnores = ['agent-output/', 'docs/', 'tests/performance/', 'tools/'];
     for (const dir of requiredIgnores) {
       expect(ignoreFile).toContain(dir);
     }

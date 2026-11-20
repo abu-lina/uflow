@@ -20,7 +20,7 @@ Scripts here are invoked via `npm run`, `npx tsx`, or directly in the terminal. 
 
 ## Agent lanes
 
-`lane.sh` holds the `lane`, `lane_done`, `lane_status` and `foreman` shell
+`lane.sh` holds the `lane`, `lane_done` and `lane_status` shell
 functions used by the foreman (`docs/agents/foreman.md`). Source it from
 `~/.zshrc`:
 
@@ -29,9 +29,9 @@ source ~/Projects/uflow/scripts/lane.sh
 ```
 
 In zsh, sourcing defines only thin wrappers (`lane`, `lane_done`,
-`lane_status`, `foreman`). Each calls `scripts/lane <subcommand> "$@"` and
+`lane_status`). Each calls `scripts/lane <subcommand> "$@"` and
 returns its exit status, so all logic runs under bash. `scripts/lane`
-(`status`, `start`, `foreman`, `done`) is the only entry point that sources
+(`status`, `start`, `done`, `register`) is the only entry point that sources
 `lane.sh` under bash and runs the real functions.
 
 It is not executed by CI or runtime code.
