@@ -1,10 +1,10 @@
 # Review
 
-A review runs automatically when a lane reports done; the owner doesn't start it. Reviews run as parallel subagents with the `reviewer` profile (`.devin/agents/reviewer.md`), one per role, against a single PR. The profile has `read`, `grep` and `glob` only: no exec, write or edit, so a reviewer can't comment, label, push or merge.
+A review runs automatically when a lane reports done; the owner doesn't start it. Reviews run as parallel read-only subagents, one per role, against a single PR. A reviewer doesn't comment, label, push or merge.
 
 Reviewers can't run `gh pr diff`. The foreman runs `scripts/review-bundle <pr>` once. It prints the path of a bundle file holding the diff, the issue's acceptance criteria and the PR-head content of every touched file. Each reviewer reads that file and only the files the diff touches plus their direct imports, and returns a list of findings in the format below. The foreman (or whoever triggered the review) merges them.
 
-Read deny rules in `.devin/foreman.json` cover `~/` paths such as `~/.ssh` and `~/.config/gh`, but they don't block files inside the checkout (#718), so the foreman and reviewers can read `.env*` there. Real secrets must never be in a checkout the foreman runs in.
+Nothing blocks the foreman and reviewers from reading `.env*` files inside the checkout (#718). Real secrets must never be in a checkout the foreman runs in.
 
 The foreman asks the owner only for decisions, and every decision request includes a recommendation.
 

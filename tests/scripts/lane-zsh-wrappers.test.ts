@@ -12,11 +12,12 @@ const zsh = (script: string, env: NodeJS.ProcessEnv = process.env) =>
   spawnSync('zsh', ['-f', '-c', script], { encoding: 'utf8', env });
 
 describe('zsh wrappers for scripts/lane.sh', { timeout: spawnTestTimeoutMs }, () => {
-  it('defines lane, lane_done, lane_status and foreman but no helper functions in zsh', () => {
+  it('defines lane, lane_done and lane_status but no foreman or helper functions in zsh', () => {
     const result = zsh(`source ${shellQuote(laneSh)}
-for f in lane lane_done lane_status foreman; do
+for f in lane lane_done lane_status; do
   (( \${+functions[$f]} )) || echo "missing $f"
 done
+(( \${+functions[foreman]} )) && echo "unexpected foreman"
 print -l \${(k)functions} | grep -E '^_(lane|foreman|agent|herdr)_' || true`);
     expect(result.status).toBe(0);
     expect(result.stdout).toBe('');
@@ -33,7 +34,6 @@ source ${shellQuote(laneSh)}
     ['lane', 'start'],
     ['lane_done', 'done'],
     ['lane_status', 'status'],
-    ['foreman', 'foreman'],
   ] as const;
 
   const withStubbedLane = (exitCode: number, run: (dir: string) => void) => {

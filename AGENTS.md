@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Shared rules for every AI coding agent in this repo (GitHub Copilot CLI, Devin CLI, VS Code Copilot). Tool-specific files only point here. Most important rules first.
+Shared rules for every AI coding agent in this repo (Claude Code, GitHub Copilot CLI, VS Code Copilot). Tool-specific files only point here. Most important rules first.
 
 ## How work happens here
 
