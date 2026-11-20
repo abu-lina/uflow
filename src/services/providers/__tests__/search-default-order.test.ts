@@ -27,6 +27,7 @@ function makeClient(rank: RankRow[], opts: { matching?: Set<string>; rpcError?: 
     orders: [] as Array<{ column: string; ascending: boolean }>,
     eqs: [] as Array<[string, unknown]>,
     selects: [] as string[],
+    ranges: [] as Array<[number, number]>,
   };
   const providerRow = (r: RankRow) => ({
     provider_id: r.provider_id,
@@ -52,6 +53,7 @@ function makeClient(rank: RankRow[], opts: { matching?: Set<string>; rpcError?: 
     }
     builder.range = (a: number, b: number) => {
       range = [a, b];
+      calls.ranges.push([a, b]);
       return builder;
     };
     builder.select = (fields: string) => {
@@ -214,6 +216,14 @@ describe('#983 admin status tabs list newest submissions first', () => {
       expect(calls.orders).toEqual([{ column: 'created_at', ascending: false }]);
     },
   );
+
+  it('page 2 of a tab pages through the database in created_at desc order', async () => {
+    const { client, calls } = makeClient(RANK);
+    await page(client, 13, 12, { admin: { status: 'pending', isAdmin: true } });
+    expect(calls.rpc.map((c) => c.name)).not.toContain('get_default_order_providers');
+    expect(calls.ranges).toEqual([[12, 24]]);
+    expect(calls.orders).toEqual([{ column: 'created_at', ascending: false }]);
+  });
 });
 
 describe('#953 more providers than PostgREST max_rows (1000)', () => {

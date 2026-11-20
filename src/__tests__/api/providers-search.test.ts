@@ -420,6 +420,27 @@ describe('GET /api/providers/search', () => {
       expect(response.headers.get('Cache-Control')).toBe('no-store');
     });
 
+    it('#983: admin browse without status sends no admin options, so it keeps the public ranked list', async () => {
+      mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
+      mockIsAdminOrModerator.mockResolvedValue(true);
+      mockSearch.mockResolvedValue({ results: [], hasMore: false });
+
+      await GET(new Request('http://localhost:3000/api/providers/search'));
+
+      expect(mockSearch).toHaveBeenCalledWith(
+        '',
+        null,
+        '',
+        0,
+        12,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+    });
+
     it('should preserve public caching for admin browse without status param', async () => {
       mockGetUserFromCookie.mockResolvedValue({ id: 'admin-123' });
       mockIsAdminOrModerator.mockResolvedValue(true);

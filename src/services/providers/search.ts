@@ -294,7 +294,8 @@ async function searchProvidersOnly(
 
   const hasMore = rawProviders.length > pageSize;
   const results = rawProviders.slice(0, pageSize).map(transformProviderToSearchResult);
-  // No city: the database already returned the page in default order (#953).
+  // No city: the database already returned the page in order, population order
+  // for the public list (#953) or created_at desc for admin status tabs (#983).
   const sortedResults = isValidLocation(location) ? sortByCreationDate(results) : results;
 
   return { results: sortedResults, hasMore, totalCount };
